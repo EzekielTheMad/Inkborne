@@ -1,0 +1,201 @@
+<h2>Updated Data Architecture — Full Foundation Scope</h2>
+<p class="subtitle">All tables created in this sub-project, including access control structures</p>
+
+<div class="section">
+  <div class="mockup">
+    <div class="mockup-header">Complete Foundation Tables</div>
+    <div class="mockup-body" style="padding: 24px; font-family: monospace; font-size: 12px; line-height: 1.6;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+
+        <!-- Column 1: Identity & Access -->
+        <div>
+          <div style="color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Identity & Access</div>
+
+          <div style="background: #2a2a3e; border: 2px solid #7c6ff0; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+            <div style="color: #7c6ff0; font-weight: bold; font-size: 13px; margin-bottom: 6px;">profiles</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK → auth.users</span></div>
+            <div style="color: #aaa; font-size: 11px;">display_name <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">avatar_url <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">bio <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">created_at <span style="color: #555;">timestamptz</span></div>
+          </div>
+
+          <div style="background: #2a2a3e; border: 2px solid #5865F2; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+            <div style="color: #5865F2; font-weight: bold; font-size: 13px; margin-bottom: 6px;">campaigns</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">system_id <span style="color: #555;">uuid FK → game_systems</span></div>
+            <div style="color: #aaa; font-size: 11px;">owner_id <span style="color: #555;">uuid FK → profiles (DM)</span></div>
+            <div style="color: #aaa; font-size: 11px;">name <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">description <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">invite_code <span style="color: #555;">text unique</span></div>
+            <div style="color: #aaa; font-size: 11px;">created_at <span style="color: #555;">timestamptz</span></div>
+          </div>
+
+          <div style="background: #2a2a3e; border: 2px solid #5865F2; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+            <div style="color: #5865F2; font-weight: bold; font-size: 13px; margin-bottom: 6px;">campaign_members</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">campaign_id <span style="color: #555;">uuid FK → campaigns</span></div>
+            <div style="color: #aaa; font-size: 11px;">user_id <span style="color: #555;">uuid FK → profiles</span></div>
+            <div style="color: #aaa; font-size: 11px;">role <span style="color: #555;">text — "dm" | "player"</span></div>
+            <div style="color: #aaa; font-size: 11px;">joined_at <span style="color: #555;">timestamptz</span></div>
+          </div>
+
+          <div style="background: #2a2a3e; border: 2px solid #ff6b6b; border-radius: 8px; padding: 14px;">
+            <div style="color: #ff6b6b; font-weight: bold; font-size: 13px; margin-bottom: 6px;">characters</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">user_id <span style="color: #555;">uuid FK → profiles</span></div>
+            <div style="color: #aaa; font-size: 11px;">system_id <span style="color: #555;">uuid FK → game_systems</span></div>
+            <div style="color: #aaa; font-size: 11px;">campaign_id <span style="color: #555;">uuid FK → campaigns (nullable)</span></div>
+            <div style="color: #aaa; font-size: 11px;">name <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">visibility <span style="color: #555;">"private" | "campaign" | "public"</span></div>
+            <div style="color: #aaa; font-size: 11px;">archived <span style="color: #555;">bool</span></div>
+            <div style="color: #aaa; font-size: 11px;">created_at <span style="color: #555;">timestamptz</span></div>
+            <div style="color: #555; font-size: 10px; margin-top: 4px;">— full character data columns added in builder sub-project</div>
+          </div>
+        </div>
+
+        <!-- Column 2: System & Content -->
+        <div>
+          <div style="color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">System & Content</div>
+
+          <div style="background: #2a2a3e; border: 2px solid #4ecdc4; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+            <div style="color: #4ecdc4; font-weight: bold; font-size: 13px; margin-bottom: 6px;">game_systems</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">slug <span style="color: #555;">text unique</span></div>
+            <div style="color: #aaa; font-size: 11px;">name <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">version_label <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">schema_definition <span style="color: #555;">jsonb</span></div>
+            <div style="color: #aaa; font-size: 11px;">expression_context <span style="color: #555;">jsonb</span></div>
+            <div style="color: #aaa; font-size: 11px;">status <span style="color: #555;">"draft" | "published"</span></div>
+            <div style="color: #aaa; font-size: 11px;">created_at <span style="color: #555;">timestamptz</span></div>
+          </div>
+
+          <div style="background: #2a2a3e; border: 2px solid #a8e6cf; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+            <div style="color: #a8e6cf; font-weight: bold; font-size: 13px; margin-bottom: 6px;">content_definitions</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">system_id <span style="color: #555;">uuid FK → game_systems</span></div>
+            <div style="color: #aaa; font-size: 11px;">content_type <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">slug <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">name <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">data <span style="color: #555;">jsonb</span></div>
+            <div style="color: #aaa; font-size: 11px;">effects <span style="color: #555;">jsonb[]</span></div>
+            <div style="color: #aaa; font-size: 11px;">source <span style="color: #555;">"srd" | "homebrew"</span></div>
+            <div style="color: #aaa; font-size: 11px;">scope <span style="color: #555;">"platform" | "personal" | "shared"</span></div>
+            <div style="color: #aaa; font-size: 11px;">owner_id <span style="color: #555;">uuid FK → profiles</span></div>
+            <div style="color: #aaa; font-size: 11px;">version <span style="color: #555;">int</span></div>
+            <div style="color: #aaa; font-size: 11px;">created_at <span style="color: #555;">timestamptz</span></div>
+          </div>
+
+          <div style="background: #2a2a3e; border: 2px solid #a8e6cf; border-radius: 8px; padding: 14px;">
+            <div style="color: #a8e6cf; font-weight: bold; font-size: 13px; margin-bottom: 6px;">content_versions</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">content_id <span style="color: #555;">uuid FK → content_definitions</span></div>
+            <div style="color: #aaa; font-size: 11px;">version <span style="color: #555;">int</span></div>
+            <div style="color: #aaa; font-size: 11px;">data_snapshot <span style="color: #555;">jsonb</span></div>
+            <div style="color: #aaa; font-size: 11px;">effects_snapshot <span style="color: #555;">jsonb[]</span></div>
+            <div style="color: #aaa; font-size: 11px;">changelog <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">created_at <span style="color: #555;">timestamptz</span></div>
+          </div>
+        </div>
+
+        <!-- Column 3: Homebrew & Sharing -->
+        <div>
+          <div style="color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Homebrew & Sharing</div>
+
+          <div style="background: #2a2a3e; border: 2px solid #ffd93d; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+            <div style="color: #ffd93d; font-weight: bold; font-size: 13px; margin-bottom: 6px;">custom_content_types</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">system_id <span style="color: #555;">uuid FK → game_systems</span></div>
+            <div style="color: #aaa; font-size: 11px;">created_by <span style="color: #555;">uuid FK → profiles</span></div>
+            <div style="color: #aaa; font-size: 11px;">slug <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">name <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">description <span style="color: #555;">text</span></div>
+            <div style="color: #aaa; font-size: 11px;">allow_multiple <span style="color: #555;">bool</span></div>
+            <div style="color: #aaa; font-size: 11px;">entry_conditions <span style="color: #555;">jsonb</span></div>
+            <div style="color: #aaa; font-size: 11px;">has_progression <span style="color: #555;">bool</span></div>
+            <div style="color: #aaa; font-size: 11px;">scope <span style="color: #555;">"personal" | "shared"</span></div>
+            <div style="color: #aaa; font-size: 11px;">owner_id <span style="color: #555;">uuid FK → profiles</span></div>
+            <div style="color: #aaa; font-size: 11px;">version <span style="color: #555;">int</span></div>
+          </div>
+
+          <div style="background: #2a2a3e; border: 2px solid #ff9f43; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+            <div style="color: #ff9f43; font-weight: bold; font-size: 13px; margin-bottom: 6px;">content_shares</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">content_id <span style="color: #555;">uuid FK → content_definitions</span></div>
+            <div style="color: #aaa; font-size: 11px;">campaign_id <span style="color: #555;">uuid FK → campaigns</span></div>
+            <div style="color: #aaa; font-size: 11px;">shared_by <span style="color: #555;">uuid FK → profiles</span></div>
+            <div style="color: #aaa; font-size: 11px;">shared_at <span style="color: #555;">timestamptz</span></div>
+            <div style="color: #555; font-size: 10px; margin-top: 4px;">— shared_by must be member of campaign</div>
+          </div>
+
+          <div style="background: #2a2a3e; border: 2px solid #ff9f43; border-radius: 8px; padding: 14px;">
+            <div style="color: #ff9f43; font-weight: bold; font-size: 13px; margin-bottom: 6px;">content_type_shares</div>
+            <div style="color: #aaa; font-size: 11px;">id <span style="color: #555;">uuid PK</span></div>
+            <div style="color: #aaa; font-size: 11px;">content_type_id <span style="color: #555;">uuid FK → custom_content_types</span></div>
+            <div style="color: #aaa; font-size: 11px;">campaign_id <span style="color: #555;">uuid FK → campaigns</span></div>
+            <div style="color: #aaa; font-size: 11px;">shared_by <span style="color: #555;">uuid FK → profiles</span></div>
+            <div style="color: #aaa; font-size: 11px;">shared_at <span style="color: #555;">timestamptz</span></div>
+            <div style="color: #555; font-size: 10px; margin-top: 4px;">— shares the type + all its content entries</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RLS Summary -->
+      <div style="margin-top: 24px; padding: 16px; background: #1a1a2e; border-radius: 8px;">
+        <div style="font-weight: bold; color: #ccc; margin-bottom: 10px;">Row Level Security Policies</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+          <div>
+            <div style="color: #a8e6cf; margin-bottom: 4px;">content_definitions visibility:</div>
+            <div style="color: #888;">• <span style="color: #aaa;">platform</span> → everyone</div>
+            <div style="color: #888;">• <span style="color: #aaa;">personal</span> → owner only</div>
+            <div style="color: #888;">• <span style="color: #aaa;">shared</span> → owner + members of campaigns in content_shares</div>
+          </div>
+          <div>
+            <div style="color: #ff6b6b; margin-bottom: 4px;">characters visibility:</div>
+            <div style="color: #888;">• <span style="color: #aaa;">private</span> → owner + campaign DM</div>
+            <div style="color: #888;">• <span style="color: #aaa;">campaign</span> → owner + all campaign members</div>
+            <div style="color: #888;">• <span style="color: #aaa;">public</span> → everyone</div>
+          </div>
+          <div>
+            <div style="color: #5865F2; margin-bottom: 4px;">campaigns:</div>
+            <div style="color: #888;">• Visible to members only</div>
+            <div style="color: #888;">• Editable by DM (owner) only</div>
+          </div>
+          <div>
+            <div style="color: #ffd93d; margin-bottom: 4px;">custom_content_types:</div>
+            <div style="color: #888;">• <span style="color: #aaa;">personal</span> → owner only</div>
+            <div style="color: #888;">• <span style="color: #aaa;">shared</span> → owner + campaigns in content_type_shares</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit access -->
+      <div style="margin-top: 12px; padding: 16px; background: #1a1a2e; border-radius: 8px;">
+        <div style="font-weight: bold; color: #ccc; margin-bottom: 10px;">Edit Access</div>
+        <div style="font-size: 12px; color: #888; line-height: 1.8;">
+          <div>• <span style="color: #aaa;">Characters</span> → owner only (DM can view but not edit)</div>
+          <div>• <span style="color: #aaa;">Content definitions</span> → owner only (sharing grants read, not write)</div>
+          <div>• <span style="color: #aaa;">Custom content types</span> → owner only</div>
+          <div>• <span style="color: #aaa;">Campaigns</span> → DM (owner) manages settings; members can leave</div>
+          <div>• <span style="color: #aaa;">Content shares</span> → any campaign member can share their own content</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Total: 10 Tables in Foundation</h3>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <span style="background: #7c6ff033; border: 1px solid #7c6ff0; border-radius: 16px; padding: 6px 14px; color: #7c6ff0; font-size: 13px;">profiles</span>
+    <span style="background: #4ecdc433; border: 1px solid #4ecdc4; border-radius: 16px; padding: 6px 14px; color: #4ecdc4; font-size: 13px;">game_systems</span>
+    <span style="background: #a8e6cf33; border: 1px solid #a8e6cf; border-radius: 16px; padding: 6px 14px; color: #a8e6cf; font-size: 13px;">content_definitions</span>
+    <span style="background: #a8e6cf33; border: 1px solid #a8e6cf; border-radius: 16px; padding: 6px 14px; color: #a8e6cf; font-size: 13px;">content_versions</span>
+    <span style="background: #ffd93d33; border: 1px solid #ffd93d; border-radius: 16px; padding: 6px 14px; color: #ffd93d; font-size: 13px;">custom_content_types</span>
+    <span style="background: #5865F233; border: 1px solid #5865F2; border-radius: 16px; padding: 6px 14px; color: #5865F2; font-size: 13px;">campaigns</span>
+    <span style="background: #5865F233; border: 1px solid #5865F2; border-radius: 16px; padding: 6px 14px; color: #5865F2; font-size: 13px;">campaign_members</span>
+    <span style="background: #ff6b6b33; border: 1px solid #ff6b6b; border-radius: 16px; padding: 6px 14px; color: #ff6b6b; font-size: 13px;">characters</span>
+    <span style="background: #ff9f4333; border: 1px solid #ff9f43; border-radius: 16px; padding: 6px 14px; color: #ff9f43; font-size: 13px;">content_shares</span>
+    <span style="background: #ff9f4333; border: 1px solid #ff9f43; border-radius: 16px; padding: 6px 14px; color: #ff9f43; font-size: 13px;">content_type_shares</span>
+  </div>
+</div>

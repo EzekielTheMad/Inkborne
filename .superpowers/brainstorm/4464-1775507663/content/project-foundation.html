@@ -1,0 +1,169 @@
+<h2>Section 4: Project Foundation</h2>
+<p class="subtitle">Tech stack, auth, project structure, and infrastructure decisions</p>
+
+<div class="section">
+  <h3>Tech Stack</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 20px;">
+      <div style="color: #7c6ff0; font-weight: bold; font-size: 15px; margin-bottom: 8px;">Frontend</div>
+      <div style="color: #ccc; font-size: 14px; margin-bottom: 4px;">Next.js 15 (App Router)</div>
+      <p style="color: #888; font-size: 12px; margin-bottom: 12px;">React Server Components for fast initial loads. Client components for interactive sheet.</p>
+      <div style="color: #ccc; font-size: 14px; margin-bottom: 4px;">Tailwind CSS v4</div>
+      <p style="color: #888; font-size: 12px; margin-bottom: 12px;">Utility-first styling. Already in your toolbox.</p>
+      <div style="color: #ccc; font-size: 14px; margin-bottom: 4px;">TypeScript (strict)</div>
+      <p style="color: #888; font-size: 12px;">Type safety across schema definitions, expression engine, and content.</p>
+    </div>
+
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 20px;">
+      <div style="color: #4ecdc4; font-weight: bold; font-size: 15px; margin-bottom: 8px;">Backend & Data</div>
+      <div style="color: #ccc; font-size: 14px; margin-bottom: 4px;">Supabase</div>
+      <p style="color: #888; font-size: 12px; margin-bottom: 8px;">Postgres database, Row Level Security, Auth, Realtime subscriptions, Storage for uploads.</p>
+      <div style="border-left: 2px solid #4ecdc4; padding-left: 12px; margin-top: 8px;">
+        <div style="color: #aaa; font-size: 12px;">Postgres — structured data, JSONB for schemas</div>
+        <div style="color: #aaa; font-size: 12px;">RLS — content scoping (platform/user/campaign)</div>
+        <div style="color: #aaa; font-size: 12px;">Auth — email, Google, Discord OAuth</div>
+        <div style="color: #aaa; font-size: 12px;">Realtime — live sheet updates in campaigns</div>
+        <div style="color: #aaa; font-size: 12px;">Storage — character portraits, uploads</div>
+      </div>
+    </div>
+
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 20px;">
+      <div style="color: #ff6b6b; font-weight: bold; font-size: 15px; margin-bottom: 8px;">Infrastructure</div>
+      <div style="color: #ccc; font-size: 14px; margin-bottom: 4px;">Vercel</div>
+      <p style="color: #888; font-size: 12px; margin-bottom: 12px;">Hosting, edge functions, preview deployments. Pairs naturally with Next.js.</p>
+      <div style="color: #ccc; font-size: 14px; margin-bottom: 4px;">GitHub</div>
+      <p style="color: #888; font-size: 12px; margin-bottom: 12px;">Source control. Open source (per PRD).</p>
+      <div style="color: #ccc; font-size: 14px; margin-bottom: 4px;">Zod</div>
+      <p style="color: #888; font-size: 12px;">Runtime schema validation for all JSONB data — system definitions, content payloads, effects.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Authentication Flow</h3>
+  <div class="mockup">
+    <div class="mockup-header">Supabase Auth — OAuth Providers</div>
+    <div class="mockup-body" style="padding: 20px;">
+      <div style="display: flex; gap: 16px; align-items: stretch;">
+        <div style="flex: 1; background: #7c6ff022; border: 1px solid #7c6ff0; border-radius: 8px; padding: 16px; text-align: center;">
+          <div style="font-size: 28px; margin-bottom: 8px;">📧</div>
+          <div style="color: #7c6ff0; font-weight: bold;">Email + Password</div>
+          <div style="color: #888; font-size: 12px; margin-top: 4px;">Email verification required</div>
+        </div>
+        <div style="flex: 1; background: #5865F222; border: 1px solid #5865F2; border-radius: 8px; padding: 16px; text-align: center;">
+          <div style="font-size: 28px; margin-bottom: 8px;">🎮</div>
+          <div style="color: #5865F2; font-weight: bold;">Discord OAuth</div>
+          <div style="color: #888; font-size: 12px; margin-top: 4px;">Primary audience lives on Discord</div>
+        </div>
+        <div style="flex: 1; background: #4285F422; border: 1px solid #4285F4; border-radius: 8px; padding: 16px; text-align: center;">
+          <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
+          <div style="color: #4285F4; font-weight: bold;">Google OAuth</div>
+          <div style="color: #888; font-size: 12px; margin-top: 4px;">Universal fallback</div>
+        </div>
+      </div>
+      <div style="margin-top: 16px; background: #1a1a2e; border-radius: 6px; padding: 12px;">
+        <p style="color: #aaa; font-size: 13px; margin: 0;">Supabase Auth handles all three out of the box. User profiles stored in a <code style="color: #ffd93d;">profiles</code> table linked to <code style="color: #ffd93d;">auth.users</code> via trigger on signup. Display name, avatar, bio.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Project Structure</h3>
+  <div class="mockup">
+    <div class="mockup-header">Directory Layout</div>
+    <div class="mockup-body" style="padding: 20px; font-family: monospace; font-size: 12px; color: #ccc; line-height: 1.8;">
+<pre style="margin: 0;">inkborne/
+├── <span style="color: #7c6ff0;">app/</span>                        <span style="color: #666;"># Next.js App Router</span>
+│   ├── (auth)/                   <span style="color: #666;"># Login, signup, callback routes</span>
+│   ├── (app)/                    <span style="color: #666;"># Authenticated app shell</span>
+│   │   ├── dashboard/            <span style="color: #666;"># User's characters & campaigns</span>
+│   │   ├── characters/           <span style="color: #666;"># Character builder & sheet (future sub-project)</span>
+│   │   └── campaigns/            <span style="color: #666;"># Campaign management (future sub-project)</span>
+│   ├── layout.tsx
+│   └── page.tsx                  <span style="color: #666;"># Landing page</span>
+│
+├── <span style="color: #4ecdc4;">lib/</span>                        <span style="color: #666;"># Shared logic</span>
+│   ├── supabase/                 <span style="color: #666;"># Client & server Supabase helpers</span>
+│   │   ├── client.ts
+│   │   ├── server.ts
+│   │   └── middleware.ts
+│   ├── engine/                   <span style="color: #666;"># Expression engine</span>
+│   │   ├── evaluator.ts          <span style="color: #666;"># Core evaluation pipeline</span>
+│   │   ├── parser.ts             <span style="color: #666;"># Expression parser (Tier 2)</span>
+│   │   ├── sandbox.ts            <span style="color: #666;"># Script sandbox (Tier 3)</span>
+│   │   └── effects.ts            <span style="color: #666;"># Effect collection & sorting</span>
+│   ├── schemas/                  <span style="color: #666;"># Zod schemas for validation</span>
+│   │   ├── system.ts             <span style="color: #666;"># Game system schema validation</span>
+│   │   ├── content.ts            <span style="color: #666;"># Content definition validation</span>
+│   │   ├── character.ts          <span style="color: #666;"># Character data validation</span>
+│   │   └── effects.ts            <span style="color: #666;"># Effect & expression validation</span>
+│   └── types/                    <span style="color: #666;"># TypeScript type definitions</span>
+│       ├── system.ts
+│       ├── content.ts
+│       └── character.ts
+│
+├── <span style="color: #ff6b6b;">components/</span>                 <span style="color: #666;"># React components</span>
+│   ├── ui/                       <span style="color: #666;"># Base UI components</span>
+│   └── auth/                     <span style="color: #666;"># Auth forms, OAuth buttons</span>
+│
+├── <span style="color: #ffd93d;">supabase/</span>                   <span style="color: #666;"># Supabase config</span>
+│   ├── migrations/               <span style="color: #666;"># SQL migrations</span>
+│   ├── seed.sql                  <span style="color: #666;"># D&D 5e 2024 SRD seed data</span>
+│   └── config.toml
+│
+└── <span style="color: #a8e6cf;">tests/</span>                      <span style="color: #666;"># Tests</span>
+    ├── engine/                   <span style="color: #666;"># Expression engine unit tests</span>
+    └── schemas/                  <span style="color: #666;"># Schema validation tests</span></pre>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Database Tables — Foundation Scope</h3>
+  <p style="color: #aaa; margin-bottom: 12px;">Only the tables this sub-project creates. Character builder, campaigns, etc. come in later sub-projects.</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #7c6ff0; font-weight: bold; margin-bottom: 8px;">Created Now</div>
+      <div style="font-family: monospace; font-size: 13px; color: #aaa; line-height: 1.8;">
+        <div><span style="color: #ccc;">profiles</span> — user display info</div>
+        <div><span style="color: #ccc;">game_systems</span> — system definitions</div>
+        <div><span style="color: #ccc;">content_definitions</span> — all game content</div>
+        <div><span style="color: #ccc;">content_versions</span> — version snapshots</div>
+        <div><span style="color: #ccc;">custom_content_types</span> — DM-created categories</div>
+      </div>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #666; font-weight: bold; margin-bottom: 8px;">Created Later (other sub-projects)</div>
+      <div style="font-family: monospace; font-size: 13px; color: #555; line-height: 1.8;">
+        <div>characters — character builder sub-project</div>
+        <div>character_content_refs — character builder</div>
+        <div>campaigns — campaign management sub-project</div>
+        <div>campaign_members — campaign management</div>
+        <div>character_custom_skills — character builder</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Key Decisions</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #4ecdc4; font-weight: bold; margin-bottom: 4px;">Why Supabase over alternatives?</div>
+      <p style="color: #aaa; font-size: 13px;">You already know it. It gives you Postgres, auth, realtime, and storage in one service. RLS maps perfectly to content scoping. The alternatives (Prisma + separate auth + separate realtime) add integration complexity with no clear benefit for this project.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #ff6b6b; font-weight: bold; margin-bottom: 4px;">Why Zod for JSONB validation?</div>
+      <p style="color: #aaa; font-size: 13px;">System schemas and content payloads are JSONB — Postgres won't validate their internal structure. Zod gives us runtime validation with TypeScript type inference. Define the shape once, get both runtime checks and compile-time types.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #ffd93d; font-weight: bold; margin-bottom: 4px;">Expression engine lives client-side</div>
+      <p style="color: #aaa; font-size: 13px;">Derived stats are computed in the browser for instant feedback. The engine is a pure TypeScript module with no DOM or network dependencies — it can also run server-side for PDF export or API responses.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #a8e6cf; font-weight: bold; margin-bottom: 4px;">Stub routes for future sub-projects</div>
+      <p style="color: #aaa; font-size: 13px;">We'll create the directory structure for characters/ and campaigns/ but only build the dashboard page. This ensures routing and layout decisions are made early without building features prematurely.</p>
+    </div>
+  </div>
+</div>

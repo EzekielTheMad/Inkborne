@@ -1,0 +1,145 @@
+<h2>Section 3: System Schema Definition</h2>
+<p class="subtitle">What lives inside game_systems.schema_definition — the blueprint for each TTRPG</p>
+
+<div class="section">
+  <h3>Schema Structure</h3>
+  <p style="color: #aaa; margin-bottom: 16px;">Each game system defines: what stats exist, what resources to track, what content types are available, and how the character sheet is organized. This is admin-authored — your team curates these.</p>
+
+  <div class="mockup">
+    <div class="mockup-header">D&D 5e 2024 — Schema Definition (simplified)</div>
+    <div class="mockup-body" style="padding: 20px; font-family: monospace; font-size: 11px; color: #ccc; line-height: 1.7; max-height: 600px; overflow-y: auto;">
+<pre style="margin: 0; white-space: pre-wrap;">{
+  <span style="color: #7c6ff0;">"system"</span>: {
+    <span style="color: #888;">"slug"</span>: "dnd-5e-2024",
+    <span style="color: #888;">"name"</span>: "D&D 5th Edition (2024)",
+    <span style="color: #888;">"version_label"</span>: "2024 Rules"
+  },
+
+  <span style="color: #7c6ff0;">// What stats exist on a character</span>
+  <span style="color: #7c6ff0;">"ability_scores"</span>: [
+    { "slug": "strength",     "name": "Strength",     "abbr": "STR" },
+    { "slug": "dexterity",    "name": "Dexterity",    "abbr": "DEX" },
+    { "slug": "constitution", "name": "Constitution", "abbr": "CON" },
+    { "slug": "intelligence", "name": "Intelligence", "abbr": "INT" },
+    { "slug": "wisdom",       "name": "Wisdom",       "abbr": "WIS" },
+    { "slug": "charisma",     "name": "Charisma",     "abbr": "CHA" }
+  ],
+
+  <span style="color: #4ecdc4;">// Derived stats computed by the expression engine</span>
+  <span style="color: #4ecdc4;">"derived_stats"</span>: [
+    { "slug": "proficiency_bonus", "name": "Proficiency Bonus",
+      "formula": "floor((level - 1) / 4) + 2" },
+    { "slug": "armor_class", "name": "Armor Class",
+      "formula": "10 + mod(dexterity)", "note": "base, modified by armor/effects" },
+    { "slug": "initiative", "name": "Initiative",
+      "formula": "mod(dexterity)" },
+    { "slug": "movement_speed", "name": "Speed", "base": 30,
+      "note": "overridden by species" },
+    { "slug": "hit_points_max", "name": "Hit Point Maximum",
+      "formula": "hit_die_total + (mod(constitution) * level)" },
+    { "slug": "passive_perception", "name": "Passive Perception",
+      "formula": "10 + mod(wisdom) + proficiency_if('perception')" }
+  ],
+
+  <span style="color: #ff6b6b;">// Skills and what they're tied to</span>
+  <span style="color: #ff6b6b;">"skills"</span>: [
+    { "slug": "acrobatics",       "name": "Acrobatics",       "ability": "dexterity" },
+    { "slug": "animal_handling",  "name": "Animal Handling",  "ability": "wisdom" },
+    { "slug": "arcana",           "name": "Arcana",           "ability": "intelligence" },
+    { "slug": "athletics",        "name": "Athletics",        "ability": "strength" },
+    <span style="color: #666;">// ... all 18 skills</span>
+  ],
+
+  <span style="color: #ffd93d;">// Trackable resources (things that deplete and refresh)</span>
+  <span style="color: #ffd93d;">"resources"</span>: [
+    { "slug": "hit_points",  "name": "Hit Points",  "type": "current_max_temp" },
+    { "slug": "hit_dice",    "name": "Hit Dice",    "type": "pool", "per": "level" },
+    { "slug": "spell_slots", "name": "Spell Slots", "type": "slots_by_level",
+      "levels": [1,2,3,4,5,6,7,8,9] },
+    { "slug": "death_saves", "name": "Death Saves", "type": "success_fail",
+      "max_each": 3 }
+  ],
+
+  <span style="color: #a8e6cf;">// What content types this system supports</span>
+  <span style="color: #a8e6cf;">"content_types"</span>: [
+    { "slug": "species",    "name": "Species",    "plural": "Species",
+      "required": true, "max": 1 },
+    { "slug": "class",      "name": "Class",      "plural": "Classes",
+      "required": true, "max": null, "note": "multiclassing allows multiple" },
+    { "slug": "subclass",   "name": "Subclass",   "plural": "Subclasses",
+      "parent": "class" },
+    { "slug": "background", "name": "Background", "plural": "Backgrounds",
+      "required": true, "max": 1 },
+    { "slug": "feat",       "name": "Feat",       "plural": "Feats",
+      "max": null },
+    { "slug": "spell",      "name": "Spell",      "plural": "Spells" },
+    { "slug": "item",       "name": "Item",       "plural": "Items" },
+    { "slug": "weapon",     "name": "Weapon",     "plural": "Weapons" },
+    { "slug": "armor",      "name": "Armor",      "plural": "Armor" }
+  ],
+
+  <span style="color: #ff6b6b;">// Currency system</span>
+  <span style="color: #ff6b6b;">"currencies"</span>: [
+    { "slug": "cp", "name": "Copper",   "rate": 1 },
+    { "slug": "sp", "name": "Silver",   "rate": 10 },
+    { "slug": "ep", "name": "Electrum", "rate": 50 },
+    { "slug": "gp", "name": "Gold",     "rate": 100 },
+    { "slug": "pp", "name": "Platinum", "rate": 1000 }
+  ],
+
+  <span style="color: #7c6ff0;">// Character creation flow — step order</span>
+  <span style="color: #7c6ff0;">"creation_steps"</span>: [
+    { "step": 1, "type": "species",    "label": "Choose Species" },
+    { "step": 2, "type": "class",      "label": "Choose Class" },
+    { "step": 3, "type": "abilities",  "label": "Set Ability Scores",
+      "methods": ["standard_array", "point_buy", "manual"] },
+    { "step": 4, "type": "background", "label": "Choose Background" },
+    { "step": 5, "type": "equipment",  "label": "Starting Equipment" },
+    { "step": 6, "type": "details",    "label": "Character Details",
+      "fields": ["name", "alignment", "backstory", "appearance",
+                 "personality_traits", "ideals", "bonds", "flaws"] }
+  ],
+
+  <span style="color: #4ecdc4;">// Sheet layout sections (for the curated UI)</span>
+  <span style="color: #4ecdc4;">"sheet_sections"</span>: [
+    { "slug": "header",     "label": "Character Header",
+      "contains": ["name", "class_level", "species", "background"] },
+    { "slug": "abilities",  "label": "Ability Scores" },
+    { "slug": "combat",     "label": "Combat",
+      "contains": ["armor_class", "initiative", "speed", "hit_points"] },
+    { "slug": "skills",     "label": "Skills & Saves" },
+    { "slug": "actions",    "label": "Actions",    "tab": true },
+    { "slug": "spells",     "label": "Spells",     "tab": true },
+    { "slug": "inventory",  "label": "Inventory",  "tab": true },
+    { "slug": "features",   "label": "Features & Traits", "tab": true,
+      "extension_zone": true, <span style="color: #ffd93d;">"note": "custom content types appear as tabs here"</span> },
+    { "slug": "background", "label": "Background", "tab": true },
+    { "slug": "notes",      "label": "Notes",      "tab": true },
+    { "slug": "extras",     "label": "Extras",     "tab": true }
+  ]
+}</pre>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>What This Enables</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #7c6ff0; font-weight: bold; margin-bottom: 4px;">Different System, Same Engine</div>
+      <p style="color: #aaa; font-size: 13px;">Dagger Heart would define different ability scores (e.g., Agility, Strength, Finesse), different resources (Hope, Stress), different content types (Ancestry, Class, Subclass, Domain). The expression engine and content system work identically — only the schema changes.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #4ecdc4; font-weight: bold; margin-bottom: 4px;">Creation Flow is Data</div>
+      <p style="color: #aaa; font-size: 13px;">The character builder reads <code style="color: #ffd93d;">creation_steps</code> to generate its wizard. Each system can define its own step order, labels, and ability score methods. One builder component serves all systems.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #ff6b6b; font-weight: bold; margin-bottom: 4px;">Extension Zones</div>
+      <p style="color: #aaa; font-size: 13px;">The <code style="color: #ffd93d;">features</code> sheet section is marked as an extension zone. Custom content types from DM homebrew (Ship Roles, Org Ranks) automatically appear as additional filter tabs within this section.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #ffd93d; font-weight: bold; margin-bottom: 4px;">Curated but Flexible</div>
+      <p style="color: #aaa; font-size: 13px;">Your team authors these schemas — they're not user-editable. But the content within them (SRD data, homebrew) is fully open. The schema defines the container; the community fills it.</p>
+    </div>
+  </div>
+</div>

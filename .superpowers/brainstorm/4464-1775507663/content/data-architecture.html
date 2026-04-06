@@ -1,0 +1,123 @@
+<h2>Section 1: Data Architecture</h2>
+<p class="subtitle">Core tables and relationships for Foundation + System Schema Engine</p>
+
+<div class="section">
+  <div class="mockup">
+    <div class="mockup-header">Entity Relationship Overview</div>
+    <div class="mockup-body" style="padding: 24px; font-family: monospace; font-size: 13px; line-height: 1.6;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+        <!-- Left column: Core tables -->
+        <div>
+          <div style="margin-bottom: 20px;">
+            <div style="background: #2a2a3e; border: 2px solid #7c6ff0; border-radius: 8px; padding: 16px;">
+              <div style="color: #7c6ff0; font-weight: bold; font-size: 14px; margin-bottom: 8px;">game_systems</div>
+              <div style="color: #aaa;">id <span style="color: #666;">uuid PK</span></div>
+              <div style="color: #aaa;">slug <span style="color: #666;">text unique</span> <span style="color: #555;">— "dnd-5e-2024"</span></div>
+              <div style="color: #aaa;">name <span style="color: #666;">text</span></div>
+              <div style="color: #aaa;">version_label <span style="color: #666;">text</span> <span style="color: #555;">— "2024"</span></div>
+              <div style="color: #aaa;">schema_definition <span style="color: #666;">jsonb</span> <span style="color: #555;">— stats, resources, sections</span></div>
+              <div style="color: #aaa;">expression_context <span style="color: #666;">jsonb</span> <span style="color: #555;">— base formulas</span></div>
+              <div style="color: #aaa;">status <span style="color: #666;">text</span> <span style="color: #555;">— draft/published</span></div>
+              <div style="color: #aaa;">created_at <span style="color: #666;">timestamptz</span></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <div style="background: #2a2a3e; border: 2px solid #4ecdc4; border-radius: 8px; padding: 16px;">
+              <div style="color: #4ecdc4; font-weight: bold; font-size: 14px; margin-bottom: 8px;">content_definitions</div>
+              <div style="color: #aaa;">id <span style="color: #666;">uuid PK</span></div>
+              <div style="color: #aaa;">system_id <span style="color: #666;">uuid FK → game_systems</span></div>
+              <div style="color: #aaa;">content_type <span style="color: #666;">text</span> <span style="color: #555;">— "species", "class", "spell", "feat"...</span></div>
+              <div style="color: #aaa;">slug <span style="color: #666;">text</span></div>
+              <div style="color: #aaa;">name <span style="color: #666;">text</span></div>
+              <div style="color: #aaa;">data <span style="color: #666;">jsonb</span> <span style="color: #555;">— content payload</span></div>
+              <div style="color: #aaa;">effects <span style="color: #666;">jsonb[]</span> <span style="color: #555;">— stat modifications</span></div>
+              <div style="color: #aaa;">source <span style="color: #666;">text</span> <span style="color: #555;">— "srd", "homebrew"</span></div>
+              <div style="color: #aaa;">scope <span style="color: #666;">text</span> <span style="color: #555;">— "platform", "user", "campaign"</span></div>
+              <div style="color: #aaa;">owner_id <span style="color: #666;">uuid FK → users</span></div>
+              <div style="color: #aaa;">campaign_id <span style="color: #666;">uuid FK → campaigns (nullable)</span></div>
+              <div style="color: #aaa;">version <span style="color: #666;">int</span></div>
+              <div style="color: #aaa;">created_at <span style="color: #666;">timestamptz</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div>
+          <div style="margin-bottom: 20px;">
+            <div style="background: #2a2a3e; border: 2px solid #ff6b6b; border-radius: 8px; padding: 16px;">
+              <div style="color: #ff6b6b; font-weight: bold; font-size: 14px; margin-bottom: 8px;">characters</div>
+              <div style="color: #aaa;">id <span style="color: #666;">uuid PK</span></div>
+              <div style="color: #aaa;">user_id <span style="color: #666;">uuid FK → users</span></div>
+              <div style="color: #aaa;">system_id <span style="color: #666;">uuid FK → game_systems</span></div>
+              <div style="color: #aaa;">campaign_id <span style="color: #666;">uuid FK → campaigns (nullable)</span></div>
+              <div style="color: #aaa;">name <span style="color: #666;">text</span></div>
+              <div style="color: #aaa;">level <span style="color: #666;">int</span></div>
+              <div style="color: #aaa;">base_stats <span style="color: #666;">jsonb</span> <span style="color: #555;">— raw ability scores, etc.</span></div>
+              <div style="color: #aaa;">choices <span style="color: #666;">jsonb</span> <span style="color: #555;">— selected race, class, etc.</span></div>
+              <div style="color: #aaa;">state <span style="color: #666;">jsonb</span> <span style="color: #555;">— current HP, spell slots, etc.</span></div>
+              <div style="color: #aaa;">archived <span style="color: #666;">bool</span></div>
+              <div style="color: #aaa;">created_at <span style="color: #666;">timestamptz</span></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <div style="background: #2a2a3e; border: 2px solid #ffd93d; border-radius: 8px; padding: 16px;">
+              <div style="color: #ffd93d; font-weight: bold; font-size: 14px; margin-bottom: 8px;">character_content_refs</div>
+              <div style="color: #aaa;">id <span style="color: #666;">uuid PK</span></div>
+              <div style="color: #aaa;">character_id <span style="color: #666;">uuid FK → characters</span></div>
+              <div style="color: #aaa;">content_id <span style="color: #666;">uuid FK → content_definitions</span></div>
+              <div style="color: #aaa;">content_version <span style="color: #666;">int</span> <span style="color: #555;">— pinned version</span></div>
+              <div style="color: #aaa;">context <span style="color: #666;">jsonb</span> <span style="color: #555;">— "gained at level 5", etc.</span></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="background: #2a2a3e; border: 2px solid #a8e6cf; border-radius: 8px; padding: 16px;">
+              <div style="color: #a8e6cf; font-weight: bold; font-size: 14px; margin-bottom: 8px;">content_versions</div>
+              <div style="color: #aaa;">id <span style="color: #666;">uuid PK</span></div>
+              <div style="color: #aaa;">content_id <span style="color: #666;">uuid FK → content_definitions</span></div>
+              <div style="color: #aaa;">version <span style="color: #666;">int</span></div>
+              <div style="color: #aaa;">data_snapshot <span style="color: #666;">jsonb</span> <span style="color: #555;">— frozen copy</span></div>
+              <div style="color: #aaa;">effects_snapshot <span style="color: #666;">jsonb[]</span></div>
+              <div style="color: #aaa;">changelog <span style="color: #666;">text</span></div>
+              <div style="color: #aaa;">created_at <span style="color: #666;">timestamptz</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Relationship arrows as text -->
+      <div style="margin-top: 24px; padding: 16px; background: #1a1a2e; border-radius: 8px; color: #888;">
+        <div style="font-weight: bold; color: #ccc; margin-bottom: 8px;">Relationships</div>
+        <div><span style="color: #7c6ff0;">game_systems</span> ← one-to-many → <span style="color: #4ecdc4;">content_definitions</span></div>
+        <div><span style="color: #7c6ff0;">game_systems</span> ← one-to-many → <span style="color: #ff6b6b;">characters</span></div>
+        <div><span style="color: #ff6b6b;">characters</span> ← many-to-many → <span style="color: #4ecdc4;">content_definitions</span> <span style="color: #ffd93d;">(via character_content_refs, version-pinned)</span></div>
+        <div><span style="color: #4ecdc4;">content_definitions</span> ← one-to-many → <span style="color: #a8e6cf;">content_versions</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Key Design Decisions</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #7c6ff0; font-weight: bold; margin-bottom: 4px;">Version Pinning</div>
+      <p style="color: #aaa; font-size: 14px;">Characters reference content at a specific version via <code style="color: #ffd93d;">character_content_refs</code>. DM updates create a new version row; players opt in to adopt it.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #4ecdc4; font-weight: bold; margin-bottom: 4px;">Content Scoping</div>
+      <p style="color: #aaa; font-size: 14px;">Every content_definition has a <code style="color: #ffd93d;">scope</code>: platform (SRD), user (personal), or campaign (shared). RLS enforces visibility.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #ff6b6b; font-weight: bold; margin-bottom: 4px;">Effects as Data</div>
+      <p style="color: #aaa; font-size: 14px;">Content carries an <code style="color: #ffd93d;">effects</code> array — each effect is a typed operation like <code style="color: #ffd93d;">{stat: "movement_speed", op: "add", value: 10}</code> or a formula expression.</p>
+    </div>
+    <div style="background: #2a2a3e; border-radius: 8px; padding: 16px;">
+      <div style="color: #a8e6cf; font-weight: bold; margin-bottom: 4px;">Characters are Lean</div>
+      <p style="color: #aaa; font-size: 14px;">Characters store base values + choices. Derived stats (AC, modifiers, save DCs) are computed at runtime by the expression engine from base_stats + content effects.</p>
+    </div>
+  </div>
+</div>

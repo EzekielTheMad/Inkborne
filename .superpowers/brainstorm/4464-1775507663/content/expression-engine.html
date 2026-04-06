@@ -1,0 +1,145 @@
+<h2>Section 2: Expression Engine</h2>
+<p class="subtitle">How effects modify character stats — from simple bonuses to custom formulas</p>
+
+<div class="section">
+  <h3>Three Tiers of Effects</h3>
+  <p style="color: #aaa; margin-bottom: 16px;">Content (species, classes, feats, homebrew) carries effects that modify character stats. Three tiers handle simple to complex cases.</p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+    <!-- Tier 1 -->
+    <div style="background: #2a2a3e; border: 2px solid #4ecdc4; border-radius: 8px; padding: 20px;">
+      <div style="color: #4ecdc4; font-weight: bold; font-size: 16px; margin-bottom: 4px;">Tier 1: Static Effects</div>
+      <div style="color: #666; font-size: 12px; margin-bottom: 12px;">90% of homebrew needs</div>
+      <div style="background: #1a1a2e; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #ccc; margin-bottom: 12px;">
+        <div style="color: #666;">// +2 to Dexterity</div>
+        <div>{</div>
+        <div>&nbsp; "stat": "dexterity",</div>
+        <div>&nbsp; "op": "<span style="color: #4ecdc4;">add</span>",</div>
+        <div>&nbsp; "value": 2</div>
+        <div>}</div>
+      </div>
+      <div style="background: #1a1a2e; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #ccc; margin-bottom: 12px;">
+        <div style="color: #666;">// Grant darkvision 60ft</div>
+        <div>{</div>
+        <div>&nbsp; "stat": "darkvision",</div>
+        <div>&nbsp; "op": "<span style="color: #4ecdc4;">set</span>",</div>
+        <div>&nbsp; "value": 60</div>
+        <div>}</div>
+      </div>
+      <p style="color: #888; font-size: 13px;">Operations: <code style="color: #4ecdc4;">add</code>, <code style="color: #4ecdc4;">set</code>, <code style="color: #4ecdc4;">multiply</code>, <code style="color: #4ecdc4;">grant</code> (proficiencies, features), <code style="color: #4ecdc4;">max</code>, <code style="color: #4ecdc4;">min</code></p>
+      <p style="color: #888; font-size: 13px; margin-top: 8px;">Form-based UI — DM picks stat, operation, and value from dropdowns.</p>
+    </div>
+
+    <!-- Tier 2 -->
+    <div style="background: #2a2a3e; border: 2px solid #7c6ff0; border-radius: 8px; padding: 20px;">
+      <div style="color: #7c6ff0; font-weight: bold; font-size: 16px; margin-bottom: 4px;">Tier 2: Expressions</div>
+      <div style="color: #666; font-size: 12px; margin-bottom: 12px;">Formulas referencing other stats</div>
+      <div style="background: #1a1a2e; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #ccc; margin-bottom: 12px;">
+        <div style="color: #666;">// AC = 10 + DEX mod + CON mod</div>
+        <div>{</div>
+        <div>&nbsp; "stat": "armor_class",</div>
+        <div>&nbsp; "op": "<span style="color: #7c6ff0;">formula</span>",</div>
+        <div>&nbsp; "expr": "<span style="color: #7c6ff0;">10 + mod(dexterity)</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #7c6ff0;">+ mod(constitution)</span>"</div>
+        <div>}</div>
+      </div>
+      <div style="background: #1a1a2e; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #ccc; margin-bottom: 12px;">
+        <div style="color: #666;">// Spell save DC</div>
+        <div>{</div>
+        <div>&nbsp; "stat": "spell_save_dc",</div>
+        <div>&nbsp; "op": "<span style="color: #7c6ff0;">formula</span>",</div>
+        <div>&nbsp; "expr": "<span style="color: #7c6ff0;">8 + proficiency_bonus</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color: #7c6ff0;">+ mod(spellcasting_ability)</span>"</div>
+        <div>}</div>
+      </div>
+      <p style="color: #888; font-size: 13px;">Safe expression parser — arithmetic, stat references, built-in functions like <code style="color: #7c6ff0;">mod()</code>, <code style="color: #7c6ff0;">max()</code>, <code style="color: #7c6ff0;">floor()</code>.</p>
+      <p style="color: #888; font-size: 13px; margin-top: 8px;">Text input with autocomplete. AI can help generate these.</p>
+    </div>
+
+    <!-- Tier 3 -->
+    <div style="background: #2a2a3e; border: 2px solid #ff6b6b; border-radius: 8px; padding: 20px;">
+      <div style="color: #ff6b6b; font-weight: bold; font-size: 16px; margin-bottom: 4px;">Tier 3: Scripts</div>
+      <div style="color: #666; font-size: 12px; margin-bottom: 12px;">Power users — complex conditional logic</div>
+      <div style="background: #1a1a2e; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #ccc; margin-bottom: 12px;">
+        <div style="color: #666;">// Unarmored Defense (Barbarian)</div>
+        <div style="color: #ff6b6b;">function</div> <span style="color: #ccc;">compute(char) {</span>
+        <div>&nbsp; <span style="color: #ff6b6b;">if</span> (!char.armor_equipped) {</div>
+        <div>&nbsp;&nbsp;&nbsp; <span style="color: #ff6b6b;">return</span> {</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; armor_class:</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 10 + char.mod("dex")</div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; + char.mod("con")</div>
+        <div>&nbsp;&nbsp;&nbsp; };</div>
+        <div>&nbsp; }</div>
+        <div>&nbsp; <span style="color: #ff6b6b;">return</span> {};</div>
+        <div>}</div>
+      </div>
+      <p style="color: #888; font-size: 13px;">Sandboxed JS runtime (no DOM, no network, no filesystem). Character object is read-only. Returns stat modifications.</p>
+      <p style="color: #888; font-size: 13px; margin-top: 8px;">Code editor UI. AI-assisted generation from natural language.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Evaluation Pipeline</h3>
+  <div class="mockup">
+    <div class="mockup-header">How derived stats are computed</div>
+    <div class="mockup-body" style="padding: 24px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-family: monospace; font-size: 13px;">
+        <div style="background: #ff6b6b33; border: 1px solid #ff6b6b; border-radius: 8px; padding: 12px 16px; text-align: center;">
+          <div style="color: #ff6b6b; font-weight: bold;">1. Base Stats</div>
+          <div style="color: #aaa; font-size: 11px;">STR: 16, DEX: 14...</div>
+        </div>
+        <div style="color: #666; font-size: 20px;">→</div>
+        <div style="background: #4ecdc433; border: 1px solid #4ecdc4; border-radius: 8px; padding: 12px 16px; text-align: center;">
+          <div style="color: #4ecdc4; font-weight: bold;">2. Collect Effects</div>
+          <div style="color: #aaa; font-size: 11px;">From all content refs</div>
+          <div style="color: #aaa; font-size: 11px;">(race, class, feats, items...)</div>
+        </div>
+        <div style="color: #666; font-size: 20px;">→</div>
+        <div style="background: #ffd93d33; border: 1px solid #ffd93d; border-radius: 8px; padding: 12px 16px; text-align: center;">
+          <div style="color: #ffd93d; font-weight: bold;">3. Sort by Priority</div>
+          <div style="color: #aaa; font-size: 11px;">set → add → multiply</div>
+          <div style="color: #aaa; font-size: 11px;">→ formula → script</div>
+        </div>
+        <div style="color: #666; font-size: 20px;">→</div>
+        <div style="background: #7c6ff033; border: 1px solid #7c6ff0; border-radius: 8px; padding: 12px 16px; text-align: center;">
+          <div style="color: #7c6ff0; font-weight: bold;">4. Evaluate</div>
+          <div style="color: #aaa; font-size: 11px;">Apply each effect</div>
+          <div style="color: #aaa; font-size: 11px;">in priority order</div>
+        </div>
+        <div style="color: #666; font-size: 20px;">→</div>
+        <div style="background: #a8e6cf33; border: 1px solid #a8e6cf; border-radius: 8px; padding: 12px 16px; text-align: center;">
+          <div style="color: #a8e6cf; font-weight: bold;">5. Computed Sheet</div>
+          <div style="color: #aaa; font-size: 11px;">AC: 17, Init: +3...</div>
+          <div style="color: #aaa; font-size: 11px;">Cached until change</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
+  <h3>Ship Roles Example — How It Would Work</h3>
+  <div style="background: #2a2a3e; border-radius: 8px; padding: 20px;">
+    <p style="color: #aaa; margin-bottom: 12px;">A DM creates "Ship Role: Navigator" as homebrew content scoped to their campaign:</p>
+    <div style="background: #1a1a2e; border-radius: 6px; padding: 16px; font-family: monospace; font-size: 12px; color: #ccc;">
+      <div style="color: #666;">// content_definition for Navigator (Level 5 benefit)</div>
+      <div>{</div>
+      <div>&nbsp; "content_type": "custom_feature",</div>
+      <div>&nbsp; "name": "Navigator — Seasoned Voyager",</div>
+      <div>&nbsp; "data": {</div>
+      <div>&nbsp;&nbsp;&nbsp; "description": "Your time at the helm has sharpened...",</div>
+      <div>&nbsp;&nbsp;&nbsp; "prerequisites": { "level_min": 5 }</div>
+      <div>&nbsp; },</div>
+      <div>&nbsp; "effects": [</div>
+      <div>&nbsp;&nbsp;&nbsp; { "stat": "movement_speed", "op": "add", "value": 10 },</div>
+      <div>&nbsp;&nbsp;&nbsp; { "stat": "half_cover", "op": "set", "value": "ignore" },</div>
+      <div>&nbsp;&nbsp;&nbsp; { "stat": "wisdom", "op": "add", "value": 1 }</div>
+      <div>&nbsp; ],</div>
+      <div>&nbsp; "scope": "campaign",</div>
+      <div>&nbsp; "version": 1</div>
+      <div>}</div>
+    </div>
+    <p style="color: #888; font-size: 13px; margin-top: 12px;">The DM fills this out via a structured form (Tier 1 effects), or writes an expression/script for complex logic. The player's character references this at version 1. If the DM nerfs the speed bonus to +5, that becomes version 2 — the player's sheet stays on v1 until they accept the update.</p>
+  </div>
+</div>
