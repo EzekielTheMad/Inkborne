@@ -11,10 +11,10 @@ describe("parseExpression", () => {
     proficiency_bonus: 3,
   };
 
-  const builtins = {
-    mod: (score: number) => Math.floor((score - 10) / 2),
-    proficiency_if: (skill: string) =>
-      skill === "perception" ? stats.proficiency_bonus : 0,
+  const builtins: Record<string, (...args: unknown[]) => number> = {
+    mod: (...args: unknown[]) => Math.floor((args[0] as number - 10) / 2),
+    proficiency_if: (...args: unknown[]) =>
+      (args[0] as string) === "perception" ? stats.proficiency_bonus : 0,
   };
 
   it("evaluates simple arithmetic", () => {
