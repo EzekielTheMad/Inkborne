@@ -545,7 +545,7 @@ inkborne/
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Launch system | D&D 5e 2024 SRD | Forward-looking; 2014 added later as separate system |
+| Launch system | D&D 5e 2014 SRD first, 2024 later | 2014 has structured API data (dnd5eapi.co); 2024 added as separate system once content is sourced from PDF/MPMB |
 | System versioning | Separate snapshots | "D&D 5e 2024" and "D&D 5e 2014" are distinct systems, not versions of one system |
 | Schema approach | Schema-as-Data | System definitions live in DB as structured JSON; enables multi-system without code deploys |
 | System authoring | Platform-controlled | Only the Inkborne team creates game systems; users create content within systems |
