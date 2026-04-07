@@ -33,7 +33,15 @@ export interface GrantEffect {
   value: string; // e.g., "proficient", "expertise", feature name
 }
 
-export type Effect = MechanicalEffect | NarrativeEffect | GrantEffect;
+export interface ChoiceEffect {
+  type: "choice";
+  choose: number;
+  from: string[] | string;
+  grant_type: string;
+  choice_id: string;
+}
+
+export type Effect = MechanicalEffect | NarrativeEffect | GrantEffect | ChoiceEffect;
 
 // --- Progression ---
 

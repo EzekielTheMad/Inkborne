@@ -156,4 +156,49 @@ describe("Effect Schemas", () => {
       expect(result.success).toBe(true);
     });
   });
+
+  describe("choiceEffectSchema", () => {
+    it("validates a choice with explicit list", () => {
+      const result = effectSchema.safeParse({
+        type: "choice",
+        choose: 2,
+        from: ["athletics", "acrobatics", "history"],
+        grant_type: "skill_proficiency",
+        choice_id: "fighter-skill-choice",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("validates a choice with category string", () => {
+      const result = effectSchema.safeParse({
+        type: "choice",
+        choose: 1,
+        from: "all_languages",
+        grant_type: "language",
+        choice_id: "elf-language-choice",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects choice with choose < 1", () => {
+      const result = effectSchema.safeParse({
+        type: "choice",
+        choose: 0,
+        from: ["athletics"],
+        grant_type: "skill_proficiency",
+        choice_id: "bad-choice",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects choice without choice_id", () => {
+      const result = effectSchema.safeParse({
+        type: "choice",
+        choose: 1,
+        from: ["athletics"],
+        grant_type: "skill_proficiency",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
 });
