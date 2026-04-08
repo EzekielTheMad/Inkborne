@@ -1,11 +1,20 @@
 import type { MechanicalEffect, GrantEffect, NarrativeEffect, ChoiceEffect, Effect } from "@/lib/types/effects";
 
-const API_BASE = "https://www.dnd5eapi.co/api/2014";
+const API_HOST = "https://www.dnd5eapi.co";
+const API_BASE = `${API_HOST}/api/2014`;
 
 // --- API Fetch ---
 
 export async function fetchFromApi<T>(path: string): Promise<T> {
-  const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
+  let url: string;
+  if (path.startsWith("http")) {
+    url = path;
+  } else if (path.startsWith("/api/")) {
+    // API returns urls like "/api/2014/traits/darkvision" — use host directly
+    url = `${API_HOST}${path}`;
+  } else {
+    url = `${API_BASE}${path}`;
+  }
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`API fetch failed: ${response.status} ${url}`);
