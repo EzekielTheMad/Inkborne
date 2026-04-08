@@ -40,10 +40,19 @@ export const grantEffectSchema = z.object({
   value: z.string().min(1),
 });
 
+export const choiceEffectSchema = z.object({
+  type: z.literal("choice"),
+  choose: z.number().int().min(1),
+  from: z.union([z.array(z.string().min(1)).min(1), z.string().min(1)]),
+  grant_type: z.string().min(1),
+  choice_id: z.string().min(1),
+});
+
 export const effectSchema = z.discriminatedUnion("type", [
   mechanicalEffectSchema,
   narrativeEffectSchema,
   grantEffectSchema,
+  choiceEffectSchema,
 ]);
 
 const progressionTriggerAutoSchema = z.object({
