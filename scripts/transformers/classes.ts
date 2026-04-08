@@ -74,7 +74,7 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
   // Proficiency choices (e.g., choose 2 skills)
   for (let i = 0; i < apiClass.proficiency_choices.length; i++) {
     const choice = apiClass.proficiency_choices[i];
-    const options = choice.from.options.map((o) => normalizeSlug(o.item.index));
+    const options = choice.from.options.filter((o) => o.item != null).map((o) => normalizeSlug(o.item.index));
     effects.push(buildChoiceEffect(
       choice.choose,
       options,

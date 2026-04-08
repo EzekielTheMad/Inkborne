@@ -39,7 +39,7 @@ export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
   effects.push(buildMechanicalEffect("size", "set", apiRace.size));
 
   // Starting proficiency grants
-  for (const prof of apiRace.starting_proficiencies) {
+  for (const prof of (apiRace.starting_proficiencies ?? [])) {
     effects.push(buildGrantEffect(normalizeSlug(prof.index), "proficient"));
   }
 
@@ -64,9 +64,9 @@ export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
     alignment_description: apiRace.alignment,
     size_description: apiRace.size_description,
     language_description: apiRace.language_desc,
-    traits: apiRace.traits.map((t) => t.index),
-    subraces: apiRace.subraces.map((s) => s.index),
-    languages: apiRace.languages.map((l) => l.index),
+    traits: (apiRace.traits ?? []).map((t) => t.index),
+    subraces: (apiRace.subraces ?? []).map((s) => s.index),
+    languages: (apiRace.languages ?? []).map((l) => l.index),
   }, effects);
 }
 
@@ -90,7 +90,7 @@ export function transformSubraceEntry(apiSubrace: ApiSubrace): TransformedConten
 
   effects.push(...buildAbilityBonusEffects(apiSubrace.ability_bonuses));
 
-  for (const prof of apiSubrace.starting_proficiencies) {
+  for (const prof of (apiSubrace.starting_proficiencies ?? [])) {
     effects.push(buildGrantEffect(normalizeSlug(prof.index), "proficient"));
   }
 
@@ -103,8 +103,8 @@ export function transformSubraceEntry(apiSubrace: ApiSubrace): TransformedConten
   return buildContentEntry("subrace", apiSubrace.index, apiSubrace.name, {
     parent_race: apiSubrace.race.index,
     description: apiSubrace.desc,
-    traits: apiSubrace.racial_traits.map((t) => t.index),
-    languages: apiSubrace.languages.map((l) => l.index),
+    traits: (apiSubrace.racial_traits ?? []).map((t) => t.index),
+    languages: (apiSubrace.languages ?? []).map((l) => l.index),
   }, effects);
 }
 

@@ -27,7 +27,7 @@ export async function transformBackgrounds(): Promise<TransformedContent[]> {
 
     if (bg.language_options) {
       const opts = bg.language_options;
-      const options = opts.from.options.map((o) => normalizeSlug(o.item.index));
+      const options = (opts.from?.options ?? []).map((o) => normalizeSlug(o.item.index));
       effects.push(buildChoiceEffect(opts.choose, options.length > 0 ? options : "all_languages", "language", `${bg.index}-language-choice`));
     }
 

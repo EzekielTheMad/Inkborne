@@ -36,7 +36,7 @@ interface ApiSpell {
 export function transformSpellEntry(apiSpell: ApiSpell): TransformedContent {
   const damage = apiSpell.damage
     ? {
-        type: apiSpell.damage.damage_type.index,
+        type: apiSpell.damage.damage_type?.index ?? null,
         dice_at_slot_level: apiSpell.damage.damage_at_slot_level ?? apiSpell.damage.damage_at_character_level ?? {},
       }
     : null;
