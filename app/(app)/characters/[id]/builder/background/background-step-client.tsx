@@ -183,17 +183,12 @@ export function BackgroundStepClient({
       .eq("id", characterId);
   }
 
-  function NarrativeSelector({
-    label,
-    field,
-    options,
-    max,
-  }: {
-    label: string;
-    field: "personality_traits" | "ideals" | "bonds" | "flaws";
-    options: string[];
-    max: number;
-  }) {
+  const renderNarrativeSelector = (
+    label: string,
+    field: "personality_traits" | "ideals" | "bonds" | "flaws",
+    options: string[],
+    max: number,
+  ) => {
     const current = localChoices[field] ?? [];
 
     return (
@@ -244,7 +239,7 @@ export function BackgroundStepClient({
         )}
       </div>
     );
-  }
+  };
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
@@ -310,30 +305,10 @@ export function BackgroundStepClient({
                 <CardTitle className="text-base">Personality</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <NarrativeSelector
-                  label="Personality Traits"
-                  field="personality_traits"
-                  options={personalityTraits}
-                  max={2}
-                />
-                <NarrativeSelector
-                  label="Ideals"
-                  field="ideals"
-                  options={ideals}
-                  max={1}
-                />
-                <NarrativeSelector
-                  label="Bonds"
-                  field="bonds"
-                  options={bonds}
-                  max={1}
-                />
-                <NarrativeSelector
-                  label="Flaws"
-                  field="flaws"
-                  options={flaws}
-                  max={1}
-                />
+                {renderNarrativeSelector("Personality Traits", "personality_traits", personalityTraits, 2)}
+                {renderNarrativeSelector("Ideals", "ideals", ideals, 1)}
+                {renderNarrativeSelector("Bonds", "bonds", bonds, 1)}
+                {renderNarrativeSelector("Flaws", "flaws", flaws, 1)}
               </CardContent>
             </Card>
           </div>
