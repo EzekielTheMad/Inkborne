@@ -311,6 +311,28 @@ This means the same builder components work for both D&D 5e 2014 ("Race") and 20
 
 ---
 
+## Coding Standards
+
+### Theming: Semantic Colors Only
+
+All components must use semantic CSS variable-based color classes, never raw Tailwind color classes. This ensures a full visual rebrand (e.g., modern → medieval fantasy) is a CSS-only change.
+
+**Do:**
+```
+bg-background, bg-card, bg-primary, bg-muted, bg-accent, bg-destructive
+text-foreground, text-muted-foreground, text-primary-foreground
+border-border, border-input
+```
+
+**Don't:**
+```
+bg-zinc-900, bg-slate-800, text-gray-400, border-gray-700
+```
+
+This applies to all custom components. shadcn/ui components already follow this pattern — match their approach. If you need a new semantic token (e.g., `bg-stat-card` for ability score cards), define it as a CSS variable in `globals.css` rather than hardcoding a color.
+
+---
+
 ## Decisions Log
 
 | Decision | Choice | Rationale |
