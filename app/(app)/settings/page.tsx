@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProfileSection } from "@/components/settings/profile-section";
+import { EmailSection } from "@/components/settings/email-section";
+import { PasswordSection } from "@/components/settings/password-section";
+import { ConnectedAccountsSection } from "@/components/settings/connected-accounts-section";
+import { AppearanceSection } from "@/components/settings/appearance-section";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -12,6 +16,15 @@ export default async function SettingsPage() {
     .select("display_name, avatar_url, bio, preferences")
     .eq("id", user.id)
     .single();
+
+  const hasPasswordIdentity = user.identities?.some(
+    (identity) => identity.provider === "email"
+  ) ?? false;
+
+  const identities = (user.identities ?? []).map((identity) => ({
+    id: identity.id,
+    provider: identity.provider,
+  }));
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -26,7 +39,15 @@ export default async function SettingsPage() {
         bio={profile?.bio || null}
       />
 
-      {/* Email, Password, Connected Accounts, Appearance, and Danger Zone sections added in Tasks 15-16 */}
+      <EmailSection email={user.email || ""} />
+
+      <PasswordSection hasPasswordIdentity={hasPasswordIdentity} />
+
+      <ConnectedAccountsSection identities={identities} />
+
+      <AppearanceSection />
+
+      {/* Danger Zone section added in Task 16 */}
     </div>
   );
 }
