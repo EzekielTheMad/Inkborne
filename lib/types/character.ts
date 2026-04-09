@@ -15,9 +15,19 @@ export interface CharacterChoices {
   resolved_choices?: Record<string, string[]>;
 }
 
+export interface CharacterDeathSaves {
+  successes: number; // 0-3
+  failures: number;  // 0-3
+}
+
 export interface CharacterState {
   current_hp?: number;
   temp_hp?: number;
+  conditions?: string[];
+  death_saves?: CharacterDeathSaves;
+  inspiration?: boolean;
+  quick_notes?: string;
+  notes?: string;
   spell_slots_used?: Record<string, number>;
   [key: string]: unknown;
 }
