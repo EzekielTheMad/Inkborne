@@ -63,10 +63,38 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="overview" className="flex-1 sm:flex-none">Overview</TabsTrigger>
           <TabsTrigger value="narrative" className="flex-1 sm:flex-none">Narrative</TabsTrigger>
-          <TabsTrigger value="sheet" className="flex-1 sm:flex-none">Sheet</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 mt-4">
+          {/* Open Character Sheet CTA */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {hasSheet ? "Ready to play?" : "Not built yet"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {hasSheet
+                      ? "Open the full character sheet to track HP, conditions, and more."
+                      : "Complete the builder to unlock the play-mode character sheet."}
+                  </p>
+                </div>
+                <Link
+                  href={
+                    hasSheet
+                      ? `/characters/${character.id}/sheet`
+                      : `/characters/${character.id}/builder`
+                  }
+                >
+                  <Button className="w-full sm:w-auto">
+                    {hasSheet ? "Open Character Sheet" : "Build Character Sheet"}
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Character Summary</CardTitle>
@@ -220,25 +248,7 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="sheet" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Character Sheet</CardTitle>
-              <CardDescription>
-                {hasSheet
-                  ? "View your character sheet details or edit in the builder."
-                  : "Build your character sheet to see it here."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Link href={`/characters/${character.id}/builder`}>
-                  <Button>{hasSheet ? "Edit Character" : "Build Character Sheet"}</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </div>
   );
