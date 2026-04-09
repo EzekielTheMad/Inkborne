@@ -12,6 +12,8 @@ import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
 import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
+import { SkillsList } from "@/components/sheet/skills-list";
+import { Proficiencies } from "@/components/sheet/proficiencies";
 
 interface SheetClientProps {
   character: CharacterWithSystem;
@@ -97,15 +99,12 @@ export function SheetClient({
             deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
             patchState={patchState}
           />
+          <Proficiencies grants={evalResult.grants} contentRefs={contentRefs} />
         </div>
 
-        {/* Center column placeholder */}
+        {/* Center column */}
         <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-card p-3">
-            <p className="text-xs text-muted-foreground italic">
-              Skills list — coming soon
-            </p>
-          </div>
+          <SkillsList schema={schema} evalResult={evalResult} />
         </div>
 
         {/* Right column placeholder */}
