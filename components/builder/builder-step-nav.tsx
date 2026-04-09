@@ -23,7 +23,7 @@ export function BuilderStepNav({
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap gap-1 border-b pb-3 mb-6">
+    <nav className="flex flex-wrap gap-1 border-b pb-3 mb-6 overflow-x-auto">
       <Link
         href={`/characters/${characterId}/builder`}
         className={cn(

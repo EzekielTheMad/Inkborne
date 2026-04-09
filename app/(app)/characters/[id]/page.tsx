@@ -40,9 +40,9 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{character.name}</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">{character.name}</h1>
           <p className="text-muted-foreground">
             {character.game_systems?.name}
             {primaryClass && (
@@ -55,15 +55,15 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
           </p>
         </div>
         <Link href="/characters">
-          <Button variant="outline">Back to Characters</Button>
+          <Button variant="outline" className="w-full sm:w-auto">Back to Characters</Button>
         </Link>
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="narrative">Narrative</TabsTrigger>
-          <TabsTrigger value="sheet">Sheet</TabsTrigger>
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="overview" className="flex-1 sm:flex-none">Overview</TabsTrigger>
+          <TabsTrigger value="narrative" className="flex-1 sm:flex-none">Narrative</TabsTrigger>
+          <TabsTrigger value="sheet" className="flex-1 sm:flex-none">Sheet</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 mt-4">
@@ -100,7 +100,7 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
                     </div>
                   </div>
                   <Separator className="my-4" />
-                  <div className="grid gap-4 sm:grid-cols-6">
+                  <div className="grid gap-4 grid-cols-3 sm:grid-cols-6">
                     {Object.entries(character.base_stats || {}).map(
                       ([stat, value]) => (
                         <div key={stat} className="text-center">

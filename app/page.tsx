@@ -30,7 +30,7 @@ export default async function LandingPage() {
           <span className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
             Character &amp; Campaign Management
           </span>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+          <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
             Your characters are{" "}
             <em className="not-italic text-accent">inkborne</em>
           </h1>
