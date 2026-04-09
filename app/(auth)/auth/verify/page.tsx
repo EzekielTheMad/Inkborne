@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,26 @@ import { LandingFooter } from "@/components/landing/landing-footer";
 import Link from "next/link";
 
 export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col bg-background">
+        <div className="flex flex-1 items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="items-center space-y-3">
+              <Logo />
+              <CardTitle className="text-center text-2xl">Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+        <LandingFooter />
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
+  );
+}
+
+function VerifyContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
   const [resendStatus, setResendStatus] = useState<"idle" | "loading" | "success" | "error">(
