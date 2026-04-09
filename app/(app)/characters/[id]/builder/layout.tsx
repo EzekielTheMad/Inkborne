@@ -96,13 +96,13 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{character.name}</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">{character.name}</h1>
           <p className="text-sm text-muted-foreground">Character Builder</p>
         </div>
         <Link href={`/characters/${id}`}>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
             Back to Dashboard
           </Button>
         </Link>

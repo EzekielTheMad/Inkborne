@@ -76,10 +76,15 @@ export interface CampaignMember {
   joined_at: string;
 }
 
+export interface ProfilePreferences {
+  theme?: "dark" | "light" | "system";
+}
+
 export interface Profile {
   id: string;
   display_name: string;
   avatar_url: string | null;
   bio: string | null;
+  preferences: ProfilePreferences;
   created_at: string;
 }

@@ -193,7 +193,7 @@ export function AbilitiesStepClient({
         {/* Method selector */}
         <div className="space-y-2">
           <Label>Method</Label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {(
               [
                 { value: "standard_array", label: "Standard Array" },

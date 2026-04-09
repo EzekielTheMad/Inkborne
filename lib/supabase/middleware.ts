@@ -29,12 +29,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    request.nextUrl.pathname.startsWith("/dashboard")
-  ) {
+  // Redirect unauthenticated users away from protected routes
+  const protectedPaths = ["/dashboard", "/characters", "/campaigns", "/settings"];
+  if (!user && protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect authenticated users away from public-only pages
+  const publicOnlyPaths = ["/", "/login", "/signup"];
+  if (user && publicOnlyPaths.includes(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 

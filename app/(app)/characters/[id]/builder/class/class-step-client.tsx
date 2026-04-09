@@ -198,7 +198,7 @@ export function ClassStepClient({
               return (
                 <Card key={`${cls.slug}-${index}`}>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <CardTitle className="capitalize">{cls.slug}</CardTitle>
                       <div className="flex items-center gap-2">
                         <label className="text-sm text-muted-foreground">
