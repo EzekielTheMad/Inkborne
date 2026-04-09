@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 
 type Theme = "dark" | "light" | "system";
 type ResolvedTheme = "dark" | "light";
@@ -42,38 +42,34 @@ export function ThemeProvider({
     return (localStorage.getItem(STORAGE_KEY) as Theme) || "dark";
   });
 
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
-    if (theme === "system") return getSystemTheme();
+  // Track system preference separately so resolved can be computed without setState in effect
+  const [systemPreference, setSystemPreference] = useState<ResolvedTheme>(() => getSystemTheme());
+
+  const resolvedTheme = useMemo<ResolvedTheme>(() => {
+    if (theme === "system") return systemPreference;
     return theme === "light" ? "light" : "dark";
-  });
+  }, [theme, systemPreference]);
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem(STORAGE_KEY, newTheme);
   }, []);
 
-  // Resolve theme and apply class
+  // Apply class to DOM whenever resolved theme changes
   useEffect(() => {
-    const resolved: ResolvedTheme =
-      theme === "system" ? getSystemTheme() : theme === "light" ? "light" : "dark";
-    setResolvedTheme(resolved);
-    applyTheme(resolved);
-  }, [theme]);
+    applyTheme(resolvedTheme);
+  }, [resolvedTheme]);
 
-  // Listen for OS preference changes when in system mode
+  // Listen for OS preference changes
   useEffect(() => {
-    if (theme !== "system") return;
-
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      const resolved: ResolvedTheme = e.matches ? "dark" : "light";
-      setResolvedTheme(resolved);
-      applyTheme(resolved);
+      setSystemPreference(e.matches ? "dark" : "light");
     };
 
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
-  }, [theme]);
+  }, []);
 
   return (
     <ThemeContext value={{ theme, setTheme, resolvedTheme }}>
