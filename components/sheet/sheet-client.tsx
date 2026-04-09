@@ -14,6 +14,8 @@ import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { SkillsList } from "@/components/sheet/skills-list";
 import { Proficiencies } from "@/components/sheet/proficiencies";
+import { ContentTabs } from "@/components/sheet/content-tabs";
+import { QuickNotes } from "@/components/sheet/quick-notes";
 
 interface SheetClientProps {
   character: CharacterWithSystem;
@@ -100,6 +102,7 @@ export function SheetClient({
             patchState={patchState}
           />
           <Proficiencies grants={evalResult.grants} contentRefs={contentRefs} />
+          <QuickNotes state={state} patchState={patchState} />
         </div>
 
         {/* Center column */}
@@ -107,13 +110,16 @@ export function SheetClient({
           <SkillsList schema={schema} evalResult={evalResult} />
         </div>
 
-        {/* Right column placeholder */}
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-card p-3">
-            <p className="text-xs text-muted-foreground italic">
-              Actions, spells, features — coming soon ({contentRefs.length} items)
-            </p>
-          </div>
+        {/* Right column — tabbed content */}
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <ContentTabs
+            character={character}
+            schema={schema}
+            evalResult={evalResult}
+            contentRefs={contentRefs}
+            state={state}
+            patchState={patchState}
+          />
         </div>
       </div>
 
