@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { AppNav } from "@/components/nav/app-nav";
+import { MobileNav } from "@/components/nav/mobile-nav";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -17,36 +17,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq("id", user.id)
     .single();
 
+  const displayName = profile?.display_name || "";
+  const avatarUrl = profile?.avatar_url || null;
+  const email = user.email || "";
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b">
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="border-b border-border">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold">
-              Inkborne
-            </Link>
-            <nav className="flex gap-4 text-sm">
-              <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
-                Dashboard
-              </Link>
-              <Link href="/characters" className="text-muted-foreground hover:text-foreground">
-                Characters
-              </Link>
-              <Link href="/campaigns" className="text-muted-foreground hover:text-foreground">
-                Campaigns
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {profile?.display_name || user.email}
-            </span>
-            <form action="/auth/signout" method="post">
-              <Button variant="ghost" size="sm" type="submit">
-                Sign out
-              </Button>
-            </form>
-          </div>
+          <AppNav displayName={displayName} avatarUrl={avatarUrl} email={email} />
+          <MobileNav displayName={displayName} avatarUrl={avatarUrl} email={email} />
         </div>
       </header>
       <main className="flex-1 container mx-auto px-4 py-6">
