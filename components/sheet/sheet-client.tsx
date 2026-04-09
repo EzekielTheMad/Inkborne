@@ -16,6 +16,7 @@ import { SkillsList } from "@/components/sheet/skills-list";
 import { Proficiencies } from "@/components/sheet/proficiencies";
 import { ContentTabs } from "@/components/sheet/content-tabs";
 import { QuickNotes } from "@/components/sheet/quick-notes";
+import { MobileSheet } from "@/components/sheet/mobile-sheet";
 
 interface SheetClientProps {
   character: CharacterWithSystem;
@@ -123,13 +124,17 @@ export function SheetClient({
         </div>
       </div>
 
-      {/* Mobile swipeable tabs placeholder */}
-      <div className="md:hidden flex-1 p-4">
-        <div className="rounded-lg border border-border bg-card p-3">
-          <p className="text-xs text-muted-foreground italic">
-            Mobile tabs — coming soon
-          </p>
-        </div>
+      {/* Mobile swipeable tabs */}
+      <div className="md:hidden flex-1 flex flex-col">
+        <MobileSheet
+          character={character}
+          schema={schema}
+          evalResult={evalResult}
+          contentRefs={contentRefs}
+          state={state}
+          patchState={patchState}
+          maxHp={maxHp}
+        />
       </div>
     </div>
   );

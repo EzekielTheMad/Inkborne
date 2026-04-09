@@ -28,6 +28,7 @@ interface ContentTabsProps {
   contentRefs: ContentRefWithContent[];
   state: CharacterState;
   patchState: (patch: Partial<CharacterState>) => void;
+  initialTab?: TabId;
 }
 
 export function ContentTabs({
@@ -37,8 +38,9 @@ export function ContentTabs({
   contentRefs,
   state,
   patchState,
+  initialTab = "actions",
 }: ContentTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("actions");
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
   return (
     <div className="flex flex-col h-full">
