@@ -8,6 +8,10 @@ import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import { CharacterHeader } from "@/components/sheet/character-header";
 import { StatRibbon } from "@/components/sheet/stat-ribbon";
+import { SavingThrows } from "@/components/sheet/saving-throws";
+import { PassiveSenses } from "@/components/sheet/passive-senses";
+import { Conditions } from "@/components/sheet/conditions";
+import { DeathSaves } from "@/components/sheet/death-saves";
 
 interface SheetClientProps {
   character: CharacterWithSystem;
@@ -80,13 +84,19 @@ export function SheetClient({
 
       {/* Desktop three-column layout */}
       <div className="hidden md:grid grid-cols-[280px_1fr_1fr] gap-4 flex-1 p-4">
-        {/* Left column placeholder */}
+        {/* Left column */}
         <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-card p-3">
-            <p className="text-xs text-muted-foreground italic">
-              Saving throws, senses, conditions — coming soon
-            </p>
-          </div>
+          <SavingThrows schema={schema} evalResult={evalResult} />
+          <PassiveSenses schema={schema} evalResult={evalResult} />
+          <Conditions
+            conditions={state.conditions ?? []}
+            patchState={patchState}
+          />
+          <DeathSaves
+            currentHp={state.current_hp ?? 0}
+            deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
+            patchState={patchState}
+          />
         </div>
 
         {/* Center column placeholder */}
