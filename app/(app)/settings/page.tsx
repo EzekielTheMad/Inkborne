@@ -5,6 +5,7 @@ import { EmailSection } from "@/components/settings/email-section";
 import { PasswordSection } from "@/components/settings/password-section";
 import { ConnectedAccountsSection } from "@/components/settings/connected-accounts-section";
 import { AppearanceSection } from "@/components/settings/appearance-section";
+import { DangerZoneSection } from "@/components/settings/danger-zone-section";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -47,7 +48,7 @@ export default async function SettingsPage() {
 
       <AppearanceSection />
 
-      {/* Danger Zone section added in Task 16 */}
+      <DangerZoneSection />
     </div>
   );
 }
