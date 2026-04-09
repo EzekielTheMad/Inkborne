@@ -1,5 +1,27 @@
 export type CharacterVisibility = "private" | "campaign" | "public";
 
+export interface CharacterChoices {
+  classes?: Array<{ slug: string; level: number; subclass?: string }>;
+  race?: string;
+  subrace?: string;
+  background?: string;
+  ability_method?: "standard_array" | "point_buy" | "manual";
+  ability_assignments?: Record<string, number>;
+  starting_equipment?: string;
+  personality_traits?: string[];
+  ideals?: string[];
+  bonds?: string[];
+  flaws?: string[];
+  resolved_choices?: Record<string, string[]>;
+}
+
+export interface CharacterState {
+  current_hp?: number;
+  temp_hp?: number;
+  spell_slots_used?: Record<string, number>;
+  [key: string]: unknown;
+}
+
 export interface Character {
   id: string;
   user_id: string;
@@ -8,7 +30,30 @@ export interface Character {
   name: string;
   visibility: CharacterVisibility;
   archived: boolean;
+  level: number;
+  base_stats: Record<string, number>;
+  choices: CharacterChoices;
+  state: CharacterState;
   created_at: string;
+}
+
+export interface CharacterContentRef {
+  id: string;
+  character_id: string;
+  content_id: string;
+  content_version: number;
+  context: Record<string, unknown>;
+  choice_source: string | null;
+  created_at: string;
+}
+
+export interface CharacterWithSystem extends Character {
+  game_systems: {
+    id: string;
+    name: string;
+    slug: string;
+    schema_definition: import("./system").SystemSchemaDefinition;
+  };
 }
 
 export type CampaignMemberRole = "dm" | "player";
