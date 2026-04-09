@@ -13,11 +13,6 @@ export function QuickNotes({ state, patchState }: QuickNotesProps) {
   const [value, setValue] = useState(state.quick_notes ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync from parent if state.quick_notes changes externally
-  useEffect(() => {
-    setValue(state.quick_notes ?? "");
-  }, [state.quick_notes]);
-
   const debouncedSave = useCallback(
     (text: string) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

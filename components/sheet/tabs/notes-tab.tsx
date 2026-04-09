@@ -12,11 +12,6 @@ export function NotesTab({ state, patchState }: NotesTabProps) {
   const [value, setValue] = useState(state.notes ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync from parent if state.notes changes externally
-  useEffect(() => {
-    setValue(state.notes ?? "");
-  }, [state.notes]);
-
   const debouncedSave = useCallback(
     (text: string) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
