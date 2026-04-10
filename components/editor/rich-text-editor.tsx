@@ -153,6 +153,7 @@ export function RichTextEditor({
         suggestion: createMentionSuggestion(campaignId),
       }),
     ],
+    immediatelyRender: false,
     content: content ?? undefined,
     editable,
     onUpdate: ({ editor: e }) => {

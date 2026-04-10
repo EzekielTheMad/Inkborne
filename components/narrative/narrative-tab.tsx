@@ -317,9 +317,9 @@ export function NarrativeTab({
             </>
           )}
           {isOwner && !editMode && (
-            <Button variant="ghost" size="sm" onClick={enterEdit}>
-              <Pencil className="mr-1 size-3.5" />
-              Edit
+            <Button onClick={enterEdit}>
+              <Pencil className="mr-1 size-4" />
+              Edit Character
             </Button>
           )}
         </div>
