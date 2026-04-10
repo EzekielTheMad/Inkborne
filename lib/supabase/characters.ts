@@ -75,7 +75,7 @@ export async function createCharacter(params: {
 export async function updateCharacter(
   id: string,
   updates: Partial<
-    Pick<Character, "name" | "level" | "base_stats" | "choices" | "state" | "visibility" | "archived" | "campaign_id">
+    Pick<Character, "name" | "level" | "base_stats" | "choices" | "state" | "visibility" | "archived" | "campaign_id" | "narrative" | "narrative_rich">
   >,
 ): Promise<Character> {
   const supabase = await createClient();

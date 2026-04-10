@@ -1,3 +1,5 @@
+import type { NarrativeData, NarrativeRichData } from "./narrative";
+
 export type CharacterVisibility = "private" | "campaign" | "public";
 
 export interface CharacterChoices {
@@ -44,6 +46,8 @@ export interface Character {
   base_stats: Record<string, number>;
   choices: CharacterChoices;
   state: CharacterState;
+  narrative: NarrativeData;
+  narrative_rich: NarrativeRichData;
   created_at: string;
 }
 
