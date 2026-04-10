@@ -340,28 +340,36 @@ export function NarrativeTab({
         </div>
       </div>
 
-      {/* Portrait */}
-      <div className="flex justify-center">
-        <CharacterPortrait
-          characterId={character.id}
-          characterName={character.name}
-          portraitUrl={portraitUrl}
-          tokenUrl={tokenUrl}
-          editable={editMode}
-          onPortraitChange={handlePortraitChange}
-          onTokenChange={handleTokenChange}
-          uploadAction={handleUpload}
-          deleteAction={handleDelete}
-        />
+      {/* Portrait + Core Identity — side by side */}
+      <div className="flex flex-col sm:flex-row gap-6 items-start">
+        <div className="flex-shrink-0">
+          <CharacterPortrait
+            characterId={character.id}
+            characterName={character.name}
+            portraitUrl={portraitUrl}
+            tokenUrl={tokenUrl}
+            editable={editMode}
+            onPortraitChange={handlePortraitChange}
+            onTokenChange={handleTokenChange}
+            uploadAction={handleUpload}
+            deleteAction={handleDelete}
+          />
+        </div>
+        <div className="flex-1 w-full">
+          {editMode ? (
+            <CoreIdentityForm
+              narrative={localNarrative}
+              onChange={handleNarrativeChange}
+            />
+          ) : (
+            <CoreIdentityCard narrative={narrative} />
+          )}
+        </div>
       </div>
 
       {/* Edit mode */}
       {editMode && (
         <div className="space-y-4">
-          <CoreIdentityForm
-            narrative={localNarrative}
-            onChange={handleNarrativeChange}
-          />
           <PersonalityForm
             choices={localChoices}
             narrative={localNarrative}
@@ -393,7 +401,6 @@ export function NarrativeTab({
         <>
           {hasAnyViewContent ? (
             <div className="space-y-4">
-              <CoreIdentityCard narrative={narrative} />
               <PersonalityCard choices={choices} narrative={narrative} />
               <DistinguishingFeaturesCard
                 content={rich.distinguishing_features}
