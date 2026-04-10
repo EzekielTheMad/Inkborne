@@ -399,6 +399,7 @@ export function NarrativeTab({
                 <BackstoryCard
                   title="What the DM Should Know"
                   content={rich.backstory_dm_notes}
+                  dmOnly
                 />
               )}
               <FunTraitsCard funTraits={narrative.fun_traits} />
