@@ -102,12 +102,7 @@ create policy "Owner can update campaigns"
 create policy "Members can view campaign membership"
   on public.campaign_members for select
   to authenticated
-  using (
-    campaign_id in (
-      select campaign_id from public.campaign_members
-      where user_id = auth.uid()
-    )
-  );
+  using (user_id = auth.uid());
 
 create policy "Campaign owner can manage members"
   on public.campaign_members for insert
