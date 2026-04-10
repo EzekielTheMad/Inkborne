@@ -5,6 +5,7 @@ import { ArrowLeftIcon, PencilIcon, StarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { CharacterWithSystem } from "@/lib/types/character";
+import { PortraitAvatar } from "@/components/narrative/portrait-avatar";
 
 interface CharacterHeaderProps {
   character: CharacterWithSystem;
@@ -82,12 +83,12 @@ export function CharacterHeader({
 
   return (
     <header className="flex items-center gap-4 px-6 py-4 border-b border-border bg-card">
-      {/* Avatar placeholder */}
-      <div className="size-12 shrink-0 rounded-full border border-border bg-muted flex items-center justify-center">
-        <span className="text-lg font-bold text-muted-foreground select-none">
-          {character.name.charAt(0).toUpperCase()}
-        </span>
-      </div>
+      {/* Portrait avatar */}
+      <PortraitAvatar
+        portraitUrl={character.narrative?.portrait_url}
+        characterName={character.name}
+        size="sm"
+      />
 
       {/* Identity */}
       <div className="flex-1 min-w-0">
