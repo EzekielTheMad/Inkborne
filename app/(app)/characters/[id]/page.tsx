@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { NarrativeTab } from "@/components/narrative/narrative-tab";
+import { PortraitAvatar } from "@/components/narrative/portrait-avatar";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -38,6 +39,21 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
 
   if (!character) notFound();
 
+  const isOwner = character.user_id === user.id;
+
+  // Determine if current user is DM of the campaign this character belongs to
+  let isDm = false;
+  if (character.campaign_id) {
+    const { data: campaign } = await supabase
+      .from("campaigns")
+      .select("owner_id")
+      .eq("id", character.campaign_id)
+      .single();
+    if (campaign) {
+      isDm = campaign.owner_id === user.id;
+    }
+  }
+
   const hasSheet =
     character.choices?.classes && character.choices.classes.length > 0;
 
@@ -46,7 +62,13 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          <PortraitAvatar
+            portraitUrl={character.narrative?.portrait_url}
+            characterName={character.name}
+            size="lg"
+          />
+          <div>
           <h1 className="text-2xl font-bold sm:text-3xl">{character.name}</h1>
           <p className="text-muted-foreground">
             {character.game_systems?.name}
@@ -58,6 +80,7 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
               </span>
             )}
           </p>
+          </div>
         </div>
         <Link href="/characters">
           <Button variant="outline" className="w-full sm:w-auto">Back to Characters</Button>
@@ -167,90 +190,13 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="narrative" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Backstory</CardTitle>
-              <CardDescription>
-                A polished narrative editing experience is coming in a future
-                update.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {character.choices?.personality_traits &&
-                  character.choices.personality_traits.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-1">
-                        Personality Traits
-                      </p>
-                      {character.choices.personality_traits.map(
-                        (trait: string, i: number) => (
-                          <p key={i} className="text-sm">
-                            {trait}
-                          </p>
-                        ),
-                      )}
-                    </div>
-                  )}
-                {character.choices?.ideals &&
-                  character.choices.ideals.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-1">
-                        Ideals
-                      </p>
-                      {character.choices.ideals.map(
-                        (ideal: string, i: number) => (
-                          <p key={i} className="text-sm">
-                            {ideal}
-                          </p>
-                        ),
-                      )}
-                    </div>
-                  )}
-                {character.choices?.bonds &&
-                  character.choices.bonds.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-1">
-                        Bonds
-                      </p>
-                      {character.choices.bonds.map(
-                        (bond: string, i: number) => (
-                          <p key={i} className="text-sm">
-                            {bond}
-                          </p>
-                        ),
-                      )}
-                    </div>
-                  )}
-                {character.choices?.flaws &&
-                  character.choices.flaws.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-1">
-                        Flaws
-                      </p>
-                      {character.choices.flaws.map(
-                        (flaw: string, i: number) => (
-                          <p key={i} className="text-sm">
-                            {flaw}
-                          </p>
-                        ),
-                      )}
-                    </div>
-                  )}
-                {!character.choices?.personality_traits?.length &&
-                  !character.choices?.ideals?.length &&
-                  !character.choices?.bonds?.length &&
-                  !character.choices?.flaws?.length && (
-                    <p className="text-sm text-muted-foreground italic">
-                      No narrative details yet. Choose a background in the
-                      builder to set personality traits, ideals, bonds, and
-                      flaws.
-                    </p>
-                  )}
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="narrative" className="mt-4">
+          <NarrativeTab
+            character={character}
+            campaignId={character.campaign_id}
+            isOwner={isOwner}
+            isDm={isDm}
+          />
         </TabsContent>
 
 
