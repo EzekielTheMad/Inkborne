@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { JSONContent } from "@tiptap/react";
 import type { CharacterWithSystem, CharacterChoices } from "@/lib/types/character";
 import type { NarrativeData, NarrativeRichData } from "@/lib/types/narrative";
@@ -56,8 +57,15 @@ export function NarrativeTab({
   isOwner,
   isDm,
 }: NarrativeTabProps) {
+  const router = useRouter();
+
   // ---- Edit mode toggle ----
   const [editMode, setEditMode] = useState(false);
+
+  // ---- Saved state (updated after successful save so view mode shows latest) ----
+  const [savedNarrative, setSavedNarrative] = useState<NarrativeData>(character.narrative ?? {});
+  const [savedRich, setSavedRich] = useState<NarrativeRichData>(character.narrative_rich ?? {});
+  const [savedChoices, setSavedChoices] = useState<CharacterChoices>(character.choices ?? {});
 
   // ---- Local editable state (only used in edit mode) ----
   const [localNarrative, setLocalNarrative] = useState<NarrativeData>(
@@ -241,36 +249,43 @@ export function NarrativeTab({
     dirtyRich.current = true;
     dirtyChoices.current = true;
     await flushSave();
-  }, [flushSave]);
+    // Persist to saved state so view mode shows latest
+    setSavedNarrative({ ...localNarrative });
+    setSavedRich({ ...localRich });
+    setSavedChoices({ ...localChoices });
+    // Exit edit mode and refresh server data
+    setEditMode(false);
+    router.refresh();
+  }, [flushSave, localNarrative, localRich, localChoices, router]);
 
   // ---- Cancel ----
   const handleCancel = useCallback(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    setLocalNarrative(character.narrative ?? {});
-    setLocalRich(character.narrative_rich ?? {});
-    setLocalChoices(character.choices ?? {});
-    setPortraitUrl(character.narrative?.portrait_url ?? null);
-    setTokenUrl(character.narrative?.token_url ?? null);
+    setLocalNarrative(savedNarrative);
+    setLocalRich(savedRich);
+    setLocalChoices(savedChoices);
+    setPortraitUrl(savedNarrative.portrait_url ?? null);
+    setTokenUrl(savedNarrative.token_url ?? null);
     dirtyNarrative.current = false;
     dirtyRich.current = false;
     dirtyChoices.current = false;
     setSaveStatus("idle");
     setEditMode(false);
-  }, [character]);
+  }, [savedNarrative, savedRich, savedChoices]);
 
   // ---- Enter edit mode ----
   const enterEdit = useCallback(() => {
-    setLocalNarrative(character.narrative ?? {});
-    setLocalRich(character.narrative_rich ?? {});
-    setLocalChoices(character.choices ?? {});
+    setLocalNarrative(savedNarrative);
+    setLocalRich(savedRich);
+    setLocalChoices(savedChoices);
     setSaveStatus("idle");
     setEditMode(true);
-  }, [character]);
+  }, [savedNarrative, savedRich, savedChoices]);
 
   // ---- Determine if view has any content ----
-  const narrative = editMode ? localNarrative : (character.narrative ?? {});
-  const rich = editMode ? localRich : (character.narrative_rich ?? {});
-  const choices = editMode ? localChoices : (character.choices ?? {});
+  const narrative = editMode ? localNarrative : savedNarrative;
+  const rich = editMode ? localRich : savedRich;
+  const choices = editMode ? localChoices : savedChoices;
 
   const hasAnyViewContent =
     narrative.full_name ||
