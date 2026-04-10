@@ -2,7 +2,6 @@
 
 import {
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useState,
   useCallback,
@@ -21,11 +20,14 @@ interface MentionListProps {
 
 export const MentionList = forwardRef<MentionListRef, MentionListProps>(
   ({ items, command }, ref) => {
+    // Derive a key from items to reset selection — useMemo avoids setState-in-effect
+    const itemsKey = items.map((i) => i.id).join(",");
     const [selectedIndex, setSelectedIndex] = useState(0);
-
-    useEffect(() => {
+    const [lastItemsKey, setLastItemsKey] = useState(itemsKey);
+    if (itemsKey !== lastItemsKey) {
+      setLastItemsKey(itemsKey);
       setSelectedIndex(0);
-    }, [items]);
+    }
 
     const selectItem = useCallback(
       (index: number) => {
