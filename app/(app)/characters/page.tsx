@@ -12,12 +12,17 @@ export default async function CharactersPage() {
 
   if (!user) redirect("/login");
 
-  const { data: characters } = await supabase
+  console.log("[CharactersPage] Fetching characters for user:", user.id);
+  const { data: characters, error: charactersError } = await supabase
     .from("characters")
     .select("*, game_systems (name), campaigns (name)")
     .eq("user_id", user.id)
     .eq("archived", false)
     .order("created_at", { ascending: false });
+
+  if (charactersError) {
+    console.error("[CharactersPage] Error fetching characters:", charactersError.message, charactersError.details, charactersError.hint);
+  }
 
   return (
     <div className="space-y-6">

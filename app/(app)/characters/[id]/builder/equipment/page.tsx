@@ -15,11 +15,16 @@ export default async function EquipmentStepPage({ params }: PageProps) {
 
   if (!user) redirect("/login");
 
-  const { data: character } = await supabase
+  console.log("[EquipmentStepPage] Fetching character:", id);
+  const { data: character, error: characterError } = await supabase
     .from("characters")
     .select("*, game_systems (id, name, slug, schema_definition)")
     .eq("id", id)
     .single();
+
+  if (characterError) {
+    console.error("[EquipmentStepPage] Error fetching character:", characterError.message, characterError.details, characterError.hint);
+  }
 
   if (!character || character.user_id !== user.id) notFound();
 
@@ -27,13 +32,17 @@ export default async function EquipmentStepPage({ params }: PageProps) {
   const classSlug = character.choices?.classes?.[0]?.slug;
   let classContent = null;
   if (classSlug) {
-    const { data } = await supabase
+    console.log("[EquipmentStepPage] Fetching class content for slug:", classSlug);
+    const { data, error: classError } = await supabase
       .from("content_definitions")
       .select("id, name, slug, data")
       .eq("system_id", character.system_id)
       .eq("content_type", "class")
       .eq("slug", classSlug)
       .single();
+    if (classError) {
+      console.error("[EquipmentStepPage] Error fetching class content:", classError.message, classError.details, classError.hint);
+    }
     classContent = data;
   }
 

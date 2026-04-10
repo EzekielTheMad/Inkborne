@@ -77,11 +77,16 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
 
   if (!user) redirect("/login");
 
-  const { data: character } = await supabase
+  console.log("[BuilderLayout] Fetching character:", id);
+  const { data: character, error: characterError } = await supabase
     .from("characters")
     .select("*, game_systems (id, name, slug, schema_definition)")
     .eq("id", id)
     .single();
+
+  if (characterError) {
+    console.error("[BuilderLayout] Error fetching character:", characterError.message, characterError.details, characterError.hint);
+  }
 
   if (!character) notFound();
   if (character.user_id !== user.id) notFound();

@@ -12,12 +12,14 @@ export async function updateProfile(formData: FormData) {
   const displayName = formData.get("displayName") as string;
   const bio = formData.get("bio") as string;
 
+  console.log("[updateProfile] Updating profile for user:", user.id);
   const { error } = await supabase
     .from("profiles")
     .update({ display_name: displayName, bio: bio || null })
     .eq("id", user.id);
 
   if (error) {
+    console.error("[updateProfile] Error:", error.message, error.details, error.hint);
     return { error: error.message };
   }
 
@@ -47,11 +49,13 @@ export async function uploadAvatar(formData: FormData) {
   const fileExt = file.name.split(".").pop();
   const filePath = `${user.id}/avatar.${fileExt}`;
 
+  console.log("[uploadAvatar] Uploading avatar for user:", user.id, "path:", filePath);
   const { error: uploadError } = await supabase.storage
     .from("avatars")
     .upload(filePath, file, { upsert: true });
 
   if (uploadError) {
+    console.error("[uploadAvatar] Upload error:", uploadError.message);
     return { error: uploadError.message };
   }
 
@@ -68,6 +72,7 @@ export async function uploadAvatar(formData: FormData) {
     .eq("id", user.id);
 
   if (updateError) {
+    console.error("[uploadAvatar] Error updating avatar URL in profile:", updateError.message, updateError.details, updateError.hint);
     return { error: updateError.message };
   }
 
@@ -85,21 +90,28 @@ export async function updatePreferences(formData: FormData) {
   }
 
   // Fetch current preferences, merge with new theme
-  const { data: profile } = await supabase
+  console.log("[updatePreferences] Fetching preferences for user:", user.id);
+  const { data: profile, error: fetchError } = await supabase
     .from("profiles")
     .select("preferences")
     .eq("id", user.id)
     .single();
 
+  if (fetchError) {
+    console.error("[updatePreferences] Error fetching preferences:", fetchError.message, fetchError.details, fetchError.hint);
+  }
+
   const currentPrefs = (profile?.preferences as Record<string, unknown>) || {};
   const newPrefs = { ...currentPrefs, theme };
 
+  console.log("[updatePreferences] Updating preferences for user:", user.id);
   const { error } = await supabase
     .from("profiles")
     .update({ preferences: newPrefs })
     .eq("id", user.id);
 
   if (error) {
+    console.error("[updatePreferences] Error updating preferences:", error.message, error.details, error.hint);
     return { error: error.message };
   }
 
@@ -117,8 +129,10 @@ export async function deleteAccount() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  console.log("[deleteAccount] Deleting user:", user.id);
   const { error } = await adminClient.auth.admin.deleteUser(user.id);
   if (error) {
+    console.error("[deleteAccount] Error deleting user:", error.message);
     return { error: error.message };
   }
 

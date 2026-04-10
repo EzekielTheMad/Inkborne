@@ -25,11 +25,16 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
 
   if (!user) redirect("/login");
 
-  const { data: character } = await supabase
+  console.log("[CharacterDashboardPage] Fetching character:", id);
+  const { data: character, error: characterError } = await supabase
     .from("characters")
     .select("*, game_systems (id, name, slug, schema_definition)")
     .eq("id", id)
     .single();
+
+  if (characterError) {
+    console.error("[CharacterDashboardPage] Error fetching character:", characterError.message, characterError.details, characterError.hint);
+  }
 
   if (!character) notFound();
 

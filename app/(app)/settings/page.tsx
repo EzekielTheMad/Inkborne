@@ -12,11 +12,16 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
+  console.log("[SettingsPage] Fetching profile for user:", user.id);
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("display_name, avatar_url, bio, preferences")
     .eq("id", user.id)
     .single();
+
+  if (profileError) {
+    console.error("[SettingsPage] Error fetching profile:", profileError.message, profileError.details, profileError.hint);
+  }
 
   const hasPasswordIdentity = user.identities?.some(
     (identity) => identity.provider === "email"

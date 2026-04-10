@@ -19,13 +19,21 @@ export default async function CharacterSheetPage({ params }: PageProps) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const character = await getCharacterWithSystem(id);
+  console.log("[CharacterSheetPage] Fetching character:", id);
+  const character = await getCharacterWithSystem(id).catch((err) => {
+    console.error("[CharacterSheetPage] Error fetching character:", err?.message, err?.details, err?.hint);
+    return null;
+  });
   if (!character) notFound();
 
   // Only the character owner may view the sheet
   if (character.user_id !== user.id) notFound();
 
-  const contentRefs = await getContentRefsByCharacter(id);
+  console.log("[CharacterSheetPage] Fetching content refs for character:", id);
+  const contentRefs = await getContentRefsByCharacter(id).catch((err) => {
+    console.error("[CharacterSheetPage] Error fetching content refs:", err?.message, err?.details, err?.hint);
+    return [];
+  });
 
   // Collect all effects from content refs
   const allEffects: Effect[] = contentRefs.flatMap(

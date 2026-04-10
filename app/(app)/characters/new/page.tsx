@@ -11,7 +11,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default async function NewCharacterPage() {
+interface PageProps {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function NewCharacterPage({ searchParams }: PageProps) {
+  const { error: pageError } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -39,8 +44,15 @@ export default async function NewCharacterPage() {
     const systemId = formData.get("system_id") as string;
 
     if (!name?.trim() || !systemId) {
+      console.error("[createCharacter] Missing fields:", { name, systemId });
       redirect("/characters/new?error=missing_fields");
     }
+
+    console.log("[createCharacter] Inserting character:", {
+      name: name.trim(),
+      user_id: user.id,
+      system_id: systemId,
+    });
 
     const { data, error } = await supabase
       .from("characters")
@@ -55,7 +67,8 @@ export default async function NewCharacterPage() {
       .single();
 
     if (error) {
-      redirect("/characters/new?error=create_failed");
+      console.error("[createCharacter] Insert failed:", error.message, error.details, error.hint);
+      redirect(`/characters/new?error=${encodeURIComponent(error.message)}`);
     }
 
     redirect(`/characters/${data.id}`);
@@ -71,6 +84,11 @@ export default async function NewCharacterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {pageError && (
+            <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-3 mb-4">
+              Error: {decodeURIComponent(pageError)}
+            </p>
+          )}
           <form action={createCharacter} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Character Name</Label>
