@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import type { ContentEntry } from "./content-browser";
 import type { Effect, GrantEffect, MechanicalEffect } from "@/lib/types/effects";
 
@@ -31,45 +30,15 @@ function formatSlug(slug: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function formatGrant(effect: GrantEffect): string {
-  const stat = effect.stat;
-  if (stat.startsWith("save_")) {
-    return `${formatSlug(stat)} Saving Throws`;
-  }
-  if (effect.value === "proficient") {
-    return `${formatSlug(stat)} Proficiency`;
-  }
-  if (effect.value === "expertise") {
-    return `${formatSlug(stat)} Expertise`;
-  }
-  return `${formatSlug(stat)}: ${effect.value}`;
-}
-
 function formatChoice(effect: Effect): string {
   if (effect.type !== "choice") return "";
   const type = effect.grant_type
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
-  // Simple pluralization — handle "y" → "ies"
   const plural = effect.choose > 1
     ? type.endsWith("y") ? type.slice(0, -1) + "ies" : type + "s"
     : type;
   return `Choose ${effect.choose} ${plural}`;
-}
-
-function formatEffect(effect: Effect): string {
-  switch (effect.type) {
-    case "mechanical":
-      return `${formatSlug(effect.stat)}: ${effect.op} ${effect.value ?? effect.expr ?? ""}`;
-    case "grant":
-      return formatGrant(effect);
-    case "narrative":
-      return effect.text;
-    case "choice":
-      return formatChoice(effect);
-    default:
-      return "";
-  }
 }
 
 export function ContentPreview({
@@ -89,6 +58,12 @@ export function ContentPreview({
   );
   const choices = content.effects.filter((e) => e.type === "choice");
 
+  // Build merged proficiencies list
+  const profCategories = buildProficiencyCategories(content, grants, choices);
+
+  // Get all level features for classes
+  const levelFeatures = getClassLevelFeatures(content, features);
+
   return (
     <Dialog open={!!content} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
@@ -101,109 +76,46 @@ export function ContentPreview({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Description */}
           {typeof content.data.description === "string" && (
             <p className="text-sm text-foreground">
               {content.data.description}
             </p>
           )}
 
-          {/* Key stats from data */}
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          {/* Key stats line */}
+          <div className="text-sm space-y-0.5">
             {content.data.hit_die != null && (
               <div>
-                <span className="text-muted-foreground">Hit Die: </span>
-                <span className="font-medium">d{String(content.data.hit_die)}</span>
+                <span className="font-medium">Hit Die: </span>
+                <span>d{String(content.data.hit_die)}</span>
               </div>
             )}
             {content.data.speed != null && (
               <div>
-                <span className="text-muted-foreground">Speed: </span>
-                <span className="font-medium">{String(content.data.speed)} ft</span>
+                <span className="font-medium">Speed: </span>
+                <span>{String(content.data.speed)} ft.</span>
               </div>
             )}
             {content.data.size != null && (
               <div>
-                <span className="text-muted-foreground">Size: </span>
-                <span className="font-medium capitalize">
-                  {String(content.data.size)}
-                </span>
-              </div>
-            )}
-            {content.data.primary_ability != null && (
-              <div>
-                <span className="text-muted-foreground">Primary: </span>
-                <span className="font-medium capitalize">
-                  {String(content.data.primary_ability)}
-                </span>
+                <span className="font-medium">Size: </span>
+                <span className="capitalize">{String(content.data.size)}</span>
               </div>
             )}
           </div>
 
-          {/* Class-specific: saving throws, proficiencies, level 1 features */}
-          {Array.isArray(content.data.saving_throws) && (content.data.saving_throws as string[]).length > 0 && (
-            <div className="text-sm">
-              <span className="text-muted-foreground">Saves: </span>
-              <span className="font-medium capitalize">
-                {(content.data.saving_throws as string[]).join(" & ")}
-              </span>
-            </div>
-          )}
-          {Array.isArray(content.data.starting_proficiencies) && (content.data.starting_proficiencies as string[]).length > 0 && (
+          {/* Proficiencies — merged categorized list */}
+          {profCategories.length > 0 && (
             <>
               <Separator />
               <div>
-                <p className="text-sm font-medium mb-1">Proficiencies</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(content.data.starting_proficiencies as string[]).map((prof, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs capitalize">
-                      {prof.replace(/-/g, " ")}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-          {Array.isArray(content.data.levels) && (() => {
-            const level1Features = (content.data.levels as Array<{ level: number; features: string[] }>)
-              .find((l) => l.level === 1)?.features ?? [];
-            if (level1Features.length === 0) return null;
-            return (
-              <>
-                <Separator />
-                <div>
-                  <p className="text-sm font-medium mb-2">Level 1 Features</p>
-                  <div className="space-y-2">
-                    {level1Features.map((featureSlug, i) => {
-                      const featureEntry = features?.find((f) => f.slug === featureSlug);
-                      const description = featureEntry?.data?.description;
-                      return (
-                        <div key={i} className="rounded-md border border-border bg-muted/50 px-3 py-2">
-                          <p className="text-sm font-medium capitalize text-accent">
-                            {featureEntry?.name ?? featureSlug.replace(/-/g, " ")}
-                          </p>
-                          {typeof description === "string" && description.length > 0 && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
-                              {description}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            );
-          })()}
-          {/* Race-specific: traits */}
-          {Array.isArray(content.data.traits) && (content.data.traits as string[]).length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-2">Traits</p>
-                <div className="space-y-1.5">
-                  {(content.data.traits as string[]).map((trait, i) => (
-                    <div key={i} className="text-sm rounded-md bg-muted px-3 py-2 capitalize">
-                      {trait.replace(/-/g, " ")}
+                <p className="text-sm font-medium mb-2">Proficiencies</p>
+                <div className="text-sm space-y-1">
+                  {profCategories.map(({ label, items }) => (
+                    <div key={label}>
+                      <span className="font-medium">{label}: </span>
+                      <span className="text-muted-foreground">{items.join(", ")}</span>
                     </div>
                   ))}
                 </div>
@@ -211,51 +123,79 @@ export function ContentPreview({
             </>
           )}
 
-          {/* Grants */}
-          {grants.length > 0 && (
+          {/* Level features — all levels for classes */}
+          {levelFeatures.length > 0 && (
             <>
               <Separator />
               <div>
-                <p className="text-sm font-medium mb-2">Proficiencies & Grants</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {grants.map((g, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs">
-                      {formatGrant(g)}
-                    </Badge>
+                <p className="text-sm font-medium mb-2">Class Features</p>
+                <div className="space-y-3">
+                  {levelFeatures.map(({ level, featureList }) => (
+                    <div key={level}>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                        {level === 1 ? "1st Level" : level === 2 ? "2nd Level" : level === 3 ? "3rd Level" : `${level}th Level`}
+                      </p>
+                      <div className="space-y-2">
+                        {featureList.map((feat, i) => (
+                          <div key={i} className="rounded-md border border-border bg-muted/50 px-3 py-2">
+                            <p className="text-sm font-medium text-accent">
+                              {feat.name}
+                            </p>
+                            {feat.description && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {feat.description}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
             </>
           )}
 
-          {/* Mechanical effects */}
+          {/* Race-specific: traits */}
+          {Array.isArray(content.data.traits) && (content.data.traits as string[]).length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2">Traits</p>
+                <div className="space-y-2">
+                  {(content.data.traits as string[]).map((traitSlug, i) => {
+                    const traitEntry = features?.find((f) => f.slug === traitSlug);
+                    const description = traitEntry?.data?.description;
+                    return (
+                      <div key={i} className="rounded-md border border-border bg-muted/50 px-3 py-2">
+                        <p className="text-sm font-medium text-accent">
+                          {traitEntry?.name ?? formatSlug(traitSlug)}
+                        </p>
+                        {typeof description === "string" && description.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {description}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Stat Bonuses */}
           {mechanicals.length > 0 && (
             <>
               <Separator />
               <div>
-                <p className="text-sm font-medium mb-2">Stat Bonuses</p>
-                <div className="flex flex-wrap gap-1.5">
+                <p className="text-sm font-medium mb-1">Stat Bonuses</p>
+                <div className="text-sm text-muted-foreground">
                   {mechanicals.map((m, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
-                      {formatEffect(m)}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Choices */}
-          {choices.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-2">Choices to Resolve</p>
-                <div className="space-y-1">
-                  {choices.map((c, i) => (
-                    <p key={i} className="text-sm text-muted-foreground">
-                      {formatEffect(c)}
-                    </p>
+                    <span key={i}>
+                      {i > 0 && ", "}
+                      {formatSlug(m.stat)} {m.op === "add" ? "+" : ""}{String(m.value ?? m.expr ?? "")}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -274,4 +214,111 @@ export function ContentPreview({
       </DialogContent>
     </Dialog>
   );
+}
+
+// --- Helpers ---
+
+interface ProfCategory {
+  label: string;
+  items: string[];
+}
+
+function buildProficiencyCategories(
+  content: ContentEntry,
+  grants: GrantEffect[],
+  choices: Effect[],
+): ProfCategory[] {
+  const categories: Record<string, string[]> = {};
+
+  function addTo(cat: string, item: string) {
+    if (!categories[cat]) categories[cat] = [];
+    if (!categories[cat].includes(item)) categories[cat].push(item);
+  }
+
+  // Saving throws from data
+  const savingThrows = (content.data.saving_throws as string[] | undefined) ?? [];
+  for (const s of savingThrows) {
+    addTo("Saving Throws", formatSlug(s));
+  }
+
+  // Saving throws from grants
+  for (const g of grants) {
+    if (g.stat.startsWith("save_")) {
+      addTo("Saving Throws", formatSlug(g.stat));
+    }
+  }
+
+  // Starting proficiencies from data
+  const startingProfs = (content.data.starting_proficiencies as string[] | undefined) ?? [];
+  for (const prof of startingProfs) {
+    const slug = prof.toLowerCase();
+    const label = formatSlug(prof);
+    if (slug.includes("armor") || slug === "shields" || slug.includes("all-armor")) {
+      addTo("Armor", label);
+    } else if (slug.includes("weapon") || slug.includes("sword") || slug.includes("crossbow") || slug.includes("dagger") || slug.includes("rapier") || slug.includes("axe") || slug.includes("bow") || slug.includes("mace") || slug.includes("staff") || slug.includes("quarterstaff")) {
+      addTo("Weapons", label);
+    } else if (slug.includes("saving-throw") || slug.includes("save")) {
+      // skip — handled above
+    } else if (slug.includes("tool") || slug.includes("kit") || slug.includes("supplies") || slug.includes("instrument")) {
+      addTo("Tools", label);
+    } else {
+      addTo("Other", label);
+    }
+  }
+
+  // Skills from choices
+  for (const c of choices) {
+    if (c.type === "choice") {
+      addTo("Skills", formatChoice(c));
+    }
+  }
+
+  // Non-save grants as skills
+  for (const g of grants) {
+    if (!g.stat.startsWith("save_")) {
+      // Don't add here — they're redundant with starting_proficiencies
+    }
+  }
+
+  // Build ordered output
+  const order = ["Armor", "Weapons", "Tools", "Saving Throws", "Skills", "Other"];
+  const result: ProfCategory[] = [];
+  for (const key of order) {
+    if (categories[key] && categories[key].length > 0) {
+      result.push({ label: key, items: categories[key] });
+    }
+  }
+  return result;
+}
+
+interface LevelFeatureGroup {
+  level: number;
+  featureList: Array<{ name: string; description?: string }>;
+}
+
+function getClassLevelFeatures(
+  content: ContentEntry,
+  features?: ContentEntry[],
+): LevelFeatureGroup[] {
+  const levels = content.data.levels as Array<{ level: number; features: string[] }> | undefined;
+  if (!Array.isArray(levels)) return [];
+
+  const result: LevelFeatureGroup[] = [];
+
+  for (const lvl of levels) {
+    if (!lvl.features || lvl.features.length === 0) continue;
+
+    const featureList = lvl.features.map((featureSlug) => {
+      const featureEntry = features?.find((f) => f.slug === featureSlug);
+      const description = featureEntry?.data?.description;
+      return {
+        name: featureEntry?.name ?? formatSlug(featureSlug),
+        description: typeof description === "string" ? description : undefined,
+      };
+    });
+
+    result.push({ level: lvl.level, featureList });
+  }
+
+  return result;
 }
