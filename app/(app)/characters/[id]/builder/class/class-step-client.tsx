@@ -219,19 +219,6 @@ export function ClassStepClient({
                             ),
                           )}
                         </select>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleLevelChange(
-                              index,
-                              Math.min(cls.level + 1, 20),
-                            )
-                          }
-                          disabled={cls.level >= 20}
-                        >
-                          Level Up
-                        </Button>
                       </div>
                     </div>
                   </CardHeader>
@@ -241,6 +228,32 @@ export function ClassStepClient({
                         Hit Die: d{String(classData?.data.hit_die)}
                       </p>
                     )}
+
+                    {/* Class-level choices (skill proficiency, etc.) */}
+                    {(() => {
+                      const classChoices = (classData?.effects ?? []).filter(
+                        (e): e is ChoiceEffect => e.type === "choice",
+                      );
+                      if (classChoices.length === 0) return null;
+                      return (
+                        <div className="space-y-3 mb-4">
+                          <p className="text-sm font-medium">Class Proficiency Choices</p>
+                          {classChoices.map((choice) => (
+                            <ChoiceSelector
+                              key={choice.choice_id}
+                              choiceEffect={choice}
+                              currentSelections={
+                                localChoices.resolved_choices?.[choice.choice_id] ?? []
+                              }
+                              onSelect={(selections) =>
+                                handleChoiceSelect(choice.choice_id, selections)
+                              }
+                            />
+                          ))}
+                          <Separator />
+                        </div>
+                      );
+                    })()}
 
                     {classFeatures.length > 0 && (
                       <Accordion className="w-full">
