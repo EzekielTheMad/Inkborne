@@ -52,11 +52,25 @@ async function upsertContent(systemId: string, content: TransformedContent[]): P
   }));
 
   // Batch insert in chunks of 50
+  // Delete existing platform content of these types before re-inserting
+  // (upsert doesn't work with NULL owner_id due to SQL NULL != NULL)
+  const contentTypes = [...new Set(content.map((c) => c.content_type))];
+  for (const ct of contentTypes) {
+    await supabase
+      .from("content_definitions")
+      .delete()
+      .eq("system_id", systemId)
+      .eq("content_type", ct)
+      .eq("scope", "platform")
+      .is("owner_id", null);
+  }
+
+  // Insert fresh
   for (let i = 0; i < rows.length; i += 50) {
     const chunk = rows.slice(i, i + 50);
     const { error } = await supabase
       .from("content_definitions")
-      .upsert(chunk, { onConflict: "system_id,content_type,slug,owner_id" });
+      .insert(chunk);
 
     if (error) {
       console.error(`Error inserting chunk at index ${i}:`, error.message);
