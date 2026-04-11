@@ -336,6 +336,7 @@ export function ClassStepClient({
           contentTypeLabel="Class"
           onConfirm={handleSelectClass}
           onCancel={() => setPreviewContent(null)}
+          features={features}
         />
 
         {/* Bottom navigation */}

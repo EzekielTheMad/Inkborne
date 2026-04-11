@@ -19,18 +19,54 @@ interface ContentPreviewProps {
   contentTypeLabel: string;
   onConfirm: (content: ContentEntry) => void;
   onCancel: () => void;
+  /** Optional list of feature entries for resolving feature slugs to names/descriptions */
+  features?: ContentEntry[];
+}
+
+function formatSlug(slug: string): string {
+  return slug
+    .replace(/^save_/, "")
+    .replace(/^skill-/, "")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatGrant(effect: GrantEffect): string {
+  const stat = effect.stat;
+  if (stat.startsWith("save_")) {
+    return `${formatSlug(stat)} Saving Throws`;
+  }
+  if (effect.value === "proficient") {
+    return `${formatSlug(stat)} Proficiency`;
+  }
+  if (effect.value === "expertise") {
+    return `${formatSlug(stat)} Expertise`;
+  }
+  return `${formatSlug(stat)}: ${effect.value}`;
+}
+
+function formatChoice(effect: Effect): string {
+  if (effect.type !== "choice") return "";
+  const type = effect.grant_type
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  // Simple pluralization — handle "y" → "ies"
+  const plural = effect.choose > 1
+    ? type.endsWith("y") ? type.slice(0, -1) + "ies" : type + "s"
+    : type;
+  return `Choose ${effect.choose} ${plural}`;
 }
 
 function formatEffect(effect: Effect): string {
   switch (effect.type) {
     case "mechanical":
-      return `${effect.stat}: ${effect.op} ${effect.value ?? effect.expr ?? ""}`;
+      return `${formatSlug(effect.stat)}: ${effect.op} ${effect.value ?? effect.expr ?? ""}`;
     case "grant":
-      return `${effect.stat}: ${effect.value}`;
+      return formatGrant(effect);
     case "narrative":
       return effect.text;
     case "choice":
-      return `Choose ${effect.choose} ${effect.grant_type}`;
+      return formatChoice(effect);
     default:
       return "";
   }
@@ -41,6 +77,7 @@ export function ContentPreview({
   contentTypeLabel,
   onConfirm,
   onCancel,
+  features,
 }: ContentPreviewProps) {
   if (!content) return null;
 
@@ -126,23 +163,37 @@ export function ContentPreview({
               </div>
             </>
           )}
-          {Array.isArray(content.data.levels) && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-2">Level 1 Features</p>
-                <div className="space-y-1.5">
-                  {((content.data.levels as Array<{ level: number; features: string[] }>)
-                    .find((l) => l.level === 1)?.features ?? [])
-                    .map((feature, i) => (
-                      <div key={i} className="text-sm rounded-md bg-muted px-3 py-2 capitalize">
-                        {feature.replace(/-/g, " ")}
-                      </div>
-                    ))}
+          {Array.isArray(content.data.levels) && (() => {
+            const level1Features = (content.data.levels as Array<{ level: number; features: string[] }>)
+              .find((l) => l.level === 1)?.features ?? [];
+            if (level1Features.length === 0) return null;
+            return (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium mb-2">Level 1 Features</p>
+                  <div className="space-y-2">
+                    {level1Features.map((featureSlug, i) => {
+                      const featureEntry = features?.find((f) => f.slug === featureSlug);
+                      const description = featureEntry?.data?.description;
+                      return (
+                        <div key={i} className="rounded-md border border-border bg-muted/50 px-3 py-2">
+                          <p className="text-sm font-medium capitalize text-accent">
+                            {featureEntry?.name ?? featureSlug.replace(/-/g, " ")}
+                          </p>
+                          {typeof description === "string" && description.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
+                              {description}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            );
+          })()}
           {/* Race-specific: traits */}
           {Array.isArray(content.data.traits) && (content.data.traits as string[]).length > 0 && (
             <>
@@ -169,7 +220,7 @@ export function ContentPreview({
                 <div className="flex flex-wrap gap-1.5">
                   {grants.map((g, i) => (
                     <Badge key={i} variant="secondary" className="text-xs">
-                      {g.stat}: {g.value}
+                      {formatGrant(g)}
                     </Badge>
                   ))}
                 </div>
