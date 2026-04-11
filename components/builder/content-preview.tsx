@@ -102,6 +102,64 @@ export function ContentPreview({
             )}
           </div>
 
+          {/* Class-specific: saving throws, proficiencies, level 1 features */}
+          {Array.isArray(content.data.saving_throws) && (content.data.saving_throws as string[]).length > 0 && (
+            <div className="text-sm">
+              <span className="text-muted-foreground">Saves: </span>
+              <span className="font-medium capitalize">
+                {(content.data.saving_throws as string[]).join(" & ")}
+              </span>
+            </div>
+          )}
+          {Array.isArray(content.data.starting_proficiencies) && (content.data.starting_proficiencies as string[]).length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-1">Proficiencies</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(content.data.starting_proficiencies as string[]).map((prof, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs capitalize">
+                      {prof.replace(/-/g, " ")}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {Array.isArray(content.data.levels) && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2">Level 1 Features</p>
+                <div className="space-y-1.5">
+                  {((content.data.levels as Array<{ level: number; features: string[] }>)
+                    .find((l) => l.level === 1)?.features ?? [])
+                    .map((feature, i) => (
+                      <div key={i} className="text-sm rounded-md bg-muted px-3 py-2 capitalize">
+                        {feature.replace(/-/g, " ")}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </>
+          )}
+          {/* Race-specific: traits */}
+          {Array.isArray(content.data.traits) && (content.data.traits as string[]).length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-2">Traits</p>
+                <div className="space-y-1.5">
+                  {(content.data.traits as string[]).map((trait, i) => (
+                    <div key={i} className="text-sm rounded-md bg-muted px-3 py-2 capitalize">
+                      {trait.replace(/-/g, " ")}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Grants */}
           {grants.length > 0 && (
             <>
