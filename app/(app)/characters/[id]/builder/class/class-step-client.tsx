@@ -268,13 +268,20 @@ export function ClassStepClient({
                               value={feature.id}
                             >
                               <AccordionTrigger className="text-sm">
-                                <span className="flex items-center gap-2">
-                                  {feature.name}
-                                  {featureChoices.length > 0 && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {featureChoices.length} choice
-                                      {featureChoices.length > 1 ? "s" : ""}
-                                    </Badge>
+                                <span className="flex flex-col items-start gap-0.5">
+                                  <span className="flex items-center gap-2">
+                                    {feature.name}
+                                    {featureChoices.length > 0 && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {featureChoices.length} choice
+                                        {featureChoices.length > 1 ? "s" : ""}
+                                      </Badge>
+                                    )}
+                                  </span>
+                                  {typeof feature.data.level === "number" && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {feature.data.level === 1 ? "1st" : feature.data.level === 2 ? "2nd" : feature.data.level === 3 ? "3rd" : `${feature.data.level}th`} level
+                                    </span>
                                   )}
                                 </span>
                               </AccordionTrigger>
