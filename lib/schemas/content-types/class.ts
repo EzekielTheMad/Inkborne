@@ -32,7 +32,15 @@ import {
   spellcastingKnownSchema,
   spellcastingListSchema,
   spellcastingExtraSchema,
+  languageProfsSchema,
+  toolProfsSchema,
 } from "./mechanical";
+
+// Proficiency split — primary (full class) vs secondary (multiclass gain)
+const classProfArraySchema = z.object({
+  primary: z.array(z.string()).default([]),
+  secondary: z.array(z.string()).default([]),
+});
 
 export const classDataSchema = z.object({
   hit_die: z.number().int().positive(),
@@ -50,5 +58,13 @@ export const classDataSchema = z.object({
   spellcastingList: spellcastingListSchema.optional(),
   spellcastingExtra: spellcastingExtraSchema.optional(),
   abilitySave: z.string().optional(),
+  // Phase 3 proficiency structure and display metadata
+  primaryAbility: z.string().optional(),
+  skillstxt: z.string().optional(),
+  armorProfs: classProfArraySchema.optional(),
+  weaponProfs: classProfArraySchema.optional(),
+  toolProfs: toolProfsSchema.optional(),
+  equipment: z.string().optional(),
+  subclassLabel: z.string().optional(),
 });
 export type ClassData = z.infer<typeof classDataSchema>;
