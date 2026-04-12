@@ -63,7 +63,10 @@ export function ChoiceSelector({
                     : "bg-card text-card-foreground border-border hover:bg-accent hover:text-accent-foreground cursor-pointer",
               )}
             >
-              {option}
+              {option
+                .replace(/^skill-/, "")
+                .replace(/-/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())}
             </button>
           );
         })}

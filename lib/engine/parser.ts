@@ -185,12 +185,12 @@ class Parser {
         return this.functionCall(name);
       }
 
-      // Stat reference
+      // Stat reference — default to 0 if not found (handles empty base_stats)
       if (name in this.stats) {
         return this.stats[name];
       }
 
-      throw new Error(`Unknown identifier: '${name}'`);
+      return 0;
     }
 
     throw new Error(`Unexpected token: '${tok.value}'`);

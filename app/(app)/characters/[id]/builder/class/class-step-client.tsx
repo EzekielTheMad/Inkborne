@@ -21,8 +21,10 @@ import { Separator } from "@/components/ui/separator";
 import { ContentBrowser, type ContentEntry } from "@/components/builder/content-browser";
 import { ContentPreview } from "@/components/builder/content-preview";
 import { ChoiceSelector } from "@/components/builder/choice-selector";
+import { SubclassSelector } from "@/components/builder/subclass-selector";
+import { AsiSelector } from "@/components/builder/asi-selector";
 import { StatPreview } from "@/components/builder/stat-preview";
-import type { CharacterChoices } from "@/lib/types/character";
+import type { CharacterChoices, AsiChoice } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
 
@@ -169,16 +171,140 @@ export function ClassStepClient({
       .eq("id", characterId);
   }
 
-  // Get features for a specific class at a specific level
-  function getFeaturesForClass(classSlug: string, level: number) {
-    return features.filter((f) => {
-      const data = f.data as Record<string, unknown>;
-      return (
-        data.class === classSlug &&
-        typeof data.level === "number" &&
-        data.level <= level
+  async function handleSubclassSelect(
+    classSlug: string,
+    classIndex: number,
+    subclassSlug: string | undefined,
+  ) {
+    const updatedClasses = [...selectedClasses];
+    updatedClasses[classIndex] = {
+      ...updatedClasses[classIndex],
+      subclass: subclassSlug,
+    };
+    const newChoices = { ...localChoices, classes: updatedClasses };
+    setLocalChoices(newChoices);
+
+    await supabase
+      .from("characters")
+      .update({ choices: newChoices })
+      .eq("id", characterId);
+
+    // Manage content ref for the subclass
+    if (subclassSlug) {
+      const subclassContent = subclasses.find((sc) => sc.slug === subclassSlug);
+      if (subclassContent) {
+        // Remove any existing subclass ref for this class
+        const existingRef = contentRefs.find(
+          (ref) =>
+            ref.content_definitions?.content_type === "subclass" &&
+            ref.context?.source === "subclass" &&
+            ref.context?.class === classSlug,
+        );
+        if (existingRef) {
+          await supabase
+            .from("character_content_refs")
+            .delete()
+            .eq("id", existingRef.id);
+        }
+
+        await supabase.from("character_content_refs").insert([
+          {
+            character_id: characterId,
+            content_id: subclassContent.id,
+            content_version: subclassContent.version,
+            context: { source: "subclass", class: classSlug },
+          },
+        ]);
+      }
+    } else {
+      // Remove subclass content ref
+      const existingRef = contentRefs.find(
+        (ref) =>
+          ref.content_definitions?.content_type === "subclass" &&
+          ref.context?.source === "subclass" &&
+          ref.context?.class === classSlug,
       );
-    });
+      if (existingRef) {
+        await supabase
+          .from("character_content_refs")
+          .delete()
+          .eq("id", existingRef.id);
+      }
+    }
+
+    startTransition(() => router.refresh());
+  }
+
+  async function handleAsiSelect(featureSlug: string, choice: AsiChoice) {
+    const newAsiChoices = {
+      ...localChoices.asi_choices,
+      [featureSlug]: choice,
+    };
+    const newChoices = { ...localChoices, asi_choices: newAsiChoices };
+    setLocalChoices(newChoices);
+
+    await supabase
+      .from("characters")
+      .update({ choices: newChoices })
+      .eq("id", characterId);
+  }
+
+  /** Check feature type from data.feature_type field */
+  function getFeatureType(feature: ContentEntry): string {
+    return (feature.data.feature_type as string) ?? "passive";
+  }
+
+  // Get features for a specific class at a specific level, sorted by level then name
+  // When a subclass is selected, replace generic placeholder features with subclass-specific ones
+  function getFeaturesForClass(classSlug: string, level: number, selectedSubclass?: string) {
+    return features
+      .filter((f) => {
+        const data = f.data as Record<string, unknown>;
+        if (data.class !== classSlug) return false;
+        if (typeof data.level !== "number" || data.level > level) return false;
+
+        const featureSubclass = data.subclass as string | null;
+
+        if (selectedSubclass) {
+          // Subclass is selected:
+          // - Include features with no subclass (general class features)
+          // - Include features matching the selected subclass
+          // - EXCLUDE generic subclass placeholder features (they have subclass: null
+          //   but their feature_type would be passive and their name contains "feature")
+          //   We detect placeholders by checking if a subclass feature exists at the same level
+          if (featureSubclass && featureSubclass !== selectedSubclass) {
+            return false; // Wrong subclass feature
+          }
+          if (!featureSubclass) {
+            // Check if this is a generic placeholder that should be replaced
+            // Placeholders have names like "Path feature", "College Feature", etc.
+            const isPlaceholder = /feature$/i.test(f.name.trim());
+            if (isPlaceholder) {
+              // Check if there's a subclass feature at this same level
+              const hasSubclassReplacement = features.some((sf) => {
+                const sfData = sf.data as Record<string, unknown>;
+                return (
+                  sfData.class === classSlug &&
+                  sfData.subclass === selectedSubclass &&
+                  sfData.level === data.level
+                );
+              });
+              if (hasSubclassReplacement) return false; // Skip placeholder
+            }
+          }
+        } else {
+          // No subclass selected — only show features with no subclass
+          if (featureSubclass) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        const levelA = (a.data.level as number) ?? 0;
+        const levelB = (b.data.level as number) ?? 0;
+        if (levelA !== levelB) return levelA - levelB;
+        return a.name.localeCompare(b.name);
+      });
   }
 
   return (
@@ -190,7 +316,7 @@ export function ClassStepClient({
           <div className="space-y-4">
             {selectedClasses.map((cls, index) => {
               const classData = classes.find((c) => c.slug === cls.slug);
-              const classFeatures = getFeaturesForClass(cls.slug, cls.level);
+              const classFeatures = getFeaturesForClass(cls.slug, cls.level, cls.subclass);
               const choiceEffects = classFeatures.flatMap((f) =>
                 f.effects.filter((e): e is ChoiceEffect => e.type === "choice"),
               );
@@ -219,19 +345,6 @@ export function ClassStepClient({
                             ),
                           )}
                         </select>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleLevelChange(
-                              index,
-                              Math.min(cls.level + 1, 20),
-                            )
-                          }
-                          disabled={cls.level >= 20}
-                        >
-                          Level Up
-                        </Button>
                       </div>
                     </div>
                   </CardHeader>
@@ -242,12 +355,49 @@ export function ClassStepClient({
                       </p>
                     )}
 
+                    {/* Class-level choices (skill proficiency, etc.) */}
+                    {(() => {
+                      const classChoices = (classData?.effects ?? []).filter(
+                        (e): e is ChoiceEffect => e.type === "choice",
+                      );
+                      if (classChoices.length === 0) return null;
+                      return (
+                        <div className="space-y-3 mb-4">
+                          <p className="text-sm font-medium">Class Proficiency Choices</p>
+                          {classChoices.map((choice) => (
+                            <ChoiceSelector
+                              key={choice.choice_id}
+                              choiceEffect={choice}
+                              currentSelections={
+                                localChoices.resolved_choices?.[choice.choice_id] ?? []
+                              }
+                              onSelect={(selections) =>
+                                handleChoiceSelect(choice.choice_id, selections)
+                              }
+                            />
+                          ))}
+                          <Separator />
+                        </div>
+                      );
+                    })()}
+
                     {classFeatures.length > 0 && (
                       <Accordion className="w-full">
                         {classFeatures.map((feature) => {
                           const featureChoices = feature.effects.filter(
                             (e): e is ChoiceEffect => e.type === "choice",
                           );
+                          const featureLevel =
+                            typeof feature.data.level === "number"
+                              ? feature.data.level
+                              : 0;
+                          const featureType = getFeatureType(feature);
+                          const showSubclass = featureType === "subclass";
+                          const showAsi = featureType === "asi";
+                          const hasInteraction =
+                            featureChoices.length > 0 ||
+                            showSubclass ||
+                            showAsi;
 
                           return (
                             <AccordionItem
@@ -255,13 +405,23 @@ export function ClassStepClient({
                               value={feature.id}
                             >
                               <AccordionTrigger className="text-sm">
-                                <span className="flex items-center gap-2">
-                                  {feature.name}
-                                  {featureChoices.length > 0 && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {featureChoices.length} choice
-                                      {featureChoices.length > 1 ? "s" : ""}
-                                    </Badge>
+                                <span className="flex flex-col items-start gap-0.5">
+                                  <span className="flex items-center gap-2">
+                                    {feature.name}
+                                    {hasInteraction && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {showAsi
+                                          ? "ASI"
+                                          : showSubclass
+                                            ? "Subclass"
+                                            : `${featureChoices.length} choice${featureChoices.length > 1 ? "s" : ""}`}
+                                      </Badge>
+                                    )}
+                                  </span>
+                                  {featureLevel > 0 && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {featureLevel === 1 ? "1st" : featureLevel === 2 ? "2nd" : featureLevel === 3 ? "3rd" : `${featureLevel}th`} level
+                                    </span>
                                   )}
                                 </span>
                               </AccordionTrigger>
@@ -271,6 +431,37 @@ export function ClassStepClient({
                                     {feature.data.description}
                                   </p>
                                 )}
+
+                                {/* Subclass selector */}
+                                {showSubclass && (
+                                  <SubclassSelector
+                                    classSlug={cls.slug}
+                                    subclasses={subclasses}
+                                    currentSelection={cls.subclass}
+                                    onSelect={(slug) =>
+                                      handleSubclassSelect(
+                                        cls.slug,
+                                        index,
+                                        slug,
+                                      )
+                                    }
+                                  />
+                                )}
+
+                                {/* ASI selector */}
+                                {showAsi && (
+                                  <AsiSelector
+                                    featureSlug={feature.slug}
+                                    currentChoice={
+                                      localChoices.asi_choices?.[feature.slug]
+                                    }
+                                    onSelect={(choice) =>
+                                      handleAsiSelect(feature.slug, choice)
+                                    }
+                                  />
+                                )}
+
+                                {/* Standard choice effects */}
                                 {featureChoices.map((choice) => (
                                   <ChoiceSelector
                                     key={choice.choice_id}
@@ -336,6 +527,7 @@ export function ClassStepClient({
           contentTypeLabel="Class"
           onConfirm={handleSelectClass}
           onCancel={() => setPreviewContent(null)}
+          features={features}
         />
 
         {/* Bottom navigation */}

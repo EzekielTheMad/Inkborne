@@ -1,4 +1,18 @@
+import type { NarrativeData, NarrativeRichData } from "./narrative";
+
 export type CharacterVisibility = "private" | "campaign" | "public";
+
+/** A single ASI allocation: which ability score gets how many points */
+export interface AsiAllocation {
+  ability: string;
+  amount: number; // +1 or +2
+}
+
+/** Tracks ASI decisions per feature occurrence (keyed by feature slug) */
+export interface AsiChoice {
+  mode: "asi"; // future: | "feat"
+  allocations: AsiAllocation[];
+}
 
 export interface CharacterChoices {
   classes?: Array<{ slug: string; level: number; subclass?: string }>;
@@ -13,6 +27,8 @@ export interface CharacterChoices {
   bonds?: string[];
   flaws?: string[];
   resolved_choices?: Record<string, string[]>;
+  /** Keyed by feature slug, e.g. "barbarian-ability-score-improvement-4" */
+  asi_choices?: Record<string, AsiChoice>;
 }
 
 export interface CharacterDeathSaves {
@@ -44,6 +60,8 @@ export interface Character {
   base_stats: Record<string, number>;
   choices: CharacterChoices;
   state: CharacterState;
+  narrative: NarrativeData;
+  narrative_rich: NarrativeRichData;
   created_at: string;
 }
 

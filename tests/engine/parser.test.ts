@@ -51,8 +51,8 @@ describe("parseExpression", () => {
     expect(() => parseExpression("DROP TABLE users", stats, builtins)).toThrow();
   });
 
-  it("throws on unknown stat reference", () => {
-    expect(() => parseExpression("charisma + 1", stats, builtins)).toThrow();
+  it("returns 0 for unknown stat reference", () => {
+    expect(parseExpression("charisma + 1", stats, builtins)).toBe(1);
   });
 
   it("evaluates floor() built-in", () => {

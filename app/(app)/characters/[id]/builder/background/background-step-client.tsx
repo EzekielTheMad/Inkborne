@@ -79,8 +79,10 @@ export function BackgroundStepClient({
   // Personality tables from background data
   const personalityTraits =
     (selectedBgContent?.data.personality_traits as string[] | undefined) ?? [];
-  const ideals =
-    (selectedBgContent?.data.ideals as string[] | undefined) ?? [];
+  const idealsRaw = (selectedBgContent?.data.ideals as Array<string | { text: string; alignment?: string }> | undefined) ?? [];
+  const ideals = idealsRaw.map((ideal) =>
+    typeof ideal === "string" ? ideal : ideal.text
+  );
   const bonds =
     (selectedBgContent?.data.bonds as string[] | undefined) ?? [];
   const flaws =
