@@ -349,9 +349,32 @@ export function ClassStepClient({
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {"hit_die" in (classData?.data ?? {}) && (
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Hit Die: d{String(classData?.data.hit_die)}
+                    {/* Key class info */}
+                    <div className="text-sm space-y-0.5 mb-3">
+                      {"hit_die" in (classData?.data ?? {}) && (
+                        <div>
+                          <span className="font-medium">Hit Die: </span>
+                          <span>d{String(classData?.data.hit_die)}</span>
+                        </div>
+                      )}
+                      {typeof classData?.data.primaryAbility === "string" && (
+                        <div>
+                          <span className="font-medium">Primary Ability: </span>
+                          <span>{classData.data.primaryAbility}</span>
+                        </div>
+                      )}
+                      {typeof classData?.data.equipment === "string" && (
+                        <div>
+                          <span className="font-medium">Equipment: </span>
+                          <span className="text-muted-foreground">{classData.data.equipment}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Skill choice text as context before selector */}
+                    {typeof classData?.data.skillstxt === "string" && (
+                      <p className="text-xs text-muted-foreground mb-2 italic">
+                        {classData.data.skillstxt}
                       </p>
                     )}
 
@@ -445,6 +468,7 @@ export function ClassStepClient({
                                         slug,
                                       )
                                     }
+                                    label={typeof classData?.data.subclassLabel === "string" ? classData.data.subclassLabel : undefined}
                                   />
                                 )}
 

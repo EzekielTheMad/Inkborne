@@ -21,10 +21,11 @@ describe("ChoiceSelector", () => {
       />,
     );
 
-    expect(screen.getByText("athletics")).toBeTruthy();
-    expect(screen.getByText("acrobatics")).toBeTruthy();
-    expect(screen.getByText("stealth")).toBeTruthy();
-    expect(screen.getByText("perception")).toBeTruthy();
+    // Component capitalizes slugs for display
+    expect(screen.getByText("Athletics")).toBeTruthy();
+    expect(screen.getByText("Acrobatics")).toBeTruthy();
+    expect(screen.getByText("Stealth")).toBeTruthy();
+    expect(screen.getByText("Perception")).toBeTruthy();
   });
 
   it("shows selection count", () => {
@@ -49,7 +50,7 @@ describe("ChoiceSelector", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("athletics"));
+    fireEvent.click(screen.getByText("Athletics"));
     expect(onSelect).toHaveBeenCalledWith(["athletics"]);
   });
 
@@ -63,7 +64,7 @@ describe("ChoiceSelector", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("athletics"));
+    fireEvent.click(screen.getByText("Athletics"));
     expect(onSelect).toHaveBeenCalledWith([]);
   });
 
@@ -77,7 +78,7 @@ describe("ChoiceSelector", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("stealth"));
+    fireEvent.click(screen.getByText("Stealth"));
     // Should not call onSelect since 2/2 are already selected
     expect(onSelect).not.toHaveBeenCalled();
   });

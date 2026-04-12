@@ -11,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import type { CharacterChoices } from "@/lib/types/character";
 
 interface EquipmentStepClientProps {
@@ -36,20 +38,40 @@ export function EquipmentStepClient({
   const router = useRouter();
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
-  const [selected, setSelected] = useState<string>(
-    character.choices?.starting_equipment ?? "",
+  const [acknowledged, setAcknowledged] = useState<boolean>(
+    !!character.choices?.starting_equipment,
   );
 
-  // Try to get equipment bundles from class data
+  // Equipment text from enriched class data (Phase 3)
+  const equipmentText = classContent?.data?.equipment as string | undefined;
+  // Legacy structured bundles (if any exist)
   const equipmentBundles =
     (classContent?.data?.starting_equipment as
       | Array<{ label: string; items: string[] }>
       | undefined) ?? [];
   const startingGold = classContent?.data?.starting_gold as string | undefined;
 
-  async function handleSelect(bundle: string) {
-    setSelected(bundle);
+  // Parse equipment text into choice groups (split by semicolons)
+  const equipmentGroups = equipmentText
+    ? equipmentText.split(";").map((g) => g.trim()).filter(Boolean)
+    : [];
 
+  async function handleAcknowledge() {
+    setAcknowledged(true);
+
+    const newChoices = {
+      ...character.choices,
+      starting_equipment: "acknowledged",
+    };
+
+    await supabase
+      .from("characters")
+      .update({ choices: newChoices })
+      .eq("id", characterId);
+  }
+
+  // Legacy bundle selection (keep for backward compatibility)
+  async function handleSelectBundle(bundle: string) {
     const newChoices = {
       ...character.choices,
       starting_equipment: bundle,
@@ -65,82 +87,84 @@ export function EquipmentStepClient({
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Starting Equipment</h2>
 
-      {equipmentBundles.length > 0 ? (
+      {equipmentGroups.length > 0 ? (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Your {classContent?.name} starts with the following equipment.
+            Choose from the options listed for each group.
+          </p>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Equipment Choices</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {equipmentGroups.map((group, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <Badge
+                    variant="outline"
+                    className="mt-0.5 shrink-0 text-xs"
+                  >
+                    {i + 1}
+                  </Badge>
+                  <p className="text-sm">{group}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {startingGold && (
+            <p className="text-sm text-muted-foreground">
+              Alternatively, you can start with <span className="font-medium">{startingGold}</span> and buy your own equipment.
+            </p>
+          )}
+
+          {!acknowledged ? (
+            <Button onClick={handleAcknowledge}>
+              Confirm Equipment
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant="secondary">Confirmed</Badge>
+              Equipment selections acknowledged. Detailed inventory management coming in a future update.
+            </div>
+          )}
+        </div>
+      ) : equipmentBundles.length > 0 ? (
+        /* Legacy structured bundles */
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Choose one of the starting equipment packages for your class.
           </p>
           {equipmentBundles.map((bundle, i) => {
             const bundleId = `bundle_${i}`;
-            const isSelected = selected === bundleId;
-
+            const isSelected = character.choices?.starting_equipment === bundleId;
             return (
               <Card
                 key={bundleId}
                 className={`cursor-pointer transition-colors ${
-                  isSelected
-                    ? "border-primary bg-accent/50"
-                    : "hover:bg-accent/30"
+                  isSelected ? "border-primary bg-accent/50" : "hover:bg-accent/30"
                 }`}
-                onClick={() => handleSelect(bundleId)}
+                onClick={() => handleSelectBundle(bundleId)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        isSelected
-                          ? "border-primary"
-                          : "border-muted-foreground"
+                        isSelected ? "border-primary" : "border-muted-foreground"
                       }`}
                     >
-                      {isSelected && (
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                      )}
+                      {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
                     </div>
                     <div>
                       <p className="text-sm font-medium">{bundle.label}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {bundle.items.join(", ")}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{bundle.items.join(", ")}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             );
           })}
-
-          {startingGold && (
-            <Card
-              className={`cursor-pointer transition-colors ${
-                selected === "gold"
-                  ? "border-primary bg-accent/50"
-                  : "hover:bg-accent/30"
-              }`}
-              onClick={() => handleSelect("gold")}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      selected === "gold"
-                        ? "border-primary"
-                        : "border-muted-foreground"
-                    }`}
-                  >
-                    {selected === "gold" && (
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Starting Gold</p>
-                    <p className="text-xs text-muted-foreground">
-                      {startingGold}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       ) : (
         <Card>
@@ -148,18 +172,14 @@ export function EquipmentStepClient({
             <CardTitle className="text-base">Equipment</CardTitle>
             <CardDescription>
               {classContent
-                ? "No starting equipment bundles defined for this class."
+                ? "No starting equipment defined for this class."
                 : "Select a class first to see starting equipment options."}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Full equipment and inventory management will be available in a
-              future update.
-            </p>
-          </CardContent>
         </Card>
       )}
+
+      <Separator />
 
       <div className="flex justify-between pt-4">
         <Button
@@ -173,7 +193,7 @@ export function EquipmentStepClient({
         <Button
           onClick={() => router.push(`/characters/${characterId}`)}
         >
-          Finish &amp; Return to Dashboard
+          Finish &amp; View Character
         </Button>
       </div>
     </div>

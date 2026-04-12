@@ -22,6 +22,15 @@ interface ContentPreviewProps {
   features?: ContentEntry[];
 }
 
+const ABILITY_ABBR = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
+
+function formatScoresPreview(scores: number[]): string {
+  return scores
+    .map((v, i) => (v !== 0 ? `${v > 0 ? "+" : ""}${v} ${ABILITY_ABBR[i]}` : null))
+    .filter(Boolean)
+    .join(", ");
+}
+
 function formatSlug(slug: string): string {
   return slug
     .replace(/^save_/, "")
@@ -91,16 +100,79 @@ export function ContentPreview({
                 <span>d{String(content.data.hit_die)}</span>
               </div>
             )}
-            {content.data.speed != null && (
+            {typeof content.data.primaryAbility === "string" && (
+              <div>
+                <span className="font-medium">Primary Ability: </span>
+                <span>{content.data.primaryAbility}</span>
+              </div>
+            )}
+            {/* Speed — prefer speed_detail over flat speed */}
+            {content.data.speed_detail != null ? (
+              <div>
+                <span className="font-medium">Speed: </span>
+                <span>
+                  {Object.entries(content.data.speed_detail as Record<string, number>)
+                    .filter(([key]) => key !== "encumbered")
+                    .map(([type, spd]) => type === "walk" ? `${spd} ft` : `${formatSlug(type)} ${spd} ft`)
+                    .join(", ")}
+                </span>
+              </div>
+            ) : content.data.speed != null ? (
               <div>
                 <span className="font-medium">Speed: </span>
                 <span>{String(content.data.speed)} ft.</span>
               </div>
-            )}
+            ) : null}
             {content.data.size != null && (
               <div>
                 <span className="font-medium">Size: </span>
                 <span className="capitalize">{String(content.data.size)}</span>
+              </div>
+            )}
+            {/* Race: Ability Scores */}
+            {Array.isArray(content.data.scores) && (
+              <div>
+                <span className="font-medium">Ability Scores: </span>
+                <span>{formatScoresPreview(content.data.scores as number[])}</span>
+              </div>
+            )}
+            {/* Race: Vision */}
+            {Array.isArray(content.data.vision) && (content.data.vision as Array<{type: string; range: number}>).length > 0 && (
+              <div>
+                <span className="font-medium">Vision: </span>
+                <span className="capitalize">
+                  {(content.data.vision as Array<{type: string; range: number}>)
+                    .map((v) => `${v.type} ${v.range} ft`)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+            {/* Race: Damage Resistances */}
+            {Array.isArray(content.data.dmgres) && (content.data.dmgres as string[]).length > 0 && (
+              <div>
+                <span className="font-medium">Damage Resistance: </span>
+                <span className="capitalize">{(content.data.dmgres as string[]).join(", ")}</span>
+              </div>
+            )}
+            {/* Background: Skills */}
+            {Array.isArray(content.data.skills) && (content.data.skills as string[]).length > 0 && (
+              <div>
+                <span className="font-medium">Skills: </span>
+                <span>{(content.data.skills as string[]).map(formatSlug).join(", ")}</span>
+              </div>
+            )}
+            {/* Background: Gold */}
+            {content.data.gold != null && (
+              <div>
+                <span className="font-medium">Starting Gold: </span>
+                <span>{String(content.data.gold)} gp</span>
+              </div>
+            )}
+            {/* Class: Equipment */}
+            {typeof content.data.equipment === "string" && (
+              <div>
+                <span className="font-medium">Equipment: </span>
+                <span>{content.data.equipment}</span>
               </div>
             )}
           </div>
@@ -248,7 +320,25 @@ function buildProficiencyCategories(
     }
   }
 
-  // Starting proficiencies from data
+  // Structured proficiencies from enriched data (Phase 3)
+  const armorProfsData = content.data.armorProfs as { primary?: string[]; secondary?: string[] } | undefined;
+  const weaponProfsData = content.data.weaponProfs as { primary?: string[]; secondary?: string[] } | undefined;
+  const toolProfsData = content.data.toolProfs as string[] | Array<{ choose: number; from: string }> | undefined;
+
+  if (armorProfsData?.primary?.length) {
+    for (const p of armorProfsData.primary) addTo("Armor", formatSlug(p));
+  }
+  if (weaponProfsData?.primary?.length) {
+    for (const p of weaponProfsData.primary) addTo("Weapons", formatSlug(p));
+  }
+  if (Array.isArray(toolProfsData)) {
+    for (const t of toolProfsData) {
+      if (typeof t === "string") addTo("Tools", formatSlug(t));
+      else if (typeof t === "object" && t.choose) addTo("Tools", `Choose ${t.choose} from ${t.from}`);
+    }
+  }
+
+  // Starting proficiencies from data (legacy)
   const startingProfs = (content.data.starting_proficiencies as string[] | undefined) ?? [];
   for (const prof of startingProfs) {
     const slug = prof.toLowerCase();
