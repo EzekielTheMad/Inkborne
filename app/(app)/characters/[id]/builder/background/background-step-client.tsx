@@ -45,6 +45,7 @@ interface BackgroundStepClientProps {
     };
   }>;
   schema: SystemSchemaDefinition | undefined;
+  availableLanguages?: string[];
 }
 
 export function BackgroundStepClient({
@@ -53,6 +54,7 @@ export function BackgroundStepClient({
   backgrounds,
   contentRefs,
   schema,
+  availableLanguages = [],
 }: BackgroundStepClientProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -285,18 +287,48 @@ export function BackgroundStepClient({
                   </div>
                 )}
 
-                {bgChoices.map((choice) => (
-                  <ChoiceSelector
-                    key={choice.choice_id}
-                    choiceEffect={choice}
-                    currentSelections={
-                      localChoices.resolved_choices?.[choice.choice_id] ?? []
+                {bgChoices.map((choice) => {
+                  // Resolve category strings like "all_languages" to actual options
+                  let resolvedChoice = choice;
+                  if (typeof choice.from === "string") {
+                    if (choice.from === "all_languages") {
+                      // Get languages already granted by race or other sources
+                      const grantedLanguages = allEffects
+                        .filter((e) => e.type === "grant" && (e as { stat: string }).stat.startsWith("language"))
+                        .map((e) => (e as { stat: string }).stat);
+                      const raceLanguages = contentRefs
+                        .filter((ref) => ref.content_definitions?.content_type === "race")
+                        .flatMap((ref) => {
+                          const langs = ref.content_definitions?.data?.languages;
+                          return Array.isArray(langs) ? langs as string[] : [];
+                        });
+                      const alreadyGranted = new Set([...grantedLanguages, ...raceLanguages]);
+
+                      // Filter available languages to exclude already-granted ones
+                      const filteredLanguages = availableLanguages.filter(
+                        (lang) => !alreadyGranted.has(lang)
+                      );
+
+                      resolvedChoice = {
+                        ...choice,
+                        from: filteredLanguages,
+                      };
                     }
-                    onSelect={(selections) =>
-                      handleChoiceSelect(choice.choice_id, selections)
-                    }
-                  />
-                ))}
+                  }
+
+                  return (
+                    <ChoiceSelector
+                      key={choice.choice_id}
+                      choiceEffect={resolvedChoice}
+                      currentSelections={
+                        localChoices.resolved_choices?.[choice.choice_id] ?? []
+                      }
+                      onSelect={(selections) =>
+                        handleChoiceSelect(choice.choice_id, selections)
+                      }
+                    />
+                  );
+                })}
               </CardContent>
             </Card>
 
