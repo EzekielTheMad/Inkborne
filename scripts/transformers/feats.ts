@@ -25,9 +25,14 @@ export async function transformFeats(): Promise<TransformedContent[]> {
       effects.push(buildNarrativeEffect(feat.desc.join("\n"), "Feat"));
     }
 
+    // Phase 3: add source_refs from transformer; all other mechanical fields
+    // (scores, action, usages, recovery, speed, vision, dmgres, savetxt,
+    // proficiencies, extraAC, spellcastingBonus, calcChanges, addMod) are
+    // populated via SQL migration 00016 or via homebrew creation UI.
     return buildContentEntry("feat", feat.index, feat.name, {
       description: feat.desc.join("\n"),
       prerequisites,
+      source_refs: [{ book: "SRD", page: 0 }],
     }, effects);
   });
 }
