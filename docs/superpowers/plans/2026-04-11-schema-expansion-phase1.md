@@ -64,6 +64,13 @@ export const ACTION_TYPES = ["action", "bonus action", "reaction", "free"] as co
 // Recovery enum
 export const RECOVERY_TYPES = ["short rest", "long rest", "dawn", "day"] as const;
 
+// Source reference — book + page for content filtering
+export const sourceRefSchema = z.object({
+  book: z.string().min(1),    // e.g., "PHB", "SRD", "XGE", "TCE"
+  page: z.number().int().min(0).default(0),
+});
+export const sourceRefsSchema = z.array(sourceRefSchema).default([]);
+
 // Proficiency grants (by category)
 export const proficiencyGrantsSchema = z.object({
   weapons: z.array(z.string()).default([]),
@@ -72,7 +79,7 @@ export const proficiencyGrantsSchema = z.object({
 });
 ```
 
-- [ ] **0.2** Export `SpeedData`, `VisionEntry`, `SavetxtData`, `ProficiencyGrants` TypeScript types via `z.infer<>`
+- [ ] **0.2** Export `SpeedData`, `VisionEntry`, `SavetxtData`, `ProficiencyGrants`, `SourceRef` TypeScript types via `z.infer<>`
 - [ ] **0.3** Add `VISION_TYPES` and `RECOVERY_TYPES` to `lib/types/taxonomies.ts` as const arrays (alongside existing `DAMAGE_TYPES`, etc.)
 
 **Verify:** `npx tsc --noEmit` passes. No runtime usage yet — these are just type definitions.
@@ -99,6 +106,7 @@ export const proficiencyGrantsSchema = z.object({
 | `weaponProfs` | `z.array(z.string()).default([])` | `[]` | Weapon proficiency grants |
 | `armorProfs` | `z.array(z.string()).default([])` | `[]` | Armor proficiency grants |
 | `toolProfs` | `z.array(z.string()).default([])` | `[]` | Tool proficiency grants |
+| `source_refs` | `sourceRefsSchema` | `[]` | Source book references `[{book: "PHB", page: 53}]` for content filtering |
 
 - [ ] **1.3** Keep existing `speed: z.number().int().positive()` field unchanged (backward-compatible; `speed_detail` is the new structured version)
 
@@ -127,6 +135,7 @@ export const proficiencyGrantsSchema = z.object({
 | `savetxt` | `savetxtSchema.optional()` | `undefined` | Save advantages/immunities |
 | `extraAC` | `z.number().optional()` | `undefined` | Flat AC bonus (simple case) |
 | `extraLimitedFeatures` | `z.array(z.object({ name: z.string(), usages: z.number(), recovery: z.enum(RECOVERY_TYPES) })).default([])` | `[]` | Additional limited-use resources granted |
+| `source_refs` | `sourceRefsSchema` | `[]` | Source book references for content filtering |
 
 **Verify:** `npx tsc --noEmit` passes. Parse existing feature data through the schema to confirm backward compatibility.
 
@@ -142,6 +151,7 @@ export const proficiencyGrantsSchema = z.object({
 |---|---|---|---|
 | `attacks` | `z.array(z.number().int().positive()).length(20).optional()` | `undefined` | Attacks per action per level (e.g., Fighter gets 2 at level 5) |
 | `improvements` | `z.array(z.boolean()).length(20).optional()` | `undefined` | Which levels get ASI (`true` at levels 4, 8, 12, 16, 19 for most) |
+| `source_refs` | `sourceRefsSchema` | `[]` | Source book references for content filtering |
 
 **Verify:** `npx tsc --noEmit` passes. Parse existing class data through the schema to confirm backward compatibility.
 
