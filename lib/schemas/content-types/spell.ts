@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAGIC_SCHOOLS, DAMAGE_TYPES } from "@/lib/types/taxonomies";
+import { cantripDieSchema } from "./mechanical";
 
 const spellDamageSchema = z.object({
   type: z.enum(DAMAGE_TYPES),
@@ -34,5 +35,9 @@ export const spellDataSchema = z.object({
   area_of_effect: areaOfEffectSchema.nullable().default(null),
   classes: z.array(z.string()).default([]),
   subclasses: z.array(z.string()).default([]),
+  // Phase 2 fields
+  descriptionFull: z.string().optional(),
+  descriptionCantripDie: cantripDieSchema.optional(),
+  dependencies: z.array(z.string()).default([]),
 });
 export type SpellData = z.infer<typeof spellDataSchema>;
