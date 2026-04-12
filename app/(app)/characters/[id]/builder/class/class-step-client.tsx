@@ -255,15 +255,49 @@ export function ClassStepClient({
   }
 
   // Get features for a specific class at a specific level, sorted by level then name
-  function getFeaturesForClass(classSlug: string, level: number) {
+  // When a subclass is selected, replace generic placeholder features with subclass-specific ones
+  function getFeaturesForClass(classSlug: string, level: number, selectedSubclass?: string) {
     return features
       .filter((f) => {
         const data = f.data as Record<string, unknown>;
-        return (
-          data.class === classSlug &&
-          typeof data.level === "number" &&
-          data.level <= level
-        );
+        if (data.class !== classSlug) return false;
+        if (typeof data.level !== "number" || data.level > level) return false;
+
+        const featureSubclass = data.subclass as string | null;
+
+        if (selectedSubclass) {
+          // Subclass is selected:
+          // - Include features with no subclass (general class features)
+          // - Include features matching the selected subclass
+          // - EXCLUDE generic subclass placeholder features (they have subclass: null
+          //   but their feature_type would be passive and their name contains "feature")
+          //   We detect placeholders by checking if a subclass feature exists at the same level
+          if (featureSubclass && featureSubclass !== selectedSubclass) {
+            return false; // Wrong subclass feature
+          }
+          if (!featureSubclass) {
+            // Check if this is a generic placeholder that should be replaced
+            // Placeholders have names like "Path feature", "College Feature", etc.
+            const isPlaceholder = /feature$/i.test(f.name.trim());
+            if (isPlaceholder) {
+              // Check if there's a subclass feature at this same level
+              const hasSubclassReplacement = features.some((sf) => {
+                const sfData = sf.data as Record<string, unknown>;
+                return (
+                  sfData.class === classSlug &&
+                  sfData.subclass === selectedSubclass &&
+                  sfData.level === data.level
+                );
+              });
+              if (hasSubclassReplacement) return false; // Skip placeholder
+            }
+          }
+        } else {
+          // No subclass selected — only show features with no subclass
+          if (featureSubclass) return false;
+        }
+
+        return true;
       })
       .sort((a, b) => {
         const levelA = (a.data.level as number) ?? 0;
@@ -282,7 +316,7 @@ export function ClassStepClient({
           <div className="space-y-4">
             {selectedClasses.map((cls, index) => {
               const classData = classes.find((c) => c.slug === cls.slug);
-              const classFeatures = getFeaturesForClass(cls.slug, cls.level);
+              const classFeatures = getFeaturesForClass(cls.slug, cls.level, cls.subclass);
               const choiceEffects = classFeatures.flatMap((f) =>
                 f.effects.filter((e): e is ChoiceEffect => e.type === "choice"),
               );
