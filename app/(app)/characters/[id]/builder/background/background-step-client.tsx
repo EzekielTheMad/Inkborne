@@ -397,17 +397,17 @@ export function BackgroundStepClient({
           <Button
             variant="outline"
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/race`)
-            }
-          >
-            Previous: Race
-          </Button>
-          <Button
-            onClick={() =>
               router.push(`/characters/${characterId}/builder/abilities`)
             }
           >
-            Next: Abilities
+            Previous: Abilities
+          </Button>
+          <Button
+            onClick={() =>
+              router.push(`/characters/${characterId}/builder/equipment`)
+            }
+          >
+            Next: Equipment
           </Button>
         </div>
       </div>

@@ -558,16 +558,18 @@ export function ClassStepClient({
         <div className="flex justify-between pt-4">
           <Button
             variant="outline"
-            onClick={() => router.push(`/characters/${characterId}/builder`)}
-          >
-            Back to Overview
-          </Button>
-          <Button
             onClick={() =>
               router.push(`/characters/${characterId}/builder/race`)
             }
           >
-            Next: Race
+            Previous: Race
+          </Button>
+          <Button
+            onClick={() =>
+              router.push(`/characters/${characterId}/builder/abilities`)
+            }
+          >
+            Next: Abilities
           </Button>
         </div>
       </div>

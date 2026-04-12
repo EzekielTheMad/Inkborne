@@ -515,17 +515,17 @@ export function RaceStepClient({
           <Button
             variant="outline"
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/class`)
+              router.push(`/characters/${characterId}/builder`)
             }
           >
-            Previous: Class
+            Back to Overview
           </Button>
           <Button
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/background`)
+              router.push(`/characters/${characterId}/builder/class`)
             }
           >
-            Next: Background
+            Next: Class
           </Button>
         </div>
       </div>

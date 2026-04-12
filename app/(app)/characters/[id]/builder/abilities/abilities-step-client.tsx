@@ -418,17 +418,17 @@ export function AbilitiesStepClient({
           <Button
             variant="outline"
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/background`)
+              router.push(`/characters/${characterId}/builder/class`)
             }
           >
-            Previous: Background
+            Previous: Class
           </Button>
           <Button
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/equipment`)
+              router.push(`/characters/${characterId}/builder/background`)
             }
           >
-            Next: Equipment
+            Next: Background
           </Button>
         </div>
       </div>

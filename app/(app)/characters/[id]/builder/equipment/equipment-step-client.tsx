@@ -185,10 +185,10 @@ export function EquipmentStepClient({
         <Button
           variant="outline"
           onClick={() =>
-            router.push(`/characters/${characterId}/builder/abilities`)
+            router.push(`/characters/${characterId}/builder/background`)
           }
         >
-          Previous: Abilities
+          Previous: Background
         </Button>
         <Button
           onClick={() => router.push(`/characters/${characterId}`)}
