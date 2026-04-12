@@ -254,16 +254,23 @@ export function ClassStepClient({
     return (feature.data.feature_type as string) ?? "passive";
   }
 
-  // Get features for a specific class at a specific level
+  // Get features for a specific class at a specific level, sorted by level then name
   function getFeaturesForClass(classSlug: string, level: number) {
-    return features.filter((f) => {
-      const data = f.data as Record<string, unknown>;
-      return (
-        data.class === classSlug &&
-        typeof data.level === "number" &&
-        data.level <= level
-      );
-    });
+    return features
+      .filter((f) => {
+        const data = f.data as Record<string, unknown>;
+        return (
+          data.class === classSlug &&
+          typeof data.level === "number" &&
+          data.level <= level
+        );
+      })
+      .sort((a, b) => {
+        const levelA = (a.data.level as number) ?? 0;
+        const levelB = (b.data.level as number) ?? 0;
+        if (levelA !== levelB) return levelA - levelB;
+        return a.name.localeCompare(b.name);
+      });
   }
 
   return (
