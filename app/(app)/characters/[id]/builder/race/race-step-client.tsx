@@ -508,6 +508,7 @@ export function RaceStepClient({
           contentTypeLabel={raceTypeLabel}
           onConfirm={handleSelectRace}
           onCancel={() => setPreviewContent(null)}
+          features={traits}
         />
 
         <div className="flex justify-between pt-4">

@@ -256,23 +256,32 @@ export function ContentPreview({
             </>
           )}
 
-          {/* Stat Bonuses */}
-          {mechanicals.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-1">Stat Bonuses</p>
-                <div className="text-sm text-muted-foreground">
-                  {mechanicals.map((m, i) => (
-                    <span key={i}>
-                      {i > 0 && ", "}
-                      {formatSlug(m.stat)} {m.op === "add" ? "+" : ""}{String(m.value ?? m.expr ?? "")}
-                    </span>
-                  ))}
+          {/* Stat Modifiers — only show non-ability-score effects not already covered above */}
+          {(() => {
+            // Filter out ability scores (shown in enriched section) and internal stats
+            const ABILITY_SLUGS = new Set(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]);
+            const HIDDEN_STATS = new Set(["movement_speed", "size", "hit_die"]);
+            const displayMechanicals = mechanicals.filter(
+              (m) => !ABILITY_SLUGS.has(m.stat) && !HIDDEN_STATS.has(m.stat),
+            );
+            if (displayMechanicals.length === 0) return null;
+            return (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium mb-1">Stat Modifiers</p>
+                  <div className="text-sm text-muted-foreground">
+                    {displayMechanicals.map((m, i) => (
+                      <span key={i}>
+                        {i > 0 && ", "}
+                        {formatSlug(m.stat)} {m.op === "add" && typeof m.value === "number" && m.value > 0 ? "+" : ""}{String(m.value ?? m.expr ?? "")}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            );
+          })()}
         </div>
 
         <DialogFooter className="gap-2">
