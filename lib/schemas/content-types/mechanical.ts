@@ -109,3 +109,55 @@ export const cantripDieSchema = z.object({
   levels: z.array(z.number().int().positive()).default([1, 5, 11, 17]),
 });
 export type CantripDie = z.infer<typeof cantripDieSchema>;
+
+// Language proficiency grants — fixed languages or "choose N from any"
+export const languageProfsSchema = z.array(
+  z.union([
+    z.string().min(1),           // fixed language slug: "elvish", "dwarvish"
+    z.object({                   // choice: "choose N"
+      choose: z.number().int().positive(),
+      from: z.union([z.literal("any"), z.array(z.string().min(1))]),
+    }),
+  ])
+).default([]);
+export type LanguageProfs = z.infer<typeof languageProfsSchema>;
+
+// Tool proficiency grants
+export const toolProfsSchema = z.array(
+  z.union([
+    z.string().min(1),           // fixed tool slug: "thieves-tools"
+    z.object({
+      choose: z.number().int().positive(),
+      from: z.union([z.literal("any"), z.array(z.string().min(1))]),
+    }),
+  ])
+).default([]);
+export type ToolProfs = z.infer<typeof toolProfsSchema>;
+
+// Skill proficiency grants
+export const skillProfsSchema = z.array(z.string().min(1)).default([]);
+
+// Starting equipment description text
+export const equipmentDescSchema = z.string().default("");
+
+// Conditional modifier — declarative version of MPMB calcChanges
+export const calcChangeEntrySchema = z.object({
+  target: z.enum(["atkCalc", "atkAdd", "spellCalc", "spellAdd", "hp"]),
+  condition: z.string().default(""),       // human-readable condition description
+  value: z.union([z.number(), z.string()]).optional(),  // numeric bonus or formula
+  description: z.string().min(1),          // what this modifier does
+});
+export type CalcChangeEntry = z.infer<typeof calcChangeEntrySchema>;
+
+export const calcChangesSchema = z.array(calcChangeEntrySchema).default([]);
+
+// Modifier addition — adds to a specific computed field
+export const addModEntrySchema = z.object({
+  type: z.string().min(1),     // modifier type: "save", "skill", etc.
+  field: z.string().min(1),    // specific field: "Str", "Athletics", etc.
+  mod: z.union([z.number(), z.string()]),  // bonus value or formula
+  text: z.string().default(""),
+});
+export type AddModEntry = z.infer<typeof addModEntrySchema>;
+
+export const addModSchema = z.array(addModEntrySchema).default([]);
