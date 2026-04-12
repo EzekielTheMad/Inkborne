@@ -27,7 +27,12 @@ const multiclassSchema = z.object({
   proficiencies_gained: z.array(z.string()),
 });
 
-import { sourceRefsSchema } from "./mechanical";
+import {
+  sourceRefsSchema,
+  spellcastingKnownSchema,
+  spellcastingListSchema,
+  spellcastingExtraSchema,
+} from "./mechanical";
 
 export const classDataSchema = z.object({
   hit_die: z.number().int().positive(),
@@ -40,5 +45,10 @@ export const classDataSchema = z.object({
   attacks: z.array(z.number().int().positive()).length(20).optional(),
   improvements: z.array(z.boolean()).length(20).optional(),
   source_refs: sourceRefsSchema,
+  // Phase 2 spellcasting fields
+  spellcastingKnown: spellcastingKnownSchema.optional(),
+  spellcastingList: spellcastingListSchema.optional(),
+  spellcastingExtra: spellcastingExtraSchema.optional(),
+  abilitySave: z.string().optional(),
 });
 export type ClassData = z.infer<typeof classDataSchema>;
