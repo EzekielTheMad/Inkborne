@@ -249,21 +249,9 @@ export function ClassStepClient({
       .eq("id", characterId);
   }
 
-  /** Check if a given level is a subclass selection level for a class */
-  function isSubclassLevel(classSlug: string, level: number): boolean {
-    const classEntry = classes.find((c) => c.slug === classSlug);
-    if (!classEntry) return false;
-    const levels = classEntry.data.levels;
-    if (!Array.isArray(levels)) return false;
-    return levels.some(
-      (lvl: Record<string, unknown>) =>
-        lvl.level === level && lvl.subclass_level === true,
-    );
-  }
-
-  /** Check if a feature is an Ability Score Improvement */
-  function isAsiFeature(feature: ContentEntry): boolean {
-    return feature.name === "Ability Score Improvement";
+  /** Check feature type from data.feature_type field */
+  function getFeatureType(feature: ContentEntry): string {
+    return (feature.data.feature_type as string) ?? "passive";
   }
 
   // Get features for a specific class at a specific level
@@ -362,10 +350,9 @@ export function ClassStepClient({
                             typeof feature.data.level === "number"
                               ? feature.data.level
                               : 0;
-                          const showSubclass =
-                            featureLevel > 0 &&
-                            isSubclassLevel(cls.slug, featureLevel);
-                          const showAsi = isAsiFeature(feature);
+                          const featureType = getFeatureType(feature);
+                          const showSubclass = featureType === "subclass";
+                          const showAsi = featureType === "asi";
                           const hasInteraction =
                             featureChoices.length > 0 ||
                             showSubclass ||
