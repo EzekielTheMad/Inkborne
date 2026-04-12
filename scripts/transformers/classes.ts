@@ -139,6 +139,13 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     lvl.features.some((f) => f.index.includes("ability-score-improvement"))
   );
 
+  // Derive cantrips known array from API level data (one entry per level, 20 total)
+  // spellcastingKnown.spells, spellcastingKnown.prepared, and spellcastingExtra are
+  // MPMB-seeded via SQL migration 00014_mpmb_spellcasting_known.sql
+  const cantripsKnown = sortedLevels
+    .map((lvl) => lvl.spellcasting?.cantrips_known ?? 0);
+  const hasCantrips = cantripsKnown.some((c) => c > 0);
+
   return buildContentEntry("class", apiClass.index, apiClass.name, {
     hit_die: apiClass.hit_die,
     spellcasting,
@@ -150,6 +157,19 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     starting_proficiencies: apiClass.proficiencies.map((p) => p.index),
     levels,
     ...(improvements.some(Boolean) ? { improvements } : {}),
+    // Partial spellcastingKnown from API — cantrips only; spells/prepared via SQL migration
+    ...(hasCantrips ? {
+      spellcastingKnown: {
+        cantrips: cantripsKnown,
+      },
+    } : {}),
+    // spellcastingList derived from class slug; half-casters cap at spell level 5
+    ...(spellcasting ? {
+      spellcastingList: {
+        class: apiClass.index,
+        level: [0, mapSpellcastingType(apiClass.index) === "half" ? 5 : 9] as [number, number],
+      },
+    } : {}),
   }, effects);
 }
 
