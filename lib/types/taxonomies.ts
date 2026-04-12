@@ -44,3 +44,9 @@ export const SPELLCASTING_TYPES = [
   "full", "half", "third", "pact",
 ] as const;
 export type SpellcastingType = (typeof SPELLCASTING_TYPES)[number];
+
+export const VISION_TYPES = ["darkvision", "blindsight", "truesight", "tremorsense"] as const;
+export type VisionType = (typeof VISION_TYPES)[number];
+
+export const RECOVERY_TYPES = ["short rest", "long rest", "dawn", "day"] as const;
+export type RecoveryType = (typeof RECOVERY_TYPES)[number];
