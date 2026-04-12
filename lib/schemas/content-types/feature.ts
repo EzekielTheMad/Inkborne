@@ -7,6 +7,8 @@ import {
   speedSchema,
   savetxtSchema,
   sourceRefsSchema,
+  spellcastingBonusSchema,
+  spellcastingExtraSchema,
 } from "./mechanical";
 
 export const FEATURE_TYPES = [
@@ -45,5 +47,11 @@ export const featureDataSchema = z.object({
     })
   ).default([]),
   source_refs: sourceRefsSchema,
+  // Phase 2 spellcasting fields
+  spellcastingBonus: z.array(spellcastingBonusSchema).default([]),
+  spellcastingAbility: z.string().optional(),
+  spellcastingExtra: spellcastingExtraSchema.optional(),
+  fixedDC: z.number().int().positive().optional(),
+  fixedSpAttack: z.number().int().optional(),
 });
 export type FeatureData = z.infer<typeof featureDataSchema>;
