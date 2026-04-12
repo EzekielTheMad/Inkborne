@@ -11,6 +11,10 @@ interface ApiFeature {
   prerequisites: Array<unknown>;
 }
 
+// TODO: Phase 1 mechanical fields (action, usages, recovery, additional, speed,
+// vision, dmgres, savetxt, scores, extraAC) are seeded from MPMB data via SQL
+// migration 00012_mpmb_feature_enrichment.sql. The dnd5eapi API does not provide
+// these fields, so the transformer cannot populate them from the API.
 export async function transformFeatures(): Promise<TransformedContent[]> {
   const features = await fetchAllFromApi<ApiFeature>("/features");
   return features.map((feature) => {

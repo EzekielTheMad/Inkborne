@@ -26,6 +26,21 @@ interface ApiRace {
   };
 }
 
+// Known weapon proficiency indices from the API
+const WEAPON_PROF_PREFIXES = ["weapon-", "battleaxes", "handaxes", "light-hammers", "warhammers", "longswords", "shortswords", "rapiers", "hand-crossbows"];
+const ARMOR_PROF_PREFIXES = ["armor-", "light-armor", "medium-armor", "heavy-armor", "shields"];
+const TOOL_PROF_PREFIXES = ["smiths-tools", "brewers-supplies", "masons-tools", "tinkers-tools", "alchemists-supplies", "painters-supplies", "navigators-tools"];
+
+function categorizeProficiency(index: string): "weapon" | "armor" | "tool" | "other" {
+  const slug = index.toLowerCase();
+  if (WEAPON_PROF_PREFIXES.some((p) => slug.includes(p))) return "weapon";
+  if (ARMOR_PROF_PREFIXES.some((p) => slug.includes(p))) return "armor";
+  if (TOOL_PROF_PREFIXES.some((p) => slug.includes(p))) return "tool";
+  return "other";
+}
+
+const ABILITY_ORDER = ["str", "dex", "con", "int", "wis", "cha"];
+
 export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
   const effects: Effect[] = [];
 
@@ -57,9 +72,32 @@ export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
     effects.push(buildChoiceEffect(opts.choose, options, "language", `${apiRace.index}-language-choice`));
   }
 
+  // Build scores array [STR, DEX, CON, INT, WIS, CHA] from ability_bonuses
+  const scores = [0, 0, 0, 0, 0, 0];
+  for (const bonus of apiRace.ability_bonuses) {
+    const idx = ABILITY_ORDER.indexOf(bonus.ability_score.index);
+    if (idx >= 0) scores[idx] = bonus.bonus;
+  }
+
+  // Categorize starting proficiencies
+  const weaponProfs: string[] = [];
+  const armorProfs: string[] = [];
+  const toolProfs: string[] = [];
+  for (const prof of (apiRace.starting_proficiencies ?? [])) {
+    const category = categorizeProficiency(prof.index);
+    const slug = normalizeSlug(prof.index);
+    switch (category) {
+      case "weapon": weaponProfs.push(slug); break;
+      case "armor": armorProfs.push(slug); break;
+      case "tool": toolProfs.push(slug); break;
+    }
+  }
+
   return buildContentEntry("race", apiRace.index, apiRace.name, {
     size: apiRace.size,
     speed: apiRace.speed,
+    speed_detail: { walk: apiRace.speed },
+    scores: scores.some((s) => s !== 0) ? scores : undefined,
     age_description: apiRace.age,
     alignment_description: apiRace.alignment,
     size_description: apiRace.size_description,
@@ -67,6 +105,9 @@ export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
     traits: (apiRace.traits ?? []).map((t) => t.index),
     subraces: (apiRace.subraces ?? []).map((s) => s.index),
     languages: (apiRace.languages ?? []).map((l) => l.index),
+    weaponProfs,
+    armorProfs,
+    toolProfs,
   }, effects);
 }
 

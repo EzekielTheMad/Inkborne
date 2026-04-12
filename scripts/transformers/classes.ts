@@ -133,6 +133,12 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     };
   });
 
+  // Derive improvements (ASI levels) from API level feature data
+  // TODO: attacks array is MPMB-seeded via SQL migration 00013_mpmb_class_enrichment.sql
+  const improvements = sortedLevels.map((lvl) =>
+    lvl.features.some((f) => f.index.includes("ability-score-improvement"))
+  );
+
   return buildContentEntry("class", apiClass.index, apiClass.name, {
     hit_die: apiClass.hit_die,
     spellcasting,
@@ -143,6 +149,7 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     saving_throws: apiClass.saving_throws.map((s) => expandAbilityAbbreviation(s.index)),
     starting_proficiencies: apiClass.proficiencies.map((p) => p.index),
     levels,
+    ...(improvements.some(Boolean) ? { improvements } : {}),
   }, effects);
 }
 
