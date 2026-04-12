@@ -55,6 +55,7 @@ export function StatRibbon({
           armorClass={armorClass}
           initiative={initiative}
           speed={speed}
+          speedDetail={evalResult.speed}
         />
       </div>
 

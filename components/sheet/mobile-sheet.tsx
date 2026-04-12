@@ -10,6 +10,7 @@ import { CombatStats } from "@/components/sheet/combat-stats";
 import { HPTracker } from "@/components/sheet/hp-tracker";
 import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
+import { Defenses } from "@/components/sheet/defenses";
 import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { QuickNotes } from "@/components/sheet/quick-notes";
@@ -143,6 +144,7 @@ export function MobileSheet({
               armorClass={armorClass}
               initiative={initiative}
               speed={speed}
+              speedDetail={evalResult.speed}
             />
           </div>
 
@@ -164,6 +166,9 @@ export function MobileSheet({
 
           {/* Passive senses */}
           <PassiveSenses schema={schema} evalResult={evalResult} />
+
+          {/* Defenses */}
+          <Defenses evalResult={evalResult} />
 
           {/* Conditions */}
           <Conditions

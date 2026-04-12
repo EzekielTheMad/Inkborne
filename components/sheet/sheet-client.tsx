@@ -10,6 +10,7 @@ import { CharacterHeader } from "@/components/sheet/character-header";
 import { StatRibbon } from "@/components/sheet/stat-ribbon";
 import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
+import { Defenses } from "@/components/sheet/defenses";
 import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { SkillsList } from "@/components/sheet/skills-list";
@@ -93,6 +94,7 @@ export function SheetClient({
         <div className="space-y-4">
           <SavingThrows schema={schema} evalResult={evalResult} />
           <PassiveSenses schema={schema} evalResult={evalResult} />
+          <Defenses evalResult={evalResult} />
           <Conditions
             conditions={state.conditions ?? []}
             patchState={patchState}
