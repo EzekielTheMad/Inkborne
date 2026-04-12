@@ -39,6 +39,21 @@ export async function transformBackgrounds(): Promise<TransformedContent[]> {
     const bonds = bg.bonds?.from?.options?.map((o) => o.string) ?? [];
     const flaws = bg.flaws?.from?.options?.map((o) => o.string) ?? [];
 
+    // Phase 3: extract skill proficiencies from API starting_proficiencies
+    const skills = bg.starting_proficiencies
+      .filter((p) => p.index.startsWith("skill-"))
+      .map((p) => normalizeSlug(p.index.replace("skill-", "")));
+
+    // Phase 3: extract tool proficiencies (non-skill proficiencies)
+    const toolProfs = bg.starting_proficiencies
+      .filter((p) => !p.index.startsWith("skill-"))
+      .map((p) => normalizeSlug(p.index));
+
+    // Phase 3: derive language proficiency data from language_options
+    const languageProfs = bg.language_options
+      ? [{ choose: bg.language_options.choose, from: "any" as const }]
+      : [];
+
     return buildContentEntry("background", bg.index, bg.name, {
       feature: {
         name: bg.feature.name,
@@ -48,6 +63,12 @@ export async function transformBackgrounds(): Promise<TransformedContent[]> {
       ideals,
       bonds,
       flaws,
+      // Phase 3 fields
+      skills,
+      toolProfs,
+      languageProfs,
+      source_refs: [{ book: "SRD", page: 0 }],
+      // gold and equipment are MPMB-seeded via SQL migration 00017
     }, effects);
   });
 }

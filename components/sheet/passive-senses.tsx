@@ -16,7 +16,7 @@ interface SenseCard {
 }
 
 export function PassiveSenses({ schema, evalResult }: PassiveSensesProps) {
-  const { grants, stats, computed, narratives } = evalResult;
+  const { grants, stats, computed, narratives, vision } = evalResult;
   const proficiencyBonus = computed.proficiency_bonus ?? 0;
 
   // Helper: get the ability mod for a given ability slug
@@ -48,6 +48,14 @@ export function PassiveSenses({ schema, evalResult }: PassiveSensesProps) {
     .filter((n) => n.tag === "sense" || n.tag === "senses")
     .map((n) => n.text);
 
+  // Build vision display from structured vision data
+  const visionLabels = vision.map(
+    (v) => `${v.type.charAt(0).toUpperCase() + v.type.slice(1)} ${v.range} ft.`,
+  );
+
+  // Combine narrative senses and structured vision (deduped)
+  const allSpecialSenses = [...new Set([...visionLabels, ...specialSenses])];
+
   return (
     <div className="rounded-lg border border-border bg-card p-3 space-y-2">
       <h3 className="text-accent font-semibold text-sm uppercase tracking-wide">
@@ -70,10 +78,17 @@ export function PassiveSenses({ schema, evalResult }: PassiveSensesProps) {
         ))}
       </div>
 
-      {specialSenses.length > 0 && (
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {specialSenses.join(", ")}
-        </p>
+      {allSpecialSenses.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {allSpecialSenses.map((sense) => (
+            <span
+              key={sense}
+              className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full"
+            >
+              {sense}
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );

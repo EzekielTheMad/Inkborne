@@ -49,6 +49,14 @@ export default async function BackgroundStepPage({ params }: PageProps) {
     console.error("[BackgroundStepPage] Error fetching content refs:", contentRefsError.message, contentRefsError.details, contentRefsError.hint);
   }
 
+  // Fetch all languages for resolving "all_languages" choice
+  const { data: languages } = await supabase
+    .from("content_definitions")
+    .select("slug, name")
+    .eq("system_id", character.system_id)
+    .eq("content_type", "language")
+    .order("name");
+
   return (
     <BackgroundStepClient
       characterId={id}
@@ -56,6 +64,7 @@ export default async function BackgroundStepPage({ params }: PageProps) {
       backgrounds={backgroundContent ?? []}
       contentRefs={contentRefs ?? []}
       schema={character.game_systems?.schema_definition}
+      availableLanguages={(languages ?? []).map((l) => l.slug)}
     />
   );
 }

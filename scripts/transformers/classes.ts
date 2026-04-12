@@ -71,6 +71,18 @@ function mapSpellcastingType(className: string): "full" | "half" | "third" | "pa
 export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel[]): TransformedContent {
   const effects: Effect[] = [];
 
+  // Phase 3: derive skillstxt from proficiency choices
+  const skillChoices = apiClass.proficiency_choices
+    .filter((c) => c.from.options.some((o) => o.item?.index?.startsWith("skill-")));
+  const skillstxt = skillChoices.length > 0
+    ? `Choose ${skillChoices[0].choose} from ${
+        skillChoices[0].from.options
+          .filter((o) => o.item?.index?.startsWith("skill-"))
+          .map((o) => o.item.name.replace("Skill: ", ""))
+          .join(", ")
+      }`
+    : undefined;
+
   // Proficiency choices (e.g., choose 2 skills)
   for (let i = 0; i < apiClass.proficiency_choices.length; i++) {
     const choice = apiClass.proficiency_choices[i];
@@ -133,6 +145,22 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     };
   });
 
+  // Derive improvements (ASI levels) from API level feature data
+  // TODO: attacks array is MPMB-seeded via SQL migration 00013_mpmb_class_enrichment.sql
+  const improvements = sortedLevels.map((lvl) =>
+    lvl.features.some((f) => f.index.includes("ability-score-improvement"))
+  );
+
+  // Derive cantrips known array from API level data (one entry per level, 20 total)
+  // spellcastingKnown.spells, spellcastingKnown.prepared, and spellcastingExtra are
+  // MPMB-seeded via SQL migration 00014_mpmb_spellcasting_known.sql
+  const cantripsKnown = sortedLevels
+    .map((lvl) => lvl.spellcasting?.cantrips_known ?? 0);
+  const hasCantrips = cantripsKnown.some((c) => c > 0);
+
+  // Phase 3: primaryAbility, subclassLabel, equipment, armorProfs, weaponProfs, and
+  // toolProfs are MPMB-seeded via SQL migration 00018_class_detail_enrichment.sql.
+  // Only skillstxt and source_refs are derived from the API here.
   return buildContentEntry("class", apiClass.index, apiClass.name, {
     hit_die: apiClass.hit_die,
     spellcasting,
@@ -143,6 +171,23 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     saving_throws: apiClass.saving_throws.map((s) => expandAbilityAbbreviation(s.index)),
     starting_proficiencies: apiClass.proficiencies.map((p) => p.index),
     levels,
+    ...(improvements.some(Boolean) ? { improvements } : {}),
+    // Partial spellcastingKnown from API — cantrips only; spells/prepared via SQL migration
+    ...(hasCantrips ? {
+      spellcastingKnown: {
+        cantrips: cantripsKnown,
+      },
+    } : {}),
+    // spellcastingList derived from class slug; half-casters cap at spell level 5
+    ...(spellcasting ? {
+      spellcastingList: {
+        class: apiClass.index,
+        level: [0, mapSpellcastingType(apiClass.index) === "half" ? 5 : 9] as [number, number],
+      },
+    } : {}),
+    // Phase 3 fields from API
+    ...(skillstxt ? { skillstxt } : {}),
+    source_refs: [{ book: "SRD", page: 0 }],
   }, effects);
 }
 

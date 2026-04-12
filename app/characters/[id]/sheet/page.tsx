@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { getCharacterWithSystem } from "@/lib/supabase/characters";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { evaluate } from "@/lib/engine/evaluator";
+import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
 import { SheetClient } from "@/components/sheet/sheet-client";
 import type { Effect } from "@/lib/types/effects";
@@ -40,10 +41,22 @@ export default async function CharacterSheetPage({ params }: PageProps) {
     (ref) => ref.content_definitions?.effects ?? [],
   );
 
+  // Build structured sources from content ref data for Phase 1 aggregation
+  const raceRef = contentRefs.find((r) => r.content_definitions?.content_type === "race");
+  const classRef = contentRefs.find((r) => r.content_definitions?.content_type === "class");
+  const featureRefs = contentRefs.filter((r) => r.content_definitions?.content_type === "feature");
+
+  const structuredSources: StructuredSources = {
+    raceData: raceRef?.content_definitions?.data as StructuredSources["raceData"],
+    classData: classRef?.content_definitions?.data as StructuredSources["classData"],
+    featureData: featureRefs.map((r) => r.content_definitions?.data as NonNullable<StructuredSources["featureData"]>[number]).filter(Boolean),
+    level: character.level,
+  };
+
   // Run expression engine server-side
   const baseStatsWithLevel = { ...character.base_stats, level: character.level };
   const schema = character.game_systems.schema_definition;
-  const evalResult = evaluate(baseStatsWithLevel, allEffects, schema);
+  const evalResult = evaluate(baseStatsWithLevel, allEffects, schema, structuredSources);
 
   // Initialize play state with defaults
   const maxHp = evalResult.computed.hit_points ?? 0;

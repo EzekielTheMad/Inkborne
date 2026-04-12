@@ -55,6 +55,7 @@ export function transformSpellEntry(apiSpell: ApiSpell): TransformedContent {
       }
     : null;
 
+  // descriptionCantripDie is MPMB-seeded via SQL migration 00015_mpmb_cantrip_scaling.sql
   return buildContentEntry("spell", apiSpell.index, apiSpell.name, {
     level: apiSpell.level,
     school: apiSpell.school.index,
@@ -66,6 +67,7 @@ export function transformSpellEntry(apiSpell: ApiSpell): TransformedContent {
     concentration: apiSpell.concentration,
     ritual: apiSpell.ritual,
     description: apiSpell.desc.join("\n"),
+    descriptionFull: apiSpell.desc.join("\n"),
     higher_level: apiSpell.higher_level?.join("\n"),
     damage,
     heal_at_slot_level: apiSpell.heal_at_slot_level ?? null,
@@ -73,6 +75,7 @@ export function transformSpellEntry(apiSpell: ApiSpell): TransformedContent {
     area_of_effect: aoe,
     classes: apiSpell.classes.map((c) => c.index),
     subclasses: apiSpell.subclasses.map((s) => s.index),
+    dependencies: [],
   });
 }
 

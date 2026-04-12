@@ -25,6 +25,10 @@ export function transformEquipmentEntry(apiItem: ApiEquipment): TransformedConte
   const category = apiItem.equipment_category.index;
 
   if (category === "weapon" && apiItem.weapon_category) {
+    // Phase 3: monkweapon — the dnd5eapi does not tag monk weapons via properties,
+    // so we default to false. Correct values are populated via SQL migration or manual correction.
+    // Phase 3: ability, ammo, and baseWeapon are not available from the API
+    // and are either MPMB-seeded or set via homebrew creation.
     return buildContentEntry("weapon", apiItem.index, apiItem.name, {
       weapon_category: apiItem.weapon_category,
       weapon_range: apiItem.weapon_range ?? "Melee",
@@ -38,6 +42,8 @@ export function transformEquipmentEntry(apiItem: ApiEquipment): TransformedConte
       two_handed_damage: apiItem.two_handed_damage
         ? { dice: apiItem.two_handed_damage.damage_dice, type: apiItem.two_handed_damage.damage_type.index }
         : null,
+      monkweapon: false,
+      source_refs: [{ book: "SRD", page: 0 }],
     });
   }
 
