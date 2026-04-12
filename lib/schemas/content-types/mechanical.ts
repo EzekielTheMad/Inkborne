@@ -52,3 +52,60 @@ export const proficiencyGrantsSchema = z.object({
   tools: z.array(z.string()).default([]),
 });
 export type ProficiencyGrants = z.infer<typeof proficiencyGrantsSchema>;
+
+// Spellcasting known — cantrips/spells known per level for a class
+export const spellcastingKnownSchema = z.object({
+  cantrips: z.array(z.number().int().nonnegative()).length(20).optional(),
+  spells: z.union([
+    z.array(z.number().int().nonnegative()).length(20),
+    z.literal("all"),
+  ]).optional(),
+  prepared: z.boolean().default(false),
+});
+export type SpellcastingKnown = z.infer<typeof spellcastingKnownSchema>;
+
+// Spellcasting list reference — which spell list a class uses
+export const spellcastingListSchema = z.object({
+  class: z.string().min(1),
+  level: z.tuple([z.number().int().min(0), z.number().int().min(0).max(9)]),
+});
+export type SpellcastingList = z.infer<typeof spellcastingListSchema>;
+
+// Bonus spells granted at certain class/subclass levels
+export const spellcastingExtraSchema = z.array(
+  z.union([
+    z.string().min(1),                  // spell slug at all levels
+    z.array(z.string().min(1)),         // array of spell slugs for that tier
+  ])
+);
+export type SpellcastingExtra = z.infer<typeof spellcastingExtraSchema>;
+
+// Bonus spell access granted by a feature
+export const spellcastingBonusSchema = z.object({
+  name: z.string().min(1),
+  spells: z.array(z.string().min(1)).default([]),
+  selection: z.object({
+    count: z.number().int().positive(),
+    from: z.union([
+      z.literal("class"),
+      z.literal("any"),
+      z.array(z.string().min(1)),
+    ]),
+    level: z.tuple([z.number().int().min(0), z.number().int().max(9)]).optional(),
+    school: z.array(z.string()).optional(),
+  }).optional(),
+  class: z.string().optional(),
+  level: z.number().int().min(0).max(9).optional(),
+  prepared: z.boolean().default(false),
+  atwill: z.boolean().default(false),
+  oncelr: z.boolean().default(false),
+  oncesr: z.boolean().default(false),
+});
+export type SpellcastingBonus = z.infer<typeof spellcastingBonusSchema>;
+
+// Cantrip damage scaling formula
+export const cantripDieSchema = z.object({
+  die: z.string().min(1),
+  levels: z.array(z.number().int().positive()).default([1, 5, 11, 17]),
+});
+export type CantripDie = z.infer<typeof cantripDieSchema>;
