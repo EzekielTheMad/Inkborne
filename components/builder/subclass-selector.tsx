@@ -7,6 +7,8 @@ interface SubclassSelectorProps {
   subclasses: ContentEntry[];
   currentSelection: string | undefined;
   onSelect: (subclassSlug: string | undefined) => void;
+  /** Override label from class data (e.g. "Sacred Oath", "Primal Path") */
+  label?: string;
 }
 
 /**
@@ -18,6 +20,7 @@ export function SubclassSelector({
   subclasses,
   currentSelection,
   onSelect,
+  label,
 }: SubclassSelectorProps) {
   const available = subclasses.filter(
     (sc) => sc.data.parent_class === classSlug,
@@ -25,12 +28,12 @@ export function SubclassSelector({
 
   if (available.length === 0) return null;
 
-  // Derive the flavor label from the first subclass (they share the same label per class)
+  // Use explicit label prop (from class data), fall back to subclass flavor_label, then "Subclass"
   const flavorLabel =
-    typeof available[0]?.data.flavor_label === "string" &&
-    available[0].data.flavor_label
+    label ??
+    (typeof available[0]?.data.flavor_label === "string" && available[0].data.flavor_label
       ? available[0].data.flavor_label
-      : "Subclass";
+      : "Subclass");
 
   return (
     <div className="space-y-2 rounded-lg border border-accent/30 bg-accent/5 p-3">

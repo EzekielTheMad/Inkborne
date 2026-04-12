@@ -89,20 +89,79 @@ export function AbilitiesStepClient({
     (ref) => ref.content_definitions?.effects ?? [],
   );
 
-  // Racial bonuses from effects
-  const racialBonuses = useMemo(() => {
-    const bonuses: Record<string, number> = {};
-    for (const effect of allEffects) {
-      if (
-        effect.type === "mechanical" &&
-        effect.op === "add" &&
-        abilities.some((a) => a.slug === effect.stat)
-      ) {
-        bonuses[effect.stat] = (bonuses[effect.stat] ?? 0) + (typeof effect.value === "number" ? effect.value : 0);
+  // Compute per-ability bonuses with source attribution
+  interface BonusEntry { source: string; value: number }
+  const abilityBonuses = useMemo(() => {
+    const bonuses: Record<string, BonusEntry[]> = {};
+
+    // From content refs (race, subrace, class features, etc.)
+    for (const ref of contentRefs) {
+      const contentType = ref.content_definitions?.content_type;
+      const contentName = ref.content_definitions?.name;
+      const label =
+        contentType === "race" || contentType === "subrace"
+          ? contentName ?? "Race"
+          : contentType === "class"
+            ? contentName ?? "Class"
+            : contentName ?? "Feature";
+
+      // Prefer enriched scores array for races/subraces (avoids double-counting with mechanical effects)
+      const scoresArr = ref.content_definitions?.data?.scores as number[] | undefined;
+      const hasEnrichedScores = Array.isArray(scoresArr) && scoresArr.length === 6 &&
+        (contentType === "race" || contentType === "subrace");
+
+      if (hasEnrichedScores) {
+        const slugs = abilities.map((a) => a.slug);
+        for (let i = 0; i < Math.min(scoresArr!.length, slugs.length); i++) {
+          if (scoresArr![i] !== 0) {
+            const slug = slugs[i];
+            if (!bonuses[slug]) bonuses[slug] = [];
+            bonuses[slug].push({ source: label, value: scoresArr![i] });
+          }
+        }
+      } else {
+        // Fall back to mechanical effects for non-race content or races without enriched scores
+        for (const effect of ref.content_definitions?.effects ?? []) {
+          if (
+            effect.type === "mechanical" &&
+            effect.op === "add" &&
+            abilities.some((a) => a.slug === effect.stat)
+          ) {
+            const val = typeof effect.value === "number" ? effect.value : 0;
+            if (val !== 0) {
+              if (!bonuses[effect.stat]) bonuses[effect.stat] = [];
+              bonuses[effect.stat].push({ source: label, value: val });
+            }
+          }
+        }
       }
     }
+
+    // From ASI choices
+    const asiChoices = character.choices?.asi_choices ?? {};
+    for (const [featureSlug, asiChoice] of Object.entries(asiChoices)) {
+      if (asiChoice?.allocations) {
+        for (const alloc of asiChoice.allocations) {
+          if (alloc.amount !== 0) {
+            const slug = alloc.ability;
+            if (!bonuses[slug]) bonuses[slug] = [];
+            bonuses[slug].push({ source: "Ability Score Improvement", value: alloc.amount });
+          }
+        }
+      }
+    }
+
     return bonuses;
-  }, [allEffects, abilities]);
+  }, [contentRefs, abilities, character.choices?.asi_choices]);
+
+  // Total racial/other bonuses per ability (for score calculation)
+  const racialBonuses = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const [slug, entries] of Object.entries(abilityBonuses)) {
+      totals[slug] = entries.reduce((sum, e) => sum + e.value, 0);
+    }
+    return totals;
+  }, [abilityBonuses]);
 
   // Point buy points remaining
   const pointsUsed = useMemo(() => {
@@ -320,19 +379,31 @@ export function AbilitiesStepClient({
                     />
                   )}
 
-                  {bonus !== 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Racial: {bonus > 0 ? "+" : ""}
-                      {bonus}
-                    </p>
-                  )}
+                  <Separator />
+
+                  {/* Score breakdown */}
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Base Score</span>
+                      <span className="font-medium">{base || "--"}</span>
+                    </div>
+                    {(abilityBonuses[ability.slug] ?? []).map((entry, i) => (
+                      <div key={i} className="flex justify-between">
+                        <span className="text-muted-foreground">{entry.source}</span>
+                        <span className="font-medium text-accent">
+                          {entry.value > 0 ? "+" : ""}{entry.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
 
                   <Separator />
 
                   <div>
-                    <p className="text-lg font-bold">{total || "--"}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Total</p>
+                    <p className="text-2xl font-bold">{total || "--"}</p>
                     <p className="text-sm text-muted-foreground">
-                      {total
+                      Modifier: {total
                         ? `${mod >= 0 ? "+" : ""}${mod}`
                         : "--"}
                     </p>

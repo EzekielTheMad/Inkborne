@@ -272,6 +272,38 @@ export function BackgroundStepClient({
                   </p>
                 )}
 
+                {/* Enriched background data */}
+                <div className="text-sm space-y-0.5">
+                  {Array.isArray(selectedBgContent.data.skills) &&
+                    (selectedBgContent.data.skills as string[]).length > 0 && (
+                    <div>
+                      <span className="font-medium">Skills: </span>
+                      <span>
+                        {(selectedBgContent.data.skills as string[])
+                          .map((s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
+                          .join(", ")}
+                      </span>
+                    </div>
+                  )}
+                  {selectedBgContent.data.gold != null && (
+                    <div>
+                      <span className="font-medium">Starting Gold: </span>
+                      <span>{String(selectedBgContent.data.gold)} gp</span>
+                    </div>
+                  )}
+                  {Array.isArray(selectedBgContent.data.toolProfs) &&
+                    (selectedBgContent.data.toolProfs as string[]).length > 0 && (
+                    <div>
+                      <span className="font-medium">Tools: </span>
+                      <span>
+                        {(selectedBgContent.data.toolProfs as string[])
+                          .map((t) => t.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
+                          .join(", ")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 {selectedBgContent.effects
                   .filter((e) => e.type === "grant")
                   .length > 0 && (

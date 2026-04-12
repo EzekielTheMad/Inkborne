@@ -62,12 +62,21 @@ export default async function RaceStepPage({ params }: PageProps) {
     console.error("[RaceStepPage] Error fetching content refs:", contentRefsError.message, contentRefsError.details, contentRefsError.hint);
   }
 
+  // Fetch traits for resolving race trait choices (e.g., Dwarf tool proficiency, Half-Elf skill versatility)
+  const { data: traitContent } = await supabase
+    .from("content_definitions")
+    .select("id, name, slug, content_type, data, effects, version, source")
+    .eq("system_id", systemId)
+    .eq("content_type", "trait")
+    .order("name");
+
   return (
     <RaceStepClient
       characterId={id}
       character={character}
       races={raceContent ?? []}
       subraces={subraceContent ?? []}
+      traits={traitContent ?? []}
       contentRefs={contentRefs ?? []}
       schema={character.game_systems?.schema_definition}
     />
