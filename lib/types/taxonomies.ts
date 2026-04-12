@@ -18,7 +18,13 @@ export type CreatureSize = (typeof CREATURE_SIZES)[number];
 export const ARMOR_CATEGORIES = ["Light", "Medium", "Heavy", "Shield"] as const;
 export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
-export const WEAPON_CATEGORIES = ["Simple", "Martial"] as const;
+export const WEAPON_CATEGORIES = [
+  "Simple", "Martial",
+  "Natural",     // unarmed strike, beast attacks
+  "Cantrip",     // cantrip-based weapon entries (e.g., Booming Blade)
+  "Spell",       // spell-based weapon entries
+  "Improvised",  // improvised weapons
+] as const;
 export type WeaponCategory = (typeof WEAPON_CATEGORIES)[number];
 
 export const WEAPON_RANGE_TYPES = ["Melee", "Ranged"] as const;
