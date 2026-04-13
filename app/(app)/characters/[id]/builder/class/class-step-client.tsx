@@ -297,6 +297,18 @@ export function ClassStepClient({
           if (featureSubclass) return false;
         }
 
+        // Hide individual fighting style options — they're shown as choices under the parent
+        const featureType = data.feature_type as string | undefined;
+        if (featureType === "fighting_style" && f.name !== "Fighting Style") {
+          // This is a child style option (e.g., "Fighting Style: Archery")
+          // Only show it if there's no parent "Fighting Style" feature for this class
+          const hasParent = features.some((pf) => {
+            const pd = pf.data as Record<string, unknown>;
+            return pd.class === classSlug && pf.name === "Fighting Style" && pd.feature_type === "fighting_style";
+          });
+          if (hasParent) return false;
+        }
+
         return true;
       })
       .sort((a, b) => {
@@ -305,6 +317,18 @@ export function ClassStepClient({
         if (levelA !== levelB) return levelA - levelB;
         return a.name.localeCompare(b.name);
       });
+  }
+
+  /** Get the fighting style options for a class */
+  function getFightingStyleOptions(classSlug: string) {
+    return features.filter((f) => {
+      const data = f.data as Record<string, unknown>;
+      return (
+        data.class === classSlug &&
+        data.feature_type === "fighting_style" &&
+        f.name !== "Fighting Style" // exclude the parent
+      );
+    });
   }
 
   return (
@@ -417,10 +441,12 @@ export function ClassStepClient({
                           const featureType = getFeatureType(feature);
                           const showSubclass = featureType === "subclass";
                           const showAsi = featureType === "asi";
+                          const showFightingStyle = featureType === "fighting_style" && feature.name === "Fighting Style";
                           const hasInteraction =
                             featureChoices.length > 0 ||
                             showSubclass ||
-                            showAsi;
+                            showAsi ||
+                            showFightingStyle;
 
                           return (
                             <AccordionItem
@@ -437,7 +463,9 @@ export function ClassStepClient({
                                           ? "ASI"
                                           : showSubclass
                                             ? "Subclass"
-                                            : `${featureChoices.length} choice${featureChoices.length > 1 ? "s" : ""}`}
+                                            : showFightingStyle
+                                              ? "Choice"
+                                              : `${featureChoices.length} choice${featureChoices.length > 1 ? "s" : ""}`}
                                       </Badge>
                                     )}
                                   </span>
@@ -484,6 +512,42 @@ export function ClassStepClient({
                                     }
                                   />
                                 )}
+
+                                {/* Fighting Style selector */}
+                                {showFightingStyle && (() => {
+                                  const styleOptions = getFightingStyleOptions(cls.slug);
+                                  const selectedStyle = localChoices.resolved_choices?.[feature.slug]?.[0];
+                                  const selectedStyleEntry = styleOptions.find((s) => s.slug === selectedStyle);
+                                  return (
+                                    <div className="space-y-2 rounded-lg border border-accent/30 bg-accent/5 p-3">
+                                      <label className="block text-sm font-medium">
+                                        Choose your Fighting Style
+                                      </label>
+                                      <select
+                                        value={selectedStyle ?? ""}
+                                        onChange={(e) =>
+                                          handleChoiceSelect(
+                                            feature.slug,
+                                            e.target.value ? [e.target.value] : [],
+                                          )
+                                        }
+                                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                      >
+                                        <option value="">-- Select --</option>
+                                        {styleOptions.map((style) => (
+                                          <option key={style.slug} value={style.slug}>
+                                            {style.name.replace("Fighting Style: ", "")}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      {selectedStyleEntry && typeof selectedStyleEntry.data.description === "string" && (
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                          {selectedStyleEntry.data.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
 
                                 {/* Standard choice effects */}
                                 {featureChoices.map((choice) => (
