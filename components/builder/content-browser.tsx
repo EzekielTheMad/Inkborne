@@ -8,7 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { Effect } from "@/lib/types/effects";
+
+const ABILITY_ABBR = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
 
 export interface ContentEntry {
   id: string;
@@ -68,19 +71,70 @@ export function ContentBrowser({
               onClick={() => onSelect(entry)}
             >
               <CardHeader className="pb-1">
-                <CardTitle className="text-sm font-medium">
-                  {entry.name}
-                </CardTitle>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-sm font-medium">
+                    {entry.name}
+                  </CardTitle>
+                  <Badge variant="outline" className="text-[10px] shrink-0">
+                    {entry.source === "srd" ? "SRD" : "Homebrew"}
+                  </Badge>
+                </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {entry.source === "srd" ? "SRD" : "Homebrew"}
-                </p>
+              <CardContent className="space-y-1.5">
+                {/* Description */}
                 {typeof entry.data.description === "string" && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {entry.data.description.slice(0, 120)}
-                    {entry.data.description.length > 120 ? "..." : ""}
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {entry.data.description}
                   </p>
+                )}
+
+                {/* Class-specific: hit die, primary ability */}
+                {entry.content_type === "class" && (
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {entry.data.hit_die != null && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        d{String(entry.data.hit_die)}
+                      </Badge>
+                    )}
+                    {typeof entry.data.primaryAbility === "string" && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        {entry.data.primaryAbility}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {/* Race-specific: ability scores, speed, vision */}
+                {entry.content_type === "race" && (
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {Array.isArray(entry.data.scores) && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        {(entry.data.scores as number[])
+                          .map((v, i) => (v !== 0 ? `${v > 0 ? "+" : ""}${v} ${ABILITY_ABBR[i]}` : null))
+                          .filter(Boolean)
+                          .join(", ")}
+                      </Badge>
+                    )}
+                    {entry.data.speed_detail != null
+                      ? Object.entries(entry.data.speed_detail as Record<string, number>)
+                          .filter(([key]) => key !== "encumbered")
+                          .map(([type, spd]) => (
+                            <Badge key={type} variant="secondary" className="text-[10px]">
+                              {type === "walk" ? `${spd} ft` : `${type} ${spd} ft`}
+                            </Badge>
+                          ))
+                      : entry.data.speed != null && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            {String(entry.data.speed)} ft
+                          </Badge>
+                        )}
+                    {Array.isArray(entry.data.vision) &&
+                      (entry.data.vision as Array<{ type: string; range: number }>).map((v, i) => (
+                        <Badge key={i} variant="secondary" className="text-[10px] capitalize">
+                          {v.type} {v.range} ft
+                        </Badge>
+                      ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
