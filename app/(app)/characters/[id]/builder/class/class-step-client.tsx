@@ -171,6 +171,55 @@ export function ClassStepClient({
       .eq("id", characterId);
   }
 
+  async function handleFightingStyleSelect(
+    featureSlug: string,
+    classSlug: string,
+    styleSlug: string | undefined,
+  ) {
+    // Save to resolved_choices
+    const newResolved = {
+      ...localChoices.resolved_choices,
+      [featureSlug]: styleSlug ? [styleSlug] : [],
+    };
+    const newChoices = { ...localChoices, resolved_choices: newResolved };
+    setLocalChoices(newChoices);
+
+    await supabase
+      .from("characters")
+      .update({ choices: newChoices })
+      .eq("id", characterId);
+
+    // Remove old fighting style content ref for this class
+    const oldRef = contentRefs.find(
+      (ref) =>
+        ref.context?.source === "fighting_style" &&
+        ref.context?.class === classSlug,
+    );
+    if (oldRef) {
+      await supabase
+        .from("character_content_refs")
+        .delete()
+        .eq("id", oldRef.id);
+    }
+
+    // Create new content ref if a style is selected
+    if (styleSlug) {
+      const styleContent = features.find((f) => f.slug === styleSlug);
+      if (styleContent) {
+        await supabase.from("character_content_refs").insert([
+          {
+            character_id: characterId,
+            content_id: styleContent.id,
+            content_version: styleContent.version,
+            context: { source: "fighting_style", class: classSlug },
+          },
+        ]);
+      }
+    }
+
+    startTransition(() => router.refresh());
+  }
+
   async function handleSubclassSelect(
     classSlug: string,
     classIndex: number,
@@ -526,9 +575,10 @@ export function ClassStepClient({
                                       <select
                                         value={selectedStyle ?? ""}
                                         onChange={(e) =>
-                                          handleChoiceSelect(
+                                          handleFightingStyleSelect(
                                             feature.slug,
-                                            e.target.value ? [e.target.value] : [],
+                                            cls.slug,
+                                            e.target.value || undefined,
                                           )
                                         }
                                         className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
