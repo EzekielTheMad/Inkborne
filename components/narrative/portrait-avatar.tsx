@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-interface CropArea {
+export interface CropArea {
   x: number;
   y: number;
   width: number;
@@ -18,10 +19,12 @@ interface PortraitAvatarProps {
 }
 
 const sizeMap = {
-  sm: "size-12", // 48px — header
-  md: "size-14", // 56px — card
-  lg: "size-16", // 64px — dashboard overview
+  sm: "size-12",
+  md: "size-14",
+  lg: "size-16",
 } as const;
+
+const sizePx = { sm: 48, md: 56, lg: 64 } as const;
 
 const textSizeMap = {
   sm: "text-sm",
@@ -45,35 +48,53 @@ export function PortraitAvatar({
   className,
   cropArea,
 }: PortraitAvatarProps) {
-  // Build crop styles: scale the image so only the cropped region fills the container
-  const cropStyle = cropArea
-    ? {
-        objectFit: "none" as const,
-        objectPosition: `${-cropArea.x}px ${-cropArea.y}px`,
-        width: `${cropArea.width}px`,
-        height: `${cropArea.height}px`,
-        transform: `scale(${100 / cropArea.width})`,
-        transformOrigin: "top left",
-      }
-    : undefined;
+  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
+
+  // Calculate styles for cropped view using the original image dimensions
+  const getCroppedImgStyle = (): React.CSSProperties | undefined => {
+    if (!cropArea || !naturalSize) return undefined;
+    const container = sizePx[size];
+    const scale = container / cropArea.width;
+    return {
+      position: "absolute",
+      width: naturalSize.w * scale,
+      height: naturalSize.h * scale,
+      left: -cropArea.x * scale,
+      top: -cropArea.y * scale,
+      maxWidth: "none",
+    };
+  };
 
   return (
     <div
       className={cn(
-        "shrink-0 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center",
+        "shrink-0 rounded-full overflow-hidden border border-border bg-muted flex items-center justify-center relative",
         sizeMap[size],
         className,
       )}
     >
       {portraitUrl ? (
-        cropStyle ? (
-          <div className="size-full overflow-hidden">
+        cropArea ? (
+          <>
+            {/* Hidden image to get natural dimensions */}
             <img
               src={portraitUrl}
-              alt={characterName}
-              style={cropStyle}
+              alt=""
+              className="hidden"
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
+              }}
             />
-          </div>
+            {/* Cropped visible image */}
+            {naturalSize && (
+              <img
+                src={portraitUrl}
+                alt={characterName}
+                style={getCroppedImgStyle()}
+              />
+            )}
+          </>
         ) : (
           <img
             src={portraitUrl}

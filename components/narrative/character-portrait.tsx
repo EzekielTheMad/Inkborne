@@ -146,34 +146,6 @@ export function CharacterPortrait({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Tab switcher */}
-      <div className="flex gap-1 rounded-lg bg-muted p-0.5">
-        <button
-          type="button"
-          onClick={() => setActiveTab("portrait")}
-          className={cn(
-            "rounded-md px-3 py-1 text-xs font-medium transition-colors",
-            activeTab === "portrait"
-              ? "bg-secondary text-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Portrait
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("token")}
-          className={cn(
-            "rounded-md px-3 py-1 text-xs font-medium transition-colors",
-            activeTab === "token"
-              ? "bg-secondary text-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Token
-        </button>
-      </div>
-
       {/* Image container */}
       <div className="relative group">
         <div
@@ -277,6 +249,34 @@ export function CharacterPortrait({
             )}
           </div>
         )}
+      </div>
+
+      {/* Tab switcher — below image */}
+      <div className="flex gap-1 rounded-lg bg-muted p-0.5">
+        <button
+          type="button"
+          onClick={() => setActiveTab("portrait")}
+          className={cn(
+            "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+            activeTab === "portrait"
+              ? "bg-secondary text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Portrait
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("token")}
+          className={cn(
+            "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+            activeTab === "token"
+              ? "bg-secondary text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Token
+        </button>
       </div>
 
       {/* Hidden file input */}
