@@ -9,6 +9,14 @@ export interface StatCondition {
   value: number;
 }
 
+export type StateConditionOp = "eq" | "neq";
+
+export interface StateCondition {
+  field: string;
+  op: StateConditionOp;
+  value: string | boolean;
+}
+
 // --- Effect Types ---
 
 export type EffectOp = "add" | "set" | "multiply" | "grant" | "max" | "min";
@@ -19,6 +27,8 @@ export interface MechanicalEffect {
   op: EffectOp | "formula";
   value?: number | string;
   expr?: string; // Tier 2 formula expression
+  condition?: StateCondition | StateCondition[]; // array = AND semantics
+  tag?: string; // grouping tag, e.g., "ac_formula" for best-of selection
 }
 
 export interface NarrativeEffect {

@@ -45,6 +45,11 @@ export interface CharacterState {
   quick_notes?: string;
   notes?: string;
   spell_slots_used?: Record<string, number>;
+  // Equipment state
+  equipped_armor?: "none" | "light" | "medium" | "heavy";
+  shield_equipped?: boolean;
+  // Activation toggles
+  rage_active?: boolean;
   [key: string]: unknown;
 }
 
