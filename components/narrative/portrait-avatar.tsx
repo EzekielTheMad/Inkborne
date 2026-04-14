@@ -2,16 +2,24 @@
 
 import { cn } from "@/lib/utils";
 
+interface CropArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface PortraitAvatarProps {
   portraitUrl?: string | null;
   characterName: string;
   size: "sm" | "md" | "lg";
   className?: string;
+  cropArea?: CropArea | null;
 }
 
 const sizeMap = {
-  sm: "size-10", // 40px — header
-  md: "size-12", // 48px — card
+  sm: "size-12", // 48px — header
+  md: "size-14", // 56px — card
   lg: "size-16", // 64px — dashboard overview
 } as const;
 
@@ -35,7 +43,20 @@ export function PortraitAvatar({
   characterName,
   size,
   className,
+  cropArea,
 }: PortraitAvatarProps) {
+  // Build crop styles: scale the image so only the cropped region fills the container
+  const cropStyle = cropArea
+    ? {
+        objectFit: "none" as const,
+        objectPosition: `${-cropArea.x}px ${-cropArea.y}px`,
+        width: `${cropArea.width}px`,
+        height: `${cropArea.height}px`,
+        transform: `scale(${100 / cropArea.width})`,
+        transformOrigin: "top left",
+      }
+    : undefined;
+
   return (
     <div
       className={cn(
@@ -45,11 +66,21 @@ export function PortraitAvatar({
       )}
     >
       {portraitUrl ? (
-        <img
-          src={portraitUrl}
-          alt={characterName}
-          className="size-full object-cover"
-        />
+        cropStyle ? (
+          <div className="size-full overflow-hidden">
+            <img
+              src={portraitUrl}
+              alt={characterName}
+              style={cropStyle}
+            />
+          </div>
+        ) : (
+          <img
+            src={portraitUrl}
+            alt={characterName}
+            className="size-full object-cover"
+          />
+        )
       ) : (
         <span
           className={cn(

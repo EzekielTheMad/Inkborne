@@ -55,6 +55,12 @@ export function CharacterPageClient({
   hasSheet,
 }: CharacterPageClientProps) {
   const [state, setState] = useState<CharacterState>(initialState);
+  const [portraitUrl, setPortraitUrl] = useState<string | undefined>(
+    character.narrative?.portrait_url as string | undefined,
+  );
+  const [portraitCrop, setPortraitCrop] = useState<{ x: number; y: number; width: number; height: number } | null>(
+    character.narrative?.portrait_crop as { x: number; y: number; width: number; height: number } | null ?? null,
+  );
 
   const patchState = useCallback(
     async (patch: Partial<CharacterState>) => {
@@ -97,6 +103,8 @@ export function CharacterPageClient({
           onToggleInspiration={() =>
             patchState({ inspiration: !(state.inspiration ?? false) })
           }
+          portraitUrl={portraitUrl}
+          portraitCrop={portraitCrop}
         />
       </div>
       <div className="md:hidden">
@@ -224,6 +232,8 @@ export function CharacterPageClient({
               character={character}
               isOwner={isOwner}
               isDm={isDm}
+              onPortraitChange={(url) => setPortraitUrl(url ?? undefined)}
+              onCropChange={(crop) => setPortraitCrop(crop)}
             />
           </div>
         </TabsContent>

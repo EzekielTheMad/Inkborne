@@ -12,6 +12,8 @@ interface CharacterHeaderProps {
   inspiration: boolean;
   onToggleInspiration: () => void;
   mobile?: boolean;
+  portraitUrl?: string;
+  portraitCrop?: { x: number; y: number; width: number; height: number } | null;
 }
 
 function getClassDisplay(character: CharacterWithSystem): string {
@@ -42,6 +44,8 @@ export function CharacterHeader({
   inspiration,
   onToggleInspiration,
   mobile = false,
+  portraitUrl,
+  portraitCrop,
 }: CharacterHeaderProps) {
   const classDisplay = getClassDisplay(character);
   const raceDisplay = getRaceDisplay(character);
@@ -85,7 +89,8 @@ export function CharacterHeader({
     <header className="flex items-center gap-4 px-6 py-4 border-b border-border bg-card">
       {/* Portrait avatar */}
       <PortraitAvatar
-        portraitUrl={character.narrative?.portrait_url}
+        portraitUrl={portraitUrl ?? character.narrative?.portrait_url}
+        cropArea={portraitCrop ?? character.narrative?.portrait_crop as { x: number; y: number; width: number; height: number } | undefined}
         characterName={character.name}
         size="sm"
       />
