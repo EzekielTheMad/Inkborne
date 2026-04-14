@@ -56,7 +56,7 @@ export default async function CharacterSheetPage({ params }: PageProps) {
   // Run expression engine server-side
   const baseStatsWithLevel = { ...character.base_stats, level: character.level };
   const schema = character.game_systems.schema_definition;
-  const evalResult = evaluate(baseStatsWithLevel, allEffects, schema, structuredSources);
+  const evalResult = evaluate(baseStatsWithLevel, allEffects, schema, structuredSources, character.state as Record<string, unknown>);
 
   // Initialize play state with defaults
   const maxHp = evalResult.computed.hit_points ?? 0;
@@ -70,6 +70,9 @@ export default async function CharacterSheetPage({ params }: PageProps) {
       contentRefs={contentRefs}
       initialState={initialState}
       maxHp={maxHp}
+      allEffects={allEffects}
+      baseStatsWithLevel={baseStatsWithLevel}
+      structuredSources={structuredSources}
     />
   );
 }
