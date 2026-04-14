@@ -43,6 +43,8 @@ interface NarrativeTabProps {
   campaignId?: string | null;
   isOwner: boolean;
   isDm: boolean;
+  onPortraitChange?: (url: string | null) => void;
+  onCropChange?: (crop: { x: number; y: number; width: number; height: number }) => void;
 }
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -56,6 +58,8 @@ export function NarrativeTab({
   campaignId,
   isOwner,
   isDm,
+  onPortraitChange: onPortraitChangeParent,
+  onCropChange: onCropChangeParent,
 }: NarrativeTabProps) {
   const router = useRouter();
 
@@ -229,8 +233,9 @@ export function NarrativeTab({
     (url: string | null) => {
       setPortraitUrl(url);
       setLocalNarrative((prev) => ({ ...prev, portrait_url: url ?? undefined }));
+      onPortraitChangeParent?.(url);
     },
-    [],
+    [onPortraitChangeParent],
   );
 
   const handleTokenChange = useCallback(
@@ -348,9 +353,16 @@ export function NarrativeTab({
             characterName={character.name}
             portraitUrl={portraitUrl}
             tokenUrl={tokenUrl}
+            portraitCrop={localNarrative.portrait_crop as { x: number; y: number; width: number; height: number } | undefined}
             editable={editMode}
             onPortraitChange={handlePortraitChange}
             onTokenChange={handleTokenChange}
+            onCropChange={(crop) => {
+              setLocalNarrative((prev) => ({ ...prev, portrait_crop: crop }));
+              dirtyNarrative.current = true;
+              scheduleAutoSave();
+              onCropChangeParent?.(crop);
+            }}
             uploadAction={handleUpload}
             deleteAction={handleDelete}
           />

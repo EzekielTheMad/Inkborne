@@ -22,6 +22,7 @@ export interface CharacterChoices {
   ability_method?: "standard_array" | "point_buy" | "manual";
   ability_assignments?: Record<string, number>;
   starting_equipment?: string;
+  alignment?: string;
   personality_traits?: string[];
   ideals?: string[];
   bonds?: string[];
@@ -45,6 +46,11 @@ export interface CharacterState {
   quick_notes?: string;
   notes?: string;
   spell_slots_used?: Record<string, number>;
+  // Equipment state
+  equipped_armor?: "none" | "light" | "medium" | "heavy";
+  shield_equipped?: boolean;
+  // Activation toggles
+  rage_active?: boolean;
   [key: string]: unknown;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import type { CharacterWithSystem, CharacterState } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
@@ -15,6 +15,8 @@ import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { QuickNotes } from "@/components/sheet/quick-notes";
 import { Proficiencies } from "@/components/sheet/proficiencies";
+import { EquipmentState } from "@/components/sheet/equipment-state";
+import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { SkillsList } from "@/components/sheet/skills-list";
 import { ContentTabs } from "@/components/sheet/content-tabs";
 
@@ -75,6 +77,22 @@ export function MobileSheet({
     container.scrollTo({ left: index * container.clientWidth, behavior: "smooth" });
     setActiveTab(tabId);
   }, []);
+
+  // Derive activation toggles from character class choices
+  const availableToggles = useMemo(() => {
+    const toggles: Array<{ key: string; label: string; active: boolean }> = [];
+    const hasBarbarian = character.choices?.classes?.some(
+      (c: { slug: string }) => c.slug === "barbarian",
+    );
+    if (hasBarbarian) {
+      toggles.push({
+        key: "rage_active",
+        label: "Rage",
+        active: (state.rage_active as boolean) ?? false,
+      });
+    }
+    return toggles;
+  }, [character.choices, state]);
 
   const { stats, computed } = evalResult;
   const proficiencyBonus = computed.proficiency_bonus ?? 2;
@@ -169,6 +187,20 @@ export function MobileSheet({
 
           {/* Defenses */}
           <Defenses evalResult={evalResult} />
+
+          {/* Equipment state */}
+          <EquipmentState
+            equippedArmor={(state.equipped_armor as string) ?? "none"}
+            shieldEquipped={(state.shield_equipped as boolean) ?? false}
+            onArmorChange={(armor) => patchState({ equipped_armor: armor as CharacterState["equipped_armor"] })}
+            onShieldChange={(shield) => patchState({ shield_equipped: shield })}
+          />
+
+          {/* Activation toggles (e.g. Rage) */}
+          <ActivationToggles
+            toggles={availableToggles}
+            onToggle={(key, active) => patchState({ [key]: active })}
+          />
 
           {/* Conditions */}
           <Conditions

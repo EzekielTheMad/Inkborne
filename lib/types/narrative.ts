@@ -18,6 +18,7 @@ export interface NarrativeData {
   mannerisms?: string;
   fear?: string;
   portrait_url?: string;
+  portrait_crop?: { x: number; y: number; width: number; height: number };
   token_url?: string;
   fun_traits?: FunTraits;
 }

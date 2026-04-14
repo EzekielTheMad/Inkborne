@@ -62,6 +62,12 @@ export function BuilderStepNav({
           </Link>
         );
       })}
+      <Link
+        href={`/characters/${characterId}`}
+        className="px-3 py-1.5 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      >
+        View Character
+      </Link>
     </nav>
   );
 }

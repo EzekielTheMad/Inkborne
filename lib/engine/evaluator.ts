@@ -8,6 +8,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { SpeedData, VisionEntry, SavetxtData } from "@/lib/schemas/content-types/mechanical";
 import { sortEffectsByPriority } from "@/lib/engine/effects";
 import { parseExpression } from "@/lib/engine/parser";
+import { checkCondition } from "@/lib/engine/conditions";
 
 // ---------------------------------------------------------------------------
 // Structured data types for Phase 1 mechanical aggregation
@@ -181,6 +182,7 @@ export function evaluate(
   effects: Effect[],
   schema: SystemSchemaDefinition,
   sources?: StructuredSources,
+  state?: Record<string, unknown>,
 ): EvaluationResult {
   // 0. Prepend race score bonus effects if available
   const allEffects = [...effects];
@@ -196,7 +198,10 @@ export function evaluate(
   for (const effect of allEffects) {
     switch (effect.type) {
       case "mechanical":
-        mechanical.push(effect);
+        // Filter by condition — skip effects whose condition is not met
+        if (checkCondition(effect.condition, state ?? {})) {
+          mechanical.push(effect);
+        }
         break;
       case "narrative":
         narratives.push(effect);
@@ -263,11 +268,53 @@ export function evaluate(
     }
   }
 
-  // 6. Apply static effects targeting derived stats
-  applyStaticEffects(computed, derivedStatEffects);
+  // 6. Apply non-AC static effects to derived stats first
+  // (AC adds are deferred until after best-of formula resolution)
+  const acDerivedEffects: MechanicalEffect[] = [];
+  const nonAcDerivedEffects: MechanicalEffect[] = [];
+  for (const effect of derivedStatEffects) {
+    if (effect.stat === "armor_class") {
+      acDerivedEffects.push(effect);
+    } else {
+      nonAcDerivedEffects.push(effect);
+    }
+  }
+  applyStaticEffects(computed, nonAcDerivedEffects);
 
   // 7. Apply formula effects (Tier 2) last
+  // Split tagged AC formulas from regular formulas
+  const acFormulaEffects: MechanicalEffect[] = [];
+  const regularFormulaEffects: MechanicalEffect[] = [];
+
   for (const effect of formulaEffects) {
+    if (effect.tag === "ac_formula") {
+      acFormulaEffects.push(effect);
+    } else {
+      regularFormulaEffects.push(effect);
+    }
+  }
+
+  // AC best-of: evaluate all ac_formula alternatives and pick the max vs schema default
+  if (acFormulaEffects.length > 0) {
+    const context = { ...stats, ...computed };
+    const baseAC = computed.armor_class ?? 10;
+    let bestAC = baseAC;
+    for (const effect of acFormulaEffects) {
+      if (effect.expr) {
+        const val = parseExpression(effect.expr, context, builtins);
+        bestAC = Math.max(bestAC, val);
+      }
+    }
+    computed.armor_class = bestAC;
+  }
+
+  // Apply deferred AC static effects (adds/etc on top of best-of result)
+  if (acDerivedEffects.length > 0) {
+    applyStaticEffects(computed, acDerivedEffects);
+  }
+
+  // Apply regular formula effects
+  for (const effect of regularFormulaEffects) {
     if (effect.expr) {
       const context = { ...stats, ...computed };
       const value = parseExpression(effect.expr, context, builtins);

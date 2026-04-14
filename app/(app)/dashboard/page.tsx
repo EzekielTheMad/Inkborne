@@ -55,7 +55,7 @@ export default async function DashboardPage() {
               <div className="space-y-3">
                 {characters.map((character) => {
                   const classes = (character.choices as Record<string, unknown>)?.classes as Array<{ slug: string; level: number }> | undefined;
-                  const classDisplay = classes?.map((c) => `${c.slug} ${c.level}`).join(" / ");
+                  const classDisplay = classes?.map((c) => `${c.slug.replace(/\b\w/g, (ch) => ch.toUpperCase())} ${c.level}`).join(" / ");
                   const narrative = character.narrative as Record<string, unknown> | null;
                   const portraitUrl = narrative?.portrait_url as string | undefined;
                   const systemArr = character.game_systems as unknown as { name: string }[] | { name: string } | null;

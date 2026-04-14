@@ -1,23 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { NarrativeTab } from "@/components/narrative/narrative-tab";
-import { PortraitAvatar } from "@/components/narrative/portrait-avatar";
+import { getCharacterWithSystem } from "@/lib/supabase/characters";
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { evaluate } from "@/lib/engine/evaluator";
+import type { StructuredSources } from "@/lib/engine/evaluator";
+import { initializeState } from "@/lib/sheet/helpers";
+import { CharacterPageClient } from "@/components/character/character-page-client";
+import type { Effect } from "@/lib/types/effects";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function CharacterDashboardPage({ params }: PageProps) {
+export default async function CharacterPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
   const {
@@ -26,22 +21,12 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
 
   if (!user) redirect("/login");
 
-  console.log("[CharacterDashboardPage] Fetching character:", id);
-  const { data: character, error: characterError } = await supabase
-    .from("characters")
-    .select("*, game_systems (id, name, slug, schema_definition)")
-    .eq("id", id)
-    .single();
-
-  if (characterError) {
-    console.error("[CharacterDashboardPage] Error fetching character:", characterError.message, characterError.details, characterError.hint);
-  }
-
+  const character = await getCharacterWithSystem(id).catch(() => null);
   if (!character) notFound();
 
   const isOwner = character.user_id === user.id;
 
-  // Determine if current user is DM of the campaign this character belongs to
+  // Determine if current user is DM of the campaign
   let isDm = false;
   if (character.campaign_id) {
     const { data: campaign } = await supabase
@@ -54,153 +39,80 @@ export default async function CharacterDashboardPage({ params }: PageProps) {
     }
   }
 
-  const hasSheet =
-    character.choices?.classes && character.choices.classes.length > 0;
+  // Fetch content refs for sheet evaluation
+  const contentRefs = await getContentRefsByCharacter(id).catch(() => []);
 
-  const primaryClass = character.choices?.classes?.[0];
+  // Fetch class features at the character's current levels
+  const classChoices = character.choices?.classes ?? [];
+  let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
+
+  if (classChoices.length > 0) {
+    const { data: featureRows } = await supabase
+      .from("content_definitions")
+      .select("effects, data")
+      .eq("system_id", character.system_id)
+      .eq("content_type", "feature")
+      .in("data->>class", classChoices.map((c: { slug: string }) => c.slug));
+
+    if (featureRows) {
+      classFeatures = featureRows.filter((f) => {
+        const featureClass = f.data?.class as string | undefined;
+        const featureLevel = f.data?.level as number | undefined;
+        const featureSubclass = f.data?.subclass as string | null | undefined;
+        if (!featureClass || featureLevel == null) return false;
+        const classEntry = classChoices.find((c: { slug: string }) => c.slug === featureClass);
+        if (!classEntry || featureLevel > classEntry.level) return false;
+        if (featureSubclass) return classEntry.subclass === featureSubclass;
+        return true;
+      });
+    }
+  }
+
+  // Collect all effects
+  const allEffects: Effect[] = [
+    ...contentRefs.flatMap((ref) => ref.content_definitions?.effects ?? []),
+    ...classFeatures.flatMap((f) => f.effects ?? []),
+  ];
+
+  // Build structured sources
+  const raceRef = contentRefs.find((r) => r.content_definitions?.content_type === "race");
+  const classRef = contentRefs.find((r) => r.content_definitions?.content_type === "class");
+  const featureRefs = contentRefs.filter((r) => r.content_definitions?.content_type === "feature");
+
+  const structuredSources: StructuredSources = {
+    raceData: raceRef?.content_definitions?.data as StructuredSources["raceData"],
+    classData: classRef?.content_definitions?.data as StructuredSources["classData"],
+    featureData: [
+      ...featureRefs.map((r) => r.content_definitions?.data as NonNullable<StructuredSources["featureData"]>[number]),
+      ...classFeatures.map((f) => f.data as NonNullable<StructuredSources["featureData"]>[number]),
+    ].filter(Boolean),
+    level: character.level,
+  };
+
+  // Run expression engine
+  const baseStatsWithLevel = { ...character.base_stats, level: character.level };
+  const schema = character.game_systems.schema_definition;
+  const evalResult = evaluate(baseStatsWithLevel, allEffects, schema, structuredSources, character.state as Record<string, unknown>);
+
+  const maxHp = evalResult.computed.hit_points ?? 0;
+  const initialState = initializeState(character.state, maxHp);
+
+  const hasSheet = character.choices?.classes && character.choices.classes.length > 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <PortraitAvatar
-            portraitUrl={character.narrative?.portrait_url}
-            characterName={character.name}
-            size="lg"
-          />
-          <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">{character.name}</h1>
-          <p className="text-muted-foreground">
-            {character.game_systems?.name}
-            {primaryClass && (
-              <span>
-                {" "}
-                &middot; Level {character.level}{" "}
-                <span className="capitalize">{primaryClass.slug}</span>
-              </span>
-            )}
-          </p>
-          </div>
-        </div>
-        <Link href="/characters">
-          <Button variant="outline" className="w-full sm:w-auto">Back to Characters</Button>
-        </Link>
-      </div>
-
-      <Tabs defaultValue="overview">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="overview" className="flex-1 sm:flex-none">Overview</TabsTrigger>
-          <TabsTrigger value="narrative" className="flex-1 sm:flex-none">Narrative</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4 mt-4">
-          {/* Open Character Sheet CTA */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {hasSheet ? "Ready to play?" : "Not built yet"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {hasSheet
-                      ? "Open the full character sheet to track HP, conditions, and more."
-                      : "Complete the builder to unlock the play-mode character sheet."}
-                  </p>
-                </div>
-                <Link
-                  href={
-                    hasSheet
-                      ? `/characters/${character.id}/sheet`
-                      : `/characters/${character.id}/builder`
-                  }
-                >
-                  <Button className="w-full sm:w-auto">
-                    {hasSheet ? "Open Character Sheet" : "Build Character Sheet"}
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Character Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {hasSheet ? (
-                <div className="space-y-2">
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Class</p>
-                      <p className="font-medium capitalize">
-                        {character.choices.classes
-                          ?.map(
-                            (c: { slug: string; level: number }) =>
-                              `${c.slug} ${c.level}`,
-                          )
-                          .join(" / ")}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Race</p>
-                      <p className="font-medium capitalize">
-                        {character.choices.race ?? "Not selected"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Background</p>
-                      <p className="font-medium capitalize">
-                        {character.choices.background ?? "Not selected"}
-                      </p>
-                    </div>
-                  </div>
-                  <Separator className="my-4" />
-                  <div className="grid gap-4 grid-cols-3 sm:grid-cols-6">
-                    {Object.entries(character.base_stats || {}).map(
-                      ([stat, value]) => (
-                        <div key={stat} className="text-center">
-                          <p className="text-xs text-muted-foreground uppercase">
-                            {stat.slice(0, 3)}
-                          </p>
-                          <p className="text-2xl font-bold">{value as number}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {Math.floor(((value as number) - 10) / 2) >= 0
-                              ? "+"
-                              : ""}
-                            {Math.floor(((value as number) - 10) / 2)}
-                          </p>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">
-                    No character sheet yet. Build your character to see a
-                    summary here.
-                  </p>
-                  <Link href={`/characters/${character.id}/builder`}>
-                    <Button>Build Character Sheet</Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="narrative" className="mt-4">
-          <NarrativeTab
-            character={character}
-            campaignId={character.campaign_id}
-            isOwner={isOwner}
-            isDm={isDm}
-          />
-        </TabsContent>
-
-
-      </Tabs>
-    </div>
+    <CharacterPageClient
+      character={character}
+      schema={schema}
+      evalResult={evalResult}
+      contentRefs={contentRefs}
+      initialState={initialState}
+      maxHp={maxHp}
+      allEffects={allEffects}
+      baseStatsWithLevel={baseStatsWithLevel}
+      structuredSources={structuredSources}
+      isOwner={isOwner}
+      isDm={isDm}
+      hasSheet={hasSheet ?? false}
+    />
   );
 }

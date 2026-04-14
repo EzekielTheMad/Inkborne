@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { CharacterWithSystem, CharacterState } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
-import type { EvaluationResult } from "@/lib/engine/evaluator";
+import { evaluate } from "@/lib/engine/evaluator";
+import type { EvaluationResult, StructuredSources } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import type { Effect } from "@/lib/types/effects";
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import { CharacterHeader } from "@/components/sheet/character-header";
 import { StatRibbon } from "@/components/sheet/stat-ribbon";
@@ -17,6 +19,8 @@ import { SkillsList } from "@/components/sheet/skills-list";
 import { Proficiencies } from "@/components/sheet/proficiencies";
 import { ContentTabs } from "@/components/sheet/content-tabs";
 import { QuickNotes } from "@/components/sheet/quick-notes";
+import { EquipmentState } from "@/components/sheet/equipment-state";
+import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { MobileSheet } from "@/components/sheet/mobile-sheet";
 
 interface SheetClientProps {
@@ -26,15 +30,21 @@ interface SheetClientProps {
   contentRefs: ContentRefWithContent[];
   initialState: CharacterState;
   maxHp: number;
+  allEffects: Effect[];
+  baseStatsWithLevel: Record<string, number>;
+  structuredSources: StructuredSources;
 }
 
 export function SheetClient({
   character,
   schema,
-  evalResult,
+  evalResult: serverEvalResult,
   contentRefs,
   initialState,
   maxHp,
+  allEffects,
+  baseStatsWithLevel,
+  structuredSources,
 }: SheetClientProps) {
   const [state, setState] = useState<CharacterState>(initialState);
 
@@ -51,6 +61,27 @@ export function SheetClient({
     },
     [character.id],
   );
+
+  // Re-evaluate effects client-side when state changes (equipment, toggles, etc.)
+  const evalResult = useMemo(() => {
+    return evaluate(baseStatsWithLevel, allEffects, schema, structuredSources, state as Record<string, unknown>);
+  }, [baseStatsWithLevel, allEffects, schema, structuredSources, state]);
+
+  // Derive activation toggles from character class choices
+  const availableToggles = useMemo(() => {
+    const toggles: Array<{ key: string; label: string; active: boolean }> = [];
+    const hasBarbarian = character.choices?.classes?.some(
+      (c: { slug: string }) => c.slug === "barbarian",
+    );
+    if (hasBarbarian) {
+      toggles.push({
+        key: "rage_active",
+        label: "Rage",
+        active: (state.rage_active as boolean) ?? false,
+      });
+    }
+    return toggles;
+  }, [character.choices, state]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -95,6 +126,16 @@ export function SheetClient({
           <SavingThrows schema={schema} evalResult={evalResult} />
           <PassiveSenses schema={schema} evalResult={evalResult} />
           <Defenses evalResult={evalResult} />
+          <EquipmentState
+            equippedArmor={(state.equipped_armor as string) ?? "none"}
+            shieldEquipped={(state.shield_equipped as boolean) ?? false}
+            onArmorChange={(armor) => patchState({ equipped_armor: armor as CharacterState["equipped_armor"] })}
+            onShieldChange={(shield) => patchState({ shield_equipped: shield })}
+          />
+          <ActivationToggles
+            toggles={availableToggles}
+            onToggle={(key, active) => patchState({ [key]: active })}
+          />
           <Conditions
             conditions={state.conditions ?? []}
             patchState={patchState}
