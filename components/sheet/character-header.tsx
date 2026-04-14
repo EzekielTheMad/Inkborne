@@ -127,10 +127,10 @@ export function CharacterHeader({
           </Button>
         </Link>
 
-        <Link href={`/characters/${character.id}`}>
+        <Link href="/characters">
           <Button variant="ghost" size="sm">
             <ArrowLeftIcon />
-            Dashboard
+            Characters
           </Button>
         </Link>
       </div>
