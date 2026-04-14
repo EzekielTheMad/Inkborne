@@ -7,6 +7,8 @@ import { evaluate } from "@/lib/engine/evaluator";
 import type { EvaluationResult, StructuredSources } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { Effect } from "@/lib/types/effects";
+import type { InventoryItem, Currency } from "@/lib/types/inventory";
+import { DEFAULT_CURRENCY } from "@/lib/types/inventory";
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import { CharacterHeader } from "@/components/sheet/character-header";
 import { StatRibbon } from "@/components/sheet/stat-ribbon";
@@ -19,7 +21,6 @@ import { SkillsList } from "@/components/sheet/skills-list";
 import { Proficiencies } from "@/components/sheet/proficiencies";
 import { ContentTabs } from "@/components/sheet/content-tabs";
 import { QuickNotes } from "@/components/sheet/quick-notes";
-import { EquipmentState } from "@/components/sheet/equipment-state";
 import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { MobileSheet } from "@/components/sheet/mobile-sheet";
 
@@ -126,12 +127,6 @@ export function SheetClient({
           <SavingThrows schema={schema} evalResult={evalResult} />
           <PassiveSenses schema={schema} evalResult={evalResult} />
           <Defenses evalResult={evalResult} />
-          <EquipmentState
-            equippedArmor={(state.equipped_armor as string) ?? "none"}
-            shieldEquipped={(state.shield_equipped as boolean) ?? false}
-            onArmorChange={(armor) => patchState({ equipped_armor: armor as CharacterState["equipped_armor"] })}
-            onShieldChange={(shield) => patchState({ shield_equipped: shield })}
-          />
           <ActivationToggles
             toggles={availableToggles}
             onToggle={(key, active) => patchState({ [key]: active })}
@@ -163,6 +158,14 @@ export function SheetClient({
             contentRefs={contentRefs}
             state={state}
             patchState={patchState}
+            inventory={[]}
+            currency={DEFAULT_CURRENCY}
+            systemId={character.system_id}
+            strengthScore={evalResult.stats.strength ?? 10}
+            onAddItem={() => {}}
+            onUpdateItem={() => {}}
+            onRemoveItem={() => {}}
+            onCurrencyChange={() => {}}
           />
         </div>
       </div>
@@ -177,6 +180,14 @@ export function SheetClient({
           state={state}
           patchState={patchState}
           maxHp={maxHp}
+          inventory={[]}
+          currency={DEFAULT_CURRENCY}
+          systemId={character.system_id}
+          strengthScore={evalResult.stats.strength ?? 10}
+          onAddItem={() => {}}
+          onUpdateItem={() => {}}
+          onRemoveItem={() => {}}
+          onCurrencyChange={() => {}}
         />
       </div>
     </div>

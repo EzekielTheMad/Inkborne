@@ -15,7 +15,7 @@ import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { QuickNotes } from "@/components/sheet/quick-notes";
 import { Proficiencies } from "@/components/sheet/proficiencies";
-import { EquipmentState } from "@/components/sheet/equipment-state";
+import type { InventoryItem, Currency } from "@/lib/types/inventory";
 import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { SkillsList } from "@/components/sheet/skills-list";
 import { ContentTabs } from "@/components/sheet/content-tabs";
@@ -43,6 +43,14 @@ interface MobileSheetProps {
   state: CharacterState;
   patchState: (patch: Partial<CharacterState>) => Promise<void>;
   maxHp: number;
+  inventory: InventoryItem[];
+  currency: Currency;
+  systemId: string;
+  strengthScore: number;
+  onAddItem: (item: { content_id: string | null; name: string; content_type: string }) => void;
+  onUpdateItem: (itemId: string, updates: Partial<Pick<InventoryItem, "quantity" | "equipped" | "attuned" | "notes">>) => void;
+  onRemoveItem: (itemId: string) => void;
+  onCurrencyChange: (currency: Currency) => void;
 }
 
 export function MobileSheet({
@@ -53,6 +61,14 @@ export function MobileSheet({
   state,
   patchState,
   maxHp,
+  inventory,
+  currency,
+  systemId,
+  strengthScore,
+  onAddItem,
+  onUpdateItem,
+  onRemoveItem,
+  onCurrencyChange,
 }: MobileSheetProps) {
   const [activeTab, setActiveTab] = useState<TabId>("stats");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -188,14 +204,6 @@ export function MobileSheet({
           {/* Defenses */}
           <Defenses evalResult={evalResult} />
 
-          {/* Equipment state */}
-          <EquipmentState
-            equippedArmor={(state.equipped_armor as string) ?? "none"}
-            shieldEquipped={(state.shield_equipped as boolean) ?? false}
-            onArmorChange={(armor) => patchState({ equipped_armor: armor as CharacterState["equipped_armor"] })}
-            onShieldChange={(shield) => patchState({ shield_equipped: shield })}
-          />
-
           {/* Activation toggles (e.g. Rage) */}
           <ActivationToggles
             toggles={availableToggles}
@@ -240,6 +248,14 @@ export function MobileSheet({
                   state={state}
                   patchState={patchState}
                   initialTab={tabId}
+                  inventory={inventory}
+                  currency={currency}
+                  systemId={systemId}
+                  strengthScore={strengthScore}
+                  onAddItem={onAddItem}
+                  onUpdateItem={onUpdateItem}
+                  onRemoveItem={onRemoveItem}
+                  onCurrencyChange={onCurrencyChange}
                 />
               </div>
             </section>

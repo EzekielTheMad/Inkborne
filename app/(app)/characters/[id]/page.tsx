@@ -42,6 +42,14 @@ export default async function CharacterPage({ params }: PageProps) {
   // Fetch content refs for sheet evaluation
   const contentRefs = await getContentRefsByCharacter(id).catch(() => []);
 
+  // Fetch inventory
+  const { data: inventoryRows } = await supabase
+    .from("character_inventory")
+    .select("*, content_definitions(id, name, slug, content_type, data, effects)")
+    .eq("character_id", id)
+    .order("sort_order")
+    .order("name");
+
   // Fetch class features at the character's current levels
   const classChoices = character.choices?.classes ?? [];
   let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
@@ -113,6 +121,7 @@ export default async function CharacterPage({ params }: PageProps) {
       isOwner={isOwner}
       isDm={isDm}
       hasSheet={hasSheet ?? false}
+      inventory={inventoryRows ?? []}
     />
   );
 }
