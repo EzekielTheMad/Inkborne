@@ -36,10 +36,43 @@ export default async function CharacterSheetPage({ params }: PageProps) {
     return [];
   });
 
-  // Collect all effects from content refs
-  const allEffects: Effect[] = contentRefs.flatMap(
-    (ref) => ref.content_definitions?.effects ?? [],
-  );
+  // Fetch class features at the character's current levels
+  const classChoices = character.choices?.classes ?? [];
+  let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
+
+  if (classChoices.length > 0) {
+    const { data: featureRows } = await supabase
+      .from("content_definitions")
+      .select("effects, data")
+      .eq("system_id", character.system_id)
+      .eq("content_type", "feature")
+      .in("data->>class", classChoices.map((c: { slug: string }) => c.slug));
+
+    if (featureRows) {
+      classFeatures = featureRows.filter((f) => {
+        const featureClass = f.data?.class as string | undefined;
+        const featureLevel = f.data?.level as number | undefined;
+        const featureSubclass = f.data?.subclass as string | null | undefined;
+        if (!featureClass || featureLevel == null) return false;
+
+        // Find the matching class entry to check level
+        const classEntry = classChoices.find((c: { slug: string }) => c.slug === featureClass);
+        if (!classEntry || featureLevel > classEntry.level) return false;
+
+        // Only include features that match the selected subclass (or have no subclass)
+        if (featureSubclass) {
+          return classEntry.subclass === featureSubclass;
+        }
+        return true;
+      });
+    }
+  }
+
+  // Collect all effects from content refs + class features
+  const allEffects: Effect[] = [
+    ...contentRefs.flatMap((ref) => ref.content_definitions?.effects ?? []),
+    ...classFeatures.flatMap((f) => f.effects ?? []),
+  ];
 
   // Build structured sources from content ref data for Phase 1 aggregation
   const raceRef = contentRefs.find((r) => r.content_definitions?.content_type === "race");
@@ -49,7 +82,10 @@ export default async function CharacterSheetPage({ params }: PageProps) {
   const structuredSources: StructuredSources = {
     raceData: raceRef?.content_definitions?.data as StructuredSources["raceData"],
     classData: classRef?.content_definitions?.data as StructuredSources["classData"],
-    featureData: featureRefs.map((r) => r.content_definitions?.data as NonNullable<StructuredSources["featureData"]>[number]).filter(Boolean),
+    featureData: [
+      ...featureRefs.map((r) => r.content_definitions?.data as NonNullable<StructuredSources["featureData"]>[number]),
+      ...classFeatures.map((f) => f.data as NonNullable<StructuredSources["featureData"]>[number]),
+    ].filter(Boolean),
     level: character.level,
   };
 
