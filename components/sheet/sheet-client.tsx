@@ -19,6 +19,8 @@ import { SkillsList } from "@/components/sheet/skills-list";
 import { Proficiencies } from "@/components/sheet/proficiencies";
 import { ContentTabs } from "@/components/sheet/content-tabs";
 import { QuickNotes } from "@/components/sheet/quick-notes";
+import { EquipmentState } from "@/components/sheet/equipment-state";
+import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { MobileSheet } from "@/components/sheet/mobile-sheet";
 
 interface SheetClientProps {
@@ -65,6 +67,22 @@ export function SheetClient({
     return evaluate(baseStatsWithLevel, allEffects, schema, structuredSources, state as Record<string, unknown>);
   }, [baseStatsWithLevel, allEffects, schema, structuredSources, state]);
 
+  // Derive activation toggles from character class choices
+  const availableToggles = useMemo(() => {
+    const toggles: Array<{ key: string; label: string; active: boolean }> = [];
+    const hasBarbarian = character.choices?.classes?.some(
+      (c: { slug: string }) => c.slug === "barbarian",
+    );
+    if (hasBarbarian) {
+      toggles.push({
+        key: "rage_active",
+        label: "Rage",
+        active: (state.rage_active as boolean) ?? false,
+      });
+    }
+    return toggles;
+  }, [character.choices, state]);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Desktop Header */}
@@ -108,6 +126,16 @@ export function SheetClient({
           <SavingThrows schema={schema} evalResult={evalResult} />
           <PassiveSenses schema={schema} evalResult={evalResult} />
           <Defenses evalResult={evalResult} />
+          <EquipmentState
+            equippedArmor={(state.equipped_armor as string) ?? "none"}
+            shieldEquipped={(state.shield_equipped as boolean) ?? false}
+            onArmorChange={(armor) => patchState({ equipped_armor: armor as CharacterState["equipped_armor"] })}
+            onShieldChange={(shield) => patchState({ shield_equipped: shield })}
+          />
+          <ActivationToggles
+            toggles={availableToggles}
+            onToggle={(key, active) => patchState({ [key]: active })}
+          />
           <Conditions
             conditions={state.conditions ?? []}
             patchState={patchState}
