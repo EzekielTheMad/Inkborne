@@ -1,4 +1,5 @@
 import type { NarrativeData, NarrativeRichData } from "./narrative";
+import type { Currency } from "./inventory";
 
 export type CharacterVisibility = "private" | "campaign" | "public";
 
@@ -51,6 +52,7 @@ export interface CharacterState {
   shield_equipped?: boolean;
   // Activation toggles
   rage_active?: boolean;
+  currency?: Currency;
   [key: string]: unknown;
 }
 
