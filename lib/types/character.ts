@@ -22,6 +22,7 @@ export interface CharacterChoices {
   ability_method?: "standard_array" | "point_buy" | "manual";
   ability_assignments?: Record<string, number>;
   starting_equipment?: string;
+  alignment?: string;
   personality_traits?: string[];
   ideals?: string[];
   bonds?: string[];

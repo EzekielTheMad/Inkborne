@@ -191,9 +191,11 @@ export function EquipmentStepClient({
           Previous: Background
         </Button>
         <Button
-          onClick={() => router.push(`/characters/${characterId}`)}
+          onClick={() =>
+            router.push(`/characters/${characterId}/builder/details`)
+          }
         >
-          Finish &amp; View Character
+          Next: Details
         </Button>
       </div>
     </div>
