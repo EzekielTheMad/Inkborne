@@ -8,14 +8,15 @@ import type { InventoryItem, Currency } from "@/lib/types/inventory";
 import { InventorySection } from "@/components/sheet/inventory/inventory-section";
 import { CurrencyTracker } from "@/components/sheet/inventory/currency-tracker";
 import { WeightBar } from "@/components/sheet/inventory/weight-bar";
-import { AddItemModal } from "@/components/sheet/inventory/add-item-modal";
+import { AddItemPanel } from "@/components/sheet/inventory/add-item-modal";
+import { rarityTextClass } from "@/lib/inventory/rarity-colors";
 
 interface InventoryTabProps {
   inventory: InventoryItem[];
   currency: Currency;
   systemId: string;
   strengthScore: number;
-  onAddItem: (item: { content_id: string | null; name: string; content_type: string }) => void;
+  onAddItem: (item: { content_id: string | null; name: string; content_type: string; quantity?: number; custom_data?: Record<string, unknown> | null }) => void;
   onUpdateItem: (itemId: string, updates: Partial<Pick<InventoryItem, "quantity" | "equipped" | "attuned" | "notes">>) => void;
   onRemoveItem: (itemId: string) => void;
   onCurrencyChange: (currency: Currency) => void;
@@ -41,7 +42,7 @@ export function InventoryTab({
   onRemoveItem,
   onCurrencyChange,
 }: InventoryTabProps) {
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddPanel, setShowAddPanel] = useState(false);
 
   const equipped = inventory.filter((i) => i.equipped);
   const weapons = inventory.filter((i) => i.content_type === "weapon");
@@ -57,11 +58,19 @@ export function InventoryTab({
     <div className="p-3 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">Inventory</p>
-        <Button size="sm" variant="outline" onClick={() => setShowAddModal(true)}>
+        <Button size="sm" variant="outline" onClick={() => setShowAddPanel(!showAddPanel)}>
           <Plus className="size-3.5 mr-1" />
-          Add Item
+          {showAddPanel ? "Close" : "Add Item"}
         </Button>
       </div>
+
+      {/* Add Item Panel — inline at top */}
+      <AddItemPanel
+        open={showAddPanel}
+        onClose={() => setShowAddPanel(false)}
+        onAdd={onAddItem}
+        systemId={systemId}
+      />
 
       {/* Equipped section */}
       {equipped.length > 0 && (
@@ -147,13 +156,6 @@ export function InventoryTab({
       {/* Weight */}
       <WeightBar totalWeight={Math.round(totalWeight)} carryingCapacity={carryingCapacity} />
 
-      {/* Add Item Modal */}
-      <AddItemModal
-        open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onAdd={onAddItem}
-        systemId={systemId}
-      />
     </div>
   );
 }
@@ -215,11 +217,11 @@ function ItemRow({
       {/* Name + details */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="truncate font-medium">{item.name}</span>
+          <span className={`truncate font-medium ${rarityTextClass(rarity)}`}>{item.name}</span>
           {item.quantity > 1 && !showQuantity && (
             <span className="text-xs text-muted-foreground">{"\u00d7"}{item.quantity}</span>
           )}
-          {rarity && (
+          {rarity && rarity !== "Common" && (
             <Badge variant="outline" className="text-[9px] shrink-0">{rarity}</Badge>
           )}
         </div>

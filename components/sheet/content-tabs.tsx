@@ -34,7 +34,7 @@ interface ContentTabsProps {
   currency: Currency;
   systemId: string;
   strengthScore: number;
-  onAddItem: (item: { content_id: string | null; name: string; content_type: string }) => void;
+  onAddItem: (item: { content_id: string | null; name: string; content_type: string; quantity?: number; custom_data?: Record<string, unknown> | null }) => void;
   onUpdateItem: (itemId: string, updates: Partial<Pick<InventoryItem, "quantity" | "equipped" | "attuned" | "notes">>) => void;
   onRemoveItem: (itemId: string) => void;
   onCurrencyChange: (currency: Currency) => void;
