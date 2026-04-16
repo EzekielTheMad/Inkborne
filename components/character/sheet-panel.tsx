@@ -15,15 +15,12 @@ import { MobileSheet } from "@/components/sheet/mobile-sheet";
 import {
   useCharacter,
   useCharacterState,
-  useInventory,
 } from "@/lib/character/character-context";
 
 export function SheetPanel() {
   const { character, schema, contentRefs, hasSheet, evalResult, maxHp } =
     useCharacter();
   const { state, patchState } = useCharacterState();
-  const { inventory, currency, addItem, updateItem, removeItem, setCurrency } =
-    useInventory();
 
   if (!hasSheet) {
     return (
@@ -92,14 +89,6 @@ export function SheetPanel() {
             contentRefs={contentRefs}
             state={state}
             patchState={patchState}
-            inventory={inventory}
-            currency={currency}
-            systemId={character.system_id}
-            strengthScore={evalResult.stats.strength ?? 10}
-            onAddItem={addItem}
-            onUpdateItem={updateItem}
-            onRemoveItem={removeItem}
-            onCurrencyChange={setCurrency}
           />
         </div>
       </div>
@@ -112,14 +101,6 @@ export function SheetPanel() {
         state={state}
         patchState={patchState}
         maxHp={maxHp}
-        inventory={inventory}
-        currency={currency}
-        systemId={character.system_id}
-        strengthScore={evalResult.stats.strength ?? 10}
-        onAddItem={addItem}
-        onUpdateItem={updateItem}
-        onRemoveItem={removeItem}
-        onCurrencyChange={setCurrency}
       />
     </>
   );
