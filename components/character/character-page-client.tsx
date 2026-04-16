@@ -82,7 +82,7 @@ export function CharacterPageClient({
 
   const [localInventory, setLocalInventory] = useState<InventoryItem[]>(inventory);
 
-  async function handleAddItem(item: { content_id: string | null; name: string; content_type: string }) {
+  async function handleAddItem(item: { content_id: string | null; name: string; content_type: string; quantity?: number; custom_data?: Record<string, unknown> | null }) {
     const newItem = await addInventoryItem(character.id, item);
     if (newItem) {
       setLocalInventory((prev) => [...prev, newItem]);

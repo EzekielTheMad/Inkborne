@@ -85,10 +85,16 @@ export async function removeInventoryItem(itemId: string): Promise<void> {
   }
 }
 
+export interface SearchItemsOptions {
+  contentType?: string;
+  equipmentCategory?: string;
+  magicalOnly?: boolean;
+}
+
 export async function searchItems(
   systemId: string,
   query: string,
-  contentType?: string,
+  options?: SearchItemsOptions,
 ): Promise<
   Array<{
     id: string;
@@ -96,21 +102,51 @@ export async function searchItems(
     slug: string;
     content_type: string;
     data: Record<string, unknown>;
+    effects: Array<Record<string, unknown>>;
   }>
 > {
   const supabase = createClient();
-  const builder = supabase
+  let builder = supabase
     .from("content_definitions")
-    .select("id, name, slug, content_type, data")
+    .select("id, name, slug, content_type, data, effects")
     .eq("system_id", systemId)
-    .in(
-      "content_type",
-      contentType ? [contentType] : ["weapon", "armor", "item", "magic_item"],
-    )
     .eq("scope", "platform")
     .ilike("name", `%${query}%`)
     .order("name")
-    .limit(30);
+    .limit(50);
+
+  // Equipment category filter
+  if (options?.equipmentCategory === "Weapon") {
+    builder = builder.or(
+      "content_type.eq.weapon,and(content_type.eq.magic_item,data->>equipment_category.eq.Weapon)",
+    );
+  } else if (options?.equipmentCategory === "Armor") {
+    builder = builder.or(
+      "content_type.eq.armor,and(content_type.eq.magic_item,data->>equipment_category.eq.Armor)",
+    );
+  } else if (options?.equipmentCategory === "Gear") {
+    builder = builder.eq("content_type", "item");
+  } else if (options?.equipmentCategory) {
+    builder = builder
+      .eq("content_type", "magic_item")
+      .eq("data->>equipment_category", options.equipmentCategory);
+  } else if (options?.contentType) {
+    builder = builder.eq("content_type", options.contentType);
+  } else {
+    builder = builder.in("content_type", [
+      "weapon",
+      "armor",
+      "item",
+      "magic_item",
+    ]);
+  }
+
+  // Magical-only filter: items with effects or non-Common rarity
+  if (options?.magicalOnly) {
+    builder = builder.or(
+      "effects.neq.[],and(data->>rarity.neq.null,data->>rarity.neq.Common)",
+    );
+  }
 
   const { data, error } = await builder;
   if (error) {
