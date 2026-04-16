@@ -8,7 +8,7 @@ import type { InventoryItem } from "@/lib/types/inventory";
 import { InventorySection } from "@/components/sheet/inventory/inventory-section";
 import { CurrencyTracker } from "@/components/sheet/inventory/currency-tracker";
 import { WeightBar } from "@/components/sheet/inventory/weight-bar";
-import { AddItemPanel } from "@/components/sheet/inventory/add-item-modal";
+import { AddItemPanel } from "@/components/sheet/inventory/add-item-panel";
 import { rarityTextClass } from "@/lib/inventory/rarity-colors";
 import { getItemData, getItemWeight, isShield, isBodyArmor } from "@/lib/inventory/helpers";
 import { useInventory, useCharacter } from "@/lib/character/character-context";
