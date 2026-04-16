@@ -4,49 +4,26 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { InventoryItem, Currency } from "@/lib/types/inventory";
+import type { InventoryItem } from "@/lib/types/inventory";
 import { InventorySection } from "@/components/sheet/inventory/inventory-section";
 import { CurrencyTracker } from "@/components/sheet/inventory/currency-tracker";
 import { WeightBar } from "@/components/sheet/inventory/weight-bar";
-import { AddItemPanel } from "@/components/sheet/inventory/add-item-modal";
+import { AddItemPanel } from "@/components/sheet/inventory/add-item-panel";
 import { rarityTextClass } from "@/lib/inventory/rarity-colors";
+import { getItemData, getItemWeight, isShield, isBodyArmor } from "@/lib/inventory/helpers";
+import { useInventory, useCharacter } from "@/lib/character/character-context";
 
-interface InventoryTabProps {
-  inventory: InventoryItem[];
-  currency: Currency;
-  systemId: string;
-  strengthScore: number;
-  onAddItem: (item: { content_id: string | null; name: string; content_type: string; quantity?: number; custom_data?: Record<string, unknown> | null }) => void;
-  onUpdateItem: (itemId: string, updates: Partial<Pick<InventoryItem, "quantity" | "equipped" | "attuned" | "notes">>) => void;
-  onRemoveItem: (itemId: string) => void;
-  onCurrencyChange: (currency: Currency) => void;
-}
+export function InventoryTab() {
+  const { inventory, currency, addItem, updateItem, removeItem, setCurrency } = useInventory();
+  const { character, evalResult } = useCharacter();
+  const systemId = character.system_id;
+  const strengthScore = evalResult.stats.strength ?? 10;
 
-function getItemWeight(item: InventoryItem): number {
-  if (item.custom_data?.weight != null) return Number(item.custom_data.weight);
-  const dataWeight = item.content_definitions?.data?.weight;
-  return typeof dataWeight === "number" ? dataWeight : 0;
-}
-
-function getItemData(item: InventoryItem): Record<string, unknown> {
-  return { ...(item.content_definitions?.data ?? {}), ...(item.custom_data ?? {}) };
-}
-
-export function InventoryTab({
-  inventory,
-  currency,
-  systemId,
-  strengthScore,
-  onAddItem,
-  onUpdateItem,
-  onRemoveItem,
-  onCurrencyChange,
-}: InventoryTabProps) {
   const [showAddPanel, setShowAddPanel] = useState(false);
 
   const equipped = inventory.filter((i) => i.equipped);
   const weapons = inventory.filter((i) => i.content_type === "weapon");
-  const armor = inventory.filter((i) => i.content_type === "armor" || (i.content_definitions?.data as Record<string, unknown>)?.armor_category === "Shield");
+  const armor = inventory.filter((i) => isBodyArmor(i) || isShield(i));
   const gear = inventory.filter((i) => i.content_type === "item");
   const magicItems = inventory.filter((i) => i.content_type === "magic_item");
 
@@ -68,7 +45,7 @@ export function InventoryTab({
       <AddItemPanel
         open={showAddPanel}
         onClose={() => setShowAddPanel(false)}
-        onAdd={onAddItem}
+        onAdd={addItem}
         systemId={systemId}
       />
 
@@ -79,8 +56,8 @@ export function InventoryTab({
             <ItemRow
               key={item.id}
               item={item}
-              onUpdate={(updates) => onUpdateItem(item.id, updates)}
-              onRemove={() => onRemoveItem(item.id)}
+              onUpdate={(updates) => updateItem(item.id, updates)}
+              onRemove={() => removeItem(item.id)}
               showEquipToggle={false}
             />
           ))}
@@ -94,8 +71,8 @@ export function InventoryTab({
             <ItemRow
               key={item.id}
               item={item}
-              onUpdate={(updates) => onUpdateItem(item.id, updates)}
-              onRemove={() => onRemoveItem(item.id)}
+              onUpdate={(updates) => updateItem(item.id, updates)}
+              onRemove={() => removeItem(item.id)}
             />
           ))}
         </InventorySection>
@@ -108,8 +85,8 @@ export function InventoryTab({
             <ItemRow
               key={item.id}
               item={item}
-              onUpdate={(updates) => onUpdateItem(item.id, updates)}
-              onRemove={() => onRemoveItem(item.id)}
+              onUpdate={(updates) => updateItem(item.id, updates)}
+              onRemove={() => removeItem(item.id)}
             />
           ))}
         </InventorySection>
@@ -122,8 +99,8 @@ export function InventoryTab({
             <ItemRow
               key={item.id}
               item={item}
-              onUpdate={(updates) => onUpdateItem(item.id, updates)}
-              onRemove={() => onRemoveItem(item.id)}
+              onUpdate={(updates) => updateItem(item.id, updates)}
+              onRemove={() => removeItem(item.id)}
               showQuantity
             />
           ))}
@@ -141,8 +118,8 @@ export function InventoryTab({
             <ItemRow
               key={item.id}
               item={item}
-              onUpdate={(updates) => onUpdateItem(item.id, updates)}
-              onRemove={() => onRemoveItem(item.id)}
+              onUpdate={(updates) => updateItem(item.id, updates)}
+              onRemove={() => removeItem(item.id)}
               showAttunement
               attunedCount={attunedCount}
             />
@@ -151,7 +128,7 @@ export function InventoryTab({
       )}
 
       {/* Currency */}
-      <CurrencyTracker currency={currency} onChange={onCurrencyChange} />
+      <CurrencyTracker currency={currency} onChange={setCurrency} />
 
       {/* Weight */}
       <WeightBar totalWeight={Math.round(totalWeight)} carryingCapacity={carryingCapacity} />

@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import type { JSONContent } from "@tiptap/react";
-import type { CharacterWithSystem, CharacterChoices } from "@/lib/types/character";
-import type { NarrativeData, NarrativeRichData } from "@/lib/types/narrative";
+import { useCallback } from "react";
+import type { CharacterWithSystem } from "@/lib/types/character";
 import {
-  saveNarrative,
-  saveNarrativeRich,
-  savePersonalityChoices,
   uploadPortrait,
   uploadToken,
   deletePortrait,
@@ -16,6 +10,8 @@ import {
 } from "@/app/(app)/characters/[id]/narrative-actions";
 import { Button } from "@/components/ui/button";
 import { Pencil, X, Save, Loader2, Check } from "lucide-react";
+
+import { useNarrativeEditor, type SaveStatus } from "./use-narrative-editor";
 
 // View components
 import { CoreIdentityCard } from "./view/core-identity-card";
@@ -47,8 +43,6 @@ interface NarrativeTabProps {
   onCropChange?: (crop: { x: number; y: number; width: number; height: number }) => void;
 }
 
-type SaveStatus = "idle" | "saving" | "saved" | "error";
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -61,141 +55,37 @@ export function NarrativeTab({
   onPortraitChange: onPortraitChangeParent,
   onCropChange: onCropChangeParent,
 }: NarrativeTabProps) {
-  const router = useRouter();
+  const editor = useNarrativeEditor({
+    character,
+    onPortraitChange: onPortraitChangeParent,
+  });
 
-  // ---- Edit mode toggle ----
-  const [editMode, setEditMode] = useState(false);
+  const {
+    editMode,
+    enterEdit,
+    savedNarrative,
+    savedRich,
+    savedChoices,
+    localNarrative,
+    localRich,
+    localChoices,
+    setLocalNarrative,
+    saveStatus,
+    portraitUrl,
+    tokenUrl,
+    handleNarrativeChange,
+    handleFunTraitChange,
+    handleRichChange,
+    handleChoiceChange,
+    handlePortraitChange,
+    handleTokenChange,
+    handleManualSave,
+    handleCancel,
+    markNarrativeDirty,
+    scheduleAutoSave,
+  } = editor;
 
-  // ---- Saved state (updated after successful save so view mode shows latest) ----
-  const [savedNarrative, setSavedNarrative] = useState<NarrativeData>(character.narrative ?? {});
-  const [savedRich, setSavedRich] = useState<NarrativeRichData>(character.narrative_rich ?? {});
-  const [savedChoices, setSavedChoices] = useState<CharacterChoices>(character.choices ?? {});
-
-  // ---- Local editable state (only used in edit mode) ----
-  const [localNarrative, setLocalNarrative] = useState<NarrativeData>(
-    character.narrative ?? {},
-  );
-  const [localRich, setLocalRich] = useState<NarrativeRichData>(
-    character.narrative_rich ?? {},
-  );
-  const [localChoices, setLocalChoices] = useState<CharacterChoices>(
-    character.choices ?? {},
-  );
-
-  // ---- Portrait URLs tracked locally so view updates after upload ----
-  const [portraitUrl, setPortraitUrl] = useState<string | null>(
-    character.narrative?.portrait_url ?? null,
-  );
-  const [tokenUrl, setTokenUrl] = useState<string | null>(
-    character.narrative?.token_url ?? null,
-  );
-
-  // ---- Save status ----
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-
-  // ---- Dirty flags ----
-  const dirtyNarrative = useRef(false);
-  const dirtyRich = useRef(false);
-  const dirtyChoices = useRef(false);
-
-  // ---- Debounce timer ----
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // ---- Debounced save logic ----
-  const scheduleAutoSave = useCallback(() => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      void flushSave();
-    }, 500);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Use refs for latest state so the flush closure always reads current values
-  const narrativeRef = useRef(localNarrative);
-  narrativeRef.current = localNarrative;
-  const richRef = useRef(localRich);
-  richRef.current = localRich;
-  const choicesRef = useRef(localChoices);
-  choicesRef.current = localChoices;
-
-  const flushSave = useCallback(async () => {
-    const promises: Promise<unknown>[] = [];
-
-    if (dirtyNarrative.current) {
-      dirtyNarrative.current = false;
-      promises.push(saveNarrative(character.id, narrativeRef.current));
-    }
-    if (dirtyRich.current) {
-      dirtyRich.current = false;
-      promises.push(saveNarrativeRich(character.id, richRef.current));
-    }
-    if (dirtyChoices.current) {
-      dirtyChoices.current = false;
-      promises.push(
-        savePersonalityChoices(character.id, {
-          personality_traits: choicesRef.current.personality_traits,
-          ideals: choicesRef.current.ideals,
-          bonds: choicesRef.current.bonds,
-          flaws: choicesRef.current.flaws,
-        }),
-      );
-    }
-
-    if (promises.length === 0) return;
-
-    setSaveStatus("saving");
-    try {
-      const results = await Promise.all(promises);
-      const hasError = results.some(
-        (r) => r && typeof r === "object" && "error" in r,
-      );
-      setSaveStatus(hasError ? "error" : "saved");
-    } catch {
-      setSaveStatus("error");
-    }
-  }, [character.id]);
-
-  // ---- Field change handlers ----
-  const handleNarrativeChange = useCallback(
-    (field: string, value: string) => {
-      setLocalNarrative((prev) => ({ ...prev, [field]: value }));
-      dirtyNarrative.current = true;
-      scheduleAutoSave();
-    },
-    [scheduleAutoSave],
-  );
-
-  const handleFunTraitChange = useCallback(
-    (field: string, value: string) => {
-      setLocalNarrative((prev) => ({
-        ...prev,
-        fun_traits: { ...prev.fun_traits, [field]: value },
-      }));
-      dirtyNarrative.current = true;
-      scheduleAutoSave();
-    },
-    [scheduleAutoSave],
-  );
-
-  const handleRichChange = useCallback(
-    (field: string, content: JSONContent) => {
-      setLocalRich((prev) => ({ ...prev, [field]: content }));
-      dirtyRich.current = true;
-      scheduleAutoSave();
-    },
-    [scheduleAutoSave],
-  );
-
-  const handleChoiceChange = useCallback(
-    (field: string, value: string[]) => {
-      setLocalChoices((prev) => ({ ...prev, [field]: value }));
-      dirtyChoices.current = true;
-      scheduleAutoSave();
-    },
-    [scheduleAutoSave],
-  );
-
-  // ---- Portrait wrappers ----
+  // ---- Portrait upload/delete wrappers (passed straight to CharacterPortrait) ----
   const handleUpload = useCallback(
     async (formData: FormData) => {
       const file = formData.get("file") as File | null;
@@ -228,64 +118,6 @@ export function NarrativeTab({
     },
     [character.id],
   );
-
-  const handlePortraitChange = useCallback(
-    (url: string | null) => {
-      setPortraitUrl(url);
-      setLocalNarrative((prev) => ({ ...prev, portrait_url: url ?? undefined }));
-      onPortraitChangeParent?.(url);
-    },
-    [onPortraitChangeParent],
-  );
-
-  const handleTokenChange = useCallback(
-    (url: string | null) => {
-      setTokenUrl(url);
-      setLocalNarrative((prev) => ({ ...prev, token_url: url ?? undefined }));
-    },
-    [],
-  );
-
-  // ---- Manual save ----
-  const handleManualSave = useCallback(async () => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    // Mark all as dirty to ensure full save
-    dirtyNarrative.current = true;
-    dirtyRich.current = true;
-    dirtyChoices.current = true;
-    await flushSave();
-    // Persist to saved state so view mode shows latest
-    setSavedNarrative({ ...localNarrative });
-    setSavedRich({ ...localRich });
-    setSavedChoices({ ...localChoices });
-    // Exit edit mode and refresh server data
-    setEditMode(false);
-    router.refresh();
-  }, [flushSave, localNarrative, localRich, localChoices, router]);
-
-  // ---- Cancel ----
-  const handleCancel = useCallback(() => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    setLocalNarrative(savedNarrative);
-    setLocalRich(savedRich);
-    setLocalChoices(savedChoices);
-    setPortraitUrl(savedNarrative.portrait_url ?? null);
-    setTokenUrl(savedNarrative.token_url ?? null);
-    dirtyNarrative.current = false;
-    dirtyRich.current = false;
-    dirtyChoices.current = false;
-    setSaveStatus("idle");
-    setEditMode(false);
-  }, [savedNarrative, savedRich, savedChoices]);
-
-  // ---- Enter edit mode ----
-  const enterEdit = useCallback(() => {
-    setLocalNarrative(savedNarrative);
-    setLocalRich(savedRich);
-    setLocalChoices(savedChoices);
-    setSaveStatus("idle");
-    setEditMode(true);
-  }, [savedNarrative, savedRich, savedChoices]);
 
   // ---- Determine if view has any content ----
   const narrative = editMode ? localNarrative : savedNarrative;
@@ -359,7 +191,7 @@ export function NarrativeTab({
             onTokenChange={handleTokenChange}
             onCropChange={(crop) => {
               setLocalNarrative((prev) => ({ ...prev, portrait_crop: crop }));
-              dirtyNarrative.current = true;
+              markNarrativeDirty();
               scheduleAutoSave();
               onCropChangeParent?.(crop);
             }}
