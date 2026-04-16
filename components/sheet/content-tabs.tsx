@@ -5,6 +5,7 @@ import type { CharacterWithSystem, CharacterState } from "@/lib/types/character"
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import type { InventoryItem, Currency } from "@/lib/types/inventory";
 import { FeaturesTab } from "@/components/sheet/tabs/features-tab";
 import { ActionsTab } from "@/components/sheet/tabs/actions-tab";
 import { SpellsTab } from "@/components/sheet/tabs/spells-tab";
@@ -29,6 +30,14 @@ interface ContentTabsProps {
   state: CharacterState;
   patchState: (patch: Partial<CharacterState>) => void;
   initialTab?: TabId;
+  inventory: InventoryItem[];
+  currency: Currency;
+  systemId: string;
+  strengthScore: number;
+  onAddItem: (item: { content_id: string | null; name: string; content_type: string }) => void;
+  onUpdateItem: (itemId: string, updates: Partial<Pick<InventoryItem, "quantity" | "equipped" | "attuned" | "notes">>) => void;
+  onRemoveItem: (itemId: string) => void;
+  onCurrencyChange: (currency: Currency) => void;
 }
 
 export function ContentTabs({
@@ -39,6 +48,14 @@ export function ContentTabs({
   state,
   patchState,
   initialTab = "actions",
+  inventory,
+  currency,
+  systemId,
+  strengthScore,
+  onAddItem,
+  onUpdateItem,
+  onRemoveItem,
+  onCurrencyChange,
 }: ContentTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
@@ -76,8 +93,14 @@ export function ContentTabs({
         )}
         {activeTab === "inventory" && (
           <InventoryTab
-            character={character}
-            contentRefs={contentRefs}
+            inventory={inventory}
+            currency={currency}
+            systemId={systemId}
+            strengthScore={strengthScore}
+            onAddItem={onAddItem}
+            onUpdateItem={onUpdateItem}
+            onRemoveItem={onRemoveItem}
+            onCurrencyChange={onCurrencyChange}
           />
         )}
         {activeTab === "features" && (

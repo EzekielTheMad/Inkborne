@@ -8,6 +8,10 @@ import { evaluate } from "@/lib/engine/evaluator";
 import type { EvaluationResult, StructuredSources } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { Effect } from "@/lib/types/effects";
+import type { InventoryItem, Currency } from "@/lib/types/inventory";
+import { DEFAULT_CURRENCY } from "@/lib/types/inventory";
+import { addInventoryItem, updateInventoryItem, removeInventoryItem, unequipAllArmor } from "@/lib/supabase/inventory";
+import { generateArmorEffects } from "@/lib/inventory/armor-effects";
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import { CharacterHeader } from "@/components/sheet/character-header";
 import { StatRibbon } from "@/components/sheet/stat-ribbon";
@@ -20,7 +24,7 @@ import { SkillsList } from "@/components/sheet/skills-list";
 import { Proficiencies } from "@/components/sheet/proficiencies";
 import { ContentTabs } from "@/components/sheet/content-tabs";
 import { QuickNotes } from "@/components/sheet/quick-notes";
-import { EquipmentState } from "@/components/sheet/equipment-state";
+
 import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { MobileSheet } from "@/components/sheet/mobile-sheet";
 import { NarrativeTab } from "@/components/narrative/narrative-tab";
@@ -38,6 +42,7 @@ interface CharacterPageClientProps {
   isOwner: boolean;
   isDm: boolean;
   hasSheet: boolean;
+  inventory: InventoryItem[];
 }
 
 export function CharacterPageClient({
@@ -53,6 +58,7 @@ export function CharacterPageClient({
   isOwner,
   isDm,
   hasSheet,
+  inventory,
 }: CharacterPageClientProps) {
   const [state, setState] = useState<CharacterState>(initialState);
   const [portraitUrl, setPortraitUrl] = useState<string | undefined>(
@@ -74,9 +80,79 @@ export function CharacterPageClient({
     [character.id],
   );
 
+  const [localInventory, setLocalInventory] = useState<InventoryItem[]>(inventory);
+
+  async function handleAddItem(item: { content_id: string | null; name: string; content_type: string }) {
+    const newItem = await addInventoryItem(character.id, item);
+    if (newItem) {
+      setLocalInventory((prev) => [...prev, newItem]);
+    }
+  }
+
+  async function handleUpdateItem(itemId: string, updates: Partial<Pick<InventoryItem, "quantity" | "equipped" | "attuned" | "notes">>) {
+    // If equipping armor (non-shield), unequip other armor first
+    if (updates.equipped === true) {
+      const item = localInventory.find((i) => i.id === itemId);
+      const itemData = item?.content_definitions?.data as Record<string, unknown> | undefined;
+      if (item?.content_type === "armor" && itemData?.armor_category !== "Shield") {
+        await unequipAllArmor(character.id);
+        setLocalInventory((prev) =>
+          prev.map((i) =>
+            i.content_type === "armor" && i.id !== itemId && (i.content_definitions?.data as Record<string, unknown>)?.armor_category !== "Shield"
+              ? { ...i, equipped: false }
+              : i
+          )
+        );
+      }
+    }
+    await updateInventoryItem(itemId, updates);
+    setLocalInventory((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, ...updates } : i))
+    );
+  }
+
+  async function handleRemoveItem(itemId: string) {
+    await removeInventoryItem(itemId);
+    setLocalInventory((prev) => prev.filter((i) => i.id !== itemId));
+  }
+
+  function handleCurrencyChange(newCurrency: Currency) {
+    patchState({ currency: newCurrency });
+  }
+
+  // AC effects from equipped armor
+  const equippedArmorEffects = useMemo(() => {
+    const equippedArmor = localInventory.find(
+      (i) => i.equipped && i.content_type === "armor" &&
+      (i.content_definitions?.data as Record<string, unknown>)?.armor_category !== "Shield"
+    );
+    if (!equippedArmor) return [];
+    return generateArmorEffects(equippedArmor.content_definitions?.data as any);
+  }, [localInventory]);
+
+  // Derive equipped_armor state from inventory
+  const derivedState = useMemo(() => {
+    const equippedArmor = localInventory.find(
+      (i) => i.equipped && i.content_type === "armor" &&
+      (i.content_definitions?.data as Record<string, unknown>)?.armor_category !== "Shield"
+    );
+    const hasShield = localInventory.some(
+      (i) => i.equipped && (i.content_definitions?.data as Record<string, unknown>)?.armor_category === "Shield"
+    );
+    const armorCategory = equippedArmor
+      ? String((equippedArmor.content_definitions?.data as Record<string, unknown>)?.armor_category ?? "none").toLowerCase()
+      : "none";
+    return {
+      ...state,
+      equipped_armor: armorCategory,
+      shield_equipped: hasShield,
+    };
+  }, [localInventory, state]);
+
   const evalResult = useMemo(() => {
-    return evaluate(baseStatsWithLevel, allEffects, schema, structuredSources, state as Record<string, unknown>);
-  }, [baseStatsWithLevel, allEffects, schema, structuredSources, state]);
+    const combinedEffects = [...allEffects, ...equippedArmorEffects];
+    return evaluate(baseStatsWithLevel, combinedEffects, schema, structuredSources, derivedState as Record<string, unknown>);
+  }, [baseStatsWithLevel, allEffects, equippedArmorEffects, schema, structuredSources, derivedState]);
 
   const availableToggles = useMemo(() => {
     const toggles: Array<{ key: string; label: string; active: boolean }> = [];
@@ -158,12 +234,6 @@ export function CharacterPageClient({
                   <SavingThrows schema={schema} evalResult={evalResult} />
                   <PassiveSenses schema={schema} evalResult={evalResult} />
                   <Defenses evalResult={evalResult} />
-                  <EquipmentState
-                    equippedArmor={(state.equipped_armor as string) ?? "none"}
-                    shieldEquipped={(state.shield_equipped as boolean) ?? false}
-                    onArmorChange={(armor) => patchState({ equipped_armor: armor as CharacterState["equipped_armor"] })}
-                    onShieldChange={(shield) => patchState({ shield_equipped: shield })}
-                  />
                   <ActivationToggles
                     toggles={availableToggles}
                     onToggle={(key, active) => patchState({ [key]: active })}
@@ -191,6 +261,14 @@ export function CharacterPageClient({
                     contentRefs={contentRefs}
                     state={state}
                     patchState={patchState}
+                    inventory={localInventory}
+                    currency={(state.currency as Currency) ?? DEFAULT_CURRENCY}
+                    systemId={character.system_id}
+                    strengthScore={evalResult.stats.strength ?? 10}
+                    onAddItem={handleAddItem}
+                    onUpdateItem={handleUpdateItem}
+                    onRemoveItem={handleRemoveItem}
+                    onCurrencyChange={handleCurrencyChange}
                   />
                 </div>
               </div>
@@ -205,6 +283,14 @@ export function CharacterPageClient({
                   state={state}
                   patchState={patchState}
                   maxHp={maxHp}
+                  inventory={localInventory}
+                  currency={(state.currency as Currency) ?? DEFAULT_CURRENCY}
+                  systemId={character.system_id}
+                  strengthScore={evalResult.stats.strength ?? 10}
+                  onAddItem={handleAddItem}
+                  onUpdateItem={handleUpdateItem}
+                  onRemoveItem={handleRemoveItem}
+                  onCurrencyChange={handleCurrencyChange}
                 />
               </div>
             </>
