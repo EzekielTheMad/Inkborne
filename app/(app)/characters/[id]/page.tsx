@@ -121,7 +121,7 @@ export default async function CharacterPage({ params }: PageProps) {
       isOwner={isOwner}
       isDm={isDm}
       hasSheet={hasSheet ?? false}
-      inventory={inventoryRows ?? []}
+      initialInventory={inventoryRows ?? []}
     />
   );
 }
