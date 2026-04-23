@@ -211,11 +211,13 @@ export function MobileSheet({
           />
 
           {/* Death saves (only at HP=0) */}
-          <DeathSaves
-            currentHp={state.current_hp ?? maxHp}
-            deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
-            patchState={patchState}
-          />
+          {(state.current_hp ?? 0) === 0 && (
+            <DeathSaves
+              currentHp={state.current_hp ?? 0}
+              deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
+              patchState={patchState}
+            />
+          )}
 
           {/* Quick notes */}
           <QuickNotes state={state} patchState={patchState} />

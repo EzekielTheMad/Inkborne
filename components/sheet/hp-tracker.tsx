@@ -60,12 +60,23 @@ export function HPTracker({
     setOpen(false);
   }
 
+  function applyHpChange(newHp: number) {
+    const wasAtZero = currentHp === 0;
+    const patch: Partial<CharacterState> = { current_hp: newHp };
+    // Auto-reset death saves on 0 → >0 transition. The patch is idempotent if saves
+    // are already zeroed, so we don't need to read the current saves value here.
+    if (wasAtZero && newHp > 0) {
+      patch.death_saves = { successes: 0, failures: 0 };
+    }
+    patchState(patch);
+  }
+
   function applyHeal() {
     const amount = getAmount();
     if (amount === 0) return;
 
     const newCurrent = Math.min(maxHp, currentHp + amount);
-    patchState({ current_hp: newCurrent });
+    applyHpChange(newCurrent);
     setInputValue("");
     setOpen(false);
   }

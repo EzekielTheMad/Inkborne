@@ -91,11 +91,13 @@ export function SheetPanel() {
             exhaustion={(state.exhaustion as number | undefined) ?? 0}
             patchState={patchState}
           />
-          <DeathSaves
-            currentHp={state.current_hp ?? 0}
-            deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
-            patchState={patchState}
-          />
+          {(state.current_hp ?? 0) === 0 && (
+            <DeathSaves
+              currentHp={state.current_hp ?? 0}
+              deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
+              patchState={patchState}
+            />
+          )}
           <Proficiencies grants={evalResult.grants} contentRefs={contentRefs} />
           <QuickNotes state={state} patchState={patchState} />
         </div>
