@@ -103,7 +103,7 @@ export function MobileSheet({
   const speed = computed.speed ?? computed.movement_speed ?? 30;
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 md:hidden">
       {/* Fixed tab bar */}
       <nav className="sticky top-0 z-10 bg-background border-b border-border overflow-x-auto">
         <div className="flex whitespace-nowrap">
