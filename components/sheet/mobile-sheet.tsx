@@ -8,6 +8,7 @@ import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { AbilityCard } from "@/components/sheet/ability-card";
 import { CombatStats } from "@/components/sheet/combat-stats";
 import { HPTracker } from "@/components/sheet/hp-tracker";
+import { RestButton } from "@/components/sheet/rest-button";
 import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
 import { Defenses } from "@/components/sheet/defenses";
@@ -171,12 +172,17 @@ export function MobileSheet({
             <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-3">
               Hit Points
             </h3>
-            <HPTracker
-              currentHp={state.current_hp ?? maxHp}
-              maxHp={maxHp}
-              tempHp={state.temp_hp ?? 0}
-              patchState={patchState}
-            />
+            <div className="space-y-3">
+              <HPTracker
+                currentHp={state.current_hp ?? maxHp}
+                maxHp={maxHp}
+                tempHp={state.temp_hp ?? 0}
+                patchState={patchState}
+              />
+              <div className="pt-2 border-t border-border">
+                <RestButton />
+              </div>
+            </div>
           </div>
 
           {/* Saving throws */}

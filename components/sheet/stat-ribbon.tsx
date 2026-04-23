@@ -2,6 +2,7 @@ import { Separator } from "@/components/ui/separator";
 import { AbilityCard } from "@/components/sheet/ability-card";
 import { CombatStats } from "@/components/sheet/combat-stats";
 import { HPTracker } from "@/components/sheet/hp-tracker";
+import { RestButton } from "@/components/sheet/rest-button";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { CharacterState } from "@/lib/types/character";
@@ -69,6 +70,13 @@ export function StatRibbon({
           tempHp={state.temp_hp ?? 0}
           patchState={patchState}
         />
+      </div>
+
+      <Separator orientation="vertical" className="hidden md:block h-16" />
+
+      {/* Rest Button */}
+      <div className="shrink-0">
+        <RestButton />
       </div>
     </div>
   );
