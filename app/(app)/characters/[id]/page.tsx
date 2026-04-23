@@ -5,6 +5,7 @@ import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { evaluate } from "@/lib/engine/evaluator";
 import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
+import { computeMaxHp } from "@/lib/character/max-hp";
 import { CharacterPageClient } from "@/components/character/character-page-client";
 import type { Effect } from "@/lib/types/effects";
 
@@ -168,7 +169,11 @@ export default async function CharacterPage({ params }: PageProps) {
   const schema = character.game_systems.schema_definition;
   const evalResult = evaluate(baseStatsWithLevel, allEffects, schema, structuredSources, character.state as Record<string, unknown>);
 
-  const maxHp = evalResult.computed.hit_points ?? 0;
+  // Max HP is computed from class hit dice + CON mod, per RAW multiclassing rules.
+  // (The engine's derived-stat formula can't express per-class iteration, so we
+  // compute it directly here using the helper in lib/character/max-hp.ts.)
+  const constitutionScore = (evalResult.stats.constitution as number | undefined) ?? 10;
+  const maxHp = computeMaxHp(classChoices, classData, constitutionScore);
   const initialState = initializeState(character.state, maxHp);
 
   const hasSheet = character.choices?.classes && character.choices.classes.length > 0;
