@@ -22,6 +22,7 @@ vi.mock("@/lib/character/character-context", () => ({
     maxHp: 50,
   }),
   useCharacterState: () => ({ state: { current_hp: 30 } }),
+  useResources: () => ({ resources: [], uses: {}, spend: vi.fn(), restore: vi.fn(), setUsed: vi.fn() }),
 }));
 
 describe("RestDialog", () => {
@@ -62,5 +63,11 @@ describe("RestDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
     expect(longRest).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("shows 'No short-rest recovery available' when no pact slots used and no short-rest resources", () => {
+    mockUseRest = () => buildMock();
+    render(<RestDialog open={true} onClose={vi.fn()} />);
+    expect(screen.getByText(/no short-rest recovery available/i)).toBeInTheDocument();
   });
 });

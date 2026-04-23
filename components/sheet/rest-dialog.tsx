@@ -3,7 +3,7 @@
 import { Moon, Sun } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useRest, useCharacter, useCharacterState } from "@/lib/character/character-context";
+import { useRest, useCharacter, useCharacterState, useResources } from "@/lib/character/character-context";
 
 interface RestDialogProps {
   open: boolean;
@@ -19,6 +19,9 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
   const { shortRest, longRest, canShortRest, canLongRest } = useRest();
   const { maxHp } = useCharacter();
   const { state } = useCharacterState();
+  const { resources } = useResources();
+  const pactUsed = ((state.spell_slots_used as Record<string, number> | undefined)?.pact ?? 0) > 0;
+  const shortRestResources = resources.filter((r) => r.recovery === "short");
 
   const currentHp = state.current_hp ?? maxHp;
   const tempHp = state.temp_hp ?? 0;
@@ -49,8 +52,13 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
               <h3 className="font-semibold">Short Rest</h3>
             </div>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
-              <li>Restore Warlock pact slots</li>
-              <li>Reset short-rest resources (Ki, Channel Divinity, etc.)</li>
+              {pactUsed && <li>Restore Warlock pact slots</li>}
+              {shortRestResources.length > 0 && (
+                <li>Reset {shortRestResources.map((r) => r.name).join(", ")}</li>
+              )}
+              {!pactUsed && shortRestResources.length === 0 && (
+                <li className="italic">No short-rest recovery available</li>
+              )}
             </ul>
             <Button
               className="w-full"
@@ -76,7 +84,10 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
               <li>HP {currentHp} → {maxHp}</li>
               {tempHp > 0 && <li>Clear {tempHp} temp HP</li>}
               <li>Restore all spell slots</li>
-              <li>Reset all feature resources</li>
+              {resources.length > 0 && <li>Restore all feature uses</li>}
+              {state.concentrating_on && (
+                <li>Drop concentration on {(state.concentrating_on as { spell_name?: string }).spell_name ?? "current spell"}</li>
+              )}
               {(deathSaves.successes > 0 || deathSaves.failures > 0) && (
                 <li>Clear death saves</li>
               )}
