@@ -22,9 +22,12 @@ export function ResourceCounter({
   onChange,
   layout = "widget",
 }: ResourceCounterProps) {
+  // Counter displays remaining/max (how many are left, not how many are used).
+  // Minus icon → decrements remaining (increments `used`).
+  // Plus icon → restores remaining (decrements `used`).
   const remaining = Math.max(0, Math.min(resource.max, resource.max - used));
   const exhausted = remaining === 0;
-  const atFull = used <= 0;
+  const noneSpent = used <= 0;
 
   return (
     <div
@@ -59,7 +62,7 @@ export function ResourceCounter({
       <button
         type="button"
         onClick={() => onChange(used - 1)}
-        disabled={atFull}
+        disabled={noneSpent}
         aria-label={`Restore one ${resource.name}`}
         className={cn(
           "size-5 rounded border border-border flex items-center justify-center shrink-0",
