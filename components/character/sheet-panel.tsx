@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { StatRibbon } from "@/components/sheet/stat-ribbon";
 import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
@@ -24,8 +27,23 @@ export function SheetPanel() {
 
   if (!hasSheet) {
     return (
-      <div className="p-8 text-center text-muted-foreground">
-        <p>Character has no sheet yet. Complete the builder first.</p>
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="max-w-md text-center space-y-4">
+          <div className="inline-flex items-center justify-center size-16 rounded-full bg-primary/10">
+            <Sparkles className="size-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold">Let&apos;s build your character</h2>
+          <p className="text-sm text-muted-foreground">
+            {character.name} doesn&apos;t have a sheet yet. Walk through the builder to pick a
+            race, class, abilities, background, and starting equipment.
+          </p>
+          <Link href={`/characters/${character.id}/builder`}>
+            <Button size="lg" className="mt-2">
+              <Sparkles className="size-4 mr-2" />
+              Start Building
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }

@@ -6,6 +6,8 @@ import type { EvaluationResult, StructuredSources } from "@/lib/engine/evaluator
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { Effect } from "@/lib/types/effects";
 import type { InventoryItem } from "@/lib/types/inventory";
+import type { CharacterSpell } from "@/lib/types/spells";
+import type { ClassContentData } from "@/lib/character/character-context";
 import { CharacterProvider } from "@/lib/character/character-context";
 import { CharacterShell } from "@/components/character/character-shell";
 
@@ -23,6 +25,8 @@ interface CharacterPageClientProps {
   isDm: boolean;
   hasSheet: boolean;
   initialInventory: InventoryItem[];
+  initialSpells: CharacterSpell[];
+  classData: ClassContentData;
 }
 
 export function CharacterPageClient(props: CharacterPageClientProps) {
@@ -39,6 +43,8 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
     isDm,
     hasSheet,
     initialInventory,
+    initialSpells,
+    classData,
   } = props;
 
   return (
@@ -55,6 +61,8 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
       isDm={isDm}
       hasSheet={hasSheet}
       maxHp={maxHp}
+      initialSpells={initialSpells}
+      classData={classData}
     >
       <CharacterShell />
     </CharacterProvider>
