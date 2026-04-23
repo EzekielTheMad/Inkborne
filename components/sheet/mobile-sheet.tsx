@@ -179,6 +179,13 @@ export function MobileSheet({
                 tempHp={state.temp_hp ?? 0}
                 patchState={patchState}
               />
+              {/* Death saves — returns null when HP > 0, so this slot stays hidden
+                  during normal play. */}
+              <DeathSaves
+                currentHp={state.current_hp ?? maxHp}
+                deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
+                patchState={patchState}
+              />
               <div className="pt-2 border-t border-border">
                 <RestButton />
               </div>
@@ -209,15 +216,6 @@ export function MobileSheet({
             exhaustion={(state.exhaustion as number | undefined) ?? 0}
             patchState={patchState}
           />
-
-          {/* Death saves (only at HP=0) */}
-          {(state.current_hp ?? 0) === 0 && (
-            <DeathSaves
-              currentHp={state.current_hp ?? 0}
-              deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
-              patchState={patchState}
-            />
-          )}
 
           {/* Quick notes */}
           <QuickNotes state={state} patchState={patchState} />

@@ -2,6 +2,7 @@ import { Separator } from "@/components/ui/separator";
 import { AbilityCard } from "@/components/sheet/ability-card";
 import { CombatStats } from "@/components/sheet/combat-stats";
 import { HPTracker } from "@/components/sheet/hp-tracker";
+import { DeathSaves } from "@/components/sheet/death-saves";
 import { RestButton } from "@/components/sheet/rest-button";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
@@ -68,6 +69,16 @@ export function StatRibbon({
           currentHp={state.current_hp ?? maxHp}
           maxHp={maxHp}
           tempHp={state.temp_hp ?? 0}
+          patchState={patchState}
+        />
+      </div>
+
+      {/* Death saves — DeathSaves returns null when currentHp > 0, so this
+          slot takes no space during normal play. */}
+      <div className="shrink-0">
+        <DeathSaves
+          currentHp={state.current_hp ?? maxHp}
+          deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
           patchState={patchState}
         />
       </div>
