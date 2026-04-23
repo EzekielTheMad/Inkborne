@@ -50,6 +50,8 @@ import {
   computeMaxPrepared,
   computeMaxSlots,
 } from "@/lib/spells/helpers";
+import { computeResources } from "@/lib/resources/helpers";
+import type { FeatureResource } from "@/lib/types/resources";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -123,6 +125,9 @@ interface CharacterContextValue {
   updateItem: (id: string, updates: InventoryUpdate) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   setCurrency: (currency: Currency) => void;
+
+  // Feature resources
+  resources: FeatureResource[];
 
   // Spells
   spells: CharacterSpell[];
@@ -420,6 +425,14 @@ export function CharacterProvider({
   const slotState = (state.spell_slots_used ?? {}) as SpellSlotsUsed;
   const concentration = (state.concentrating_on ?? null) as ConcentrationState | null;
 
+  const resources = useMemo<FeatureResource[]>(() => {
+    const classChoices = (character.choices?.classes ?? []).map((c) => ({
+      slug: c.slug,
+      level: c.level,
+    }));
+    return computeResources(contentRefs, classChoices);
+  }, [contentRefs, character.choices?.classes]);
+
   const value: CharacterContextValue = {
     character,
     schema,
@@ -439,6 +452,7 @@ export function CharacterProvider({
     updateItem,
     removeItem,
     setCurrency,
+    resources,
     spells,
     slotState,
     maxSlots,
@@ -526,4 +540,44 @@ export function usePortrait() {
     portrait: ctx.portrait,
     setPortrait: ctx.setPortrait,
   };
+}
+
+/** Access character's feature-usage resources: read, spend, restore, set absolute. */
+export function useResources(): {
+  resources: FeatureResource[];
+  uses: Record<string, number>;
+  spend: (slug: string, amount?: number) => void;
+  restore: (slug: string, amount?: number) => void;
+  setUsed: (slug: string, newUsed: number) => void;
+} {
+  const ctx = useContext(CharacterContext);
+  if (!ctx) throw new Error("useResources must be used inside CharacterProvider");
+
+  const { resources, state, patchState } = ctx;
+  const uses = (state.feature_uses ?? {}) as Record<string, number>;
+
+  const clamp = (resource: FeatureResource | undefined, value: number) => {
+    if (!resource) return Math.max(0, value);
+    return Math.max(0, Math.min(resource.max, value));
+  };
+
+  const setUsed = (slug: string, newUsed: number) => {
+    const resource = resources.find((r) => r.slug === slug);
+    const clamped = clamp(resource, newUsed);
+    patchState({
+      feature_uses: { ...uses, [slug]: clamped },
+    });
+  };
+
+  const spend = (slug: string, amount = 1) => {
+    const current = uses[slug] ?? 0;
+    setUsed(slug, current + amount);
+  };
+
+  const restore = (slug: string, amount = 1) => {
+    const current = uses[slug] ?? 0;
+    setUsed(slug, current - amount);
+  };
+
+  return { resources, uses, spend, restore, setUsed };
 }
