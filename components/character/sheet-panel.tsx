@@ -88,6 +88,7 @@ export function SheetPanel() {
           />
           <Conditions
             conditions={state.conditions ?? []}
+            exhaustion={(state.exhaustion as number | undefined) ?? 0}
             patchState={patchState}
           />
           <DeathSaves
