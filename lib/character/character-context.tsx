@@ -29,6 +29,27 @@ import {
 } from "@/lib/supabase/inventory";
 import { generateArmorEffects } from "@/lib/inventory/armor-effects";
 import { isBodyArmor, isShield, getItemData } from "@/lib/inventory/helpers";
+import type {
+  CharacterSpell,
+  AddSpellPayload,
+  SpellUpdate,
+  SpellSlotsUsed,
+  MaxSlotsByLevel,
+  CasterInfo,
+  CasterClass,
+  ConcentrationState,
+} from "@/lib/types/spells";
+import {
+  addCharacterSpell,
+  updateCharacterSpell,
+  removeCharacterSpell,
+} from "@/lib/supabase/spells";
+import {
+  computeSpellDc,
+  computeSpellAttackBonus,
+  computeMaxPrepared,
+  computeMaxSlots,
+} from "@/lib/spells/helpers";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,6 +71,29 @@ interface PortraitData {
   url?: string;
   crop?: CropArea | null;
 }
+
+export type ClassContentData = Record<
+  string,
+  {
+    slug: string;
+    data: {
+      spellcasting?: {
+        ability?: string;
+        type?: CasterClass["type"];
+        focus?: string;
+        ritual_casting?: boolean;
+      } | null;
+      spellcastingKnown?: {
+        cantrips?: number[];
+        spells?: number[] | "all";
+        prepared?: boolean;
+      };
+      levels?: Array<{
+        spellcasting?: { cantrips_known?: number; spell_slots?: number[] } | null;
+      }>;
+    };
+  }
+>;
 
 interface CharacterContextValue {
   // Identity
@@ -79,6 +123,17 @@ interface CharacterContextValue {
   updateItem: (id: string, updates: InventoryUpdate) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   setCurrency: (currency: Currency) => void;
+
+  // Spells
+  spells: CharacterSpell[];
+  slotState: SpellSlotsUsed;
+  maxSlots: MaxSlotsByLevel;
+  casterInfo: CasterInfo;
+  concentration: ConcentrationState | null;
+  addSpell: (payload: AddSpellPayload) => Promise<void>;
+  updateSpell: (id: string, updates: SpellUpdate) => Promise<void>;
+  removeSpell: (id: string) => Promise<void>;
+  setConcentration: (spell: Omit<ConcentrationState, "started_at"> | null) => Promise<void>;
 }
 
 const CharacterContext = createContext<CharacterContextValue | null>(null);
@@ -93,6 +148,8 @@ export interface CharacterProviderProps {
   contentRefs: ContentRefWithContent[];
   initialState: CharacterState;
   initialInventory: InventoryItem[];
+  initialSpells: CharacterSpell[];
+  classData: ClassContentData;
   allEffects: Effect[];
   baseStatsWithLevel: Record<string, number>;
   structuredSources: StructuredSources;
@@ -109,6 +166,8 @@ export function CharacterProvider({
   contentRefs,
   initialState,
   initialInventory,
+  initialSpells,
+  classData,
   allEffects,
   baseStatsWithLevel,
   structuredSources,
@@ -240,6 +299,127 @@ export function CharacterProvider({
 
   const currency = (state.currency as Currency) ?? DEFAULT_CURRENCY;
 
+  // --- Spells ---
+  const [spells, setSpells] = useState<CharacterSpell[]>(initialSpells);
+
+  const addSpell = useCallback(
+    async (payload: AddSpellPayload) => {
+      const newSpell = await addCharacterSpell(character.id, payload);
+      if (newSpell) {
+        setSpells((prev) => [...prev, newSpell]);
+      }
+    },
+    [character.id],
+  );
+
+  const updateSpell = useCallback(
+    async (id: string, updates: SpellUpdate) => {
+      await updateCharacterSpell(id, updates);
+      setSpells((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    },
+    [],
+  );
+
+  const removeSpell = useCallback(
+    async (id: string) => {
+      await removeCharacterSpell(id);
+      setSpells((prev) => prev.filter((s) => s.id !== id));
+    },
+    [],
+  );
+
+  const setConcentration = useCallback(
+    async (spell: Omit<ConcentrationState, "started_at"> | null) => {
+      if (!spell) {
+        await patchState({ concentrating_on: null });
+      } else {
+        await patchState({
+          concentrating_on: {
+            ...spell,
+            started_at: new Date().toISOString(),
+          },
+        });
+      }
+    },
+    [patchState],
+  );
+
+  // --- Derived caster info ---
+  const casterInfo = useMemo<CasterInfo>(() => {
+    const classChoices =
+      (character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string }> })
+        ?.classes ?? [];
+
+    const profBonus = Number(evalResult.computed?.proficiency_bonus ?? 2);
+    const abilityScores = (evalResult.stats ?? {}) as Record<string, number>;
+
+    const classes: CasterClass[] = [];
+    for (const cls of classChoices) {
+      const cd = classData[cls.slug];
+      const sc = cd?.data?.spellcasting;
+      if (!sc || !sc.type) continue;
+
+      const ability = sc.ability ?? "intelligence";
+      const abilityMod = Math.floor(((abilityScores[ability] ?? 10) - 10) / 2);
+      const prepared = cd.data.spellcastingKnown?.prepared ?? false;
+      const cantripsArr = cd.data.spellcastingKnown?.cantrips ?? [];
+      const knownArr = cd.data.spellcastingKnown?.spells ?? "all";
+      const cantripsKnown = cantripsArr[cls.level - 1] ?? 0;
+      const spellsKnown: number | "all" =
+        knownArr === "all" ? "all" : knownArr[cls.level - 1] ?? 0;
+
+      classes.push({
+        slug: cls.slug,
+        level: cls.level,
+        type: sc.type,
+        ability,
+        prepared,
+        cantripsKnown,
+        spellsKnown,
+        maxPrepared: prepared ? computeMaxPrepared(cls.slug, cls.level, abilityMod) : 0,
+        ritualCasting: sc.ritual_casting ?? false,
+        focus: sc.focus,
+      });
+    }
+
+    // Spell DC and attack: highest across classes
+    let spellDc = 0;
+    let spellAttackBonus = 0;
+    for (const c of classes) {
+      const dc = computeSpellDc(c, abilityScores, profBonus);
+      const atk = computeSpellAttackBonus(c, abilityScores, profBonus);
+      if (dc > spellDc) spellDc = dc;
+      if (atk > spellAttackBonus) spellAttackBonus = atk;
+    }
+
+    return {
+      isCaster: classes.length > 0,
+      classes,
+      spellDc,
+      spellAttackBonus,
+    };
+  }, [character.choices, classData, evalResult]);
+
+  const maxSlots = useMemo<MaxSlotsByLevel>(() => {
+    const classChoices =
+      (character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string }> })
+        ?.classes ?? [];
+    const forCalc = classChoices.map((c) => {
+      const cd = classData[c.slug];
+      const type = cd?.data?.spellcasting?.type ?? null;
+      return { slug: c.slug, level: c.level, type };
+    });
+    // computeMaxSlots expects { levels } directly; ClassContentData nests it under .data
+    const classDataForSlots: Record<string, { levels?: Array<{ spellcasting?: { spell_slots?: number[] } | null }> }> = {};
+    for (const [slug, content] of Object.entries(classData)) {
+      classDataForSlots[slug] = { levels: content.data.levels };
+    }
+    return computeMaxSlots(forCalc, classDataForSlots);
+  }, [character.choices, classData]);
+
+  const slotState = (state.spell_slots_used ?? {}) as SpellSlotsUsed;
+  const concentration = (state.concentrating_on ?? null) as ConcentrationState | null;
+
   const value: CharacterContextValue = {
     character,
     schema,
@@ -259,6 +439,15 @@ export function CharacterProvider({
     updateItem,
     removeItem,
     setCurrency,
+    spells,
+    slotState,
+    maxSlots,
+    casterInfo,
+    concentration,
+    addSpell,
+    updateSpell,
+    removeSpell,
+    setConcentration,
   };
 
   return (
@@ -313,6 +502,21 @@ export function useInventory() {
     updateItem: ctx.updateItem,
     removeItem: ctx.removeItem,
     setCurrency: ctx.setCurrency,
+  };
+}
+
+export function useSpells() {
+  const ctx = useCharacterContext();
+  return {
+    spells: ctx.spells,
+    slotState: ctx.slotState,
+    maxSlots: ctx.maxSlots,
+    casterInfo: ctx.casterInfo,
+    concentration: ctx.concentration,
+    addSpell: ctx.addSpell,
+    updateSpell: ctx.updateSpell,
+    removeSpell: ctx.removeSpell,
+    setConcentration: ctx.setConcentration,
   };
 }
 

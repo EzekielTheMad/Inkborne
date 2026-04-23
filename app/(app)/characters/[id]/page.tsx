@@ -50,8 +50,74 @@ export default async function CharacterPage({ params }: PageProps) {
     .order("sort_order")
     .order("name");
 
+  // Fetch spells for this character.
+  const { data: spellRows } = await supabase
+    .from("character_spells")
+    .select("*, content_definitions(id, name, slug, content_type, data, effects)")
+    .eq("character_id", id)
+    .order("name");
+
+  // Fetch class content for caster classes to derive spellcasting metadata.
+  const classChoices =
+    ((character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string }> })
+      ?.classes) ?? [];
+  const classSlugs = classChoices.map((c) => c.slug);
+  const subclassSlugs = classChoices
+    .map((c) => c.subclass)
+    .filter((s): s is string => !!s);
+
+  const [classContentRes, subclassContentRes] = await Promise.all([
+    classSlugs.length > 0
+      ? supabase
+          .from("content_definitions")
+          .select("slug, data")
+          .eq("system_id", character.system_id)
+          .eq("content_type", "class")
+          .in("slug", classSlugs)
+      : Promise.resolve({ data: [] as Array<{ slug: string; data: Record<string, unknown> }> }),
+    subclassSlugs.length > 0
+      ? supabase
+          .from("content_definitions")
+          .select("slug, data")
+          .eq("system_id", character.system_id)
+          .eq("content_type", "subclass")
+          .in("slug", subclassSlugs)
+      : Promise.resolve({ data: [] as Array<{ slug: string; data: Record<string, unknown> }> }),
+  ]);
+
+  const classData: Record<string, { slug: string; data: Record<string, unknown> }> = {};
+  for (const row of classContentRes.data ?? []) {
+    classData[row.slug] = row;
+  }
+
+  const subclassData: Record<string, { spellcastingExtra?: Array<{ level: number; spells: string[] }> | null }> = {};
+  for (const row of subclassContentRes.data ?? []) {
+    const extras = (row.data as Record<string, unknown>)?.spellcastingExtra;
+    subclassData[row.slug] = {
+      spellcastingExtra: Array.isArray(extras)
+        ? (extras as Array<{ level: number; spells: string[] }>)
+        : null,
+    };
+  }
+
+  // Run always-prepared sync.
+  if (classChoices.length > 0) {
+    const { resolveFeatureGrantedSpells } = await import("@/lib/spells/helpers");
+    const { syncAlwaysPreparedSpells } = await import("@/lib/supabase/spells");
+    const granted = resolveFeatureGrantedSpells(classChoices, subclassData);
+    if (granted.length > 0) {
+      await syncAlwaysPreparedSpells(id, granted, {});
+    }
+  }
+
+  // Re-fetch spells after sync so the client gets the feature-granted rows.
+  const { data: spellRowsAfterSync } = await supabase
+    .from("character_spells")
+    .select("*, content_definitions(id, name, slug, content_type, data, effects)")
+    .eq("character_id", id)
+    .order("name");
+
   // Fetch class features at the character's current levels
-  const classChoices = character.choices?.classes ?? [];
   let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
 
   if (classChoices.length > 0) {
@@ -122,6 +188,8 @@ export default async function CharacterPage({ params }: PageProps) {
       isDm={isDm}
       hasSheet={hasSheet ?? false}
       initialInventory={inventoryRows ?? []}
+      initialSpells={spellRowsAfterSync ?? spellRows ?? []}
+      classData={classData}
     />
   );
 }
