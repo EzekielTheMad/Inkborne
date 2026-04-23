@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import type { CharacterWithSystem } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import { useResources } from "@/lib/character/character-context";
+import { ResourceCounter } from "@/components/sheet/resource-counter";
 
 /** Standard filter categories */
 const BASE_FILTERS = [
@@ -25,6 +27,7 @@ export function FeaturesTab({
   contentRefs,
 }: FeaturesTabProps) {
   const [activeFilter, setActiveFilter] = useState("all");
+  const { resources, uses, setUsed } = useResources();
 
   // Identify custom content types present in the character's content refs
   const customPills = useMemo(() => {
@@ -137,6 +140,25 @@ export function FeaturesTab({
                   {String(ref.content_definitions.data.description)}
                 </p>
               )}
+              {(() => {
+                const featureSlug = ref.content_definitions?.slug;
+                if (!featureSlug) return null;
+                const matched = resources.filter((r) => r.sourceFeatureSlug === featureSlug);
+                if (matched.length === 0) return null;
+                return (
+                  <div className="space-y-1.5 pt-1">
+                    {matched.map((r) => (
+                      <ResourceCounter
+                        key={r.slug}
+                        resource={r}
+                        used={uses[r.slug] ?? 0}
+                        onChange={(n) => setUsed(r.slug, n)}
+                        layout="card"
+                      />
+                    ))}
+                  </div>
+                );
+              })()}
               {/* Show resolved choices if any */}
               {ref.context?.resolved_choices != null &&
                 typeof ref.context.resolved_choices === "object" && (
