@@ -80,9 +80,10 @@ describe("ResourcesWidget", () => {
       setUsed: vi.fn(),
     });
     render(<ResourcesWidget />);
-    const names = screen.getAllByText(/Rage|Lay on Hands/).map((el) => el.textContent);
-    const lay = names.indexOf("Lay on Hands");
-    const rage = names.indexOf("Rage");
-    expect(lay).toBeLessThan(rage);
+    const rageEl = screen.getByText("Rage");
+    const layEl = screen.getByText("Lay on Hands");
+    // Lay on Hands should appear before Rage in document order
+    const position = layEl.compareDocumentPosition(rageEl);
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

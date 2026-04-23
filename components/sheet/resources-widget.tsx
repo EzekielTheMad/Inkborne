@@ -18,8 +18,8 @@ export function ResourcesWidget() {
   const grouped = groupByRecovery(resources);
 
   return (
-    <div className="rounded-lg border border-border bg-card/50 p-3 space-y-2">
-      <p className="text-xs text-muted-foreground">Resources</p>
+    <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+      <h3 className="text-accent font-semibold text-sm uppercase tracking-wide">Resources</h3>
 
       {grouped.short.length > 0 && (
         <ResourceGroup
@@ -54,7 +54,7 @@ interface ResourceGroupProps {
 function ResourceGroup({ label, icon, resources, uses, setUsed }: ResourceGroupProps) {
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
