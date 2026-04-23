@@ -3,7 +3,18 @@
 import { createClient } from "@/lib/supabase/client";
 import type { CharacterState } from "@/lib/types/character";
 
-/** Patches the character.state JSONB column with partial updates. */
+/**
+ * Patches the character.state JSONB column with partial updates.
+ *
+ * Uses the `patch_character_state` Postgres RPC (migration 00031) for an
+ * atomic shallow-merge. This eliminates the read-merge-write race that
+ * would occur if two state patches interleaved (e.g., spending Rage and
+ * spending Ki in quick succession).
+ *
+ * Shallow merge semantics: top-level keys in `patch` replace existing keys
+ * wholesale. Callers that want to update a nested field (e.g., one entry
+ * in feature_uses) must pass the full merged nested object.
+ */
 export async function updateCharacterState(
   characterId: string,
   patch: Partial<CharacterState>,
@@ -13,21 +24,5 @@ export async function updateCharacterState(
     character_id: characterId,
     state_patch: patch,
   });
-
-  // Fallback: if RPC doesn't exist, do a read-merge-write
-  if (error) {
-    const { data } = await supabase
-      .from("characters")
-      .select("state")
-      .eq("id", characterId)
-      .single();
-
-    const merged = { ...(data?.state ?? {}), ...patch };
-    const { error: updateError } = await supabase
-      .from("characters")
-      .update({ state: merged })
-      .eq("id", characterId);
-
-    if (updateError) throw updateError;
-  }
+  if (error) throw error;
 }

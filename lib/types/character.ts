@@ -49,6 +49,9 @@ export interface CharacterState {
   notes?: string;
   spell_slots_used?: SpellSlotsUsed;
   concentrating_on?: ConcentrationState | null;
+  /** Uses spent per feature resource. Key = FeatureResource.slug; value = spent count.
+   *  Max is computed per render; spent clamped to [0, max] on read. */
+  feature_uses?: Record<string, number>;
   // Equipment state
   equipped_armor?: "none" | "light" | "medium" | "heavy";
   shield_equipped?: boolean;
