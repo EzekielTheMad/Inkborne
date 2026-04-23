@@ -1,5 +1,6 @@
 import type { NarrativeData, NarrativeRichData } from "./narrative";
 import type { Currency } from "./inventory";
+import type { SpellSlotsUsed, ConcentrationState } from "./spells";
 
 export type CharacterVisibility = "private" | "campaign" | "public";
 
@@ -46,7 +47,8 @@ export interface CharacterState {
   inspiration?: boolean;
   quick_notes?: string;
   notes?: string;
-  spell_slots_used?: Record<string, number>;
+  spell_slots_used?: SpellSlotsUsed;
+  concentrating_on?: ConcentrationState | null;
   // Equipment state
   equipped_armor?: "none" | "light" | "medium" | "heavy";
   shield_equipped?: boolean;
