@@ -93,6 +93,30 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
   const cantripsAtCap =
     !!selectedCaster && cantripsKnown >= selectedCaster.cantripsKnown;
 
+  // Count leveled spells known for the selected class (excludes cantrips + always-prepared
+  // feature spells). Only applies to known casters (Sorcerer/Bard/Ranger/Warlock) — prepared
+  // casters have no spells-known cap, and wizards' spellbook is uncapped.
+  const leveledSpellsKnown = useMemo(() => {
+    return spells.filter((s) => {
+      if (s.class_slug !== selectedClass) return false;
+      if (s.always_prepared) return false; // feature-granted, doesn't count
+      const level = (s.content_definitions?.data?.level as number | undefined) ?? 0;
+      return level > 0;
+    }).length;
+  }, [spells, selectedClass]);
+
+  const hasKnownCap =
+    !!selectedCaster &&
+    !selectedCaster.prepared &&
+    selectedCaster.slug !== "wizard" &&
+    typeof selectedCaster.spellsKnown === "number";
+
+  const leveledSpellsAtCap =
+    hasKnownCap &&
+    !!selectedCaster &&
+    typeof selectedCaster.spellsKnown === "number" &&
+    leveledSpellsKnown >= selectedCaster.spellsKnown;
+
   // Map from content_id → spell row id for the current class (so we can remove by id).
   const existingByContentId = useMemo(() => {
     const map = new Map<string, string>();
@@ -136,6 +160,8 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     // Cantrip cap — shouldn't reach here because the button is disabled when at cap,
     // but guard against concurrent state changes.
     if (level === 0 && cantripsAtCap) return;
+    // Leveled-spells cap for known casters (Sorcerer/Bard/Ranger/Warlock).
+    if (level > 0 && leveledSpellsAtCap) return;
 
     // Determine add intent based on class type
     const intent: "known" | "spellbook" | "available" =
@@ -257,6 +283,13 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
           const isAlreadyAdded = !!existingRowId;
           const isBusy = busyId === spell.id;
           const isCantripAtCap = level === 0 && cantripsAtCap && !isAlreadyAdded;
+          const isLeveledAtCap = level > 0 && leveledSpellsAtCap && !isAlreadyAdded;
+          const atCap = isCantripAtCap || isLeveledAtCap;
+          const capTooltip = isCantripAtCap
+            ? `Cantrip cap reached (${selectedCaster?.cantripsKnown ?? 0}). Remove another cantrip first.`
+            : isLeveledAtCap
+              ? `Spells known cap reached (${selectedCaster?.spellsKnown ?? 0}). Remove another spell first.`
+              : undefined;
 
           return (
             <div
@@ -293,16 +326,12 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
                   size="sm"
                   variant="outline"
                   onClick={() => handleAdd(spell)}
-                  disabled={isBusy || isCantripAtCap}
+                  disabled={isBusy || atCap}
                   className="shrink-0 h-7"
-                  title={
-                    isCantripAtCap
-                      ? `Cantrip cap reached (${selectedCaster?.cantripsKnown ?? 0}). Remove another cantrip first.`
-                      : undefined
-                  }
+                  title={capTooltip}
                 >
                   <Plus className={cn("size-3.5 mr-1", isBusy && "animate-pulse")} />
-                  {isBusy ? "Adding…" : isCantripAtCap ? "Max" : "Add"}
+                  {isBusy ? "Adding…" : atCap ? "Max" : "Add"}
                 </Button>
               )}
             </div>

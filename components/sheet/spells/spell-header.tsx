@@ -9,6 +9,11 @@ export function SpellHeader() {
   const cantripsKnown = spells.filter(
     (s) => (s.content_definitions?.data?.level ?? 1) === 0,
   ).length;
+  const leveledSpellsKnown = spells.filter((s) => {
+    if (s.always_prepared) return false;
+    const level = (s.content_definitions?.data?.level as number | undefined) ?? 0;
+    return level > 0;
+  }).length;
   const preparedCount = spells.filter((s) => s.is_prepared).length;
   const totalCantripsAllowed = casterInfo.classes.reduce(
     (sum, c) => sum + c.cantripsKnown,
@@ -18,6 +23,11 @@ export function SpellHeader() {
     (sum, c) => sum + (c.prepared ? c.maxPrepared : 0),
     0,
   );
+  // Known casters (not prepared, not wizard): sum spells-known cap across classes.
+  const totalSpellsKnown = casterInfo.classes.reduce((sum, c) => {
+    if (c.prepared || c.slug === "wizard") return sum;
+    return sum + (typeof c.spellsKnown === "number" ? c.spellsKnown : 0);
+  }, 0);
 
   const abilityLabel = casterInfo.classes
     .map((c) => c.ability.charAt(0).toUpperCase() + c.ability.slice(1))
@@ -39,10 +49,15 @@ export function SpellHeader() {
           </span>
         </span>
       </div>
-      <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+      <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1 flex-wrap">
         <span>
           Cantrips: {cantripsKnown}/{totalCantripsAllowed}
         </span>
+        {totalSpellsKnown > 0 && (
+          <span>
+            Spells Known: {leveledSpellsKnown}/{totalSpellsKnown}
+          </span>
+        )}
         {totalPrepared > 0 && (
           <span>
             Prepared: {preparedCount}/{totalPrepared}
