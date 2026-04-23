@@ -70,7 +70,7 @@ export function ContentTabs({
             contentRefs={contentRefs}
           />
         )}
-        {activeTab === "spells" && <SpellsTab contentRefs={contentRefs} />}
+        {activeTab === "spells" && <SpellsTab />}
         {activeTab === "inventory" && <InventoryTab />}
         {activeTab === "features" && (
           <FeaturesTab
