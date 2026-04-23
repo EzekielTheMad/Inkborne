@@ -11,6 +11,7 @@ import { HPTracker } from "@/components/sheet/hp-tracker";
 import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
 import { Defenses } from "@/components/sheet/defenses";
+import { ResourcesWidget } from "@/components/sheet/resources-widget";
 import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { QuickNotes } from "@/components/sheet/quick-notes";
@@ -186,6 +187,9 @@ export function MobileSheet({
 
           {/* Defenses */}
           <Defenses evalResult={evalResult} />
+
+          {/* Feature Resources */}
+          <ResourcesWidget />
 
           {/* Activation toggles (e.g. Rage) */}
           <ActivationToggles
