@@ -4,6 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRest, useCharacter, useCharacterState, useResources } from "@/lib/character/character-context";
+import type { ConcentrationState } from "@/lib/types/spells";
 
 interface RestDialogProps {
   open: boolean;
@@ -86,7 +87,7 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
               <li>Restore all spell slots</li>
               {resources.length > 0 && <li>Restore all feature uses</li>}
               {state.concentrating_on && (
-                <li>Drop concentration on {(state.concentrating_on as { spell_name?: string }).spell_name ?? "current spell"}</li>
+                <li>Drop concentration on {(state.concentrating_on as ConcentrationState).spell_name ?? "current spell"}</li>
               )}
               {(deathSaves.successes > 0 || deathSaves.failures > 0) && (
                 <li>Clear death saves</li>
