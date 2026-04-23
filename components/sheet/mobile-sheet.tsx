@@ -8,6 +8,7 @@ import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { AbilityCard } from "@/components/sheet/ability-card";
 import { CombatStats } from "@/components/sheet/combat-stats";
 import { HPTracker } from "@/components/sheet/hp-tracker";
+import { RestButton } from "@/components/sheet/rest-button";
 import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
 import { Defenses } from "@/components/sheet/defenses";
@@ -171,12 +172,24 @@ export function MobileSheet({
             <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-3">
               Hit Points
             </h3>
-            <HPTracker
-              currentHp={state.current_hp ?? maxHp}
-              maxHp={maxHp}
-              tempHp={state.temp_hp ?? 0}
-              patchState={patchState}
-            />
+            <div className="space-y-3">
+              <HPTracker
+                currentHp={state.current_hp ?? maxHp}
+                maxHp={maxHp}
+                tempHp={state.temp_hp ?? 0}
+                patchState={patchState}
+              />
+              {/* Death saves — returns null when HP > 0, so this slot stays hidden
+                  during normal play. */}
+              <DeathSaves
+                currentHp={state.current_hp ?? maxHp}
+                deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
+                patchState={patchState}
+              />
+              <div className="pt-2 border-t border-border">
+                <RestButton />
+              </div>
+            </div>
           </div>
 
           {/* Saving throws */}
@@ -200,13 +213,7 @@ export function MobileSheet({
           {/* Conditions */}
           <Conditions
             conditions={state.conditions ?? []}
-            patchState={patchState}
-          />
-
-          {/* Death saves (only at HP=0) */}
-          <DeathSaves
-            currentHp={state.current_hp ?? maxHp}
-            deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
+            exhaustion={(state.exhaustion as number | undefined) ?? 0}
             patchState={patchState}
           />
 

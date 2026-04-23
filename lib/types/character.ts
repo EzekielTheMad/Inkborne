@@ -49,6 +49,8 @@ export interface CharacterState {
   notes?: string;
   spell_slots_used?: SpellSlotsUsed;
   concentrating_on?: ConcentrationState | null;
+  /** RAW exhaustion level 0-6. Applied via Conditions widget picker; decremented by 1 on long rest. */
+  exhaustion?: number;
   /** Uses spent per feature resource. Key = FeatureResource.slug; value = spent count.
    *  Max is computed per render; spent clamped to [0, max] on read. */
   feature_uses?: Record<string, number>;

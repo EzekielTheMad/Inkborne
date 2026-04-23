@@ -8,7 +8,6 @@ import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
 import { Defenses } from "@/components/sheet/defenses";
 import { Conditions } from "@/components/sheet/conditions";
-import { DeathSaves } from "@/components/sheet/death-saves";
 import { SkillsList } from "@/components/sheet/skills-list";
 import { Proficiencies } from "@/components/sheet/proficiencies";
 import { ContentTabs } from "@/components/sheet/content-tabs";
@@ -88,11 +87,7 @@ export function SheetPanel() {
           />
           <Conditions
             conditions={state.conditions ?? []}
-            patchState={patchState}
-          />
-          <DeathSaves
-            currentHp={state.current_hp ?? 0}
-            deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
+            exhaustion={(state.exhaustion as number | undefined) ?? 0}
             patchState={patchState}
           />
           <Proficiencies grants={evalResult.grants} contentRefs={contentRefs} />

@@ -52,6 +52,10 @@ import {
 } from "@/lib/spells/helpers";
 import { computeResources } from "@/lib/resources/helpers";
 import type { FeatureResource } from "@/lib/types/resources";
+import {
+  computeShortRestEffects,
+  computeLongRestEffects,
+} from "@/lib/rest/helpers";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -579,4 +583,45 @@ export function useResources(): {
   };
 
   return { resources, uses, spend, restore, setUsed };
+}
+
+/** Orchestrate short and long rests: compute effects, apply atomic state patch. */
+export function useRest(): {
+  exhaustion: number;
+  shortRest: () => void;
+  longRest: () => void;
+  setExhaustion: (level: number) => void;
+  canShortRest: boolean;
+  canLongRest: boolean;
+} {
+  const ctx = useCharacterContext();
+  const { state, resources, maxHp, patchState } = ctx;
+  const exhaustion = (state.exhaustion as number | undefined) ?? 0;
+
+  const shortEffects = computeShortRestEffects(state, resources);
+  const longEffects = computeLongRestEffects(state, maxHp, resources);
+
+  const shortRest = () => {
+    if (!shortEffects.canApply) return;
+    patchState(shortEffects.statePatch);
+  };
+
+  const longRest = () => {
+    if (!longEffects.canApply) return;
+    patchState(longEffects.statePatch);
+  };
+
+  const setExhaustion = (level: number) => {
+    const clamped = Math.max(0, Math.min(6, Math.floor(level)));
+    patchState({ exhaustion: clamped });
+  };
+
+  return {
+    exhaustion,
+    shortRest,
+    longRest,
+    setExhaustion,
+    canShortRest: shortEffects.canApply,
+    canLongRest: longEffects.canApply,
+  };
 }
