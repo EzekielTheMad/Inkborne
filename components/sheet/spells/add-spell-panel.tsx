@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Search, X, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -35,8 +35,36 @@ const LEVEL_PILLS: Array<{ key: string; label: string; level: number }> = [
   { key: "9", label: "9th", level: 9 },
 ];
 
+/**
+ * The highest spell level this character can actually cast.
+ * Derived from maxSlots — returns the highest key with slots > 0.
+ * Warlocks get their pact slot level. Non-casters get 0.
+ * Cantrips (level 0) are always castable by casters who know them.
+ */
+function getMaxCastableLevel(
+  maxSlots: Record<string, number | undefined>,
+  casterClasses: Array<{ slug: string; level: number }>,
+): number {
+  // Full/half casters: highest slot key with count > 0
+  let maxLevel = 0;
+  for (let i = 9; i >= 1; i--) {
+    if ((maxSlots[String(i)] ?? 0) > 0) {
+      maxLevel = i;
+      break;
+    }
+  }
+  // Warlock pact slots: determine pact slot level from class level
+  // (Warlock L1-2 = 1st, L3-4 = 2nd, L5-6 = 3rd, L7-8 = 4th, L9+ = 5th)
+  const warlock = casterClasses.find((c) => c.slug === "warlock");
+  if (warlock && (maxSlots.pact ?? 0) > 0) {
+    const pactLevel = warlock.level >= 9 ? 5 : Math.min(5, Math.ceil(warlock.level / 2));
+    if (pactLevel > maxLevel) maxLevel = pactLevel;
+  }
+  return maxLevel;
+}
+
 export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
-  const { casterInfo, addSpell, spells } = useSpells();
+  const { casterInfo, maxSlots, addSpell, spells } = useSpells();
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [selectedClass, setSelectedClass] = useState<string | null>(
@@ -44,8 +72,25 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
   );
   const [results, setResults] = useState<SpellSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [addingId, setAddingId] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const selectedCaster = casterInfo.classes.find((c) => c.slug === selectedClass);
+  const maxCastableLevel = useMemo(
+    () => getMaxCastableLevel(maxSlots as Record<string, number | undefined>, casterInfo.classes),
+    [maxSlots, casterInfo.classes],
+  );
+
+  // Set of content_ids already on this character (for the current class)
+  const alreadyAddedIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of spells) {
+      if (s.class_slug === selectedClass && s.content_id) {
+        set.add(s.content_id);
+      }
+    }
+    return set;
+  }, [spells, selectedClass]);
 
   const runSearch = useCallback(async () => {
     setLoading(true);
@@ -53,9 +98,16 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     if (selectedClass) opts.classSlug = selectedClass;
     if (selectedLevel != null) opts.level = selectedLevel;
     const data = await searchSpells(systemId, query, opts);
-    setResults(data);
+    // Client-side filter: exclude spell levels above what this character can cast.
+    // Cantrips (level 0) are always available to casters.
+    const filtered = data.filter((spell) => {
+      const level = (spell.data?.level as number | undefined) ?? 0;
+      if (level === 0) return true;
+      return level <= maxCastableLevel;
+    });
+    setResults(filtered);
     setLoading(false);
-  }, [systemId, query, selectedClass, selectedLevel]);
+  }, [systemId, query, selectedClass, selectedLevel, maxCastableLevel]);
 
   useEffect(() => {
     if (!open) return;
@@ -65,15 +117,12 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
 
   if (!open) return null;
 
-  const selectedCaster = casterInfo.classes.find((c) => c.slug === selectedClass);
-
-  const handleAdd = async (spell: SpellSearchResult, intent: "known" | "spellbook" | "available") => {
-    if (!selectedClass) return;
+  const handleAdd = async (spell: SpellSearchResult) => {
+    if (!selectedClass || !selectedCaster) return;
     const level = (spell.data?.level as number | undefined) ?? 0;
-    // Enforce cantrip cap: count existing cantrips known, block if at cap.
-    // Spellbook intent (wizard) and available intent (prepared casters) don't get enforced for
-    // non-cantrip levels in Phase 1 — spells known caps for known casters can be added later.
-    if (level === 0 && intent === "known" && selectedCaster) {
+
+    // Cantrip cap enforcement
+    if (level === 0) {
       const existingCantrips = spells.filter(
         (s) =>
           s.class_slug === selectedClass &&
@@ -86,15 +135,28 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
         return;
       }
     }
-    await addSpell({
-      content_id: spell.id,
-      name: spell.name,
-      class_slug: selectedClass,
-      is_known: intent === "known",
-      is_prepared: false,
-      in_spellbook: intent === "spellbook",
-    });
-    setExpandedId(null);
+
+    // Determine add intent based on class type
+    const intent: "known" | "spellbook" | "available" =
+      selectedCaster.slug === "wizard" && level > 0
+        ? "spellbook"
+        : selectedCaster.prepared && level > 0
+          ? "available"
+          : "known";
+
+    setAddingId(spell.id);
+    try {
+      await addSpell({
+        content_id: spell.id,
+        name: spell.name,
+        class_slug: selectedClass,
+        is_known: intent === "known",
+        is_prepared: false,
+        in_spellbook: intent === "spellbook",
+      });
+    } finally {
+      setAddingId(null);
+    }
   };
 
   return (
@@ -140,21 +202,31 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
       </div>
 
       <div className="flex flex-wrap gap-1">
-        {LEVEL_PILLS.map((p) => (
-          <button
-            key={p.key}
-            type="button"
-            onClick={() => setSelectedLevel(selectedLevel === p.level ? null : p.level)}
-            className={cn(
-              "text-xs px-2 py-1 rounded-full border",
-              selectedLevel === p.level
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50",
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
+        {LEVEL_PILLS.map((p) => {
+          const disabled = p.level > 0 && p.level > maxCastableLevel;
+          return (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => {
+                if (disabled) return;
+                setSelectedLevel(selectedLevel === p.level ? null : p.level);
+              }}
+              disabled={disabled}
+              className={cn(
+                "text-xs px-2 py-1 rounded-full border",
+                selectedLevel === p.level
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : disabled
+                    ? "bg-muted/20 text-muted-foreground/40 border-border/40 cursor-not-allowed line-through"
+                    : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50",
+              )}
+              title={disabled ? "You don't have slots for this level yet" : undefined}
+            >
+              {p.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="max-h-[400px] overflow-y-auto space-y-1">
@@ -167,51 +239,53 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
           </p>
         )}
         {results.map((spell) => {
-          const isExpanded = expandedId === spell.id;
           const level = (spell.data?.level as number | undefined) ?? 0;
           const school = (spell.data?.school as string | undefined) ?? "";
           const ritual = !!spell.data?.ritual;
           const concentration = !!spell.data?.concentration;
+          const isAlreadyAdded = alreadyAddedIds.has(spell.id);
+          const isAdding = addingId === spell.id;
+
           return (
-            <div key={spell.id} className="rounded border border-border/50 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setExpandedId(isExpanded ? null : spell.id)}
-                className="w-full flex items-center justify-between px-2 py-1.5 text-left hover:bg-accent/30"
-              >
-                <span className="flex items-center gap-2 min-w-0">
+            <div
+              key={spell.id}
+              className="flex items-center gap-2 px-2 py-1.5 rounded border border-border/50 hover:bg-accent/20"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
                   <span className="text-sm font-medium truncate">{spell.name}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {level === 0 ? "Cantrip" : `L${level}`} · {school}
-                  </span>
                   {ritual && <span className="text-[9px] text-muted-foreground">R</span>}
                   {concentration && <span className="text-[9px] text-muted-foreground">C</span>}
-                </span>
-              </button>
-              {isExpanded && (
-                <div className="p-2 border-t border-border/50 space-y-2">
-                  {spell.data?.description ? (
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {String(spell.data.description)}
-                    </p>
-                  ) : null}
-                  <div className="flex gap-2">
-                    {selectedCaster?.slug === "wizard" && level > 0 ? (
-                      <Button size="sm" onClick={() => handleAdd(spell, "spellbook")}>
-                        Add to Spellbook
-                      </Button>
-                    ) : selectedCaster?.prepared && level > 0 ? (
-                      <Button size="sm" onClick={() => handleAdd(spell, "available")}>
-                        Add (available to prepare)
-                      </Button>
-                    ) : (
-                      <Button size="sm" onClick={() => handleAdd(spell, "known")}>
-                        {level === 0 ? "Learn Cantrip" : "Learn Spell"}
-                      </Button>
-                    )}
-                  </div>
                 </div>
-              )}
+                <p className="text-xs text-muted-foreground truncate">
+                  {level === 0 ? "Cantrip" : `Level ${level}`}
+                  {school && ` · ${school}`}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant={isAlreadyAdded ? "ghost" : "outline"}
+                onClick={() => handleAdd(spell)}
+                disabled={isAlreadyAdded || isAdding}
+                className="shrink-0 h-7"
+              >
+                {isAlreadyAdded ? (
+                  <>
+                    <Check className="size-3.5 mr-1" />
+                    Added
+                  </>
+                ) : isAdding ? (
+                  <>
+                    <Plus className="size-3.5 mr-1 animate-pulse" />
+                    Adding…
+                  </>
+                ) : (
+                  <>
+                    <Plus className="size-3.5 mr-1" />
+                    Add
+                  </>
+                )}
+              </Button>
             </div>
           );
         })}

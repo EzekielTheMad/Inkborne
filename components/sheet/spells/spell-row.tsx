@@ -51,8 +51,8 @@ export function SpellRow({
   const components = formatComponents(data.components);
 
   return (
-    <div className="rounded border border-border/50 overflow-hidden text-sm">
-      <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent/30">
+    <div className="text-sm">
+      <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent/30">
         {allowPrepareToggle && !spell.always_prepared && !isCantrip && (
           <button
             type="button"

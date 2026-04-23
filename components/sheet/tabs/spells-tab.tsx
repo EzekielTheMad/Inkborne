@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCharacter, useSpells } from "@/lib/character/character-context";
 import { SpellHeader } from "@/components/sheet/spells/spell-header";
 import { SlotTracker } from "@/components/sheet/spells/slot-tracker";
-import { SpellLevelSection } from "@/components/sheet/spells/spell-level-section";
+import { SpellRow } from "@/components/sheet/spells/spell-row";
 import { AddSpellPanel } from "@/components/sheet/spells/add-spell-panel";
 import type { CharacterSpell } from "@/lib/types/spells";
 
@@ -21,20 +21,43 @@ const CASTER_CLASSES = [
   "Wizard",
 ];
 
+function levelLabel(level: number): string {
+  if (level === 0) return "Cantrips";
+  if (level === 1) return "1st Level";
+  if (level === 2) return "2nd Level";
+  if (level === 3) return "3rd Level";
+  return `${level}th Level`;
+}
+
 export function SpellsTab() {
   const { character } = useCharacter();
-  const { casterInfo, spells, slotState, maxSlots, updateSpell, removeSpell } = useSpells();
+  const { casterInfo, spells, updateSpell, removeSpell } = useSpells();
   const [showAddPanel, setShowAddPanel] = useState(false);
 
-  const spellsByLevel = useMemo(() => {
-    const groups: Record<number, CharacterSpell[]> = {};
-    for (const s of spells) {
-      const level = (s.content_definitions?.data?.level as number | undefined) ?? 0;
-      if (!groups[level]) groups[level] = [];
-      groups[level].push(s);
+  /** Spells sorted by level (cantrips first, then 1st-9th), then by name. */
+  const sortedSpells = useMemo(() => {
+    return [...spells].sort((a, b) => {
+      const aLevel = (a.content_definitions?.data?.level as number | undefined) ?? 0;
+      const bLevel = (b.content_definitions?.data?.level as number | undefined) ?? 0;
+      if (aLevel !== bLevel) return aLevel - bLevel;
+      return a.name.localeCompare(b.name);
+    });
+  }, [spells]);
+
+  /** Grouped for level dividers: [{level, spells}] in order. */
+  const groupedSpells = useMemo(() => {
+    const groups: Array<{ level: number; spells: CharacterSpell[] }> = [];
+    let current: { level: number; spells: CharacterSpell[] } | null = null;
+    for (const spell of sortedSpells) {
+      const level = (spell.content_definitions?.data?.level as number | undefined) ?? 0;
+      if (!current || current.level !== level) {
+        current = { level, spells: [] };
+        groups.push(current);
+      }
+      current.spells.push(spell);
     }
     return groups;
-  }, [spells]);
+  }, [sortedSpells]);
 
   const hasAnySpells = spells.length > 0;
   const anyClassPrepared = casterInfo.classes.some((c) => c.prepared);
@@ -80,47 +103,36 @@ export function SpellsTab() {
 
       {!hasAnySpells ? (
         <div className="rounded-lg border border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
-          <p>You haven't picked any spells yet.</p>
+          <p>You haven&apos;t picked any spells yet.</p>
           <p className="text-xs mt-1">
             Click <strong>+ Add Spell</strong> to get started.
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {Array.from({ length: 10 }).map((_, level) => {
-            const spellsAtLevel = spellsByLevel[level] ?? [];
-            if (spellsAtLevel.length === 0 && level > 0) return null;
-            const total = level === 0 ? undefined : maxSlots[String(level) as "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"];
-            const used = level === 0 ? undefined : slotState[String(level) as "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"];
-            return (
-              <SpellLevelSection
-                key={level}
-                level={level}
-                spells={spellsAtLevel}
-                maxSlots={total}
-                usedSlots={used}
-                defaultOpen={level === 0}
-                allowPrepareToggle={anyClassPrepared}
-                onTogglePrepared={(spell) =>
-                  updateSpell(spell.id, { is_prepared: !spell.is_prepared })
-                }
-                onRemove={(spell) => removeSpell(spell.id)}
-              />
-            );
-          })}
-          {(maxSlots.pact ?? 0) > 0 && (
-            <SpellLevelSection
-              level={0}
-              isPactSection
-              spells={[]}
-              maxSlots={maxSlots.pact}
-              usedSlots={slotState.pact}
-              defaultOpen={false}
-              allowPrepareToggle={false}
-              onTogglePrepared={() => {}}
-              onRemove={() => {}}
-            />
-          )}
+        <div className="rounded-lg border border-border overflow-hidden">
+          {groupedSpells.map((group) => (
+            <div key={group.level}>
+              <div className="px-3 py-1.5 bg-muted/40 border-b border-border/50 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {levelLabel(group.level)}
+                <span className="ml-1.5 text-[10px] font-normal normal-case tracking-normal text-muted-foreground/70">
+                  ({group.spells.length})
+                </span>
+              </div>
+              <div className="divide-y divide-border/30">
+                {group.spells.map((spell) => (
+                  <SpellRow
+                    key={spell.id}
+                    spell={spell}
+                    allowPrepareToggle={anyClassPrepared}
+                    onTogglePrepared={() =>
+                      updateSpell(spell.id, { is_prepared: !spell.is_prepared })
+                    }
+                    onRemove={() => removeSpell(spell.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
