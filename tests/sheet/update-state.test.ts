@@ -27,33 +27,23 @@ describe("updateCharacterState", () => {
     });
   });
 
-  it("falls back to select+update when RPC fails", async () => {
-    rpcMock.mockResolvedValue({ error: { message: "no rpc" } });
+  it("throws when the RPC returns an error", async () => {
+    const rpcError = { message: "permission denied" };
+    rpcMock.mockResolvedValue({ error: rpcError });
 
-    const updateSpy = vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    });
-    const selectSpy = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: { state: { current_hp: 10, conditions: ["prone"] } },
-          error: null,
-        }),
-      }),
-    });
+    await expect(
+      updateCharacterState("char-456", { current_hp: 20 }),
+    ).rejects.toEqual(rpcError);
 
-    fromMock.mockReturnValue({
-      select: selectSpy,
-      update: updateSpy,
-    });
+    // No fallback select/update path should run — RPC errors propagate.
+    expect(fromMock).not.toHaveBeenCalled();
+  });
 
-    await updateCharacterState("char-456", { current_hp: 20 });
+  it("resolves without error when RPC succeeds", async () => {
+    rpcMock.mockResolvedValue({ error: null });
 
-    // fromMock is called for both select and update paths
-    expect(fromMock).toHaveBeenCalledWith("characters");
-    expect(selectSpy).toHaveBeenCalledWith("state");
-    expect(updateSpy).toHaveBeenCalledWith({
-      state: { current_hp: 20, conditions: ["prone"] },
-    });
+    await expect(
+      updateCharacterState("char-789", { conditions: ["poisoned"] }),
+    ).resolves.toBeUndefined();
   });
 });
