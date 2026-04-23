@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-23
 **Status:** Approved
-**Scope:** Second of three foundation phases preceding Spell Management Phase 2. Delivers short/long rest orchestration covering: Warlock pact slots, all spell slots, HP to max, death saves reset, exhaustion tracking, concentration break, and feature resources reset. Does **not** build dice rolling, HD tracking, or HD spend-to-heal — those are explicitly deferred to the Dice Rolling foundation phase. Also does not build class-specific refreshes beyond what's covered by Feature Resources.
+**Scope:** Second of three foundation phases preceding Spell Management Phase 2. Delivers short/long rest orchestration covering: Warlock pact slots, all spell slots, HP to max, death saves reset, exhaustion tracking, concentration break, and feature resources reset. Additionally redesigns the Conditions widget (dropdown picker + applied-only pills + Exhaustion as a leveled pill) and hides Death Saves until `current_hp === 0`. Does **not** build dice rolling, HD tracking, or HD spend-to-heal — those are explicitly deferred to the Dice Rolling foundation phase. Also does not build class-specific refreshes beyond what's covered by Feature Resources.
 
 ---
 
@@ -153,15 +153,54 @@ Layout: side-by-side panes on desktop, stacked on mobile.
 
 **No success toast** in this phase — the sheet updates visibly (HP bar, slot tracker, widget counters) and that's sufficient feedback. Toast/log integration can come with the Activity Log phase.
 
-### 3. Exhaustion stepper in Conditions widget
+### 3. Conditions widget redesign + Exhaustion integration
 
-Modify `components/sheet/conditions.tsx` to always render a small "Exhaustion" row at the top of the widget showing `Exhaustion: {level}/6` with `[−]`/`[+]` buttons. Always visible (not conditional on `> 0`) so DM-granted exhaustion is one-click. Buttons clamp at [0, 6].
+**Current state:** `components/sheet/conditions.tsx` renders all 15 conditions as a flat grid of toggle pills — including "Exhaustion" as a binary toggle (incorrect per RAW, which treats Exhaustion as level 1–6). The grid always takes ~6 rows of vertical space even when the character has zero conditions.
 
-Tooltip on the label summarizes the 6 levels per RAW (disadvantage on ability checks at 1, speed halved at 2, disadvantage on attack rolls and saves at 3, HP max halved at 4, speed 0 at 5, death at 6).
+**Redesign to dropdown-picker pattern:**
 
-At level 5+ the row renders with warning styling (amber background or red text) to make the severity visible at a glance.
+```
+╭─ CONDITIONS ─────────────────────────────────╮
+│                                               │
+│  [Poisoned ×]  [Exhaustion 2/6  −  +]        │
+│                                               │
+│  [+ Add Condition ▼]                          │
+╰───────────────────────────────────────────────╯
+```
 
-### 4. No HD display
+Empty state:
+```
+╭─ CONDITIONS ─────────────────────────────────╮
+│  No active conditions                         │
+│  [+ Add Condition ▼]                          │
+╰───────────────────────────────────────────────╯
+```
+
+**Behavior:**
+- Applied conditions render as pills at the top of the widget. Clicking the `×` removes it.
+- Below the pills: a small `[+ Add Condition]` button that opens a popover listing only conditions NOT currently applied. Click one to add.
+- **Exhaustion is special-cased in two places:**
+  1. In the popover, clicking "Exhaustion" adds it with `level = 1`
+  2. When applied, the pill renders with an inline stepper: `Exhaustion 2/6 [−][+]` — clicking `[−]` at level 1 removes it (sets `exhaustion = 0`, which is interpreted as "not applied")
+- When `exhaustion >= 5`, the pill gets warning styling (amber or destructive color) to surface the severity.
+- Tooltip on the Exhaustion pill's label summarizes RAW levels (disadv on checks at 1, speed halved at 2, disadv on attacks + saves at 3, HP max halved at 4, speed 0 at 5, death at 6).
+
+**State model:**
+- Boolean conditions remain in `state.conditions: string[]` (existing)
+- Exhaustion lives separately as `state.exhaustion: number` (new this phase)
+- The widget considers Exhaustion "applied" when `exhaustion > 0`; absent when `exhaustion === 0 | undefined`
+
+**Benefits:** Widget shrinks dramatically for characters with zero conditions (which is most of the time). Exhaustion gets proper level tracking without a separate widget. Discoverability of the 14 other conditions preserved through the picker.
+
+### 4. Death Saves visibility
+
+**Currently** `<DeathSaves>` always renders in the left column. **Change: only render when `current_hp === 0`.**
+
+Additionally, **auto-reset saves when HP transitions from 0 to > 0.** Implementation: modify the HP tracker (or the `patchState` wrapper call-site) so any patch that sets `current_hp > 0` while the prior value was `0` AND `death_saves` has non-zero values also clears `death_saves` in the same patch. This matches RAW: healing at 0 HP resets death saves.
+
+Edge case: a DM might edit saves directly (e.g., for roleplay). The auto-reset only fires on the `0 → >0` HP transition, not on direct save edits, so direct editing still works.
+
+### 5. No HD display
 
 Per the scope decision: HD state is not tracked this phase, so no HP tracker sub-row, no widget. The Dice Rolling phase will add HD tracking, display, spend-to-heal, and long-rest HD restoration together.
 
@@ -190,30 +229,23 @@ The hook:
 - For resource resets, loops and calls `useResources().setUsed(slug, 0)` for each
 - `setExhaustion(level)` clamps to [0, 6]; `level === 6` is a death trigger but Rest System doesn't enforce death handling (separate concern — character just shows level 6)
 
-### Rest execution sequence
+### Rest execution: single atomic patch
 
-Long rest performs multiple state mutations. Order:
-
-1. Compute full `CharacterState` patch (all top-level fields) via `computeLongRestEffects`
-2. Single `patchState` call with the full patch (atomic via RPC)
-3. Compute resource reset list
-4. Sequentially call `setUsed(slug, 0)` for each resource — **each is a separate RPC call** under current plumbing
-
-**Concern:** Step 4 is N round-trips for N resources. For a typical L5-10 character with ~5 resources that's 5 extra RPC calls. Acceptable for MVP, not ideal. Future optimization: a `reset_feature_uses_multi` RPC or a `bulk_patch` variant. Tracked as Phase 2.5 backlog — out of scope here.
-
-Alternative: stuff `feature_uses` into the `patchState` call since it's a state field:
+Because `feature_uses` is a top-level state field and the `patch_character_state` RPC does shallow merge on top-level keys, all rest state changes — HP, death saves, exhaustion, concentration, slots, feature_uses — can be batched into a single `patchState` call:
 
 ```ts
 patchState({
   current_hp: maxHp,
-  // ... other patches ...
+  temp_hp: 0,
+  death_saves: { successes: 0, failures: 0 },
+  exhaustion: Math.max(0, exhaustion - 1),
+  concentrating_on: null,
+  spell_slots_used: {},  // all keys zeroed out — shallow merge replaces wholesale
   feature_uses: { ...existingUses, [slug1]: 0, [slug2]: 0, ... },
 });
 ```
 
-**This is strictly better.** `feature_uses` is already a top-level state field, and the RPC does shallow merge on top-level keys, so we replace `feature_uses` wholesale. One RPC call instead of N+1.
-
-**Plan will use the single-patch approach.** `useResources().setUsed` is for single-resource updates driven by UI; `useRest()` bulk-resets directly via `patchState` for efficiency.
+One RPC call, atomic. `useResources().setUsed` is for single-resource updates driven by UI; `useRest()` bulk-resets directly via `patchState` for efficiency.
 
 ---
 
@@ -227,26 +259,41 @@ patchState({
 | `components/sheet/rest-button.tsx` | Create | Stat-ribbon trigger button |
 | `components/sheet/rest-dialog.tsx` | Create | Two-pane short/long dialog with execution buttons |
 | `components/sheet/stat-ribbon.tsx` | Modify | Insert `<RestButton />` after HP tracker |
-| `components/sheet/conditions.tsx` | Modify | Add exhaustion stepper with RAW-level tooltip |
-| `components/sheet/mobile-sheet.tsx` | Modify | Mirror the stat-ribbon Rest button on mobile |
+| `components/sheet/conditions.tsx` | Rewrite | Dropdown-picker pattern; applied-only pills; exhaustion stepper pill |
+| `components/sheet/hp-tracker.tsx` | Modify | Auto-reset death saves on 0→>0 HP transition |
+| `components/character/sheet-panel.tsx` | Modify | Conditional render of `<DeathSaves>` only when `current_hp === 0` |
+| `components/sheet/mobile-sheet.tsx` | Modify | Mirror Rest button + DeathSaves visibility rule |
 | `tests/rest/helpers.test.ts` | Create | Pure-logic tests for both effect computations |
 | `tests/components/sheet/rest-dialog.test.tsx` | Create | Dialog render + execution tests |
+| `tests/components/sheet/conditions.test.tsx` | Create | Redesigned picker + exhaustion stepper behavior |
 
 No DB migration needed — state change is additive JSONB.
 
 ---
 
-## Verification Criteria (9)
+## Verification Criteria (13)
 
+**Rest:**
 1. **Rest button visible** in stat ribbon on desktop and mobile; icon + label readable
 2. **Dialog opens** showing two panes (Short Rest / Long Rest)
 3. **Short Rest pane** accurately previews effects based on character class and current state; disabled with tooltip if nothing would happen
 4. **Short Rest executes** — Warlock pact slots set to 0, short-rest feature_uses cleared, regular slots/HP/death saves/exhaustion unchanged
 5. **Long Rest pane** accurately previews current → target values for HP, slots, death saves, exhaustion, resources
-6. **Long Rest executes** — single atomic patch plus resource resets; all fields updated correctly
+6. **Long Rest executes** — single atomic patch; all fields updated correctly
 7. **Concentration breaks** on long rest (concentrating_on becomes null)
-8. **Exhaustion stepper** visible in Conditions widget; clamped to [0, 6]; RAW tooltip accessible
-9. **No HD UI or HD logic** shipped — confirms scope discipline; HD follows Dice Rolling phase
+
+**Conditions redesign:**
+8. **Empty state** — Conditions widget shows "No active conditions" + Add button only when no conditions applied
+9. **Add flow** — clicking Add Condition opens a popover listing only unapplied conditions; clicking one adds it as a pill
+10. **Exhaustion** — applying Exhaustion from the picker sets level = 1; pill shows `Exhaustion L/6` with functioning `[−]`/`[+]` stepper; `[−]` at level 1 removes it
+11. **Warning styling** at exhaustion level 5+
+
+**Death Saves:**
+12. **Hidden** when `current_hp > 0`; **visible** when `current_hp === 0`
+13. **Auto-reset** on 0 → >0 HP transition — previously non-zero death saves clear in the same patchState call
+
+**Scope discipline:**
+14. **No HD UI or HD logic** shipped — confirms the Dice Rolling phase carries HD
 
 ---
 
@@ -269,6 +316,14 @@ No DB migration needed — state change is additive JSONB.
 - Long Rest button disabled when canLongRest=false
 - Clicking Short Rest calls `shortRest()` and closes dialog
 - Clicking Long Rest calls `longRest()` and closes dialog
+
+**Component (`tests/components/sheet/conditions.test.tsx`)**:
+- Empty state renders when conditions=[] and exhaustion=0
+- Applied condition pill renders with × remove button
+- Clicking Add Condition opens popover listing only unapplied conditions (applied ones filtered out)
+- Exhaustion popover click sets exhaustion = 1
+- Exhaustion pill shows level + stepper; `[+]` increments; `[−]` at level > 1 decrements; `[−]` at level 1 removes (sets to 0)
+- Warning styling class applied at exhaustion >= 5
 - Preview text includes accurate before/after values
 
 **Smoke (manual)**:
