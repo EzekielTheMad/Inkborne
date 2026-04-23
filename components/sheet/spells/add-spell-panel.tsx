@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, X, Plus, Check } from "lucide-react";
+import { Search, X, Plus, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -64,7 +64,7 @@ function getMaxCastableLevel(
 }
 
 export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
-  const { casterInfo, maxSlots, addSpell, spells } = useSpells();
+  const { casterInfo, maxSlots, addSpell, removeSpell, spells } = useSpells();
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [selectedClass, setSelectedClass] = useState<string | null>(
@@ -72,7 +72,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
   );
   const [results, setResults] = useState<SpellSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [addingId, setAddingId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedCaster = casterInfo.classes.find((c) => c.slug === selectedClass);
@@ -81,15 +81,27 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     [maxSlots, casterInfo.classes],
   );
 
-  // Set of content_ids already on this character (for the current class)
-  const alreadyAddedIds = useMemo(() => {
-    const set = new Set<string>();
+  // Count cantrips already known for the selected class (for cap enforcement).
+  const cantripsKnown = useMemo(() => {
+    return spells.filter(
+      (s) =>
+        s.class_slug === selectedClass &&
+        ((s.content_definitions?.data?.level as number | undefined) ?? 0) === 0,
+    ).length;
+  }, [spells, selectedClass]);
+
+  const cantripsAtCap =
+    !!selectedCaster && cantripsKnown >= selectedCaster.cantripsKnown;
+
+  // Map from content_id → spell row id for the current class (so we can remove by id).
+  const existingByContentId = useMemo(() => {
+    const map = new Map<string, string>();
     for (const s of spells) {
       if (s.class_slug === selectedClass && s.content_id) {
-        set.add(s.content_id);
+        map.set(s.content_id, s.id);
       }
     }
-    return set;
+    return map;
   }, [spells, selectedClass]);
 
   const runSearch = useCallback(async () => {
@@ -121,20 +133,9 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     if (!selectedClass || !selectedCaster) return;
     const level = (spell.data?.level as number | undefined) ?? 0;
 
-    // Cantrip cap enforcement
-    if (level === 0) {
-      const existingCantrips = spells.filter(
-        (s) =>
-          s.class_slug === selectedClass &&
-          ((s.content_definitions?.data?.level as number | undefined) ?? 0) === 0,
-      ).length;
-      if (existingCantrips >= selectedCaster.cantripsKnown) {
-        alert(
-          `You already know the maximum number of cantrips (${selectedCaster.cantripsKnown}) for ${selectedClass}.`,
-        );
-        return;
-      }
-    }
+    // Cantrip cap — shouldn't reach here because the button is disabled when at cap,
+    // but guard against concurrent state changes.
+    if (level === 0 && cantripsAtCap) return;
 
     // Determine add intent based on class type
     const intent: "known" | "spellbook" | "available" =
@@ -144,7 +145,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
           ? "available"
           : "known";
 
-    setAddingId(spell.id);
+    setBusyId(spell.id);
     try {
       await addSpell({
         content_id: spell.id,
@@ -155,7 +156,16 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
         in_spellbook: intent === "spellbook",
       });
     } finally {
-      setAddingId(null);
+      setBusyId(null);
+    }
+  };
+
+  const handleRemove = async (spellRowId: string, spellId: string) => {
+    setBusyId(spellId);
+    try {
+      await removeSpell(spellRowId);
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -243,8 +253,10 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
           const school = (spell.data?.school as string | undefined) ?? "";
           const ritual = !!spell.data?.ritual;
           const concentration = !!spell.data?.concentration;
-          const isAlreadyAdded = alreadyAddedIds.has(spell.id);
-          const isAdding = addingId === spell.id;
+          const existingRowId = existingByContentId.get(spell.id);
+          const isAlreadyAdded = !!existingRowId;
+          const isBusy = busyId === spell.id;
+          const isCantripAtCap = level === 0 && cantripsAtCap && !isAlreadyAdded;
 
           return (
             <div
@@ -262,30 +274,37 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
                   {school && ` · ${school}`}
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant={isAlreadyAdded ? "ghost" : "outline"}
-                onClick={() => handleAdd(spell)}
-                disabled={isAlreadyAdded || isAdding}
-                className="shrink-0 h-7"
-              >
-                {isAlreadyAdded ? (
-                  <>
-                    <Check className="size-3.5 mr-1" />
-                    Added
-                  </>
-                ) : isAdding ? (
-                  <>
-                    <Plus className="size-3.5 mr-1 animate-pulse" />
-                    Adding…
-                  </>
-                ) : (
-                  <>
-                    <Plus className="size-3.5 mr-1" />
-                    Add
-                  </>
-                )}
-              </Button>
+              {isAlreadyAdded ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleRemove(existingRowId, spell.id)}
+                  disabled={isBusy}
+                  className="shrink-0 h-7 text-muted-foreground hover:text-destructive group"
+                  title="Remove spell"
+                >
+                  <Check className="size-3.5 mr-1 group-hover:hidden" />
+                  <Trash2 className="size-3.5 mr-1 hidden group-hover:inline" />
+                  <span className="group-hover:hidden">Added</span>
+                  <span className="hidden group-hover:inline">Remove</span>
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleAdd(spell)}
+                  disabled={isBusy || isCantripAtCap}
+                  className="shrink-0 h-7"
+                  title={
+                    isCantripAtCap
+                      ? `Cantrip cap reached (${selectedCaster?.cantripsKnown ?? 0}). Remove another cantrip first.`
+                      : undefined
+                  }
+                >
+                  <Plus className={cn("size-3.5 mr-1", isBusy && "animate-pulse")} />
+                  {isBusy ? "Adding…" : isCantripAtCap ? "Max" : "Add"}
+                </Button>
+              )}
             </div>
           );
         })}
