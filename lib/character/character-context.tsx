@@ -550,8 +550,7 @@ export function useResources(): {
   restore: (slug: string, amount?: number) => void;
   setUsed: (slug: string, newUsed: number) => void;
 } {
-  const ctx = useContext(CharacterContext);
-  if (!ctx) throw new Error("useResources must be used inside CharacterProvider");
+  const ctx = useCharacterContext();
 
   const { resources, state, patchState } = ctx;
   const uses = (state.feature_uses ?? {}) as Record<string, number>;
