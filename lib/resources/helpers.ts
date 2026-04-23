@@ -36,36 +36,62 @@ function slugifyExtra(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
-/** Compute the full list of active feature resources for the character. */
+/** Content types that can contribute feature resources. */
+const RESOURCE_CONTENT_TYPES = new Set(["feature", "feat", "trait"]);
+
+/**
+ * Compute the full list of active feature resources for the character.
+ *
+ * Accepted content types:
+ *  - "feature" (class feature) — requires `data.class`; max scales by level in
+ *    that class. sourceLabel is "{Class} {level}" (the level this feature was
+ *    gained, e.g., "Barbarian 1").
+ *  - "feat"    — no class required; max scales by total character level. Label: "Feat".
+ *  - "trait"   — no class required; max scales by total character level. Label: "Racial Trait".
+ */
 export function computeResources(
   contentRefs: ContentRefWithContent[],
   classes: Array<{ slug: string; level: number }>,
 ): FeatureResource[] {
   const out: FeatureResource[] = [];
+  const characterLevel = classes.reduce((sum, c) => sum + c.level, 0);
 
   for (const ref of contentRefs) {
     const def = ref.content_definitions;
-    if (!def || def.content_type !== "feature") continue;
+    if (!def) continue;
+    if (!RESOURCE_CONTENT_TYPES.has(def.content_type)) continue;
 
     const data = def.data as Record<string, unknown> | undefined;
     if (!data) continue;
 
-    const classSlug = data.class as string | undefined;
-    if (!classSlug) continue;
+    // Resolve level context + sourceLabel based on content type.
+    let levelForMax: number;
+    let sourceLabel: string;
 
-    const classEntry = classes.find((c) => c.slug === classSlug);
-    if (!classEntry) continue;
+    if (def.content_type === "feature") {
+      const classSlug = data.class as string | undefined;
+      if (!classSlug) continue;
+      const classEntry = classes.find((c) => c.slug === classSlug);
+      if (!classEntry) continue;
+      levelForMax = classEntry.level;
+      const featureGainLevel = typeof data.level === "number" ? data.level : 1;
+      sourceLabel = `${titleCase(classSlug)} ${featureGainLevel}`;
+    } else if (def.content_type === "feat") {
+      levelForMax = characterLevel;
+      sourceLabel = "Feat";
+    } else {
+      // trait
+      levelForMax = characterLevel;
+      sourceLabel = "Racial Trait";
+    }
 
-    const classLevel = classEntry.level;
     const usages = data.usages as number | Array<number | null> | undefined;
     const recoveryRaw = data.recovery as string | null | undefined;
     const recovery = normalizeRecovery(recoveryRaw ?? null);
-    const featureGainLevel = typeof data.level === "number" ? data.level : 1;
-    const sourceLabel = `${titleCase(classSlug)} ${featureGainLevel}`;
 
     // Primary resource from usages + recovery
     if (recovery != null) {
-      const max = getMaxUses(usages, classLevel);
+      const max = getMaxUses(usages, levelForMax);
       if (max > 0) {
         out.push({
           slug: def.slug,
