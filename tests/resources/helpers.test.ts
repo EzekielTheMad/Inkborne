@@ -50,8 +50,13 @@ describe("getMaxUses", () => {
 });
 
 describe("computeResources", () => {
-  // Synthetic feature fixture helper
-  function feature(slug: string, data: Record<string, unknown>) {
+  // Synthetic content-ref fixture helper. Defaults content_type to "feature";
+  // override to build feat/trait fixtures.
+  function makeRef(
+    slug: string,
+    data: Record<string, unknown>,
+    contentType: "feature" | "feat" | "trait" = "feature",
+  ) {
     return {
       id: `id-${slug}`,
       content_id: `content-${slug}`,
@@ -64,12 +69,15 @@ describe("computeResources", () => {
         id: `content-${slug}`,
         slug,
         name: slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        content_type: "feature",
+        content_type: contentType,
         data,
         version: 1,
       },
     };
   }
+  const feature = (slug: string, data: Record<string, unknown>) => makeRef(slug, data, "feature");
+  const feat = (slug: string, data: Record<string, unknown>) => makeRef(slug, data, "feat");
+  const trait = (slug: string, data: Record<string, unknown>) => makeRef(slug, data, "trait");
 
   it("returns empty array when no features", () => {
     expect(computeResources([], [])).toEqual([]);
@@ -171,7 +179,7 @@ describe("computeResources", () => {
     expect(result).toEqual([]);
   });
 
-  it("skips non-feature content types", () => {
+  it("skips non-feature/feat/trait content types (e.g., weapon)", () => {
     const refs = [{
       id: "id1", content_id: "c1", character_id: "ch", content_version: 1,
       context: {}, choice_source: null, created_at: "",
@@ -181,6 +189,109 @@ describe("computeResources", () => {
       },
     }];
     expect(computeResources(refs as never, [{ slug: "fighter", level: 1 }])).toEqual([]);
+  });
+
+  // --- Feats ---
+
+  it("builds a resource from a feat with fixed usages + long rest", () => {
+    const refs = [feat("lucky", { description: "x", usages: 3, recovery: "long rest" })];
+    const result = computeResources(refs, [{ slug: "wizard", level: 1 }]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      slug: "lucky",
+      name: "Lucky",
+      max: 3,
+      recovery: "long",
+      sourceLabel: "Feat",
+      sourceFeatureSlug: "lucky",
+    });
+  });
+
+  it("builds a resource from a feat with fixed usages + short rest", () => {
+    const refs = [feat("inspiring_leader", { description: "x", usages: 1, recovery: "short rest" })];
+    const result = computeResources(refs, [{ slug: "fighter", level: 1 }]);
+    expect(result[0]).toMatchObject({
+      slug: "inspiring_leader",
+      max: 1,
+      recovery: "short",
+      sourceLabel: "Feat",
+    });
+  });
+
+  it("excludes a feat with no usages", () => {
+    const refs = [feat("tough", { description: "x" })];
+    expect(computeResources(refs, [{ slug: "fighter", level: 1 }])).toEqual([]);
+  });
+
+  it("includes a feat even when the character has no classes (feat-specific path)", () => {
+    const refs = [feat("lucky", { description: "x", usages: 3, recovery: "long rest" })];
+    const result = computeResources(refs, []);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ slug: "lucky", max: 3, sourceLabel: "Feat" });
+  });
+
+  it("resolves per-level array usages on a feat against character total level", () => {
+    const arr = Array.from({ length: 20 }, (_, i) => i + 1); // [1..20]
+    const refs = [feat("scaling", { description: "x", usages: arr, recovery: "long rest" })];
+    // Fighter 3 + Wizard 2 → total level 5 → arr[4] = 5
+    const result = computeResources(refs, [{ slug: "fighter", level: 3 }, { slug: "wizard", level: 2 }]);
+    expect(result[0].max).toBe(5);
+  });
+
+  // --- Racial traits ---
+
+  it("builds a resource from a racial trait with fixed usages + short rest", () => {
+    const refs = [trait("breath_weapon", { description: "x", usages: 1, recovery: "short rest" })];
+    const result = computeResources(refs, [{ slug: "wizard", level: 3 }]);
+    expect(result[0]).toMatchObject({
+      slug: "breath_weapon",
+      max: 1,
+      recovery: "short",
+      sourceLabel: "Racial Trait",
+      sourceFeatureSlug: "breath_weapon",
+    });
+  });
+
+  it("excludes a trait with no usages (passive)", () => {
+    const refs = [trait("darkvision", { description: "x" })];
+    expect(computeResources(refs, [{ slug: "wizard", level: 1 }])).toEqual([]);
+  });
+
+  it("includes trait extraLimitedFeatures as separate entries", () => {
+    const refs = [trait("infernal_legacy", {
+      description: "x",
+      usages: 1,
+      recovery: "long rest",
+      extraLimitedFeatures: [
+        { name: "Hellish Rebuke", usages: 1, recovery: "long rest" },
+      ],
+    })];
+    const result = computeResources(refs, [{ slug: "wizard", level: 1 }]);
+    expect(result).toHaveLength(2);
+    const parent = result.find((r) => r.slug === "infernal_legacy");
+    const extra = result.find((r) => r.slug === "infernal_legacy.hellish_rebuke");
+    expect(parent?.sourceLabel).toBe("Racial Trait");
+    expect(parent?.max).toBe(1);
+    expect(extra?.name).toBe("Infernal Legacy: Hellish Rebuke");
+    expect(extra?.sourceFeatureSlug).toBe("infernal_legacy");
+  });
+
+  it("handles mixed input (features + feats + traits) together", () => {
+    const refs = [
+      feature("rage", { class: "barbarian", level: 1, description: "x", usages: 2, recovery: "long rest" }),
+      feat("lucky", { description: "x", usages: 3, recovery: "long rest" }),
+      trait("breath_weapon", { description: "x", usages: 1, recovery: "short rest" }),
+    ];
+    const result = computeResources(refs, [{ slug: "barbarian", level: 1 }]);
+    expect(result).toHaveLength(3);
+    const slugs = result.map((r) => r.slug).sort();
+    expect(slugs).toEqual(["breath_weapon", "lucky", "rage"]);
+    const labels = Object.fromEntries(result.map((r) => [r.slug, r.sourceLabel]));
+    expect(labels).toEqual({
+      rage: "Barbarian 1",
+      lucky: "Feat",
+      breath_weapon: "Racial Trait",
+    });
   });
 });
 
