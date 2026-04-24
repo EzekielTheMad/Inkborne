@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NavLink } from "@/components/nav/nav-link";
-import { Menu } from "lucide-react";
+import { Menu, MessageSquare } from "lucide-react";
+import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
 
 interface MobileNavProps {
   displayName: string;
@@ -16,6 +17,12 @@ interface MobileNavProps {
 
 export function MobileNav({ displayName, avatarUrl, email }: MobileNavProps) {
   const [open, setOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  function openFeedback() {
+    setOpen(false);
+    setFeedbackOpen(true);
+  }
 
   const initials = displayName
     ? displayName.slice(0, 2).toUpperCase()
@@ -73,11 +80,19 @@ export function MobileNav({ displayName, avatarUrl, email }: MobileNavProps) {
 
           <Separator className="my-4" />
 
-          {/* Settings + Sign out */}
+          {/* Settings + Feedback + Sign out */}
           <nav className="flex flex-col gap-3">
             <NavLink href="/settings" onClick={() => setOpen(false)} className="text-base">
               Settings
             </NavLink>
+            <button
+              type="button"
+              onClick={openFeedback}
+              className="text-base text-left text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2"
+            >
+              <MessageSquare className="size-4" />
+              Feedback
+            </button>
             <button
               type="button"
               onClick={handleSignOut}
@@ -88,6 +103,8 @@ export function MobileNav({ displayName, avatarUrl, email }: MobileNavProps) {
           </nav>
         </SheetContent>
       </Sheet>
+
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }
