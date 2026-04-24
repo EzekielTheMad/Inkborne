@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { AppNav } from "@/components/nav/app-nav";
 import { MobileNav } from "@/components/nav/mobile-nav";
+import { ErrorListeners } from "@/components/error/error-listeners";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -23,6 +24,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Global error + promise-rejection listeners (authenticated only). */}
+      <ErrorListeners />
       <header className="border-b border-border">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <AppNav displayName={displayName} avatarUrl={avatarUrl} email={email} />
