@@ -1,0 +1,8 @@
+# Daily backup at 06:00 UTC (low-traffic for any timezone).
+0 6 * * * /app/scripts/run-backup.sh >> /var/log/inkborne-backup.log 2>&1
+
+# Weekly integrity check at 07:00 UTC on Sundays. Reads 5% of repo data
+# and verifies hashes; cheap insurance against silent bit-rot.
+0 7 * * 0 /app/scripts/run-check.sh >> /var/log/inkborne-backup.log 2>&1
+
+# Trailing newline required for POSIX cron.
