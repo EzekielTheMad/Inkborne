@@ -71,8 +71,10 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
       redirect(`/characters/new?error=${encodeURIComponent(error.message)}`);
     }
 
-    redirect(`/characters/${data.id}`);
+    redirect(`/characters/${data.id}/builder`);
   }
+
+  const onlySystem = systems && systems.length === 1 ? systems[0] : null;
 
   return (
     <div className="max-w-lg mx-auto">
@@ -80,8 +82,13 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
         <CardHeader>
           <CardTitle>Create New Character</CardTitle>
           <CardDescription>
-            Choose a name and game system for your character.
+            {onlySystem
+              ? `Pick a name to start your ${onlySystem.name} character.`
+              : "Choose a name and game system for your character."}
           </CardDescription>
+          <p className="text-sm text-muted-foreground mt-2">
+            Next, you&rsquo;ll pick a race, class, abilities, background, and starting equipment. You can rename or change your character at any time.
+          </p>
         </CardHeader>
         <CardContent>
           {pageError && (
@@ -101,22 +108,26 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="system_id">Game System</Label>
-              <select
-                id="system_id"
-                name="system_id"
-                required
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="">Select a game system</option>
-                {systems?.map((system) => (
-                  <option key={system.id} value={system.id}>
-                    {system.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {onlySystem ? (
+              <input type="hidden" name="system_id" value={onlySystem.id} />
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="system_id">Game System</Label>
+                <select
+                  id="system_id"
+                  name="system_id"
+                  required
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Select a game system</option>
+                  {systems?.map((system) => (
+                    <option key={system.id} value={system.id}>
+                      {system.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="flex gap-2 pt-2">
               <Button type="submit" className="flex-1">
