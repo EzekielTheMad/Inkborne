@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { createCharacter } from "@/app/(app)/characters/new/actions";
 
 interface PageProps {
   searchParams: Promise<{ error?: string }>;
@@ -29,50 +30,6 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
     .select("id, name, slug")
     .eq("status", "published")
     .order("name");
-
-  async function createCharacter(formData: FormData) {
-    "use server";
-
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) redirect("/login");
-
-    const name = formData.get("name") as string;
-    const systemId = formData.get("system_id") as string;
-
-    if (!name?.trim() || !systemId) {
-      console.error("[createCharacter] Missing fields:", { name, systemId });
-      redirect("/characters/new?error=missing_fields");
-    }
-
-    console.log("[createCharacter] Inserting character:", {
-      name: name.trim(),
-      user_id: user.id,
-      system_id: systemId,
-    });
-
-    const { data, error } = await supabase
-      .from("characters")
-      .insert([
-        {
-          name: name.trim(),
-          user_id: user.id,
-          system_id: systemId,
-        },
-      ])
-      .select("id")
-      .single();
-
-    if (error) {
-      console.error("[createCharacter] Insert failed:", error.message, error.details, error.hint);
-      redirect(`/characters/new?error=${encodeURIComponent(error.message)}`);
-    }
-
-    redirect(`/characters/${data.id}/builder`);
-  }
 
   const onlySystem = systems && systems.length === 1 ? systems[0] : null;
 
