@@ -151,11 +151,41 @@ Variants can explore whether this page is transient (auto-redirect) or resident 
 - This is a one-time animation/state — on second load, the sheet renders normally. Implementation detail: check `choices.classes.length > 0` AND a "seen_sheet_first_time" flag on the character state.
 - Should tie back to the journey visually — if the landing page has a particular visual motif (ink flourish, parchment texture), the arrival could echo it.
 
-### 4.8 Character sheet — ongoing use (reference, not target)
+### 4.8 Character sheet — polish pass (no restructure)
 
-**Explicitly not redesigning.** The sheet layout — three-column desktop (stat ribbon, left column, skills, content tabs) and mobile tabs view — has been iterated extensively and is sacred for this brief. The sheet is the **reference for visual consistency**: the journey should deliver players into it with continuity, not break the pattern.
+**Layout is preserved.** The three-column desktop layout (stat ribbon top, left column with sub-widgets, skills middle, content tabs right) and the mobile tabs view have been iterated extensively. **Don't move anything.** Components stay where they are. Sub-widgets stay in their columns. The stat ribbon's order doesn't change. The mobile tab order doesn't change.
 
-If you see specific small polish opportunities on the sheet (e.g., empty-state copy for tabs, tooltip hover styling, spacing consistency), note them as follow-up suggestions — don't restructure.
+**But polish is in scope.** A pass over the sheet for visual consistency, hierarchy, density, and microcopy is welcome — and probably overdue. The sheet has accreted features over many phases (HP tracker, slot tracker, resources widget, conditions redesign, rest dialog, death saves) and the visual language across them isn't fully unified.
+
+**What's in scope (yes, prototype these):**
+
+- **Typography hierarchy** — section headings (`text-accent uppercase tracking-wide`) are mostly consistent but spacing and size vary. Field labels, value emphasis, and tertiary muted text could be tightened into a clear three-level hierarchy.
+- **Spacing rhythm** — panel padding (`p-3`), inter-panel gap (`space-y-4`), and intra-panel spacing should feel consistent. Some panels feel cramped, some loose. A unified rhythm helps the eye scan.
+- **Border + background usage** — `bg-card` vs. `bg-card/50`, `border-border` vs. `border-border/50` — there's some drift across panels. Pick a clear two-level system (primary panel vs. secondary nested panel) and apply consistently.
+- **Color application** — gold accent is currently overused for headings; muted-foreground is the workhorse for everything else. A polish pass might introduce one more semantic level (e.g., a subtle desaturated accent for "value" text vs. labels) to break up monochrome density.
+- **Empty states** — Actions tab shows "No weapons equipped" plainly; Spells tab has its own empty messaging; Inventory has another. These should share a visual treatment (centered, muted, with relevant CTA).
+- **Hover + focus affordances** — clickable rows (skill rows, ability cards, HP tracker) have inconsistent hover treatments. Cleaner unified hover/focus styling would reduce cognitive load.
+- **Tooltip styling** — exists in places (Exhaustion RAW summary, disabled buttons), inconsistent treatment. Pick one styling convention.
+- **Microcopy polish** — section titles ("Saving Throws", "Defenses", "Conditions"), button labels, empty state copy. A pass for consistent voice and density.
+- **Stat ribbon polish** — ability cards, combat stat block, HP tracker, Death Saves, Rest button currently sit side-by-side with inconsistent visual weight. The grouping is correct (don't reorder), but the visual treatment of each block could harmonize better.
+- **Iconography** — section headings could use small icons next to the gold-uppercase labels (Saving Throws + shield, Conditions + alert, Defenses + sparkles, etc.). Today there are no icons on most section headings; consistent iconography would aid scanning. Prototype with and without to compare.
+- **Density** — could the sheet show more at a glance without feeling cramped? Pixel-by-pixel review of where breathing room helps vs. where compression buys real estate.
+
+**What's out of scope (don't propose these):**
+
+- **Reordering or relocating components.** Don't move the HP tracker. Don't move Saving Throws. Don't change which column the Skills list lives in. Don't reshuffle the content tabs (Actions / Spells / Features / Inventory / Notes).
+- **New components.** No "Recently used" widget, no "Combat log" panel, no new tracker. Polish what's there.
+- **Interaction pattern changes.** HP tracker stays a popover. Conditions widget keeps the dropdown picker. Rest button keeps the dialog. Don't propose new flows.
+- **Mobile structure.** Tabs stay tabs; the mobile sheet's section order stays as-is.
+
+**Variants to explore:**
+- **Conservative polish** — same layout, same components, tightened typography + spacing + color hierarchy. The "calm pass" version. Best for shipping fast.
+- **Considered polish** — same layout but introduces an iconography system on section headings, refined two-level panel framing (primary vs. nested), and a third semantic text color for value emphasis. More design investment, more visible improvement.
+- **Density-tuned polish** — primarily about breathing room and information density. Where can fields tighten? Where do they need more space? Best for power users who scan often.
+
+Show all three; pick a recommended one.
+
+**Deliverable shape for this surface:** annotated screenshots of the polished sheet at desktop and mobile, with each polish decision called out. Include before/after pairs where helpful. The handoff bundle should include exact class changes (Tailwind utility deltas, not full component rewrites) so implementation is a careful diff, not a rebuild.
 
 ---
 
@@ -192,7 +222,7 @@ Every surface must fold gracefully below `md` (768px). Alpha includes mobile use
 ## 6. Explicit non-goals
 
 - **Builder steps themselves** — covered in `docs/design-briefs/builder-ux-polish.md`
-- **Character sheet layout** — sacred (except the 4.7 arrival moment)
+- **Character sheet structural changes** — see 4.8 for the polish-only scope. Don't move components. Don't reorder. Don't add or remove widgets. Polish typography, spacing, color, hierarchy, copy, hover/focus states only.
 - **Campaigns feature** — not yet implemented; anything showing campaigns is placeholder
 - **Admin / feedback dashboards** — internal tools, not user-journey surfaces
 - **Settings page** — out of scope; polish later
@@ -203,7 +233,7 @@ Every surface must fold gracefully below `md` (768px). Alpha includes mobile use
 
 ## 7. What to return
 
-For each surface (7 total, with 4 being "prototype-variant" scope and 3 being "polish proposals"):
+For each surface:
 
 | Surface | Scope |
 |---|---|
@@ -214,6 +244,7 @@ For each surface (7 total, with 4 being "prototype-variant" scope and 3 being "p
 | 4.5 New-character entry | 2–3 variants |
 | 4.6 Pre-built state | 2 variants (transient vs. resident) |
 | 4.7 Sheet arrival moment | 1–2 options |
+| 4.8 Sheet polish pass | 3 polish levels (conservative / considered / density-tuned) — annotated diffs, no restructure |
 
 **Plus a journey overview** — a short POV / recommendation about which combination of variants hangs together best, and why. If there are cross-surface dependencies (e.g., "the dashboard variant B only works if new-character is a modal"), call them out.
 
