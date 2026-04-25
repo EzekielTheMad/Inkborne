@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { MessageSquare, AlertTriangle } from "lucide-react";
+import { MessageSquare, AlertTriangle, Users } from "lucide-react";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminUserId } from "@/lib/auth/is-admin";
@@ -30,7 +30,30 @@ export default async function AdminHubPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Link
+          href="/admin/users"
+          className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors space-y-2 block"
+        >
+          <div className="flex items-center gap-2">
+            <Users className="size-4 text-primary" />
+            <h2 className="font-semibold">Users</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Signups, last sign-in, and character counts.
+          </p>
+          <div className="flex items-center gap-3 pt-1 text-sm">
+            <span>
+              <span className="font-semibold">{stats.users.total}</span> total
+            </span>
+            {stats.users.recent > 0 && (
+              <span className="text-primary">
+                <span className="font-semibold">{stats.users.recent}</span> in last 7d
+              </span>
+            )}
+          </div>
+        </Link>
+
         <Link
           href="/admin/feedback"
           className="rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors space-y-2 block"
@@ -90,6 +113,7 @@ export default async function AdminHubPage() {
 }
 
 interface AdminStats {
+  users: { total: number; recent: number };
   feedback: { total: number; new: number };
   errors: { total: number; new: number };
 }
@@ -105,6 +129,7 @@ async function fetchStats(): Promise<AdminStats> {
   if (!url || !serviceKey) {
     // Without service-role key, skip stats — sub-pages will surface the issue.
     return {
+      users: { total: 0, recent: 0 },
       feedback: { total: 0, new: 0 },
       errors: { total: 0, new: 0 },
     };
@@ -114,14 +139,26 @@ async function fetchStats(): Promise<AdminStats> {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const [feedbackTotal, feedbackNew, errorsTotal, errorsNew] = await Promise.all([
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [usersList, feedbackTotal, feedbackNew, errorsTotal, errorsNew] = await Promise.all([
+    // listUsers returns paged data; we only need counts so default page (50) is fine
+    // for alpha. If we ever exceed 50, page through. Using perPage=1000 to future-proof.
+    admin.auth.admin.listUsers({ perPage: 1000 }),
     admin.from("feedback").select("*", { count: "exact", head: true }),
     admin.from("feedback").select("*", { count: "exact", head: true }).eq("status", "new"),
     admin.from("app_errors").select("*", { count: "exact", head: true }),
     admin.from("app_errors").select("*", { count: "exact", head: true }).eq("status", "new"),
   ]);
 
+  const allUsers = usersList.error ? [] : usersList.data.users;
+  const recentUsers = allUsers.filter((u) => u.created_at && u.created_at >= sevenDaysAgo);
+
   return {
+    users: {
+      total: allUsers.length,
+      recent: recentUsers.length,
+    },
     feedback: {
       total: feedbackTotal.count ?? 0,
       new: feedbackNew.count ?? 0,
