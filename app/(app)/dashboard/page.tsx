@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PortraitAvatar } from "@/components/narrative/portrait-avatar";
+import { AlphaBanner } from "@/components/alpha/alpha-banner";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -17,9 +18,12 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name")
+    .select("display_name, preferences")
     .eq("id", user!.id)
     .single();
+
+  const prefs = (profile?.preferences as Record<string, unknown> | null) ?? {};
+  const alphaBannerDismissed = typeof prefs.alpha_banner_dismissed_at === "string";
 
   const { data: characters } = await supabase
     .from("characters")
@@ -31,6 +35,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {!alphaBannerDismissed && <AlphaBanner />}
       <div>
         <h1 className="text-3xl font-bold">
           Welcome{profile?.display_name ? `, ${profile.display_name}` : ""}
@@ -40,7 +45,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="max-w-2xl">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Characters</CardTitle>
@@ -100,19 +105,6 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Campaigns</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-6">
-              <p className="text-muted-foreground text-sm">
-                Campaign management is coming soon.
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
