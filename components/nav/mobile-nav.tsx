@@ -6,16 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NavLink } from "@/components/nav/nav-link";
-import { Menu, MessageSquare } from "lucide-react";
+import { Menu, MessageSquare, Shield } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
 
 interface MobileNavProps {
   displayName: string;
   avatarUrl: string | null;
   email: string;
+  isAdmin: boolean;
 }
 
-export function MobileNav({ displayName, avatarUrl, email }: MobileNavProps) {
+export function MobileNav({ displayName, avatarUrl, email, isAdmin }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -80,7 +81,7 @@ export function MobileNav({ displayName, avatarUrl, email }: MobileNavProps) {
 
           <Separator className="my-4" />
 
-          {/* Settings + Feedback + Sign out */}
+          {/* Settings + Feedback + (Admin) + Sign out */}
           <nav className="flex flex-col gap-3">
             <NavLink href="/settings" onClick={() => setOpen(false)} className="text-base">
               Settings
@@ -93,6 +94,16 @@ export function MobileNav({ displayName, avatarUrl, email }: MobileNavProps) {
               <MessageSquare className="size-4" />
               Feedback
             </button>
+            {isAdmin && (
+              <NavLink
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="text-base flex items-center gap-2"
+              >
+                <Shield className="size-4" />
+                Admin
+              </NavLink>
+            )}
             <button
               type="button"
               onClick={handleSignOut}
