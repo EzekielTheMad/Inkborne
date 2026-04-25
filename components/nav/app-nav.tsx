@@ -2,14 +2,16 @@ import { Logo } from "@/components/landing/logo";
 import { NavLink } from "@/components/nav/nav-link";
 import { UserDropdown } from "@/components/nav/user-dropdown";
 import { FeedbackButton } from "@/components/feedback/feedback-button";
+import { AdminButton } from "@/components/nav/admin-button";
 
 interface AppNavProps {
   displayName: string;
   avatarUrl: string | null;
   email: string;
+  isAdmin: boolean;
 }
 
-export function AppNav({ displayName, avatarUrl, email }: AppNavProps) {
+export function AppNav({ displayName, avatarUrl, email, isAdmin }: AppNavProps) {
   return (
     <>
       <div className="flex items-center gap-6">
@@ -22,6 +24,7 @@ export function AppNav({ displayName, avatarUrl, email }: AppNavProps) {
       </div>
       <div className="hidden md:flex items-center gap-2">
         <FeedbackButton />
+        {isAdmin && <AdminButton />}
         <UserDropdown displayName={displayName} avatarUrl={avatarUrl} email={email} />
       </div>
     </>
