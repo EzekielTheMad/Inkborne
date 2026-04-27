@@ -152,3 +152,108 @@ describe("ClassPreviewModal — overview tab", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("ClassPreviewModal — features tab", () => {
+  function setupPaladinWithFeatures() {
+    const features: ContentEntry[] = [
+      {
+        id: "f1",
+        name: "Divine Sense",
+        slug: "divine-sense",
+        content_type: "feature",
+        data: { description: "Detect celestials, fiends, undead." },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+      {
+        id: "f2",
+        name: "Sacred Oath",
+        slug: "sacred-oath",
+        content_type: "feature",
+        data: { description: "Pick an oath at level 3." },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+      {
+        id: "f3",
+        name: "Channel Divinity: Sacred Weapon",
+        slug: "cd-sacred-weapon",
+        content_type: "feature",
+        data: { description: "Devotion oath feature.", subclass: "oath-of-devotion" },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+    ];
+    const paladin = makeClass({
+      data: {
+        hit_die: 10,
+        primaryAbility: "STR + CHA",
+        levels: [
+          { level: 1, features: ["divine-sense"] },
+          { level: 3, features: ["sacred-oath", "cd-sacred-weapon"] },
+        ],
+      },
+    });
+    return { paladin, features };
+  }
+
+  it("hides features above the preview level", () => {
+    const { paladin, features } = setupPaladinWithFeatures();
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={paladin}
+        features={features}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /features/i }));
+    expect(screen.getByText("Divine Sense")).toBeInTheDocument();
+    expect(screen.queryByText("Sacred Oath")).not.toBeInTheDocument();
+  });
+
+  it("hides subclass-locked features until the matching subclass is previewed", () => {
+    const { paladin, features } = setupPaladinWithFeatures();
+    const subclasses: ContentEntry[] = [
+      {
+        id: "sc1",
+        name: "Oath of Devotion",
+        slug: "oath-of-devotion",
+        content_type: "subclass",
+        data: { class: "paladin" },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+    ];
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={paladin}
+        features={features}
+        subclasses={subclasses}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    // Bump the preview level to 3.
+    fireEvent.change(screen.getByLabelText("Preview level"), { target: { value: "3" } });
+    fireEvent.click(screen.getByRole("tab", { name: /features/i }));
+    expect(screen.getByText("Sacred Oath")).toBeInTheDocument();
+    // Subclass-locked feature is hidden until subclass picked.
+    expect(screen.queryByText("Channel Divinity: Sacred Weapon")).not.toBeInTheDocument();
+
+    // Pick the subclass on the Subclasses tab.
+    fireEvent.click(screen.getByRole("tab", { name: /subclasses/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Oath of Devotion/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /features/i }));
+    expect(screen.getByText("Channel Divinity: Sacred Weapon")).toBeInTheDocument();
+  });
+});
