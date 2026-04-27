@@ -65,7 +65,6 @@ export function ChoiceCardASI({ featureSlug, currentChoice, onSelect }: ChoiceCa
   return (
     <article className="rounded-md border border-border bg-card/40 p-4" data-feature-slug={featureSlug}>
       <header className="flex items-center justify-between gap-3 mb-3">
-        <h4 className="text-sm font-medium">Ability Score Improvement</h4>
         <span
           aria-label={isMade ? "Choice made" : "Choice not yet made"}
           className={cn(

@@ -263,6 +263,7 @@ describe("AddClassRow", () => {
   });
 });
 
+import { ClassLevelPane } from "@/components/builder/class-step-rail/class-level-pane";
 import { LevelRail } from "@/components/builder/class-step-rail/level-rail";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 
@@ -358,5 +359,115 @@ describe("LevelRail", () => {
     );
     fireEvent.change(screen.getByLabelText("Set level for Paladin"), { target: { value: "6" } });
     expect(onLevelChange).toHaveBeenCalledWith(6);
+  });
+});
+
+function f(slug: string, name: string, description?: string): ContentEntry {
+  return {
+    id: `f-${slug}`,
+    slug,
+    name,
+    content_type: "feature",
+    data: { description },
+    effects: [],
+    version: 1,
+    source: "srd",
+  };
+}
+
+const noopHandlers = {
+  onAsiSelect: vi.fn(),
+  onSubclassSelect: vi.fn(),
+  onFightingStyleSelect: vi.fn(),
+};
+
+describe("ClassLevelPane", () => {
+  it("titles the pane after the choice when present", () => {
+    const row: PerLevel = {
+      level: 3,
+      features: [f("divine-health", "Divine Health"), f("oath-spells", "Oath Spells")],
+      choices: [{ type: "subclass", classSlug: "paladin", label: "Sacred Oath", isMade: false }],
+    };
+    render(
+      <ClassLevelPane
+        classSlug="paladin"
+        className_={"Paladin"}
+        classIndex={0}
+        row={row}
+        subclasses={[]}
+        styleOptions={[]}
+        localChoices={{}}
+        currentSubclass={undefined}
+        {...noopHandlers}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: "Sacred Oath" })).toBeInTheDocument();
+  });
+
+  it("titles the pane after the single feature when there are no choices", () => {
+    const row: PerLevel = {
+      level: 1,
+      features: [f("divine-sense", "Divine Sense", "Detect celestials.")],
+      choices: [],
+    };
+    render(
+      <ClassLevelPane
+        classSlug="paladin"
+        className_={"Paladin"}
+        classIndex={0}
+        row={row}
+        subclasses={[]}
+        styleOptions={[]}
+        localChoices={{}}
+        currentSubclass={undefined}
+        {...noopHandlers}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: "Divine Sense" })).toBeInTheDocument();
+  });
+
+  it("falls back to 'Level N' for multi-feature levels with no choices", () => {
+    const row: PerLevel = {
+      level: 3,
+      features: [f("divine-health", "Divine Health"), f("channel-divinity", "Channel Divinity")],
+      choices: [],
+    };
+    render(
+      <ClassLevelPane
+        classSlug="paladin"
+        className_={"Paladin"}
+        classIndex={0}
+        row={row}
+        subclasses={[]}
+        styleOptions={[]}
+        localChoices={{}}
+        currentSubclass={undefined}
+        {...noopHandlers}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: "Level 3" })).toBeInTheDocument();
+  });
+
+  it("renders feature cards and choice cards together", () => {
+    const row: PerLevel = {
+      level: 4,
+      features: [f("divine-health", "Divine Health")],
+      choices: [{ type: "asi", featureSlug: "paladin-asi-4", classSlug: "paladin", label: "Ability Score Improvement", isMade: false }],
+    };
+    render(
+      <ClassLevelPane
+        classSlug="paladin"
+        className_={"Paladin"}
+        classIndex={0}
+        row={row}
+        subclasses={[]}
+        styleOptions={[]}
+        localChoices={{}}
+        currentSubclass={undefined}
+        {...noopHandlers}
+      />,
+    );
+    expect(screen.getByText("Divine Health")).toBeInTheDocument();
+    expect(screen.getByText("Ability Score Improvement")).toBeInTheDocument();
   });
 });
