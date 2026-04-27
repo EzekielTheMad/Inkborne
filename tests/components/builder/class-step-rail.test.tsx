@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
+import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
+import type { ContentEntry } from "@/components/builder/content-browser";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -33,5 +35,33 @@ describe("LevelPill", () => {
     render(<LevelPill level={2} summary="Fighting Style" hasUnmadeChoice={false} active={false} onClick={onClick} />);
     fireEvent.click(screen.getByRole("button", { name: /level 2/i }));
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+function passiveFeature(): ContentEntry {
+  return {
+    id: "f1",
+    slug: "divine-sense",
+    name: "Divine Sense",
+    content_type: "feature",
+    data: { description: "Detect celestials, fiends, undead.", level: 1, class: "paladin" },
+    effects: [],
+    version: 1,
+    source: "srd",
+  };
+}
+
+describe("FeatureCard", () => {
+  it("renders the feature name and description", () => {
+    render(<FeatureCard feature={passiveFeature()} />);
+    expect(screen.getByText("Divine Sense")).toBeInTheDocument();
+    expect(screen.getByText("Detect celestials, fiends, undead.")).toBeInTheDocument();
+  });
+
+  it("renders without a description if absent", () => {
+    const f = passiveFeature();
+    f.data = { level: 1, class: "paladin" };
+    render(<FeatureCard feature={f} />);
+    expect(screen.getByText("Divine Sense")).toBeInTheDocument();
   });
 });
