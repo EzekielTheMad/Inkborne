@@ -64,6 +64,17 @@ export default async function ClassStepPage({ params }: PageProps) {
     console.error("[ClassStepPage] Error fetching features:", featureError.message, featureError.details, featureError.hint);
   }
 
+  const { data: spells, error: spellsError } = await supabase
+    .from("content_definitions")
+    .select("id, name, slug, content_type, data, effects, version, source")
+    .eq("system_id", systemId)
+    .eq("content_type", "spell")
+    .order("name");
+
+  if (spellsError) {
+    console.error("[ClassStepPage] Error fetching spells:", spellsError.message, spellsError.details, spellsError.hint);
+  }
+
   const { data: contentRefs, error: contentRefsError } = await supabase
     .from("character_content_refs")
     .select("*, content_definitions (id, name, slug, content_type, data, effects)")
@@ -80,6 +91,7 @@ export default async function ClassStepPage({ params }: PageProps) {
       classes={classContent ?? []}
       subclasses={subclassContent ?? []}
       features={featureContent ?? []}
+      spells={spells ?? []}
       contentRefs={contentRefs ?? []}
       schema={character.game_systems?.schema_definition}
     />

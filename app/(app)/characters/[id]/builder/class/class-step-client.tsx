@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ContentBrowser, type ContentEntry } from "@/components/builder/content-browser";
-import { ContentPreview } from "@/components/builder/content-preview";
+import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
 import { ChoiceSelector } from "@/components/builder/choice-selector";
 import { SubclassSelector } from "@/components/builder/subclass-selector";
 import { AsiSelector } from "@/components/builder/asi-selector";
@@ -39,6 +39,7 @@ interface ClassStepClientProps {
   classes: ContentEntry[];
   subclasses: ContentEntry[];
   features: ContentEntry[];
+  spells: ContentEntry[];
   contentRefs: Array<{
     id: string;
     content_id: string;
@@ -62,6 +63,7 @@ export function ClassStepClient({
   classes,
   subclasses,
   features,
+  spells,
   contentRefs,
   schema,
 }: ClassStepClientProps) {
@@ -81,23 +83,30 @@ export function ClassStepClient({
     (ref) => ref.content_definitions?.effects ?? [],
   );
 
-  async function handleSelectClass(content: ContentEntry) {
+  async function handleSelectClass(
+    content: ContentEntry,
+    opts?: { subclassSlug?: string | null },
+  ) {
     setPreviewContent(null);
 
-    const newClasses = [...selectedClasses, { slug: content.slug, level: 1 }];
+    const subclassSlug = opts?.subclassSlug ?? undefined;
+    const newClasses = [
+      ...selectedClasses,
+      { slug: content.slug, level: 1, subclass: subclassSlug },
+    ];
     const totalLevel = newClasses.reduce((sum, c) => sum + c.level, 0);
     const newChoices = { ...localChoices, classes: newClasses };
 
     setLocalChoices(newChoices);
     setLocalLevel(totalLevel);
 
-    // Save to database
+    // Persist character.choices + level
     await supabase
       .from("characters")
       .update({ choices: newChoices, level: totalLevel })
       .eq("id", characterId);
 
-    // Create content ref
+    // Class content_ref
     await supabase.from("character_content_refs").insert([
       {
         character_id: characterId,
@@ -106,6 +115,21 @@ export function ClassStepClient({
         context: { source: "class", level: 1 },
       },
     ]);
+
+    // Optional subclass content_ref — same shape handleSubclassSelect uses.
+    if (subclassSlug) {
+      const subclassContent = subclasses.find((sc) => sc.slug === subclassSlug);
+      if (subclassContent) {
+        await supabase.from("character_content_refs").insert([
+          {
+            character_id: characterId,
+            content_id: subclassContent.id,
+            content_version: subclassContent.version,
+            context: { source: "subclass", class: content.slug },
+          },
+        ]);
+      }
+    }
 
     startTransition(() => router.refresh());
   }
@@ -660,12 +684,19 @@ export function ClassStepClient({
           />
         )}
 
-        <ContentPreview
-          content={previewContent}
-          contentTypeLabel="Class"
-          onConfirm={handleSelectClass}
-          onCancel={() => setPreviewContent(null)}
+        <ClassPreviewModal
+          open={previewContent !== null}
+          classContent={previewContent}
           features={features}
+          subclasses={subclasses}
+          spells={spells}
+          onCancel={() => setPreviewContent(null)}
+          onPick={({ subclassSlug }) => {
+            if (!previewContent) return;
+            // classSlug from the modal == previewContent.slug. We pass the
+            // full ContentEntry to keep the existing handler signature.
+            handleSelectClass(previewContent, { subclassSlug });
+          }}
         />
 
         {/* Bottom navigation */}
