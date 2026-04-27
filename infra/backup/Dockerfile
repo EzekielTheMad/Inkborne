@@ -3,7 +3,7 @@
 # Base on the official postgres:15 image so pg_dump matches Supabase's
 # Postgres major version. Add restic + rclone + cron + tini on top.
 
-FROM postgres:15-bookworm
+FROM postgres:17-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 

@@ -64,6 +64,13 @@ run_pipeline() {
   local dump_size
   dump_size=$(stat -c%s "${SNAPSHOT_DIR}/inkborne.dump")
   echo "[$(date -u +%H:%M:%S)]   dump = ${dump_size} bytes"
+  # Defensive: pg_dump can succeed (exit 0) and produce a tiny file in
+  # edge cases. A real Inkborne dump is well over 100 KB. Fail loudly
+  # rather than ship an unusable snapshot.
+  if [[ "$dump_size" -lt 10240 ]]; then
+    echo "[$(date -u +%H:%M:%S)] ERROR: dump suspiciously small (${dump_size} bytes)" >&2
+    return 1
+  fi
 
   echo "[$(date -u +%H:%M:%S)] Step 2: rclone sync supabase-storage"
   mkdir -p "${SNAPSHOT_DIR}/storage"
@@ -95,7 +102,12 @@ run_pipeline() {
 }
 
 # Tee the entire run to the log file so post_failure can grab the tail.
-if run_pipeline 2>&1 | tee -a "$LOG_FILE"; then
+# Don't wrap run_pipeline in an `if` test directly — that suppresses
+# `set -e` inside the function (bash gotcha). Capture PIPESTATUS instead.
+run_pipeline 2>&1 | tee -a "$LOG_FILE"
+status=${PIPESTATUS[0]}
+
+if [[ "$status" -eq 0 ]]; then
   exit 0
 else
   post_failure
