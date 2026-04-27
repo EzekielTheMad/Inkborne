@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import type { ContentEntry } from "@/components/builder/content-browser";
+import type { CharacterChoices } from "@/lib/types/character";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -469,5 +470,98 @@ describe("ClassLevelPane", () => {
     );
     expect(screen.getByText("Divine Health")).toBeInTheDocument();
     expect(screen.getByText("Ability Score Improvement")).toBeInTheDocument();
+  });
+});
+
+import { ClassStepRail } from "@/components/builder/class-step-rail";
+
+function classEntry(slug: string, name: string, levels: Array<{ level: number; features: string[] }>): ContentEntry {
+  return {
+    id: `c-${slug}`,
+    slug,
+    name,
+    content_type: "class",
+    data: { hit_die: 10, levels },
+    effects: [],
+    version: 1,
+    source: "srd",
+  };
+}
+
+describe("ClassStepRail", () => {
+  function setup(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+    const handlers = {
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onAsiSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+    };
+    const props = {
+      classes: [
+        classEntry("paladin", "Paladin", [
+          { level: 1, features: ["divine-sense"] },
+          { level: 2, features: [] },
+          { level: 3, features: ["sacred-oath"] },
+        ]),
+      ],
+      subclasses: [],
+      features: [
+        { id: "f1", slug: "divine-sense", name: "Divine Sense", content_type: "feature", data: { level: 1, class: "paladin" }, effects: [], version: 1, source: "srd" } as ContentEntry,
+        { id: "f2", slug: "sacred-oath", name: "Sacred Oath", content_type: "feature", data: { level: 3, class: "paladin", feature_type: "subclass" }, effects: [], version: 1, source: "srd" } as ContentEntry,
+      ],
+      selectedClasses: [{ slug: "paladin", level: 3 }],
+      localChoices: {} as CharacterChoices,
+      contentRefs: [],
+      ...handlers,
+      ...overrides,
+    };
+    const utils = render(<ClassStepRail {...props} />);
+    return { ...utils, ...handlers, props };
+  }
+
+  it("renders one rail per selected class and an AddClassRow", () => {
+    setup();
+    expect(screen.getByRole("button", { name: /level 1/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /level 3/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Add a class/i })).toBeInTheDocument();
+  });
+
+  it("starts with the highest level of the (only) class as the active level", () => {
+    setup();
+    // Level 3's pill should be aria-current=true.
+    const lv3Pill = screen.getByRole("button", { name: /level 3/i });
+    expect(lv3Pill).toHaveAttribute("aria-current", "true");
+  });
+
+  it("switches the main pane content when a different level pill is clicked", () => {
+    setup();
+    // Initially: Sacred Oath title (lv 3 has subclass choice).
+    expect(screen.getByRole("heading", { level: 2, name: "Sacred Oath" })).toBeInTheDocument();
+    // Click Lv 1 → title becomes "Divine Sense".
+    fireEvent.click(screen.getByRole("button", { name: /level 1/i }));
+    expect(screen.getByRole("heading", { level: 2, name: "Divine Sense" })).toBeInTheDocument();
+  });
+
+  it("forwards onLevelChange with the right classIndex when the level dropdown changes", () => {
+    const { onLevelChange } = setup();
+    fireEvent.change(screen.getByLabelText("Set level for Paladin"), { target: { value: "5" } });
+    expect(onLevelChange).toHaveBeenCalledWith(0, 5);
+  });
+
+  it("renders multiple class sections for a multiclass character", () => {
+    setup({
+      classes: [
+        classEntry("barbarian", "Barbarian", [{ level: 1, features: [] }]),
+        classEntry("fighter", "Fighter", [{ level: 1, features: [] }]),
+      ],
+      selectedClasses: [
+        { slug: "barbarian", level: 10 },
+        { slug: "fighter", level: 5 },
+      ],
+    });
+    expect(screen.getByText("Barbarian")).toBeInTheDocument();
+    expect(screen.getByText("Fighter")).toBeInTheDocument();
   });
 });
