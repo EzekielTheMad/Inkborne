@@ -119,3 +119,65 @@ describe("ChoiceCardASI", () => {
     });
   });
 });
+
+import { ChoiceCardSubclass } from "@/components/builder/class-step-rail/choice-card-subclass";
+
+function subclass(slug: string, name: string, parentClass: string, description?: string): ContentEntry {
+  return {
+    id: `sc-${slug}`,
+    slug,
+    name,
+    content_type: "subclass",
+    data: { parent_class: parentClass, description },
+    effects: [],
+    version: 1,
+    source: "srd",
+  };
+}
+
+describe("ChoiceCardSubclass", () => {
+  it("renders subclass cards filtered to the matching class", () => {
+    render(
+      <ChoiceCardSubclass
+        classSlug="paladin"
+        subclasses={[
+          subclass("devotion", "Oath of Devotion", "paladin"),
+          subclass("ancients", "Oath of the Ancients", "paladin"),
+          subclass("evocation", "Evocation", "wizard"),
+        ]}
+        currentSelection={undefined}
+        onSelect={vi.fn()}
+        label="Sacred Oath"
+      />,
+    );
+    expect(screen.getByText("Oath of Devotion")).toBeInTheDocument();
+    expect(screen.getByText("Oath of the Ancients")).toBeInTheDocument();
+    expect(screen.queryByText("Evocation")).not.toBeInTheDocument();
+  });
+
+  it("shows 'Chosen' when a subclass is selected", () => {
+    render(
+      <ChoiceCardSubclass
+        classSlug="paladin"
+        subclasses={[subclass("devotion", "Oath of Devotion", "paladin")]}
+        currentSelection="devotion"
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Chosen")).toBeInTheDocument();
+  });
+
+  it("calls onSelect with the slug when a card is clicked", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCardSubclass
+        classSlug="paladin"
+        subclasses={[subclass("devotion", "Oath of Devotion", "paladin")]}
+        currentSelection={undefined}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Oath of Devotion/i }));
+    expect(onSelect).toHaveBeenCalledWith("devotion");
+  });
+});
