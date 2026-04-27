@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkborne — Builder UX Polish</title>
+  <link rel="stylesheet" href="inkborne-tokens.css" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #f0eee9; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="inkborne-data.js"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="inkborne-ui.jsx"></script>
+  <script type="text/babel" src="preview-variants.jsx"></script>
+  <script type="text/babel" src="class-step-variants.jsx"></script>
+  <script type="text/babel" src="mobile-and-recs.jsx"></script>
+  <script type="text/babel" src="multiclass-variants.jsx"></script>
+  <script type="text/babel" src="color-exploration.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="mobile-variants.jsx"></script>
+  <script type="text/babel" src="level-up-flow.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+
+    function App() {
+      return (
+        <DesignCanvas>
+          <DCSection id="intro" title="Inkborne — Builder UX Polish"
+            subtitle="2–3 variants of each surface, then a recommendation. All tokens, vocabulary and data shapes lifted from the repo.">
+            <DCArtboard id="recs" label="Recommendations" width={520} height={540}>
+              <RecommendationsCard />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="preview" title="Surface A · Content Preview Modal"
+            subtitle="Wider proportions, richer headers. Three layouts + three icon directions.">
+            <DCArtboard id="pa" label="A · Left-nav tabs · Class (portrait slot)" width={1120} height={720}>
+              <PreviewModalA />
+            </DCArtboard>
+            <DCArtboard id="pb" label="B · Top tabs · Race (emblem)" width={1120} height={720}>
+              <PreviewModalB />
+            </DCArtboard>
+            <DCArtboard id="pc" label="C · Sticky section nav · Background (type-only)" width={1120} height={720}>
+              <PreviewModalC />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="class-step" title="Surface B · Class Step"
+            subtitle="Fighter L12 · Battle Master — pressure test for density. Three layouts, three subclass placements.">
+            <DCArtboard id="ca" label="A · Single scroll · Subclass dominant top" width={1120} height={820}>
+              <ClassStepA />
+            </DCArtboard>
+            <DCArtboard id="cb" label="B · Accordion per level · Subclass inline at unlock" width={1120} height={820}>
+              <ClassStepB />
+            </DCArtboard>
+            <DCArtboard id="cc" label="C · Sidebar-by-level · Subclass nested (recommended)" width={1120} height={820}>
+              <ClassStepC />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="multiclass" title="Variant C · Multiclass exploration"
+            subtitle="Paladin 6 / Sorcerer 3 (sorcadin) · Character-level 9. Two rail models compared.">
+            <DCArtboard id="mc1" label="C1 · Grouped by class (recommended) · Character section + Add-class row" width={1120} height={820}>
+              <ClassStepC_MC_Grouped />
+            </DCArtboard>
+            <DCArtboard id="mc2" label="C2 · Unified character-level rail (order taken)" width={1120} height={820}>
+              <ClassStepC_MC_Unified />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="levelup" title="Level-up flow · in-rail buttons (Model B)"
+            subtitle="Each class section has its own + Level up button. Tapping it adds the next level and drops the user into the choice pane.">
+            <DCArtboard id="lu1" label="L1 · Desktop · in-rail Level up buttons (idle)" width={1120} height={820}>
+              <LevelUpL1_RailIdle />
+            </DCArtboard>
+            <DCArtboard id="lu2" label="L2 · Desktop · new-level choice pane (Pal 7 just added)" width={1120} height={820}>
+              <LevelUpL2_NewLevelChoice />
+            </DCArtboard>
+            <DCArtboard id="lu3" label="L3 · Mobile · level-up pill at end of each class rail" width={440} height={900}>
+              <LevelUpL3_Mobile />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="mobile" title="Mobile · Class Step on phone"
+            subtitle="Sidebar-by-level becomes a horizontal top rail. Multiclass = two rails stacked. Add-class is a bottom sheet.">
+            <DCArtboard id="m1" label="M1 · Single class · Paladin 6 baseline" width={440} height={900}>
+              <MobileM1_SingleClass />
+            </DCArtboard>
+            <DCArtboard id="m2" label="M2 · Multiclass · two rails stacked + char strip" width={440} height={900}>
+              <MobileM2_Multiclass />
+            </DCArtboard>
+            <DCArtboard id="m3" label="M3 · Add-class as bottom sheet with prereqs" width={440} height={900}>
+              <MobileM3_AddClassSheet />
+            </DCArtboard>
+            <DCArtboard id="m4" label="M4 · Level detail · inline ASI choice" width={440} height={900}>
+              <MobileM4_LevelDetail />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="color" title="Color · class-tinted vs. character primary"
+            subtitle="Color picker lives on the character page (e.g. /characters/:id). The builder reads it as input — these artboards show how the chosen color shows up inside Class Step.">
+            <DCArtboard id="col1" label="D1 · Class-tinted abilities · chips take the active class's color" width={1120} height={820}>
+              <ColorD1_ClassTinted />
+            </DCArtboard>
+            <DCArtboard id="col2" label="D2 · Character primary · color set on character page, read by builder" width={1120} height={820}>
+              <ColorD2_CharacterPrimary />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="mobile" title="Mobile pattern"
+            subtitle="One shared bottom-sheet pattern. Sub-md: the modal becomes a Sheet; the class step becomes the full-screen accordion.">
+            <DCArtboard id="ma" label="Mobile · Preview as bottom sheet" width={420} height={820}>
+              <MobileSheet />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    root.render(<App />);
+  </script>
+</body>
+</html>
