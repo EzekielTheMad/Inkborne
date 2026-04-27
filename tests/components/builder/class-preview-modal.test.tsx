@@ -292,3 +292,58 @@ describe("ClassPreviewModal — subclasses tab", () => {
     expect(card.dataset.selected).toBeUndefined();
   });
 });
+
+describe("ClassPreviewModal — spells tab", () => {
+  it("filters spells by level chip", () => {
+    const wizard = makeClass({
+      slug: "wizard",
+      name: "Wizard",
+      data: {
+        hit_die: 6,
+        primaryAbility: "INT",
+        spellsKnown: "all",
+        levels: [{ level: 1, features: [] }],
+      },
+    });
+    const spells: ContentEntry[] = [
+      {
+        id: "s1",
+        name: "Mage Hand",
+        slug: "mage-hand",
+        content_type: "spell",
+        data: { level: 0, school: "conjuration", classes: ["wizard"] },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+      {
+        id: "s2",
+        name: "Magic Missile",
+        slug: "magic-missile",
+        content_type: "spell",
+        data: { level: 1, school: "evocation", classes: ["wizard"] },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+    ];
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={wizard}
+        features={[]}
+        subclasses={[]}
+        spells={spells}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /spells/i }));
+    expect(screen.getByText("Mage Hand")).toBeInTheDocument();
+    expect(screen.getByText("Magic Missile")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Cantrip$/ }));
+    expect(screen.getByText("Mage Hand")).toBeInTheDocument();
+    expect(screen.queryByText("Magic Missile")).not.toBeInTheDocument();
+  });
+});

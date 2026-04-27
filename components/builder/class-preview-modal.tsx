@@ -8,6 +8,7 @@ import { ClassEmblem } from "@/components/builder/class-emblem";
 import { OverviewTab } from "@/components/builder/class-preview-modal/overview-tab";
 import { FeaturesTab } from "@/components/builder/class-preview-modal/features-tab";
 import { SubclassesTab } from "@/components/builder/class-preview-modal/subclasses-tab";
+import { SpellsTab } from "@/components/builder/class-preview-modal/spells-tab";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
 export interface ClassPreviewModalProps {
@@ -120,7 +121,7 @@ export function ClassPreviewModal({
           </TabsContent>
           {isCaster && (
             <TabsContent value="spells" className="overflow-y-auto px-6 py-4">
-              <p className="text-sm text-muted-foreground">Spells tab — Task 8.</p>
+              <SpellsTab classContent={classContent} spells={spells} />
             </TabsContent>
           )}
         </Tabs>
