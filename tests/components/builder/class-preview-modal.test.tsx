@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { fireEvent } from "@testing-library/react";
 import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
@@ -60,5 +61,66 @@ describe("ClassPreviewModal", () => {
     // Nothing is portaled to body either.
     expect(document.body.textContent).not.toContain("Paladin");
     expect(container.textContent).toBe("");
+  });
+});
+
+describe("ClassPreviewModal — tabs", () => {
+  it("shows 4 tabs when the class is a caster (has spellsKnown)", () => {
+    const wizard = makeClass({
+      slug: "wizard",
+      name: "Wizard",
+      data: {
+        hit_die: 6,
+        primaryAbility: "INT",
+        spellsKnown: "all",
+        levels: [{ level: 1, features: ["arcane-recovery"] }],
+      },
+    });
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={wizard}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("tab", { name: /overview/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /features/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /subclasses/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /spells/i })).toBeInTheDocument();
+  });
+
+  it("hides the Spells tab when the class is not a caster", () => {
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={makeClass()}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("tab", { name: /spells/i })).not.toBeInTheDocument();
+  });
+
+  it("switches the visible tab body when a different tab is clicked", () => {
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={makeClass()}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /features/i }));
+    expect(screen.getByRole("tabpanel", { name: /features/i })).toBeInTheDocument();
   });
 });

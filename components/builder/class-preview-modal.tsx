@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ClassEmblem } from "@/components/builder/class-emblem";
 import type { ContentEntry } from "@/components/builder/content-browser";
@@ -56,6 +57,8 @@ export function ClassPreviewModal({
   const levels = (data.levels as Array<{ level: number; features: string[] }>) ?? [];
   const maxLevel = levels.length > 0 ? levels[levels.length - 1].level : 20;
 
+  const isCaster = data.spellcasting != null || data.spellsKnown != null;
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
       <DialogContent
@@ -81,10 +84,33 @@ export function ClassPreviewModal({
           </div>
         </header>
 
-        {/* Tab body placeholder — Task 4 fills in tabs. */}
-        <div className="overflow-y-auto px-6 py-4 text-sm">
-          <p className="text-muted-foreground">Coming up: tabs.</p>
-        </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as TabId)}
+          className="flex flex-col min-h-0"
+        >
+          <TabsList variant="line" className="px-6 border-b border-border rounded-none w-full justify-start">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="features">Features</TabsTrigger>
+            <TabsTrigger value="subclasses">Subclasses</TabsTrigger>
+            {isCaster && <TabsTrigger value="spells">Spells</TabsTrigger>}
+          </TabsList>
+
+          <TabsContent value="overview" className="overflow-y-auto px-6 py-4">
+            <p className="text-sm text-muted-foreground">Overview tab — Task 5.</p>
+          </TabsContent>
+          <TabsContent value="features" className="overflow-y-auto px-6 py-4">
+            <p className="text-sm text-muted-foreground">Features tab — Task 6.</p>
+          </TabsContent>
+          <TabsContent value="subclasses" className="overflow-y-auto px-6 py-4">
+            <p className="text-sm text-muted-foreground">Subclasses tab — Task 7.</p>
+          </TabsContent>
+          {isCaster && (
+            <TabsContent value="spells" className="overflow-y-auto px-6 py-4">
+              <p className="text-sm text-muted-foreground">Spells tab — Task 8.</p>
+            </TabsContent>
+          )}
+        </Tabs>
 
         <footer className="flex items-center justify-between gap-3 px-6 py-3 border-t border-border bg-muted/30">
           <div data-slot="preview-level-slot" />
