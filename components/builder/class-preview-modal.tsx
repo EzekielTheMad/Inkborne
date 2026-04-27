@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ClassEmblem } from "@/components/builder/class-emblem";
+import { OverviewTab } from "@/components/builder/class-preview-modal/overview-tab";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
 export interface ClassPreviewModalProps {
@@ -97,7 +98,7 @@ export function ClassPreviewModal({
           </TabsList>
 
           <TabsContent value="overview" className="overflow-y-auto px-6 py-4">
-            <p className="text-sm text-muted-foreground">Overview tab — Task 5.</p>
+            <OverviewTab classContent={classContent} />
           </TabsContent>
           <TabsContent value="features" className="overflow-y-auto px-6 py-4">
             <p className="text-sm text-muted-foreground">Features tab — Task 6.</p>

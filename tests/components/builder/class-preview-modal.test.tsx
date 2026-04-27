@@ -124,3 +124,31 @@ describe("ClassPreviewModal — tabs", () => {
     expect(screen.getByRole("tabpanel", { name: /features/i })).toBeInTheDocument();
   });
 });
+
+describe("ClassPreviewModal — overview tab", () => {
+  it("shows the class description when present", () => {
+    const paladin = makeClass({
+      data: {
+        hit_die: 10,
+        primaryAbility: "STR + CHA",
+        saving_throws: ["wisdom", "charisma"],
+        description: "A holy warrior bound by an oath.",
+        levels: [{ level: 1, features: [] }],
+      },
+    });
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={paladin}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText("A holy warrior bound by an oath."),
+    ).toBeInTheDocument();
+  });
+});
