@@ -127,7 +127,21 @@ export function ClassPreviewModal({
         </Tabs>
 
         <footer className="flex items-center justify-between gap-3 px-6 py-3 border-t border-border bg-muted/30">
-          <div data-slot="preview-level-slot" />
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Preview as</span>
+            <select
+              aria-label="Preview level"
+              value={previewLevel}
+              onChange={(e) => setPreviewLevel(Number(e.target.value))}
+              className="h-8 rounded-md border border-border bg-card px-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {Array.from({ length: maxLevel }, (_, i) => i + 1).map((lvl) => (
+                <option key={lvl} value={lvl}>
+                  Lv {lvl}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onCancel} autoFocus>
               Cancel
