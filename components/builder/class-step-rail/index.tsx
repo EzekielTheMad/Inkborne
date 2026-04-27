@@ -19,15 +19,18 @@ export interface ClassStepRailProps {
     subclass?: string;
   }>;
   localChoices: CharacterChoices;
+  /** TODO(PR-C): used by the multiclass picker panel to detect duplicate class adds. Currently unused in PR-B. */
   contentRefs: Array<{
     id: string;
     content_definitions?: { slug: string; content_type: string };
   }>;
   onLevelChange: (classIndex: number, newLevel: number) => Promise<void> | void;
+  /** TODO(PR-C): wire to a Remove Class button in the LevelRail header. Currently unused in PR-B. */
   onRemoveClass: (classIndex: number) => Promise<void> | void;
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => Promise<void> | void;
   onAsiSelect: (featureSlug: string, choice: AsiChoice) => Promise<void> | void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => Promise<void> | void;
+  /** TODO(cleanup): wire to class-level proficiency choice cards (e.g., Wizard skill picks). Currently unused in PR-B. */
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
 }
 
@@ -118,7 +121,14 @@ export function ClassStepRail(props: ClassStepRailProps) {
               perLevel={perLevel.filter((r) => r.level <= cls.level)}
               activeLevel={selected.classIndex === idx ? selected.level : -1}
               onSelectLevel={(level) => setSelected({ classIndex: idx, level })}
-              onLevelChange={(newLevel) => onLevelChange(idx, newLevel)}
+              onLevelChange={(newLevel) => {
+                // If the active rail is shrinking past the currently selected
+                // level, clamp the selection so the main pane doesn't go blank.
+                if (selected.classIndex === idx && selected.level > newLevel) {
+                  setSelected({ classIndex: idx, level: newLevel });
+                }
+                onLevelChange(idx, newLevel);
+              }}
             />
           );
         })}
@@ -126,7 +136,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         <AddClassRow reasons={MULTICLASS_PREREQS} />
       </aside>
 
-      <main className="min-w-0">
+      <div className="min-w-0">
         {activeRow && activeClass && activeClassContent ? (
           <ClassLevelPane
             classSlug={activeClass.slug}
@@ -144,7 +154,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         ) : (
           <p className="text-sm text-muted-foreground">No class data for the selected level.</p>
         )}
-      </main>
+      </div>
     </div>
   );
 }

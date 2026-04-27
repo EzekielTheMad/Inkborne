@@ -16,7 +16,12 @@ interface LevelRailProps {
 }
 
 function summarizeLevel(row: PerLevel): string {
-  if (row.choices.length > 0) return row.choices[0].label;
+  const primary = row.choices[0];
+  if (primary) {
+    if (primary.type === "asi") return "ASI";
+    if (primary.type === "fighting-style") return "Fighting Style";
+    return primary.label;
+  }
   if (row.features.length === 1) return row.features[0].name;
   if (row.features.length > 1) return `${row.features.length} features`;
   return `Level ${row.level}`;
