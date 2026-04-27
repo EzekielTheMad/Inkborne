@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ClassEmblem } from "@/components/builder/class-emblem";
 import { OverviewTab } from "@/components/builder/class-preview-modal/overview-tab";
 import { FeaturesTab } from "@/components/builder/class-preview-modal/features-tab";
+import { SubclassesTab } from "@/components/builder/class-preview-modal/subclasses-tab";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
 export interface ClassPreviewModalProps {
@@ -110,7 +111,12 @@ export function ClassPreviewModal({
             />
           </TabsContent>
           <TabsContent value="subclasses" className="overflow-y-auto px-6 py-4">
-            <p className="text-sm text-muted-foreground">Subclasses tab — Task 7.</p>
+            <SubclassesTab
+              classContent={classContent}
+              subclasses={subclasses}
+              selectedSlug={previewSubclassSlug}
+              onSelect={setPreviewSubclassSlug}
+            />
           </TabsContent>
           {isCaster && (
             <TabsContent value="spells" className="overflow-y-auto px-6 py-4">

@@ -257,3 +257,38 @@ describe("ClassPreviewModal — features tab", () => {
     expect(screen.getByText("Channel Divinity: Sacred Weapon")).toBeInTheDocument();
   });
 });
+
+describe("ClassPreviewModal — subclasses tab", () => {
+  it("toggles subclass selection on click", () => {
+    const subclasses: ContentEntry[] = [
+      {
+        id: "sc1",
+        name: "Oath of Devotion",
+        slug: "oath-of-devotion",
+        content_type: "subclass",
+        data: { class: "paladin", description: "Holy paladin." },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+    ];
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={makeClass()}
+        features={[]}
+        subclasses={subclasses}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /subclasses/i }));
+    const card = screen.getByRole("button", { name: /Oath of Devotion/i });
+    expect(card.dataset.selected).toBeUndefined();
+    fireEvent.click(card);
+    expect(card.dataset.selected).toBe("true");
+    fireEvent.click(card);
+    expect(card.dataset.selected).toBeUndefined();
+  });
+});
