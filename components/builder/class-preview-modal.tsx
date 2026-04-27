@@ -107,6 +107,7 @@ export function ClassPreviewModal({
             <FeaturesTab
               classContent={classContent}
               features={features}
+              subclasses={subclasses}
               previewLevel={previewLevel}
               previewSubclassSlug={previewSubclassSlug}
             />

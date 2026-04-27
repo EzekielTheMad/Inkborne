@@ -181,7 +181,7 @@ describe("ClassPreviewModal — features tab", () => {
         name: "Channel Divinity: Sacred Weapon",
         slug: "cd-sacred-weapon",
         content_type: "feature",
-        data: { description: "Devotion oath feature.", subclass: "oath-of-devotion" },
+        data: { description: "Devotion oath feature." },
         effects: [],
         version: 1,
         source: "srd",
@@ -193,7 +193,7 @@ describe("ClassPreviewModal — features tab", () => {
         primaryAbility: "STR + CHA",
         levels: [
           { level: 1, features: ["divine-sense"] },
-          { level: 3, features: ["sacred-oath", "cd-sacred-weapon"] },
+          { level: 3, features: ["sacred-oath"] },
         ],
       },
     });
@@ -220,13 +220,17 @@ describe("ClassPreviewModal — features tab", () => {
 
   it("hides subclass-locked features until the matching subclass is previewed", () => {
     const { paladin, features } = setupPaladinWithFeatures();
+    // Subclass holds its own levels with subclass-locked feature slugs.
     const subclasses: ContentEntry[] = [
       {
         id: "sc1",
         name: "Oath of Devotion",
         slug: "oath-of-devotion",
         content_type: "subclass",
-        data: { parent_class: "paladin" },
+        data: {
+          parent_class: "paladin",
+          levels: [{ level: 3, features: ["cd-sacred-weapon"] }],
+        },
         effects: [],
         version: 1,
         source: "srd",

@@ -3,34 +3,60 @@ import type { ContentEntry } from "@/components/builder/content-browser";
 interface FeaturesTabProps {
   classContent: ContentEntry;
   features: ContentEntry[];
+  subclasses: ContentEntry[];
   previewLevel: number;
   previewSubclassSlug: string | null;
+}
+
+interface LevelRow {
+  level: number;
+  features: string[];
 }
 
 export function FeaturesTab({
   classContent,
   features,
+  subclasses,
   previewLevel,
   previewSubclassSlug,
 }: FeaturesTabProps) {
-  const data = classContent.data as Record<string, unknown>;
-  const levels = (data.levels as Array<{ level: number; features: string[] }> | undefined) ?? [];
+  const classData = classContent.data as Record<string, unknown>;
+  const classLevels = (classData.levels as LevelRow[] | undefined) ?? [];
 
-  const visibleByLevel = levels
-    .filter((row) => row.level <= previewLevel)
-    .map((row) => {
-      const featureEntries = row.features
+  // If a subclass is previewed, also pull in features from its own levels.
+  // Subclass-locked features live under the subclass's data.levels[], not
+  // the parent class's, so we merge by level number.
+  const subclassContent = previewSubclassSlug
+    ? (subclasses ?? []).find(
+        (sc) =>
+          sc.slug === previewSubclassSlug &&
+          (sc.data as Record<string, unknown>).parent_class === classContent.slug,
+      )
+    : null;
+  const subclassLevels =
+    ((subclassContent?.data as Record<string, unknown> | undefined)?.levels as LevelRow[] | undefined) ?? [];
+
+  // Merge: for each level <= previewLevel, collect feature slugs from both
+  // class and (optional) subclass.
+  const mergedByLevel = new Map<number, string[]>();
+  for (const row of classLevels) {
+    if (row.level > previewLevel) continue;
+    mergedByLevel.set(row.level, [...(mergedByLevel.get(row.level) ?? []), ...row.features]);
+  }
+  for (const row of subclassLevels) {
+    if (row.level > previewLevel) continue;
+    mergedByLevel.set(row.level, [...(mergedByLevel.get(row.level) ?? []), ...row.features]);
+  }
+
+  const visibleByLevel = Array.from(mergedByLevel.entries())
+    .map(([level, slugs]) => ({
+      level,
+      features: slugs
         .map((slug) => features.find((f) => f.slug === slug))
-        .filter((f): f is ContentEntry => !!f)
-        .filter((f) => {
-          // Subclass-locked features only show if the user has previewed that subclass.
-          const featureSubclass = (f.data as Record<string, unknown>).subclass as string | undefined;
-          if (!featureSubclass) return true;
-          return previewSubclassSlug === featureSubclass;
-        });
-      return { level: row.level, features: featureEntries };
-    })
-    .filter((row) => row.features.length > 0);
+        .filter((f): f is ContentEntry => !!f),
+    }))
+    .filter((row) => row.features.length > 0)
+    .sort((a, b) => a.level - b.level);
 
   if (visibleByLevel.length === 0) {
     return (
