@@ -65,3 +65,57 @@ describe("FeatureCard", () => {
     expect(screen.getByText("Divine Sense")).toBeInTheDocument();
   });
 });
+
+import { ChoiceCardASI } from "@/components/builder/class-step-rail/choice-card-asi";
+
+describe("ChoiceCardASI", () => {
+  it("shows 'Choose' badge when no choice is made", () => {
+    render(
+      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} onSelect={vi.fn()} />,
+    );
+    expect(screen.getByText("Choose")).toBeInTheDocument();
+  });
+
+  it("shows 'Chosen' badge when a choice exists", () => {
+    render(
+      <ChoiceCardASI
+        featureSlug="paladin-asi-4"
+        currentChoice={{ mode: "asi", allocations: [{ ability: "strength", amount: 2 }] }}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Chosen")).toBeInTheDocument();
+  });
+
+  it("calls onSelect with a +2 allocation when the user picks +2 to strength", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} onSelect={onSelect} />,
+    );
+    // Toggle to "Increase one ability by 2" mode (default in this test) and click STR.
+    fireEvent.click(screen.getByRole("button", { name: /^STR \+2$/ }));
+    expect(onSelect).toHaveBeenCalledWith({
+      mode: "asi",
+      allocations: [{ ability: "strength", amount: 2 }],
+    });
+  });
+
+  it("calls onSelect with two +1 allocations in two-stat mode", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} onSelect={onSelect} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /two abilities by \+1/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^STR \+1$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^DEX \+1$/ }));
+    // The last call carries the final state: STR+1 + DEX+1.
+    const lastCall = onSelect.mock.calls.at(-1)?.[0];
+    expect(lastCall).toEqual({
+      mode: "asi",
+      allocations: expect.arrayContaining([
+        { ability: "strength", amount: 1 },
+        { ability: "dexterity", amount: 1 },
+      ]),
+    });
+  });
+});
