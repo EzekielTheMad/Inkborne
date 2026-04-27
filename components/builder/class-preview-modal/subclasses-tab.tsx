@@ -15,9 +15,9 @@ export function SubclassesTab({
   onSelect,
 }: SubclassesTabProps) {
   // Defensive filter — parent should have already filtered by class, but in
-  // case it didn't.
+  // case it didn't. Subclass data uses the `parent_class` field (snake_case).
   const matching = subclasses.filter(
-    (sc) => (sc.data as Record<string, unknown>).class === classContent.slug,
+    (sc) => (sc.data as Record<string, unknown>).parent_class === classContent.slug,
   );
 
   if (matching.length === 0) {
