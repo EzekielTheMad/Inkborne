@@ -262,3 +262,101 @@ describe("AddClassRow", () => {
     expect(btn).toBeInTheDocument();
   });
 });
+
+import { LevelRail } from "@/components/builder/class-step-rail/level-rail";
+import type { PerLevel } from "@/lib/builder/class-features-per-level";
+
+function makePerLevel(): PerLevel[] {
+  return [
+    { level: 1, features: [], choices: [] },
+    {
+      level: 3,
+      features: [],
+      choices: [
+        { type: "subclass", classSlug: "paladin", label: "Sacred Oath", isMade: false },
+      ],
+    },
+    {
+      level: 4,
+      features: [],
+      choices: [
+        { type: "asi", featureSlug: "paladin-asi-4", classSlug: "paladin", label: "Ability Score Improvement", isMade: true },
+      ],
+    },
+  ];
+}
+
+describe("LevelRail", () => {
+  it("renders one pill per level row", () => {
+    render(
+      <LevelRail
+        classSlug="paladin"
+        className_={"Paladin"}
+        subclassName={undefined}
+        currentLevel={4}
+        perLevel={makePerLevel()}
+        activeLevel={1}
+        onSelectLevel={vi.fn()}
+        onLevelChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /level 1/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /level 3/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /level 4/i })).toBeInTheDocument();
+  });
+
+  it("shows the unmade-choice red dot only on rows with isMade=false", () => {
+    render(
+      <LevelRail
+        classSlug="paladin"
+        className_={"Paladin"}
+        subclassName={undefined}
+        currentLevel={4}
+        perLevel={makePerLevel()}
+        activeLevel={1}
+        onSelectLevel={vi.fn()}
+        onLevelChange={vi.fn()}
+      />,
+    );
+    // Level 3 has unmade subclass → dot present
+    // Level 4 has made ASI → dot absent
+    const indicators = screen.getAllByLabelText("Has unmade choice");
+    expect(indicators.length).toBe(1);
+  });
+
+  it("calls onSelectLevel when a pill is clicked", () => {
+    const onSelectLevel = vi.fn();
+    render(
+      <LevelRail
+        classSlug="paladin"
+        className_={"Paladin"}
+        subclassName={undefined}
+        currentLevel={4}
+        perLevel={makePerLevel()}
+        activeLevel={1}
+        onSelectLevel={onSelectLevel}
+        onLevelChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /level 3/i }));
+    expect(onSelectLevel).toHaveBeenCalledWith(3);
+  });
+
+  it("calls onLevelChange with parsed integer when the level dropdown changes", () => {
+    const onLevelChange = vi.fn();
+    render(
+      <LevelRail
+        classSlug="paladin"
+        className_={"Paladin"}
+        subclassName={undefined}
+        currentLevel={4}
+        perLevel={makePerLevel()}
+        activeLevel={1}
+        onSelectLevel={vi.fn()}
+        onLevelChange={onLevelChange}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Set level for Paladin"), { target: { value: "6" } });
+    expect(onLevelChange).toHaveBeenCalledWith(6);
+  });
+});
