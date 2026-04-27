@@ -243,3 +243,22 @@ describe("ChoiceCardFightingStyle", () => {
     expect(onSelect).toHaveBeenCalledWith("fighter-fighting-style", "fighter", "fs-archery");
   });
 });
+
+import { AddClassRow } from "@/components/builder/class-step-rail/add-class-row";
+
+describe("AddClassRow", () => {
+  it("renders the locked label and reasons text", () => {
+    render(<AddClassRow reasons={["Requires CHA 13 for Bard", "Requires INT 13 for Wizard"]} />);
+    expect(screen.getByText(/Add a class · Locked/i)).toBeInTheDocument();
+    expect(screen.getByText(/Requires CHA 13 for Bard/i)).toBeInTheDocument();
+  });
+
+  it("is aria-disabled and click is a no-op", () => {
+    render(<AddClassRow reasons={["Requires CHA 13 for Bard"]} />);
+    const btn = screen.getByRole("button", { name: /Add a class/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    // Clicking does nothing observable — just confirm no error and no state change.
+    fireEvent.click(btn);
+    expect(btn).toBeInTheDocument();
+  });
+});
