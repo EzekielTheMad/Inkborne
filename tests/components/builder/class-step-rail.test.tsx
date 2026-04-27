@@ -181,3 +181,65 @@ describe("ChoiceCardSubclass", () => {
     expect(onSelect).toHaveBeenCalledWith("devotion");
   });
 });
+
+import { ChoiceCardFightingStyle } from "@/components/builder/class-step-rail/choice-card-fighting-style";
+
+function styleEntry(slug: string, name: string, description?: string): ContentEntry {
+  return {
+    id: `style-${slug}`,
+    slug,
+    name,
+    content_type: "feature",
+    data: { feature_type: "fighting_style", description },
+    effects: [],
+    version: 1,
+    source: "srd",
+  };
+}
+
+describe("ChoiceCardFightingStyle", () => {
+  it("renders style options stripped of the 'Fighting Style: ' prefix", () => {
+    render(
+      <ChoiceCardFightingStyle
+        featureSlug="fighter-fighting-style"
+        classSlug="fighter"
+        styleOptions={[
+          styleEntry("fs-archery", "Fighting Style: Archery"),
+          styleEntry("fs-defense", "Fighting Style: Defense"),
+        ]}
+        currentStyleSlug={undefined}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Archery")).toBeInTheDocument();
+    expect(screen.getByText("Defense")).toBeInTheDocument();
+  });
+
+  it("shows 'Chosen' when a style is selected", () => {
+    render(
+      <ChoiceCardFightingStyle
+        featureSlug="fighter-fighting-style"
+        classSlug="fighter"
+        styleOptions={[styleEntry("fs-archery", "Fighting Style: Archery")]}
+        currentStyleSlug="fs-archery"
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Chosen")).toBeInTheDocument();
+  });
+
+  it("calls onSelect with the style slug + class slug when a style is picked", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCardFightingStyle
+        featureSlug="fighter-fighting-style"
+        classSlug="fighter"
+        styleOptions={[styleEntry("fs-archery", "Fighting Style: Archery")]}
+        currentStyleSlug={undefined}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Archery/i }));
+    expect(onSelect).toHaveBeenCalledWith("fighter-fighting-style", "fighter", "fs-archery");
+  });
+});
