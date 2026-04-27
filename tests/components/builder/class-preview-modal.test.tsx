@@ -347,3 +347,106 @@ describe("ClassPreviewModal — spells tab", () => {
     expect(screen.queryByText("Magic Missile")).not.toBeInTheDocument();
   });
 });
+
+describe("ClassPreviewModal — callbacks", () => {
+  it("calls onPick with the class slug and the current subclass selection", () => {
+    const onPick = vi.fn();
+    const subclasses: ContentEntry[] = [
+      {
+        id: "sc1",
+        name: "Oath of Devotion",
+        slug: "oath-of-devotion",
+        content_type: "subclass",
+        data: { class: "paladin" },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+    ];
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={makeClass()}
+        features={[]}
+        subclasses={subclasses}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={onPick}
+      />,
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /subclasses/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Oath of Devotion/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Pick this class/i }));
+    expect(onPick).toHaveBeenCalledTimes(1);
+    expect(onPick).toHaveBeenCalledWith({
+      classSlug: "paladin",
+      subclassSlug: "oath-of-devotion",
+    });
+  });
+
+  it("calls onCancel and never onPick when Cancel is clicked", () => {
+    const onCancel = vi.fn();
+    const onPick = vi.fn();
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={makeClass()}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={onCancel}
+        onPick={onPick}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Cancel$/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onPick).not.toHaveBeenCalled();
+  });
+});
+
+describe("ClassPreviewModal — reset on open", () => {
+  it("resets active tab and previewLevel when a different class is opened", () => {
+    const paladin = makeClass();
+    const wizard = makeClass({
+      id: "c2",
+      slug: "wizard",
+      name: "Wizard",
+      data: {
+        hit_die: 6,
+        primaryAbility: "INT",
+        spellsKnown: "all",
+        levels: [{ level: 1, features: [] }, { level: 2, features: [] }],
+      },
+    });
+    const { rerender } = render(
+      <ClassPreviewModal
+        open={true}
+        classContent={paladin}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    // Move to features tab and bump level.
+    fireEvent.click(screen.getByRole("tab", { name: /features/i }));
+    fireEvent.change(screen.getByLabelText("Preview level"), { target: { value: "2" } });
+
+    // Re-render with a different class (mimics opening a new card).
+    rerender(
+      <ClassPreviewModal
+        open={true}
+        classContent={wizard}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    // Active tab should be reset to overview, preview level to 1.
+    expect(screen.getByRole("tabpanel", { name: /overview/i })).toBeInTheDocument();
+    expect((screen.getByLabelText("Preview level") as HTMLSelectElement).value).toBe("1");
+  });
+});
