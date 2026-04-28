@@ -25,12 +25,10 @@ export interface ClassStepRailProps {
     content_definitions?: { slug: string; content_type: string };
   }>;
   onLevelChange: (classIndex: number, newLevel: number) => Promise<void> | void;
-  /** TODO(PR-C): wire to a Remove Class button in the LevelRail header. Currently unused in PR-B. */
   onRemoveClass: (classIndex: number) => Promise<void> | void;
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => Promise<void> | void;
   onAsiSelect: (featureSlug: string, choice: AsiChoice) => Promise<void> | void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => Promise<void> | void;
-  /** TODO(cleanup): wire to class-level proficiency choice cards (e.g., Wizard skill picks). Currently unused in PR-B. */
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
 }
 
@@ -55,9 +53,11 @@ export function ClassStepRail(props: ClassStepRailProps) {
     selectedClasses,
     localChoices,
     onLevelChange,
+    onRemoveClass,
     onSubclassSelect,
     onAsiSelect,
     onFightingStyleSelect,
+    onChoiceSelect,
   } = props;
 
   const initialClassIndex = 0;
@@ -84,6 +84,12 @@ export function ClassStepRail(props: ClassStepRailProps) {
     : [];
 
   const activeRow = activePerLevel.find((r) => r.level === selected.level);
+
+  const activeClassChoices = activeClassContent
+    ? (activeClassContent.effects ?? []).filter(
+        (e): e is import("@/lib/types/effects").ChoiceEffect => e.type === "choice",
+      )
+    : [];
 
   // Style options for any class — used by ClassLevelPane when rendering a Fighting Style choice card.
   const styleOptionsForActiveClass = activeClass
@@ -129,6 +135,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
                 }
                 onLevelChange(idx, newLevel);
               }}
+              onRemoveClass={() => onRemoveClass(idx)}
             />
           );
         })}
@@ -147,9 +154,11 @@ export function ClassStepRail(props: ClassStepRailProps) {
             styleOptions={styleOptionsForActiveClass}
             localChoices={localChoices}
             currentSubclass={activeClass.subclass}
+            classChoices={activeClassChoices}
             onAsiSelect={onAsiSelect}
             onSubclassSelect={onSubclassSelect}
             onFightingStyleSelect={onFightingStyleSelect}
+            onChoiceSelect={onChoiceSelect}
           />
         ) : (
           <p className="text-sm text-muted-foreground">No class data for the selected level.</p>
