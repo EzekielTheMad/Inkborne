@@ -763,3 +763,117 @@ describe("ClassPickerCard", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 });
+
+import { ClassPickerPanel } from "@/components/builder/class-step-rail/class-picker-panel";
+
+const TWELVE_CLASSES: ContentEntry[] = [
+  "barbarian", "bard", "cleric", "druid", "fighter", "monk",
+  "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard",
+].map((slug) => pickerClass(slug, slug.charAt(0).toUpperCase() + slug.slice(1)));
+
+describe("ClassPickerPanel", () => {
+  const stats = {
+    strength: 13, dexterity: 13, constitution: 13,
+    intelligence: 13, wisdom: 13, charisma: 13,
+  };
+
+  it("renders one card per class in the input list", () => {
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    for (const slug of ["barbarian", "wizard", "paladin", "fighter"]) {
+      const name = slug.charAt(0).toUpperCase() + slug.slice(1);
+      expect(screen.getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
+    }
+  });
+
+  it("renders the heading and a Cancel button", () => {
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={17}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
+    expect(screen.getByText(/17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("Cancel button calls onCancel", () => {
+    const onCancel = vi.fn();
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("clicking a met card calls onSelect with that class content", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={onSelect}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].slug).toBe("paladin");
+  });
+
+  it("clicking a not-met card does not call onSelect", () => {
+    const onSelect = vi.fn();
+    const lowStats = {
+      strength: 8, dexterity: 8, constitution: 8,
+      intelligence: 8, wisdom: 8, charisma: 8,
+    };
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={lowStats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={onSelect}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("marks already-selected classes as already-in-build", () => {
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[{ slug: "paladin" }]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Already in this build/i)).toBeInTheDocument();
+  });
+});
