@@ -555,6 +555,11 @@ describe("ClassStepRail", () => {
       selectedClasses: [{ slug: "paladin", level: 3 }],
       localChoices: {} as CharacterChoices,
       contentRefs: [],
+      resolvedStats: {
+        strength: 10, dexterity: 10, constitution: 10,
+        intelligence: 10, wisdom: 10, charisma: 10,
+      },
+      onAddClass: vi.fn(),
       ...handlers,
       ...overrides,
     };
@@ -632,6 +637,11 @@ function setupRail(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {})
     selectedClasses: [{ slug: "paladin", level: 3 }],
     localChoices: {} as CharacterChoices,
     contentRefs: [],
+    resolvedStats: {
+      strength: 10, dexterity: 10, constitution: 10,
+      intelligence: 10, wisdom: 10, charisma: 10,
+    },
+    onAddClass: vi.fn(),
     ...handlers,
     ...overrides,
   };
@@ -913,5 +923,111 @@ describe("ClassPickerPanel", () => {
       />,
     );
     expect(screen.getByText(/Already in this build/i)).toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — multiclass picker", () => {
+  function setupForPicker(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+    const handlers = {
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onAsiSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onAddClass: vi.fn(),
+    };
+    const allClasses = [
+      "barbarian", "bard", "cleric", "druid", "fighter", "monk",
+      "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard",
+    ].map((slug) =>
+      classEntry(slug, slug.charAt(0).toUpperCase() + slug.slice(1), [
+        { level: 1, features: [] },
+      ]),
+    );
+    const props = {
+      classes: allClasses,
+      subclasses: [],
+      features: [],
+      selectedClasses: [{ slug: "paladin", level: 3 }],
+      localChoices: {} as CharacterChoices,
+      contentRefs: [],
+      resolvedStats: {
+        strength: 13, dexterity: 12, constitution: 14,
+        intelligence: 8, wisdom: 10, charisma: 13,
+      },
+      ...handlers,
+      ...overrides,
+    };
+    const utils = render(<ClassStepRail {...props} />);
+    return { ...utils, ...handlers, props };
+  }
+
+  it("renders the locked AddClassRow when no class qualifies", () => {
+    setupForPicker({
+      resolvedStats: {
+        strength: 8, dexterity: 8, constitution: 8,
+        intelligence: 8, wisdom: 8, charisma: 8,
+      },
+    });
+    expect(screen.getByText(/Add a class · Locked/i)).toBeInTheDocument();
+  });
+
+  it("renders the unlocked AddClassRow when at least one class qualifies", () => {
+    setupForPicker();
+    expect(screen.getByText(/Add a class · 17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("opens the ClassPickerPanel when the unlocked AddClassRow is clicked", () => {
+    setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+  });
+
+  it("closes the picker when its Cancel button is clicked", () => {
+    setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+  });
+
+  it("calls onAddClass when a met card in the picker is clicked", () => {
+    const { onAddClass } = setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Barbarian/i }));
+    expect(onAddClass).toHaveBeenCalledTimes(1);
+    expect(onAddClass.mock.calls[0][0].slug).toBe("barbarian");
+  });
+
+  it("does not auto-close the picker when onAddClass is invoked (modal will close it via length increment)", () => {
+    setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Barbarian/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+  });
+
+  it("closes the picker when selectedClasses.length increments (simulated Pick)", () => {
+    const { rerender, props } = setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+
+    rerender(
+      <ClassStepRail
+        {...props}
+        selectedClasses={[
+          { slug: "paladin", level: 3 },
+          { slug: "barbarian", level: 1 },
+        ]}
+      />,
+    );
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+  });
+
+  it("locks AddClassRow when totalLevel reaches 20", () => {
+    setupForPicker({
+      selectedClasses: [{ slug: "paladin", level: 20 }],
+    });
+    expect(screen.getByText(/Add a class · Locked/i)).toBeInTheDocument();
   });
 });
