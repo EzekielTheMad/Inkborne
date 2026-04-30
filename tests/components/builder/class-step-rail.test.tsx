@@ -651,3 +651,115 @@ describe("ClassStepRail — Remove Class button", () => {
     expect(onRemoveClass).not.toHaveBeenCalled();
   });
 });
+
+import { ClassPickerCard } from "@/components/builder/class-step-rail/class-picker-card";
+import type { ClassPrereqResult } from "@/lib/builder/multiclass-prereqs";
+
+function pickerClass(slug: string, name: string, data: Record<string, unknown> = {}): ContentEntry {
+  return {
+    id: `c-${slug}`,
+    slug,
+    name,
+    content_type: "class",
+    data,
+    effects: [],
+    version: 1,
+    source: "srd",
+  };
+}
+
+function prereq(state: ClassPrereqResult["state"], line: string, classSlug = "paladin"): ClassPrereqResult {
+  return { classSlug, state, line };
+}
+
+describe("ClassPickerCard", () => {
+  it("renders emblem letter, class name, and prereq line for met state", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("paladin", "Paladin", { role: "Defender / Striker" })}
+        prereq={prereq("met", "STR 13 · met")}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText(/Defender \/ Striker/i)).toBeInTheDocument();
+    expect(screen.getByText("STR 13 · met")).toBeInTheDocument();
+  });
+
+  it("falls back to a derived role string when classContent.data.role is absent", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("rogue", "Rogue", { hit_die: 8 })}
+        prereq={prereq("met", "DEX 13 · met", "rogue")}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/d8 hit die/i)).toBeInTheDocument();
+  });
+
+  it("is aria-disabled and shows the unmet line for not-met state", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("wizard", "Wizard")}
+        prereq={prereq("not-met", "INT 13 · not met", "wizard")}
+        onSelect={vi.fn()}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Wizard/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("INT 13 · not met")).toBeInTheDocument();
+  });
+
+  it("is aria-disabled and shows 'Already in this build' for already-in-build state", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("paladin", "Paladin")}
+        prereq={prereq("already-in-build", "Already in this build")}
+        onSelect={vi.fn()}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Paladin/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Already in this build")).toBeInTheDocument();
+  });
+
+  it("calls onSelect(classContent) when met card is clicked", () => {
+    const onSelect = vi.fn();
+    const content = pickerClass("paladin", "Paladin");
+    render(
+      <ClassPickerCard
+        classContent={content}
+        prereq={prereq("met", "STR 13 · met")}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).toHaveBeenCalledWith(content);
+  });
+
+  it("does not call onSelect when not-met card is clicked", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("wizard", "Wizard")}
+        prereq={prereq("not-met", "INT 13 · not met", "wizard")}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Wizard/i }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("does not call onSelect when already-in-build card is clicked", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("paladin", "Paladin")}
+        prereq={prereq("already-in-build", "Already in this build")}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+});
