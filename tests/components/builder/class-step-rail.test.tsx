@@ -264,6 +264,44 @@ describe("AddClassRow", () => {
   });
 });
 
+describe("AddClassRow — unlocked state", () => {
+  it("renders the unlocked label with X levels remaining", () => {
+    render(
+      <AddClassRow
+        unlocked
+        levelsRemaining={17}
+        onClick={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Add a class · 17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("is not aria-disabled in unlocked state", () => {
+    render(<AddClassRow unlocked levelsRemaining={20} onClick={vi.fn()} />);
+    const btn = screen.getByRole("button", { name: /Add a class/i });
+    expect(btn).not.toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("calls onClick when unlocked button is clicked", () => {
+    const onClick = vi.fn();
+    render(<AddClassRow unlocked levelsRemaining={20} onClick={onClick} />);
+    fireEvent.click(screen.getByRole("button", { name: /Add a class/i }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does NOT call onClick when locked button is clicked", () => {
+    const onClick = vi.fn();
+    render(
+      <AddClassRow
+        reasons={["Requires CHA 13 for Bard"]}
+        onClick={onClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Add a class/i }));
+    expect(onClick).not.toHaveBeenCalled();
+  });
+});
+
 import { ClassLevelPane } from "@/components/builder/class-step-rail/class-level-pane";
 import { LevelRail } from "@/components/builder/class-step-rail/level-rail";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
