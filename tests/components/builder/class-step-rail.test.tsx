@@ -1224,3 +1224,51 @@ describe("HpPicker", () => {
     expect(screen.getByRole("radio", { name: /Manual/i })).toBeInTheDocument();
   });
 });
+
+import { LevelUpActionBar } from "@/components/builder/class-step-rail/level-up-action-bar";
+
+describe("LevelUpActionBar", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelUpActionBar>[0]> = {}) {
+    return {
+      classLabel: "Paladin",
+      draftLevel: 7,
+      totalLevelAfterConfirm: 10,
+      canConfirm: true,
+      missingReason: "",
+      onCancel: vi.fn(),
+      onConfirm: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders Cancel button + summary text + Confirm button", () => {
+    render(<LevelUpActionBar {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByText(/Will set Paladin to Lv 7/i)).toBeInTheDocument();
+    expect(screen.getByText(/character to Lv 10/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("Confirm is disabled and aria-describedby points to missingReason when canConfirm is false", () => {
+    render(<LevelUpActionBar {...defaults({ canConfirm: false, missingReason: "Pick a subclass to enable Confirm" })} />);
+    const confirm = screen.getByRole("button", { name: /Confirm level 7/i });
+    expect(confirm).toBeDisabled();
+    const describedById = confirm.getAttribute("aria-describedby");
+    expect(describedById).toBeTruthy();
+    expect(document.getElementById(describedById!)?.textContent).toMatch(/Pick a subclass/i);
+  });
+
+  it("Confirm is enabled when canConfirm is true and onConfirm fires", () => {
+    const onConfirm = vi.fn();
+    render(<LevelUpActionBar {...defaults({ onConfirm })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Confirm level 7/i }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("Cancel button calls onCancel", () => {
+    const onCancel = vi.fn();
+    render(<LevelUpActionBar {...defaults({ onCancel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel level-up/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
