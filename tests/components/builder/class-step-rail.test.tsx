@@ -1525,3 +1525,65 @@ describe("ClassLevelPane — empty-state polish", () => {
     expect(screen.queryByText(/No class data for the selected level/i)).not.toBeInTheDocument();
   });
 });
+
+describe("LevelRail — disabled mid-flow + LevelUpButton", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelRail>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      subclassName: undefined,
+      currentLevel: 6,
+      perLevel: makePerLevel(),
+      activeLevel: 6,
+      onSelectLevel: vi.fn(),
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onLevelUpClick: vi.fn(),
+      levelUpButtonState: "idle" as const,
+      levelUpButtonReason: undefined,
+      disabled: false,
+      ...overrides,
+    };
+  }
+
+  it("renders a LevelUpButton tile beneath the level pills (idle state)", () => {
+    render(<LevelRail {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Level up Paladin/i })).toBeInTheDocument();
+  });
+
+  it("clicking the idle LevelUpButton fires onLevelUpClick", () => {
+    const onLevelUpClick = vi.fn();
+    render(<LevelRail {...defaults({ onLevelUpClick })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin/i }));
+    expect(onLevelUpClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables level dropdown + Remove button when disabled prop is true", () => {
+    render(<LevelRail {...defaults({ disabled: true })} />);
+    expect(screen.getByLabelText("Set level for Paladin")).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Remove Paladin/i })).toBeDisabled();
+  });
+
+  it("renders LevelUpButton in active-flow state when levelUpButtonState='active-flow'", () => {
+    render(<LevelRail {...defaults({ levelUpButtonState: "active-flow" })} />);
+    expect(screen.getByText(/In progress/i)).toBeInTheDocument();
+  });
+
+  it("renders LevelUpButton in disabled state with the provided reason", () => {
+    render(<LevelRail {...defaults({ levelUpButtonState: "disabled", levelUpButtonReason: "Finish Pal 7 first" })} />);
+    expect(screen.getByText(/Finish Pal 7 first/i)).toBeInTheDocument();
+  });
+});
+
+describe("AddClassRow — disabledReason override", () => {
+  it("renders the provided disabledReason instead of the default reasons list", () => {
+    render(<AddClassRow reasons={["Requires CHA 13 for Bard"]} disabledReason="Finish active level-up first" />);
+    expect(screen.getByText(/Finish active level-up first/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Requires CHA 13 for Bard/i)).not.toBeInTheDocument();
+  });
+
+  it("falls back to reasons list when disabledReason is undefined (locked variant)", () => {
+    render(<AddClassRow reasons={["Requires CHA 13 for Bard"]} />);
+    expect(screen.getByText(/Requires CHA 13 for Bard/i)).toBeInTheDocument();
+  });
+});
