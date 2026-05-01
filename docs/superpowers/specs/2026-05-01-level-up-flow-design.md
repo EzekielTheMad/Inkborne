@@ -135,10 +135,10 @@ interface HpPickerProps {
 }
 ```
 
-Renders as a `<div role="radiogroup" aria-labelledby="hp-method-label">` with three options:
-- **Average** — `<button role="radio">` showing `Average ({avg + conMod})`. Click → `onChange({ method: "average", value: avg + conMod })`.
-- **Roll d{die}** — `<button role="radio">`. Click → roll via `crypto.getRandomValues`, then `onChange({ method: "rolled", value: rolled + conMod })`. Re-clicking re-rolls and overwrites (no roll history).
-- **Manual** — `<button role="radio">` reveals a numeric input (`aria-label="Manual HP value"`). Submit on blur or Enter.
+Renders as a `<div role="radiogroup" aria-labelledby="hp-method-label">` with three options. The stored `value` is always the raw die contribution (before CON); the picker DISPLAYS `value + conMod` to the user:
+- **Average** — `<button role="radio">` showing `Average (+{avg + conMod})`. Click → `onChange({ method: "average", value: avg })` where `avg = floor(die/2) + 1`.
+- **Roll d{die}** — `<button role="radio">`. Click → roll via `crypto.getRandomValues` to get integer in [1, die], then `onChange({ method: "rolled", value: rolled })`. Display shows `+{rolled + conMod}`. Re-clicking re-rolls and overwrites (no roll history).
+- **Manual** — `<button role="radio">` reveals a numeric input (`aria-label="Manual HP value"`). User enters the raw die contribution (validated as integer in [1, die]). Submit on blur or Enter. `onChange({ method: "manual", value: N })`. Display shows `+{value + conMod}`.
 
 **Picker visibility/interactivity by rule:**
 
@@ -170,7 +170,13 @@ export type HpRollMethod = "average" | "rolled" | "manual";
 
 export interface HpRollRecord {
   method: HpRollMethod;
-  value: number;            // includes CON modifier; this is the final HP gain for that level
+  /** Raw die contribution for this level, BEFORE CON modifier.
+   *  For "average": floor(die/2) + 1.
+   *  For "rolled":  the random die roll (1..die).
+   *  For "manual":  the user-entered integer (1..die).
+   *  computeMaxHp adds CON modifier separately, so a later ASI raising CON
+   *  automatically reflects in total HP without invalidating any stored rolls. */
+  value: number;
 }
 
 export interface CharacterChoices {
@@ -272,10 +278,12 @@ export function computeMaxHp(
 2. **`rule === "max_for_all"`** → always `die`. Picker disabled, displays the rule.
 3. **`rule === "max_first_level_each_class"`** AND `isFirstLevelOfClass` → `die`. Picker disabled, displays the rule. Other levels fall through to step 4 with `rule = "free_choice"` semantics.
 4. **`rule === "average_only"`** → always `averageHitDie(die)`. Picker disabled.
-5. **`rule === "rolled_only"`** → uses `storedRoll.value - conMod` if present (extracts the raw die contribution before re-adding conMod in `computeMaxHp`); else `averageHitDie(die)` until rolled. Picker shows roll-only.
+5. **`rule === "rolled_only"`** → uses `storedRoll.value` directly (raw die contribution); else `averageHitDie(die)` until rolled. Picker shows roll-only.
 6. **`rule === "free_choice"`** (default):
-   - If `storedRoll` exists → use `storedRoll.value - conMod` (extract die contribution).
+   - If `storedRoll` exists → use `storedRoll.value` directly.
    - Else → `averageHitDie(die)` (lazy retrofit display default).
+
+> **Note on `storedRoll.value` semantics:** the stored value is the **raw die contribution**, BEFORE CON modifier. The picker displays `value + conMod` to the user (e.g. shows `+9` for a rolled `8` with CON +1), but persists only the `8`. `computeMaxHp` adds CON separately via its per-level loop. This way, changing CON later (e.g. via an ASI) automatically reflects in total HP without invalidating any stored rolls.
 
 > **Note on `storedRoll.value` semantics:** the picker stores `value = die_contribution + conMod` (the displayed/added HP for that level). The engine subtracts conMod to get the raw die contribution, then re-adds it inside `computeMaxHp`'s loop. This avoids a double-CON-add and lets CON changes (e.g. ASI raising CON) automatically reflect in past levels' total HP without re-rolling.
 
