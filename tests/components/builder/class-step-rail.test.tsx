@@ -1414,4 +1414,30 @@ describe("LevelUpPane", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
     expect(onHpRollChange).toHaveBeenCalledWith("paladin-7", { method: "average", value: 6 });
   });
+
+  it("does not render description paragraph when no feature has a description field", () => {
+    const rowWithoutDescription: PerLevel = {
+      level: 7,
+      features: [
+        {
+          id: "f-aura-imp",
+          slug: "aura-improvement",
+          name: "Aura improvement",
+          content_type: "feature",
+          data: { level: 7, class: "paladin" }, // no description field
+          effects: [],
+          version: 1,
+          source: "srd",
+        },
+      ],
+      choices: [],
+    };
+    render(<LevelUpPane {...defaults({ perLevelRow: rowWithoutDescription })} />);
+    // Heading still present
+    expect(screen.getByRole("heading", { level: 2, name: /Aura improvement/i })).toBeInTheDocument();
+    // No description paragraph (the `<p>` would render the description text directly).
+    // The "What this level grants" eyebrow IS rendered, so we can't just check for
+    // *no* paragraphs. Instead, we check that no element contains the description text.
+    expect(screen.queryByText(/aura range increases/i)).not.toBeInTheDocument();
+  });
 });
