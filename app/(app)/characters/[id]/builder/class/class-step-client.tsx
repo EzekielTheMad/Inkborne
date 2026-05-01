@@ -8,8 +8,9 @@ import { ContentBrowser, type ContentEntry } from "@/components/builder/content-
 import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
 import { ClassStepRail } from "@/components/builder/class-step-rail";
 import { StatPreview } from "@/components/builder/stat-preview";
-import type { CharacterChoices, AsiChoice } from "@/lib/types/character";
+import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
+import { resolveHpRule, type HpRule } from "@/lib/builder/level-up-rules";
 import type { Effect } from "@/lib/types/effects";
 import { evaluate } from "@/lib/engine/evaluator";
 
@@ -63,6 +64,13 @@ export function ClassStepClient({
 
   const selectedClasses = localChoices.classes ?? [];
   const hasClass = selectedClasses.length > 0;
+
+  const hpRule = resolveHpRule(
+    (character as unknown as { campaigns?: { hp_rule?: HpRule | null } | null }).campaigns?.hp_rule,
+    (schema as unknown as { hp_rule?: HpRule } | undefined)?.hp_rule,
+  );
+
+  const hpRolls = localChoices.hp_rolls ?? {};
 
   const allEffects: Effect[] = contentRefs.flatMap(
     (ref) => ref.content_definitions?.effects ?? [],
@@ -140,6 +148,39 @@ export function ClassStepClient({
       .eq("id", characterId);
 
     startTransition(() => router.refresh());
+  }
+
+  async function handleConfirmLevelUp(payload: { classIndex: number; draftLevel: number }) {
+    const { classIndex, draftLevel } = payload;
+    const updatedClasses = [...selectedClasses];
+    updatedClasses[classIndex] = { ...updatedClasses[classIndex], level: draftLevel };
+    const totalLevel = updatedClasses.reduce((sum, c) => sum + c.level, 0);
+    const newChoices = { ...localChoices, classes: updatedClasses };
+
+    setLocalChoices(newChoices);
+    setLocalLevel(totalLevel);
+
+    await supabase
+      .from("characters")
+      .update({ choices: newChoices, level: totalLevel })
+      .eq("id", characterId);
+
+    startTransition(() => router.refresh());
+  }
+
+  function handleCancelLevelUp() {
+    // No persistence — the rail handles UI revert; HP roll edits are already
+    // persisted incrementally via handleHpRollChange (per Q2A semantics).
+  }
+
+  async function handleHpRollChange(key: string, record: HpRollRecord) {
+    const newHpRolls = { ...(localChoices.hp_rolls ?? {}), [key]: record };
+    const newChoices = { ...localChoices, hp_rolls: newHpRolls };
+    setLocalChoices(newChoices);
+    await supabase
+      .from("characters")
+      .update({ choices: newChoices })
+      .eq("id", characterId);
   }
 
   async function handleRemoveClass(classIndex: number) {
@@ -325,8 +366,9 @@ export function ClassStepClient({
             features={features}
             selectedClasses={selectedClasses}
             localChoices={localChoices}
-            contentRefs={contentRefs}
             resolvedStats={resolvedStats}
+            hpRule={hpRule}
+            hpRolls={hpRolls}
             onLevelChange={handleLevelChange}
             onRemoveClass={handleRemoveClass}
             onSubclassSelect={handleSubclassSelect}
@@ -334,6 +376,9 @@ export function ClassStepClient({
             onFightingStyleSelect={handleFightingStyleSelect}
             onChoiceSelect={handleChoiceSelect}
             onAddClass={(content) => setPreviewContent(content)}
+            onConfirmLevelUp={handleConfirmLevelUp}
+            onCancelLevelUp={handleCancelLevelUp}
+            onHpRollChange={handleHpRollChange}
           />
         ) : (
           <ContentBrowser
