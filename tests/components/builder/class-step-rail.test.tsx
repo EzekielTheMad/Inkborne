@@ -1031,3 +1031,125 @@ describe("ClassStepRail — multiclass picker", () => {
     expect(screen.getByText(/Add a class · Locked/i)).toBeInTheDocument();
   });
 });
+
+import { HpPicker } from "@/components/builder/class-step-rail/hp-picker";
+import type { HpRollRecord } from "@/lib/types/character";
+
+describe("HpPicker", () => {
+  function defaults(overrides: Partial<Parameters<typeof HpPicker>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      level: 2,
+      hitDie: 10,
+      conMod: 2,
+      isFirstLevelOfPrimary: false,
+      hpRule: "free_choice" as const,
+      storedRoll: undefined as HpRollRecord | undefined,
+      onChange: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("does not render when isFirstLevelOfPrimary is true", () => {
+    const { container } = render(<HpPicker {...defaults({ isFirstLevelOfPrimary: true })} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("renders all three method buttons under free_choice", () => {
+    render(<HpPicker {...defaults()} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Manual/i })).toBeInTheDocument();
+  });
+
+  it("Average button shows displayed value avg + conMod (d10 + CON 2 → +8)", () => {
+    render(<HpPicker {...defaults()} />);
+    expect(screen.getByRole("radio", { name: /Average.*\+8/i })).toBeInTheDocument();
+  });
+
+  it("clicking Average calls onChange with raw die contribution (no conMod)", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    expect(onChange).toHaveBeenCalledWith({ method: "average", value: 6 });
+  });
+
+  it("clicking Roll d{die} writes a roll in [1, die]", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const record = onChange.mock.calls[0][0] as HpRollRecord;
+    expect(record.method).toBe("rolled");
+    expect(record.value).toBeGreaterThanOrEqual(1);
+    expect(record.value).toBeLessThanOrEqual(10);
+  });
+
+  it("re-clicking Roll re-rolls (overwrites stored value)", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("clicking Manual reveals a numeric input and onChange fires on Enter", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Manual/i }));
+    const input = screen.getByLabelText("Manual HP value");
+    fireEvent.change(input, { target: { value: "7" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    expect(onChange).toHaveBeenCalledWith({ method: "manual", value: 7 });
+  });
+
+  it("Manual input out-of-range (0 or > die) does not fire onChange", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Manual/i }));
+    const input = screen.getByLabelText("Manual HP value");
+    fireEvent.change(input, { target: { value: "11" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("rendered method shows aria-checked on the right radio when storedRoll is present", () => {
+    render(<HpPicker {...defaults({ storedRoll: { method: "rolled", value: 8 } })} />);
+    const rollBtn = screen.getByRole("radio", { name: /Roll d10/i });
+    expect(rollBtn).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("rolled_only rule renders only the Roll button + read-only display when no roll yet", () => {
+    render(<HpPicker {...defaults({ hpRule: "rolled_only" })} />);
+    expect(screen.queryByRole("radio", { name: /Average/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Manual/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
+  });
+
+  it("average_only rule renders read-only display, no interactive radios", () => {
+    const { container } = render(<HpPicker {...defaults({ hpRule: "average_only" })} />);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByText(/Campaign rule: Average/i)).toBeInTheDocument();
+    expect(container.textContent).toContain("+8");
+  });
+
+  it("max_for_all rule renders read-only display showing max + conMod", () => {
+    const { container } = render(<HpPicker {...defaults({ hpRule: "max_for_all" })} />);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByText(/Campaign rule: Max/i)).toBeInTheDocument();
+    expect(container.textContent).toContain("+12");
+  });
+
+  it("max_first_level_each_class at level 1 of any class renders read-only display", () => {
+    render(<HpPicker {...defaults({ hpRule: "max_first_level_each_class", level: 1 })} />);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByText(/First level of class.*Max/i)).toBeInTheDocument();
+  });
+
+  it("max_first_level_each_class at level > 1 renders the full free_choice picker", () => {
+    render(<HpPicker {...defaults({ hpRule: "max_first_level_each_class", level: 5 })} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Manual/i })).toBeInTheDocument();
+  });
+});
