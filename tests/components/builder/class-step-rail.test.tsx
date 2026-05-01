@@ -338,6 +338,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={vi.fn()}
         onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     expect(screen.getByRole("button", { name: /level 1/i })).toBeInTheDocument();
@@ -356,6 +358,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={vi.fn()}
         onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     // Level 3 has unmade subclass → dot present
@@ -376,6 +380,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={onSelectLevel}
         onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /level 3/i }));
@@ -394,6 +400,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={vi.fn()}
         onLevelChange={onLevelChange}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     fireEvent.change(screen.getByLabelText("Set level for Paladin"), { target: { value: "6" } });
