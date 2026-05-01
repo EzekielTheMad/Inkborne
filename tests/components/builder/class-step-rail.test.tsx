@@ -544,6 +544,9 @@ describe("ClassStepRail", () => {
       onAsiSelect: vi.fn(),
       onFightingStyleSelect: vi.fn(),
       onChoiceSelect: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
     };
     const props = {
       classes: [
@@ -560,11 +563,12 @@ describe("ClassStepRail", () => {
       ],
       selectedClasses: [{ slug: "paladin", level: 3 }],
       localChoices: {} as CharacterChoices,
-      contentRefs: [],
       resolvedStats: {
         strength: 10, dexterity: 10, constitution: 10,
         intelligence: 10, wisdom: 10, charisma: 10,
       },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
       onAddClass: vi.fn(),
       ...handlers,
       ...overrides,
@@ -626,6 +630,10 @@ function setupRail(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {})
     onAsiSelect: vi.fn(),
     onFightingStyleSelect: vi.fn(),
     onChoiceSelect: vi.fn(),
+    onConfirmLevelUp: vi.fn(),
+    onCancelLevelUp: vi.fn(),
+    onHpRollChange: vi.fn(),
+    onAddClass: vi.fn(),
   };
   const props = {
     classes: [
@@ -642,12 +650,12 @@ function setupRail(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {})
     ],
     selectedClasses: [{ slug: "paladin", level: 3 }],
     localChoices: {} as CharacterChoices,
-    contentRefs: [],
     resolvedStats: {
       strength: 10, dexterity: 10, constitution: 10,
       intelligence: 10, wisdom: 10, charisma: 10,
     },
-    onAddClass: vi.fn(),
+    hpRule: "free_choice" as const,
+    hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
     ...handlers,
     ...overrides,
   };
@@ -942,6 +950,9 @@ describe("ClassStepRail — multiclass picker", () => {
       onFightingStyleSelect: vi.fn(),
       onChoiceSelect: vi.fn(),
       onAddClass: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
     };
     const allClasses = [
       "barbarian", "bard", "cleric", "druid", "fighter", "monk",
@@ -957,11 +968,12 @@ describe("ClassStepRail — multiclass picker", () => {
       features: [],
       selectedClasses: [{ slug: "paladin", level: 3 }],
       localChoices: {} as CharacterChoices,
-      contentRefs: [],
       resolvedStats: {
         strength: 13, dexterity: 12, constitution: 14,
         intelligence: 8, wisdom: 10, charisma: 13,
       },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
       ...handlers,
       ...overrides,
     };
@@ -1585,5 +1597,128 @@ describe("AddClassRow — disabledReason override", () => {
   it("falls back to reasons list when disabledReason is undefined (locked variant)", () => {
     render(<AddClassRow reasons={["Requires CHA 13 for Bard"]} />);
     expect(screen.getByText(/Requires CHA 13 for Bard/i)).toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — level-up flow", () => {
+  function setupForLevelUp(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+    const handlers = {
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onAsiSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onAddClass: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
+    };
+    const allClasses = ["paladin", "wizard", "fighter"].map((slug) =>
+      classEntry(slug, slug.charAt(0).toUpperCase() + slug.slice(1), [
+        { level: 1, features: [] },
+        { level: 2, features: [] },
+        { level: 3, features: [] },
+        { level: 4, features: [] },
+        { level: 5, features: [] },
+        { level: 6, features: [] },
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+    );
+    const props = {
+      classes: allClasses,
+      subclasses: [],
+      features: [
+        { id: "f-aura-imp", slug: "aura-improvement", name: "Aura improvement", content_type: "feature", data: { level: 7, class: "paladin", description: "Your aura range increases." }, effects: [], version: 1, source: "srd" } as ContentEntry,
+      ],
+      selectedClasses: [
+        { slug: "paladin", level: 6 },
+        { slug: "wizard", level: 3 },
+      ],
+      localChoices: {} as CharacterChoices,
+      resolvedStats: {
+        strength: 14, dexterity: 12, constitution: 14,
+        intelligence: 13, wisdom: 10, charisma: 14,
+      },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
+      ...handlers,
+      ...overrides,
+    };
+    const utils = render(<ClassStepRail {...props} />);
+    return { ...utils, ...handlers, props };
+  }
+
+  it("renders a LevelUpButton tile per class section in idle state by default", () => {
+    setupForLevelUp();
+    expect(screen.getByRole("button", { name: /Level up Paladin/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Level up Wizard/i })).toBeInTheDocument();
+  });
+
+  it("clicking idle LevelUpButton opens the LevelUpPane in main pane", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Aura improvement/i })).toBeInTheDocument();
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+
+  it("opening flow disables ALL other rail mutators (hard lock)", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    // Other class's LevelUpButton: disabled with reason
+    const wizardBtn = screen.getByRole("button", { name: /Level up Wizard/i });
+    expect(wizardBtn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getAllByText(/Finish Paladin 7 first/i).length).toBeGreaterThan(0);
+    // All level dropdowns: disabled
+    expect(screen.getByLabelText("Set level for Paladin")).toBeDisabled();
+    expect(screen.getByLabelText("Set level for Wizard")).toBeDisabled();
+    // All Remove buttons: disabled
+    expect(screen.getByRole("button", { name: /Remove Paladin/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Remove Wizard/i })).toBeDisabled();
+  });
+
+  it("AddClassRow shows 'Finish active level-up first' during flow", () => {
+    setupForLevelUp({
+      resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/Finish active level-up first/i)).toBeInTheDocument();
+  });
+
+  it("clicking 'Cancel level-up' returns to ClassLevelPane and re-enables the rail", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Cancel level-up/i }));
+    expect(screen.queryByText(/NEW LEVEL/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Set level for Paladin")).not.toBeDisabled();
+  });
+
+  it("clicking Confirm fires onConfirmLevelUp with the right payload", () => {
+    const { onConfirmLevelUp, onHpRollChange } = setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    // Pick HP first (no choices at Paladin Lv 7 — passive level)
+    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    expect(onHpRollChange).toHaveBeenCalledWith("paladin-7", { method: "average", value: 6 });
+    // Now Confirm should be enabled
+    const confirmBtn = screen.getByRole("button", { name: /Confirm level 7/i });
+    expect(confirmBtn).toBeEnabled();
+    fireEvent.click(confirmBtn);
+    expect(onConfirmLevelUp).toHaveBeenCalledWith({ classIndex: 0, draftLevel: 7 });
+  });
+
+  it("opening flow closes the multiclass picker if it was open", () => {
+    setupForLevelUp({
+      resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
+    });
+    // Open picker first
+    fireEvent.click(screen.getByRole("button", { name: /Add a class/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    // Now open level-up flow
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    // Picker should be closed
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+    // Level-up pane should be open
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
   });
 });
