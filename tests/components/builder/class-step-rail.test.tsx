@@ -1032,6 +1032,77 @@ describe("ClassStepRail — multiclass picker", () => {
   });
 });
 
+import { LevelUpButton } from "@/components/builder/class-step-rail/level-up-button";
+
+describe("LevelUpButton", () => {
+  it("renders idle state with 'Level up [Class]' label and 'Lv {N+1}' glyph", () => {
+    render(
+      <LevelUpButton state="idle" classSlug="paladin" classLabel="Paladin" atLevel={6} onClick={vi.fn()} />,
+    );
+    expect(screen.getByRole("button", { name: /Level up Paladin to level 7/i })).toBeInTheDocument();
+    expect(screen.getByText(/Lv 7/i)).toBeInTheDocument();
+  });
+
+  it("idle state is not aria-disabled and click fires onClick", () => {
+    const onClick = vi.fn();
+    render(
+      <LevelUpButton state="idle" classSlug="paladin" classLabel="Paladin" atLevel={6} onClick={onClick} />,
+    );
+    const btn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(btn).not.toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("disabled-with-reason state renders reason text + aria-disabled true; click is no-op", () => {
+    const onClick = vi.fn();
+    render(
+      <LevelUpButton
+        state="disabled"
+        classSlug="paladin"
+        classLabel="Paladin"
+        atLevel={6}
+        reason="Finish Pal 7 first"
+        onClick={onClick}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText(/Finish Pal 7 first/i)).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("active-flow state renders 'In progress' reason and is aria-disabled", () => {
+    render(
+      <LevelUpButton
+        state="active-flow"
+        classSlug="paladin"
+        classLabel="Paladin"
+        atLevel={6}
+        onClick={vi.fn()}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText(/In progress/i)).toBeInTheDocument();
+  });
+
+  it("tone-codes by class slug (gold for martial, purple for caster) via classTone()", () => {
+    const { rerender } = render(
+      <LevelUpButton state="idle" classSlug="paladin" classLabel="Paladin" atLevel={1} onClick={vi.fn()} />,
+    );
+    const goldBtn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(goldBtn).toHaveAttribute("data-tone", "gold");
+
+    rerender(
+      <LevelUpButton state="idle" classSlug="wizard" classLabel="Wizard" atLevel={1} onClick={vi.fn()} />,
+    );
+    const purpleBtn = screen.getByRole("button", { name: /Level up Wizard/i });
+    expect(purpleBtn).toHaveAttribute("data-tone", "purple");
+  });
+});
+
 import { HpPicker } from "@/components/builder/class-step-rail/hp-picker";
 import type { HpRollRecord } from "@/lib/types/character";
 
