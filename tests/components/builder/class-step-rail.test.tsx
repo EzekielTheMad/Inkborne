@@ -1715,6 +1715,24 @@ describe("ClassStepRail — level-up flow", () => {
     expect(onConfirmLevelUp).toHaveBeenCalledWith({ classIndex: 0, draftLevel: 7 });
   });
 
+  it("clears the draft when selectedClasses[i].level increments via rerender (parent confirm)", () => {
+    const { rerender, props } = setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+
+    // Simulate parent persisting the new level — selectedClasses[0].level goes 6 -> 7.
+    const newSelectedClasses = [
+      { slug: "paladin", level: 7 },
+      ...props.selectedClasses.slice(1),
+    ];
+    rerender(<ClassStepRail {...props} selectedClasses={newSelectedClasses} />);
+
+    // Draft cleared: NEW LEVEL ribbon is gone.
+    expect(screen.queryByText(/NEW LEVEL/i)).not.toBeInTheDocument();
+    // Rail re-enabled: dropdown no longer disabled.
+    expect(screen.getByLabelText("Set level for Paladin")).not.toBeDisabled();
+  });
+
   it("opening flow closes the multiclass picker if it was open", () => {
     setupForLevelUp({
       resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },

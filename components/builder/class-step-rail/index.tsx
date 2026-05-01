@@ -11,6 +11,7 @@ import { classFeaturesPerLevel } from "@/lib/builder/class-features-per-level";
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
+import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
 
 export interface ClassStepRailProps {
@@ -165,7 +166,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         return data.class === cls.slug && data.feature_type === "fighting_style" && f.name !== "Fighting Style";
       });
       const classChoices = (classContent.effects ?? []).filter(
-        (e): e is import("@/lib/types/effects").ChoiceEffect => e.type === "choice",
+        (e): e is ChoiceEffect => e.type === "choice",
       );
       const totalAfter = totalLevel - cls.level + draft.draftLevel;
 
@@ -245,7 +246,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         );
       });
       const activeClassChoices = (activeClassContent.effects ?? []).filter(
-        (e): e is import("@/lib/types/effects").ChoiceEffect => e.type === "choice",
+        (e): e is ChoiceEffect => e.type === "choice",
       );
       const rawHitDie = (activeClassContent.data as Record<string, unknown>).hit_die;
       const hitDie = typeof rawHitDie === "number" && rawHitDie > 0 ? rawHitDie : 8;
