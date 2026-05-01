@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import type { ContentEntry } from "@/components/builder/content-browser";
-import type { CharacterChoices } from "@/lib/types/character";
+import type { CharacterChoices, HpRollRecord } from "@/lib/types/character";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -415,10 +415,16 @@ function f(slug: string, name: string, description?: string): ContentEntry {
 }
 
 const noopHandlers = {
+  isPrimaryClass: true,
+  hitDie: 8,
+  hpRule: "free_choice" as const,
+  conMod: 0,
+  hpRolls: {} as Record<string, HpRollRecord>,
   onAsiSelect: vi.fn(),
   onSubclassSelect: vi.fn(),
   onFightingStyleSelect: vi.fn(),
   onChoiceSelect: vi.fn(),
+  onHpRollChange: vi.fn(),
   classChoices: [],
 };
 
@@ -1104,7 +1110,6 @@ describe("LevelUpButton", () => {
 });
 
 import { HpPicker } from "@/components/builder/class-step-rail/hp-picker";
-import type { HpRollRecord } from "@/lib/types/character";
 
 describe("HpPicker", () => {
   function defaults(overrides: Partial<Parameters<typeof HpPicker>[0]> = {}) {
@@ -1439,5 +1444,84 @@ describe("LevelUpPane", () => {
     // The "What this level grants" eyebrow IS rendered, so we can't just check for
     // *no* paragraphs. Instead, we check that no element contains the description text.
     expect(screen.queryByText(/aura range increases/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("ClassLevelPane — HP picker retrofit", () => {
+  function defaults(overrides: Partial<Parameters<typeof ClassLevelPane>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      classIndex: 0,
+      isPrimaryClass: true,
+      row: { level: 3, features: [], choices: [] } as PerLevel,
+      subclasses: [] as ContentEntry[],
+      styleOptions: [] as ContentEntry[],
+      localChoices: {} as CharacterChoices,
+      currentSubclass: undefined as string | undefined,
+      classChoices: [] as Array<import("@/lib/types/effects").ChoiceEffect>,
+      hitDie: 10,
+      hpRule: "free_choice" as const,
+      conMod: 2,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
+      onAsiSelect: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onHpRollChange: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders the HP picker for non-Lv1-primary levels", () => {
+    render(<ClassLevelPane {...defaults({ row: { level: 5, features: [], choices: [] } })} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+  });
+
+  it("does NOT render the HP picker for Lv1 of primary class", () => {
+    render(<ClassLevelPane {...defaults({ row: { level: 1, features: [], choices: [] }, isPrimaryClass: true })} />);
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  });
+
+  it("renders HP picker for Lv1 of non-primary class (multiclass first level)", () => {
+    render(<ClassLevelPane {...defaults({ row: { level: 1, features: [], choices: [] }, isPrimaryClass: false })} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+  });
+
+  it("clicking the HP picker fires onHpRollChange with the right key", () => {
+    const onHpRollChange = vi.fn();
+    render(<ClassLevelPane {...defaults({ row: { level: 5, features: [], choices: [] }, onHpRollChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    expect(onHpRollChange).toHaveBeenCalledWith("paladin-5", { method: "average", value: 6 });
+  });
+});
+
+describe("ClassLevelPane — empty-state polish", () => {
+  it("shows a friendly empty-state when row has no features and no choices", () => {
+    render(
+      <ClassLevelPane
+        classSlug="wizard"
+        className_="Wizard"
+        classIndex={0}
+        isPrimaryClass={true}
+        row={{ level: 3, features: [], choices: [] }}
+        subclasses={[]}
+        styleOptions={[]}
+        localChoices={{} as CharacterChoices}
+        currentSubclass={undefined}
+        classChoices={[]}
+        hitDie={6}
+        hpRule="free_choice"
+        conMod={1}
+        hpRolls={{}}
+        onAsiSelect={vi.fn()}
+        onSubclassSelect={vi.fn()}
+        onFightingStyleSelect={vi.fn()}
+        onChoiceSelect={vi.fn()}
+        onHpRollChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/No new features at this level/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No class data for the selected level/i)).not.toBeInTheDocument();
   });
 });

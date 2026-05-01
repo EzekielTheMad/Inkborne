@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { classFeaturesPerLevel } from "@/lib/builder/class-features-per-level";
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import type { ContentEntry } from "@/components/builder/content-browser";
-import type { CharacterChoices, AsiChoice } from "@/lib/types/character";
+import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
+import type { HpRule } from "@/lib/builder/level-up-rules";
 
 export interface ClassStepRailProps {
   classes: ContentEntry[];
@@ -35,6 +36,14 @@ export interface ClassStepRailProps {
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
   /** Called when a met card in the picker is clicked. Parent opens the existing ClassPreviewModal. */
   onAddClass: (content: ContentEntry) => void;
+  /** HP rule for the campaign/session. Defaults to "free_choice" when omitted. */
+  hpRule?: HpRule;
+  /** CON modifier for the active character. Defaults to 0 when omitted. */
+  conMod?: number;
+  /** Stored HP roll records keyed by "{classSlug}-{level}". */
+  hpRolls?: Record<string, HpRollRecord>;
+  /** Called when the user picks an HP method for a level. */
+  onHpRollChange?: (key: string, record: HpRollRecord) => void;
 }
 
 interface SelectedKey {
@@ -67,6 +76,10 @@ export function ClassStepRail(props: ClassStepRailProps) {
     onFightingStyleSelect,
     onChoiceSelect,
     onAddClass,
+    hpRule = "free_choice",
+    conMod = 0,
+    hpRolls = {},
+    onHpRollChange = () => {},
   } = props;
 
   const initialClassIndex = 0;
@@ -189,21 +202,27 @@ export function ClassStepRail(props: ClassStepRailProps) {
             onSelect={onAddClass}
             onCancel={() => setShowPicker(false)}
           />
-        ) : activeRow && activeClass && activeClassContent ? (
+        ) : activeClass && activeClassContent ? (
           <ClassLevelPane
             classSlug={activeClass.slug}
             className_={activeClassContent.name}
             classIndex={selected.classIndex}
+            isPrimaryClass={selected.classIndex === 0}
             row={activeRow}
             subclasses={subclasses}
             styleOptions={styleOptionsForActiveClass}
             localChoices={localChoices}
             currentSubclass={activeClass.subclass}
             classChoices={activeClassChoices}
+            hitDie={(activeClassContent.data as Record<string, unknown>).hit_die as number ?? 8}
+            hpRule={hpRule}
+            conMod={conMod}
+            hpRolls={hpRolls}
             onAsiSelect={onAsiSelect}
             onSubclassSelect={onSubclassSelect}
             onFightingStyleSelect={onFightingStyleSelect}
             onChoiceSelect={onChoiceSelect}
+            onHpRollChange={onHpRollChange}
           />
         ) : (
           <p className="text-sm text-muted-foreground">No class data for the selected level.</p>
