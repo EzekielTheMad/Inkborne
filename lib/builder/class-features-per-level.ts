@@ -107,7 +107,6 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
       featureEntries.push(f);
     }
 
-    if (featureEntries.length === 0 && choices.length === 0) continue;
     result.push({ level, features: featureEntries, choices });
   }
 

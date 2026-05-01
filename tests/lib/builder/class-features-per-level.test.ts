@@ -180,4 +180,41 @@ describe("classFeaturesPerLevel", () => {
       }),
     ]);
   });
+
+  it("includes a row for levels with no features and no choices (so the rail can navigate to them)", () => {
+    const wizard: ContentEntry = {
+      id: "c-wizard",
+      slug: "wizard",
+      name: "Wizard",
+      content_type: "class",
+      data: {
+        hit_die: 6,
+        levels: [
+          { level: 1, features: ["arcane-recovery"] },
+          { level: 2, features: ["arcane-tradition"] },
+          { level: 3, features: [] }, // explicit empty level
+        ],
+      },
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+    const features = [
+      feature("arcane-recovery", "Arcane Recovery", 1, "wizard"),
+      feature("arcane-tradition", "Arcane Tradition", 2, "wizard", { feature_type: "subclass" }),
+    ];
+    const result = classFeaturesPerLevel({
+      classContent: wizard,
+      features,
+      subclassContent: null,
+      characterChoices: {} as CharacterChoices,
+      classIndex: 0,
+    });
+    // All three levels must be present in the result.
+    expect(result.map((r) => r.level)).toContain(3);
+    const lv3 = result.find((r) => r.level === 3);
+    expect(lv3).toBeDefined();
+    expect(lv3?.features).toHaveLength(0);
+    expect(lv3?.choices).toHaveLength(0);
+  });
 });

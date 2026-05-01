@@ -214,7 +214,10 @@ export function ClassStepRail(props: ClassStepRailProps) {
             localChoices={localChoices}
             currentSubclass={activeClass.subclass}
             classChoices={activeClassChoices}
-            hitDie={(activeClassContent.data as Record<string, unknown>).hit_die as number ?? 8}
+            hitDie={(() => {
+              const raw = (activeClassContent.data as Record<string, unknown>).hit_die;
+              return typeof raw === "number" && raw > 0 ? raw : 8;
+            })()}
             hpRule={hpRule}
             conMod={conMod}
             hpRolls={hpRolls}
