@@ -5,6 +5,7 @@ import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
 import { LevelRailSetLevelSheet } from "@/components/builder/class-step-rail/level-rail-set-level-sheet";
 import { ClassPickerSheet } from "@/components/builder/class-step-rail/class-picker-sheet";
+import { LevelUpSheet } from "@/components/builder/class-step-rail/level-up-sheet";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, HpRollRecord } from "@/lib/types/character";
 
@@ -2130,5 +2131,95 @@ describe("ClassPickerSheet", () => {
       />,
     );
     expect(screen.queryByText(/Add a class/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("LevelUpSheet", () => {
+  function classEntryWithHitDie(slug: string, name: string, hitDie: number, levels: Array<{ level: number; features: string[] }>): ContentEntry {
+    return {
+      id: `c-${slug}`,
+      slug,
+      name,
+      content_type: "class",
+      data: { hit_die: hitDie, levels },
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+  }
+
+  function passiveLevelRow(level: number, featureSlug: string, featureName: string): PerLevel {
+    return {
+      level,
+      features: [
+        {
+          id: `f-${featureSlug}`,
+          slug: featureSlug,
+          name: featureName,
+          content_type: "feature",
+          data: { level, class: "paladin", description: "Your aura range increases." },
+          effects: [],
+          version: 1,
+          source: "srd",
+        },
+      ],
+      choices: [],
+    };
+  }
+
+  function defaults(overrides: Partial<Parameters<typeof LevelUpSheet>[0]> = {}) {
+    return {
+      open: true,
+      onOpenChange: vi.fn(),
+      classContent: classEntryWithHitDie("paladin", "Paladin", 10, [
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+      classIndex: 0,
+      isPrimaryClass: true,
+      draftLevel: 7,
+      totalLevelAfterConfirm: 10,
+      perLevelRow: passiveLevelRow(7, "aura-improvement", "Aura improvement"),
+      subclasses: [] as ContentEntry[],
+      styleOptions: [] as ContentEntry[],
+      localChoices: {} as CharacterChoices,
+      currentSubclass: undefined as string | undefined,
+      classChoices: [] as Array<import("@/lib/types/effects").ChoiceEffect>,
+      hpRule: "free_choice" as const,
+      conMod: 2,
+      hpRolls: { "paladin-7": { method: "average" as const, value: 6 } },
+      onAsiSelect: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onHpRollChange: vi.fn(),
+      onCancel: vi.fn(),
+      onConfirm: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders Drawer with breadcrumb + NEW LEVEL ribbon when open", () => {
+    render(<LevelUpSheet {...defaults()} />);
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText("Level 7")).toBeInTheDocument();
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+
+  it("renders the action bar (Cancel + Confirm) inside the sheet", () => {
+    render(<LevelUpSheet {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("Cancel fires onCancel", () => {
+    const onCancel = vi.fn();
+    render(<LevelUpSheet {...defaults({ onCancel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel level-up/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("does not render content when open=false", () => {
+    render(<LevelUpSheet {...defaults({ open: false })} />);
+    expect(screen.queryByText(/NEW LEVEL/i)).not.toBeInTheDocument();
   });
 });
