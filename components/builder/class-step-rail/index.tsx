@@ -334,13 +334,15 @@ export function ClassStepRail(props: ClassStepRailProps) {
     return (
       <>
         <div className="flex flex-col md:hidden">
-          <CharacterStrip
-            characterName={characterName}
-            totalLevel={totalLevel}
-            maxLevel={MAX_TOTAL_LEVEL}
-            classes={classes}
-            selectedClasses={selectedClasses}
-          />
+          {selectedClasses.length > 1 && (
+            <CharacterStrip
+              characterName={characterName}
+              totalLevel={totalLevel}
+              maxLevel={MAX_TOTAL_LEVEL}
+              classes={classes}
+              selectedClasses={selectedClasses}
+            />
+          )}
           {selectedClasses.map((cls, idx) => {
             const built = buildRailProps(cls, idx);
             if (!built) return null;

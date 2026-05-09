@@ -2384,7 +2384,8 @@ describe("ClassStepRail — mobile pattern (sub-md)", () => {
   it("renders <LevelRailMobile> elements per class section (mobile rail-mobile-specific affordances visible)", () => {
     setupForLevelUp();
     // <LevelRailMobile> renders a kebab "more options" button per class — desktop <LevelRail> doesn't.
-    // Both desktop and mobile rails are mounted (CSS-hidden); the mobile one's kebab is what we check.
+    // The component early-returns the mobile branch when isMobile is true,
+    // so only mobile rails are mounted. The mobile rail's kebab is what we check.
     const kebabs = screen.getAllByRole("button", { name: /more options/i });
     expect(kebabs.length).toBeGreaterThanOrEqual(1);
   });
