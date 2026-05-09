@@ -4,29 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ContentBrowser, type ContentEntry } from "@/components/builder/content-browser";
 import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
-import { ChoiceSelector } from "@/components/builder/choice-selector";
-import { SubclassSelector } from "@/components/builder/subclass-selector";
-import { AsiSelector } from "@/components/builder/asi-selector";
+import { ClassStepRail } from "@/components/builder/class-step-rail";
 import { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices, AsiChoice } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
-import type { Effect, ChoiceEffect } from "@/lib/types/effects";
+import type { Effect } from "@/lib/types/effects";
 
 interface ClassStepClientProps {
   characterId: string;
@@ -69,7 +53,7 @@ export function ClassStepClient({
 }: ClassStepClientProps) {
   const router = useRouter();
   const supabase = createClient();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
     character.choices ?? {},
@@ -322,360 +306,26 @@ export function ClassStepClient({
       .eq("id", characterId);
   }
 
-  /** Check feature type from data.feature_type field */
-  function getFeatureType(feature: ContentEntry): string {
-    return (feature.data.feature_type as string) ?? "passive";
-  }
-
-  // Get features for a specific class at a specific level, sorted by level then name
-  // When a subclass is selected, replace generic placeholder features with subclass-specific ones
-  function getFeaturesForClass(classSlug: string, level: number, selectedSubclass?: string) {
-    return features
-      .filter((f) => {
-        const data = f.data as Record<string, unknown>;
-        if (data.class !== classSlug) return false;
-        if (typeof data.level !== "number" || data.level > level) return false;
-
-        const featureSubclass = data.subclass as string | null;
-
-        if (selectedSubclass) {
-          // Subclass is selected:
-          // - Include features with no subclass (general class features)
-          // - Include features matching the selected subclass
-          // - EXCLUDE generic subclass placeholder features (they have subclass: null
-          //   but their feature_type would be passive and their name contains "feature")
-          //   We detect placeholders by checking if a subclass feature exists at the same level
-          if (featureSubclass && featureSubclass !== selectedSubclass) {
-            return false; // Wrong subclass feature
-          }
-          if (!featureSubclass) {
-            // Check if this is a generic placeholder that should be replaced
-            // Placeholders have names like "Path feature", "College Feature", etc.
-            const isPlaceholder = /feature$/i.test(f.name.trim());
-            if (isPlaceholder) {
-              // Check if there's a subclass feature at this same level
-              const hasSubclassReplacement = features.some((sf) => {
-                const sfData = sf.data as Record<string, unknown>;
-                return (
-                  sfData.class === classSlug &&
-                  sfData.subclass === selectedSubclass &&
-                  sfData.level === data.level
-                );
-              });
-              if (hasSubclassReplacement) return false; // Skip placeholder
-            }
-          }
-        } else {
-          // No subclass selected — only show features with no subclass
-          if (featureSubclass) return false;
-        }
-
-        // Hide individual fighting style options — they're shown as choices under the parent
-        const featureType = data.feature_type as string | undefined;
-        if (featureType === "fighting_style" && f.name !== "Fighting Style") {
-          // This is a child style option (e.g., "Fighting Style: Archery")
-          // Only show it if there's no parent "Fighting Style" feature for this class
-          const hasParent = features.some((pf) => {
-            const pd = pf.data as Record<string, unknown>;
-            return pd.class === classSlug && pf.name === "Fighting Style" && pd.feature_type === "fighting_style";
-          });
-          if (hasParent) return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        const levelA = (a.data.level as number) ?? 0;
-        const levelB = (b.data.level as number) ?? 0;
-        if (levelA !== levelB) return levelA - levelB;
-        return a.name.localeCompare(b.name);
-      });
-  }
-
-  /** Get the fighting style options for a class */
-  function getFightingStyleOptions(classSlug: string) {
-    return features.filter((f) => {
-      const data = f.data as Record<string, unknown>;
-      return (
-        data.class === classSlug &&
-        data.feature_type === "fighting_style" &&
-        f.name !== "Fighting Style" // exclude the parent
-      );
-    });
-  }
-
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6">
         <h2 className="text-xl font-semibold">Class</h2>
 
         {hasClass ? (
-          <div className="space-y-4">
-            {selectedClasses.map((cls, index) => {
-              const classData = classes.find((c) => c.slug === cls.slug);
-              const classFeatures = getFeaturesForClass(cls.slug, cls.level, cls.subclass);
-              const choiceEffects = classFeatures.flatMap((f) =>
-                f.effects.filter((e): e is ChoiceEffect => e.type === "choice"),
-              );
-
-              return (
-                <Card key={`${cls.slug}-${index}`}>
-                  <CardHeader>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <CardTitle className="capitalize">{cls.slug}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-muted-foreground">
-                          Level:
-                        </label>
-                        <select
-                          value={cls.level}
-                          onChange={(e) =>
-                            handleLevelChange(index, parseInt(e.target.value))
-                          }
-                          className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-                        >
-                          {Array.from({ length: 20 }, (_, i) => i + 1).map(
-                            (lvl) => (
-                              <option key={lvl} value={lvl}>
-                                {lvl}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Key class info */}
-                    <div className="text-sm space-y-0.5 mb-3">
-                      {"hit_die" in (classData?.data ?? {}) && (
-                        <div>
-                          <span className="font-medium">Hit Die: </span>
-                          <span>d{String(classData?.data.hit_die)}</span>
-                        </div>
-                      )}
-                      {typeof classData?.data.primaryAbility === "string" && (
-                        <div>
-                          <span className="font-medium">Primary Ability: </span>
-                          <span>{classData.data.primaryAbility}</span>
-                        </div>
-                      )}
-                      {typeof classData?.data.equipment === "string" && (
-                        <div>
-                          <span className="font-medium">Equipment: </span>
-                          <span className="text-muted-foreground">{classData.data.equipment}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Skill choice text as context before selector */}
-                    {typeof classData?.data.skillstxt === "string" && (
-                      <p className="text-xs text-muted-foreground mb-2 italic">
-                        {classData.data.skillstxt}
-                      </p>
-                    )}
-
-                    {/* Class-level choices (skill proficiency, etc.) */}
-                    {(() => {
-                      const classChoices = (classData?.effects ?? []).filter(
-                        (e): e is ChoiceEffect => e.type === "choice",
-                      );
-                      if (classChoices.length === 0) return null;
-                      return (
-                        <div className="space-y-3 mb-4">
-                          <p className="text-sm font-medium">Class Proficiency Choices</p>
-                          {classChoices.map((choice) => (
-                            <ChoiceSelector
-                              key={choice.choice_id}
-                              choiceEffect={choice}
-                              currentSelections={
-                                localChoices.resolved_choices?.[choice.choice_id] ?? []
-                              }
-                              onSelect={(selections) =>
-                                handleChoiceSelect(choice.choice_id, selections)
-                              }
-                            />
-                          ))}
-                          <Separator />
-                        </div>
-                      );
-                    })()}
-
-                    {classFeatures.length > 0 && (
-                      <Accordion className="w-full">
-                        {classFeatures.map((feature) => {
-                          const featureChoices = feature.effects.filter(
-                            (e): e is ChoiceEffect => e.type === "choice",
-                          );
-                          const featureLevel =
-                            typeof feature.data.level === "number"
-                              ? feature.data.level
-                              : 0;
-                          const featureType = getFeatureType(feature);
-                          const showSubclass = featureType === "subclass";
-                          const showAsi = featureType === "asi";
-                          const showFightingStyle = featureType === "fighting_style" && feature.name === "Fighting Style";
-                          const hasInteraction =
-                            featureChoices.length > 0 ||
-                            showSubclass ||
-                            showAsi ||
-                            showFightingStyle;
-
-                          return (
-                            <AccordionItem
-                              key={feature.id}
-                              value={feature.id}
-                            >
-                              <AccordionTrigger className="text-sm">
-                                <span className="flex flex-col items-start gap-0.5">
-                                  <span className="flex items-center gap-2">
-                                    {feature.name}
-                                    {hasInteraction && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        {showAsi
-                                          ? "ASI"
-                                          : showSubclass
-                                            ? "Subclass"
-                                            : showFightingStyle
-                                              ? "Choice"
-                                              : `${featureChoices.length} choice${featureChoices.length > 1 ? "s" : ""}`}
-                                      </Badge>
-                                    )}
-                                  </span>
-                                  {featureLevel > 0 && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {featureLevel === 1 ? "1st" : featureLevel === 2 ? "2nd" : featureLevel === 3 ? "3rd" : `${featureLevel}th`} level
-                                    </span>
-                                  )}
-                                </span>
-                              </AccordionTrigger>
-                              <AccordionContent className="space-y-3">
-                                {typeof feature.data.description === "string" && (
-                                  <p className="text-sm text-muted-foreground">
-                                    {feature.data.description}
-                                  </p>
-                                )}
-
-                                {/* Subclass selector */}
-                                {showSubclass && (
-                                  <SubclassSelector
-                                    classSlug={cls.slug}
-                                    subclasses={subclasses}
-                                    currentSelection={cls.subclass}
-                                    onSelect={(slug) =>
-                                      handleSubclassSelect(
-                                        cls.slug,
-                                        index,
-                                        slug,
-                                      )
-                                    }
-                                    label={typeof classData?.data.subclassLabel === "string" ? classData.data.subclassLabel : undefined}
-                                  />
-                                )}
-
-                                {/* ASI selector */}
-                                {showAsi && (
-                                  <AsiSelector
-                                    featureSlug={feature.slug}
-                                    currentChoice={
-                                      localChoices.asi_choices?.[feature.slug]
-                                    }
-                                    onSelect={(choice) =>
-                                      handleAsiSelect(feature.slug, choice)
-                                    }
-                                  />
-                                )}
-
-                                {/* Fighting Style selector */}
-                                {showFightingStyle && (() => {
-                                  const styleOptions = getFightingStyleOptions(cls.slug);
-                                  const selectedStyle = localChoices.resolved_choices?.[feature.slug]?.[0];
-                                  const selectedStyleEntry = styleOptions.find((s) => s.slug === selectedStyle);
-                                  return (
-                                    <div className="space-y-2 rounded-lg border border-accent/30 bg-accent/5 p-3">
-                                      <label className="block text-sm font-medium">
-                                        Choose your Fighting Style
-                                      </label>
-                                      <select
-                                        value={selectedStyle ?? ""}
-                                        onChange={(e) =>
-                                          handleFightingStyleSelect(
-                                            feature.slug,
-                                            cls.slug,
-                                            e.target.value || undefined,
-                                          )
-                                        }
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                                      >
-                                        <option value="">-- Select --</option>
-                                        {styleOptions.map((style) => (
-                                          <option key={style.slug} value={style.slug}>
-                                            {style.name.replace("Fighting Style: ", "")}
-                                          </option>
-                                        ))}
-                                      </select>
-                                      {selectedStyleEntry && typeof selectedStyleEntry.data.description === "string" && (
-                                        <p className="text-xs text-muted-foreground leading-relaxed">
-                                          {selectedStyleEntry.data.description}
-                                        </p>
-                                      )}
-                                    </div>
-                                  );
-                                })()}
-
-                                {/* Standard choice effects */}
-                                {featureChoices.map((choice) => (
-                                  <ChoiceSelector
-                                    key={choice.choice_id}
-                                    choiceEffect={choice}
-                                    currentSelections={
-                                      localChoices.resolved_choices?.[
-                                        choice.choice_id
-                                      ] ?? []
-                                    }
-                                    onSelect={(selections) =>
-                                      handleChoiceSelect(
-                                        choice.choice_id,
-                                        selections,
-                                      )
-                                    }
-                                  />
-                                ))}
-                              </AccordionContent>
-                            </AccordionItem>
-                          );
-                        })}
-                      </Accordion>
-                    )}
-
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveClass(index)}
-                      >
-                        Remove Class
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-
-            <Separator />
-            <div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Add another class for multiclassing:
-              </p>
-              <ContentBrowser
-                entries={classes.filter(
-                  (c) => !selectedClasses.some((sc) => sc.slug === c.slug),
-                )}
-                contentTypeLabel="Class"
-                onSelect={setPreviewContent}
-              />
-            </div>
-          </div>
+          <ClassStepRail
+            classes={classes}
+            subclasses={subclasses}
+            features={features}
+            selectedClasses={selectedClasses}
+            localChoices={localChoices}
+            contentRefs={contentRefs}
+            onLevelChange={handleLevelChange}
+            onRemoveClass={handleRemoveClass}
+            onSubclassSelect={handleSubclassSelect}
+            onAsiSelect={handleAsiSelect}
+            onFightingStyleSelect={handleFightingStyleSelect}
+            onChoiceSelect={handleChoiceSelect}
+          />
         ) : (
           <ContentBrowser
             entries={classes}
