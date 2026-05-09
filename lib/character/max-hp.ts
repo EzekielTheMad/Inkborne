@@ -9,10 +9,16 @@
 //
 // RAW (Player's Handbook, multiclassing):
 //  - First (primary) class, level 1: gain MAX of hit die
-//  - All other levels (including multiclass L1s): gain average of hit die
+//  - All other levels (including multiclass L1s): gain average of hit die by default
 //  - Average hit die = floor(die/2) + 1 → d6=4, d8=5, d10=6, d12=7
 //  - CON modifier applied per character level (total)
 //  - Minimum +1 HP per level even if CON modifier is very negative
+//
+// PR-D extension: per-level HP rolls (`hpRolls`) and a campaign/system HP rule
+// (`hpRule`) override the default per-level math via `hpContributionForLevel`.
+
+import { hpContributionForLevel, type HpRule } from "@/lib/builder/level-up-rules";
+import type { HpRollRecord } from "@/lib/types/character";
 
 interface ClassChoice {
   slug: string;
@@ -24,14 +30,13 @@ interface ClassContentEntry {
   data: Record<string, unknown>;
 }
 
-/** Average hit die roll per RAW: floor(die/2) + 1. */
-function averageHitDie(die: number): number {
-  return Math.floor(die / 2) + 1;
-}
-
-/** Standard D&D 5e ability-score-to-modifier function. */
 function abilityMod(score: number): number {
   return Math.floor((score - 10) / 2);
+}
+
+function hitDieFor(slug: string, classContent: Record<string, ClassContentEntry>): number {
+  const entry = classContent[slug];
+  return typeof entry?.data?.hit_die === "number" ? (entry.data.hit_die as number) : 8;
 }
 
 /**
@@ -40,28 +45,36 @@ function abilityMod(score: number): number {
  * @param classes Character's class choices in order taken. `classes[0]` is the primary class.
  * @param classContent Map of class slug → content definition (with `data.hit_die`).
  * @param constitutionScore Character's current CON score (post-effects).
+ * @param hpRolls Optional per-level HP rolls keyed as `{classSlug}-{level}`. Stored values are raw die contributions (BEFORE CON).
+ * @param hpRule Optional resolved HP rule. Defaults to "free_choice" (matches legacy behavior).
  * @returns Total maximum hit points. Returns 0 if no classes.
  */
 export function computeMaxHp(
   classes: ClassChoice[],
   classContent: Record<string, ClassContentEntry>,
   constitutionScore: number,
+  hpRolls: Record<string, HpRollRecord> = {},
+  hpRule: HpRule = "free_choice",
 ): number {
   if (classes.length === 0) return 0;
   const conMod = abilityMod(constitutionScore);
 
   let total = 0;
   classes.forEach((cls, classIndex) => {
-    const entry = classContent[cls.slug];
-    const hitDie =
-      typeof entry?.data?.hit_die === "number" ? (entry.data.hit_die as number) : 8;
-    const avg = averageHitDie(hitDie);
+    const die = hitDieFor(cls.slug, classContent);
     const isPrimary = classIndex === 0;
 
     for (let level = 1; level <= cls.level; level++) {
-      const isFirstLevelOfPrimary = isPrimary && level === 1;
-      const baseContribution = isFirstLevelOfPrimary ? hitDie : avg;
-      total += Math.max(1, baseContribution + conMod);
+      const contribution = hpContributionForLevel({
+        classSlug: cls.slug,
+        level,
+        die,
+        isFirstLevelOfPrimary: isPrimary && level === 1,
+        isFirstLevelOfClass: level === 1,
+        storedRoll: hpRolls[`${cls.slug}-${level}`],
+        rule: hpRule,
+      });
+      total += Math.max(1, contribution + conMod);
     }
   });
 

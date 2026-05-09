@@ -173,7 +173,9 @@ export default async function CharacterPage({ params }: PageProps) {
   // (The engine's derived-stat formula can't express per-class iteration, so we
   // compute it directly here using the helper in lib/character/max-hp.ts.)
   const constitutionScore = (evalResult.stats.constitution as number | undefined) ?? 10;
-  const maxHp = computeMaxHp(classChoices, classData, constitutionScore);
+  const hpRolls = (character.choices?.hp_rolls ?? {}) as Record<string, import("@/lib/types/character").HpRollRecord>;
+  const hpRule = (character.game_systems?.schema_definition as { hp_rule?: import("@/lib/builder/level-up-rules").HpRule } | undefined)?.hp_rule ?? "free_choice";
+  const maxHp = computeMaxHp(classChoices, classData, constitutionScore, hpRolls, hpRule);
   const initialState = initializeState(character.state, maxHp);
 
   const hasSheet = character.choices?.classes && character.choices.classes.length > 0;

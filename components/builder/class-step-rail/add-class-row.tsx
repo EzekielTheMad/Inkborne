@@ -8,6 +8,8 @@ type AddClassRowProps =
       reasons: string[];
       onClick?: () => void;
       levelsRemaining?: never;
+      /** Override for the reasons list. When present, renders instead of joined reasons. */
+      disabledReason?: string;
     }
   | {
       /** Unlocked state — renders the accent-border row with plus icon. */
@@ -15,6 +17,7 @@ type AddClassRowProps =
       levelsRemaining: number;
       onClick: () => void;
       reasons?: never;
+      disabledReason?: never;
     };
 
 export function AddClassRow(props: AddClassRowProps) {
@@ -38,14 +41,14 @@ export function AddClassRow(props: AddClassRowProps) {
     );
   }
 
-  const { reasons, onClick } = props;
-  const reasonText = reasons.slice(0, 3).join(" · ");
+  const { reasons, onClick, disabledReason } = props;
+  const reasonText = disabledReason ?? reasons.slice(0, 3).join(" · ");
   return (
     <button
       type="button"
       aria-disabled="true"
       aria-describedby="add-class-reason"
-      title={reasons.join("\n")}
+      title={disabledReason ? disabledReason : reasons.join("\n")}
       className="w-full rounded-md border border-dashed border-muted px-3 py-2 text-left transition-colors cursor-not-allowed"
       onClick={(e) => {
         e.preventDefault();

@@ -16,6 +16,30 @@ export interface AsiChoice {
   allocations: AsiAllocation[];
 }
 
+/** Campaign/system-level HP rule. Drives picker behavior and engine math.
+ *  - free_choice: user picks Average / Roll / Manual per level
+ *  - average_only: engine pins to averageHitDie; picker read-only
+ *  - rolled_only: user must roll; engine falls back to average until rolled
+ *  - max_first_level_each_class: every class's level 1 = max die; rest follow free_choice
+ *  - max_for_all: every level = max die; picker read-only */
+export type HpRule =
+  | "free_choice"
+  | "average_only"
+  | "rolled_only"
+  | "max_first_level_each_class"
+  | "max_for_all";
+
+/** Method used to determine HP gain at a given level. Stored value is always
+ *  the raw die contribution (before CON), so CON changes from later ASIs
+ *  automatically reflect in total HP without invalidating stored rolls. */
+export type HpRollMethod = "average" | "rolled" | "manual";
+
+export interface HpRollRecord {
+  method: HpRollMethod;
+  /** Raw die contribution for this level, BEFORE CON modifier (1..die). */
+  value: number;
+}
+
 export interface CharacterChoices {
   classes?: Array<{ slug: string; level: number; subclass?: string }>;
   race?: string;
@@ -32,6 +56,10 @@ export interface CharacterChoices {
   resolved_choices?: Record<string, string[]>;
   /** Keyed by feature slug, e.g. "barbarian-ability-score-improvement-4" */
   asi_choices?: Record<string, AsiChoice>;
+  /** Per-level HP rolls keyed as `{classSlug}-{level}` (e.g. "paladin-7").
+   *  Lv 1 of the primary class is NOT stored — RAW pins it to max die.
+   *  Engine reads from this map when present, falls back to averageHitDie. */
+  hp_rolls?: Record<string, HpRollRecord>;
 }
 
 export interface CharacterDeathSaves {
@@ -109,6 +137,8 @@ export interface Campaign {
   description: string;
   invite_code: string;
   created_at: string;
+  /** Optional campaign-wide HP rule override. NULL = inherit from system. */
+  hp_rule?: HpRule | null;
 }
 
 export interface CampaignMember {

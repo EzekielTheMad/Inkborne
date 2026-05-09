@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import type { ContentEntry } from "@/components/builder/content-browser";
-import type { CharacterChoices } from "@/lib/types/character";
+import type { CharacterChoices, HpRollRecord } from "@/lib/types/character";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -338,6 +338,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={vi.fn()}
         onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     expect(screen.getByRole("button", { name: /level 1/i })).toBeInTheDocument();
@@ -356,6 +358,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={vi.fn()}
         onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     // Level 3 has unmade subclass → dot present
@@ -376,6 +380,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={onSelectLevel}
         onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /level 3/i }));
@@ -394,6 +400,8 @@ describe("LevelRail", () => {
         activeLevel={1}
         onSelectLevel={vi.fn()}
         onLevelChange={onLevelChange}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
       />,
     );
     fireEvent.change(screen.getByLabelText("Set level for Paladin"), { target: { value: "6" } });
@@ -415,10 +423,16 @@ function f(slug: string, name: string, description?: string): ContentEntry {
 }
 
 const noopHandlers = {
+  isPrimaryClass: true,
+  hitDie: 8,
+  hpRule: "free_choice" as const,
+  conMod: 0,
+  hpRolls: {} as Record<string, HpRollRecord>,
   onAsiSelect: vi.fn(),
   onSubclassSelect: vi.fn(),
   onFightingStyleSelect: vi.fn(),
   onChoiceSelect: vi.fn(),
+  onHpRollChange: vi.fn(),
   classChoices: [],
 };
 
@@ -538,6 +552,9 @@ describe("ClassStepRail", () => {
       onAsiSelect: vi.fn(),
       onFightingStyleSelect: vi.fn(),
       onChoiceSelect: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
     };
     const props = {
       classes: [
@@ -554,11 +571,12 @@ describe("ClassStepRail", () => {
       ],
       selectedClasses: [{ slug: "paladin", level: 3 }],
       localChoices: {} as CharacterChoices,
-      contentRefs: [],
       resolvedStats: {
         strength: 10, dexterity: 10, constitution: 10,
         intelligence: 10, wisdom: 10, charisma: 10,
       },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
       onAddClass: vi.fn(),
       ...handlers,
       ...overrides,
@@ -620,6 +638,10 @@ function setupRail(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {})
     onAsiSelect: vi.fn(),
     onFightingStyleSelect: vi.fn(),
     onChoiceSelect: vi.fn(),
+    onConfirmLevelUp: vi.fn(),
+    onCancelLevelUp: vi.fn(),
+    onHpRollChange: vi.fn(),
+    onAddClass: vi.fn(),
   };
   const props = {
     classes: [
@@ -636,12 +658,12 @@ function setupRail(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {})
     ],
     selectedClasses: [{ slug: "paladin", level: 3 }],
     localChoices: {} as CharacterChoices,
-    contentRefs: [],
     resolvedStats: {
       strength: 10, dexterity: 10, constitution: 10,
       intelligence: 10, wisdom: 10, charisma: 10,
     },
-    onAddClass: vi.fn(),
+    hpRule: "free_choice" as const,
+    hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
     ...handlers,
     ...overrides,
   };
@@ -936,6 +958,9 @@ describe("ClassStepRail — multiclass picker", () => {
       onFightingStyleSelect: vi.fn(),
       onChoiceSelect: vi.fn(),
       onAddClass: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
     };
     const allClasses = [
       "barbarian", "bard", "cleric", "druid", "fighter", "monk",
@@ -951,11 +976,12 @@ describe("ClassStepRail — multiclass picker", () => {
       features: [],
       selectedClasses: [{ slug: "paladin", level: 3 }],
       localChoices: {} as CharacterChoices,
-      contentRefs: [],
       resolvedStats: {
         strength: 13, dexterity: 12, constitution: 14,
         intelligence: 8, wisdom: 10, charisma: 13,
       },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
       ...handlers,
       ...overrides,
     };
@@ -1029,5 +1055,696 @@ describe("ClassStepRail — multiclass picker", () => {
       selectedClasses: [{ slug: "paladin", level: 20 }],
     });
     expect(screen.getByText(/Add a class · Locked/i)).toBeInTheDocument();
+  });
+});
+
+import { LevelUpButton } from "@/components/builder/class-step-rail/level-up-button";
+
+describe("LevelUpButton", () => {
+  it("renders idle state with 'Level up [Class]' label and 'Lv {N+1}' glyph", () => {
+    render(
+      <LevelUpButton state="idle" classSlug="paladin" classLabel="Paladin" atLevel={6} onClick={vi.fn()} />,
+    );
+    expect(screen.getByRole("button", { name: /Level up Paladin to level 7/i })).toBeInTheDocument();
+    expect(screen.getByText(/Lv 7/i)).toBeInTheDocument();
+  });
+
+  it("idle state is not aria-disabled and click fires onClick", () => {
+    const onClick = vi.fn();
+    render(
+      <LevelUpButton state="idle" classSlug="paladin" classLabel="Paladin" atLevel={6} onClick={onClick} />,
+    );
+    const btn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(btn).not.toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("disabled-with-reason state renders reason text + aria-disabled true; click is no-op", () => {
+    const onClick = vi.fn();
+    render(
+      <LevelUpButton
+        state="disabled"
+        classSlug="paladin"
+        classLabel="Paladin"
+        atLevel={6}
+        reason="Finish Pal 7 first"
+        onClick={onClick}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText(/Finish Pal 7 first/i)).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("active-flow state renders 'In progress' reason and is aria-disabled", () => {
+    render(
+      <LevelUpButton
+        state="active-flow"
+        classSlug="paladin"
+        classLabel="Paladin"
+        atLevel={6}
+        onClick={vi.fn()}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText(/In progress/i)).toBeInTheDocument();
+  });
+
+  it("tone-codes by class slug (gold for martial, purple for caster) via classTone()", () => {
+    const { rerender } = render(
+      <LevelUpButton state="idle" classSlug="paladin" classLabel="Paladin" atLevel={1} onClick={vi.fn()} />,
+    );
+    const goldBtn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(goldBtn).toHaveAttribute("data-tone", "gold");
+
+    rerender(
+      <LevelUpButton state="idle" classSlug="wizard" classLabel="Wizard" atLevel={1} onClick={vi.fn()} />,
+    );
+    const purpleBtn = screen.getByRole("button", { name: /Level up Wizard/i });
+    expect(purpleBtn).toHaveAttribute("data-tone", "purple");
+  });
+});
+
+import { HpPicker } from "@/components/builder/class-step-rail/hp-picker";
+
+describe("HpPicker", () => {
+  function defaults(overrides: Partial<Parameters<typeof HpPicker>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      level: 2,
+      hitDie: 10,
+      conMod: 2,
+      isFirstLevelOfPrimary: false,
+      hpRule: "free_choice" as const,
+      storedRoll: undefined as HpRollRecord | undefined,
+      onChange: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("does not render when isFirstLevelOfPrimary is true", () => {
+    const { container } = render(<HpPicker {...defaults({ isFirstLevelOfPrimary: true })} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("renders all three method buttons under free_choice", () => {
+    render(<HpPicker {...defaults()} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Manual/i })).toBeInTheDocument();
+  });
+
+  it("Average button shows displayed value avg + conMod (d10 + CON 2 → +8)", () => {
+    render(<HpPicker {...defaults()} />);
+    expect(screen.getByRole("radio", { name: /Average.*\+8/i })).toBeInTheDocument();
+  });
+
+  it("clicking Average calls onChange with raw die contribution (no conMod)", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    expect(onChange).toHaveBeenCalledWith({ method: "average", value: 6 });
+  });
+
+  it("clicking Roll d{die} writes a roll in [1, die]", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const record = onChange.mock.calls[0][0] as HpRollRecord;
+    expect(record.method).toBe("rolled");
+    expect(record.value).toBeGreaterThanOrEqual(1);
+    expect(record.value).toBeLessThanOrEqual(10);
+  });
+
+  it("re-clicking Roll re-rolls (overwrites stored value)", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
+    expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("clicking Manual reveals a numeric input and onChange fires on Enter", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Manual/i }));
+    const input = screen.getByLabelText("Manual HP value");
+    fireEvent.change(input, { target: { value: "7" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    expect(onChange).toHaveBeenCalledWith({ method: "manual", value: 7 });
+  });
+
+  it("Manual input out-of-range (0 or > die) does not fire onChange", () => {
+    const onChange = vi.fn();
+    render(<HpPicker {...defaults({ onChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Manual/i }));
+    const input = screen.getByLabelText("Manual HP value");
+    fireEvent.change(input, { target: { value: "11" } });
+    fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("rendered method shows aria-checked on the right radio when storedRoll is present", () => {
+    render(<HpPicker {...defaults({ storedRoll: { method: "rolled", value: 8 } })} />);
+    const rollBtn = screen.getByRole("radio", { name: /Roll d10/i });
+    expect(rollBtn).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("rolled_only rule renders only the Roll button + read-only display when no roll yet", () => {
+    render(<HpPicker {...defaults({ hpRule: "rolled_only" })} />);
+    expect(screen.queryByRole("radio", { name: /Average/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: /Manual/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
+  });
+
+  it("average_only rule renders read-only display, no interactive radios", () => {
+    const { container } = render(<HpPicker {...defaults({ hpRule: "average_only" })} />);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByText(/Campaign rule: Average/i)).toBeInTheDocument();
+    expect(container.textContent).toContain("+8");
+  });
+
+  it("max_for_all rule renders read-only display showing max + conMod", () => {
+    const { container } = render(<HpPicker {...defaults({ hpRule: "max_for_all" })} />);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByText(/Campaign rule: Max/i)).toBeInTheDocument();
+    expect(container.textContent).toContain("+12");
+  });
+
+  it("max_first_level_each_class at level 1 of any class renders read-only display", () => {
+    render(<HpPicker {...defaults({ hpRule: "max_first_level_each_class", level: 1 })} />);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByText(/First level of class.*Max/i)).toBeInTheDocument();
+  });
+
+  it("max_first_level_each_class at level > 1 renders the full free_choice picker", () => {
+    render(<HpPicker {...defaults({ hpRule: "max_first_level_each_class", level: 5 })} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Manual/i })).toBeInTheDocument();
+  });
+});
+
+import { LevelUpActionBar } from "@/components/builder/class-step-rail/level-up-action-bar";
+import { LevelUpPane } from "@/components/builder/class-step-rail/level-up-pane";
+
+describe("LevelUpActionBar", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelUpActionBar>[0]> = {}) {
+    return {
+      classLabel: "Paladin",
+      draftLevel: 7,
+      totalLevelAfterConfirm: 10,
+      canConfirm: true,
+      missingReason: "",
+      onCancel: vi.fn(),
+      onConfirm: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders Cancel button + summary text + Confirm button", () => {
+    render(<LevelUpActionBar {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByText(/Will set Paladin to Lv 7/i)).toBeInTheDocument();
+    expect(screen.getByText(/character to Lv 10/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("Confirm is disabled and aria-describedby points to missingReason when canConfirm is false", () => {
+    render(<LevelUpActionBar {...defaults({ canConfirm: false, missingReason: "Pick a subclass to enable Confirm" })} />);
+    const confirm = screen.getByRole("button", { name: /Confirm level 7/i });
+    expect(confirm).toBeDisabled();
+    const describedById = confirm.getAttribute("aria-describedby");
+    expect(describedById).toBeTruthy();
+    expect(document.getElementById(describedById!)?.textContent).toMatch(/Pick a subclass/i);
+  });
+
+  it("Confirm is enabled when canConfirm is true and onConfirm fires", () => {
+    const onConfirm = vi.fn();
+    render(<LevelUpActionBar {...defaults({ onConfirm })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Confirm level 7/i }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("Cancel button calls onCancel", () => {
+    const onCancel = vi.fn();
+    render(<LevelUpActionBar {...defaults({ onCancel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel level-up/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("LevelUpPane", () => {
+  function classEntryWithHitDie(slug: string, name: string, hitDie: number, levels: Array<{ level: number; features: string[] }>): ContentEntry {
+    return {
+      id: `c-${slug}`,
+      slug,
+      name,
+      content_type: "class",
+      data: { hit_die: hitDie, levels },
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+  }
+
+  function passiveLevelRow(level: number, featureSlug: string, featureName: string): PerLevel {
+    return {
+      level,
+      features: [
+        {
+          id: `f-${featureSlug}`,
+          slug: featureSlug,
+          name: featureName,
+          content_type: "feature",
+          data: { level, class: "paladin", description: "Your aura range increases." },
+          effects: [],
+          version: 1,
+          source: "srd",
+        },
+      ],
+      choices: [],
+    };
+  }
+
+  function defaults(overrides: Partial<Parameters<typeof LevelUpPane>[0]> = {}) {
+    return {
+      classContent: classEntryWithHitDie("paladin", "Paladin", 10, [
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+      classIndex: 0,
+      isPrimaryClass: true,
+      draftLevel: 7,
+      totalLevelAfterConfirm: 10,
+      perLevelRow: passiveLevelRow(7, "aura-improvement", "Aura improvement"),
+      subclasses: [] as ContentEntry[],
+      styleOptions: [] as ContentEntry[],
+      localChoices: {} as CharacterChoices,
+      currentSubclass: undefined as string | undefined,
+      classChoices: [] as Array<import("@/lib/types/effects").ChoiceEffect>,
+      hpRule: "free_choice" as const,
+      conMod: 2,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
+      onAsiSelect: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onHpRollChange: vi.fn(),
+      onCancel: vi.fn(),
+      onConfirm: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders the breadcrumb with class name and draft level + NEW LEVEL ribbon", () => {
+    render(<LevelUpPane {...defaults()} />);
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText("Level 7")).toBeInTheDocument();
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+
+  it("renders the heading from the level row's first feature name", () => {
+    render(<LevelUpPane {...defaults()} />);
+    expect(screen.getByRole("heading", { level: 2, name: /Aura improvement/i })).toBeInTheDocument();
+  });
+
+  it("renders 'What this level grants' feature cards section", () => {
+    render(<LevelUpPane {...defaults()} />);
+    expect(screen.getByText(/What this level grants/i)).toBeInTheDocument();
+  });
+
+  it("renders 'Choices for this level' section ONLY when row has choices", () => {
+    const { rerender } = render(<LevelUpPane {...defaults()} />);
+    expect(screen.queryByText(/Choices for this level/i)).not.toBeInTheDocument();
+
+    const rowWithChoice: PerLevel = {
+      level: 3,
+      features: [],
+      choices: [
+        { type: "subclass", classSlug: "paladin", label: "Sacred Oath", isMade: false },
+      ],
+    };
+    rerender(<LevelUpPane {...defaults({ draftLevel: 3, perLevelRow: rowWithChoice })} />);
+    expect(screen.getByText(/Choices for this level/i)).toBeInTheDocument();
+  });
+
+  it("renders the HP picker for non-Lv1-primary draft levels", () => {
+    render(<LevelUpPane {...defaults()} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+  });
+
+  it("does NOT render the HP picker when draft is Lv1 of primary class", () => {
+    render(<LevelUpPane {...defaults({ draftLevel: 1, isPrimaryClass: true })} />);
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  });
+
+  it("Confirm is disabled when there is an unmade required choice", () => {
+    const rowWithUnmadeChoice: PerLevel = {
+      level: 3,
+      features: [],
+      choices: [
+        { type: "subclass", classSlug: "paladin", label: "Sacred Oath", isMade: false },
+      ],
+    };
+    render(<LevelUpPane {...defaults({ draftLevel: 3, perLevelRow: rowWithUnmadeChoice })} />);
+    expect(screen.getByRole("button", { name: /Confirm level 3/i })).toBeDisabled();
+  });
+
+  it("Confirm is disabled when HP is unset (free_choice, non-Lv1-primary)", () => {
+    render(<LevelUpPane {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeDisabled();
+  });
+
+  it("Confirm is enabled when all choices made + HP set", () => {
+    const hpRolls = { "paladin-7": { method: "average" as const, value: 6 } };
+    render(<LevelUpPane {...defaults({ hpRolls })} />);
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeEnabled();
+  });
+
+  it("clicking Cancel calls onCancel", () => {
+    const onCancel = vi.fn();
+    render(<LevelUpPane {...defaults({ onCancel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel level-up/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("clicking HP picker Average fires onHpRollChange with the right key", () => {
+    const onHpRollChange = vi.fn();
+    render(<LevelUpPane {...defaults({ onHpRollChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    expect(onHpRollChange).toHaveBeenCalledWith("paladin-7", { method: "average", value: 6 });
+  });
+
+  it("does not render description paragraph when no feature has a description field", () => {
+    const rowWithoutDescription: PerLevel = {
+      level: 7,
+      features: [
+        {
+          id: "f-aura-imp",
+          slug: "aura-improvement",
+          name: "Aura improvement",
+          content_type: "feature",
+          data: { level: 7, class: "paladin" }, // no description field
+          effects: [],
+          version: 1,
+          source: "srd",
+        },
+      ],
+      choices: [],
+    };
+    render(<LevelUpPane {...defaults({ perLevelRow: rowWithoutDescription })} />);
+    // Heading still present
+    expect(screen.getByRole("heading", { level: 2, name: /Aura improvement/i })).toBeInTheDocument();
+    // No description paragraph (the `<p>` would render the description text directly).
+    // The "What this level grants" eyebrow IS rendered, so we can't just check for
+    // *no* paragraphs. Instead, we check that no element contains the description text.
+    expect(screen.queryByText(/aura range increases/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("ClassLevelPane — HP picker retrofit", () => {
+  function defaults(overrides: Partial<Parameters<typeof ClassLevelPane>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      classIndex: 0,
+      isPrimaryClass: true,
+      row: { level: 3, features: [], choices: [] } as PerLevel,
+      subclasses: [] as ContentEntry[],
+      styleOptions: [] as ContentEntry[],
+      localChoices: {} as CharacterChoices,
+      currentSubclass: undefined as string | undefined,
+      classChoices: [] as Array<import("@/lib/types/effects").ChoiceEffect>,
+      hitDie: 10,
+      hpRule: "free_choice" as const,
+      conMod: 2,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
+      onAsiSelect: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onHpRollChange: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders the HP picker for non-Lv1-primary levels", () => {
+    render(<ClassLevelPane {...defaults({ row: { level: 5, features: [], choices: [] } })} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+  });
+
+  it("does NOT render the HP picker for Lv1 of primary class", () => {
+    render(<ClassLevelPane {...defaults({ row: { level: 1, features: [], choices: [] }, isPrimaryClass: true })} />);
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  });
+
+  it("renders HP picker for Lv1 of non-primary class (multiclass first level)", () => {
+    render(<ClassLevelPane {...defaults({ row: { level: 1, features: [], choices: [] }, isPrimaryClass: false })} />);
+    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+  });
+
+  it("clicking the HP picker fires onHpRollChange with the right key", () => {
+    const onHpRollChange = vi.fn();
+    render(<ClassLevelPane {...defaults({ row: { level: 5, features: [], choices: [] }, onHpRollChange })} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    expect(onHpRollChange).toHaveBeenCalledWith("paladin-5", { method: "average", value: 6 });
+  });
+});
+
+describe("ClassLevelPane — empty-state polish", () => {
+  it("shows a friendly empty-state when row has no features and no choices", () => {
+    render(
+      <ClassLevelPane
+        classSlug="wizard"
+        className_="Wizard"
+        classIndex={0}
+        isPrimaryClass={true}
+        row={{ level: 3, features: [], choices: [] }}
+        subclasses={[]}
+        styleOptions={[]}
+        localChoices={{} as CharacterChoices}
+        currentSubclass={undefined}
+        classChoices={[]}
+        hitDie={6}
+        hpRule="free_choice"
+        conMod={1}
+        hpRolls={{}}
+        onAsiSelect={vi.fn()}
+        onSubclassSelect={vi.fn()}
+        onFightingStyleSelect={vi.fn()}
+        onChoiceSelect={vi.fn()}
+        onHpRollChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/No new features at this level/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No class data for the selected level/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("LevelRail — disabled mid-flow + LevelUpButton", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelRail>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      subclassName: undefined,
+      currentLevel: 6,
+      perLevel: makePerLevel(),
+      activeLevel: 6,
+      onSelectLevel: vi.fn(),
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onLevelUpClick: vi.fn(),
+      levelUpButtonState: "idle" as const,
+      levelUpButtonReason: undefined,
+      disabled: false,
+      ...overrides,
+    };
+  }
+
+  it("renders a LevelUpButton tile beneath the level pills (idle state)", () => {
+    render(<LevelRail {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Level up Paladin/i })).toBeInTheDocument();
+  });
+
+  it("clicking the idle LevelUpButton fires onLevelUpClick", () => {
+    const onLevelUpClick = vi.fn();
+    render(<LevelRail {...defaults({ onLevelUpClick })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin/i }));
+    expect(onLevelUpClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables level dropdown + Remove button when disabled prop is true", () => {
+    render(<LevelRail {...defaults({ disabled: true })} />);
+    expect(screen.getByLabelText("Set level for Paladin")).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Remove Paladin/i })).toBeDisabled();
+  });
+
+  it("renders LevelUpButton in active-flow state when levelUpButtonState='active-flow'", () => {
+    render(<LevelRail {...defaults({ levelUpButtonState: "active-flow" })} />);
+    expect(screen.getByText(/In progress/i)).toBeInTheDocument();
+  });
+
+  it("renders LevelUpButton in disabled state with the provided reason", () => {
+    render(<LevelRail {...defaults({ levelUpButtonState: "disabled", levelUpButtonReason: "Finish Pal 7 first" })} />);
+    expect(screen.getByText(/Finish Pal 7 first/i)).toBeInTheDocument();
+  });
+});
+
+describe("AddClassRow — disabledReason override", () => {
+  it("renders the provided disabledReason instead of the default reasons list", () => {
+    render(<AddClassRow reasons={["Requires CHA 13 for Bard"]} disabledReason="Finish active level-up first" />);
+    expect(screen.getByText(/Finish active level-up first/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Requires CHA 13 for Bard/i)).not.toBeInTheDocument();
+  });
+
+  it("falls back to reasons list when disabledReason is undefined (locked variant)", () => {
+    render(<AddClassRow reasons={["Requires CHA 13 for Bard"]} />);
+    expect(screen.getByText(/Requires CHA 13 for Bard/i)).toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — level-up flow", () => {
+  function setupForLevelUp(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+    const handlers = {
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onAsiSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onAddClass: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
+    };
+    const allClasses = ["paladin", "wizard", "fighter"].map((slug) =>
+      classEntry(slug, slug.charAt(0).toUpperCase() + slug.slice(1), [
+        { level: 1, features: [] },
+        { level: 2, features: [] },
+        { level: 3, features: [] },
+        { level: 4, features: [] },
+        { level: 5, features: [] },
+        { level: 6, features: [] },
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+    );
+    const props = {
+      classes: allClasses,
+      subclasses: [],
+      features: [
+        { id: "f-aura-imp", slug: "aura-improvement", name: "Aura improvement", content_type: "feature", data: { level: 7, class: "paladin", description: "Your aura range increases." }, effects: [], version: 1, source: "srd" } as ContentEntry,
+      ],
+      selectedClasses: [
+        { slug: "paladin", level: 6 },
+        { slug: "wizard", level: 3 },
+      ],
+      localChoices: {} as CharacterChoices,
+      resolvedStats: {
+        strength: 14, dexterity: 12, constitution: 14,
+        intelligence: 13, wisdom: 10, charisma: 14,
+      },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
+      ...handlers,
+      ...overrides,
+    };
+    const utils = render(<ClassStepRail {...props} />);
+    return { ...utils, ...handlers, props };
+  }
+
+  it("renders a LevelUpButton tile per class section in idle state by default", () => {
+    setupForLevelUp();
+    expect(screen.getByRole("button", { name: /Level up Paladin/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Level up Wizard/i })).toBeInTheDocument();
+  });
+
+  it("clicking idle LevelUpButton opens the LevelUpPane in main pane", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Aura improvement/i })).toBeInTheDocument();
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+
+  it("opening flow disables ALL other rail mutators (hard lock)", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    // Other class's LevelUpButton: disabled with reason
+    const wizardBtn = screen.getByRole("button", { name: /Level up Wizard/i });
+    expect(wizardBtn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getAllByText(/Finish Paladin 7 first/i).length).toBeGreaterThan(0);
+    // All level dropdowns: disabled
+    expect(screen.getByLabelText("Set level for Paladin")).toBeDisabled();
+    expect(screen.getByLabelText("Set level for Wizard")).toBeDisabled();
+    // All Remove buttons: disabled
+    expect(screen.getByRole("button", { name: /Remove Paladin/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Remove Wizard/i })).toBeDisabled();
+  });
+
+  it("AddClassRow shows 'Finish active level-up first' during flow", () => {
+    setupForLevelUp({
+      resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/Finish active level-up first/i)).toBeInTheDocument();
+  });
+
+  it("clicking 'Cancel level-up' returns to ClassLevelPane and re-enables the rail", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Cancel level-up/i }));
+    expect(screen.queryByText(/NEW LEVEL/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Set level for Paladin")).not.toBeDisabled();
+  });
+
+  it("clicking Confirm fires onConfirmLevelUp with the right payload", () => {
+    const { onConfirmLevelUp, onHpRollChange } = setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    // Pick HP first (no choices at Paladin Lv 7 — passive level)
+    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    expect(onHpRollChange).toHaveBeenCalledWith("paladin-7", { method: "average", value: 6 });
+    // Now Confirm should be enabled
+    const confirmBtn = screen.getByRole("button", { name: /Confirm level 7/i });
+    expect(confirmBtn).toBeEnabled();
+    fireEvent.click(confirmBtn);
+    expect(onConfirmLevelUp).toHaveBeenCalledWith({ classIndex: 0, draftLevel: 7 });
+  });
+
+  it("clears the draft when selectedClasses[i].level increments via rerender (parent confirm)", () => {
+    const { rerender, props } = setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+
+    // Simulate parent persisting the new level — selectedClasses[0].level goes 6 -> 7.
+    const newSelectedClasses = [
+      { slug: "paladin", level: 7 },
+      ...props.selectedClasses.slice(1),
+    ];
+    rerender(<ClassStepRail {...props} selectedClasses={newSelectedClasses} />);
+
+    // Draft cleared: NEW LEVEL ribbon is gone.
+    expect(screen.queryByText(/NEW LEVEL/i)).not.toBeInTheDocument();
+    // Rail re-enabled: dropdown no longer disabled.
+    expect(screen.getByLabelText("Set level for Paladin")).not.toBeDisabled();
+  });
+
+  it("opening flow closes the multiclass picker if it was open", () => {
+    setupForLevelUp({
+      resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
+    });
+    // Open picker first
+    fireEvent.click(screen.getByRole("button", { name: /Add a class/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    // Now open level-up flow
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    // Picker should be closed
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+    // Level-up pane should be open
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
   });
 });

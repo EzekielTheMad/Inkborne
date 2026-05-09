@@ -3,6 +3,7 @@
 import { Trash2 } from "lucide-react";
 import { ClassEmblem } from "@/components/builder/class-emblem";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
+import { LevelUpButton } from "@/components/builder/class-step-rail/level-up-button";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 
 interface LevelRailProps {
@@ -15,6 +16,12 @@ interface LevelRailProps {
   onSelectLevel: (level: number) => void;
   onLevelChange: (newLevel: number) => void;
   onRemoveClass?: () => void;
+  /** Disables level dropdown + Remove button (used during a level-up flow on another class). */
+  disabled?: boolean;
+  onLevelUpClick: () => void;
+  levelUpButtonState: "idle" | "disabled" | "active-flow";
+  /** Reason text for the disabled state (ignored for idle/active-flow). */
+  levelUpButtonReason?: string;
 }
 
 function summarizeLevel(row: PerLevel): string {
@@ -39,6 +46,10 @@ export function LevelRail({
   onSelectLevel,
   onLevelChange,
   onRemoveClass,
+  disabled = false,
+  onLevelUpClick,
+  levelUpButtonState,
+  levelUpButtonReason,
 }: LevelRailProps) {
   return (
     <section className="space-y-2">
@@ -56,7 +67,8 @@ export function LevelRail({
             aria-label={`Set level for ${className_}`}
             value={currentLevel}
             onChange={(e) => onLevelChange(parseInt(e.target.value, 10))}
-            className="h-6 rounded-md border border-input bg-background px-1.5 text-xs"
+            disabled={disabled}
+            className="h-6 rounded-md border border-input bg-background px-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {Array.from({ length: 20 }, (_, i) => i + 1).map((lvl) => (
               <option key={lvl} value={lvl}>{lvl}</option>
@@ -72,7 +84,8 @@ export function LevelRail({
               }
             }}
             aria-label={`Remove ${className_}`}
-            className="rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            disabled={disabled}
+            className="rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
             title={`Remove ${className_}`}
           >
             <Trash2 className="size-3.5" aria-hidden="true" />
@@ -92,6 +105,15 @@ export function LevelRail({
           />
         ))}
       </div>
+
+      <LevelUpButton
+        state={levelUpButtonState}
+        classSlug={classSlug}
+        classLabel={className_}
+        atLevel={currentLevel}
+        reason={levelUpButtonReason}
+        onClick={onLevelUpClick}
+      />
     </section>
   );
 }

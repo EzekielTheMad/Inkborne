@@ -18,7 +18,7 @@ export default async function ClassStepPage({ params }: PageProps) {
   console.log("[ClassStepPage] Fetching character:", id);
   const { data: character, error: characterError } = await supabase
     .from("characters")
-    .select("*, game_systems (id, name, slug, schema_definition)")
+    .select("*, game_systems (id, name, slug, schema_definition), campaigns (id, hp_rule)")
     .eq("id", id)
     .single();
 
