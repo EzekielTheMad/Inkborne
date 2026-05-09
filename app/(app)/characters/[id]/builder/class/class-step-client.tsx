@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices, AsiChoice } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
+import { evaluate } from "@/lib/engine/evaluator";
 
 interface ClassStepClientProps {
   characterId: string;
@@ -66,6 +67,12 @@ export function ClassStepClient({
   const allEffects: Effect[] = contentRefs.flatMap(
     (ref) => ref.content_definitions?.effects ?? [],
   );
+
+  const resolvedStats = useMemo(() => {
+    if (!schema) return character.base_stats ?? {};
+    const baseWithLevel = { ...(character.base_stats ?? {}), level: localLevel };
+    return evaluate(baseWithLevel, allEffects, schema).stats;
+  }, [character.base_stats, localLevel, allEffects, schema]);
 
   async function handleSelectClass(
     content: ContentEntry,
@@ -319,12 +326,14 @@ export function ClassStepClient({
             selectedClasses={selectedClasses}
             localChoices={localChoices}
             contentRefs={contentRefs}
+            resolvedStats={resolvedStats}
             onLevelChange={handleLevelChange}
             onRemoveClass={handleRemoveClass}
             onSubclassSelect={handleSubclassSelect}
             onAsiSelect={handleAsiSelect}
             onFightingStyleSelect={handleFightingStyleSelect}
             onChoiceSelect={handleChoiceSelect}
+            onAddClass={(content) => setPreviewContent(content)}
           />
         ) : (
           <ContentBrowser

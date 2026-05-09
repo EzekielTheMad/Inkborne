@@ -264,6 +264,44 @@ describe("AddClassRow", () => {
   });
 });
 
+describe("AddClassRow — unlocked state", () => {
+  it("renders the unlocked label with X levels remaining", () => {
+    render(
+      <AddClassRow
+        unlocked
+        levelsRemaining={17}
+        onClick={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Add a class · 17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("is not aria-disabled in unlocked state", () => {
+    render(<AddClassRow unlocked levelsRemaining={20} onClick={vi.fn()} />);
+    const btn = screen.getByRole("button", { name: /Add a class/i });
+    expect(btn).not.toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("calls onClick when unlocked button is clicked", () => {
+    const onClick = vi.fn();
+    render(<AddClassRow unlocked levelsRemaining={20} onClick={onClick} />);
+    fireEvent.click(screen.getByRole("button", { name: /Add a class/i }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("does NOT call onClick when locked button is clicked", () => {
+    const onClick = vi.fn();
+    render(
+      <AddClassRow
+        reasons={["Requires CHA 13 for Bard"]}
+        onClick={onClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Add a class/i }));
+    expect(onClick).not.toHaveBeenCalled();
+  });
+});
+
 import { ClassLevelPane } from "@/components/builder/class-step-rail/class-level-pane";
 import { LevelRail } from "@/components/builder/class-step-rail/level-rail";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
@@ -517,6 +555,11 @@ describe("ClassStepRail", () => {
       selectedClasses: [{ slug: "paladin", level: 3 }],
       localChoices: {} as CharacterChoices,
       contentRefs: [],
+      resolvedStats: {
+        strength: 10, dexterity: 10, constitution: 10,
+        intelligence: 10, wisdom: 10, charisma: 10,
+      },
+      onAddClass: vi.fn(),
       ...handlers,
       ...overrides,
     };
@@ -594,6 +637,11 @@ function setupRail(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {})
     selectedClasses: [{ slug: "paladin", level: 3 }],
     localChoices: {} as CharacterChoices,
     contentRefs: [],
+    resolvedStats: {
+      strength: 10, dexterity: 10, constitution: 10,
+      intelligence: 10, wisdom: 10, charisma: 10,
+    },
+    onAddClass: vi.fn(),
     ...handlers,
     ...overrides,
   };
@@ -649,5 +697,337 @@ describe("ClassStepRail — Remove Class button", () => {
     setupRail({ onRemoveClass });
     fireEvent.click(screen.getByRole("button", { name: /Remove Paladin/i }));
     expect(onRemoveClass).not.toHaveBeenCalled();
+  });
+});
+
+import { ClassPickerCard } from "@/components/builder/class-step-rail/class-picker-card";
+import type { ClassPrereqResult } from "@/lib/builder/multiclass-prereqs";
+
+function pickerClass(slug: string, name: string, data: Record<string, unknown> = {}): ContentEntry {
+  return {
+    id: `c-${slug}`,
+    slug,
+    name,
+    content_type: "class",
+    data,
+    effects: [],
+    version: 1,
+    source: "srd",
+  };
+}
+
+function prereq(state: ClassPrereqResult["state"], line: string, classSlug = "paladin"): ClassPrereqResult {
+  return { classSlug, state, line };
+}
+
+describe("ClassPickerCard", () => {
+  it("renders emblem letter, class name, and prereq line for met state", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("paladin", "Paladin", { role: "Defender / Striker" })}
+        prereq={prereq("met", "STR 13 · met")}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText(/Defender \/ Striker/i)).toBeInTheDocument();
+    expect(screen.getByText("STR 13 · met")).toBeInTheDocument();
+  });
+
+  it("falls back to a derived role string when classContent.data.role is absent", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("rogue", "Rogue", { hit_die: 8 })}
+        prereq={prereq("met", "DEX 13 · met", "rogue")}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/d8 hit die/i)).toBeInTheDocument();
+  });
+
+  it("is aria-disabled and shows the unmet line for not-met state", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("wizard", "Wizard")}
+        prereq={prereq("not-met", "INT 13 · not met", "wizard")}
+        onSelect={vi.fn()}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Wizard/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("INT 13 · not met")).toBeInTheDocument();
+  });
+
+  it("is aria-disabled and shows 'Already in this build' for already-in-build state", () => {
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("paladin", "Paladin")}
+        prereq={prereq("already-in-build", "Already in this build")}
+        onSelect={vi.fn()}
+      />,
+    );
+    const btn = screen.getByRole("button", { name: /Paladin/i });
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Already in this build")).toBeInTheDocument();
+  });
+
+  it("calls onSelect(classContent) when met card is clicked", () => {
+    const onSelect = vi.fn();
+    const content = pickerClass("paladin", "Paladin");
+    render(
+      <ClassPickerCard
+        classContent={content}
+        prereq={prereq("met", "STR 13 · met")}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).toHaveBeenCalledWith(content);
+  });
+
+  it("does not call onSelect when not-met card is clicked", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("wizard", "Wizard")}
+        prereq={prereq("not-met", "INT 13 · not met", "wizard")}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Wizard/i }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("does not call onSelect when already-in-build card is clicked", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerCard
+        classContent={pickerClass("paladin", "Paladin")}
+        prereq={prereq("already-in-build", "Already in this build")}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+import { ClassPickerPanel } from "@/components/builder/class-step-rail/class-picker-panel";
+
+const TWELVE_CLASSES: ContentEntry[] = [
+  "barbarian", "bard", "cleric", "druid", "fighter", "monk",
+  "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard",
+].map((slug) => pickerClass(slug, slug.charAt(0).toUpperCase() + slug.slice(1)));
+
+describe("ClassPickerPanel", () => {
+  const stats = {
+    strength: 13, dexterity: 13, constitution: 13,
+    intelligence: 13, wisdom: 13, charisma: 13,
+  };
+
+  it("renders one card per class in the input list", () => {
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    for (const slug of ["barbarian", "wizard", "paladin", "fighter"]) {
+      const name = slug.charAt(0).toUpperCase() + slug.slice(1);
+      expect(screen.getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
+    }
+  });
+
+  it("renders the heading and a Cancel button", () => {
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={17}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel/i })).toBeInTheDocument();
+    expect(screen.getByText(/17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("Cancel button calls onCancel", () => {
+    const onCancel = vi.fn();
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("clicking a met card calls onSelect with that class content", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={onSelect}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].slug).toBe("paladin");
+  });
+
+  it("clicking a not-met card does not call onSelect", () => {
+    const onSelect = vi.fn();
+    const lowStats = {
+      strength: 8, dexterity: 8, constitution: 8,
+      intelligence: 8, wisdom: 8, charisma: 8,
+    };
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={lowStats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={onSelect}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("marks already-selected classes as already-in-build", () => {
+    render(
+      <ClassPickerPanel
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[{ slug: "paladin" }]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Already in this build/i)).toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — multiclass picker", () => {
+  function setupForPicker(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+    const handlers = {
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onAsiSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onAddClass: vi.fn(),
+    };
+    const allClasses = [
+      "barbarian", "bard", "cleric", "druid", "fighter", "monk",
+      "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard",
+    ].map((slug) =>
+      classEntry(slug, slug.charAt(0).toUpperCase() + slug.slice(1), [
+        { level: 1, features: [] },
+      ]),
+    );
+    const props = {
+      classes: allClasses,
+      subclasses: [],
+      features: [],
+      selectedClasses: [{ slug: "paladin", level: 3 }],
+      localChoices: {} as CharacterChoices,
+      contentRefs: [],
+      resolvedStats: {
+        strength: 13, dexterity: 12, constitution: 14,
+        intelligence: 8, wisdom: 10, charisma: 13,
+      },
+      ...handlers,
+      ...overrides,
+    };
+    const utils = render(<ClassStepRail {...props} />);
+    return { ...utils, ...handlers, props };
+  }
+
+  it("renders the locked AddClassRow when no class qualifies", () => {
+    setupForPicker({
+      resolvedStats: {
+        strength: 8, dexterity: 8, constitution: 8,
+        intelligence: 8, wisdom: 8, charisma: 8,
+      },
+    });
+    expect(screen.getByText(/Add a class · Locked/i)).toBeInTheDocument();
+  });
+
+  it("renders the unlocked AddClassRow when at least one class qualifies", () => {
+    setupForPicker();
+    expect(screen.getByText(/Add a class · 17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("opens the ClassPickerPanel when the unlocked AddClassRow is clicked", () => {
+    setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+  });
+
+  it("closes the picker when its Cancel button is clicked", () => {
+    setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+  });
+
+  it("calls onAddClass when a met card in the picker is clicked", () => {
+    const { onAddClass } = setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Barbarian/i }));
+    expect(onAddClass).toHaveBeenCalledTimes(1);
+    expect(onAddClass.mock.calls[0][0].slug).toBe("barbarian");
+  });
+
+  it("does not auto-close the picker when onAddClass is invoked (modal will close it via length increment)", () => {
+    setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Barbarian/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+  });
+
+  it("closes the picker when selectedClasses.length increments (simulated Pick)", () => {
+    const { rerender, props } = setupForPicker();
+    fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+
+    rerender(
+      <ClassStepRail
+        {...props}
+        selectedClasses={[
+          { slug: "paladin", level: 3 },
+          { slug: "barbarian", level: 1 },
+        ]}
+      />,
+    );
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+  });
+
+  it("locks AddClassRow when totalLevel reaches 20", () => {
+    setupForPicker({
+      selectedClasses: [{ slug: "paladin", level: 20 }],
+    });
+    expect(screen.getByText(/Add a class · Locked/i)).toBeInTheDocument();
   });
 });

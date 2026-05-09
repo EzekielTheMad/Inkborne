@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LevelRail } from "@/components/builder/class-step-rail/level-rail";
 import { ClassLevelPane } from "@/components/builder/class-step-rail/class-level-pane";
 import { AddClassRow } from "@/components/builder/class-step-rail/add-class-row";
+import { ClassPickerPanel } from "@/components/builder/class-step-rail/class-picker-panel";
 import { Separator } from "@/components/ui/separator";
 import { classFeaturesPerLevel } from "@/lib/builder/class-features-per-level";
+import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, AsiChoice } from "@/lib/types/character";
 
@@ -19,17 +21,20 @@ export interface ClassStepRailProps {
     subclass?: string;
   }>;
   localChoices: CharacterChoices;
-  /** TODO(PR-C): used by the multiclass picker panel to detect duplicate class adds. Currently unused in PR-B. */
   contentRefs: Array<{
     id: string;
     content_definitions?: { slug: string; content_type: string };
   }>;
+  /** Engine-resolved ability scores for the current build. */
+  resolvedStats: Record<string, number>;
   onLevelChange: (classIndex: number, newLevel: number) => Promise<void> | void;
   onRemoveClass: (classIndex: number) => Promise<void> | void;
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => Promise<void> | void;
   onAsiSelect: (featureSlug: string, choice: AsiChoice) => Promise<void> | void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => Promise<void> | void;
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
+  /** Called when a met card in the picker is clicked. Parent opens the existing ClassPreviewModal. */
+  onAddClass: (content: ContentEntry) => void;
 }
 
 interface SelectedKey {
@@ -37,13 +42,15 @@ interface SelectedKey {
   level: number;
 }
 
-const MULTICLASS_PREREQS = [
+const MULTICLASS_PREREQS_LOCKED_REASONS = [
   "Requires CHA 13 for Bard / Sorcerer / Warlock",
   "Requires INT 13 for Wizard",
   "Requires WIS 13 for Cleric / Druid / Ranger",
   "Requires STR 13 for Barbarian / Paladin",
   "Requires DEX 13 for Rogue",
 ];
+
+const MAX_TOTAL_LEVEL = 20;
 
 export function ClassStepRail(props: ClassStepRailProps) {
   const {
@@ -52,12 +59,14 @@ export function ClassStepRail(props: ClassStepRailProps) {
     features,
     selectedClasses,
     localChoices,
+    resolvedStats,
     onLevelChange,
     onRemoveClass,
     onSubclassSelect,
     onAsiSelect,
     onFightingStyleSelect,
     onChoiceSelect,
+    onAddClass,
   } = props;
 
   const initialClassIndex = 0;
@@ -66,6 +75,25 @@ export function ClassStepRail(props: ClassStepRailProps) {
     classIndex: initialClassIndex,
     level: initialLevel,
   });
+  const [showPicker, setShowPicker] = useState(false);
+
+  // Close picker after a successful add (selectedClasses.length increments
+  // via parent's handleSelectClass) and focus the new class's pane.
+  const prevLengthRef = useRef(selectedClasses.length);
+  useEffect(() => {
+    if (selectedClasses.length > prevLengthRef.current) {
+      setShowPicker(false);
+      setSelected({ classIndex: selectedClasses.length - 1, level: 1 });
+    }
+    prevLengthRef.current = selectedClasses.length;
+  }, [selectedClasses.length]);
+
+  const totalLevel = selectedClasses.reduce((sum, c) => sum + c.level, 0);
+  const levelsRemaining = MAX_TOTAL_LEVEL - totalLevel;
+
+  const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes);
+  const anyMet = prereqs.some((p) => p.state === "met");
+  const canAddClass = anyMet && levelsRemaining > 0;
 
   const activeClass = selectedClasses[selected.classIndex];
   const activeClassContent = activeClass ? classes.find((c) => c.slug === activeClass.slug) : undefined;
@@ -91,7 +119,6 @@ export function ClassStepRail(props: ClassStepRailProps) {
       )
     : [];
 
-  // Style options for any class — used by ClassLevelPane when rendering a Fighting Style choice card.
   const styleOptionsForActiveClass = activeClass
     ? features.filter((f) => {
         const data = f.data as Record<string, unknown>;
@@ -125,11 +152,12 @@ export function ClassStepRail(props: ClassStepRailProps) {
               subclassName={subclassContent?.name}
               currentLevel={cls.level}
               perLevel={perLevel.filter((r) => r.level <= cls.level)}
-              activeLevel={selected.classIndex === idx ? selected.level : -1}
-              onSelectLevel={(level) => setSelected({ classIndex: idx, level })}
+              activeLevel={selected.classIndex === idx && !showPicker ? selected.level : -1}
+              onSelectLevel={(level) => {
+                setShowPicker(false);
+                setSelected({ classIndex: idx, level });
+              }}
               onLevelChange={(newLevel) => {
-                // If the active rail is shrinking past the currently selected
-                // level, clamp the selection so the main pane doesn't go blank.
                 if (selected.classIndex === idx && selected.level > newLevel) {
                   setSelected({ classIndex: idx, level: newLevel });
                 }
@@ -140,11 +168,28 @@ export function ClassStepRail(props: ClassStepRailProps) {
           );
         })}
         <Separator />
-        <AddClassRow reasons={MULTICLASS_PREREQS} />
+        {canAddClass ? (
+          <AddClassRow
+            unlocked
+            levelsRemaining={levelsRemaining}
+            onClick={() => setShowPicker(true)}
+          />
+        ) : (
+          <AddClassRow reasons={MULTICLASS_PREREQS_LOCKED_REASONS} />
+        )}
       </aside>
 
       <div className="min-w-0">
-        {activeRow && activeClass && activeClassContent ? (
+        {showPicker ? (
+          <ClassPickerPanel
+            classes={classes}
+            resolvedStats={resolvedStats}
+            selectedClasses={selectedClasses}
+            levelsRemaining={levelsRemaining}
+            onSelect={onAddClass}
+            onCancel={() => setShowPicker(false)}
+          />
+        ) : activeRow && activeClass && activeClassContent ? (
           <ClassLevelPane
             classSlug={activeClass.slug}
             className_={activeClassContent.name}
