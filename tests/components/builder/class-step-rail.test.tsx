@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
+import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, HpRollRecord } from "@/lib/types/character";
 
@@ -1746,5 +1747,69 @@ describe("ClassStepRail — level-up flow", () => {
     expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
     // Level-up pane should be open
     expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+});
+
+describe("CharacterStrip", () => {
+  function classEntry(slug: string, name: string): ContentEntry {
+    return {
+      id: `c-${slug}`,
+      slug,
+      name,
+      content_type: "class",
+      data: {},
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+  }
+
+  function defaults(overrides: Partial<Parameters<typeof CharacterStrip>[0]> = {}) {
+    return {
+      characterName: "Kaelith Vex",
+      totalLevel: 9,
+      maxLevel: 20,
+      classes: [classEntry("paladin", "Paladin"), classEntry("sorcerer", "Sorcerer")],
+      selectedClasses: [
+        { slug: "paladin", level: 6 },
+        { slug: "sorcerer", level: 3 },
+      ],
+      ...overrides,
+    };
+  }
+
+  it("renders avatar with character initials", () => {
+    render(<CharacterStrip {...defaults()} />);
+    expect(screen.getByText("KV")).toBeInTheDocument();
+  });
+
+  it("renders character name and level summary", () => {
+    render(<CharacterStrip {...defaults()} />);
+    expect(screen.getByText("Kaelith Vex")).toBeInTheDocument();
+    expect(screen.getByText(/Lv 9\/20/i)).toBeInTheDocument();
+  });
+
+  it("renders one chip badge per class with class letter and tabular level", () => {
+    const { container } = render(<CharacterStrip {...defaults()} />);
+    expect(container.querySelectorAll('[data-slot="class-emblem"]').length).toBeGreaterThanOrEqual(2);
+    // Level numbers visible
+    expect(container.textContent).toContain("6");
+    expect(container.textContent).toContain("3");
+  });
+
+  it("returns null when selectedClasses.length <= 1", () => {
+    const { container } = render(
+      <CharacterStrip
+        {...defaults({
+          selectedClasses: [{ slug: "paladin", level: 6 }],
+        })}
+      />,
+    );
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("region has aria-label='Character summary'", () => {
+    render(<CharacterStrip {...defaults()} />);
+    expect(screen.getByRole("region", { name: "Character summary" })).toBeInTheDocument();
   });
 });
