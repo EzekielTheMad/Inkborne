@@ -13,6 +13,7 @@ import { LevelUpSheet } from "@/components/builder/class-step-rail/level-up-shee
 import { Separator } from "@/components/ui/separator";
 import { classFeaturesPerLevel } from "@/lib/builder/class-features-per-level";
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
+import { useIsMobile } from "@/lib/builder/use-is-mobile";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
 import type { ChoiceEffect } from "@/lib/types/effects";
@@ -69,26 +70,6 @@ const MULTICLASS_PREREQS_LOCKED_REASONS = [
 
 const MAX_TOTAL_LEVEL = 20;
 
-/**
- * Reads matchMedia synchronously at render time.
- *
- * Returns true only when `window.matchMedia` is available AND the (max-width: 767px)
- * query matches. This is used to select which layout branch to render:
- *
- * - Server / SSR: `window` is undefined → false (desktop-first).
- * - jsdom without matchMedia mock (most existing tests): `window.matchMedia` is
- *   undefined → false → desktop layout rendered → existing `getByRole`/`getByText`
- *   queries find unique elements and pass without modification.
- * - jsdom with mobile matchMedia mock (new mobile integration tests): query
- *   matches → true → mobile layout rendered.
- * - Real browser: reads live matchMedia at first render; CSS (md:hidden/md:grid)
- *   governs visual display independently.
- */
-function isMobileViewport(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia?.("(max-width: 767px)")?.matches ?? false;
-}
-
 export function ClassStepRail(props: ClassStepRailProps) {
   const {
     characterName = "Character",
@@ -112,8 +93,9 @@ export function ClassStepRail(props: ClassStepRailProps) {
     onHpRollChange,
   } = props;
 
-  // Computed once per render. Drives layout branch selection (mobile vs. desktop).
-  const isMobile = isMobileViewport();
+  // Drives layout branch selection (mobile vs. desktop).
+  // SSR-safe: always false on server + first client render; updates post-hydration via useEffect.
+  const isMobile = useIsMobile();
 
   const initialClassIndex = 0;
   const initialLevel = selectedClasses[0]?.level ?? 1;

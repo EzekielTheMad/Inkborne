@@ -32,9 +32,12 @@ describe("useIsMobile", () => {
     expect(result.current).toBe(false);
   });
 
-  it("returns true when viewport is mobile (matchMedia matches=true)", () => {
+  it("returns true when viewport is mobile after useEffect runs", () => {
     mockMql.matches = true;
     const { result } = renderHook(() => useIsMobile());
+    // The hook always returns false on first render (SSR-safe). The useEffect
+    // fires synchronously inside renderHook (v16), reads matchMedia, and
+    // updates state — so result.current is true by the time we assert.
     expect(result.current).toBe(true);
   });
 
