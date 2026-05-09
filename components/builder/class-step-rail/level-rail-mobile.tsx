@@ -46,7 +46,7 @@ export function LevelRailMobile(props: LevelRailMobileProps) {
   const [setLevelOpen, setSetLevelOpen] = useState(false);
 
   const handleRemove = () => {
-    if (!window.confirm(`Remove ${className_} from this character?`)) return;
+    if (!window.confirm(`Remove ${className_} from this character? This will also remove any subclass and choices made for it.`)) return;
     void onRemoveClass();
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -24,6 +24,11 @@ interface LevelRailSetLevelSheetProps {
 export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
   const { open, onOpenChange, classSlug, className_, classIndex, currentLevel, maxLevel, onLevelChange } = props;
   const [draftLevel, setDraftLevel] = useState<number>(currentLevel);
+
+  useEffect(() => {
+    if (open) setDraftLevel(currentLevel);
+  }, [open, currentLevel]);
+
   const labelId = `set-level-${classSlug}-label`;
 
   const handleConfirm = () => {
