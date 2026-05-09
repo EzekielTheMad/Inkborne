@@ -2315,3 +2315,102 @@ describe("LevelUpSheet", () => {
     expect(screen.queryByText(/NEW LEVEL/i)).not.toBeInTheDocument();
   });
 });
+
+describe("ClassStepRail — mobile pattern (sub-md)", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(max-width: 767px)",
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  function setupForLevelUp(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+    const handlers = {
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onAsiSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onAddClass: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
+    };
+    const allClasses = ["paladin", "wizard", "fighter"].map((slug) =>
+      classEntry(slug, slug.charAt(0).toUpperCase() + slug.slice(1), [
+        { level: 1, features: [] },
+        { level: 2, features: [] },
+        { level: 3, features: [] },
+        { level: 4, features: [] },
+        { level: 5, features: [] },
+        { level: 6, features: [] },
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+    );
+    const props = {
+      classes: allClasses,
+      subclasses: [],
+      features: [
+        { id: "f-aura-imp", slug: "aura-improvement", name: "Aura improvement", content_type: "feature", data: { level: 7, class: "paladin", description: "Your aura range increases." }, effects: [], version: 1, source: "srd" } as ContentEntry,
+      ],
+      selectedClasses: [
+        { slug: "paladin", level: 6 },
+        { slug: "wizard", level: 3 },
+      ],
+      localChoices: {} as CharacterChoices,
+      resolvedStats: {
+        strength: 14, dexterity: 12, constitution: 14,
+        intelligence: 13, wisdom: 10, charisma: 14,
+      },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
+      ...handlers,
+      ...overrides,
+    };
+    const utils = render(<ClassStepRail {...props} />);
+    return { ...utils, ...handlers, props };
+  }
+
+  it("renders <LevelRailMobile> elements per class section (mobile rail-mobile-specific affordances visible)", () => {
+    setupForLevelUp();
+    // <LevelRailMobile> renders a kebab "more options" button per class — desktop <LevelRail> doesn't.
+    // Both desktop and mobile rails are mounted (CSS-hidden); the mobile one's kebab is what we check.
+    const kebabs = screen.getAllByRole("button", { name: /more options/i });
+    expect(kebabs.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders <CharacterStrip> when multiclass (selectedClasses.length > 1)", () => {
+    setupForLevelUp(); // setupForLevelUp uses Paladin Lv 6 + Wizard Lv 3
+    expect(screen.getByRole("region", { name: "Character summary" })).toBeInTheDocument();
+  });
+
+  it("does NOT render <CharacterStrip> when single-class", () => {
+    setupForLevelUp({
+      selectedClasses: [{ slug: "paladin", level: 6 }],
+    });
+    expect(screen.queryByRole("region", { name: "Character summary" })).not.toBeInTheDocument();
+  });
+
+  it("clicking a <LevelUpButton> opens the LevelUpSheet (mobile) — NEW LEVEL ribbon visible", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+
+  it("AddClassRow is rendered (used in both modes)", () => {
+    setupForLevelUp({
+      resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
+    });
+    expect(screen.getAllByText(/Add a class/i).length).toBeGreaterThanOrEqual(1);
+  });
+});
