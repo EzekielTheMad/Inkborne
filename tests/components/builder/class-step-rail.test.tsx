@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
+import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
+import { LevelRailSetLevelSheet } from "@/components/builder/class-step-rail/level-rail-set-level-sheet";
+import { ClassPickerSheet } from "@/components/builder/class-step-rail/class-picker-sheet";
+import { LevelUpSheet } from "@/components/builder/class-step-rail/level-up-sheet";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, HpRollRecord } from "@/lib/types/character";
 
@@ -1746,5 +1750,668 @@ describe("ClassStepRail — level-up flow", () => {
     expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
     // Level-up pane should be open
     expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+});
+
+describe("CharacterStrip", () => {
+  function classEntry(slug: string, name: string): ContentEntry {
+    return {
+      id: `c-${slug}`,
+      slug,
+      name,
+      content_type: "class",
+      data: {},
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+  }
+
+  function defaults(overrides: Partial<Parameters<typeof CharacterStrip>[0]> = {}) {
+    return {
+      characterName: "Kaelith Vex",
+      totalLevel: 9,
+      maxLevel: 20,
+      classes: [classEntry("paladin", "Paladin"), classEntry("sorcerer", "Sorcerer")],
+      selectedClasses: [
+        { slug: "paladin", level: 6 },
+        { slug: "sorcerer", level: 3 },
+      ],
+      ...overrides,
+    };
+  }
+
+  it("renders avatar with character initials", () => {
+    render(<CharacterStrip {...defaults()} />);
+    expect(screen.getByText("KV")).toBeInTheDocument();
+  });
+
+  it("renders character name and level summary", () => {
+    render(<CharacterStrip {...defaults()} />);
+    expect(screen.getByText("Kaelith Vex")).toBeInTheDocument();
+    expect(screen.getByText(/Lv 9\/20/i)).toBeInTheDocument();
+  });
+
+  it("renders one chip badge per class with class letter and tabular level", () => {
+    const { container } = render(<CharacterStrip {...defaults()} />);
+    expect(container.querySelectorAll('[data-slot="class-emblem"]').length).toBeGreaterThanOrEqual(2);
+    // Level numbers visible
+    expect(container.textContent).toContain("6");
+    expect(container.textContent).toContain("3");
+  });
+
+  it("returns null when selectedClasses.length <= 1", () => {
+    const { container } = render(
+      <CharacterStrip
+        {...defaults({
+          selectedClasses: [{ slug: "paladin", level: 6 }],
+        })}
+      />,
+    );
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("region has aria-label='Character summary'", () => {
+    render(<CharacterStrip {...defaults()} />);
+    expect(screen.getByRole("region", { name: "Character summary" })).toBeInTheDocument();
+  });
+});
+
+describe("LevelRailSetLevelSheet", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelRailSetLevelSheet>[0]> = {}) {
+    return {
+      open: true,
+      onOpenChange: vi.fn(),
+      classSlug: "paladin",
+      className_: "Paladin",
+      classIndex: 0,
+      currentLevel: 6,
+      maxLevel: 20,
+      onLevelChange: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders sheet with title 'Set level for {Class}'", () => {
+    render(<LevelRailSetLevelSheet {...defaults()} />);
+    expect(screen.getByRole("heading", { name: /Set level for Paladin/i })).toBeInTheDocument();
+  });
+
+  it("renders a level select with options 1..maxLevel", () => {
+    render(<LevelRailSetLevelSheet {...defaults({ maxLevel: 5 })} />);
+    const select = screen.getByLabelText("Set level for Paladin");
+    const options = select.querySelectorAll("option");
+    expect(options.length).toBe(5);
+    expect(options[0]).toHaveValue("1");
+    expect(options[4]).toHaveValue("5");
+  });
+
+  it("default-selects the currentLevel", () => {
+    render(<LevelRailSetLevelSheet {...defaults({ currentLevel: 3 })} />);
+    const select = screen.getByLabelText("Set level for Paladin") as HTMLSelectElement;
+    expect(select.value).toBe("3");
+  });
+
+  it("Confirm button fires onLevelChange with classIndex and new level", () => {
+    const onLevelChange = vi.fn();
+    const onOpenChange = vi.fn();
+    render(<LevelRailSetLevelSheet {...defaults({ onLevelChange, onOpenChange, classIndex: 1 })} />);
+    const select = screen.getByLabelText("Set level for Paladin");
+    fireEvent.change(select, { target: { value: "8" } });
+    fireEvent.click(screen.getByRole("button", { name: /Confirm/i }));
+    expect(onLevelChange).toHaveBeenCalledWith(1, 8);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("Cancel button closes without firing onLevelChange", () => {
+    const onLevelChange = vi.fn();
+    const onOpenChange = vi.fn();
+    render(<LevelRailSetLevelSheet {...defaults({ onLevelChange, onOpenChange })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onLevelChange).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe("ClassPickerPanel — chrome prop", () => {
+  const stats = {
+    strength: 13, dexterity: 13, constitution: 13,
+    intelligence: 13, wisdom: 13, charisma: 13,
+  };
+  const oneClass: ContentEntry[] = [pickerClass("paladin", "Paladin")];
+
+  it("default chrome renders the heading and description", () => {
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    expect(screen.getByText(/levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' hides the heading and description", () => {
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        chrome="embedded"
+      />,
+    );
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/levels remaining/i)).not.toBeInTheDocument();
+  });
+
+  it("chrome='embedded' still renders the cards", () => {
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        chrome="embedded"
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Paladin/i })).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' still renders the Cancel button", () => {
+    const onCancel = vi.fn();
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={onCancel}
+        chrome="embedded"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+});
+
+describe("LevelUpPane — chrome + renderFooter props", () => {
+  function classEntryWithHitDie(slug: string, name: string, hitDie: number, levels: Array<{ level: number; features: string[] }>): ContentEntry {
+    return {
+      id: `c-${slug}`,
+      slug,
+      name,
+      content_type: "class",
+      data: { hit_die: hitDie, levels },
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+  }
+
+  function passiveLevelRow(level: number, featureSlug: string, featureName: string): PerLevel {
+    return {
+      level,
+      features: [
+        {
+          id: `f-${featureSlug}`,
+          slug: featureSlug,
+          name: featureName,
+          content_type: "feature",
+          data: { level, class: "paladin", description: "Your aura range increases." },
+          effects: [],
+          version: 1,
+          source: "srd",
+        },
+      ],
+      choices: [],
+    };
+  }
+
+  function defaults(overrides: Partial<Parameters<typeof LevelUpPane>[0]> = {}) {
+    return {
+      classContent: classEntryWithHitDie("paladin", "Paladin", 10, [
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+      classIndex: 0,
+      isPrimaryClass: true,
+      draftLevel: 7,
+      totalLevelAfterConfirm: 10,
+      perLevelRow: passiveLevelRow(7, "aura-improvement", "Aura improvement"),
+      subclasses: [] as ContentEntry[],
+      styleOptions: [] as ContentEntry[],
+      localChoices: {} as CharacterChoices,
+      currentSubclass: undefined as string | undefined,
+      classChoices: [] as Array<import("@/lib/types/effects").ChoiceEffect>,
+      hpRule: "free_choice" as const,
+      conMod: 2,
+      hpRolls: { "paladin-7": { method: "average" as const, value: 6 } },
+      onAsiSelect: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onHpRollChange: vi.fn(),
+      onCancel: vi.fn(),
+      onConfirm: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("default chrome renders the action bar inline at the bottom", () => {
+    render(<LevelUpPane {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' without renderFooter still renders inline (graceful default)", () => {
+    render(<LevelUpPane {...defaults({ chrome: "embedded" })} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' with renderFooter routes the action bar through it", () => {
+    const renderFooter = vi.fn((children: React.ReactNode) => (
+      <div data-testid="custom-footer">{children}</div>
+    ));
+    render(<LevelUpPane {...defaults({ chrome: "embedded", renderFooter })} />);
+    expect(renderFooter).toHaveBeenCalled();
+    const customFooter = screen.getByTestId("custom-footer");
+    expect(customFooter).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("breadcrumb and heading still render in chrome='embedded' mode", () => {
+    render(<LevelUpPane {...defaults({ chrome: "embedded" })} />);
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText("Level 7")).toBeInTheDocument();
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+});
+
+describe("ClassPickerSheet", () => {
+  const stats = {
+    strength: 13, dexterity: 13, constitution: 13,
+    intelligence: 13, wisdom: 13, charisma: 13,
+  };
+
+  it("renders Drawer with title 'Add a class' when open", () => {
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={17}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Add a class/i)).toBeInTheDocument();
+    expect(screen.getByText(/17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("renders the picker cards inside the sheet", () => {
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    for (const slug of ["paladin", "fighter"]) {
+      const name = slug.charAt(0).toUpperCase() + slug.slice(1);
+      expect(screen.getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
+    }
+  });
+
+  it("calls onSelect when a card is tapped", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={onSelect}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].slug).toBe("paladin");
+  });
+
+  it("Cancel button fires onCancel", () => {
+    const onCancel = vi.fn();
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("does not render content when open=false", () => {
+    render(
+      <ClassPickerSheet
+        open={false}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/Add a class/i)).not.toBeInTheDocument();
+  });
+});
+
+import { LevelRailMobile } from "@/components/builder/class-step-rail/level-rail-mobile";
+
+describe("LevelRailMobile", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelRailMobile>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      subclassName: undefined as string | undefined,
+      currentLevel: 6,
+      perLevel: makePerLevel(),
+      activeLevel: 6,
+      onSelectLevel: vi.fn(),
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onLevelUpClick: vi.fn(),
+      levelUpButtonState: "idle" as const,
+      levelUpButtonReason: undefined as string | undefined,
+      disabled: false,
+      ...overrides,
+    };
+  }
+
+  it("renders the class header strip with name + current level", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText(/Lv 6/i)).toBeInTheDocument();
+  });
+
+  it("renders subclass name when present", () => {
+    render(<LevelRailMobile {...defaults({ subclassName: "Oath of Devotion" })} />);
+    expect(screen.getByText(/Oath of Devotion/i)).toBeInTheDocument();
+  });
+
+  it("renders 'Set level' button that opens the LevelRailSetLevelSheet", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    const btn = screen.getByRole("button", { name: /Set level/i });
+    expect(btn).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(screen.getByText(/Set level for Paladin/i)).toBeInTheDocument();
+  });
+
+  it("renders the kebab menu trigger", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    const kebab = screen.getByRole("button", { name: /more options/i });
+    expect(kebab).toBeInTheDocument();
+  });
+
+  it("kebab menu has a 'Remove [Class]' item that fires onRemoveClass", () => {
+    const onRemoveClass = vi.fn();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<LevelRailMobile {...defaults({ onRemoveClass })} />);
+    fireEvent.click(screen.getByRole("button", { name: /more options/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Remove Paladin/i }));
+    expect(onRemoveClass).toHaveBeenCalled();
+  });
+
+  it("renders one LevelPill per perLevel row in the horizontal scroll rail", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    // makePerLevel from earlier PR-B tests returns 3 rows. Pills are buttons with name like "level X".
+    const pills = screen.getAllByRole("button", { name: /level \d+/i });
+    expect(pills.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("renders a trailing LevelUpButton in the rail", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Level up Paladin/i })).toBeInTheDocument();
+  });
+
+  it("disabled=true makes Set level + kebab disabled, and LevelUpButton aria-disabled", () => {
+    render(<LevelRailMobile {...defaults({ disabled: true })} />);
+    expect(screen.getByRole("button", { name: /Set level/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /more options/i })).toBeDisabled();
+    const levelUpBtn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(levelUpBtn).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("clicking a pill calls onSelectLevel with that level", () => {
+    const onSelectLevel = vi.fn();
+    render(<LevelRailMobile {...defaults({ onSelectLevel })} />);
+    const lv1 = screen.getByRole("button", { name: /level 1/i });
+    fireEvent.click(lv1);
+    expect(onSelectLevel).toHaveBeenCalledWith(1);
+  });
+
+  it("clicking idle level-up button calls onLevelUpClick", () => {
+    const onLevelUpClick = vi.fn();
+    render(<LevelRailMobile {...defaults({ onLevelUpClick })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin/i }));
+    expect(onLevelUpClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("LevelUpSheet", () => {
+  function classEntryWithHitDie(slug: string, name: string, hitDie: number, levels: Array<{ level: number; features: string[] }>): ContentEntry {
+    return {
+      id: `c-${slug}`,
+      slug,
+      name,
+      content_type: "class",
+      data: { hit_die: hitDie, levels },
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+  }
+
+  function passiveLevelRow(level: number, featureSlug: string, featureName: string): PerLevel {
+    return {
+      level,
+      features: [
+        {
+          id: `f-${featureSlug}`,
+          slug: featureSlug,
+          name: featureName,
+          content_type: "feature",
+          data: { level, class: "paladin", description: "Your aura range increases." },
+          effects: [],
+          version: 1,
+          source: "srd",
+        },
+      ],
+      choices: [],
+    };
+  }
+
+  function defaults(overrides: Partial<Parameters<typeof LevelUpSheet>[0]> = {}) {
+    return {
+      open: true,
+      onOpenChange: vi.fn(),
+      classContent: classEntryWithHitDie("paladin", "Paladin", 10, [
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+      classIndex: 0,
+      isPrimaryClass: true,
+      draftLevel: 7,
+      totalLevelAfterConfirm: 10,
+      perLevelRow: passiveLevelRow(7, "aura-improvement", "Aura improvement"),
+      subclasses: [] as ContentEntry[],
+      styleOptions: [] as ContentEntry[],
+      localChoices: {} as CharacterChoices,
+      currentSubclass: undefined as string | undefined,
+      classChoices: [] as Array<import("@/lib/types/effects").ChoiceEffect>,
+      hpRule: "free_choice" as const,
+      conMod: 2,
+      hpRolls: { "paladin-7": { method: "average" as const, value: 6 } },
+      onAsiSelect: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onHpRollChange: vi.fn(),
+      onCancel: vi.fn(),
+      onConfirm: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders Drawer with breadcrumb + NEW LEVEL ribbon when open", () => {
+    render(<LevelUpSheet {...defaults()} />);
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText("Level 7")).toBeInTheDocument();
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+
+  it("renders the action bar (Cancel + Confirm) inside the sheet", () => {
+    render(<LevelUpSheet {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("Cancel fires onCancel", () => {
+    const onCancel = vi.fn();
+    render(<LevelUpSheet {...defaults({ onCancel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel level-up/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("does not render content when open=false", () => {
+    render(<LevelUpSheet {...defaults({ open: false })} />);
+    expect(screen.queryByText(/NEW LEVEL/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — mobile pattern (sub-md)", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(max-width: 767px)",
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  function setupForLevelUp(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+    const handlers = {
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onAsiSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onAddClass: vi.fn(),
+      onConfirmLevelUp: vi.fn(),
+      onCancelLevelUp: vi.fn(),
+      onHpRollChange: vi.fn(),
+    };
+    const allClasses = ["paladin", "wizard", "fighter"].map((slug) =>
+      classEntry(slug, slug.charAt(0).toUpperCase() + slug.slice(1), [
+        { level: 1, features: [] },
+        { level: 2, features: [] },
+        { level: 3, features: [] },
+        { level: 4, features: [] },
+        { level: 5, features: [] },
+        { level: 6, features: [] },
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+    );
+    const props = {
+      classes: allClasses,
+      subclasses: [],
+      features: [
+        { id: "f-aura-imp", slug: "aura-improvement", name: "Aura improvement", content_type: "feature", data: { level: 7, class: "paladin", description: "Your aura range increases." }, effects: [], version: 1, source: "srd" } as ContentEntry,
+      ],
+      selectedClasses: [
+        { slug: "paladin", level: 6 },
+        { slug: "wizard", level: 3 },
+      ],
+      localChoices: {} as CharacterChoices,
+      resolvedStats: {
+        strength: 14, dexterity: 12, constitution: 14,
+        intelligence: 13, wisdom: 10, charisma: 14,
+      },
+      hpRule: "free_choice" as const,
+      hpRolls: {} as Record<string, import("@/lib/types/character").HpRollRecord>,
+      ...handlers,
+      ...overrides,
+    };
+    const utils = render(<ClassStepRail {...props} />);
+    return { ...utils, ...handlers, props };
+  }
+
+  it("renders <LevelRailMobile> elements per class section (mobile rail-mobile-specific affordances visible)", () => {
+    setupForLevelUp();
+    // <LevelRailMobile> renders a kebab "more options" button per class — desktop <LevelRail> doesn't.
+    // The component early-returns the mobile branch when isMobile is true,
+    // so only mobile rails are mounted. The mobile rail's kebab is what we check.
+    const kebabs = screen.getAllByRole("button", { name: /more options/i });
+    expect(kebabs.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders <CharacterStrip> when multiclass (selectedClasses.length > 1)", () => {
+    setupForLevelUp(); // setupForLevelUp uses Paladin Lv 6 + Wizard Lv 3
+    expect(screen.getByRole("region", { name: "Character summary" })).toBeInTheDocument();
+  });
+
+  it("does NOT render <CharacterStrip> when single-class", () => {
+    setupForLevelUp({
+      selectedClasses: [{ slug: "paladin", level: 6 }],
+    });
+    expect(screen.queryByRole("region", { name: "Character summary" })).not.toBeInTheDocument();
+  });
+
+  it("clicking a <LevelUpButton> opens the LevelUpSheet (mobile) — NEW LEVEL ribbon visible", () => {
+    setupForLevelUp();
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+
+  it("AddClassRow is rendered (used in both modes)", () => {
+    setupForLevelUp({
+      resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
+    });
+    expect(screen.getAllByText(/Add a class/i).length).toBeGreaterThanOrEqual(1);
   });
 });

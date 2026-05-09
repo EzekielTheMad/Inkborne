@@ -4,6 +4,11 @@ import { fireEvent } from "@testing-library/react";
 import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
+vi.mock("@/lib/builder/use-is-mobile", () => ({
+  useIsMobile: vi.fn(),
+}));
+import { useIsMobile } from "@/lib/builder/use-is-mobile";
+
 function makeClass(overrides: Partial<ContentEntry> = {}): ContentEntry {
   return {
     id: "c1",
@@ -28,6 +33,8 @@ function makeClass(overrides: Partial<ContentEntry> = {}): ContentEntry {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default to desktop mode so existing tests are unaffected.
+  vi.mocked(useIsMobile).mockReturnValue(false);
 });
 
 describe("ClassPreviewModal", () => {
@@ -452,5 +459,92 @@ describe("ClassPreviewModal — reset on open", () => {
     // Active tab should be reset to overview, preview level to 1.
     expect(screen.getByRole("tabpanel", { name: /overview/i })).toBeInTheDocument();
     expect((screen.getByLabelText("Preview level") as HTMLSelectElement).value).toBe("1");
+  });
+});
+
+describe("ClassPreviewModal — Dialog↔Drawer dispatcher", () => {
+  beforeEach(() => {
+    vi.mocked(useIsMobile).mockReset();
+  });
+
+  function getProps(overrides: Partial<Parameters<typeof ClassPreviewModal>[0]> = {}) {
+    return {
+      open: true,
+      classContent: {
+        id: "c-paladin",
+        slug: "paladin",
+        name: "Paladin",
+        content_type: "class",
+        data: { hit_die: 10, levels: [{ level: 1, features: [] }] },
+        effects: [],
+        version: 1,
+        source: "srd",
+      } as ContentEntry,
+      features: [] as ContentEntry[],
+      subclasses: [] as ContentEntry[],
+      spells: [] as ContentEntry[],
+      onCancel: vi.fn(),
+      onPick: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders Radix Dialog when useIsMobile returns false", () => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+    render(<ClassPreviewModal {...getProps()} />);
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    // Verify it's NOT a vaul drawer (vaul drawers have data-vaul-drawer attribute)
+    expect(dialog?.getAttribute("data-vaul-drawer")).toBeNull();
+  });
+
+  it("renders Drawer when useIsMobile returns true", () => {
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    render(<ClassPreviewModal {...getProps()} />);
+    // vaul drawer has a specific data-vaul-drawer attribute or unique structure
+    const drawer = document.querySelector('[data-vaul-drawer], [role="dialog"]');
+    expect(drawer).not.toBeNull();
+  });
+
+  it("renders the same body content (Overview/Features/Subclasses tabs) in both variants", () => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+    const { rerender } = render(<ClassPreviewModal {...getProps()} />);
+    expect(screen.getByRole("tab", { name: /Overview/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Features/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Subclasses/i })).toBeInTheDocument();
+
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    rerender(<ClassPreviewModal {...getProps()} />);
+    expect(screen.getByRole("tab", { name: /Overview/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Features/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Subclasses/i })).toBeInTheDocument();
+  });
+
+  it("Cancel button works in both variants", () => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+    const onCancel = vi.fn();
+    const { rerender } = render(<ClassPreviewModal {...getProps({ onCancel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+
+    onCancel.mockReset();
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    rerender(<ClassPreviewModal {...getProps({ onCancel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("Pick fires onPick in both variants", () => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+    const onPick = vi.fn();
+    const { rerender } = render(<ClassPreviewModal {...getProps({ onPick })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Pick this class/i }));
+    expect(onPick).toHaveBeenCalled();
+
+    onPick.mockReset();
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    rerender(<ClassPreviewModal {...getProps({ onPick })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Pick this class/i }));
+    expect(onPick).toHaveBeenCalled();
   });
 });

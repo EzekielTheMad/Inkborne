@@ -14,6 +14,7 @@ import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/char
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
+import type { ReactNode } from "react";
 
 interface LevelUpPaneProps {
   classContent: ContentEntry;
@@ -37,6 +38,8 @@ interface LevelUpPaneProps {
   onHpRollChange: (key: string, record: HpRollRecord) => void;
   onCancel: () => void;
   onConfirm: () => void;
+  chrome?: "default" | "embedded";
+  renderFooter?: (footer: ReactNode) => ReactNode;
 }
 
 function getFeatureDescription(features: ContentEntry[]): string | null {
@@ -54,6 +57,8 @@ export function LevelUpPane(props: LevelUpPaneProps) {
     hpRule, conMod, hpRolls,
     onAsiSelect, onSubclassSelect, onFightingStyleSelect, onChoiceSelect, onHpRollChange,
     onCancel, onConfirm,
+    chrome = "default",
+    renderFooter,
   } = props;
 
   const hitDie = (classContent.data as Record<string, unknown>).hit_die as number | undefined ?? 8;
@@ -188,15 +193,23 @@ export function LevelUpPane(props: LevelUpPaneProps) {
         onChange={(record) => onHpRollChange(hpKey, record)}
       />
 
-      <LevelUpActionBar
-        classLabel={classContent.name}
-        draftLevel={draftLevel}
-        totalLevelAfterConfirm={totalLevelAfterConfirm}
-        canConfirm={canConfirm}
-        missingReason={missingReason}
-        onCancel={onCancel}
-        onConfirm={onConfirm}
-      />
+      {(() => {
+        const actionBar = (
+          <LevelUpActionBar
+            classLabel={classContent.name}
+            draftLevel={draftLevel}
+            totalLevelAfterConfirm={totalLevelAfterConfirm}
+            canConfirm={canConfirm}
+            missingReason={missingReason}
+            onCancel={onCancel}
+            onConfirm={onConfirm}
+          />
+        );
+        if (chrome === "embedded" && renderFooter) {
+          return renderFooter(actionBar);
+        }
+        return actionBar;
+      })()}
     </section>
   );
 }

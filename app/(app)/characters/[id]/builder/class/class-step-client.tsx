@@ -356,7 +356,7 @@ export function ClassStepClient({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         <h2 className="text-xl font-semibold">Class</h2>
 
         {hasClass ? (
