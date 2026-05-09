@@ -5,9 +5,11 @@ import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import { ChoiceCardASI } from "@/components/builder/class-step-rail/choice-card-asi";
 import { ChoiceCardSubclass } from "@/components/builder/class-step-rail/choice-card-subclass";
 import { ChoiceCardFightingStyle } from "@/components/builder/class-step-rail/choice-card-fighting-style";
+import { ChoiceCardGeneric } from "@/components/builder/class-step-rail/choice-card-generic";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 import type { CharacterChoices, AsiChoice } from "@/lib/types/character";
+import type { ChoiceEffect } from "@/lib/types/effects";
 
 interface ClassLevelPaneProps {
   classSlug: string;
@@ -18,9 +20,11 @@ interface ClassLevelPaneProps {
   styleOptions: ContentEntry[];
   localChoices: CharacterChoices;
   currentSubclass: string | undefined;
+  classChoices: ChoiceEffect[];
   onAsiSelect: (featureSlug: string, choice: AsiChoice) => void;
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => void;
+  onChoiceSelect: (choiceId: string, selections: string[]) => void;
 }
 
 function paneTitle(row: PerLevel): string {
@@ -38,9 +42,11 @@ export function ClassLevelPane({
   styleOptions,
   localChoices,
   currentSubclass,
+  classChoices,
   onAsiSelect,
   onSubclassSelect,
   onFightingStyleSelect,
+  onChoiceSelect,
 }: ClassLevelPaneProps) {
   const title = paneTitle(row);
 
@@ -62,6 +68,15 @@ export function ClassLevelPane({
           What this level grants
         </h3>
         <div className="space-y-2">
+          {row.level === 1 &&
+            classChoices.map((choice) => (
+              <ChoiceCardGeneric
+                key={choice.choice_id}
+                choiceEffect={choice}
+                currentSelections={localChoices.resolved_choices?.[choice.choice_id] ?? []}
+                onSelect={(selections) => onChoiceSelect(choice.choice_id, selections)}
+              />
+            ))}
           {row.features.map((feature) => (
             <FeatureCard key={feature.id} feature={feature} />
           ))}

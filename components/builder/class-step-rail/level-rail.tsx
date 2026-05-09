@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { ClassEmblem } from "@/components/builder/class-emblem";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
@@ -13,6 +14,7 @@ interface LevelRailProps {
   activeLevel: number;
   onSelectLevel: (level: number) => void;
   onLevelChange: (newLevel: number) => void;
+  onRemoveClass?: () => void;
 }
 
 function summarizeLevel(row: PerLevel): string {
@@ -36,6 +38,7 @@ export function LevelRail({
   activeLevel,
   onSelectLevel,
   onLevelChange,
+  onRemoveClass,
 }: LevelRailProps) {
   return (
     <section className="space-y-2">
@@ -60,6 +63,21 @@ export function LevelRail({
             ))}
           </select>
         </label>
+        {onRemoveClass && (
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm(`Remove ${className_} from this character? This will also remove any subclass and choices made for it.`)) {
+                onRemoveClass();
+              }
+            }}
+            aria-label={`Remove ${className_}`}
+            className="rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            title={`Remove ${className_}`}
+          >
+            <Trash2 className="size-3.5" aria-hidden="true" />
+          </button>
+        )}
       </header>
 
       <div className="flex flex-col gap-1">

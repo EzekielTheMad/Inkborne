@@ -380,6 +380,8 @@ const noopHandlers = {
   onAsiSelect: vi.fn(),
   onSubclassSelect: vi.fn(),
   onFightingStyleSelect: vi.fn(),
+  onChoiceSelect: vi.fn(),
+  classChoices: [],
 };
 
 describe("ClassLevelPane", () => {
@@ -473,6 +475,7 @@ describe("ClassLevelPane", () => {
   });
 });
 
+import { ChoiceCardGeneric } from "@/components/builder/class-step-rail/choice-card-generic";
 import { ClassStepRail } from "@/components/builder/class-step-rail";
 
 function classEntry(slug: string, name: string, levels: Array<{ level: number; features: string[] }>): ContentEntry {
@@ -563,5 +566,88 @@ describe("ClassStepRail", () => {
     });
     expect(screen.getByText("Barbarian")).toBeInTheDocument();
     expect(screen.getByText("Fighter")).toBeInTheDocument();
+  });
+});
+
+function setupRail(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+  const handlers = {
+    onLevelChange: vi.fn(),
+    onRemoveClass: vi.fn(),
+    onSubclassSelect: vi.fn(),
+    onAsiSelect: vi.fn(),
+    onFightingStyleSelect: vi.fn(),
+    onChoiceSelect: vi.fn(),
+  };
+  const props = {
+    classes: [
+      classEntry("paladin", "Paladin", [
+        { level: 1, features: ["divine-sense"] },
+        { level: 2, features: [] },
+        { level: 3, features: ["sacred-oath"] },
+      ]),
+    ],
+    subclasses: [],
+    features: [
+      { id: "f1", slug: "divine-sense", name: "Divine Sense", content_type: "feature", data: { level: 1, class: "paladin" }, effects: [], version: 1, source: "srd" } as ContentEntry,
+      { id: "f2", slug: "sacred-oath", name: "Sacred Oath", content_type: "feature", data: { level: 3, class: "paladin", feature_type: "subclass" }, effects: [], version: 1, source: "srd" } as ContentEntry,
+    ],
+    selectedClasses: [{ slug: "paladin", level: 3 }],
+    localChoices: {} as CharacterChoices,
+    contentRefs: [],
+    ...handlers,
+    ...overrides,
+  };
+  const utils = render(<ClassStepRail {...props} />);
+  return { ...utils, ...handlers, props };
+}
+
+describe("ChoiceCardGeneric", () => {
+  it("shows 'Choose' when no selections, 'Chosen' when at max", () => {
+    const choiceEffect = {
+      type: "choice" as const,
+      choice_id: "wizard-skills",
+      grant_type: "skill",
+      choose: 2,
+      from: ["arcana", "history", "investigation"],
+    };
+    const { rerender } = render(
+      <ChoiceCardGeneric
+        choiceEffect={choiceEffect}
+        currentSelections={[]}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Choose")).toBeInTheDocument();
+    rerender(
+      <ChoiceCardGeneric
+        choiceEffect={choiceEffect}
+        currentSelections={["arcana", "history"]}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Chosen")).toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — Remove Class button", () => {
+  it("renders a Remove button per class", () => {
+    setupRail();
+    expect(screen.getByRole("button", { name: /Remove Paladin/i })).toBeInTheDocument();
+  });
+
+  it("calls onRemoveClass with the class index when confirmed", () => {
+    const onRemoveClass = vi.fn();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    setupRail({ onRemoveClass });
+    fireEvent.click(screen.getByRole("button", { name: /Remove Paladin/i }));
+    expect(onRemoveClass).toHaveBeenCalledWith(0);
+  });
+
+  it("does not call onRemoveClass when the confirm is cancelled", () => {
+    const onRemoveClass = vi.fn();
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    setupRail({ onRemoveClass });
+    fireEvent.click(screen.getByRole("button", { name: /Remove Paladin/i }));
+    expect(onRemoveClass).not.toHaveBeenCalled();
   });
 });
