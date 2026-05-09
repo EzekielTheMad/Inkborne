@@ -4,6 +4,7 @@ import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
 import { LevelRailSetLevelSheet } from "@/components/builder/class-step-rail/level-rail-set-level-sheet";
+import { ClassPickerSheet } from "@/components/builder/class-step-rail/class-picker-sheet";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, HpRollRecord } from "@/lib/types/character";
 
@@ -2033,5 +2034,101 @@ describe("LevelUpPane — chrome + renderFooter props", () => {
     expect(screen.getByText("Paladin")).toBeInTheDocument();
     expect(screen.getByText("Level 7")).toBeInTheDocument();
     expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+});
+
+describe("ClassPickerSheet", () => {
+  const stats = {
+    strength: 13, dexterity: 13, constitution: 13,
+    intelligence: 13, wisdom: 13, charisma: 13,
+  };
+
+  it("renders Drawer with title 'Add a class' when open", () => {
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={17}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Add a class/i)).toBeInTheDocument();
+    expect(screen.getByText(/17 levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("renders the picker cards inside the sheet", () => {
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    for (const slug of ["paladin", "fighter"]) {
+      const name = slug.charAt(0).toUpperCase() + slug.slice(1);
+      expect(screen.getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
+    }
+  });
+
+  it("calls onSelect when a card is tapped", () => {
+    const onSelect = vi.fn();
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={onSelect}
+        onCancel={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].slug).toBe("paladin");
+  });
+
+  it("Cancel button fires onCancel", () => {
+    const onCancel = vi.fn();
+    render(
+      <ClassPickerSheet
+        open={true}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("does not render content when open=false", () => {
+    render(
+      <ClassPickerSheet
+        open={false}
+        onOpenChange={vi.fn()}
+        classes={TWELVE_CLASSES}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/Add a class/i)).not.toBeInTheDocument();
   });
 });
