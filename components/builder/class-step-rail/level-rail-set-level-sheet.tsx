@@ -42,9 +42,6 @@ export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
           <DrawerTitle id={labelId}>Set level for {className_}</DrawerTitle>
         </DrawerHeader>
         <div className="px-4 pb-2">
-          <label htmlFor={`${labelId}-select`} className="sr-only">
-            Set level for {className_}
-          </label>
           <select
             id={`${labelId}-select`}
             aria-label={`Set level for ${className_}`}

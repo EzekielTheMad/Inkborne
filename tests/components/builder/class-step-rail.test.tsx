@@ -2134,6 +2134,98 @@ describe("ClassPickerSheet", () => {
   });
 });
 
+import { LevelRailMobile } from "@/components/builder/class-step-rail/level-rail-mobile";
+
+describe("LevelRailMobile", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelRailMobile>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      subclassName: undefined as string | undefined,
+      currentLevel: 6,
+      perLevel: makePerLevel(),
+      activeLevel: 6,
+      onSelectLevel: vi.fn(),
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onLevelUpClick: vi.fn(),
+      levelUpButtonState: "idle" as const,
+      levelUpButtonReason: undefined as string | undefined,
+      disabled: false,
+      ...overrides,
+    };
+  }
+
+  it("renders the class header strip with name + current level", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText(/Lv 6/i)).toBeInTheDocument();
+  });
+
+  it("renders subclass name when present", () => {
+    render(<LevelRailMobile {...defaults({ subclassName: "Oath of Devotion" })} />);
+    expect(screen.getByText(/Oath of Devotion/i)).toBeInTheDocument();
+  });
+
+  it("renders 'Set level' button that opens the LevelRailSetLevelSheet", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    const btn = screen.getByRole("button", { name: /Set level/i });
+    expect(btn).toBeInTheDocument();
+    fireEvent.click(btn);
+    expect(screen.getByText(/Set level for Paladin/i)).toBeInTheDocument();
+  });
+
+  it("renders the kebab menu trigger", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    const kebab = screen.getByRole("button", { name: /more options/i });
+    expect(kebab).toBeInTheDocument();
+  });
+
+  it("kebab menu has a 'Remove [Class]' item that fires onRemoveClass", () => {
+    const onRemoveClass = vi.fn();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<LevelRailMobile {...defaults({ onRemoveClass })} />);
+    fireEvent.click(screen.getByRole("button", { name: /more options/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Remove Paladin/i }));
+    expect(onRemoveClass).toHaveBeenCalled();
+  });
+
+  it("renders one LevelPill per perLevel row in the horizontal scroll rail", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    // makePerLevel from earlier PR-B tests returns 3 rows. Pills are buttons with name like "level X".
+    const pills = screen.getAllByRole("button", { name: /level \d+/i });
+    expect(pills.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("renders a trailing LevelUpButton in the rail", () => {
+    render(<LevelRailMobile {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Level up Paladin/i })).toBeInTheDocument();
+  });
+
+  it("disabled=true makes Set level + kebab disabled, and LevelUpButton aria-disabled", () => {
+    render(<LevelRailMobile {...defaults({ disabled: true })} />);
+    expect(screen.getByRole("button", { name: /Set level/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /more options/i })).toBeDisabled();
+    const levelUpBtn = screen.getByRole("button", { name: /Level up Paladin/i });
+    expect(levelUpBtn).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("clicking a pill calls onSelectLevel with that level", () => {
+    const onSelectLevel = vi.fn();
+    render(<LevelRailMobile {...defaults({ onSelectLevel })} />);
+    const lv1 = screen.getByRole("button", { name: /level 1/i });
+    fireEvent.click(lv1);
+    expect(onSelectLevel).toHaveBeenCalledWith(1);
+  });
+
+  it("clicking idle level-up button calls onLevelUpClick", () => {
+    const onLevelUpClick = vi.fn();
+    render(<LevelRailMobile {...defaults({ onLevelUpClick })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Level up Paladin/i }));
+    expect(onLevelUpClick).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("LevelUpSheet", () => {
   function classEntryWithHitDie(slug: string, name: string, hitDie: number, levels: Array<{ level: number; features: string[] }>): ContentEntry {
     return {
