@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
+import { LevelRailSetLevelSheet } from "@/components/builder/class-step-rail/level-rail-set-level-sheet";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, HpRollRecord } from "@/lib/types/character";
 
@@ -1811,5 +1812,61 @@ describe("CharacterStrip", () => {
   it("region has aria-label='Character summary'", () => {
     render(<CharacterStrip {...defaults()} />);
     expect(screen.getByRole("region", { name: "Character summary" })).toBeInTheDocument();
+  });
+});
+
+describe("LevelRailSetLevelSheet", () => {
+  function defaults(overrides: Partial<Parameters<typeof LevelRailSetLevelSheet>[0]> = {}) {
+    return {
+      open: true,
+      onOpenChange: vi.fn(),
+      classSlug: "paladin",
+      className_: "Paladin",
+      classIndex: 0,
+      currentLevel: 6,
+      maxLevel: 20,
+      onLevelChange: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("renders sheet with title 'Set level for {Class}'", () => {
+    render(<LevelRailSetLevelSheet {...defaults()} />);
+    expect(screen.getByRole("heading", { name: /Set level for Paladin/i })).toBeInTheDocument();
+  });
+
+  it("renders a level select with options 1..maxLevel", () => {
+    render(<LevelRailSetLevelSheet {...defaults({ maxLevel: 5 })} />);
+    const select = screen.getByLabelText("Set level for Paladin");
+    const options = select.querySelectorAll("option");
+    expect(options.length).toBe(5);
+    expect(options[0]).toHaveValue("1");
+    expect(options[4]).toHaveValue("5");
+  });
+
+  it("default-selects the currentLevel", () => {
+    render(<LevelRailSetLevelSheet {...defaults({ currentLevel: 3 })} />);
+    const select = screen.getByLabelText("Set level for Paladin") as HTMLSelectElement;
+    expect(select.value).toBe("3");
+  });
+
+  it("Confirm button fires onLevelChange with classIndex and new level", () => {
+    const onLevelChange = vi.fn();
+    const onOpenChange = vi.fn();
+    render(<LevelRailSetLevelSheet {...defaults({ onLevelChange, onOpenChange, classIndex: 1 })} />);
+    const select = screen.getByLabelText("Set level for Paladin");
+    fireEvent.change(select, { target: { value: "8" } });
+    fireEvent.click(screen.getByRole("button", { name: /Confirm/i }));
+    expect(onLevelChange).toHaveBeenCalledWith(1, 8);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("Cancel button closes without firing onLevelChange", () => {
+    const onLevelChange = vi.fn();
+    const onOpenChange = vi.fn();
+    render(<LevelRailSetLevelSheet {...defaults({ onLevelChange, onOpenChange })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onLevelChange).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
