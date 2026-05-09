@@ -1870,3 +1870,74 @@ describe("LevelRailSetLevelSheet", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
+
+describe("ClassPickerPanel — chrome prop", () => {
+  const stats = {
+    strength: 13, dexterity: 13, constitution: 13,
+    intelligence: 13, wisdom: 13, charisma: 13,
+  };
+  const oneClass: ContentEntry[] = [pickerClass("paladin", "Paladin")];
+
+  it("default chrome renders the heading and description", () => {
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
+    expect(screen.getByText(/levels remaining/i)).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' hides the heading and description", () => {
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        chrome="embedded"
+      />,
+    );
+    expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/levels remaining/i)).not.toBeInTheDocument();
+  });
+
+  it("chrome='embedded' still renders the cards", () => {
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={vi.fn()}
+        chrome="embedded"
+      />,
+    );
+    expect(screen.getByRole("button", { name: /Paladin/i })).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' still renders the Cancel button", () => {
+    const onCancel = vi.fn();
+    render(
+      <ClassPickerPanel
+        classes={oneClass}
+        resolvedStats={stats}
+        selectedClasses={[]}
+        levelsRemaining={20}
+        onSelect={vi.fn()}
+        onCancel={onCancel}
+        chrome="embedded"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Cancel/i }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+});

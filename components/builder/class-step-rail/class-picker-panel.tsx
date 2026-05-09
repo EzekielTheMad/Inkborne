@@ -12,6 +12,7 @@ interface ClassPickerPanelProps {
   levelsRemaining: number;
   onSelect: (content: ContentEntry) => void;
   onCancel: () => void;
+  chrome?: "default" | "embedded";
 }
 
 export function ClassPickerPanel({
@@ -21,27 +22,37 @@ export function ClassPickerPanel({
   levelsRemaining,
   onSelect,
   onCancel,
+  chrome = "default",
 }: ClassPickerPanelProps) {
   const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes);
 
   return (
     <section
-      aria-labelledby="class-picker-heading"
+      aria-labelledby={chrome === "default" ? "class-picker-heading" : undefined}
       className="space-y-4"
     >
-      <header className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h2 id="class-picker-heading" className="text-xl font-semibold">
-            Add a class
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {levelsRemaining} levels remaining · pick a class with met prerequisites
-          </p>
+      {chrome === "default" && (
+        <header className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2 id="class-picker-heading" className="text-xl font-semibold">
+              Add a class
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {levelsRemaining} levels remaining · pick a class with met prerequisites
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={onCancel} autoFocus>
+            Cancel
+          </Button>
+        </header>
+      )}
+      {chrome === "embedded" && (
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={onCancel} autoFocus>
+            Cancel
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={onCancel} autoFocus>
-          Cancel
-        </Button>
-      </header>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {classes.map((c, i) => (
