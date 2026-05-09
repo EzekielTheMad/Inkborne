@@ -1941,3 +1941,97 @@ describe("ClassPickerPanel — chrome prop", () => {
     expect(onCancel).toHaveBeenCalled();
   });
 });
+
+describe("LevelUpPane — chrome + renderFooter props", () => {
+  function classEntryWithHitDie(slug: string, name: string, hitDie: number, levels: Array<{ level: number; features: string[] }>): ContentEntry {
+    return {
+      id: `c-${slug}`,
+      slug,
+      name,
+      content_type: "class",
+      data: { hit_die: hitDie, levels },
+      effects: [],
+      version: 1,
+      source: "srd",
+    };
+  }
+
+  function passiveLevelRow(level: number, featureSlug: string, featureName: string): PerLevel {
+    return {
+      level,
+      features: [
+        {
+          id: `f-${featureSlug}`,
+          slug: featureSlug,
+          name: featureName,
+          content_type: "feature",
+          data: { level, class: "paladin", description: "Your aura range increases." },
+          effects: [],
+          version: 1,
+          source: "srd",
+        },
+      ],
+      choices: [],
+    };
+  }
+
+  function defaults(overrides: Partial<Parameters<typeof LevelUpPane>[0]> = {}) {
+    return {
+      classContent: classEntryWithHitDie("paladin", "Paladin", 10, [
+        { level: 7, features: ["aura-improvement"] },
+      ]),
+      classIndex: 0,
+      isPrimaryClass: true,
+      draftLevel: 7,
+      totalLevelAfterConfirm: 10,
+      perLevelRow: passiveLevelRow(7, "aura-improvement", "Aura improvement"),
+      subclasses: [] as ContentEntry[],
+      styleOptions: [] as ContentEntry[],
+      localChoices: {} as CharacterChoices,
+      currentSubclass: undefined as string | undefined,
+      classChoices: [] as Array<import("@/lib/types/effects").ChoiceEffect>,
+      hpRule: "free_choice" as const,
+      conMod: 2,
+      hpRolls: { "paladin-7": { method: "average" as const, value: 6 } },
+      onAsiSelect: vi.fn(),
+      onSubclassSelect: vi.fn(),
+      onFightingStyleSelect: vi.fn(),
+      onChoiceSelect: vi.fn(),
+      onHpRollChange: vi.fn(),
+      onCancel: vi.fn(),
+      onConfirm: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("default chrome renders the action bar inline at the bottom", () => {
+    render(<LevelUpPane {...defaults()} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' without renderFooter still renders inline (graceful default)", () => {
+    render(<LevelUpPane {...defaults({ chrome: "embedded" })} />);
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("chrome='embedded' with renderFooter routes the action bar through it", () => {
+    const renderFooter = vi.fn((children: React.ReactNode) => (
+      <div data-testid="custom-footer">{children}</div>
+    ));
+    render(<LevelUpPane {...defaults({ chrome: "embedded", renderFooter })} />);
+    expect(renderFooter).toHaveBeenCalled();
+    const customFooter = screen.getByTestId("custom-footer");
+    expect(customFooter).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel level-up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeInTheDocument();
+  });
+
+  it("breadcrumb and heading still render in chrome='embedded' mode", () => {
+    render(<LevelUpPane {...defaults({ chrome: "embedded" })} />);
+    expect(screen.getByText("Paladin")).toBeInTheDocument();
+    expect(screen.getByText("Level 7")).toBeInTheDocument();
+    expect(screen.getByText(/NEW LEVEL/i)).toBeInTheDocument();
+  });
+});
