@@ -18,6 +18,7 @@ interface ClassStepClientProps {
   characterId: string;
   character: {
     id: string;
+    name: string;
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
@@ -361,6 +362,7 @@ export function ClassStepClient({
 
         {hasClass ? (
           <ClassStepRail
+            characterName={character.name}
             classes={classes}
             subclasses={subclasses}
             features={features}
