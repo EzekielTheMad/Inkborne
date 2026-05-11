@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { CharacterWithSystem } from "@/lib/types/character";
 import { PortraitAvatar } from "@/components/narrative/portrait-avatar";
+import { useCharacter } from "@/lib/character/character-context";
+import { ColorPickerPopover } from "@/components/character/color-picker-popover";
+import { updateCharacterColor } from "@/lib/supabase/character-client";
 
 interface CharacterHeaderProps {
   character: CharacterWithSystem;
@@ -15,6 +18,11 @@ interface CharacterHeaderProps {
   portraitUrl?: string;
   portraitCrop?: { x: number; y: number; width: number; height: number } | null;
 }
+
+const HEADER_GRADIENT_STYLE = {
+  background:
+    "linear-gradient(135deg, var(--character-color) 0%, color-mix(in oklab, var(--character-color) 55%, var(--background)) 100%)",
+};
 
 function getClassDisplay(character: CharacterWithSystem): string {
   const classes = character.choices?.classes;
@@ -49,21 +57,72 @@ export function CharacterHeader({
 }: CharacterHeaderProps) {
   const classDisplay = getClassDisplay(character);
   const raceDisplay = getRaceDisplay(character);
+  const { primaryColor, setPrimaryColor, isOwner } = useCharacter();
+
+  const handleColorChange = async (color: string | null) => {
+    const prev = primaryColor;
+    setPrimaryColor(color); // optimistic
+    try {
+      await updateCharacterColor(character.id, color);
+    } catch (err) {
+      setPrimaryColor(prev); // revert
+      console.error("Failed to save character color:", err);
+    }
+  };
+
+  const avatarSize = mobile ? "sm" : "sm";
+  const avatarEl = (
+    <PortraitAvatar
+      portraitUrl={portraitUrl ?? character.narrative?.portrait_url}
+      cropArea={
+        portraitCrop ??
+        (character.narrative?.portrait_crop as
+          | { x: number; y: number; width: number; height: number }
+          | undefined)
+      }
+      characterName={character.name}
+      size={avatarSize}
+    />
+  );
+
+  const avatarTrigger = isOwner ? (
+    <ColorPickerPopover currentColor={primaryColor} onChange={handleColorChange}>
+      <button
+        type="button"
+        className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        aria-label="Change character color"
+      >
+        {avatarEl}
+      </button>
+    </ColorPickerPopover>
+  ) : (
+    avatarEl
+  );
 
   if (mobile) {
     return (
-      <header className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card">
+      <header
+        className="flex items-center gap-2 px-4 py-2 border-b border-border"
+        style={HEADER_GRADIENT_STYLE}
+      >
         <Link href={`/characters/${character.id}`}>
-          <Button variant="ghost" size="icon-sm" aria-label="Back to character">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Back to character"
+            className="text-white hover:bg-white/15 hover:text-white"
+          >
             <ArrowLeftIcon />
           </Button>
         </Link>
 
+        {avatarTrigger}
+
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-accent truncate">
+          <p className="text-sm font-semibold text-white truncate">
             {character.name}
           </p>
-          <p className="text-xs text-muted-foreground truncate">{classDisplay}</p>
+          <p className="text-xs text-white/85 truncate">{classDisplay}</p>
         </div>
 
         <Button
@@ -71,13 +130,21 @@ export function CharacterHeader({
           size="icon-sm"
           aria-label={inspiration ? "Inspiration active" : "Inspiration inactive"}
           onClick={onToggleInspiration}
-          className={cn(inspiration && "text-accent")}
+          className={cn(
+            "hover:bg-white/15",
+            inspiration ? "text-yellow-300 hover:text-yellow-300" : "text-white/70 hover:text-white",
+          )}
         >
           <StarIcon className={cn("size-4", inspiration && "fill-current")} />
         </Button>
 
         <Link href={`/characters/${character.id}/builder`}>
-          <Button variant="ghost" size="icon-sm" aria-label="Edit character">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Edit character"
+            className="text-white hover:bg-white/15 hover:text-white"
+          >
             <PencilIcon />
           </Button>
         </Link>
@@ -86,24 +153,22 @@ export function CharacterHeader({
   }
 
   return (
-    <header className="flex items-center gap-4 px-6 py-4 border-b border-border bg-card">
-      {/* Portrait avatar */}
-      <PortraitAvatar
-        portraitUrl={portraitUrl ?? character.narrative?.portrait_url}
-        cropArea={portraitCrop ?? character.narrative?.portrait_crop as { x: number; y: number; width: number; height: number } | undefined}
-        characterName={character.name}
-        size="sm"
-      />
+    <header
+      className="flex items-center gap-4 px-6 py-4 border-b border-border"
+      style={HEADER_GRADIENT_STYLE}
+    >
+      {/* Portrait avatar — owners get the color-picker trigger */}
+      {avatarTrigger}
 
       {/* Identity */}
       <div className="flex-1 min-w-0">
-        <h1 className="text-2xl font-bold text-accent leading-tight">
+        <h1 className="text-2xl font-bold text-white leading-tight">
           {character.name}
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-white/85">
           {[raceDisplay, classDisplay].filter(Boolean).join(" · ")}
           {character.game_systems?.name && (
-            <span className="ml-2 text-xs">
+            <span className="ml-2 text-xs text-white/70">
               — {character.game_systems.name}
             </span>
           )}
@@ -117,7 +182,10 @@ export function CharacterHeader({
           size="icon"
           aria-label={inspiration ? "Remove inspiration" : "Grant inspiration"}
           onClick={onToggleInspiration}
-          className={cn(inspiration && "text-accent")}
+          className={cn(
+            "hover:bg-white/15",
+            inspiration ? "text-yellow-300 hover:text-yellow-300" : "text-white/70 hover:text-white",
+          )}
           title="Inspiration"
         >
           <StarIcon
@@ -126,14 +194,22 @@ export function CharacterHeader({
         </Button>
 
         <Link href={`/characters/${character.id}/builder`}>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          >
             <PencilIcon />
             Edit
           </Button>
         </Link>
 
         <Link href="/characters">
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/15 hover:text-white"
+          >
             <ArrowLeftIcon />
             Characters
           </Button>

@@ -510,6 +510,8 @@ export function useCharacter() {
     hasSheet: ctx.hasSheet,
     evalResult: ctx.evalResult,
     maxHp: ctx.maxHp,
+    primaryColor: ctx.primaryColor,
+    setPrimaryColor: ctx.setPrimaryColor,
   };
 }
 
