@@ -70,7 +70,6 @@ export function CharacterHeader({
     }
   };
 
-  const avatarSize = mobile ? "sm" : "sm";
   const avatarEl = (
     <PortraitAvatar
       portraitUrl={portraitUrl ?? character.narrative?.portrait_url}
@@ -81,7 +80,7 @@ export function CharacterHeader({
           | undefined)
       }
       characterName={character.name}
-      size={avatarSize}
+      size="sm"
     />
   );
 
