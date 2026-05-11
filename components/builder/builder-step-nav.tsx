@@ -29,7 +29,7 @@ export function BuilderStepNav({
         className={cn(
           "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
           pathname === `/characters/${characterId}/builder`
-            ? "bg-primary text-primary-foreground"
+            ? "bg-character-bg text-character-fg border border-character-border"
             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
         )}
       >
@@ -46,7 +46,7 @@ export function BuilderStepNav({
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
               isActive
-                ? "bg-primary text-primary-foreground"
+                ? "bg-character-bg text-character-fg border border-character-border"
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >
@@ -54,7 +54,7 @@ export function BuilderStepNav({
               className={cn(
                 "inline-block w-2 h-2 rounded-full",
                 status === "complete" && "bg-green-500",
-                status === "in_progress" && "bg-blue-500",
+                status === "in_progress" && "bg-character-fg",
                 status === "untouched" && "bg-muted-foreground/30",
               )}
             />
