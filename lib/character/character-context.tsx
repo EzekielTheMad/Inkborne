@@ -143,6 +143,10 @@ interface CharacterContextValue {
   updateSpell: (id: string, updates: SpellUpdate) => Promise<void>;
   removeSpell: (id: string) => Promise<void>;
   setConcentration: (spell: Omit<ConcentrationState, "started_at"> | null) => Promise<void>;
+
+  // Primary color (sheet header theming)
+  primaryColor: string | null;
+  setPrimaryColor: (color: string | null) => void;
 }
 
 const CharacterContext = createContext<CharacterContextValue | null>(null);
@@ -166,6 +170,8 @@ export interface CharacterProviderProps {
   isDm: boolean;
   hasSheet: boolean;
   maxHp: number;
+  primaryColor: string | null;
+  onPrimaryColorChange: (color: string | null) => void;
   children: ReactNode;
 }
 
@@ -184,6 +190,8 @@ export function CharacterProvider({
   isDm,
   hasSheet,
   maxHp,
+  primaryColor,
+  onPrimaryColorChange,
   children,
 }: CharacterProviderProps) {
   const [state, setState] = useState<CharacterState>(initialState);
@@ -466,6 +474,8 @@ export function CharacterProvider({
     updateSpell,
     removeSpell,
     setConcentration,
+    primaryColor,
+    setPrimaryColor: onPrimaryColorChange,
   };
 
   return (
