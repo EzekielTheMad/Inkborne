@@ -27,6 +27,7 @@ export function ColorPickerPopover({
   children,
 }: ColorPickerPopoverProps) {
   const [hexInput, setHexInput] = useState(currentColor ?? "");
+  const [nativeColorDraft, setNativeColorDraft] = useState<string | null>(null);
 
   // Keep the input synced when the parent's color changes externally.
   useEffect(() => {
@@ -35,15 +36,11 @@ export function ColorPickerPopover({
 
   const isHexValid = hexInput === "" || HEX_RE.test(hexInput);
 
-  const commit = (color: string | null) => {
-    onChange(color);
-  };
-
   const commitHex = () => {
     if (hexInput === "") return;
     if (!isHexValid) return;
     const normalized = hexInput.startsWith("#") ? hexInput : `#${hexInput}`;
-    commit(normalized.toLowerCase());
+    onChange(normalized.toLowerCase());
   };
 
   return (
@@ -62,7 +59,7 @@ export function ColorPickerPopover({
                   key={p.hex}
                   type="button"
                   aria-label={`Set character color to ${p.name}`}
-                  onClick={() => commit(p.hex)}
+                  onClick={() => onChange(p.hex)}
                   className={cn(
                     "h-[18px] w-[18px] rounded-full border border-border transition-shadow",
                     isSelected && "ring-1 ring-white/70 ring-offset-1 ring-offset-popover",
@@ -101,15 +98,21 @@ export function ColorPickerPopover({
             >
               <input
                 type="color"
-                value={currentColor ?? "#c9a44a"}
-                onChange={(e) => commit(e.target.value)}
+                value={nativeColorDraft ?? currentColor ?? "#c9a44a"}
+                onChange={(e) => setNativeColorDraft(e.target.value)}
+                onBlur={() => {
+                  if (nativeColorDraft) {
+                    onChange(nativeColorDraft.toLowerCase());
+                    setNativeColorDraft(null);
+                  }
+                }}
                 className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
             </label>
             <button
               type="button"
               aria-label="Reset character color to default"
-              onClick={() => commit(null)}
+              onClick={() => onChange(null)}
               className="ml-auto text-xs text-muted-foreground hover:text-foreground"
             >
               Reset
