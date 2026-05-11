@@ -30,7 +30,7 @@ export function LevelUpActionBar(props: LevelUpActionBarProps) {
         onClick={onConfirm}
         disabled={!canConfirm}
         aria-describedby={canConfirm ? undefined : reasonId}
-        className="ml-auto"
+        className="ml-auto bg-character-fg text-background hover:opacity-90"
       >
         Confirm level {draftLevel}
       </Button>

@@ -2415,3 +2415,70 @@ describe("ClassStepRail — mobile pattern (sub-md)", () => {
     expect(screen.getAllByText(/Add a class/i).length).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe("character color carry-through", () => {
+  it("active level pill uses character color tokens", () => {
+    render(
+      <LevelRail
+        classSlug="paladin"
+        className_={"Paladin"}
+        subclassName={undefined}
+        currentLevel={4}
+        perLevel={makePerLevel()}
+        activeLevel={3}
+        onSelectLevel={vi.fn()}
+        onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
+      />,
+    );
+    const activePill = screen.getByRole("button", { name: /level 3/i });
+    const cls = activePill.className;
+    expect(cls).toMatch(/bg-character-bg/);
+    expect(cls).toMatch(/border-character-border/);
+    expect(cls).toMatch(/text-character-fg/);
+  });
+
+  it("idle level-up button uses character color fill", () => {
+    render(
+      <LevelRail
+        classSlug="paladin"
+        className_={"Paladin"}
+        subclassName={undefined}
+        currentLevel={4}
+        perLevel={makePerLevel()}
+        activeLevel={1}
+        onSelectLevel={vi.fn()}
+        onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
+      />,
+    );
+    const levelUpBtn = screen.getByRole("button", { name: /Level up Paladin/i });
+    const cls = levelUpBtn.className;
+    expect(cls).toMatch(/bg-character-fg/);
+    expect(cls).toMatch(/text-background/);
+  });
+
+  it("inactive pills do not have character color classes", () => {
+    render(
+      <LevelRail
+        classSlug="paladin"
+        className_={"Paladin"}
+        subclassName={undefined}
+        currentLevel={4}
+        perLevel={makePerLevel()}
+        activeLevel={3}
+        onSelectLevel={vi.fn()}
+        onLevelChange={vi.fn()}
+        onLevelUpClick={vi.fn()}
+        levelUpButtonState="idle"
+      />,
+    );
+    const inactivePill = screen.getByRole("button", { name: /level 1/i });
+    const cls = inactivePill.className;
+    expect(cls).not.toMatch(/bg-character-bg/);
+    expect(cls).not.toMatch(/border-character-border/);
+    expect(cls).not.toMatch(/text-character-fg/);
+  });
+});
