@@ -143,7 +143,7 @@ export function EquipmentStepClient({
               <Card
                 key={bundleId}
                 className={`cursor-pointer transition-colors ${
-                  isSelected ? "border-primary bg-accent/50" : "hover:bg-accent/30"
+                  isSelected ? "border-character-border bg-character-bg" : "hover:bg-accent/30"
                 }`}
                 onClick={() => handleSelectBundle(bundleId)}
               >
@@ -191,6 +191,7 @@ export function EquipmentStepClient({
           Previous: Background
         </Button>
         <Button
+          className="bg-character-fg text-background hover:opacity-90"
           onClick={() => router.push(`/characters/${characterId}`)}
         >
           Finish &amp; View Character

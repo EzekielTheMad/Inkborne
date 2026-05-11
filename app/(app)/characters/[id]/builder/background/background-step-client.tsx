@@ -403,6 +403,7 @@ export function BackgroundStepClient({
             Previous: Abilities
           </Button>
           <Button
+            className="bg-character-fg text-background hover:opacity-90"
             onClick={() =>
               router.push(`/characters/${characterId}/builder/equipment`)
             }

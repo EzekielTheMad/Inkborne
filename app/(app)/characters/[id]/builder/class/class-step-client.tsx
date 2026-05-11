@@ -416,6 +416,7 @@ export function ClassStepClient({
             Previous: Race
           </Button>
           <Button
+            className="bg-character-fg text-background hover:opacity-90"
             onClick={() =>
               router.push(`/characters/${characterId}/builder/abilities`)
             }

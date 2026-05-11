@@ -288,7 +288,10 @@ export function ContentPreview({
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button onClick={() => onConfirm(content)}>
+          <Button
+            className="bg-character-fg text-background hover:opacity-90"
+            onClick={() => onConfirm(content)}
+          >
             Add {contentTypeLabel}
           </Button>
         </DialogFooter>
