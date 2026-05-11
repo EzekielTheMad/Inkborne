@@ -132,7 +132,7 @@ export function ActionsTab({
             onClick={() => setActiveFilter(filter.id)}
             className={`px-3 py-1 text-xs rounded-full border transition-colors ${
               activeFilter === filter.id
-                ? "bg-primary text-primary-foreground border-primary"
+                ? "bg-character-bg text-character-fg border-character-border"
                 : "bg-muted text-muted-foreground border-border hover:text-foreground"
             }`}
           >

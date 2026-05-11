@@ -182,7 +182,7 @@ function ItemRow({
           onClick={() => onUpdate({ equipped: !item.equipped })}
           className={`size-4 rounded border shrink-0 flex items-center justify-center text-[10px] ${
             item.equipped
-              ? "bg-primary border-primary text-primary-foreground"
+              ? "bg-character-fg border-character-fg text-background"
               : "border-muted-foreground/50 hover:border-primary"
           }`}
           title={item.equipped ? "Unequip" : "Equip"}
@@ -241,7 +241,7 @@ function ItemRow({
           }}
           className={`px-2 py-0.5 rounded text-[10px] font-medium ${
             item.attuned
-              ? "bg-primary text-primary-foreground"
+              ? "bg-character-fg text-background"
               : attunedCount >= 3
                 ? "bg-muted text-muted-foreground cursor-not-allowed"
                 : "bg-muted text-muted-foreground hover:text-foreground"

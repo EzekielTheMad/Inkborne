@@ -46,7 +46,7 @@ export function EquipmentState({
             type="button"
             onClick={() => onShieldChange(!shieldEquipped)}
             className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-              shieldEquipped ? "bg-primary" : "bg-muted"
+              shieldEquipped ? "bg-character-fg" : "bg-muted"
             }`}
           >
             <span

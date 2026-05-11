@@ -216,7 +216,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
                 className={cn(
                   "text-xs px-2 py-1 rounded-full border capitalize",
                   selectedClass === c.slug
-                    ? "bg-primary text-primary-foreground border-primary"
+                    ? "bg-character-bg text-character-fg border-character-border"
                     : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50",
                 )}
               >
@@ -252,7 +252,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
               className={cn(
                 "text-xs px-2 py-1 rounded-full border",
                 selectedLevel === p.level
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-character-bg text-character-fg border-character-border"
                   : disabled
                     ? "bg-muted/20 text-muted-foreground/40 border-border/40 cursor-not-allowed line-through"
                     : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50",

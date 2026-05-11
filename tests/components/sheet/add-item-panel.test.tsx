@@ -59,8 +59,8 @@ describe("AddItemPanel", () => {
     );
     const armorPill = screen.getByRole("button", { name: /armor/i });
     fireEvent.click(armorPill);
-    // The pill's class should reflect selected state (presence of bg-primary class)
-    expect(armorPill.className).toContain("bg-primary");
+    // The pill's class should reflect selected state (character color tone applied).
+    expect(armorPill.className).toContain("bg-character-bg");
   });
 
   it("clicking custom item button shows the form", () => {
