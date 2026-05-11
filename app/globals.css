@@ -39,6 +39,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-character:        var(--character-color);
+  --color-character-bg:     var(--character-bg);
+  --color-character-border: var(--character-border);
+  --color-character-fg:     var(--character-fg);
+  --color-character-muted:  var(--character-muted);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -83,6 +88,12 @@
   --sidebar-accent-foreground: #f0eef5;
   --sidebar-border: #1e1b2e;
   --sidebar-ring: #7c3aed;
+  /* Character primary color — overridden per-character on a layout wrapper. */
+  --character-color:  var(--accent);
+  --character-bg:     color-mix(in oklab, var(--character-color) 14%, transparent);
+  --character-border: color-mix(in oklab, var(--character-color) 45%, transparent);
+  --character-fg:     var(--character-color);
+  --character-muted:  color-mix(in oklab, var(--character-color) 70%, var(--muted-foreground));
 }
 
 .dark {
@@ -118,6 +129,12 @@
   --sidebar-accent-foreground: #f0eef5;
   --sidebar-border: #1e1b2e;
   --sidebar-ring: #7c3aed;
+  /* Character primary color — overridden per-character on a layout wrapper. */
+  --character-color:  var(--accent);
+  --character-bg:     color-mix(in oklab, var(--character-color) 14%, transparent);
+  --character-border: color-mix(in oklab, var(--character-color) 45%, transparent);
+  --character-fg:     var(--character-color);
+  --character-muted:  color-mix(in oklab, var(--character-color) 70%, var(--muted-foreground));
 }
 
 @layer base {
