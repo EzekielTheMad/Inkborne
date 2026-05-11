@@ -11,6 +11,12 @@ vi.mock("@/lib/supabase/character-client", () => ({
   updateCharacterColor: vi.fn().mockResolvedValue(undefined),
 }));
 
+// `useRouter` requires an AppRouterContext that isn't mounted in jsdom unit
+// tests. Mock to return a stub — these snapshot tests don't exercise navigation.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+}));
+
 const mockCharacter = {
   id: "char-1",
   user_id: "user-1",

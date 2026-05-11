@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeftIcon, PencilIcon, StarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,7 @@ export function CharacterHeader({
 }: CharacterHeaderProps) {
   const classDisplay = getClassDisplay(character);
   const raceDisplay = getRaceDisplay(character);
+  const router = useRouter();
   const { primaryColor, setPrimaryColor, isOwner } = useCharacter();
 
   const handleColorChange = async (color: string | null) => {
@@ -64,6 +66,10 @@ export function CharacterHeader({
     setPrimaryColor(color); // optimistic
     try {
       await updateCharacterColor(character.id, color);
+      // Invalidate any cached server-rendered pages (e.g. the builder layout
+      // also reads character.primary_color) so a subsequent navigation picks
+      // up the new color without a hard reload.
+      router.refresh();
     } catch (err) {
       setPrimaryColor(prev); // revert
       console.error("Failed to save character color:", err);
