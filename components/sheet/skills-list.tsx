@@ -52,7 +52,7 @@ export function SkillsList({ schema, evalResult }: SkillsListProps) {
               key={skill.slug}
               className={cn(
                 "flex items-center gap-2 py-1 px-2 rounded-sm",
-                (proficient || expertise) && "bg-primary/5",
+                (proficient || expertise) && "bg-character-bg",
               )}
             >
               {/* Proficiency indicator */}
@@ -60,9 +60,9 @@ export function SkillsList({ schema, evalResult }: SkillsListProps) {
                 className={cn(
                   "text-xs leading-none select-none w-3 shrink-0",
                   expertise
-                    ? "text-accent"
+                    ? "text-character-fg"
                     : proficient
-                      ? "text-accent"
+                      ? "text-character-fg"
                       : "text-muted-foreground",
                 )}
                 aria-label={
@@ -91,7 +91,7 @@ export function SkillsList({ schema, evalResult }: SkillsListProps) {
               <span
                 className={cn(
                   "text-xs font-semibold tabular-nums",
-                  proficient || expertise ? "text-accent" : "text-muted-foreground",
+                  proficient || expertise ? "text-character-fg" : "text-muted-foreground",
                 )}
               >
                 {formatModifier(modifier)}

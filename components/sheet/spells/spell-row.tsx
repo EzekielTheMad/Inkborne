@@ -60,7 +60,7 @@ export function SpellRow({
             className={cn(
               "size-4 rounded border shrink-0 flex items-center justify-center text-[10px]",
               spell.is_prepared
-                ? "bg-primary border-primary text-primary-foreground"
+                ? "bg-character-fg border-character-fg text-background"
                 : "border-muted-foreground/50 hover:border-primary",
             )}
             title={spell.is_prepared ? "Unprepare" : "Prepare"}

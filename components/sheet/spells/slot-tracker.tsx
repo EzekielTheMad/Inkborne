@@ -16,8 +16,8 @@ function SlotDots({ total, used }: { total: number; used: number }) {
           className={cn(
             "inline-block size-2 rounded-full",
             i < total - used
-              ? "bg-primary"
-              : "border border-primary/40 bg-transparent",
+              ? "bg-character-fg"
+              : "border border-character-border bg-transparent",
           )}
         />
       ))}

@@ -106,6 +106,8 @@ export interface Character {
   narrative: NarrativeData;
   narrative_rich: NarrativeRichData;
   created_at: string;
+  /** Per-character primary color (hex `#xxxxxx`) or null for the gold default. */
+  primary_color: string | null;
 }
 
 export interface CharacterContentRef {

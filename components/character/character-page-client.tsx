@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { CharacterWithSystem, CharacterState } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult, StructuredSources } from "@/lib/engine/evaluator";
@@ -10,6 +11,7 @@ import type { CharacterSpell } from "@/lib/types/spells";
 import type { ClassContentData } from "@/lib/character/character-context";
 import { CharacterProvider } from "@/lib/character/character-context";
 import { CharacterShell } from "@/components/character/character-shell";
+import { characterColorStyle } from "@/lib/character/character-color-style";
 
 interface CharacterPageClientProps {
   character: CharacterWithSystem;
@@ -47,24 +49,32 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
     classData,
   } = props;
 
+  const [primaryColor, setPrimaryColor] = useState<string | null>(
+    character.primary_color ?? null,
+  );
+
   return (
-    <CharacterProvider
-      character={character}
-      schema={schema}
-      contentRefs={contentRefs}
-      initialState={initialState}
-      initialInventory={initialInventory}
-      allEffects={allEffects}
-      baseStatsWithLevel={baseStatsWithLevel}
-      structuredSources={structuredSources}
-      isOwner={isOwner}
-      isDm={isDm}
-      hasSheet={hasSheet}
-      maxHp={maxHp}
-      initialSpells={initialSpells}
-      classData={classData}
-    >
-      <CharacterShell />
-    </CharacterProvider>
+    <div style={characterColorStyle(primaryColor)}>
+      <CharacterProvider
+        character={character}
+        schema={schema}
+        contentRefs={contentRefs}
+        initialState={initialState}
+        initialInventory={initialInventory}
+        allEffects={allEffects}
+        baseStatsWithLevel={baseStatsWithLevel}
+        structuredSources={structuredSources}
+        isOwner={isOwner}
+        isDm={isDm}
+        hasSheet={hasSheet}
+        maxHp={maxHp}
+        initialSpells={initialSpells}
+        classData={classData}
+        primaryColor={primaryColor}
+        onPrimaryColorChange={setPrimaryColor}
+      >
+        <CharacterShell />
+      </CharacterProvider>
+    </div>
   );
 }

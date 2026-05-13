@@ -32,7 +32,7 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
               className={cn(
                 "flex items-center gap-1.5 rounded-md border px-2 py-1",
                 proficient
-                  ? "border-primary/50 bg-primary/5"
+                  ? "border-character-border bg-character-bg"
                   : "border-border bg-card",
               )}
             >
@@ -40,7 +40,7 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
               <span
                 className={cn(
                   "text-xs leading-none select-none",
-                  proficient ? "text-primary" : "text-muted-foreground",
+                  proficient ? "text-character-fg" : "text-muted-foreground",
                 )}
                 aria-label={proficient ? "Proficient" : "Not proficient"}
               >
@@ -61,7 +61,7 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
               <span
                 className={cn(
                   "text-xs font-semibold tabular-nums",
-                  proficient ? "text-accent" : "text-muted-foreground",
+                  proficient ? "text-character-fg" : "text-muted-foreground",
                 )}
               >
                 {formatModifier(modifier)}

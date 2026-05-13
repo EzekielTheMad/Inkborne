@@ -146,6 +146,7 @@ export function ClassPreviewModal({
             Cancel
           </Button>
           <Button
+            className="bg-character-fg text-background hover:opacity-90"
             onClick={() =>
               onPick({
                 classSlug: classContent.slug,

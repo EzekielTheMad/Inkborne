@@ -19,7 +19,7 @@ export function LevelPill({ level, summary, hasUnmadeChoice, active, onClick }: 
         "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors",
         "border border-transparent hover:bg-muted/40",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        active && "bg-accent/12 border-accent text-accent",
+        active && "bg-character-bg border-character-border text-character-fg",
       )}
     >
       <span className="w-5 text-center font-semibold tabular-nums">{level}</span>

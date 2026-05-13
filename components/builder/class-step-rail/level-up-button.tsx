@@ -17,11 +17,6 @@ interface LevelUpButtonProps {
   onClick: () => void;
 }
 
-const TONE_BORDER_IDLE: Record<"gold" | "purple", string> = {
-  gold: "border-[rgba(201,164,74,0.45)] bg-[rgba(201,164,74,0.06)] hover:bg-[rgba(201,164,74,0.12)] text-[#c9a44a]",
-  purple: "border-[rgba(124,58,237,0.55)] bg-[rgba(124,58,237,0.08)] hover:bg-[rgba(124,58,237,0.14)] text-[#c7b0ff]",
-};
-
 const TONE_BORDER_ACTIVE: Record<"gold" | "purple", string> = {
   gold: "border-[rgba(201,164,74,0.25)] bg-transparent text-muted-foreground",
   purple: "border-[rgba(124,58,237,0.25)] bg-transparent text-muted-foreground",
@@ -41,9 +36,9 @@ export function LevelUpButton(props: LevelUpButtonProps) {
         aria-label={ariaLabel}
         data-tone={tone}
         className={cn(
-          "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-xs font-semibold transition-colors",
+          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-semibold transition-opacity",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          TONE_BORDER_IDLE[tone],
+          "bg-character-fg text-background hover:opacity-90",
         )}
       >
         <span

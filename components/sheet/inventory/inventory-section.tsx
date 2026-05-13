@@ -26,7 +26,7 @@ export function InventorySection({
   return (
     <div className={cn(
       "rounded-lg border border-border overflow-hidden",
-      highlight && "border-accent/30 bg-accent/5",
+      highlight && "border-character-border bg-character-bg",
     )}>
       <button
         type="button"

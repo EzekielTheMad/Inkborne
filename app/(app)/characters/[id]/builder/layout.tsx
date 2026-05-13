@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BuilderStepNav } from "@/components/builder/builder-step-nav";
+import { characterColorStyle } from "@/lib/character/character-color-style";
 import type { CreationStep } from "@/lib/types/system";
 import type { CharacterChoices } from "@/lib/types/character";
 
@@ -100,26 +101,28 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold sm:text-2xl">{character.name}</h1>
-          <p className="text-sm text-muted-foreground">Character Builder</p>
+    <div style={characterColorStyle(character.primary_color ?? null)}>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold sm:text-2xl">{character.name}</h1>
+            <p className="text-sm text-muted-foreground">Character Builder</p>
+          </div>
+          <Link href={`/characters/${id}`}>
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+              Back to Dashboard
+            </Button>
+          </Link>
         </div>
-        <Link href={`/characters/${id}`}>
-          <Button variant="outline" size="sm" className="w-full sm:w-auto">
-            Back to Dashboard
-          </Button>
-        </Link>
+
+        <BuilderStepNav
+          characterId={id}
+          steps={steps}
+          stepStatus={stepStatus}
+        />
+
+        {children}
       </div>
-
-      <BuilderStepNav
-        characterId={id}
-        steps={steps}
-        stepStatus={stepStatus}
-      />
-
-      {children}
     </div>
   );
 }

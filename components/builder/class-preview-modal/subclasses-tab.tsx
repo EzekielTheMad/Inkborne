@@ -43,7 +43,7 @@ export function SubclassesTab({
             className={cn(
               "text-left rounded-md border bg-card/40 px-3 py-3 transition-colors",
               "border-border hover:border-accent/50",
-              "data-[selected=true]:border-accent data-[selected=true]:bg-accent/10",
+              "data-[selected=true]:border-character-border data-[selected=true]:bg-character-bg",
             )}
           >
             <p className="text-sm font-medium">{sc.name}</p>

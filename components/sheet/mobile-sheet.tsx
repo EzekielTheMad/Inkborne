@@ -113,7 +113,7 @@ export function MobileSheet({
               onClick={() => scrollToTab(tab.id)}
               className={`px-4 py-2 text-sm shrink-0 transition-colors ${
                 activeTab === tab.id
-                  ? "text-accent border-b-2 border-accent font-medium"
+                  ? "text-character-fg border-b-2 border-character-fg font-medium"
                   : "text-muted-foreground"
               }`}
             >
