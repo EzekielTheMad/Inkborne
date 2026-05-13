@@ -223,7 +223,7 @@ export function BackgroundStepClient({
                   disabled={isDisabled}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm border transition-colors ${
                     isSelected
-                      ? "bg-primary text-primary-foreground border-primary"
+                      ? "bg-character-bg text-character-fg border-character-border"
                       : isDisabled
                         ? "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-50"
                         : "bg-card text-card-foreground border-border hover:bg-accent hover:text-accent-foreground cursor-pointer"

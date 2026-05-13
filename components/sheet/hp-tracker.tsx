@@ -163,7 +163,7 @@ export function HPTracker({
               </Button>
               <Button
                 size="sm"
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                className="w-full bg-character-fg text-background hover:opacity-90"
                 onClick={applyHeal}
               >
                 Heal
