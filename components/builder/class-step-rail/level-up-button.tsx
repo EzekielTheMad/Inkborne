@@ -43,10 +43,7 @@ export function LevelUpButton(props: LevelUpButtonProps) {
       >
         <span
           aria-hidden="true"
-          className={cn(
-            "inline-flex size-4 items-center justify-center rounded-full font-bold leading-none",
-            tone === "gold" ? "bg-[#c9a44a] text-[#1a1625]" : "bg-[#c7b0ff] text-[#1a1625]",
-          )}
+          className="inline-flex size-4 items-center justify-center rounded-full bg-background/15 text-background font-bold leading-none"
         >
           <Plus className="size-3" />
         </span>
