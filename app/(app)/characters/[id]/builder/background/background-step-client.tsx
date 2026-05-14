@@ -6,7 +6,7 @@ import { updateCharacter } from "@/lib/supabase/character-client";
 import {
   insertContentRef,
   removeContentRefById,
-} from "@/lib/supabase/content-refs";
+} from "@/lib/supabase/content-refs-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
