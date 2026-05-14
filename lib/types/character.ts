@@ -163,3 +163,22 @@ export interface Profile {
   preferences: ProfilePreferences;
   created_at: string;
 }
+
+/**
+ * Partial patch shape accepted by `updateCharacter()`.
+ * Only the top-level character fields the builder step-clients mutate.
+ * Other columns (id, user_id, system_id, created_at, state, narrative*)
+ * are written through dedicated paths and intentionally not part of this patch.
+ */
+export type CharacterUpdatePatch = Partial<
+  Pick<
+    Character,
+    | "name"
+    | "level"
+    | "choices"
+    | "primary_color"
+    | "visibility"
+    | "archived"
+    | "base_stats"
+  >
+>;
