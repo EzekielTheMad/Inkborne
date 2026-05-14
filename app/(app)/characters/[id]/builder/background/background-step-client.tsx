@@ -2,7 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { updateCharacter } from "@/lib/supabase/character-client";
+import {
+  insertContentRef,
+  removeContentRefById,
+} from "@/lib/supabase/content-refs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,7 +61,6 @@ export function BackgroundStepClient({
   availableLanguages = [],
 }: BackgroundStepClientProps) {
   const router = useRouter();
-  const supabase = createClient();
   const [isPending, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
@@ -101,34 +104,31 @@ export function BackgroundStepClient({
       bonds: [],
       flaws: [],
     };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
 
-    // Remove old background ref
-    const oldRef = contentRefs.find(
-      (ref) => ref.content_definitions?.content_type === "background",
-    );
-    if (oldRef) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", oldRef.id);
-    }
-
-    await supabase.from("character_content_refs").insert([
-      {
-        character_id: characterId,
-        content_id: content.id,
-        content_version: content.version,
+      const oldRef = contentRefs.find(
+        (ref) => ref.content_definitions?.content_type === "background",
+      );
+      if (oldRef) {
+        await removeContentRefById(oldRef.id);
+      }
+      await insertContentRef({
+        characterId,
+        contentId: content.id,
+        contentVersion: content.version,
         context: { source: "background" },
-      },
-    ]);
+      });
 
-    startTransition(() => router.refresh());
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to select background:", err);
+    }
   }
 
   async function handleChangeBackground() {
@@ -140,24 +140,25 @@ export function BackgroundStepClient({
       bonds: [],
       flaws: [],
     };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
 
-    const bgRef = contentRefs.find(
-      (ref) => ref.content_definitions?.content_type === "background",
-    );
-    if (bgRef) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", bgRef.id);
+      const bgRef = contentRefs.find(
+        (ref) => ref.content_definitions?.content_type === "background",
+      );
+      if (bgRef) {
+        await removeContentRefById(bgRef.id);
+      }
+
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to clear background:", err);
     }
-
-    startTransition(() => router.refresh());
   }
 
   async function handleNarrativeChange(
@@ -165,12 +166,16 @@ export function BackgroundStepClient({
     value: string[],
   ) {
     const newChoices = { ...localChoices, [field]: value };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save narrative trait:", err);
+    }
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
@@ -179,12 +184,16 @@ export function BackgroundStepClient({
       [choiceId]: selections,
     };
     const newChoices = { ...localChoices, resolved_choices: newResolved };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save choice selection:", err);
+    }
   }
 
   const renderNarrativeSelector = (
