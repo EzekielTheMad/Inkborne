@@ -2,7 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { updateCharacter } from "@/lib/supabase/character-client";
+import {
+  insertContentRef,
+  removeContentRefById,
+} from "@/lib/supabase/content-refs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -74,7 +78,6 @@ export function RaceStepClient({
   schema,
 }: RaceStepClientProps) {
   const router = useRouter();
-  const supabase = createClient();
   const [isPending, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
@@ -131,80 +134,68 @@ export function RaceStepClient({
       race: content.slug,
       subrace: undefined,
     };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    // Save to database
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
 
-    // Remove old race content ref (if any)
-    const oldRaceRef = contentRefs.find(
-      (ref) => ref.content_definitions?.content_type === "race",
-    );
-    if (oldRaceRef) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", oldRaceRef.id);
-    }
+      const oldRaceRef = contentRefs.find(
+        (ref) => ref.content_definitions?.content_type === "race",
+      );
+      if (oldRaceRef) {
+        await removeContentRefById(oldRaceRef.id);
+      }
+      const oldSubraceRef = contentRefs.find(
+        (ref) => ref.content_definitions?.content_type === "subrace",
+      );
+      if (oldSubraceRef) {
+        await removeContentRefById(oldSubraceRef.id);
+      }
 
-    // Remove old subrace content ref (if any)
-    const oldSubraceRef = contentRefs.find(
-      (ref) => ref.content_definitions?.content_type === "subrace",
-    );
-    if (oldSubraceRef) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", oldSubraceRef.id);
-    }
-
-    // Create new content ref
-    await supabase.from("character_content_refs").insert([
-      {
-        character_id: characterId,
-        content_id: content.id,
-        content_version: content.version,
+      await insertContentRef({
+        characterId,
+        contentId: content.id,
+        contentVersion: content.version,
         context: { source: "race" },
-      },
-    ]);
+      });
 
-    startTransition(() => router.refresh());
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to select race:", err);
+    }
   }
 
   async function handleSelectSubrace(subrace: ContentEntry) {
     const newChoices = { ...localChoices, subrace: subrace.slug };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
 
-    // Remove old subrace ref
-    const oldSubraceRef = contentRefs.find(
-      (ref) => ref.content_definitions?.content_type === "subrace",
-    );
-    if (oldSubraceRef) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", oldSubraceRef.id);
-    }
+      const oldSubraceRef = contentRefs.find(
+        (ref) => ref.content_definitions?.content_type === "subrace",
+      );
+      if (oldSubraceRef) {
+        await removeContentRefById(oldSubraceRef.id);
+      }
 
-    // Create new content ref
-    await supabase.from("character_content_refs").insert([
-      {
-        character_id: characterId,
-        content_id: subrace.id,
-        content_version: subrace.version,
+      await insertContentRef({
+        characterId,
+        contentId: subrace.id,
+        contentVersion: subrace.version,
         context: { source: "subrace" },
-      },
-    ]);
+      });
 
-    startTransition(() => router.refresh());
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to select subrace:", err);
+    }
   }
 
   async function handleChangeRace() {
@@ -213,27 +204,27 @@ export function RaceStepClient({
       race: undefined,
       subrace: undefined,
     };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
 
-    // Remove race and subrace content refs
-    const raceRefs = contentRefs.filter(
-      (ref) =>
-        ref.content_definitions?.content_type === "race" ||
-        ref.content_definitions?.content_type === "subrace",
-    );
-    for (const ref of raceRefs) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", ref.id);
+      const raceRefs = contentRefs.filter(
+        (ref) =>
+          ref.content_definitions?.content_type === "race" ||
+          ref.content_definitions?.content_type === "subrace",
+      );
+      for (const ref of raceRefs) {
+        await removeContentRefById(ref.id);
+      }
+
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to clear race:", err);
     }
-
-    startTransition(() => router.refresh());
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
@@ -242,12 +233,39 @@ export function RaceStepClient({
       [choiceId]: selections,
     };
     const newChoices = { ...localChoices, resolved_choices: newResolved };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save choice selection:", err);
+    }
+  }
+
+  async function handleChangeSubrace() {
+    const newChoices = { ...localChoices, subrace: undefined };
+
+    const prev = localChoices;
+    setLocalChoices(newChoices);
+
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+
+      const oldSubraceRef = contentRefs.find(
+        (ref) => ref.content_definitions?.content_type === "subrace",
+      );
+      if (oldSubraceRef) {
+        await removeContentRefById(oldSubraceRef.id);
+      }
+
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to clear subrace:", err);
+    }
   }
 
   return (
@@ -435,18 +453,7 @@ export function RaceStepClient({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            const newChoices = {
-                              ...localChoices,
-                              subrace: undefined,
-                            };
-                            setLocalChoices(newChoices);
-                            supabase
-                              .from("characters")
-                              .update({ choices: newChoices })
-                              .eq("id", characterId);
-                            startTransition(() => router.refresh());
-                          }}
+                          onClick={handleChangeSubrace}
                         >
                           Change Subrace
                         </Button>
