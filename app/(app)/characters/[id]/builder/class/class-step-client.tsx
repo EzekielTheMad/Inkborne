@@ -2,7 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { updateCharacter } from "@/lib/supabase/character-client";
+import {
+  insertContentRef,
+  removeContentRefById,
+} from "@/lib/supabase/content-refs-client";
 import { Button } from "@/components/ui/button";
 import { ContentBrowser, type ContentEntry } from "@/components/builder/content-browser";
 import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
@@ -55,7 +59,6 @@ export function ClassStepClient({
   schema,
 }: ClassStepClientProps) {
   const router = useRouter();
-  const supabase = createClient();
   const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
@@ -97,76 +100,94 @@ export function ClassStepClient({
     const totalLevel = newClasses.reduce((sum, c) => sum + c.level, 0);
     const newChoices = { ...localChoices, classes: newClasses };
 
+    const prev = { choices: localChoices, level: localLevel };
     setLocalChoices(newChoices);
     setLocalLevel(totalLevel);
 
-    // Persist character.choices + level
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices, level: totalLevel })
-      .eq("id", characterId);
-
-    // Class content_ref
-    await supabase.from("character_content_refs").insert([
-      {
-        character_id: characterId,
-        content_id: content.id,
-        content_version: content.version,
+    try {
+      await updateCharacter(characterId, {
+        choices: newChoices,
+        level: totalLevel,
+      });
+      await insertContentRef({
+        characterId,
+        contentId: content.id,
+        contentVersion: content.version,
         context: { source: "class", level: 1 },
-      },
-    ]);
-
-    // Optional subclass content_ref — same shape handleSubclassSelect uses.
-    if (subclassSlug) {
-      const subclassContent = subclasses.find((sc) => sc.slug === subclassSlug);
-      if (subclassContent) {
-        await supabase.from("character_content_refs").insert([
-          {
-            character_id: characterId,
-            content_id: subclassContent.id,
-            content_version: subclassContent.version,
+      });
+      if (subclassSlug) {
+        const subclassContent = subclasses.find((sc) => sc.slug === subclassSlug);
+        if (subclassContent) {
+          await insertContentRef({
+            characterId,
+            contentId: subclassContent.id,
+            contentVersion: subclassContent.version,
             context: { source: "subclass", class: content.slug },
-          },
-        ]);
+          });
+        }
       }
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev.choices);
+      setLocalLevel(prev.level);
+      console.error("Failed to add class:", err);
     }
-
-    startTransition(() => router.refresh());
   }
 
   async function handleLevelChange(classIndex: number, newLevel: number) {
     const updatedClasses = [...selectedClasses];
-    updatedClasses[classIndex] = { ...updatedClasses[classIndex], level: newLevel };
+    updatedClasses[classIndex] = {
+      ...updatedClasses[classIndex],
+      level: newLevel,
+    };
     const totalLevel = updatedClasses.reduce((sum, c) => sum + c.level, 0);
     const newChoices = { ...localChoices, classes: updatedClasses };
 
+    const prev = { choices: localChoices, level: localLevel };
     setLocalChoices(newChoices);
     setLocalLevel(totalLevel);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices, level: totalLevel })
-      .eq("id", characterId);
-
-    startTransition(() => router.refresh());
+    try {
+      await updateCharacter(characterId, {
+        choices: newChoices,
+        level: totalLevel,
+      });
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev.choices);
+      setLocalLevel(prev.level);
+      console.error("Failed to change class level:", err);
+    }
   }
 
-  async function handleConfirmLevelUp(payload: { classIndex: number; draftLevel: number }) {
+  async function handleConfirmLevelUp(payload: {
+    classIndex: number;
+    draftLevel: number;
+  }) {
     const { classIndex, draftLevel } = payload;
     const updatedClasses = [...selectedClasses];
-    updatedClasses[classIndex] = { ...updatedClasses[classIndex], level: draftLevel };
+    updatedClasses[classIndex] = {
+      ...updatedClasses[classIndex],
+      level: draftLevel,
+    };
     const totalLevel = updatedClasses.reduce((sum, c) => sum + c.level, 0);
     const newChoices = { ...localChoices, classes: updatedClasses };
 
+    const prev = { choices: localChoices, level: localLevel };
     setLocalChoices(newChoices);
     setLocalLevel(totalLevel);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices, level: totalLevel })
-      .eq("id", characterId);
-
-    startTransition(() => router.refresh());
+    try {
+      await updateCharacter(characterId, {
+        choices: newChoices,
+        level: totalLevel,
+      });
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev.choices);
+      setLocalLevel(prev.level);
+      console.error("Failed to confirm level up:", err);
+    }
   }
 
   function handleCancelLevelUp() {
@@ -177,11 +198,16 @@ export function ClassStepClient({
   async function handleHpRollChange(key: string, record: HpRollRecord) {
     const newHpRolls = { ...(localChoices.hp_rolls ?? {}), [key]: record };
     const newChoices = { ...localChoices, hp_rolls: newHpRolls };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save HP roll:", err);
+    }
   }
 
   async function handleRemoveClass(classIndex: number) {
@@ -189,29 +215,31 @@ export function ClassStepClient({
     const updatedClasses = selectedClasses.filter((_, i) => i !== classIndex);
     const totalLevel = updatedClasses.reduce((sum, c) => sum + c.level, 0);
     const newChoices = { ...localChoices, classes: updatedClasses };
+    const newLevel = Math.max(totalLevel, 1);
 
+    const prev = { choices: localChoices, level: localLevel };
     setLocalChoices(newChoices);
-    setLocalLevel(Math.max(totalLevel, 1));
+    setLocalLevel(newLevel);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices, level: Math.max(totalLevel, 1) })
-      .eq("id", characterId);
-
-    // Remove content ref for this class
-    const classContentRef = contentRefs.find(
-      (ref) =>
-        ref.content_definitions?.slug === removedClass.slug &&
-        ref.content_definitions?.content_type === "class",
-    );
-    if (classContentRef) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", classContentRef.id);
+    try {
+      await updateCharacter(characterId, {
+        choices: newChoices,
+        level: newLevel,
+      });
+      const classContentRef = contentRefs.find(
+        (ref) =>
+          ref.content_definitions?.slug === removedClass.slug &&
+          ref.content_definitions?.content_type === "class",
+      );
+      if (classContentRef) {
+        await removeContentRefById(classContentRef.id);
+      }
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev.choices);
+      setLocalLevel(prev.level);
+      console.error("Failed to remove class:", err);
     }
-
-    startTransition(() => router.refresh());
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
@@ -220,12 +248,16 @@ export function ClassStepClient({
       [choiceId]: selections,
     };
     const newChoices = { ...localChoices, resolved_choices: newResolved };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save choice selection:", err);
+    }
   }
 
   async function handleFightingStyleSelect(
@@ -233,48 +265,44 @@ export function ClassStepClient({
     classSlug: string,
     styleSlug: string | undefined,
   ) {
-    // Save to resolved_choices
     const newResolved = {
       ...localChoices.resolved_choices,
       [featureSlug]: styleSlug ? [styleSlug] : [],
     };
     const newChoices = { ...localChoices, resolved_choices: newResolved };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
 
-    // Remove old fighting style content ref for this class
-    const oldRef = contentRefs.find(
-      (ref) =>
-        ref.context?.source === "fighting_style" &&
-        ref.context?.class === classSlug,
-    );
-    if (oldRef) {
-      await supabase
-        .from("character_content_refs")
-        .delete()
-        .eq("id", oldRef.id);
-    }
-
-    // Create new content ref if a style is selected
-    if (styleSlug) {
-      const styleContent = features.find((f) => f.slug === styleSlug);
-      if (styleContent) {
-        await supabase.from("character_content_refs").insert([
-          {
-            character_id: characterId,
-            content_id: styleContent.id,
-            content_version: styleContent.version,
-            context: { source: "fighting_style", class: classSlug },
-          },
-        ]);
+      const oldRef = contentRefs.find(
+        (ref) =>
+          ref.context?.source === "fighting_style" &&
+          ref.context?.class === classSlug,
+      );
+      if (oldRef) {
+        await removeContentRefById(oldRef.id);
       }
-    }
 
-    startTransition(() => router.refresh());
+      if (styleSlug) {
+        const styleContent = features.find((f) => f.slug === styleSlug);
+        if (styleContent) {
+          await insertContentRef({
+            characterId,
+            contentId: styleContent.id,
+            contentVersion: styleContent.version,
+            context: { source: "fighting_style", class: classSlug },
+          });
+        }
+      }
+
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save fighting style:", err);
+    }
   }
 
   async function handleSubclassSelect(
@@ -288,57 +316,42 @@ export function ClassStepClient({
       subclass: subclassSlug,
     };
     const newChoices = { ...localChoices, classes: updatedClasses };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
 
-    // Manage content ref for the subclass
-    if (subclassSlug) {
-      const subclassContent = subclasses.find((sc) => sc.slug === subclassSlug);
-      if (subclassContent) {
-        // Remove any existing subclass ref for this class
-        const existingRef = contentRefs.find(
-          (ref) =>
-            ref.content_definitions?.content_type === "subclass" &&
-            ref.context?.source === "subclass" &&
-            ref.context?.class === classSlug,
-        );
-        if (existingRef) {
-          await supabase
-            .from("character_content_refs")
-            .delete()
-            .eq("id", existingRef.id);
-        }
-
-        await supabase.from("character_content_refs").insert([
-          {
-            character_id: characterId,
-            content_id: subclassContent.id,
-            content_version: subclassContent.version,
-            context: { source: "subclass", class: classSlug },
-          },
-        ]);
-      }
-    } else {
-      // Remove subclass content ref
       const existingRef = contentRefs.find(
         (ref) =>
           ref.content_definitions?.content_type === "subclass" &&
           ref.context?.source === "subclass" &&
           ref.context?.class === classSlug,
       );
-      if (existingRef) {
-        await supabase
-          .from("character_content_refs")
-          .delete()
-          .eq("id", existingRef.id);
-      }
-    }
 
-    startTransition(() => router.refresh());
+      if (subclassSlug) {
+        const subclassContent = subclasses.find((sc) => sc.slug === subclassSlug);
+        if (subclassContent) {
+          if (existingRef) {
+            await removeContentRefById(existingRef.id);
+          }
+          await insertContentRef({
+            characterId,
+            contentId: subclassContent.id,
+            contentVersion: subclassContent.version,
+            context: { source: "subclass", class: classSlug },
+          });
+        }
+      } else if (existingRef) {
+        await removeContentRefById(existingRef.id);
+      }
+
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save subclass:", err);
+    }
   }
 
   async function handleAsiSelect(featureSlug: string, choice: AsiChoice) {
@@ -347,12 +360,16 @@ export function ClassStepClient({
       [featureSlug]: choice,
     };
     const newChoices = { ...localChoices, asi_choices: newAsiChoices };
+
+    const prev = localChoices;
     setLocalChoices(newChoices);
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      setLocalChoices(prev);
+      console.error("Failed to save ASI selection:", err);
+    }
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { updateCharacter } from "@/lib/supabase/character-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,7 +58,6 @@ export function AbilitiesStepClient({
   schema,
 }: AbilitiesStepClientProps) {
   const router = useRouter();
-  const supabase = createClient();
   const [isPending, startTransition] = useTransition();
 
   const abilities = schema?.ability_scores ?? [];
@@ -174,16 +173,21 @@ export function AbilitiesStepClient({
 
   const currentScores = method === "standard_array" ? arrayAssignments : scores;
 
-  async function saveScores(newScores: Record<string, number>) {
+  async function saveScores(
+    newScores: Record<string, number>,
+    prevScores: Record<string, number>,
+    revertTo: (scores: Record<string, number>) => void,
+  ) {
     const newChoices = { ...character.choices, ability_method: method };
-
-    await supabase
-      .from("characters")
-      .update({
+    try {
+      await updateCharacter(characterId, {
         base_stats: newScores,
         choices: newChoices,
-      })
-      .eq("id", characterId);
+      });
+    } catch (err) {
+      revertTo(prevScores);
+      console.error("Failed to save ability scores:", err);
+    }
   }
 
   function handleMethodChange(newMethod: AbilityMethod) {
@@ -215,8 +219,12 @@ export function AbilitiesStepClient({
       newAssignments[abilitySlug] = numValue;
     }
 
+    const prev = arrayAssignments;
     setArrayAssignments(newAssignments);
-    saveScores(newAssignments);
+    // `void` documents that we intentionally don't await — saveScores handles its
+    // own try/catch + revert. Handlers stay sync so React event responsiveness
+    // isn't blocked on the supabase write.
+    void saveScores(newAssignments, prev, setArrayAssignments);
   }
 
   function handlePointBuyChange(abilitySlug: string, delta: number) {
@@ -231,8 +239,9 @@ export function AbilitiesStepClient({
     );
     if (newPointsUsed > POINT_BUY_BUDGET) return;
 
+    const prev = scores;
     setScores(newScores);
-    saveScores(newScores);
+    void saveScores(newScores, prev, setScores);
   }
 
   function handleManualChange(abilitySlug: string, value: string) {
@@ -240,8 +249,10 @@ export function AbilitiesStepClient({
     if (isNaN(numValue) || numValue < 1 || numValue > 30) return;
 
     const newScores = { ...scores, [abilitySlug]: numValue };
+
+    const prev = scores;
     setScores(newScores);
-    saveScores(newScores);
+    void saveScores(newScores, prev, setScores);
   }
 
   return (

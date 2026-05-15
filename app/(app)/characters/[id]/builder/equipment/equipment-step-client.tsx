@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { updateCharacter } from "@/lib/supabase/character-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,7 +36,6 @@ export function EquipmentStepClient({
   classContent,
 }: EquipmentStepClientProps) {
   const router = useRouter();
-  const supabase = createClient();
   const [isPending, startTransition] = useTransition();
   const [acknowledged, setAcknowledged] = useState<boolean>(
     !!character.choices?.starting_equipment,
@@ -57,17 +56,19 @@ export function EquipmentStepClient({
     : [];
 
   async function handleAcknowledge() {
-    setAcknowledged(true);
-
     const newChoices = {
       ...character.choices,
       starting_equipment: "acknowledged",
     };
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    setAcknowledged(true);
+
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      setAcknowledged(false);
+      console.error("Failed to acknowledge equipment:", err);
+    }
   }
 
   // Legacy bundle selection (keep for backward compatibility)
@@ -77,10 +78,11 @@ export function EquipmentStepClient({
       starting_equipment: bundle,
     };
 
-    await supabase
-      .from("characters")
-      .update({ choices: newChoices })
-      .eq("id", characterId);
+    try {
+      await updateCharacter(characterId, { choices: newChoices });
+    } catch (err) {
+      console.error("Failed to select equipment bundle:", err);
+    }
   }
 
   return (
