@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkborne — Journey (Landing → Auth → Dashboard)</title>
+  <link rel="stylesheet" href="inkborne-tokens.css" />
+  <link rel="stylesheet" href="journey-tokens.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #f0eee9; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="journey-primitives.jsx"></script>
+  <script type="text/babel" src="journey-landing-a.jsx"></script>
+  <script type="text/babel" src="journey-landing-b.jsx"></script>
+  <script type="text/babel" src="journey-landing-c.jsx"></script>
+  <script type="text/babel" src="journey-auth.jsx"></script>
+  <script type="text/babel" src="journey-dashboard.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+
+    function Recommendations() {
+      return (
+        <div style={{ padding: 28, background: "var(--ink-bg)", color: "var(--ink-fg)", height: "100%", overflow: "auto", fontFamily: "system-ui, sans-serif" }}>
+          <div className="j-folio" style={{ marginBottom: 8 }}>Designer's note</div>
+          <h2 className="j-display" style={{ fontSize: 26, color: "var(--ink-accent)", margin: 0, marginBottom: 12 }}>
+            Front door — recommended combo
+          </h2>
+          <p style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-muted-fg)" }}>
+            <strong style={{ color: "var(--ink-fg)" }}>Landing B (Feature-forward) + Auth (centered card, polished) + Dashboard B (Home base).</strong> Together they answer the three questions a new player asks in order: <em>what is this?</em> → <em>let me in</em> → <em>where do I go?</em>
+          </p>
+
+          <div style={{ margin: "18px 0", height: 1, background: "var(--ink-vellum-line)" }} />
+
+          <h3 className="ink-heading" style={{ marginBottom: 10 }}>★ Why these</h3>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: "var(--ink-muted-fg)", lineHeight: 1.7 }}>
+            <li><strong style={{ color: "var(--ink-fg)" }}>Landing B</strong> — concrete differentiators (density, narrative, homebrew) plus a real open-source moment. Beats a pretty-but-vague hero for converting D&D Beyond / LegendKeeper users.</li>
+            <li><strong style={{ color: "var(--ink-fg)" }}>Auth centered</strong> — split-screen burns space without earning it for an alpha. Keep the manuscript chrome and the warm card. The real win is the redesigned Verify page.</li>
+            <li><strong style={{ color: "var(--ink-fg)" }}>Dashboard B</strong> — “jump back in” is the most-used affordance for active users; activity ribbon makes return-visits feel alive even before campaigns ship.</li>
+          </ul>
+
+          <h3 className="ink-heading" style={{ margin: "20px 0 10px" }}>★ When to pick the others</h3>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: "var(--ink-muted-fg)", lineHeight: 1.7 }}>
+            <li><strong style={{ color: "var(--ink-fg)" }}>Landing A</strong> if cold paid-acquisition starts. Landing C if there's a launch story / video.</li>
+            <li><strong style={{ color: "var(--ink-fg)" }}>Dashboard A</strong> if you have many high-frequency users with one main campaign — the list-first feel is calmer.</li>
+            <li><strong style={{ color: "var(--ink-fg)" }}>Dashboard C (Portal)</strong> if 5+ characters per user becomes common.</li>
+          </ul>
+
+          <h3 className="ink-heading" style={{ margin: "20px 0 10px" }}>★ Cross-surface system</h3>
+          <p style={{ fontSize: 12.5, color: "var(--ink-muted-fg)", lineHeight: 1.6, margin: 0 }}>
+            <strong style={{ color: "var(--ink-fg)" }}>Marcellus</strong> for display (tagline, character names, folio numerals). <strong style={{ color: "var(--ink-fg)" }}>System</strong> stack for UI. Recurring motifs: gold folio numerals (I, II, III…), <code>j-rule</code> with ✦ glyph, ambient inkstain SVGs at 4–6% opacity, drop-cap on first paragraphs of long-form copy. <strong style={{ color: "var(--ink-fg)" }}>Don't</strong> use parchment textures, drop-caps or inkstains on dense surfaces (sheet, builder) — reserve them for landing/auth/dashboard moments.
+          </p>
+
+          <h3 className="ink-heading" style={{ margin: "20px 0 10px" }}>★ Open questions</h3>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: "var(--ink-muted-fg)", lineHeight: 1.7 }}>
+            <li>Marcellus vs. EB Garamond for body display? Toggle on top-right of the canvas.</li>
+            <li>Real portrait imagery for landing previews — should we commission illustration, or use silhouette/parchment treatments?</li>
+            <li>Alpha gating: hard waitlist or soft "request access" that just signs you up?</li>
+          </ul>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <DesignCanvas>
+          <DCSection id="intro" title="Inkborne — Journey, front door"
+            subtitle="Phase 1 · Landing + Auth + Dashboard. Marcellus display, ambient parchment, gold folio numerals. Same vocabulary as the builder, with more flair on the introductory surfaces.">
+            <DCArtboard id="recs" label="Recommendations" width={520} height={720}>
+              <Recommendations />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="landing" title="Surface 1 · Landing"
+            subtitle="Three directions. A is the polished hero (best for cold traffic), B explains differentiation (recommended), C is the ambitious narrative one.">
+            <DCArtboard id="la" label="A · Hero-first · Polished tagline + sample sheet" width={1280} height={1900}>
+              <LandingHeroFirst />
+            </DCArtboard>
+            <DCArtboard id="lb" label="B · Feature-forward · Three differentiators (recommended)" width={1280} height={2200}>
+              <LandingFeatureForward />
+            </DCArtboard>
+            <DCArtboard id="lc" label="C · Story-led · A character's becoming" width={1280} height={2100}>
+              <LandingStoryLed />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="auth" title="Surface 2 · Authentication"
+            subtitle="Polish pass on login/signup/verify with consistent paper-warm card framing and ambient inkstains. Plus one explored split-screen variant.">
+            <DCArtboard id="al" label="Login · centered card (recommended)" width={760} height={780}>
+              <AuthLogin />
+            </DCArtboard>
+            <DCArtboard id="ae" label="Login · error state — invalid credentials" width={760} height={780}>
+              <AuthLoginError />
+            </DCArtboard>
+            <DCArtboard id="as" label="Signup · centered card" width={760} height={860}>
+              <AuthSignup />
+            </DCArtboard>
+            <DCArtboard id="av" label="Verify · with troubleshooting steps (the redesigned 'what now')" width={760} height={780}>
+              <AuthVerify />
+            </DCArtboard>
+            <DCArtboard id="asplit" label="Variant · Split-screen (visual left, form right)" width={1280} height={780}>
+              <AuthSplitScreen />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="dashboard" title="Surface 3 · Dashboard"
+            subtitle="Three directions. The empty state is shared (it slots into whichever is picked). Top nav is now Dashboard / Library / Homebrew — campaigns are surfaced inside the dashboard.">
+            <DCArtboard id="da" label="A · Characters-dominant · list-first" width={1280} height={900}>
+              <DashboardA />
+            </DCArtboard>
+            <DCArtboard id="db" label="B · Home base · jump-back-in + activity (recommended)" width={1280} height={900}>
+              <DashboardB />
+            </DCArtboard>
+            <DCArtboard id="dc" label="C · Portal · minimal title, big cards" width={1280} height={900}>
+              <DashboardC />
+            </DCArtboard>
+            <DCArtboard id="de" label="Empty state · brand-new user" width={1280} height={780}>
+              <DashboardEmpty />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="library" title="Surface 4 · Library"
+            subtitle="System-scoped catalog. Pick a system at the top, then browse classes, races, monsters, feats, spells, etc. Rows expand inline; per-category filter chips (level/school for spells, CR/type/size/env for monsters, etc).">
+            <DCArtboard id="lib5e" label="Library · D&D 5e · Classes (expandable)" width={1280} height={1100}>
+              <Library />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    root.render(<App />);
+  </script>
+</body>
+</html>

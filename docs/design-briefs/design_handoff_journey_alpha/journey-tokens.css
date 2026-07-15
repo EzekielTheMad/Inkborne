@@ -1,0 +1,350 @@
+/* Journey-specific extensions to inkborne-tokens.css.
+ * Adds the manuscript motif system: parchment grain, drop caps, ornaments,
+ * inkstain washes, hairline rules. Restrained — used as accents, not wallpaper.
+ */
+
+:root {
+  --ink-paper: #1a1626;        /* warm sub-card for nested panels */
+  --ink-paper-2: #14111e;
+  --ink-deep: #08070d;         /* deeper than --ink-bg, for hero gutters */
+  --ink-vellum-faint: rgba(201,164,74,0.06);
+  --ink-vellum-line: rgba(201,164,74,0.22);
+  --ink-display: 'Marcellus', 'EB Garamond', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --ink-display-italic: 'EB Garamond', Georgia, 'Times New Roman', serif;
+}
+
+/* ── Parchment grain — applied as a fixed bg, very subtle ──────────────── */
+.j-grain {
+  position: relative;
+}
+.j-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    /* very faint warm vignette */
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,164,74,0.05), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(124,58,237,0.04), transparent 60%),
+    /* fiber lines */
+    repeating-linear-gradient(91deg, rgba(255,250,235,0.012) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(2deg, rgba(255,250,235,0.012) 0 1px, transparent 1px 7px);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+.j-grain > * { position: relative; z-index: 1; }
+
+/* SVG-noise grain (sharper, for hero) — uses an inline data url */
+.j-grain-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.79  0 0 0 0 0.65  0 0 0 0 0.27  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 220px 220px;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+/* ── Display-font helpers ────────────────────────────────────────────── */
+.j-display { font-family: var(--ink-display); font-weight: 400; letter-spacing: 0.01em; }
+.j-display-italic { font-family: var(--ink-display-italic); font-style: italic; font-weight: 400; }
+.j-display-tight { font-family: var(--ink-display); letter-spacing: -0.01em; line-height: 1; }
+
+/* Big headline numbering for sections — manuscript style */
+.j-folio {
+  font-family: var(--ink-display);
+  color: var(--ink-accent);
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+/* Drop cap */
+.j-dropcap::first-letter {
+  font-family: var(--ink-display);
+  float: left;
+  font-size: 3.2em;
+  line-height: 0.85;
+  margin: 0.08em 0.08em 0 0;
+  color: var(--ink-accent);
+  font-weight: 400;
+}
+
+/* ── Hairline rule with center ornament ─────────────────────────────── */
+.j-rule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--ink-vellum-line);
+}
+.j-rule::before, .j-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ink-vellum-line), transparent);
+}
+.j-rule-glyph {
+  color: var(--ink-accent);
+  font-family: var(--ink-display);
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  opacity: 0.7;
+}
+
+/* ── Inkstain — abstract organic shape SVG mask ─────────────────────── */
+.j-inkstain {
+  position: absolute;
+  pointer-events: none;
+  background: var(--ink-accent);
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 12 c34 0 70 22 78 58 c8 36-12 64-44 78 c-32 14-78 18-100-8 c-22-26-22-66 0-94 c14-18 38-34 66-34 z' fill='black' opacity='0.9'/><circle cx='160' cy='40' r='6' fill='black'/><circle cx='34' cy='150' r='4' fill='black'/><circle cx='180' cy='160' r='3' fill='black'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><path d='M100 12 c34 0 70 22 78 58 c8 36-12 64-44 78 c-32 14-78 18-100-8 c-22-26-22-66 0-94 c14-18 38-34 66-34 z' fill='black' opacity='0.9'/><circle cx='160' cy='40' r='6' fill='black'/><circle cx='34' cy='150' r='4' fill='black'/><circle cx='180' cy='160' r='3' fill='black'/></svg>");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* ── Ornamental section divider (fleuron / asterism style) ──────────── */
+.j-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--ink-accent);
+  opacity: 0.55;
+}
+
+/* ── Buttons: gold-lined outline (manuscript style) ─────────────────── */
+.j-btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  background: var(--ink-accent);
+  color: var(--ink-bg);
+  border: 1px solid var(--ink-accent);
+  border-radius: 6px;
+  font-family: var(--ink-font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s, transform .15s, box-shadow .15s;
+  box-shadow: 0 0 0 1px rgba(201,164,74,0.2), 0 1px 0 rgba(255,255,255,0.06) inset;
+}
+.j-btn-gold:hover { background: #d4b25a; box-shadow: 0 0 0 1px rgba(201,164,74,0.4), 0 0 28px -8px rgba(201,164,74,0.5); }
+.j-btn-purple {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  background: var(--ink-primary);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+}
+.j-btn-purple:hover { background: #8b4df0; box-shadow: 0 0 28px -8px rgba(124,58,237,0.7); }
+.j-btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  background: transparent;
+  color: var(--ink-fg);
+  border: 1px solid var(--ink-border-strong);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.j-btn-quiet:hover { border-color: var(--ink-accent); background: rgba(201,164,74,0.04); }
+
+/* Sizes */
+.j-btn-lg { height: 50px; padding: 0 28px; font-size: 13.5px; }
+.j-btn-sm { height: 34px; padding: 0 14px; font-size: 12px; }
+
+/* ── Card variants ──────────────────────────────────────────────────── */
+.j-card-paper {
+  background: var(--ink-paper);
+  border: 1px solid var(--ink-border-strong);
+  border-radius: 12px;
+  position: relative;
+}
+.j-card-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(201,164,74,0.05), transparent 60%);
+}
+
+/* Manuscript edge — corner glyphs */
+.j-corners {
+  position: relative;
+}
+.j-corners::before, .j-corners::after {
+  content: "";
+  position: absolute;
+  width: 12px; height: 12px;
+  border: 1px solid var(--ink-vellum-line);
+  pointer-events: none;
+}
+.j-corners::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
+.j-corners::after { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+
+/* ── Marginalia (small italic side text) ────────────────────────────── */
+.j-marginalia {
+  font-family: var(--ink-display-italic);
+  font-style: italic;
+  color: rgba(201,164,74,0.55);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+/* ── Animated sparkle ───────────────────────────────────────────────── */
+@keyframes j-shimmer {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+.j-sparkle { animation: j-shimmer 3s ease-in-out infinite; transform-origin: center; }
+
+@keyframes j-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.j-fade-in { animation: j-fade-in-up 0.7s ease-out both; }
+
+/* Whisper-arrival shimmer (sheet) */
+@keyframes j-name-bloom {
+  0% { opacity: 0; letter-spacing: 0.4em; filter: blur(8px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; letter-spacing: 0.02em; filter: blur(0); }
+}
+
+/* ── Star-rule for cross-section dividers ───────────────────────────── */
+.j-star-rule {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  color: var(--ink-accent);
+  opacity: 0.4;
+  font-size: 12px;
+  letter-spacing: 0.5em;
+}
+
+/* ── Input on dark warm card (auth) ─────────────────────────────────── */
+.j-input {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--ink-border-strong);
+  border-radius: 6px;
+  color: var(--ink-fg);
+  height: 42px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-family: inherit;
+  width: 100%;
+  appearance: none;
+  transition: border-color .12s, box-shadow .12s, background .12s;
+}
+.j-input:focus {
+  outline: none;
+  border-color: var(--ink-accent);
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 0 0 3px rgba(201,164,74,0.1);
+}
+.j-input::placeholder { color: var(--ink-muted-fg); }
+
+/* ── OAuth chip ─────────────────────────────────────────────────────── */
+.j-oauth {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--ink-border-strong);
+  border-radius: 6px;
+  color: var(--ink-fg);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.j-oauth:hover { border-color: var(--ink-accent); background: rgba(201,164,74,0.04); }
+
+/* ── Alpha banner ───────────────────────────────────────────────────── */
+.j-alpha-banner {
+  background: linear-gradient(180deg, rgba(201,164,74,0.06), rgba(201,164,74,0.02));
+  border-bottom: 1px solid rgba(201,164,74,0.18);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-accent);
+}
+
+/* ── Nav link  ──────────────────────────────────────────────────────── */
+.j-nav-link {
+  font-size: 13px;
+  color: var(--ink-muted-fg);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color .12s;
+  cursor: pointer;
+}
+.j-nav-link:hover { color: var(--ink-accent); }
+
+/* ── Tag/chip ───────────────────────────────────────────────────────── */
+.j-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  background: rgba(201,164,74,0.08);
+  color: var(--ink-accent);
+  border: 1px solid rgba(201,164,74,0.3);
+}
+.j-chip-purple {
+  background: rgba(124,58,237,0.1);
+  color: #b594ff;
+  border-color: rgba(124,58,237,0.4);
+}
+
+/* ── Featured pull quote ────────────────────────────────────────────── */
+.j-pull {
+  font-family: var(--ink-display);
+  font-size: 22px;
+  line-height: 1.4;
+  color: var(--ink-fg);
+  letter-spacing: -0.005em;
+}
+.j-pull-mark {
+  font-family: var(--ink-display);
+  font-size: 60px;
+  color: var(--ink-accent);
+  line-height: 0;
+  vertical-align: -0.4em;
+  margin-right: 8px;
+  opacity: 0.7;
+}
