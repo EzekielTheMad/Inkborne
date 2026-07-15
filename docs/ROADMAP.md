@@ -2,7 +2,9 @@
 
 **Status:** Living draft. Update freely.
 **Owner:** Victor
-**Last updated:** 2026-04-25
+**Last updated:** 2026-07-15
+
+> **Working on this project?** Start with [`docs/GAME-PLAN.md`](GAME-PLAN.md) — the agent-agnostic entry point with the current task backlog, workflow conventions, and repo orientation. This file is the milestone-level source of truth; the game plan is the working-level one.
 
 This document layers the new vision items (homebrew authoring, content importer, new content types, database backups) into a phased roadmap with explicit alpha/feedback checkpoints. **Not on a critical timeline** — milestones are sized for sustainable progress with feedback loops, not a sprint.
 
@@ -21,29 +23,39 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-**Shipped to production:**
+> **Snapshot 2026-06-19.** M1 (pre-alpha consolidation) and the M2 *builder* design polish have shipped — including the full mobile builder (PR #47). The single thing gating closed alpha #1 is deploying database backups (code is done — PR #33 — parked on a Supabase credential). The M2 *journey* polish (landing/auth/dashboard aesthetic) is the main design work still outstanding, but it is **not** alpha-blocking. See "What changed since 2026-04-25" at the end of this section.
+>
+> **Update 2026-07-15.** The UAT console-error punch items (dialog a11y titles + duplicate level-row key) merged as PR #58. The journey design handoff bundle was rescued off the stale `feat/mobile-builder` branch and now lives in-repo at `docs/design-briefs/design_handoff_journey_alpha/`. Backups (PR #33) remain the sole alpha gate.
+
+**Shipped to production (`main` @ `31a4996`):**
 - Auth (email + Google + Discord OAuth)
 - Character creation flow: race → class → abilities → background → equipment
 - Character sheet: stat ribbon, HP tracker, skills, saves, defenses, conditions, rest dialog, feature resources, spell selection (read-only)
 - Spell Management Phase 1 (selection + display, no casting yet)
 - Inventory management with magic items
-- Feature Resources system (29 class features + 2 racial traits enriched in PR #24)
+- Feature Resources system (27 class features + 2 racial traits, PR #24)
 - Rest System (short/long rest orchestration)
 - Atomic state patches via `patch_character_state` RPC
+- **First-time UX fixes F1–F6** (PR #29): hide Campaigns card, single-system auto-select, dismissible alpha banner + feedback CTA, new-character helper text, auto-redirect into builder
+- **In-app feedback widget + `/admin/feedback`** (PR #19) and **self-hosted error reporting + `/admin/errors`** (PR #22), under an **admin hub** at `/admin` (PR #28)
+- **Generated Supabase types** `database.types.ts` (PR #26)
+- **M2 builder design polish:** class preview modal (#37), class step rail (#40), multiclass picker (#43), level-up flow (#45), **mobile builder pattern (#47)**, character primary-color carry-through (#52/#53). Mobile support also spans nav (`mobile-nav`) and the sheet (`mobile-sheet`).
+- **Post-M2 refactor #1:** character mutations consolidated behind typed helpers (PR #56)
+- Test coverage gaps G2/G3/G4 closed (HP tracker, createCharacter, auth callback — PR #31)
 
 **In flight (open PRs):**
-- #19 Feedback widget + admin dashboard
-- #21 UX audit findings (docs)
-- #22 Error reporting + admin dashboard
-- #23 Journey design brief for Claude Design (docs)
-- #24 Feature resource data enrichment (29 enrichments)
-- #25 Test coverage audit (docs)
-- #26 Generated Supabase types
+- **#33 — Backup container scaffolding.** Code complete and reviewed (Docker + restic + rclone, daily `pg_dump`, 30-daily/12-monthly retention, weekly integrity check, Discord alerts). Unraid deploy is **parked on a Supabase pooler credential** (`Tenant or user not found` → needs the tenant-qualified username `postgres.<project-ref>` + the correct pooler host/password). B2 offsite tier deferred; Unraid-local only for now. **This is the one alpha blocker.**
+- **#57 — Content schema validation refactor (design spec).** Post-M2 refactor #2: run the existing Zod schemas at the server fetch boundary. Spec + full implementation plan written (`docs/superpowers/plans/2026-05-19-content-schema-validation.md`); execution pending. Pure robustness — not alpha-blocking.
 
-**Designed, not yet built:**
-- Builder UX polish (per Claude Design brief)
-- Journey UX polish (per Claude Design brief)
-- First-time UX fixes (per audit)
+**Designed but not yet built:**
+- **M2 journey polish** — landing / auth / dashboard / characters-list / sheet aesthetic pass (per `docs/design-briefs/journey-landing-to-sheet.md`). The Claude Design handoff bundle for this (landing A/B/C, auth, dashboard mockups + tokens) is now in-repo at `docs/design-briefs/design_handoff_journey_alpha/` (rescued 2026-07-15; `feat/mobile-builder` is now safe to retire). Not alpha-blocking.
+
+**Remaining before closed alpha #1:**
+1. **Backups deployed + restore drill** (PR #33) — the blocker; mostly external infra on Unraid.
+2. **Remaining UAT punch items** (console errors fixed in #58): equipment-step chooser decision, subclass discoverability, verify direct "Set level" doesn't skip subclass prompts — see `docs/GAME-PLAN.md` Track A.
+3. *(Optional, recommended)* **Playwright E2E smoke (G1)** — auth → builder → sheet. Not an alpha gate.
+
+**What changed since 2026-04-25:** every PR the previous snapshot listed as "in flight" (#19, #21, #22, #23, #24, #25, #26) has merged, plus the whole M2 builder-polish sequence (#34–#54), the first-time UX fixes (#29), test gaps (#31), the admin hub (#28), and post-M2 refactor #1 (#56). Backups (#33) were built and parked on a credential. Refactor #2 (#57) was specced + planned, then deferred in favor of the alpha push.
 
 **Roadmap items beyond this:** see milestones below.
 
@@ -56,6 +68,7 @@ Each milestone has a **goal**, **scope**, **exit criteria**, and ideally a **fee
 ---
 
 ### M1 — Pre-alpha consolidation
+**Status (2026-06-19): ✅ Essentially complete.** All in-flight PRs merged, F1–F6 UX fixes shipped (#29), test gaps G2–G4 closed (#31), feedback / error / admin surfaces live. Only remaining item: deploy database backups (PR #33, parked on a credential) + a manual smoke pass. **Backups are the sole alpha gate.**
 **Goal:** Land what's in flight, set up infrastructure for production use, fix known issues.
 **Estimated effort:** 1–2 weeks.
 
@@ -81,6 +94,7 @@ Each milestone has a **goal**, **scope**, **exit criteria**, and ideally a **fee
 ---
 
 ### M2 — Claude Design implementation (parallel with M1)
+**Status (2026-06-19): ◑ Builder polish shipped; journey polish outstanding.** The builder half — preview modal, class step rail, multiclass, level-up, mobile, color carry-through — shipped via PRs #37–#54. The journey half (landing / auth / dashboard / sheet aesthetic) is **not** built; its Claude Design handoff bundle is stranded on the `feat/mobile-builder` WIP commit (rescue before deleting that branch). Journey polish is not required for alpha #1.
 **Goal:** Apply the design polish coming back from Claude Design without rushing.
 **Estimated effort:** 2–4 weeks (paced by Claude Design output cadence).
 
@@ -198,6 +212,24 @@ Combined because authoring and importing share the same user-owned content infra
 **Recommended sequence:** Monsters first (highest demand, simplest). NPCs second. Companions / Sidekicks last (most complex, narrowest audience).
 
 **Exit criteria for full M5:** A DM can manage a library of monsters, NPCs, companions, and sidekicks alongside their players' characters.
+
+---
+
+### M5.5 — Campaigns + narrative depth (the LegendKeeper layer) — *proposed 2026-07-15*
+**Goal:** Deliver the second half of the founding vision: characters belong to campaigns, and campaigns carry a LegendKeeper-style wiki/narrative space shared between DM and players.
+**Estimated effort:** 4–6 weeks.
+
+> **Status: proposed, not yet sequenced.** The original vision ("character assigned to a larger campaign, campaign has a LegendKeeper-esque narrative/wiki, support players *and* DMs") had no milestone on this roadmap until now. Foundations exist: `campaigns` table (migration `00004`), campaign HP rule (migration `00036`), a hidden placeholder page at `app/(app)/campaigns/`, and the character-level narrative tab (backstory, portraits) already shipped. **Victor decides the ordering** — it could swap with or interleave M5 (monsters etc. are DM-facing and pair naturally with campaigns).
+
+**Scope (first cut — needs its own brainstorm/spec before implementation):**
+- Campaign CRUD + membership: DM creates a campaign, invites players, players assign characters
+- DM vs player roles — the first role-based UI in the app (pairs with M5 DM content)
+- Campaign wiki: linked pages/articles (locations, factions, sessions, lore) with cross-links, LegendKeeper-style
+- Character ↔ campaign narrative connections: character backstory pages can reference campaign wiki entries and vice versa
+- Character narrative profile expansion: timeline events, relationships (the parts of the narrative vision beyond the shipped backstory tab)
+- Visibility model: DM-only vs shared-with-players content (this is the campaign-scoped half of the M4 sharing question)
+
+**Exit criteria:** A DM runs a campaign with the 8 alpha friends' characters attached, keeps a small wiki for it, and players can read shared entries and link their backstories to them.
 
 ---
 

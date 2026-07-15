@@ -1,0 +1,398 @@
+/* Inkborne builder UX polish — shared design tokens
+ * All values lifted from docs/brand-reference.md verbatim.
+ */
+
+:root {
+  --ink-bg: #0b0a10;
+  --ink-fg: #f0eef5;
+  --ink-card: #13111d;
+  --ink-card-fg: #f0eef5;
+  --ink-primary: #7c3aed;
+  --ink-primary-fg: #fafafa;
+  --ink-secondary: #1e1b2e;
+  --ink-secondary-fg: #c4c0d0;
+  --ink-muted: #13111d;
+  --ink-muted-fg: #8b85a0;
+  --ink-accent: #c9a44a;
+  --ink-accent-fg: #0b0a10;
+  --ink-destructive: #dc2626;
+  --ink-border: #1e1b2e;
+  --ink-border-strong: #2a2640;
+  --ink-input: #1e1b2e;
+  --ink-ring: #7c3aed;
+
+  --ink-radius: 10px;
+  --ink-radius-sm: 6px;
+  --ink-radius-lg: 14px;
+
+  --ink-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ink-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.ink {
+  font-family: var(--ink-font);
+  color: var(--ink-fg);
+  background: var(--ink-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.45;
+}
+
+/* Section-heading vocabulary from the existing sheet:
+ * uppercase, gold, tracked. Use for "TRAITS", "PROFICIENCIES" etc.
+ */
+.ink-heading {
+  color: var(--ink-accent);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.ink-eyebrow {
+  color: var(--ink-muted-fg);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.ink-title {
+  color: var(--ink-accent);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ink-card {
+  background: var(--ink-card);
+  border: 1px solid var(--ink-border);
+  border-radius: var(--ink-radius);
+}
+
+.ink-card-inset {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--ink-border);
+  border-radius: var(--ink-radius-sm);
+}
+
+.ink-muted { color: var(--ink-muted-fg); }
+.ink-fg { color: var(--ink-fg); }
+.ink-gold { color: var(--ink-accent); }
+.ink-primary { color: var(--ink-primary); }
+
+/* ─ Buttons (matches shadcn defaults) ─ */
+.ink-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--ink-radius-sm);
+  padding: 0 14px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background .12s, border-color .12s, color .12s;
+  white-space: nowrap;
+  user-select: none;
+}
+.ink-btn-primary { background: var(--ink-primary); color: var(--ink-primary-fg); }
+.ink-btn-primary:hover { background: #8b4df0; }
+.ink-btn-outline { background: transparent; color: var(--ink-fg); border-color: var(--ink-border-strong); }
+.ink-btn-outline:hover { background: rgba(255,255,255,0.04); }
+.ink-btn-ghost { background: transparent; color: var(--ink-fg); }
+.ink-btn-ghost:hover { background: rgba(255,255,255,0.04); }
+.ink-btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
+
+/* ─ Inputs / selects ─ */
+.ink-input, .ink-select {
+  background: var(--ink-card);
+  border: 1px solid var(--ink-border-strong);
+  border-radius: var(--ink-radius-sm);
+  color: var(--ink-fg);
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.ink-select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1l4 4 4-4' stroke='%238b85a0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+.ink-input:focus, .ink-select:focus {
+  outline: none;
+  border-color: var(--ink-primary);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ink-primary) 30%, transparent);
+}
+
+/* ─ Badges ─ */
+.ink-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.ink-badge-gold { background: rgba(201,164,74,0.12); color: var(--ink-accent); border-color: rgba(201,164,74,0.35); }
+.ink-badge-purple { background: rgba(124,58,237,0.14); color: #b594ff; border-color: rgba(124,58,237,0.4); }
+.ink-badge-outline { background: transparent; color: var(--ink-muted-fg); border-color: var(--ink-border-strong); }
+.ink-badge-choice {
+  background: color-mix(in oklab, var(--ink-accent) 14%, transparent);
+  color: var(--ink-accent);
+  border-color: color-mix(in oklab, var(--ink-accent) 45%, transparent);
+}
+
+/* ─ Stepper (from sheet) ─ */
+.ink-step {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  color: var(--ink-fg);
+  border: 1px solid var(--ink-border);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ink-step:hover { background: rgba(201,164,74,0.18); }
+
+/* ─ Feature/trait card ─ */
+.ink-feat {
+  border: 1px solid var(--ink-border);
+  background: rgba(255,255,255,0.015);
+  border-radius: var(--ink-radius-sm);
+  padding: 12px 14px;
+}
+.ink-feat-choice {
+  border-left: 3px solid var(--ink-accent);
+  background: linear-gradient(90deg, rgba(201,164,74,0.07) 0%, rgba(201,164,74,0.015) 40%, transparent 70%);
+}
+
+/* ─ Striped placeholder ─ */
+.ink-placeholder {
+  background-color: #171522;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(201,164,74,0.05) 0 6px,
+    transparent 6px 14px
+  );
+  border: 1px dashed rgba(201,164,74,0.25);
+  color: var(--ink-muted-fg);
+  font-family: var(--ink-font-mono);
+  font-size: 10.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  letter-spacing: 0.04em;
+  border-radius: var(--ink-radius-sm);
+}
+
+/* ─ Divider ─ */
+.ink-hr { border: 0; border-top: 1px solid var(--ink-border); margin: 0; }
+
+/* ─ Rule: scrollable region ─ */
+.ink-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2640 transparent;
+}
+.ink-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.ink-scroll::-webkit-scrollbar-thumb { background: #2a2640; border-radius: 99px; }
+.ink-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* ─ Tabs ─ */
+.ink-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--ink-border);
+  border-radius: 8px;
+}
+.ink-tab {
+  flex: 1;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted-fg);
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  white-space: nowrap;
+  padding: 0 10px;
+}
+.ink-tab:hover { color: var(--ink-fg); }
+.ink-tab[data-active='true'] {
+  background: var(--ink-card);
+  color: var(--ink-accent);
+  box-shadow: 0 1px 0 0 rgba(255,255,255,0.03) inset;
+}
+
+/* ─ Left-nav tabs (vertical) ─ */
+.ink-vtab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted-fg);
+  border-radius: 7px;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.ink-vtab:hover { color: var(--ink-fg); background: rgba(255,255,255,0.02); }
+.ink-vtab[data-active='true'] {
+  color: var(--ink-accent);
+  background: rgba(201,164,74,0.08);
+  box-shadow: inset 2px 0 0 var(--ink-accent);
+}
+
+/* ─ Modal dialog shell ─ */
+.ink-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5,4,10,0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.ink-modal {
+  background: var(--ink-card);
+  border: 1px solid var(--ink-border-strong);
+  border-radius: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,164,74,0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─ Level rail ─ */
+.ink-level-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted-fg);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  width: 100%;
+}
+.ink-level-pill:hover { background: rgba(255,255,255,0.03); color: var(--ink-fg); }
+.ink-level-pill[data-active='true'] {
+  background: rgba(124,58,237,0.12);
+  color: var(--ink-fg);
+  border-color: rgba(124,58,237,0.45);
+}
+.ink-level-pill .lvlnum {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.05);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--ink-fg);
+  font-variant-numeric: tabular-nums;
+}
+.ink-level-pill[data-active='true'] .lvlnum {
+  background: var(--ink-primary);
+  color: var(--ink-primary-fg);
+}
+.ink-level-pill[data-choice='true'] .lvlnum {
+  background: rgba(201,164,74,0.15);
+  color: var(--ink-accent);
+  box-shadow: inset 0 0 0 1px rgba(201,164,74,0.5);
+}
+
+/* ─ Accordion row ─ */
+.ink-acc-row {
+  border: 1px solid var(--ink-border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.015);
+  overflow: hidden;
+}
+.ink-acc-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.ink-acc-head:hover { background: rgba(255,255,255,0.02); }
+
+/* ─ Small utility text ─ */
+.ink-kbd {
+  font-family: var(--ink-font-mono);
+  font-size: 11px;
+  color: var(--ink-muted-fg);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--ink-border);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.ink-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.ink-dot-gold { background: var(--ink-accent); }
+.ink-dot-purple { background: var(--ink-primary); }
+.ink-dot-muted { background: var(--ink-muted-fg); }
+
+/* ─ Checkbox-ish toggle ─ */
+.ink-check {
+  width: 16px; height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--ink-border-strong);
+  background: rgba(255,255,255,0.02);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ink-check[data-on='true'] {
+  background: var(--ink-primary);
+  border-color: var(--ink-primary);
+  color: #fff;
+}
