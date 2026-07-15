@@ -548,3 +548,41 @@ describe("ClassPreviewModal — Dialog↔Drawer dispatcher", () => {
     expect(onPick).toHaveBeenCalled();
   });
 });
+
+describe("ClassPreviewModal — accessibility", () => {
+  it("exposes an accessible dialog name and description on desktop (Dialog)", () => {
+    vi.mocked(useIsMobile).mockReturnValue(false);
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={makeClass()}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog", { name: /paladin/i });
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription();
+  });
+
+  it("exposes an accessible dialog name and description on mobile (Drawer)", () => {
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    render(
+      <ClassPreviewModal
+        open={true}
+        classContent={makeClass()}
+        features={[]}
+        subclasses={[]}
+        spells={[]}
+        onCancel={vi.fn()}
+        onPick={vi.fn()}
+      />,
+    );
+    const dialog = screen.getByRole("dialog", { name: /paladin/i });
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription();
+  });
+});

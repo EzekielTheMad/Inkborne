@@ -113,3 +113,29 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
   result.sort((a, b) => a.level - b.level);
   return result;
 }
+
+/**
+ * Build the per-level rows rendered in a class rail.
+ *
+ * Rows up to the current level are always shown. During an active level-up flow
+ * a placeholder "pending" row is appended for the draft level — but ONLY when
+ * that draft level is genuinely beyond the current level.
+ *
+ * The `draftLevel > currentLevel` guard matters: when a level-up is confirmed,
+ * the persisted level bumps to the draft level a render *before* the draft state
+ * is cleared. Without the guard, that transitional render appends a draft row
+ * whose level equals an already-present row, producing two rows with the same
+ * `level` — which surfaces as React's "two children with the same key" warning
+ * in LevelRail/LevelRailMobile (keyed by `row.level`).
+ */
+export function buildRenderedPerLevel(
+  perLevel: PerLevel[],
+  currentLevel: number,
+  draftLevel: number | null,
+): PerLevel[] {
+  const upToCurrent = perLevel.filter((r) => r.level <= currentLevel);
+  if (draftLevel != null && draftLevel > currentLevel) {
+    return [...upToCurrent, { level: draftLevel, features: [], choices: [] }];
+  }
+  return upToCurrent;
+}

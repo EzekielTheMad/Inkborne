@@ -11,7 +11,7 @@ import { ClassPickerPanel } from "@/components/builder/class-step-rail/class-pic
 import { ClassPickerSheet } from "@/components/builder/class-step-rail/class-picker-sheet";
 import { LevelUpSheet } from "@/components/builder/class-step-rail/level-up-sheet";
 import { Separator } from "@/components/ui/separator";
-import { classFeaturesPerLevel } from "@/lib/builder/class-features-per-level";
+import { classFeaturesPerLevel, buildRenderedPerLevel } from "@/lib/builder/class-features-per-level";
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import { useIsMobile } from "@/lib/builder/use-is-mobile";
 import type { ContentEntry } from "@/components/builder/content-browser";
@@ -166,12 +166,15 @@ export function ClassStepRail(props: ClassStepRailProps) {
     const draftLevelValue = levelUpDraft?.draftLevel ?? -1;
     const isActiveFlowRail = isMidFlow && draftClassIndex === idx;
 
-    const renderedPerLevel = isActiveFlowRail
-      ? [
-          ...perLevel.filter((r) => r.level <= cls.level),
-          { level: draftLevelValue, features: [], choices: [] },
-        ]
-      : perLevel.filter((r) => r.level <= cls.level);
+    // Append the pending draft row only while the draft level is genuinely
+    // ahead of the persisted level. During the confirm transition the level
+    // bumps before the draft clears; appending here would duplicate a level row
+    // (and its React key). See buildRenderedPerLevel.
+    const renderedPerLevel = buildRenderedPerLevel(
+      perLevel,
+      cls.level,
+      isActiveFlowRail ? draftLevelValue : null,
+    );
 
     const railDisabled = isMidFlow;
 

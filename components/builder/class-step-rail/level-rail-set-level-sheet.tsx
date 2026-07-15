@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -45,6 +46,9 @@ export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle id={labelId}>Set level for {className_}</DrawerTitle>
+          <DrawerDescription className="sr-only">
+            Choose a level for {className_} between 1 and {maxLevel}.
+          </DrawerDescription>
         </DrawerHeader>
         <div className="px-4 pb-2">
           <select

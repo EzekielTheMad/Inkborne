@@ -1,10 +1,39 @@
 import { describe, it, expect } from "vitest";
 import {
   classFeaturesPerLevel,
+  buildRenderedPerLevel,
   type PerLevel,
 } from "@/lib/builder/class-features-per-level";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices } from "@/lib/types/character";
+
+describe("buildRenderedPerLevel", () => {
+  const rows: PerLevel[] = [
+    { level: 1, features: [], choices: [] },
+    { level: 2, features: [], choices: [] },
+    { level: 3, features: [], choices: [] },
+  ];
+
+  it("returns rows up to the current level when not mid-flow", () => {
+    expect(buildRenderedPerLevel(rows, 2, null).map((r) => r.level)).toEqual([1, 2]);
+  });
+
+  it("appends a placeholder draft row when the draft level is beyond current", () => {
+    const result = buildRenderedPerLevel(rows, 1, 2);
+    expect(result.map((r) => r.level)).toEqual([1, 2]);
+    // The appended level-2 entry is the empty placeholder, not the real row.
+    expect(result[result.length - 1]).toEqual({ level: 2, features: [], choices: [] });
+  });
+
+  it("does NOT append a duplicate level row during the confirm transition (draft === current)", () => {
+    // Regression: on confirm, the persisted level bumps to the draft level a
+    // render before the draft clears. Appending here would create two rows with
+    // the same `level`, surfacing as React's duplicate-key warning in LevelRail.
+    const levels = buildRenderedPerLevel(rows, 2, 2).map((r) => r.level);
+    expect(levels).toEqual([1, 2]);
+    expect(new Set(levels).size).toBe(levels.length);
+  });
+});
 
 function feature(slug: string, name: string, level: number, classSlug: string, extras: Record<string, unknown> = {}): ContentEntry {
   return {
