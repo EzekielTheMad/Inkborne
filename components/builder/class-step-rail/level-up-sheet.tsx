@@ -3,6 +3,7 @@
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -58,6 +59,9 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader>
           <DrawerTitle>{classContent.name} · Level {draftLevel}</DrawerTitle>
+          <DrawerDescription className="sr-only">
+            Choose the new features and hit points for {classContent.name} at level {draftLevel}.
+          </DrawerDescription>
         </DrawerHeader>
         <div className="overflow-y-auto px-4 pb-4">
           <LevelUpPane

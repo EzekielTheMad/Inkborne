@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ClassEmblem } from "@/components/builder/class-emblem";
@@ -165,6 +165,12 @@ export function ClassPreviewModal({
     return (
       <Drawer open={open} onOpenChange={(next) => !next && onCancel()}>
         <DrawerContent className="max-h-[85vh]">
+          {/* Accessible name + description for the dialog (vaul/Radix requires a
+              title); the visible styled header lives inside bodyContent. */}
+          <DrawerTitle className="sr-only">{classContent.name} class details</DrawerTitle>
+          <DrawerDescription className="sr-only">
+            Class details and level-by-level preview for {classContent.name}.
+          </DrawerDescription>
           <div className="overflow-y-auto px-4 pb-4">
             {bodyContent}
           </div>
@@ -177,9 +183,14 @@ export function ClassPreviewModal({
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
       <DialogContent
         showCloseButton
-        aria-labelledby="class-preview-title"
         className="grid grid-rows-[auto_1fr_auto] gap-0 p-0 max-w-[1120px] w-[min(1120px,90vw)] max-h-[820px] h-[min(820px,85vh)] rounded-xl shadow-[0_24px_60px_rgba(0,0,0,0.5)] data-open:duration-[180ms] data-open:[animation-timing-function:cubic-bezier(0.16,1,0.3,1)]"
       >
+        {/* Accessible name + description for the dialog; the visible styled
+            header lives inside bodyContent. */}
+        <DialogTitle className="sr-only">{classContent.name} class details</DialogTitle>
+        <DialogDescription className="sr-only">
+          Class details and level-by-level preview for {classContent.name}.
+        </DialogDescription>
         {bodyContent}
       </DialogContent>
     </Dialog>
