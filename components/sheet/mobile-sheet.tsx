@@ -152,6 +152,7 @@ export function MobileSheet({
                     name={ability.abbr}
                     score={score}
                     modifier={modifier}
+                    rollLabel={ability.name}
                   />
                 );
               })}
@@ -169,6 +170,7 @@ export function MobileSheet({
               initiative={initiative}
               speed={speed}
               speedDetail={evalResult.speed}
+              rollable
             />
           </div>
 

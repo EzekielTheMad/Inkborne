@@ -1,6 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { RollPopover } from "@/components/sheet/rolls/roll-popover";
+import { resolveDeathSave } from "@/lib/rolls/death-saves";
+import type { RollResult } from "@/lib/dice/types";
 import type { CharacterState, CharacterDeathSaves } from "@/lib/types/character";
 
 interface DeathSavesProps {
@@ -27,6 +30,17 @@ export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProp
     patchState({
       death_saves: { successes, failures: newFailures },
     });
+  }
+
+  // RAW automation (design D9): nat 1 = two failures, nat 20 = regain 1 HP +
+  // reset, total ≥ 10 = success, else failure — one atomic patch per roll.
+  function handleRollResult(result: RollResult) {
+    void patchState(
+      resolveDeathSave({ successes, failures }, {
+        natural: result.natural,
+        total: result.total,
+      }).patch,
+    );
   }
 
   const isStabilized = successes >= 3;
@@ -81,6 +95,20 @@ export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProp
           </div>
         </div>
       </div>
+
+      {/* RAW roll — pips above stay for manual DM adjudication. Rolling stops
+          once the character is stabilized or dead. */}
+      {!isStabilized && !isDead && (
+        <RollPopover
+          kind="death_save"
+          label="Death Save"
+          ariaLabel="Roll death save"
+          onResult={handleRollResult}
+          className="w-full rounded-md border border-destructive/40 px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-destructive hover:bg-destructive/10"
+        >
+          Roll Death Save
+        </RollPopover>
+      )}
 
       {isStabilized && (
         <p className="text-xs text-green-500 font-medium">Stabilized</p>

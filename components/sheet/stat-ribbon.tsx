@@ -47,6 +47,7 @@ export function StatRibbon({
               name={ability.abbr}
               score={score}
               modifier={modifier}
+              rollLabel={ability.name}
             />
           );
         })}
@@ -62,6 +63,7 @@ export function StatRibbon({
           initiative={initiative}
           speed={speed}
           speedDetail={evalResult.speed}
+          rollable
         />
       </div>
 
