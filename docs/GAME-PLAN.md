@@ -27,7 +27,8 @@ Going forward:
 4. **UI kit is Base UI (`@base-ui/react`), not Radix** — trigger composition uses the `render` prop. Vaul for bottom sheets. Tailwind tokens per `docs/brand-reference.md` and `docs/design-briefs/*/inkborne-tokens.css`.
 5. **Supabase** is the backend (project ref `etcaodglvcspcmwecyxq`). Types are generated into `database.types.ts`; regenerate after migrations. Character state mutates through the `patch_character_state` RPC and the typed helpers from PR #56 — don't write ad-hoc state writes.
 6. **Design source of truth** for look & feel is `docs/design-briefs/` — Claude Design mockup bundles with tokens, JSX mockups, and screenshots. Match them; don't freestyle aesthetics.
-7. **Don't touch `.claude/worktrees/`** — session worktrees, excluded from vitest.
+7. **Don't touch `.claude/worktrees/`** — session worktrees, excluded from vitest. When multiple agents work in parallel worktrees, **never use `git stash`** — stash refs are repo-wide and cross-pop between worktrees (this bit us on 2026-07-16); commit WIP to the branch instead. Reserve migration numbers explicitly when concurrent branches both add migrations.
+7b. **Supabase free-tier auto-pause:** the project pauses after ~a week of inactivity (it was found INACTIVE on 2026-07-15 and restored with data intact). Before alpha invites, either upgrade the plan or add a keep-alive; check `get_project` status before debugging "connection timeout" errors.
 8. **Update the status log** (§7 below) when you finish or abandon a work item, and keep `ROADMAP.md` snapshots honest.
 9. **Local dev:** `npm run dev` (port 3000; launch config `inkborne-dev` in `.claude/launch.json`); `.env.local` lives in the repo root on Victor's machine. Test-account credentials are held by Victor — ask him, never commit them.
 
@@ -80,7 +81,7 @@ The landing → auth → dashboard → characters-list → sheet aesthetic pass.
 
 These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each needs a design spec before implementation:
 
-1. **M3 — Gameplay foundations:** dice engine + roll log, spell casting (slots), hit-dice tracking, effects/durations with concentration. → alpha #2 ("can you *play* a character?").
+1. **M3 — Gameplay foundations:** ✅ **COMPLETE 2026-07-16** (spec `docs/specs/2026-07-15-m3-gameplay-foundations-*.md`; PRs #61, #65, #66, #68–#72, #74; migrations 00038–00040 applied to prod; live-browser UAT green with zero bugs). Alpha #2 ("can you *play* a character?") is content-ready.
 2. **M4 — Homebrew + importer:** `/library`, schema-driven authoring forms, MPMB JS import pipeline (reuse `scripts/transformers/`), sharing, preview-character validation.
 3. **M5 — New content types:** monsters → NPCs → companions/sidekicks.
 4. **M5.5 — Campaigns + narrative depth** *(proposed 2026-07-15 — the LegendKeeper layer; ordering vs M5 is Victor's call, see §6)*: campaign CRUD/membership, DM/player roles, campaign wiki with cross-links, character-timeline/relationship expansion, character↔campaign narrative links.
@@ -96,18 +97,31 @@ These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each nee
 
 ## 6. Decisions Victor owns (agents: do not decide these)
 
-| # | Decision | Blocks |
-|---|----------|--------|
-| 1 | Equipment step: silently grant defaults vs build a chooser UI | A2 |
-| 2 | Landing page variant A / B / C | B1 |
-| 3 | M5 vs M5.5 ordering (DM content first, or campaigns first?) | Track D sequencing |
-| 4 | Sharing model: public publishing vs campaign-only | M4 |
-| 5 | Multi-system (e.g. Daggerheart) timing | post-beta |
-| 6 | Real-time multiplayer vs async | M5.5 architecture |
-| 7 | Pricing/monetization | M8 |
+| # | Decision | Blocks | Status |
+|---|----------|--------|--------|
+| 1 | Equipment step: silently grant defaults vs build a chooser UI | A2 | **Session default applied 2026-07-16: chooser built** (PR #64) — veto/revise freely |
+| 2 | Landing page variant A / B / C | B1 | **Session default applied 2026-07-16: variant B** (bundle README's recommendation, PR #67) — A/C mockups remain in the bundle |
+| 3 | M5 vs M5.5 ordering (DM content first, or campaigns first?) | Track D sequencing | Open |
+| 4 | Sharing model: public publishing vs campaign-only | M4 | Open |
+| 5 | Multi-system (e.g. Daggerheart) timing | post-beta | Open |
+| 6 | Real-time multiplayer vs async | M5.5 architecture | Open |
+| 7 | Pricing/monetization | M8 | Open |
+| 8 | **C1 schema drift — fix direction per category** (see table below) | C1 tasks 4–12, PR #60 | **Open — blocks the validation refactor** |
+
+**Decision #8 detail — the C1 drift audit found 22/1535 platform rows failing their schemas.** In every category the data matches what the app's consumers actually read, and the schema is the outlier — so the recommendation is to fix schemas, not data. Per category (details in PR #60):
+
+| Category | Recommendation |
+|---|---|
+| 8 caster classes: `spellcastingList.level` is `{min,max}` object, schema wants tuple | Change schema to the object shape |
+| paladin/ranger: empty `cantrips` array, schema demands length 20 | Allow empty/short arrays |
+| bard `toolProfs.from` is a plain string, schema wants `"any"\|string[]` | Widen schema to accept string (matches consumer) |
+| 11 magic items: `rarity: "Varies"` missing from enum | Add `"Varies"` to the enum |
+| 2 spells: `damage.type: null` | Allow null (consumers already tolerate it) |
+| ki feature: numeric per-level `additional` array | Widen schema to `(string\|number)[]` |
 
 ## 7. Status log (append-only — newest first)
 
+- **2026-07-16** — Agentic sprint close-out (Claude, orchestrated session). **Tracks A (agent-doable), B, C (except C1), and D/M3 are DONE.** 17 PRs merged (#33, #57–#59, #61–#74 minus #60); tests 620 → **1109 unit + 6 live E2E**; migrations 00038–00040 applied to prod. Highlights: M2 journey polish shipped (landing variant B); equipment chooser shipped; subclass discoverability + set-level gating fixed (A4 confirmed real); M3 gameplay foundations complete and UAT-verified in-browser with zero bugs. Latent bugs fixed en route: `initializeState` dropped persisted play-state fields on load (PR #68); Supabase project found auto-paused and restored, data intact. **Still open:** PR #60 (C1, blocked on decision #8), A1 backups deploy (Victor's Unraid), A8 alpha invites (Victor). Session defaults applied for decisions #1/#2 (see §6). Also: UAT Smoke Cleric deleted from prod; 15 stale branches + worktrees removed; e2e selectors repaired post-redesign (#73).
 - **2026-07-16** — M3 T9 (Claude): added `e2e/m3-gameplay.spec.ts` — Playwright UAT proving M3 exit criteria against the live stack (cast → slot → effect → AC, upcast damage roll → toast/log/`character_rolls` persistence, no concentration prompt for non-concentration effects, hit-die spend + short rest with Arcane Recovery). Full e2e suite (now 6 tests) green twice consecutively; 1109 vitest unchanged.
 
 - **2026-07-15** — Project re-orientation session (Claude). Verified main @ `31a4996` + 620 tests green; merged stranded UAT a11y/dup-key fixes as #58; rescued journey design bundle into `docs/design-briefs/design_handoff_journey_alpha/`; added M5.5 campaigns milestone (proposed) to ROADMAP; wrote this game plan. Retired GSD/superpowers workflow. Next up: Track A (A1 needs Victor's Unraid access; A2 needs decision #1).
