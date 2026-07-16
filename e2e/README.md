@@ -1,7 +1,8 @@
 # E2E smoke suite (Playwright)
 
-A three-test smoke net over the core user journey (GAME-PLAN Track A7 /
-test-coverage-audit item G1) — **not** a full E2E suite:
+A smoke net over the core user journey (GAME-PLAN Track A7 /
+test-coverage-audit item G1) plus the M3 gameplay UAT — **not** a full E2E
+suite:
 
 1. **`auth.setup.ts`** — sign in with email/password via the real login form,
    land on the dashboard. Also saves the authenticated storage state
@@ -11,6 +12,13 @@ test-coverage-audit item G1) — **not** a full E2E suite:
 3. **`sheet.spec.ts`** — seed a fully-built level-1 Fighter directly through
    Supabase and verify the character sheet renders its core elements
    (header identity, saving throws, skills, HP tracker with correct max HP).
+4. **`m3-gameplay.spec.ts`** — M3 gameplay UAT (design §10, task T9): seed a
+   level-3 Wizard with Magic Missile + Mage Armor and prove casting (slot
+   consumption, active effects, AC change), the dice engine (upcast damage
+   roll, toast, roll log, `character_rolls` persistence), concentration
+   non-firing for non-concentration effects, hit-die spending, and short rest
+   with Arcane Recovery. The three scenarios share the character and run in
+   serial mode.
 
 The tests run against the **real Supabase backend** — there is no test double.
 Every character the suite creates is deleted afterwards (per-spec `afterAll`
