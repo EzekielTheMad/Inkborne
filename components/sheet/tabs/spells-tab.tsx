@@ -8,6 +8,7 @@ import { SpellHeader } from "@/components/sheet/spells/spell-header";
 import { SlotTracker } from "@/components/sheet/spells/slot-tracker";
 import { SpellRow } from "@/components/sheet/spells/spell-row";
 import { AddSpellPanel } from "@/components/sheet/spells/add-spell-panel";
+import { SheetEmptyState } from "@/components/sheet/empty-state";
 import type { CharacterSpell } from "@/lib/types/spells";
 
 const CASTER_CLASSES = [
@@ -66,12 +67,9 @@ export function SpellsTab() {
     return (
       <div className="p-3 space-y-3">
         <p className="text-sm font-medium">Spells</p>
-        <div className="rounded-lg border border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
-          <p>This character cannot cast spells.</p>
-          <p className="text-xs mt-1">
-            Casting classes: {CASTER_CLASSES.join(", ")}.
-          </p>
-        </div>
+        <SheetEmptyState hint={`Casting classes: ${CASTER_CLASSES.join(", ")}.`}>
+          This character cannot cast spells.
+        </SheetEmptyState>
       </div>
     );
   }
@@ -102,12 +100,15 @@ export function SpellsTab() {
       <SlotTracker />
 
       {!hasAnySpells ? (
-        <div className="rounded-lg border border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
-          <p>You haven&apos;t picked any spells yet.</p>
-          <p className="text-xs mt-1">
-            Click <strong>+ Add Spell</strong> to get started.
-          </p>
-        </div>
+        <SheetEmptyState
+          hint={
+            <>
+              Click <strong>+ Add Spell</strong> to get started.
+            </>
+          }
+        >
+          You haven&apos;t picked any spells yet.
+        </SheetEmptyState>
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">
           {groupedSpells.map((group) => (

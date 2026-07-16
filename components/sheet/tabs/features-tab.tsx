@@ -6,6 +6,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { useResources } from "@/lib/character/character-context";
 import { ResourceCounter } from "@/components/sheet/resource-counter";
+import { SheetEmptyState } from "@/components/sheet/empty-state";
 
 /** Standard filter categories */
 const BASE_FILTERS = [
@@ -117,9 +118,7 @@ export function FeaturesTab({
 
       {/* Feature list */}
       {filteredRefs.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic">
-          No features match this filter.
-        </p>
+        <SheetEmptyState>No features match this filter.</SheetEmptyState>
       ) : (
         <div className="space-y-3">
           {filteredRefs.map((ref) => (

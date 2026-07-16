@@ -106,6 +106,9 @@ export interface CharacterState {
   // Activation toggles
   rage_active?: boolean;
   currency?: Currency;
+  /** Set after the one-time "your character is ready" arrival moment
+   *  has played (journey M2 B4) so it never replays for this character. */
+  seen_sheet_first_time?: boolean;
   [key: string]: unknown;
 }
 

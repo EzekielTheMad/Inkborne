@@ -47,7 +47,7 @@ export function SlotTracker() {
 
   return (
     <div className="rounded-lg border border-border bg-card/50 p-3 space-y-2">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
         Slots
       </p>
       <div className="flex flex-wrap gap-x-4 gap-y-2">

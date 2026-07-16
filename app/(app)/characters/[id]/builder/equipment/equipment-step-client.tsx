@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { EquipmentChooser } from "@/components/builder/equipment-chooser";
+import { markFirstArrival } from "@/components/sheet/first-arrival";
 import {
   buildInventoryGrants,
   emptySelections,
@@ -294,7 +295,11 @@ export function EquipmentStepClient({
         </Button>
         <Button
           className="bg-character-fg text-background hover:opacity-90"
-          onClick={() => router.push(`/characters/${characterId}`)}
+          onClick={() => {
+            // Let the sheet play its one-time arrival moment (M2 B4).
+            markFirstArrival(characterId);
+            router.push(`/characters/${characterId}`);
+          }}
         >
           Finish &amp; View Character
         </Button>

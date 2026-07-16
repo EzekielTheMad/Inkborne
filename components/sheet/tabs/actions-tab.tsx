@@ -6,6 +6,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { formatModifier, isProficient } from "@/lib/sheet/helpers";
+import { SheetEmptyState } from "@/components/sheet/empty-state";
 
 const SUB_FILTERS = [
   { id: "all", label: "All" },
@@ -189,9 +190,9 @@ export function ActionsTab({
       {/* No attacks message */}
       {(activeFilter === "all" || activeFilter === "attack") &&
         attacks.length === 0 && (
-          <p className="text-sm text-muted-foreground italic">
-            No weapons equipped. Add weapons via content references.
-          </p>
+          <SheetEmptyState hint="Equip a weapon from the Inventory tab to see attacks here.">
+            No weapons equipped.
+          </SheetEmptyState>
         )}
 
       {/* Action-type features */}
@@ -224,9 +225,9 @@ export function ActionsTab({
       {activeFilter !== "all" &&
         activeFilter !== "attack" &&
         filteredActions.length === 0 && (
-          <p className="text-sm text-muted-foreground italic">
+          <SheetEmptyState>
             No {SUB_FILTERS.find((f) => f.id === activeFilter)?.label?.toLowerCase() ?? "actions"} available.
-          </p>
+          </SheetEmptyState>
         )}
     </div>
   );

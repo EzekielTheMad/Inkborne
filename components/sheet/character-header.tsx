@@ -124,7 +124,7 @@ export function CharacterHeader({
         {avatarTrigger}
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">
+          <p className="j-display text-[15px] leading-tight text-white truncate">
             {character.name}
           </p>
           <p className="text-xs text-white/85 truncate">{classDisplay}</p>
@@ -167,7 +167,7 @@ export function CharacterHeader({
 
       {/* Identity */}
       <div className="flex-1 min-w-0">
-        <h1 className="text-2xl font-bold text-white leading-tight">
+        <h1 className="j-display text-[26px] text-white leading-tight">
           {character.name}
         </h1>
         <p className="text-sm text-white/85">
