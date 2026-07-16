@@ -2,7 +2,7 @@
 
 **Status:** Living draft. Update freely.
 **Owner:** Victor
-**Last updated:** 2026-07-15
+**Last updated:** 2026-07-16
 
 > **Working on this project?** Start with [`docs/GAME-PLAN.md`](GAME-PLAN.md) — the agent-agnostic entry point with the current task backlog, workflow conventions, and repo orientation. This file is the milestone-level source of truth; the game plan is the working-level one.
 
@@ -26,6 +26,8 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 > **Snapshot 2026-06-19.** M1 (pre-alpha consolidation) and the M2 *builder* design polish have shipped — including the full mobile builder (PR #47). The single thing gating closed alpha #1 is deploying database backups (code is done — PR #33 — parked on a Supabase credential). The M2 *journey* polish (landing/auth/dashboard aesthetic) is the main design work still outstanding, but it is **not** alpha-blocking. See "What changed since 2026-04-25" at the end of this section.
 >
 > **Update 2026-07-15.** The UAT console-error punch items (dialog a11y titles + duplicate level-row key) merged as PR #58. The journey design handoff bundle was rescued off the stale `feat/mobile-builder` branch and now lives in-repo at `docs/design-briefs/design_handoff_journey_alpha/`. Backups (PR #33) remain the sole alpha gate.
+>
+> **Update 2026-07-16 (agentic sprint).** **M2 is complete** (journey polish shipped, PR #67, landing variant B) and **M3 is complete** (dice + roll log, spell casting, hit dice, effects/durations/concentration, Arcane Recovery — PRs #61–#72, #74; migrations 00038–00040 applied; live-browser UAT green, zero bugs). Equipment chooser (#64) and subclass/set-level fixes (#63) closed the UAT punch list; Playwright E2E smoke exists (#62, 6 tests). Tests: 620 → 1109 unit + 6 E2E. **Alpha #1's only remaining gates are on Victor: deploy backups (PR #33 merged, Unraid deploy pending) and send the invites.** Alpha #1 and #2 could now even be combined, since gameplay shipped ahead of the invite. See `docs/GAME-PLAN.md` §7 for the full log and §6 for pending decisions (incl. the C1 schema-drift call).
 
 **Shipped to production (`main` @ `31a4996`):**
 - Auth (email + Google + Discord OAuth)
@@ -140,6 +142,7 @@ Acknowledged as its own milestone because design happens in batches — Victor c
 ---
 
 ### M3 — Gameplay foundations
+**Status (2026-07-16): ✅ Complete.** Shipped via PRs #61 (spec), #65 (effects), #66 (dice + roll log), #68 (hit dice), #69 (cast dialog), #70 (roll surfaces), #71 (Arcane Recovery), #72 (concentration), #74 (live UAT). Design + plan: `docs/specs/2026-07-15-m3-gameplay-foundations-*.md`.
 **Goal:** Make characters playable, not just buildable. Cast spells, roll dice, take rests that mean something.
 **Estimated effort:** 4–6 weeks.
 
