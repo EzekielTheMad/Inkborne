@@ -1,13 +1,7 @@
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import type { Character } from "@/lib/types/character";
-import { PortraitAvatar } from "@/components/narrative/portrait-avatar";
+import { PortraitAvatar, type CropArea } from "@/components/narrative/portrait-avatar";
+import { formatClassLine } from "@/components/characters/character-row";
 
 interface CharacterCardProps {
   character: Character & {
@@ -16,45 +10,68 @@ interface CharacterCardProps {
   };
 }
 
+function formatRace(character: CharacterCardProps["character"]): string | null {
+  const race = character.choices?.race;
+  if (!race) return null;
+  const subrace = character.choices?.subrace;
+  const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  return subrace ? `${cap(subrace)} ${cap(race)}` : cap(race);
+}
+
+/**
+ * Rich character card for the /characters grid — journey handoff's
+ * "card grid, richer cards" direction: paper framing, portrait, serif
+ * name + level tag, race/class line, system + campaign tags.
+ */
 export function CharacterCard({ character }: CharacterCardProps) {
-  const classInfo = character.choices?.classes;
-  const primaryClass = classInfo?.[0];
+  const classLine = formatClassLine(character.choices);
+  const raceLine = formatRace(character);
+  const built = !!classLine;
+  const narrative = character.narrative as
+    | { portrait_url?: string; portrait_crop?: CropArea | null }
+    | null;
 
   return (
-    <Link href={`/characters/${character.id}`}>
-      <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-3">
-            <PortraitAvatar
-              portraitUrl={character.narrative?.portrait_url}
-              characterName={character.name}
-              size="md"
-            />
-            <div className="min-w-0">
-              <CardTitle className="text-lg">{character.name}</CardTitle>
-              <CardDescription>
-                {character.game_systems?.name ?? "Unknown System"}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {primaryClass ? (
-              <span className="capitalize">
-                Level {character.level} {primaryClass.slug}
+    <Link
+      href={`/characters/${character.id}`}
+      className="j-card-paper group block p-4 transition-colors hover:border-accent/40"
+    >
+      <div className="flex items-center gap-3.5">
+        <PortraitAvatar
+          portraitUrl={narrative?.portrait_url}
+          cropArea={narrative?.portrait_crop}
+          characterName={character.name}
+          size="md"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="j-display truncate text-[17px] text-foreground">
+              {character.name}
+            </span>
+            {built && (
+              <span className="j-display shrink-0 text-[11px] tracking-[0.1em] text-accent">
+                · LVL {character.level}
               </span>
-            ) : (
-              <span className="italic">No class selected</span>
             )}
           </div>
-          {character.campaigns?.name && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {character.campaigns.name}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {built
+              ? [raceLine, classLine].filter(Boolean).join(" · ")
+              : "Unwritten — the builder awaits"}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-2.5 text-[11px] text-muted-foreground">
+        <span>
+          <span className="text-accent">★</span> {character.game_systems?.name ?? "Unknown system"}
+        </span>
+        {character.campaigns?.name && (
+          <span className="truncate">· {character.campaigns.name}</span>
+        )}
+        <span className="ml-auto text-muted-foreground/70 transition-colors group-hover:text-accent">
+          Open ›
+        </span>
+      </div>
     </Link>
   );
 }
