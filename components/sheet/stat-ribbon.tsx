@@ -1,7 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import { AbilityCard } from "@/components/sheet/ability-card";
 import { CombatStats } from "@/components/sheet/combat-stats";
-import { HPTracker } from "@/components/sheet/hp-tracker";
+import { HPTracker, type HPConcentrationProps } from "@/components/sheet/hp-tracker";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { RestButton } from "@/components/sheet/rest-button";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
@@ -17,6 +17,8 @@ interface StatRibbonProps {
   patchState: (patch: Partial<CharacterState>) => Promise<void>;
   /** Read-only hit-dice pools threaded into the HP tracker popover. */
   hitDicePools?: HitDicePool[];
+  /** Concentration wiring threaded into the HP tracker damage path (T7). */
+  concentration?: HPConcentrationProps;
 }
 
 export function StatRibbon({
@@ -26,6 +28,7 @@ export function StatRibbon({
   maxHp,
   patchState,
   hitDicePools,
+  concentration,
 }: StatRibbonProps) {
   const { stats, computed } = evalResult;
 
@@ -77,6 +80,7 @@ export function StatRibbon({
           tempHp={state.temp_hp ?? 0}
           patchState={patchState}
           hitDicePools={hitDicePools}
+          concentration={concentration}
         />
       </div>
 

@@ -17,9 +17,11 @@ import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { MobileSheet } from "@/components/sheet/mobile-sheet";
 import { ResourcesWidget } from "@/components/sheet/resources-widget";
 import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
+import type { HPConcentrationProps } from "@/components/sheet/hp-tracker";
 import {
   useCharacter,
   useCharacterState,
+  useConcentration,
   useRest,
 } from "@/lib/character/character-context";
 
@@ -28,6 +30,18 @@ export function SheetPanel() {
     useCharacter();
   const { state, patchState } = useCharacterState();
   const { hitDicePools } = useRest();
+  const { concentration, dropPatch, requestCheck } = useConcentration();
+
+  // Concentration wiring for the HP tracker damage path (T7): raise the
+  // CON-save prompt on surviving damage; merge the drop patch into the damage
+  // patch when HP hits 0 (RAW auto-drop, no save).
+  const hpConcentration: HPConcentrationProps | undefined = concentration
+    ? {
+        spellName: concentration.spell_name,
+        dropPatch,
+        onDamage: requestCheck,
+      }
+    : undefined;
 
   if (!hasSheet) {
     return (
@@ -79,6 +93,7 @@ export function SheetPanel() {
           patchState={patchState}
           maxHp={maxHp}
           hitDicePools={hitDicePools}
+          concentration={hpConcentration}
         />
       </div>
 
@@ -125,6 +140,7 @@ export function SheetPanel() {
         patchState={patchState}
         maxHp={maxHp}
         hitDicePools={hitDicePools}
+        concentration={hpConcentration}
       />
     </>
   );
