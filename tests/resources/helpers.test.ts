@@ -6,6 +6,7 @@ import {
   groupByRecovery,
 } from "@/lib/resources/helpers";
 import type { FeatureResource } from "@/lib/types/resources";
+import { makeContentRef } from "@/tests/fixtures/content";
 
 describe("normalizeRecovery", () => {
   it("maps short rest to short", () => {
@@ -57,13 +58,10 @@ describe("computeResources", () => {
     data: Record<string, unknown>,
     contentType: "feature" | "feat" | "trait" = "feature",
   ) {
-    return {
+    return makeContentRef({
       id: `id-${slug}`,
       content_id: `content-${slug}`,
       character_id: "char-1",
-      content_version: 1,
-      context: {},
-      choice_source: null,
       created_at: "2026-04-23",
       content_definitions: {
         id: `content-${slug}`,
@@ -71,10 +69,8 @@ describe("computeResources", () => {
         name: slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
         content_type: contentType,
         data,
-        effects: [],
-        version: 1,
       },
-    };
+    });
   }
   const feature = (slug: string, data: Record<string, unknown>) => makeRef(slug, data, "feature");
   const feat = (slug: string, data: Record<string, unknown>) => makeRef(slug, data, "feat");
