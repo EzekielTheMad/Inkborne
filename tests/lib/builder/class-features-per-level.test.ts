@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   classFeaturesPerLevel,
   buildRenderedPerLevel,
+  pendingChoicesUpTo,
   type PerLevel,
 } from "@/lib/builder/class-features-per-level";
 import type { ContentEntry } from "@/components/builder/content-browser";
@@ -32,6 +33,46 @@ describe("buildRenderedPerLevel", () => {
     const levels = buildRenderedPerLevel(rows, 2, 2).map((r) => r.level);
     expect(levels).toEqual([1, 2]);
     expect(new Set(levels).size).toBe(levels.length);
+  });
+});
+
+describe("pendingChoicesUpTo (UAT A3/A4)", () => {
+  const rows: PerLevel[] = [
+    { level: 1, features: [], choices: [] },
+    {
+      level: 2,
+      features: [],
+      choices: [{ type: "subclass", classSlug: "wizard", label: "Arcane Tradition", isMade: false }],
+    },
+    {
+      level: 4,
+      features: [],
+      choices: [{ type: "asi", featureSlug: "wizard-asi-4", classSlug: "wizard", label: "Ability Score Improvement", isMade: true }],
+    },
+    {
+      level: 6,
+      features: [],
+      choices: [{ type: "asi", featureSlug: "wizard-asi-6", classSlug: "wizard", label: "Ability Score Improvement", isMade: false }],
+    },
+  ];
+
+  it("collects unmade choices at or below the given level, in level order", () => {
+    const pending = pendingChoicesUpTo(rows, 6);
+    expect(pending.map((p) => p.level)).toEqual([2, 6]);
+    expect(pending[0].choice.label).toBe("Arcane Tradition");
+  });
+
+  it("ignores rows above the given level", () => {
+    const pending = pendingChoicesUpTo(rows, 3);
+    expect(pending.map((p) => p.level)).toEqual([2]);
+  });
+
+  it("ignores choices that are already made", () => {
+    expect(pendingChoicesUpTo(rows, 4).map((p) => p.level)).toEqual([2]);
+  });
+
+  it("returns an empty list when nothing is pending", () => {
+    expect(pendingChoicesUpTo(rows, 1)).toEqual([]);
   });
 });
 

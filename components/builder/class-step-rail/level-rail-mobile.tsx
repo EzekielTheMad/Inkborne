@@ -6,6 +6,7 @@ import { ClassEmblem } from "@/components/builder/class-emblem";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { LevelUpButton } from "@/components/builder/class-step-rail/level-up-button";
 import { LevelRailSetLevelSheet } from "@/components/builder/class-step-rail/level-rail-set-level-sheet";
+import { PendingChoiceCallout } from "@/components/builder/class-step-rail/pending-choice-callout";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -117,6 +118,16 @@ export function LevelRailMobile(props: LevelRailMobileProps) {
           />
         </div>
       </div>
+
+      <PendingChoiceCallout
+        perLevel={perLevel}
+        currentLevel={currentLevel}
+        onGoToLevel={(level) => {
+          if (!disabled) onSelectLevel(level);
+        }}
+        disabled={disabled}
+        className="px-3 pb-2"
+      />
 
       <LevelRailSetLevelSheet
         open={setLevelOpen}

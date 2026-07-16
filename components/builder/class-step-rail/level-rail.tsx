@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { ClassEmblem } from "@/components/builder/class-emblem";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { LevelUpButton } from "@/components/builder/class-step-rail/level-up-button";
+import { PendingChoiceCallout } from "@/components/builder/class-step-rail/pending-choice-callout";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 
 interface LevelRailProps {
@@ -105,6 +106,13 @@ export function LevelRail({
           />
         ))}
       </div>
+
+      <PendingChoiceCallout
+        perLevel={perLevel}
+        currentLevel={currentLevel}
+        onGoToLevel={onSelectLevel}
+        disabled={disabled}
+      />
 
       <LevelUpButton
         state={levelUpButtonState}
