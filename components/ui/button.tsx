@@ -18,6 +18,9 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        /* Journey (M2): manuscript-gold CTA — the primary action on
+         * landing/auth/dashboard surfaces. */
+        gold: "bg-accent text-accent-foreground font-semibold uppercase tracking-[0.06em] text-xs shadow-[0_0_0_1px_rgba(201,164,74,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-[#d4b25a] hover:shadow-[0_0_0_1px_rgba(201,164,74,0.4),0_0_28px_-8px_rgba(201,164,74,0.5)]",
       },
       size: {
         default:

@@ -19,7 +19,7 @@ export function NavLink({ href, children, className, onClick }: NavLinkProps) {
       href={href}
       onClick={onClick}
       className={`text-sm transition-colors ${
-        isActive ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
+        isActive ? "text-accent font-semibold" : "text-muted-foreground hover:text-accent"
       } ${className || ""}`}
     >
       {children}

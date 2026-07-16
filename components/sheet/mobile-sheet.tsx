@@ -135,7 +135,7 @@ export function MobileSheet({
         <section className="snap-start w-full shrink-0 min-h-screen p-4 space-y-4">
           {/* Ability scores 3x2 grid */}
           <div className="rounded-lg border border-border bg-card p-3">
-            <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-3">
+            <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-2">
               Ability Scores
             </h3>
             <div className="grid grid-cols-3 gap-2">
@@ -156,7 +156,7 @@ export function MobileSheet({
 
           {/* Combat stats */}
           <div className="rounded-lg border border-border bg-card p-3">
-            <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-3">
+            <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-2">
               Combat
             </h3>
             <CombatStats
@@ -170,7 +170,7 @@ export function MobileSheet({
 
           {/* HP Tracker */}
           <div className="rounded-lg border border-border bg-card p-3">
-            <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-3">
+            <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-2">
               Hit Points
             </h3>
             <div className="space-y-3">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Inkstain, Quill } from "@/components/journey/ornaments";
 import { StatRibbon } from "@/components/sheet/stat-ribbon";
 import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
@@ -28,18 +29,20 @@ export function SheetPanel() {
 
   if (!hasSheet) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="max-w-md text-center space-y-4">
-          <div className="inline-flex items-center justify-center size-16 rounded-full bg-primary/10">
-            <Sparkles className="size-8 text-primary" />
-          </div>
-          <h2 className="text-xl font-semibold">Let&apos;s build your character</h2>
-          <p className="text-sm text-muted-foreground">
-            {character.name} doesn&apos;t have a sheet yet. Walk through the builder to pick a
-            race, class, abilities, background, and starting equipment.
+      <div className="relative flex-1 flex items-center justify-center overflow-hidden p-8">
+        <Inkstain className="left-1/2 top-1/2 h-[300px] w-[460px] -translate-x-1/2 -translate-y-1/2 opacity-5" />
+        <div className="relative max-w-md text-center space-y-4">
+          <Quill className="mx-auto size-14 opacity-50" />
+          <p className="j-folio">An unwritten page</p>
+          <h2 className="j-display text-2xl text-foreground">
+            {character.name} is a name, waiting for a story.
+          </h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            The builder walks you through race, class, abilities, background and starting
+            equipment. The page holds your place if you step away.
           </p>
           <Link href={`/characters/${character.id}/builder`}>
-            <Button size="lg" className="mt-2">
+            <Button variant="gold" size="lg" className="mt-2 px-6">
               <Sparkles className="size-4 mr-2" />
               Start Building
             </Button>

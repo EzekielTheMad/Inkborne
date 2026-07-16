@@ -125,7 +125,7 @@ export function Proficiencies({ grants, contentRefs }: ProficienciesProps) {
       <div className="space-y-2">
         {categories.map((cat) => (
           <div key={cat.label}>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
               {cat.label}
             </p>
             <p className="text-sm text-foreground">

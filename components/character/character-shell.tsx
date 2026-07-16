@@ -6,6 +6,7 @@ import { SheetPanel } from "@/components/character/sheet-panel";
 import { NarrativePanel } from "@/components/character/narrative-panel";
 import { ConcentrationBadge } from "@/components/sheet/spells/concentration-badge";
 import { RollLayer } from "@/components/sheet/rolls/roll-layer";
+import { FirstArrival } from "@/components/sheet/first-arrival";
 import {
   useCharacter,
   useCharacterState,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/character/character-context";
 
 export function CharacterShell() {
-  const { character } = useCharacter();
+  const { character, hasSheet } = useCharacter();
   const { state, patchState } = useCharacterState();
   const { portrait } = usePortrait();
 
@@ -22,6 +23,14 @@ export function CharacterShell() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {hasSheet && (
+        <FirstArrival
+          characterId={character.id}
+          characterName={character.name}
+          seenBefore={state.seen_sheet_first_time === true}
+          onSeen={() => patchState({ seen_sheet_first_time: true })}
+        />
+      )}
       <div className="hidden md:block">
         <CharacterHeader
           character={character}

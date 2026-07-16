@@ -24,8 +24,8 @@ export function AlphaBanner() {
 
   return (
     <>
-      <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 flex items-start gap-3">
-        <Sparkles className="size-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+      <div className="rounded-lg border border-accent/25 bg-gradient-to-b from-accent/[0.07] to-accent/[0.02] p-4 flex items-start gap-3">
+        <Sparkles className="size-5 text-accent shrink-0 mt-0.5 j-sparkle" aria-hidden="true" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground">
             You&rsquo;re testing Inkborne Alpha
