@@ -12,6 +12,10 @@
 // that have CHECK constraints in SQL but appear as `string` here) live in
 // the consuming module (e.g. `lib/supabase/feedback.ts`, `lib/supabase/errors.ts`)
 // and use `Omit<Tables<"...">, "status"> & { status: MyUnion }` pattern.
+//
+// NOTE: `character_rolls` (migration 00038) was added BY HAND in the generated
+// style — the migration has not been applied to the live project yet. Apply
+// 00038, then regenerate; the hand-written block will be replaced verbatim.
 
 export type Json =
   | string
@@ -256,6 +260,57 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      character_rolls: {
+        Row: {
+          character_id: string
+          expression: string
+          id: string
+          kind: string
+          label: string
+          result: Json
+          rolled_at: string
+          total: number
+          user_id: string
+        }
+        Insert: {
+          character_id: string
+          expression: string
+          id?: string
+          kind: string
+          label: string
+          result: Json
+          rolled_at?: string
+          total: number
+          user_id?: string
+        }
+        Update: {
+          character_id?: string
+          expression?: string
+          id?: string
+          kind?: string
+          label?: string
+          result?: Json
+          rolled_at?: string
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_rolls_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_rolls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

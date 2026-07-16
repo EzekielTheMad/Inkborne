@@ -5,6 +5,7 @@ import { CharacterHeader } from "@/components/sheet/character-header";
 import { SheetPanel } from "@/components/character/sheet-panel";
 import { NarrativePanel } from "@/components/character/narrative-panel";
 import { ConcentrationBadge } from "@/components/sheet/spells/concentration-badge";
+import { RollLayer } from "@/components/sheet/rolls/roll-layer";
 import {
   useCharacter,
   useCharacterState,
@@ -55,8 +56,9 @@ export function CharacterShell() {
           >
             Narrative
           </TabsTrigger>
-          <div className="ml-auto flex items-center pr-3">
+          <div className="ml-auto flex items-center gap-1 pr-3">
             <ConcentrationBadge />
+            <RollLayer />
           </div>
         </TabsList>
 

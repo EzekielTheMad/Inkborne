@@ -8,6 +8,7 @@ import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { Effect } from "@/lib/types/effects";
 import type { InventoryItem } from "@/lib/types/inventory";
 import type { CharacterSpell } from "@/lib/types/spells";
+import type { RollLogEntry } from "@/lib/types/rolls";
 import type { ClassContentData } from "@/lib/character/character-context";
 import { CharacterProvider } from "@/lib/character/character-context";
 import { CharacterShell } from "@/components/character/character-shell";
@@ -28,6 +29,7 @@ interface CharacterPageClientProps {
   hasSheet: boolean;
   initialInventory: InventoryItem[];
   initialSpells: CharacterSpell[];
+  initialRolls?: RollLogEntry[];
   classData: ClassContentData;
 }
 
@@ -46,6 +48,7 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
     hasSheet,
     initialInventory,
     initialSpells,
+    initialRolls,
     classData,
   } = props;
 
@@ -69,6 +72,7 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
         hasSheet={hasSheet}
         maxHp={maxHp}
         initialSpells={initialSpells}
+        initialRolls={initialRolls}
         classData={classData}
         primaryColor={primaryColor}
         onPrimaryColorChange={setPrimaryColor}
