@@ -44,6 +44,12 @@
   --color-character-border: var(--character-border);
   --color-character-fg:     var(--character-fg);
   --color-character-muted:  var(--character-muted);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-deep: var(--deep);
+  --color-border-strong: var(--border-strong);
+  --font-display: var(--font-marcellus), Georgia, serif;
+  --font-display-italic: var(--font-eb-garamond), Georgia, serif;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -79,6 +85,13 @@
   --chart-3: #8b85a0;
   --chart-4: #1e1b2e;
   --chart-5: #f0eef5;
+  /* Journey (M2) manuscript palette — see design_handoff_journey_alpha */
+  --paper: #1a1626;
+  --paper-2: #14111e;
+  --deep: #08070d;
+  --border-strong: #2a2640;
+  --vellum-faint: rgba(201, 164, 74, 0.06);
+  --vellum-line: rgba(201, 164, 74, 0.22);
   --radius: 0.625rem;
   --sidebar: #13111d;
   --sidebar-foreground: #f0eef5;
@@ -121,6 +134,13 @@
   --chart-3: #8b85a0;
   --chart-4: #1e1b2e;
   --chart-5: #f0eef5;
+  /* Journey (M2) manuscript palette — see design_handoff_journey_alpha */
+  --paper: #1a1626;
+  --paper-2: #14111e;
+  --deep: #08070d;
+  --border-strong: #2a2640;
+  --vellum-faint: rgba(201, 164, 74, 0.06);
+  --vellum-line: rgba(201, 164, 74, 0.22);
   --sidebar: #13111d;
   --sidebar-foreground: #f0eef5;
   --sidebar-primary: #7c3aed;
@@ -224,4 +244,190 @@
 
 .mention:hover {
   text-decoration: underline;
+}
+
+/* ── Journey (M2) manuscript motifs ──────────────────────────────
+ * Translated from docs/design-briefs/design_handoff_journey_alpha
+ * (journey-tokens.css). Decorative accents — ambient, never
+ * load-bearing. Restraint: at most one inkstain per visible region.
+ */
+
+/* Display-font helpers */
+.j-display {
+  font-family: var(--font-marcellus), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+.j-display-italic {
+  font-family: var(--font-eb-garamond), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Folio kicker — manuscript-style section numbering */
+.j-folio {
+  font-family: var(--font-marcellus), Georgia, serif;
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+/* Marginalia — small italic side text, faded gold */
+.j-marginalia {
+  font-family: var(--font-eb-garamond), Georgia, serif;
+  font-style: italic;
+  color: rgba(201, 164, 74, 0.55);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+/* Parchment grain — very subtle, applied to page-level containers */
+.j-grain {
+  position: relative;
+}
+.j-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201, 164, 74, 0.05), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(124, 58, 237, 0.04), transparent 60%),
+    repeating-linear-gradient(91deg, rgba(255, 250, 235, 0.012) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(2deg, rgba(255, 250, 235, 0.012) 0 1px, transparent 1px 7px);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+.j-grain > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Paper card — warm sub-surface with a faint gold wash at the top */
+.j-card-paper {
+  background: var(--paper);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  position: relative;
+}
+.j-card-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(201, 164, 74, 0.05), transparent 60%);
+}
+
+/* Hairline rule with a centered manuscript glyph */
+.j-rule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--vellum-line);
+}
+.j-rule::before,
+.j-rule::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--vellum-line), transparent);
+}
+.j-rule-glyph {
+  color: var(--accent);
+  font-family: var(--font-marcellus), Georgia, serif;
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  opacity: 0.7;
+}
+
+/* Star-rule for cross-section dividers */
+.j-star-rule {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  color: var(--accent);
+  opacity: 0.4;
+  font-size: 12px;
+  letter-spacing: 0.5em;
+}
+
+/* Pull quote */
+.j-pull {
+  font-family: var(--font-marcellus), Georgia, serif;
+  font-size: 22px;
+  line-height: 1.4;
+  color: var(--foreground);
+  letter-spacing: -0.005em;
+}
+.j-pull-mark {
+  font-family: var(--font-marcellus), Georgia, serif;
+  font-size: 60px;
+  color: var(--accent);
+  line-height: 0;
+  vertical-align: -0.4em;
+  margin-right: 8px;
+  opacity: 0.7;
+}
+
+/* Animations */
+@keyframes j-shimmer {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+.j-sparkle {
+  animation: j-shimmer 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes j-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.j-fade-in {
+  animation: j-fade-in-up 0.7s ease-out both;
+}
+
+/* Whisper-arrival name bloom (sheet first arrival) */
+@keyframes j-name-bloom {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.4em;
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: 0.02em;
+    filter: blur(0);
+  }
+}
+.j-name-bloom {
+  animation: j-name-bloom 1.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .j-sparkle,
+  .j-fade-in,
+  .j-name-bloom {
+    animation: none;
+  }
 }
