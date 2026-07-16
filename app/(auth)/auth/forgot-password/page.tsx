@@ -4,10 +4,13 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Logo } from "@/components/landing/logo";
-import { LandingFooter } from "@/components/landing/landing-footer";
+import {
+  AuthShell,
+  AuthCard,
+  AuthHeading,
+  AuthErrorBanner,
+  AuthLabel,
+} from "@/components/auth/auth-shell";
 import Link from "next/link";
 
 export default function ForgotPasswordPage() {
@@ -36,58 +39,57 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <div className="flex flex-1 items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="items-center space-y-3">
-            <Logo />
-            <CardTitle className="text-center text-2xl">Reset your password</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {success ? (
-              <div className="space-y-4 text-center">
-                <p className="text-sm text-foreground">
-                  Check your email for a password reset link.
-                </p>
-                <Link
-                  href="/login"
-                  className="text-sm text-primary hover:underline"
-                >
-                  Back to login
-                </Link>
+    <AuthShell marginalia={"“A key, misplaced.”"}>
+      <AuthCard>
+        <AuthHeading
+          kicker="Folio I · Recover"
+          title="Reset your password."
+          sub="Enter your email and we'll send you a reset link."
+        />
+
+        {success ? (
+          <div className="space-y-4 text-center">
+            <p className="text-sm text-foreground">
+              Check your email for a password reset link. ✦
+            </p>
+            <p className="text-[12.5px] text-muted-foreground">
+              <Link
+                href="/login"
+                className="text-accent underline underline-offset-[3px] hover:text-accent/80"
+              >
+                Back to login
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <>
+            {error && <AuthErrorBanner title="That didn&rsquo;t work.">{error}</AuthErrorBanner>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <AuthLabel htmlFor="email">Email</AuthLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground text-center">
-                  Enter your email and we&apos;ll send you a reset link.
-                </p>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Sending..." : "Send Reset Link"}
-                  </Button>
-                </form>
-                <p className="text-center text-sm text-muted-foreground">
-                  <Link href="/login" className="text-primary hover:underline">
-                    Back to login
-                  </Link>
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      <LandingFooter />
-    </div>
+              <Button type="submit" variant="gold" className="w-full" disabled={loading}>
+                {loading ? "Sending..." : "Send reset link"}
+              </Button>
+            </form>
+            <p className="mt-5 text-center text-[12.5px] text-muted-foreground">
+              <Link
+                href="/login"
+                className="text-accent underline underline-offset-[3px] hover:text-accent/80"
+              >
+                Back to login
+              </Link>
+            </p>
+          </>
+        )}
+      </AuthCard>
+    </AuthShell>
   );
 }
