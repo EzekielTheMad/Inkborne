@@ -14,6 +14,7 @@ interface ApiSpell {
   concentration: boolean;
   casting_time: string;
   level: number;
+  attack_type?: string;
   damage?: {
     damage_type: { index: string; name: string };
     damage_at_slot_level?: Record<string, string>;
@@ -66,6 +67,10 @@ export function transformSpellEntry(apiSpell: ApiSpell): TransformedContent {
     duration: apiSpell.duration,
     concentration: apiSpell.concentration,
     ritual: apiSpell.ritual,
+    attack_type:
+      apiSpell.attack_type === "melee" || apiSpell.attack_type === "ranged"
+        ? apiSpell.attack_type
+        : null,
     description: apiSpell.desc.join("\n"),
     descriptionFull: apiSpell.desc.join("\n"),
     higher_level: apiSpell.higher_level?.join("\n"),
