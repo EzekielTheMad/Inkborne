@@ -8,6 +8,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import {
+  describeStartingEquipment,
+  isEquipmentConfirmed,
+  isStructuredSelections,
+} from "@/lib/builder/equipment-choices";
 import type { CreationStep } from "@/lib/types/system";
 import type { CharacterChoices } from "@/lib/types/character";
 
@@ -35,7 +40,7 @@ function getStepSummary(
     case "abilities":
       return choices.ability_method ?? "Not selected";
     case "equipment":
-      return choices.starting_equipment ?? "Not selected";
+      return describeStartingEquipment(choices.starting_equipment);
     default:
       return "Not started";
   }
@@ -59,7 +64,10 @@ function getStepStatus(
       if (choices.ability_method) return "in_progress";
       return "untouched";
     case "equipment":
-      return choices.starting_equipment ? "complete" : "untouched";
+      if (isEquipmentConfirmed(choices.starting_equipment)) return "complete";
+      if (isStructuredSelections(choices.starting_equipment))
+        return "in_progress";
+      return "untouched";
     default:
       return "untouched";
   }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateCharacter } from "@/lib/supabase/character-client";
+import { updateCharacterState } from "@/lib/sheet/update-state";
+import { addInventoryItem } from "@/lib/supabase/inventory";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +15,28 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import type { CharacterChoices } from "@/lib/types/character";
+import { EquipmentChooser } from "@/components/builder/equipment-chooser";
+import {
+  buildInventoryGrants,
+  emptySelections,
+  isSelectionComplete,
+  isStructuredSelections,
+  parseEquipmentGroups,
+  type EquipmentCatalogItem,
+} from "@/lib/builder/equipment-choices";
+import type {
+  CharacterChoices,
+  StartingEquipmentSelections,
+} from "@/lib/types/character";
+import type { Currency } from "@/lib/types/inventory";
+import { DEFAULT_CURRENCY } from "@/lib/types/inventory";
+
+interface ContentSummary {
+  id: string;
+  name: string;
+  slug: string;
+  data: Record<string, unknown>;
+}
 
 interface EquipmentStepClientProps {
   characterId: string;
@@ -21,152 +44,229 @@ interface EquipmentStepClientProps {
     id: string;
     level: number;
     choices: CharacterChoices;
+    state: { currency?: Currency } | null;
   };
-  classContent: {
-    id: string;
-    name: string;
-    slug: string;
-    data: Record<string, unknown>;
-  } | null;
+  classContent: ContentSummary | null;
+  backgroundContent: ContentSummary | null;
+  catalog: EquipmentCatalogItem[];
 }
 
 export function EquipmentStepClient({
   characterId,
   character,
   classContent,
+  backgroundContent,
+  catalog,
 }: EquipmentStepClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [acknowledged, setAcknowledged] = useState<boolean>(
-    !!character.choices?.starting_equipment,
-  );
+  const [, startTransition] = useTransition();
 
-  // Equipment text from enriched class data (Phase 3)
-  const equipmentText = classContent?.data?.equipment as string | undefined;
-  // Legacy structured bundles (if any exist)
-  const equipmentBundles =
-    (classContent?.data?.starting_equipment as
-      | Array<{ label: string; items: string[] }>
-      | undefined) ?? [];
+  const stored = character.choices?.starting_equipment;
+  const isLegacyConfirmed = typeof stored === "string" && stored.length > 0;
+
+  const [equipmentState, setEquipmentState] =
+    useState<StartingEquipmentSelections>(
+      isStructuredSelections(stored) ? stored : emptySelections(),
+    );
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  const classText = classContent?.data?.equipment as string | undefined;
+  const backgroundText = backgroundContent?.data?.equipment as string | undefined;
   const startingGold = classContent?.data?.starting_gold as string | undefined;
 
-  // Parse equipment text into choice groups (split by semicolons)
-  const equipmentGroups = equipmentText
-    ? equipmentText.split(";").map((g) => g.trim()).filter(Boolean)
-    : [];
+  const groups = useMemo(
+    () =>
+      parseEquipmentGroups({
+        classText: classText ?? null,
+        backgroundText: backgroundText ?? null,
+      }),
+    [classText, backgroundText],
+  );
 
-  async function handleAcknowledge() {
-    const newChoices = {
-      ...character.choices,
-      starting_equipment: "acknowledged",
-    };
+  const confirmed = !!equipmentState.confirmed;
+  const complete = isSelectionComplete(groups, equipmentState);
 
-    setAcknowledged(true);
+  const grantPreview = useMemo(
+    () =>
+      confirmed ? buildInventoryGrants(groups, equipmentState, catalog) : null,
+    [confirmed, groups, equipmentState, catalog],
+  );
 
+  async function persistEquipmentState(next: StartingEquipmentSelections) {
+    const prev = equipmentState;
+    setEquipmentState(next);
     try {
-      await updateCharacter(characterId, { choices: newChoices });
+      await updateCharacter(characterId, {
+        choices: { ...character.choices, starting_equipment: next },
+      });
     } catch (err) {
-      setAcknowledged(false);
-      console.error("Failed to acknowledge equipment:", err);
+      setEquipmentState(prev);
+      console.error("Failed to save equipment selection:", err);
     }
   }
 
-  // Legacy bundle selection (keep for backward compatibility)
-  async function handleSelectBundle(bundle: string) {
-    const newChoices = {
-      ...character.choices,
-      starting_equipment: bundle,
-    };
+  function handleSelectOption(groupKey: string, optionId: string) {
+    if (confirmed) return;
+    void persistEquipmentState({
+      ...equipmentState,
+      selections: { ...equipmentState.selections, [groupKey]: optionId },
+    });
+  }
+
+  function handlePick(slotKey: string, value: string) {
+    if (confirmed) return;
+    void persistEquipmentState({
+      ...equipmentState,
+      picks: { ...equipmentState.picks, [slotKey]: value },
+    });
+  }
+
+  async function handleConfirm() {
+    if (!complete || confirmed || isConfirming) return;
+    setIsConfirming(true);
+    setConfirmError(null);
 
     try {
-      await updateCharacter(characterId, { choices: newChoices });
+      const { items, currency } = buildInventoryGrants(
+        groups,
+        equipmentState,
+        catalog,
+      );
+
+      // Sequential inserts keep sort_order deterministic; addInventoryItem
+      // resolves null (and logs) on failure rather than throwing.
+      const failures: string[] = [];
+      for (const grant of items) {
+        const inserted = await addInventoryItem(characterId, {
+          content_id: grant.content_id,
+          name: grant.name,
+          content_type: grant.content_type,
+          quantity: grant.quantity,
+        });
+        if (!inserted) failures.push(grant.name);
+      }
+      if (failures.length > 0) {
+        throw new Error(`Could not add: ${failures.join(", ")}`);
+      }
+
+      if (Object.keys(currency).length > 0) {
+        const current = character.state?.currency ?? DEFAULT_CURRENCY;
+        const merged: Currency = { ...DEFAULT_CURRENCY, ...current };
+        for (const [unit, amount] of Object.entries(currency)) {
+          merged[unit as keyof Currency] += amount;
+        }
+        await updateCharacterState(characterId, { currency: merged });
+      }
+
+      const confirmedState: StartingEquipmentSelections = {
+        ...equipmentState,
+        confirmed: true,
+      };
+      await updateCharacter(characterId, {
+        choices: { ...character.choices, starting_equipment: confirmedState },
+      });
+      setEquipmentState(confirmedState);
+      startTransition(() => router.refresh());
     } catch (err) {
-      console.error("Failed to select equipment bundle:", err);
+      console.error("Failed to confirm equipment:", err);
+      setConfirmError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while granting equipment.",
+      );
+    } finally {
+      setIsConfirming(false);
     }
   }
+
+  const hasAnyEquipment = groups.length > 0;
 
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Starting Equipment</h2>
 
-      {equipmentGroups.length > 0 ? (
+      {isLegacyConfirmed ? (
+        <LegacyConfirmedNotice classText={classText} backgroundText={backgroundText} />
+      ) : hasAnyEquipment ? (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Your {classContent?.name} starts with the following equipment.
-            Choose from the options listed for each group.
+            {classContent
+              ? `Your ${classContent.name} starts with the following equipment. `
+              : ""}
+            Pick one option in each group
+            {backgroundContent ? ` — your ${backgroundContent.name} background adds a few items too` : ""}
+            .
           </p>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Equipment Choices</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {equipmentGroups.map((group, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <Badge
-                    variant="outline"
-                    className="mt-0.5 shrink-0 text-xs"
-                  >
-                    {i + 1}
-                  </Badge>
-                  <p className="text-sm">{group}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <EquipmentChooser
+            groups={groups}
+            catalog={catalog}
+            selections={equipmentState.selections}
+            picks={equipmentState.picks}
+            disabled={confirmed || isConfirming}
+            onSelectOption={handleSelectOption}
+            onPick={handlePick}
+          />
 
-          {startingGold && (
+          {startingGold && !confirmed && (
             <p className="text-sm text-muted-foreground">
-              Alternatively, you can start with <span className="font-medium">{startingGold}</span> and buy your own equipment.
+              Alternatively, you can start with{" "}
+              <span className="font-medium">{startingGold}</span> and buy your
+              own equipment (not yet supported — coming later).
             </p>
           )}
 
-          {!acknowledged ? (
-            <Button onClick={handleAcknowledge}>
-              Confirm Equipment
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Badge variant="secondary">Confirmed</Badge>
-              Equipment selections acknowledged. Detailed inventory management coming in a future update.
-            </div>
-          )}
-        </div>
-      ) : equipmentBundles.length > 0 ? (
-        /* Legacy structured bundles */
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Choose one of the starting equipment packages for your class.
-          </p>
-          {equipmentBundles.map((bundle, i) => {
-            const bundleId = `bundle_${i}`;
-            const isSelected = character.choices?.starting_equipment === bundleId;
-            return (
-              <Card
-                key={bundleId}
-                className={`cursor-pointer transition-colors ${
-                  isSelected ? "border-character-border bg-character-bg" : "hover:bg-accent/30"
-                }`}
-                onClick={() => handleSelectBundle(bundleId)}
+          {!confirmed ? (
+            <div className="space-y-2">
+              <Button
+                onClick={handleConfirm}
+                disabled={!complete || isConfirming}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        isSelected ? "border-primary" : "border-muted-foreground"
-                      }`}
-                    >
-                      {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{bundle.label}</p>
-                      <p className="text-xs text-muted-foreground">{bundle.items.join(", ")}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                {isConfirming ? "Adding to inventory…" : "Confirm Equipment"}
+              </Button>
+              {!complete && (
+                <p className="text-xs text-muted-foreground">
+                  Make a selection in every group to confirm.
+                </p>
+              )}
+              {confirmError && (
+                <p className="text-xs text-destructive" role="alert">
+                  {confirmError}
+                </p>
+              )}
+            </div>
+          ) : (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">Confirmed</Badge>
+                  <CardTitle className="text-base">Added to inventory</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-1 text-sm">
+                  {grantPreview?.items.map((item) => (
+                    <li key={`${item.content_id ?? item.name}`}>
+                      {item.name}
+                      {item.quantity > 1 ? ` ×${item.quantity}` : ""}
+                    </li>
+                  ))}
+                  {grantPreview &&
+                    Object.entries(grantPreview.currency).map(
+                      ([unit, amount]) => (
+                        <li key={unit}>
+                          {amount} {unit}
+                        </li>
+                      ),
+                    )}
+                </ul>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Manage items from the Inventory tab on the character sheet.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       ) : (
         <Card>
@@ -199,6 +299,42 @@ export function EquipmentStepClient({
           Finish &amp; View Character
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** Characters confirmed through the old acknowledge-only flow: show the
+ *  equipment text read-only; no re-grant path (inventory may already be set up). */
+function LegacyConfirmedNotice({
+  classText,
+  backgroundText,
+}: {
+  classText: string | undefined;
+  backgroundText: string | undefined;
+}) {
+  const lines = [
+    ...(classText ? classText.split(";").map((s) => s.trim()) : []),
+    ...(backgroundText ? [backgroundText.trim()] : []),
+  ].filter(Boolean);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Badge variant="secondary">Confirmed</Badge>
+        Equipment was confirmed for this character. Manage items from the
+        Inventory tab on the character sheet.
+      </div>
+      {lines.length > 0 && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            {lines.map((line, i) => (
+              <p key={i} className="text-sm text-muted-foreground">
+                {line}
+              </p>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

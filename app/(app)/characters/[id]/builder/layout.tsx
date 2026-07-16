@@ -4,6 +4,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BuilderStepNav } from "@/components/builder/builder-step-nav";
 import { characterColorStyle } from "@/lib/character/character-color-style";
+import {
+  isEquipmentConfirmed,
+  isStructuredSelections,
+} from "@/lib/builder/equipment-choices";
 import type { CreationStep } from "@/lib/types/system";
 import type { CharacterChoices } from "@/lib/types/character";
 
@@ -55,8 +59,10 @@ function computeStepStatus(
         }
         break;
       case "equipment":
-        if (choices.starting_equipment) {
+        if (isEquipmentConfirmed(choices.starting_equipment)) {
           status.equipment = "complete";
+        } else if (isStructuredSelections(choices.starting_equipment)) {
+          status.equipment = "in_progress";
         } else {
           status.equipment = "untouched";
         }

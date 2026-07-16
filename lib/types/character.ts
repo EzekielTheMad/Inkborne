@@ -40,6 +40,17 @@ export interface HpRollRecord {
   value: number;
 }
 
+/** Structured starting-equipment state written by the equipment step chooser.
+ *  `selections` maps a choice-group key (e.g. "class:1") to the chosen option id
+ *  ("a" | "b" | …); `picks` maps a category-slot key (e.g. "class:1:b:0:1") to the
+ *  chosen catalog slug (or "custom:<Name>" for items with no content definition).
+ *  `confirmed` flips once the selections have been granted to inventory. */
+export interface StartingEquipmentSelections {
+  selections: Record<string, string>;
+  picks: Record<string, string>;
+  confirmed?: boolean;
+}
+
 export interface CharacterChoices {
   classes?: Array<{ slug: string; level: number; subclass?: string }>;
   race?: string;
@@ -47,7 +58,9 @@ export interface CharacterChoices {
   background?: string;
   ability_method?: "standard_array" | "point_buy" | "manual";
   ability_assignments?: Record<string, number>;
-  starting_equipment?: string;
+  /** Legacy characters hold the strings "acknowledged" or "bundle_N";
+   *  the equipment chooser writes a StartingEquipmentSelections object. */
+  starting_equipment?: string | StartingEquipmentSelections;
   alignment?: string;
   personality_traits?: string[];
   ideals?: string[];
