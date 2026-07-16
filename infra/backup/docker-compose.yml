@@ -1,0 +1,27 @@
+# Deploy on Unraid:
+#   1. Place this directory at /mnt/user/appdata/inkborne-backup/
+#   2. Copy .env.example → .env, fill in secrets, chmod 600 .env
+#   3. docker compose up -d --build
+#
+# The container holds two persistent volumes:
+#   - ./repo  →  the local restic repo (encrypted backup data)
+#   - ./logs  →  /var/log/inkborne-backup.log (cron + script output)
+
+services:
+  inkborne-backup:
+    build: .
+    container_name: inkborne-backup
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Restic uses RESTIC_REPOSITORY for the repo path; we point it at the
+      # mounted volume inside the container.
+      RESTIC_REPOSITORY: /repo
+      # tzdata-friendly: container clock = UTC. Cron expression is UTC.
+      TZ: UTC
+    volumes:
+      - ./repo:/repo
+      - ./logs:/var/log
+    # No exposed ports — the container is pull-based and never accepts
+    # inbound connections.

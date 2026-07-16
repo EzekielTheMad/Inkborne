@@ -1,0 +1,7 @@
+# Backup scripts run inside a Linux Docker container. Force LF endings on
+# all files in this directory so Windows checkouts don't introduce CR
+# characters that break bash and cron.
+* text eol=lf
+*.sh text eol=lf
+crontab text eol=lf
+Dockerfile text eol=lf
