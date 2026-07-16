@@ -15,6 +15,7 @@ import { QuickNotes } from "@/components/sheet/quick-notes";
 import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { MobileSheet } from "@/components/sheet/mobile-sheet";
 import { ResourcesWidget } from "@/components/sheet/resources-widget";
+import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
 import {
   useCharacter,
   useCharacterState,
@@ -81,6 +82,7 @@ export function SheetPanel() {
           <PassiveSenses schema={schema} evalResult={evalResult} />
           <Defenses evalResult={evalResult} />
           <ResourcesWidget />
+          <ActiveEffectsWidget />
           <ActivationToggles
             toggles={availableToggles}
             onToggle={(key, active) => patchState({ [key]: active })}

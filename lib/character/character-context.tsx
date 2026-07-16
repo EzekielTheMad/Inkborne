@@ -56,6 +56,13 @@ import {
   computeShortRestEffects,
   computeLongRestEffects,
 } from "@/lib/rest/helpers";
+import type { ActiveEffect, CustomEffectInput } from "@/lib/types/active-effects";
+import {
+  collectActiveEffects,
+  applyActiveEffectPatch,
+  removeActiveEffectPatch,
+  buildCustomActiveEffect,
+} from "@/lib/active-effects/helpers";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -143,6 +150,12 @@ interface CharacterContextValue {
   updateSpell: (id: string, updates: SpellUpdate) => Promise<void>;
   removeSpell: (id: string) => Promise<void>;
   setConcentration: (spell: Omit<ConcentrationState, "started_at"> | null) => Promise<void>;
+
+  // Active effects
+  activeEffects: ActiveEffect[];
+  applyEffect: (entry: ActiveEffect) => Promise<void>;
+  removeEffect: (id: string) => Promise<void>;
+  addCustomEffect: (input: CustomEffectInput) => Promise<void>;
 
   // Primary color (sheet header theming)
   primaryColor: string | null;
@@ -295,9 +308,26 @@ export function CharacterProvider({
     };
   }, [inventory, state]);
 
+  // Derived: active effects (runtime buffs) from state
+  const activeEffects = useMemo(
+    () => (state.active_effects ?? []) as ActiveEffect[],
+    [state.active_effects],
+  );
+
+  // Derived: Effect[] contributions of non-expired active effects.
+  // Snapshotted at apply time, so this is a pure flatMap — no content fetch.
+  const activeEffectEffects = useMemo(
+    () => collectActiveEffects(activeEffects),
+    [activeEffects],
+  );
+
   // Derived: evaluation result
   const evalResult = useMemo(() => {
-    const combinedEffects = [...allEffects, ...equippedArmorEffects];
+    const combinedEffects = [
+      ...allEffects,
+      ...equippedArmorEffects,
+      ...activeEffectEffects,
+    ];
     return evaluate(
       baseStatsWithLevel,
       combinedEffects,
@@ -309,6 +339,7 @@ export function CharacterProvider({
     baseStatsWithLevel,
     allEffects,
     equippedArmorEffects,
+    activeEffectEffects,
     schema,
     structuredSources,
     derivedState,
@@ -359,6 +390,30 @@ export function CharacterProvider({
       }
     },
     [patchState],
+  );
+
+  // --- Active-effect mutations (each is one atomic patchState) ---
+  const applyEffect = useCallback(
+    async (entry: ActiveEffect) => {
+      await patchState(applyActiveEffectPatch(state, entry));
+    },
+    [state, patchState],
+  );
+
+  const removeEffect = useCallback(
+    async (id: string) => {
+      await patchState(removeActiveEffectPatch(state, id));
+    },
+    [state, patchState],
+  );
+
+  const addCustomEffect = useCallback(
+    async (input: CustomEffectInput) => {
+      await patchState(
+        applyActiveEffectPatch(state, buildCustomActiveEffect(input)),
+      );
+    },
+    [state, patchState],
   );
 
   // --- Derived caster info ---
@@ -474,6 +529,10 @@ export function CharacterProvider({
     updateSpell,
     removeSpell,
     setConcentration,
+    activeEffects,
+    applyEffect,
+    removeEffect,
+    addCustomEffect,
     primaryColor,
     setPrimaryColor: onPrimaryColorChange,
   };
@@ -547,6 +606,25 @@ export function useSpells() {
     updateSpell: ctx.updateSpell,
     removeSpell: ctx.removeSpell,
     setConcentration: ctx.setConcentration,
+  };
+}
+
+/**
+ * Access the character's active effects (runtime buffs/debuffs with durations):
+ * read, apply, remove (concentration-aware), and add custom entries.
+ */
+export function useActiveEffects(): {
+  activeEffects: ActiveEffect[];
+  applyEffect: (entry: ActiveEffect) => Promise<void>;
+  removeEffect: (id: string) => Promise<void>;
+  addCustomEffect: (input: CustomEffectInput) => Promise<void>;
+} {
+  const ctx = useCharacterContext();
+  return {
+    activeEffects: ctx.activeEffects,
+    applyEffect: ctx.applyEffect,
+    removeEffect: ctx.removeEffect,
+    addCustomEffect: ctx.addCustomEffect,
   };
 }
 

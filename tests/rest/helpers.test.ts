@@ -70,6 +70,15 @@ describe("computeShortRestEffects", () => {
     expect(result.statePatch.death_saves).toBeUndefined();
     expect(result.statePatch.exhaustion).toBeUndefined();
   });
+
+  it("leaves active effects alone (buffs persist through an hour RAW)", () => {
+    const state: CharacterState = {
+      spell_slots_used: { pact: 1 },
+      active_effects: [{ id: "e1", name: "Mage Armor" } as never],
+    };
+    const result = computeShortRestEffects(state, []);
+    expect(result.statePatch.active_effects).toBeUndefined();
+  });
 });
 
 describe("computeLongRestEffects", () => {
@@ -137,6 +146,32 @@ describe("computeLongRestEffects", () => {
       rage: 0,
       lay_on_hands: 0,
     });
+  });
+
+  it("clears all active effects", () => {
+    const state: CharacterState = {
+      active_effects: [
+        { id: "e1", name: "Mage Armor" } as never,
+        { id: "e2", name: "Bless" } as never,
+      ],
+    };
+    const result = computeLongRestEffects(state, 50, []);
+    expect(result.statePatch.active_effects).toEqual([]);
+  });
+
+  it("canApply=true when only active effects are present", () => {
+    const state: CharacterState = {
+      current_hp: 50,
+      temp_hp: 0,
+      death_saves: { successes: 0, failures: 0 },
+      exhaustion: 0,
+      concentrating_on: null,
+      spell_slots_used: {},
+      feature_uses: {},
+      active_effects: [{ id: "e1", name: "Mage Armor" } as never],
+    };
+    const result = computeLongRestEffects(state, 50, []);
+    expect(result.canApply).toBe(true);
   });
 
   it("canApply=false when fully rested with no resources used", () => {
