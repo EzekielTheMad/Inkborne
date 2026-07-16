@@ -52,6 +52,10 @@ import {
 } from "@/lib/spells/helpers";
 import { computeResources } from "@/lib/resources/helpers";
 import type { FeatureResource } from "@/lib/types/resources";
+import { executeRoll } from "@/lib/dice/roller";
+import type { RollRequest, RollResult } from "@/lib/dice/types";
+import type { RollLogEntry } from "@/lib/types/rolls";
+import { insertRoll } from "@/lib/supabase/rolls";
 import {
   computeShortRestEffects,
   computeLongRestEffects,
@@ -133,6 +137,10 @@ interface CharacterContextValue {
   // Feature resources
   resources: FeatureResource[];
 
+  // Rolls (hydrated history + session, newest first)
+  rolls: RollLogEntry[];
+  roll: (request: RollRequest) => RollResult;
+
   // Spells
   spells: CharacterSpell[];
   slotState: SpellSlotsUsed;
@@ -162,6 +170,8 @@ export interface CharacterProviderProps {
   initialState: CharacterState;
   initialInventory: InventoryItem[];
   initialSpells: CharacterSpell[];
+  /** Server-fetched recent rolls (newest first). Optional: defaults to empty. */
+  initialRolls?: RollLogEntry[];
   classData: ClassContentData;
   allEffects: Effect[];
   baseStatsWithLevel: Record<string, number>;
@@ -182,6 +192,7 @@ export function CharacterProvider({
   initialState,
   initialInventory,
   initialSpells,
+  initialRolls,
   classData,
   allEffects,
   baseStatsWithLevel,
@@ -437,6 +448,37 @@ export function CharacterProvider({
   const slotState = (state.spell_slots_used ?? {}) as SpellSlotsUsed;
   const concentration = (state.concentrating_on ?? null) as ConcentrationState | null;
 
+  // --- Rolls ---
+  // Newest first: hydrated history seeds the list; session rolls prepend.
+  const [rolls, setRolls] = useState<RollLogEntry[]>(initialRolls ?? []);
+
+  const roll = useCallback(
+    (request: RollRequest): RollResult => {
+      const result = executeRoll(request);
+      const entry: RollLogEntry = {
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `roll-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        character_id: character.id,
+        user_id: character.user_id,
+        kind: request.kind,
+        label: request.label,
+        expression: request.expression,
+        result,
+        total: result.total,
+        rolled_at: result.rolled_at,
+      };
+      setRolls((prev) => [entry, ...prev]);
+      // Fire-and-forget persistence — never blocks the toast (design §3.5).
+      void Promise.resolve(insertRoll(character.id, result)).catch((err) => {
+        console.error("Failed to persist roll:", err);
+      });
+      return result;
+    },
+    [character.id, character.user_id],
+  );
+
   const resources = useMemo<FeatureResource[]>(() => {
     const classChoices = (character.choices?.classes ?? []).map((c) => ({
       slug: c.slug,
@@ -465,6 +507,8 @@ export function CharacterProvider({
     removeItem,
     setCurrency,
     resources,
+    rolls,
+    roll,
     spells,
     slotState,
     maxSlots,
@@ -555,6 +599,23 @@ export function usePortrait() {
   return {
     portrait: ctx.portrait,
     setPortrait: ctx.setPortrait,
+  };
+}
+
+/**
+ * Roll dice for this character: execute → append to the session log →
+ * fire-and-forget persist. The full toast → log → persist pipeline runs for
+ * any `roll(request)` call; the RollResult returns synchronously.
+ */
+export function useRolls(): {
+  /** Hydrated + session rolls, newest first. */
+  rolls: RollLogEntry[];
+  roll: (request: RollRequest) => RollResult;
+} {
+  const ctx = useCharacterContext();
+  return {
+    rolls: ctx.rolls,
+    roll: ctx.roll,
   };
 }
 

@@ -51,6 +51,14 @@ export default async function CharacterPage({ params }: PageProps) {
     .order("sort_order")
     .order("name");
 
+  // Fetch the most recent persisted rolls for the roll log (newest first).
+  const { data: rollRows } = await supabase
+    .from("character_rolls")
+    .select("*")
+    .eq("character_id", id)
+    .order("rolled_at", { ascending: false })
+    .limit(50);
+
   // Fetch spells for this character.
   const { data: spellRows } = await supabase
     .from("character_spells")
@@ -196,6 +204,7 @@ export default async function CharacterPage({ params }: PageProps) {
       hasSheet={hasSheet ?? false}
       initialInventory={inventoryRows ?? []}
       initialSpells={spellRowsAfterSync ?? spellRows ?? []}
+      initialRolls={(rollRows ?? []) as import("@/lib/types/rolls").RollLogEntry[]}
       classData={classData}
     />
   );
