@@ -6,13 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { CharacterSpell } from "@/lib/types/spells";
+import type { SpellCastability } from "@/lib/spells/casting";
 
 interface SpellRowProps {
   spell: CharacterSpell;
   /** Whether this character's class uses prepared spells (and this spell's class is a prepared caster). */
   allowPrepareToggle: boolean;
+  /** How this row can be cast right now ("ritual-only" = unprepared wizard
+   *  spellbook ritual). Omit/"none" hides the Cast button. */
+  castability?: SpellCastability;
   onTogglePrepared: () => void;
   onRemove: () => void;
+  onCast?: () => void;
 }
 
 function formatSchool(school: string): string {
@@ -28,8 +33,10 @@ function formatComponents(components: string[] | undefined): string {
 export function SpellRow({
   spell,
   allowPrepareToggle,
+  castability = "none",
   onTogglePrepared,
   onRemove,
+  onCast,
 }: SpellRowProps) {
   const [expanded, setExpanded] = useState(false);
   const data = (spell.content_definitions?.data ?? {}) as {
@@ -96,6 +103,22 @@ export function SpellRow({
             </Badge>
           )}
         </button>
+
+        {castability !== "none" && onCast && (
+          <Button
+            size="sm"
+            variant={castability === "ritual-only" ? "outline" : "secondary"}
+            className="h-6 px-2 text-xs shrink-0"
+            onClick={onCast}
+            aria-label={
+              castability === "ritual-only"
+                ? `Ritual cast ${spell.name}`
+                : `Cast ${spell.name}`
+            }
+          >
+            {castability === "ritual-only" ? "Ritual" : "Cast"}
+          </Button>
+        )}
 
         {!spell.always_prepared && (
           <button

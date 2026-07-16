@@ -49,7 +49,14 @@ import {
   computeSpellAttackBonus,
   computeMaxPrepared,
   computeMaxSlots,
+  computePactSlotLevel,
 } from "@/lib/spells/helpers";
+import {
+  computeCastEffects,
+  castSourceFromCharacterSpell,
+  type CastChoice,
+  type CastOutcome,
+} from "@/lib/spells/casting";
 import { computeResources } from "@/lib/resources/helpers";
 import type { FeatureResource } from "@/lib/types/resources";
 import { executeRoll } from "@/lib/dice/roller";
@@ -164,11 +171,14 @@ interface CharacterContextValue {
   spells: CharacterSpell[];
   slotState: SpellSlotsUsed;
   maxSlots: MaxSlotsByLevel;
+  /** Slot level of Warlock pact slots (null without pact magic). */
+  pactSlotLevel: number | null;
   casterInfo: CasterInfo;
   concentration: ConcentrationState | null;
   addSpell: (payload: AddSpellPayload) => Promise<void>;
   updateSpell: (id: string, updates: SpellUpdate) => Promise<void>;
   removeSpell: (id: string) => Promise<void>;
+  castSpell: (spell: CharacterSpell, choice: CastChoice) => Promise<CastOutcome>;
   setConcentration: (spell: Omit<ConcentrationState, "started_at"> | null) => Promise<void>;
 
   // Active effects
@@ -512,8 +522,45 @@ export function CharacterProvider({
     return computeMaxSlots(forCalc, classDataForSlots);
   }, [character.choices, classData]);
 
+  const pactSlotLevel = useMemo<number | null>(() => {
+    const classChoices =
+      (character.choices as { classes?: Array<{ slug: string; level: number }> })
+        ?.classes ?? [];
+    const classDataForSlots: Record<string, { levels?: Array<{ spellcasting?: { spell_slots?: number[] } | null }> }> = {};
+    for (const [slug, content] of Object.entries(classData)) {
+      classDataForSlots[slug] = { levels: content.data.levels };
+    }
+    return computePactSlotLevel(classChoices, classDataForSlots);
+  }, [character.choices, classData]);
+
   const slotState = (state.spell_slots_used ?? {}) as SpellSlotsUsed;
   const concentration = (state.concentrating_on ?? null) as ConcentrationState | null;
+
+  // Cast a spell: compute the full consequence (slot consumption +
+  // concentration + active effects) as ONE atomic patch, apply it, and hand
+  // back the roll requests the dialog's result pane offers (design §4.3).
+  const castSpell = useCallback(
+    async (spell: CharacterSpell, choice: CastChoice): Promise<CastOutcome> => {
+      const source = castSourceFromCharacterSpell(spell);
+      if (!source) {
+        throw new Error(`Spell "${spell.name}" has no castable content data.`);
+      }
+      const outcome = computeCastEffects({
+        spell: source,
+        choice,
+        state,
+        casterInfo,
+        abilityScores: (evalResult.stats ?? {}) as Record<string, number>,
+        characterLevel: character.level,
+        classSlug: spell.class_slug,
+      });
+      if (Object.keys(outcome.statePatch).length > 0) {
+        await patchState(outcome.statePatch);
+      }
+      return outcome;
+    },
+    [state, casterInfo, evalResult, character.level, patchState],
+  );
 
   // --- Rolls ---
   // Newest first: hydrated history seeds the list; session rolls prepend.
@@ -614,11 +661,13 @@ export function CharacterProvider({
     spells,
     slotState,
     maxSlots,
+    pactSlotLevel,
     casterInfo,
     concentration,
     addSpell,
     updateSpell,
     removeSpell,
+    castSpell,
     setConcentration,
     activeEffects,
     applyEffect,
@@ -691,11 +740,13 @@ export function useSpells() {
     spells: ctx.spells,
     slotState: ctx.slotState,
     maxSlots: ctx.maxSlots,
+    pactSlotLevel: ctx.pactSlotLevel,
     casterInfo: ctx.casterInfo,
     concentration: ctx.concentration,
     addSpell: ctx.addSpell,
     updateSpell: ctx.updateSpell,
     removeSpell: ctx.removeSpell,
+    castSpell: ctx.castSpell,
     setConcentration: ctx.setConcentration,
   };
 }

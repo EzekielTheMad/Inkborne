@@ -2,11 +2,18 @@
 
 import { X, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSpells } from "@/lib/character/character-context";
+import { useActiveEffects, useSpells } from "@/lib/character/character-context";
 
 export function ConcentrationBadge() {
   const { concentration, setConcentration } = useSpells();
+  const { activeEffects } = useActiveEffects();
   if (!concentration) return null;
+
+  // Effects that ending concentration will remove (removal itself lands in
+  // T7's concentration lifecycle — this is the honest display half).
+  const linkedNames = activeEffects
+    .filter((e) => e.concentration)
+    .map((e) => e.name);
 
   return (
     <div className="flex items-center gap-2 rounded-full bg-purple-950/60 border border-purple-500/50 px-3 py-1 text-xs text-purple-200">
@@ -14,6 +21,12 @@ export function ConcentrationBadge() {
       <span>
         Concentrating: <span className="font-medium">{concentration.spell_name}</span>{" "}
         ({concentration.slot_level === 0 ? "cantrip" : `${concentration.slot_level} slot`})
+        {linkedNames.length > 0 && (
+          <span className="text-purple-300/80">
+            {" "}
+            · ending removes {linkedNames.join(", ")}
+          </span>
+        )}
       </span>
       <Button
         variant="ghost"

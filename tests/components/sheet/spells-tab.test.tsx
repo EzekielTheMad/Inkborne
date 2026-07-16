@@ -8,6 +8,7 @@ vi.mock("@/lib/character/character-context", () => {
       character: { id: "c1", name: "Test", system_id: "sys", choices: {} },
     }),
     useSpells: () => useSpellsMock(),
+    useCharacterState: () => ({ state: {}, patchState: vi.fn() }),
   };
 });
 
