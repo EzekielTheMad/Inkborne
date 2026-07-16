@@ -5,13 +5,14 @@ import { LevelRail } from "@/components/builder/class-step-rail/level-rail";
 import { LevelRailMobile } from "@/components/builder/class-step-rail/level-rail-mobile";
 import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
 import { ClassLevelPane } from "@/components/builder/class-step-rail/class-level-pane";
+import { ClassLevelSheet } from "@/components/builder/class-step-rail/class-level-sheet";
 import { LevelUpPane } from "@/components/builder/class-step-rail/level-up-pane";
 import { AddClassRow } from "@/components/builder/class-step-rail/add-class-row";
 import { ClassPickerPanel } from "@/components/builder/class-step-rail/class-picker-panel";
 import { ClassPickerSheet } from "@/components/builder/class-step-rail/class-picker-sheet";
 import { LevelUpSheet } from "@/components/builder/class-step-rail/level-up-sheet";
 import { Separator } from "@/components/ui/separator";
-import { classFeaturesPerLevel, buildRenderedPerLevel } from "@/lib/builder/class-features-per-level";
+import { classFeaturesPerLevel, buildRenderedPerLevel, pendingChoicesUpTo } from "@/lib/builder/class-features-per-level";
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import { useIsMobile } from "@/lib/builder/use-is-mobile";
 import type { ContentEntry } from "@/components/builder/content-browser";
@@ -105,6 +106,10 @@ export function ClassStepRail(props: ClassStepRailProps) {
   });
   const [showPicker, setShowPicker] = useState(false);
   const [levelUpDraft, setLevelUpDraft] = useState<LevelUpDraft | null>(null);
+  // Mobile-only: which class/level the level-detail bottom sheet shows (null = closed).
+  // Mobile has no static main pane, so this sheet is how per-level choices are reached
+  // outside the level-up flow (UAT A3).
+  const [mobileDetail, setMobileDetail] = useState<SelectedKey | null>(null);
   // Local HP rolls accumulated during the current draft flow, merged over the persisted hpRolls prop.
   const [draftHpRolls, setDraftHpRolls] = useState<Record<string, HpRollRecord>>({});
 
@@ -208,8 +213,22 @@ export function ClassStepRail(props: ClassStepRailProps) {
       setSelected({ classIndex: idx, level });
     };
 
+    /**
+     * First level ≤ `level` that still has a required-but-unmade choice.
+     * Computed against the FULL per-level rows (not the rendered clip) so a
+     * direct set-level jump can look ahead into the newly unlocked range.
+     */
+    const firstPendingLevelUpTo = (level: number): number | null =>
+      pendingChoicesUpTo(perLevel, level)[0]?.level ?? null;
+
     const handleLevelChange = (newLevel: number) => {
-      if (selected.classIndex === idx && selected.level > newLevel) {
+      // UAT A4: a direct set-level jump bypasses the step-by-step flow, so any
+      // required choice in the new range (subclass, ASI, …) would be silently
+      // skipped. Land the selection on the first pending choice instead.
+      const pendingLevel = firstPendingLevelUpTo(newLevel);
+      if (pendingLevel != null) {
+        setSelected({ classIndex: idx, level: pendingLevel });
+      } else if (selected.classIndex === idx && selected.level > newLevel) {
         setSelected({ classIndex: idx, level: newLevel });
       }
       onLevelChange(idx, newLevel);
@@ -218,6 +237,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     const handleLevelUpClick = () => {
       if (buttonState !== "idle") return;
       setShowPicker(false);
+      setMobileDetail(null);
       setLevelUpDraft({ classIndex: idx, draftLevel: cls.level + 1 });
     };
 
@@ -232,6 +252,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       handleSelectLevel,
       handleLevelChange,
       handleLevelUpClick,
+      firstPendingLevelUpTo,
     };
   }
 
@@ -334,6 +355,66 @@ export function ClassStepRail(props: ClassStepRailProps) {
       }
     }
 
+    // Mobile level detail sheet (UAT A3): the sub-`md` equivalent of the desktop
+    // main pane. Reuses <ClassLevelPane> — including the same choice cards
+    // (subclass / ASI / fighting style) the level-up flow renders.
+    let mobileDetailSheet: React.ReactNode = null;
+    if (mobileDetail) {
+      const cls = selectedClasses[mobileDetail.classIndex];
+      const classContent = classes.find((c) => c.slug === cls?.slug);
+      if (classContent && cls) {
+        const subclassContent = cls.subclass
+          ? subclasses.find((sc) => sc.slug === cls.subclass) ?? null
+          : null;
+        const perLevel = classFeaturesPerLevel({
+          classContent,
+          features,
+          subclassContent,
+          characterChoices: localChoices,
+          classIndex: mobileDetail.classIndex,
+        });
+        const row = perLevel.find((r) => r.level === mobileDetail.level);
+        const styleOptions = features.filter((f) => {
+          const data = f.data as Record<string, unknown>;
+          return data.class === cls.slug && data.feature_type === "fighting_style" && f.name !== "Fighting Style";
+        });
+        const classChoices = (classContent.effects ?? []).filter(
+          (e): e is ChoiceEffect => e.type === "choice",
+        );
+        const rawHitDie = (classContent.data as Record<string, unknown>).hit_die;
+        const hitDie = typeof rawHitDie === "number" && rawHitDie > 0 ? rawHitDie : 8;
+
+        mobileDetailSheet = (
+          <ClassLevelSheet
+            open
+            onOpenChange={(next) => {
+              if (!next) setMobileDetail(null);
+            }}
+            level={mobileDetail.level}
+            classSlug={cls.slug}
+            className_={classContent.name}
+            classIndex={mobileDetail.classIndex}
+            isPrimaryClass={mobileDetail.classIndex === 0}
+            row={row}
+            subclasses={subclasses}
+            styleOptions={styleOptions}
+            localChoices={localChoices}
+            currentSubclass={cls.subclass}
+            classChoices={classChoices}
+            hitDie={hitDie}
+            hpRule={hpRule}
+            conMod={conMod}
+            hpRolls={hpRolls}
+            onAsiSelect={onAsiSelect}
+            onSubclassSelect={onSubclassSelect}
+            onFightingStyleSelect={onFightingStyleSelect}
+            onChoiceSelect={onChoiceSelect}
+            onHpRollChange={onHpRollChange}
+          />
+        );
+      }
+    }
+
     return (
       <>
         <div className="flex flex-col md:hidden">
@@ -360,6 +441,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
               handleSelectLevel,
               handleLevelChange,
               handleLevelUpClick,
+              firstPendingLevelUpTo,
             } = built;
             return (
               <LevelRailMobile
@@ -370,8 +452,20 @@ export function ClassStepRail(props: ClassStepRailProps) {
                 currentLevel={cls.level}
                 perLevel={renderedPerLevel}
                 activeLevel={activeLevel}
-                onSelectLevel={handleSelectLevel}
-                onLevelChange={handleLevelChange}
+                onSelectLevel={(level) => {
+                  // Mobile has no static main pane — the level detail sheet is it.
+                  handleSelectLevel(level);
+                  if (!railDisabled) setMobileDetail({ classIndex: idx, level });
+                }}
+                onLevelChange={(newLevel) => {
+                  // UAT A4: after a direct set-level jump, immediately open the
+                  // detail sheet on the first skipped required choice (if any).
+                  const pendingLevel = firstPendingLevelUpTo(newLevel);
+                  handleLevelChange(newLevel);
+                  if (pendingLevel != null) {
+                    setMobileDetail({ classIndex: idx, level: pendingLevel });
+                  }
+                }}
                 onRemoveClass={() => onRemoveClass(idx)}
                 disabled={railDisabled}
                 onLevelUpClick={handleLevelUpClick}
@@ -400,6 +494,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
         )}
 
         {mobileLevelUpSheet}
+
+        {mobileDetailSheet}
       </>
     );
   }

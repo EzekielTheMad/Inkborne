@@ -114,6 +114,27 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
   return result;
 }
 
+export interface PendingChoice {
+  level: number;
+  choice: PerLevelChoice;
+}
+
+/**
+ * Collect required-but-unmade choices at or below `level`, in level order.
+ *
+ * Backs the pending-choice callout in the class rails (UAT A3) and the
+ * "surface skipped choices after a direct set-level jump" behavior (UAT A4).
+ */
+export function pendingChoicesUpTo(perLevel: PerLevel[], level: number): PendingChoice[] {
+  return perLevel
+    .filter((row) => row.level <= level)
+    .flatMap((row) =>
+      row.choices
+        .filter((choice) => !choice.isMade)
+        .map((choice) => ({ level: row.level, choice })),
+    );
+}
+
 /**
  * Build the per-level rows rendered in a class rail.
  *

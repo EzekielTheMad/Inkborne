@@ -1839,7 +1839,7 @@ describe("LevelRailSetLevelSheet", () => {
 
   it("renders a level select with options 1..maxLevel", () => {
     render(<LevelRailSetLevelSheet {...defaults({ maxLevel: 5 })} />);
-    const select = screen.getByLabelText("Set level for Paladin");
+    const select = screen.getByRole("combobox", { name: "Set level for Paladin" });
     const options = select.querySelectorAll("option");
     expect(options.length).toBe(5);
     expect(options[0]).toHaveValue("1");
@@ -1848,7 +1848,7 @@ describe("LevelRailSetLevelSheet", () => {
 
   it("default-selects the currentLevel", () => {
     render(<LevelRailSetLevelSheet {...defaults({ currentLevel: 3 })} />);
-    const select = screen.getByLabelText("Set level for Paladin") as HTMLSelectElement;
+    const select = screen.getByRole("combobox", { name: "Set level for Paladin" }) as HTMLSelectElement;
     expect(select.value).toBe("3");
   });
 
@@ -1856,7 +1856,7 @@ describe("LevelRailSetLevelSheet", () => {
     const onLevelChange = vi.fn();
     const onOpenChange = vi.fn();
     render(<LevelRailSetLevelSheet {...defaults({ onLevelChange, onOpenChange, classIndex: 1 })} />);
-    const select = screen.getByLabelText("Set level for Paladin");
+    const select = screen.getByRole("combobox", { name: "Set level for Paladin" });
     fireEvent.change(select, { target: { value: "8" } });
     fireEvent.click(screen.getByRole("button", { name: /Confirm/i }));
     expect(onLevelChange).toHaveBeenCalledWith(1, 8);
@@ -2413,6 +2413,271 @@ describe("ClassStepRail — mobile pattern (sub-md)", () => {
       resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
     });
     expect(screen.getAllByText(/Add a class/i).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UAT punch list A3/A4/A5 (2026-06-19): subclass discoverability, direct
+// set-level choice surfacing, set-level sheet a11y.
+// ---------------------------------------------------------------------------
+
+/** Force useIsMobile() to a known value regardless of earlier describes' mocks. */
+function mockMatchMedia(mobile: boolean) {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: mobile && query === "(max-width: 767px)",
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
+
+/**
+ * A Wizard whose required subclass choice (Arcane Tradition) gates at level 2 —
+ * the shape of the "Voltee" UAT bug (Wizard set straight to 3, no Tradition).
+ */
+function wizardProps(overrides: Partial<Parameters<typeof ClassStepRail>[0]> = {}) {
+  const handlers = {
+    onLevelChange: vi.fn(),
+    onRemoveClass: vi.fn(),
+    onSubclassSelect: vi.fn(),
+    onAsiSelect: vi.fn(),
+    onFightingStyleSelect: vi.fn(),
+    onChoiceSelect: vi.fn(),
+    onAddClass: vi.fn(),
+    onConfirmLevelUp: vi.fn(),
+    onCancelLevelUp: vi.fn(),
+    onHpRollChange: vi.fn(),
+  };
+  const props = {
+    classes: [
+      classEntry("wizard", "Wizard", [
+        { level: 1, features: ["arcane-recovery"] },
+        { level: 2, features: ["arcane-tradition"] },
+        { level: 3, features: [] },
+      ]),
+    ],
+    subclasses: [subclass("evocation", "School of Evocation", "wizard")],
+    features: [
+      { id: "f-ar", slug: "arcane-recovery", name: "Arcane Recovery", content_type: "feature", data: { level: 1, class: "wizard" }, effects: [], version: 1, source: "srd" } as ContentEntry,
+      { id: "f-at", slug: "arcane-tradition", name: "Arcane Tradition", content_type: "feature", data: { level: 2, class: "wizard", feature_type: "subclass" }, effects: [], version: 1, source: "srd" } as ContentEntry,
+    ],
+    selectedClasses: [{ slug: "wizard", level: 1 }],
+    localChoices: {} as CharacterChoices,
+    resolvedStats: {
+      strength: 10, dexterity: 10, constitution: 10,
+      intelligence: 14, wisdom: 10, charisma: 10,
+    },
+    hpRule: "free_choice" as const,
+    hpRolls: {} as Record<string, HpRollRecord>,
+    ...handlers,
+    ...overrides,
+  };
+  return { props, handlers };
+}
+
+describe("LevelRail — pending required choice callout (UAT A3)", () => {
+  function railDefaults(overrides: Partial<Parameters<typeof LevelRail>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      subclassName: undefined,
+      currentLevel: 4,
+      perLevel: makePerLevel(),
+      activeLevel: 1,
+      onSelectLevel: vi.fn(),
+      onLevelChange: vi.fn(),
+      onLevelUpClick: vi.fn(),
+      levelUpButtonState: "idle" as const,
+      ...overrides,
+    };
+  }
+
+  it("renders a 'Choose your Sacred Oath' button for the unmade required choice", () => {
+    render(<LevelRail {...railDefaults()} />);
+    expect(screen.getByRole("button", { name: /Choose your Sacred Oath/i })).toBeInTheDocument();
+  });
+
+  it("does not render a callout for choices that are already made", () => {
+    // makePerLevel's ASI at level 4 is made — only the subclass callout shows.
+    render(<LevelRail {...railDefaults()} />);
+    expect(screen.queryByRole("button", { name: /Choose your Ability Score Improvement/i })).not.toBeInTheDocument();
+  });
+
+  it("clicking the callout navigates to that level via onSelectLevel", () => {
+    const onSelectLevel = vi.fn();
+    render(<LevelRail {...railDefaults({ onSelectLevel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Choose your Sacred Oath/i }));
+    expect(onSelectLevel).toHaveBeenCalledWith(3);
+  });
+
+  it("renders no callout when every required choice is made", () => {
+    const madePerLevel: PerLevel[] = [
+      { level: 1, features: [], choices: [] },
+      { level: 3, features: [], choices: [{ type: "subclass", classSlug: "paladin", label: "Sacred Oath", isMade: true }] },
+    ];
+    render(<LevelRail {...railDefaults({ perLevel: madePerLevel })} />);
+    expect(screen.queryByRole("button", { name: /Choose your/i })).not.toBeInTheDocument();
+  });
+
+  it("hides the callout while the rail is locked (mid level-up flow)", () => {
+    render(<LevelRail {...railDefaults({ disabled: true })} />);
+    expect(screen.queryByRole("button", { name: /Choose your/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("LevelRailMobile — pending required choice callout (UAT A3)", () => {
+  function mobileDefaults(overrides: Partial<Parameters<typeof LevelRailMobile>[0]> = {}) {
+    return {
+      classSlug: "paladin",
+      className_: "Paladin",
+      subclassName: undefined as string | undefined,
+      currentLevel: 4,
+      perLevel: makePerLevel(),
+      activeLevel: 4,
+      onSelectLevel: vi.fn(),
+      onLevelChange: vi.fn(),
+      onRemoveClass: vi.fn(),
+      onLevelUpClick: vi.fn(),
+      levelUpButtonState: "idle" as const,
+      disabled: false,
+      ...overrides,
+    };
+  }
+
+  it("renders the 'Choose your Sacred Oath' callout under the pill rail", () => {
+    render(<LevelRailMobile {...mobileDefaults()} />);
+    expect(screen.getByRole("button", { name: /Choose your Sacred Oath/i })).toBeInTheDocument();
+  });
+
+  it("tapping the callout fires onSelectLevel with the pending level", () => {
+    const onSelectLevel = vi.fn();
+    render(<LevelRailMobile {...mobileDefaults({ onSelectLevel })} />);
+    fireEvent.click(screen.getByRole("button", { name: /Choose your Sacred Oath/i }));
+    expect(onSelectLevel).toHaveBeenCalledWith(3);
+  });
+
+  it("hides the callout while disabled (mid level-up flow)", () => {
+    render(<LevelRailMobile {...mobileDefaults({ disabled: true })} />);
+    expect(screen.queryByRole("button", { name: /Choose your/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — direct set-level surfaces skipped required choices (UAT A4)", () => {
+  beforeEach(() => mockMatchMedia(false));
+
+  it("REPRO: jumping Wizard 1 → 3 via the set-level dropdown lands the pane on the skipped Arcane Tradition choice", () => {
+    const { props, handlers } = wizardProps();
+    const { rerender } = render(<ClassStepRail {...props} />);
+
+    fireEvent.change(screen.getByLabelText("Set level for Wizard"), { target: { value: "3" } });
+    expect(handlers.onLevelChange).toHaveBeenCalledWith(0, 3);
+
+    // Parent persists the jump (controlled prop).
+    rerender(<ClassStepRail {...props} selectedClasses={[{ slug: "wizard", level: 3 }]} />);
+
+    // The main pane must surface the skipped required choice — not sit on level 1.
+    expect(screen.getByRole("heading", { level: 2, name: "Arcane Tradition" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+  });
+
+  it("keeps a visible 'Choose your Arcane Tradition' affordance on the rail while the choice is pending", () => {
+    const { props } = wizardProps({ selectedClasses: [{ slug: "wizard", level: 3 }] });
+    render(<ClassStepRail {...props} />);
+    expect(screen.getByRole("button", { name: /Choose your Arcane Tradition/i })).toBeInTheDocument();
+  });
+
+  it("does not hijack the selection when the new range has no pending choices", () => {
+    const { props } = wizardProps({
+      localChoices: { classes: [{ slug: "wizard", level: 1, subclass: "evocation" }] } as CharacterChoices,
+      selectedClasses: [{ slug: "wizard", level: 1, subclass: "evocation" }],
+    });
+    render(<ClassStepRail {...props} />);
+    expect(screen.getByRole("heading", { level: 2, name: "Arcane Recovery" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Set level for Wizard"), { target: { value: "2" } });
+    // Choice already made → nothing pending → pane stays where it was.
+    expect(screen.getByRole("heading", { level: 2, name: "Arcane Recovery" })).toBeInTheDocument();
+  });
+});
+
+describe("ClassStepRail — mobile level detail sheet (UAT A3/A4)", () => {
+  beforeEach(() => mockMatchMedia(true));
+
+  it("tapping a level pill opens the level detail sheet with that level's content", () => {
+    const { props } = wizardProps({ selectedClasses: [{ slug: "wizard", level: 3 }] });
+    render(<ClassStepRail {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /^Level 2/i }));
+    expect(screen.getByRole("heading", { level: 2, name: "Arcane Tradition" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+  });
+
+  it("tapping the pending-choice callout opens the detail sheet at the pending level", () => {
+    const { props } = wizardProps({ selectedClasses: [{ slug: "wizard", level: 3 }] });
+    render(<ClassStepRail {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /Choose your Arcane Tradition/i }));
+    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+  });
+
+  it("picking the subclass inside the sheet forwards onSubclassSelect (same selector as level-up)", () => {
+    const { props, handlers } = wizardProps({ selectedClasses: [{ slug: "wizard", level: 3 }] });
+    render(<ClassStepRail {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /Choose your Arcane Tradition/i }));
+    fireEvent.click(screen.getByRole("button", { name: /School of Evocation/i }));
+    expect(handlers.onSubclassSelect).toHaveBeenCalledWith("wizard", 0, "evocation");
+  });
+
+  it("REPRO (A4 mobile): confirming a set-level jump opens the detail sheet on the skipped choice", () => {
+    const { props, handlers } = wizardProps();
+    render(<ClassStepRail {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Set level" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Set level for Wizard" }), { target: { value: "3" } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    expect(handlers.onLevelChange).toHaveBeenCalledWith(0, 3);
+    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+  });
+
+  it("does not open the detail sheet after a set-level change with nothing pending", () => {
+    const { props } = wizardProps({
+      localChoices: { classes: [{ slug: "wizard", level: 1, subclass: "evocation" }] } as CharacterChoices,
+      selectedClasses: [{ slug: "wizard", level: 1, subclass: "evocation" }],
+    });
+    render(<ClassStepRail {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Set level" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Set level for Wizard" }), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    expect(screen.queryByRole("button", { name: /School of Evocation/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("LevelRailSetLevelSheet — accessibility (UAT A5)", () => {
+  it("exposes an accessible dialog name + description and fires no DialogTitle warning", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      render(
+        <LevelRailSetLevelSheet
+          open
+          onOpenChange={vi.fn()}
+          classSlug="paladin"
+          className_="Paladin"
+          classIndex={0}
+          currentLevel={6}
+          maxLevel={20}
+          onLevelChange={vi.fn()}
+        />,
+      );
+      const dialog = screen.getByRole("dialog", { name: /Set level for Paladin/i });
+      expect(dialog).toHaveAccessibleDescription();
+      const logged = errorSpy.mock.calls.flat().map(String).join("\n");
+      expect(logged).not.toMatch(/requires a `DialogTitle`/);
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });
 

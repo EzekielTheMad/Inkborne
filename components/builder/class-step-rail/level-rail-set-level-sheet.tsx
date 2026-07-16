@@ -30,7 +30,7 @@ export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
     if (open) setDraftLevel(currentLevel);
   }, [open, currentLevel]);
 
-  const labelId = `set-level-${classSlug}-label`;
+  const selectId = `set-level-${classSlug}-select`;
 
   const handleConfirm = () => {
     void onLevelChange(classIndex, draftLevel);
@@ -45,14 +45,17 @@ export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle id={labelId}>Set level for {className_}</DrawerTitle>
+          {/* No custom `id` here: Radix wires `aria-labelledby` to its own generated
+              title id, and its a11y check looks that id up in the DOM. Overriding it
+              breaks both (residual "DialogContent requires a DialogTitle" warning). */}
+          <DrawerTitle>Set level for {className_}</DrawerTitle>
           <DrawerDescription className="sr-only">
             Choose a level for {className_} between 1 and {maxLevel}.
           </DrawerDescription>
         </DrawerHeader>
         <div className="px-4 pb-2">
           <select
-            id={`${labelId}-select`}
+            id={selectId}
             aria-label={`Set level for ${className_}`}
             value={draftLevel}
             onChange={(e) => setDraftLevel(Number.parseInt(e.target.value, 10))}
