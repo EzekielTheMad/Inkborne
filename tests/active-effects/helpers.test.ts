@@ -7,6 +7,7 @@ import {
   dropConcentrationEffects,
   collectActiveEffects,
   collectRollModifiers,
+  applyRollModifiers,
   computeExpiresAt,
   isExpired,
   formatRemaining,
@@ -473,5 +474,137 @@ describe("collectRollModifiers", () => {
 
   it("returns [] for undefined input", () => {
     expect(collectRollModifiers(undefined, "attack", NOW)).toEqual([]);
+  });
+});
+
+describe("applyRollModifiers", () => {
+  const bless = mkEffect({
+    id: "e-bless",
+    name: "Bless",
+    concentration: true,
+    duration: { type: "minutes", value: 1 },
+    expires_at: null,
+    effects: [
+      { type: "mechanical", stat: "roll_attack", op: "add", value: "1d4" },
+      { type: "mechanical", stat: "roll_save", op: "add", value: "1d4" },
+    ],
+  });
+  const bane = mkEffect({
+    id: "e-bane",
+    name: "Bane",
+    duration: { type: "minutes", value: 1 },
+    expires_at: null,
+    effects: [
+      { type: "mechanical", stat: "roll_attack", op: "add", value: "-1d4" },
+    ],
+  });
+
+  it("appends save modifiers to save-kind rolls with named breakdown label", () => {
+    const modified = applyRollModifiers(
+      { kind: "save", label: "CON Save", expression: "1d20+3" },
+      [bless],
+      NOW,
+    );
+    expect(modified.expression).toBe("1d20+3+1d4");
+    expect(modified.label).toBe("CON Save · +1d4 (Bless)");
+    expect(modified.meta?.roll_modifiers).toEqual([
+      { name: "Bless", dice: "1d4" },
+    ]);
+  });
+
+  it("treats concentration rolls as saving throws (Bless applies)", () => {
+    const modified = applyRollModifiers(
+      {
+        kind: "concentration",
+        label: "Concentration Save — Bless",
+        expression: "1d20+5",
+        meta: { dc: 11 },
+      },
+      [bless],
+      NOW,
+    );
+    expect(modified.expression).toBe("1d20+5+1d4");
+    // Existing meta survives the merge.
+    expect(modified.meta?.dc).toBe(11);
+  });
+
+  it("appends negative dice without a doubled sign", () => {
+    const modified = applyRollModifiers(
+      { kind: "attack", label: "Longsword", expression: "1d20+5" },
+      [bane],
+      NOW,
+    );
+    expect(modified.expression).toBe("1d20+5-1d4");
+    expect(modified.label).toBe("Longsword · -1d4 (Bane)");
+  });
+
+  it("stacks multiple modifiers in scan order", () => {
+    const modified = applyRollModifiers(
+      { kind: "attack", label: "Longsword", expression: "1d20+5" },
+      [bless, bane],
+      NOW,
+    );
+    expect(modified.expression).toBe("1d20+5+1d4-1d4");
+    expect(modified.label).toBe("Longsword · +1d4 (Bless) -1d4 (Bane)");
+  });
+
+  it("treats initiative as a check-kind roll", () => {
+    const guidance = mkEffect({
+      id: "e-guidance",
+      name: "Guidance",
+      expires_at: null,
+      duration: { type: "minutes", value: 1 },
+      effects: [
+        { type: "mechanical", stat: "roll_check", op: "add", value: "1d4" },
+      ],
+    });
+    const modified = applyRollModifiers(
+      { kind: "initiative", label: "Initiative", expression: "1d20+2" },
+      [guidance],
+      NOW,
+    );
+    expect(modified.expression).toBe("1d20+2+1d4");
+  });
+
+  it("never touches unmapped kinds (damage, death_save) or empty scans", () => {
+    const damage = {
+      kind: "damage" as const,
+      label: "Fire Bolt",
+      expression: "1d10",
+    };
+    expect(applyRollModifiers(damage, [bless], NOW)).toBe(damage);
+
+    const deathSave = {
+      kind: "death_save" as const,
+      label: "Death Save",
+      expression: "1d20",
+    };
+    expect(applyRollModifiers(deathSave, [bless], NOW)).toBe(deathSave);
+
+    const check = {
+      kind: "check" as const,
+      label: "Athletics",
+      expression: "1d20+3",
+    };
+    expect(applyRollModifiers(check, [bless], NOW)).toBe(check); // Bless has no roll_check
+    expect(applyRollModifiers(check, undefined, NOW)).toBe(check);
+  });
+
+  it("skips expired modifier sources", () => {
+    const expiredBless = mkEffect({
+      id: "e-old",
+      name: "Bless",
+      effects: [
+        { type: "mechanical", stat: "roll_save", op: "add", value: "1d4" },
+      ],
+    }); // hours duration, expires 2026-07-15T20:00Z
+    const request = {
+      kind: "save" as const,
+      label: "CON Save",
+      expression: "1d20+3",
+    };
+    expect(
+      applyRollModifiers(request, [expiredBless], new Date("2026-07-15T21:00:00Z")),
+    ).toBe(request);
   });
 });

@@ -5,6 +5,7 @@ import { CharacterHeader } from "@/components/sheet/character-header";
 import { SheetPanel } from "@/components/character/sheet-panel";
 import { NarrativePanel } from "@/components/character/narrative-panel";
 import { ConcentrationBadge } from "@/components/sheet/spells/concentration-badge";
+import { ConcentrationPrompt } from "@/components/sheet/concentration-prompt";
 import { RollLayer } from "@/components/sheet/rolls/roll-layer";
 import { FirstArrival } from "@/components/sheet/first-arrival";
 import {
@@ -79,6 +80,11 @@ export function CharacterShell() {
           <NarrativePanel />
         </TabsContent>
       </Tabs>
+
+      {/* Damage-triggered CON-save dialog (T7) — renders nothing until the HP
+          tracker raises a check; portal-rendered, so this single mount covers
+          both the desktop and mobile HP flows. */}
+      <ConcentrationPrompt />
     </div>
   );
 }

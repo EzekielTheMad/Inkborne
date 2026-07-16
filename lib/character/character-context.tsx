@@ -82,7 +82,13 @@ import {
   applyActiveEffectPatch,
   removeActiveEffectPatch,
   buildCustomActiveEffect,
+  applyRollModifiers,
 } from "@/lib/active-effects/helpers";
+import {
+  computeConcentrationDropPatch,
+  concentrationSaveDc,
+  type PendingConcentrationCheck,
+} from "@/lib/active-effects/concentration";
 import {
   computeHitDicePools,
   buildHitDieRollRequest,
@@ -189,6 +195,16 @@ interface CharacterContextValue {
   removeSpell: (id: string) => Promise<void>;
   castSpell: (spell: CharacterSpell, choice: CastChoice) => Promise<CastOutcome>;
   setConcentration: (spell: Omit<ConcentrationState, "started_at"> | null) => Promise<void>;
+
+  // Concentration lifecycle (T7)
+  /** Damage-triggered CON save awaiting resolution; null when none pending. */
+  pendingConcentrationCheck: PendingConcentrationCheck | null;
+  /** Raise the concentration-check prompt for damage taken while concentrating. */
+  requestConcentrationCheck: (damage: number) => void;
+  /** Resolve the pending check: "drop" applies the atomic drop patch; "keep" just clears it. */
+  resolveConcentrationCheck: (outcome: "keep" | "drop") => Promise<void>;
+  /** Drop patch for the current state (concentrating_on: null + linked effects stripped). */
+  concentrationDropPatch: Partial<CharacterState>;
 
   // Active effects
   activeEffects: ActiveEffect[];
@@ -421,7 +437,10 @@ export function CharacterProvider({
   const setConcentration = useCallback(
     async (spell: Omit<ConcentrationState, "started_at"> | null) => {
       if (!spell) {
-        await patchState({ concentrating_on: null });
+        // Ending concentration strips every linked active effect in the SAME
+        // atomic patch (design §6.6) — the badge ✕, the prompt's Drop, and any
+        // other caller all get the full drop for free.
+        await patchState(computeConcentrationDropPatch(state));
       } else {
         await patchState({
           concentrating_on: {
@@ -431,7 +450,34 @@ export function CharacterProvider({
         });
       }
     },
-    [patchState],
+    [patchState, state],
+  );
+
+  // --- Concentration lifecycle (T7) ---
+  // The damage path (HP tracker) raises a pending CON-save check; the
+  // ConcentrationPrompt dialog resolves it. Drop resolution applies the same
+  // atomic drop patch as every other concentration-ending path.
+  const [pendingConcentrationCheck, setPendingConcentrationCheck] =
+    useState<PendingConcentrationCheck | null>(null);
+
+  const requestConcentrationCheck = useCallback((damage: number) => {
+    if (damage <= 0) return;
+    setPendingConcentrationCheck({ damage, dc: concentrationSaveDc(damage) });
+  }, []);
+
+  const resolveConcentrationCheck = useCallback(
+    async (outcome: "keep" | "drop") => {
+      setPendingConcentrationCheck(null);
+      if (outcome === "drop") {
+        await patchState(computeConcentrationDropPatch(state));
+      }
+    },
+    [patchState, state],
+  );
+
+  const concentrationDropPatch = useMemo(
+    () => computeConcentrationDropPatch(state),
+    [state],
   );
 
   // --- Active-effect mutations (each is one atomic patchState) ---
@@ -577,7 +623,11 @@ export function CharacterProvider({
 
   const roll = useCallback(
     (request: RollRequest): RollResult => {
-      const result = executeRoll(request);
+      // Active-effect roll modifiers (Bless +1d4, Bane -1d4…) append to
+      // matching kinds before execution (design §6.4) — the breakdown then
+      // shows the extra dice with their source named in the label.
+      const modified = applyRollModifiers(request, activeEffects);
+      const result = executeRoll(modified);
       const entry: RollLogEntry = {
         id:
           typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -585,9 +635,9 @@ export function CharacterProvider({
             : `roll-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         character_id: character.id,
         user_id: character.user_id,
-        kind: request.kind,
-        label: request.label,
-        expression: request.expression,
+        kind: modified.kind,
+        label: modified.label,
+        expression: modified.expression,
         result,
         total: result.total,
         rolled_at: result.rolled_at,
@@ -599,7 +649,7 @@ export function CharacterProvider({
       });
       return result;
     },
-    [character.id, character.user_id],
+    [character.id, character.user_id, activeEffects],
   );
 
   const resources = useMemo<FeatureResource[]>(() => {
@@ -678,6 +728,10 @@ export function CharacterProvider({
     removeSpell,
     castSpell,
     setConcentration,
+    pendingConcentrationCheck,
+    requestConcentrationCheck,
+    resolveConcentrationCheck,
+    concentrationDropPatch,
     activeEffects,
     applyEffect,
     removeEffect,
@@ -757,6 +811,29 @@ export function useSpells() {
     removeSpell: ctx.removeSpell,
     castSpell: ctx.castSpell,
     setConcentration: ctx.setConcentration,
+  };
+}
+
+/**
+ * Concentration lifecycle (M3 T7): what the character is concentrating on,
+ * the pending damage-triggered CON-save check, and its resolution paths.
+ * `dropPatch` is the current atomic drop patch — the HP tracker merges it
+ * into the damage patch when damage reduces HP to 0 (RAW auto-drop).
+ */
+export function useConcentration(): {
+  concentration: ConcentrationState | null;
+  pendingCheck: PendingConcentrationCheck | null;
+  requestCheck: (damage: number) => void;
+  resolveCheck: (outcome: "keep" | "drop") => Promise<void>;
+  dropPatch: Partial<CharacterState>;
+} {
+  const ctx = useCharacterContext();
+  return {
+    concentration: ctx.concentration,
+    pendingCheck: ctx.pendingConcentrationCheck,
+    requestCheck: ctx.requestConcentrationCheck,
+    resolveCheck: ctx.resolveConcentrationCheck,
+    dropPatch: ctx.concentrationDropPatch,
   };
 }
 

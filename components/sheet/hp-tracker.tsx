@@ -8,6 +8,23 @@ import { cn } from "@/lib/utils";
 import type { CharacterState } from "@/lib/types/character";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
 
+/**
+ * Concentration wiring for the damage path (M3 T7). Present only while the
+ * character is concentrating; the parent derives it from `useConcentration()`.
+ */
+export interface HPConcentrationProps {
+  /** Spell being concentrated on (display/meta only). */
+  spellName: string;
+  /** Drop patch (concentrating_on: null + linked effects stripped) merged
+   *  into the damage patch when damage reduces HP to 0 — RAW drops
+   *  concentration on incapacitation with no save, so it must land in the
+   *  SAME atomic write as the HP change. */
+  dropPatch: Partial<CharacterState>;
+  /** Raise the CON-save prompt after damage that leaves HP above 0
+   *  (DC handling lives with the prompt, not the tracker). */
+  onDamage: (damage: number) => void;
+}
+
 interface HPTrackerProps {
   currentHp: number;
   maxHp: number;
@@ -16,6 +33,8 @@ interface HPTrackerProps {
   /** Optional read-only hit-dice pools shown in the popover ("d10 3/5 · d6 1/1")
    *  so remaining HD are visible without opening the Rest dialog. */
   hitDicePools?: HitDicePool[];
+  /** Optional concentration wiring — see HPConcentrationProps. */
+  concentration?: HPConcentrationProps;
 }
 
 function getHpColor(currentHp: number, maxHp: number): string {
@@ -33,6 +52,7 @@ export function HPTracker({
   tempHp,
   patchState,
   hitDicePools,
+  concentration,
 }: HPTrackerProps) {
   const [inputValue, setInputValue] = useState("");
   const [open, setOpen] = useState(false);
@@ -60,7 +80,22 @@ export function HPTracker({
     }
     newCurrent = Math.max(0, newCurrent - remaining);
 
-    patchState({ current_hp: newCurrent, temp_hp: newTemp });
+    const patch: Partial<CharacterState> = {
+      current_hp: newCurrent,
+      temp_hp: newTemp,
+    };
+    // Concentration vs damage (design §6.6): dropping to 0 HP ends
+    // concentration automatically per RAW — merged into the SAME atomic
+    // patch, no prompt. Surviving damage raises the CON-save prompt instead
+    // (temp-HP absorption still counts as taking damage RAW, so the prompt
+    // fires even when current HP didn't move).
+    if (concentration && newCurrent === 0) {
+      Object.assign(patch, concentration.dropPatch);
+    }
+    patchState(patch);
+    if (concentration && newCurrent > 0) {
+      concentration.onDamage(amount);
+    }
     setInputValue("");
     setOpen(false);
   }

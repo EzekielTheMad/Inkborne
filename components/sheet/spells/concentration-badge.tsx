@@ -9,8 +9,9 @@ export function ConcentrationBadge() {
   const { activeEffects } = useActiveEffects();
   if (!concentration) return null;
 
-  // Effects that ending concentration will remove (removal itself lands in
-  // T7's concentration lifecycle — this is the honest display half).
+  // Effects that ending concentration will remove. The ✕ goes through
+  // setConcentration(null), which applies the full atomic drop patch
+  // (concentrating_on cleared + these effects stripped in ONE write, T7).
   const linkedNames = activeEffects
     .filter((e) => e.concentration)
     .map((e) => e.name);

@@ -9,6 +9,7 @@ import type {
 } from "@/lib/types/active-effects";
 import { ROLL_MODIFIER_STATS } from "@/lib/types/active-effects";
 import { parseSpellDuration } from "@/lib/spells/duration";
+import type { RollKind, RollRequest } from "@/lib/dice/types";
 
 // ---------------------------------------------------------------------------
 // All helpers here are PURE: they compute next values from current ones and
@@ -304,4 +305,51 @@ export function collectRollModifiers(
     }
   }
   return modifiers;
+}
+
+/**
+ * Which roll kinds accept which roll-modifier hints. Kinds absent here
+ * (damage, heal, hit_die, death_save†, custom) are never modified.
+ *
+ * † Death saves are not "saving throws using an ability score" — Bless does
+ *   not apply to them RAW, so they stay unmapped.
+ */
+const ROLL_KIND_TO_MODIFIER_KIND: Partial<Record<RollKind, RollModifierKind>> = {
+  attack: "attack",
+  save: "save",
+  concentration: "save", // a concentration check IS a CON saving throw
+  check: "check",
+  initiative: "check", // initiative is a Dexterity check RAW
+};
+
+/**
+ * Append active-effect roll modifiers (Bless's `+1d4`, Bane's `-1d4`…) to a
+ * matching RollRequest before execution (design §6.4). The expression gains
+ * the dice terms, the label names each source for the breakdown
+ * (`Attack · +1d4 (Bless)`), and `meta.roll_modifiers` records provenance.
+ * Non-matching kinds and empty scans return the request untouched.
+ */
+export function applyRollModifiers(
+  request: RollRequest,
+  current: ActiveEffect[] | undefined,
+  now: Date = new Date(),
+): RollRequest {
+  const modifierKind = ROLL_KIND_TO_MODIFIER_KIND[request.kind];
+  if (!modifierKind) return request;
+
+  const modifiers = collectRollModifiers(current, modifierKind, now);
+  if (modifiers.length === 0) return request;
+
+  const signed = modifiers.map((m) => {
+    const dice = m.dice.trim();
+    return dice.startsWith("-") || dice.startsWith("+") ? dice : `+${dice}`;
+  });
+  return {
+    ...request,
+    expression: `${request.expression}${signed.join("")}`,
+    label: `${request.label} · ${modifiers
+      .map((m, i) => `${signed[i]} (${m.name})`)
+      .join(" ")}`,
+    meta: { ...request.meta, roll_modifiers: modifiers },
+  };
 }
