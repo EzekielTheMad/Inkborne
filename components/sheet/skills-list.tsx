@@ -7,6 +7,7 @@ import {
   hasExpertise,
   getSkillModifier,
 } from "@/lib/sheet/helpers";
+import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import type { SystemSchemaDefinition, SkillDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 
@@ -48,10 +49,14 @@ export function SkillsList({ schema, evalResult }: SkillsListProps) {
           const abilityAbbr = abilityDef?.abbr ?? skill.ability.slice(0, 3).toUpperCase();
 
           return (
-            <div
+            <RollPopover
               key={skill.slug}
+              kind="check"
+              label={`${skill.name} Check`}
+              modifier={modifier}
+              ariaLabel={`Roll ${skill.name} check`}
               className={cn(
-                "flex items-center gap-2 py-1 px-2 rounded-sm",
+                "flex w-full items-center gap-2 py-1 px-2 rounded-sm text-left",
                 (proficient || expertise) && "bg-character-bg",
               )}
             >
@@ -96,7 +101,7 @@ export function SkillsList({ schema, evalResult }: SkillsListProps) {
               >
                 {formatModifier(modifier)}
               </span>
-            </div>
+            </RollPopover>
           );
         })}
       </div>

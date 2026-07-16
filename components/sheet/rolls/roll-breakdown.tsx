@@ -1,10 +1,14 @@
 import type { RollResult } from "@/lib/dice/types";
+import type { RollModifier } from "@/lib/types/active-effects";
 import { cn } from "@/lib/utils";
 
 /**
  * Shared dice-breakdown renderer used by the roll toast and the roll log
  * panel: one span per dice group ("d20: 14, 8" with dropped dice struck
  * through), plus the flat modifier ("+5").
+ *
+ * Active-effect roll riders (`meta.roll_modifiers`, appended last by
+ * `buildD20RollRequest`) are attributed by name: `1d20+5 · d4: 3 (Bless)`.
  */
 export function RollBreakdown({
   result,
@@ -13,6 +17,11 @@ export function RollBreakdown({
   result: RollResult;
   className?: string;
 }) {
+  // Riders contribute one trailing dice group each, in order.
+  const riders =
+    (result.request.meta?.roll_modifiers as RollModifier[] | undefined) ?? [];
+  const riderOffset = result.groups.length - riders.length;
+
   return (
     <div
       data-slot="roll-breakdown"
@@ -23,6 +32,10 @@ export function RollBreakdown({
     >
       {result.groups.map((group, groupIndex) => {
         const dropped = droppedFlags(group.rolls, group.kept);
+        const rider =
+          riders.length > 0 && groupIndex >= riderOffset && riderOffset >= 0
+            ? riders[groupIndex - riderOffset]
+            : undefined;
         return (
           <span key={groupIndex} className="whitespace-nowrap tabular-nums">
             <span className="font-medium">d{group.sides}:</span>{" "}
@@ -38,6 +51,7 @@ export function RollBreakdown({
                 </span>
               </span>
             ))}
+            {rider && <span className="opacity-80"> ({rider.name})</span>}
           </span>
         );
       })}

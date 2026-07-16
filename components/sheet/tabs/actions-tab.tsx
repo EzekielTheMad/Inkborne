@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import type { CharacterWithSystem } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import type { RollResult } from "@/lib/dice/types";
 import { formatModifier, isProficient } from "@/lib/sheet/helpers";
+import { formatSignedTerm } from "@/lib/rolls/requests";
+import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import { SheetEmptyState } from "@/components/sheet/empty-state";
 
 const SUB_FILTERS = [
@@ -30,7 +33,12 @@ interface AttackRow {
   name: string;
   range: string;
   hitBonus: string;
+  /** Numeric attack bonus for the roll request. */
+  hitBonusValue: number;
   damage: string;
+  /** Parseable dice expression for the damage roll, e.g. "1d8+3". */
+  damageExpression: string;
+  damageType: string;
   properties: string;
 }
 
@@ -91,11 +99,29 @@ export function ActionsTab({
         name,
         range,
         hitBonus: formatModifier(hitBonus),
+        hitBonusValue: hitBonus,
         damage: damageStr,
+        damageExpression: `${damageDice}${formatSignedTerm(abilityMod)}`,
+        damageType,
         properties,
       };
     });
   }, [contentRefs, evalResult, proficiencyBonus]);
+
+  // Attack → damage crit chain (design §3.3/§3.4): a natural 20 on a row's
+  // attack roll arms `crit: true` on that row's next damage roll; the damage
+  // roll consumes the arming.
+  const [critArmed, setCritArmed] = useState<Record<number, boolean>>({});
+
+  const handleAttackResult = useCallback((rowIndex: number, result: RollResult) => {
+    setCritArmed((prev) => ({ ...prev, [rowIndex]: result.natural === 20 }));
+  }, []);
+
+  const handleDamageRolled = useCallback((rowIndex: number) => {
+    setCritArmed((prev) =>
+      prev[rowIndex] ? { ...prev, [rowIndex]: false } : prev,
+    );
+  }, []);
 
   // Collect action-type features (class features with action metadata)
   const actionFeatures = useMemo(() => {
@@ -175,8 +201,37 @@ export function ActionsTab({
                     <td className="py-2 pr-3 text-muted-foreground">
                       {atk.range}
                     </td>
-                    <td className="py-2 pr-3 font-medium">{atk.hitBonus}</td>
-                    <td className="py-2 pr-3">{atk.damage}</td>
+                    <td className="py-2 pr-3 font-medium">
+                      <RollPopover
+                        kind="attack"
+                        label={`${atk.name} — Attack`}
+                        modifier={atk.hitBonusValue}
+                        ariaLabel={`Roll ${atk.name} attack`}
+                        onResult={(result) => handleAttackResult(i, result)}
+                        className="rounded-md border border-border bg-card px-2 py-0.5"
+                      >
+                        {atk.hitBonus}
+                      </RollPopover>
+                    </td>
+                    <td className="py-2 pr-3">
+                      <RollPopover
+                        kind="damage"
+                        label={`${atk.name} — Damage`}
+                        expression={atk.damageExpression}
+                        crit={critArmed[i] === true}
+                        meta={atk.damageType ? { damage_type: atk.damageType } : undefined}
+                        ariaLabel={`Roll ${atk.name} damage`}
+                        onResult={() => handleDamageRolled(i)}
+                        className="rounded-md border border-border bg-card px-2 py-0.5 text-left"
+                      >
+                        {atk.damage}
+                        {critArmed[i] && (
+                          <span className="ml-1.5 text-xs font-semibold text-emerald-500">
+                            Crit!
+                          </span>
+                        )}
+                      </RollPopover>
+                    </td>
                     <td className="py-2 text-xs text-muted-foreground">
                       {atk.properties}
                     </td>

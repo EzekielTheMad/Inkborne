@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { formatModifier, isProficient, getSaveModifier } from "@/lib/sheet/helpers";
+import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 
@@ -27,10 +28,14 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
           const modifier = getSaveModifier(abilityMod, proficiencyBonus, grants, saveSlug);
 
           return (
-            <div
+            <RollPopover
               key={ability.slug}
+              kind="save"
+              label={`${ability.name} Save`}
+              modifier={modifier}
+              ariaLabel={`Roll ${ability.name} saving throw`}
               className={cn(
-                "flex items-center gap-1.5 rounded-md border px-2 py-1",
+                "flex items-center gap-1.5 rounded-md border px-2 py-1 text-left",
                 proficient
                   ? "border-character-border bg-character-bg"
                   : "border-border bg-card",
@@ -66,7 +71,7 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
               >
                 {formatModifier(modifier)}
               </span>
-            </div>
+            </RollPopover>
           );
         })}
       </div>
