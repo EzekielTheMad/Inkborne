@@ -52,6 +52,38 @@ describe("initializeState", () => {
     );
     expect(result.death_saves).toEqual({ successes: 2, failures: 1 });
   });
+
+  it("carries fields WITHOUT explicit defaults through hydration (regression)", () => {
+    // Before M3 T4, initializeState whitelisted eight fields and silently
+    // dropped everything else on page load — the next patch computed from
+    // the hydrated state then overwrote the DB's values (e.g. hit_dice_spent
+    // resetting to full pools after a refresh).
+    const result = initializeState(
+      {
+        exhaustion: 2,
+        feature_uses: { "arcane-recovery": 1 },
+        hit_dice_spent: { fighter: 2 },
+        concentrating_on: {
+          spell_slug: "bless",
+          spell_name: "Bless",
+          slot_level: 1,
+          started_at: "2026-07-15T00:00:00.000Z",
+        } as never,
+        active_effects: [{ id: "e1", name: "Mage Armor" } as never],
+        rage_active: true,
+      },
+      30,
+    );
+    expect(result.exhaustion).toBe(2);
+    expect(result.feature_uses).toEqual({ "arcane-recovery": 1 });
+    expect(result.hit_dice_spent).toEqual({ fighter: 2 });
+    expect(result.concentrating_on).toMatchObject({ spell_slug: "bless" });
+    expect(result.active_effects).toHaveLength(1);
+    expect(result.rage_active).toBe(true);
+    // Defaults still fill the unset core fields.
+    expect(result.current_hp).toBe(30);
+    expect(result.spell_slots_used).toEqual({});
+  });
 });
 
 describe("formatModifier", () => {

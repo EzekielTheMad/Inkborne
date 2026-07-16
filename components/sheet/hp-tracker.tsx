@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { CharacterState } from "@/lib/types/character";
+import type { HitDicePool } from "@/lib/hit-dice/helpers";
 
 interface HPTrackerProps {
   currentHp: number;
   maxHp: number;
   tempHp: number;
   patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  /** Optional read-only hit-dice pools shown in the popover ("d10 3/5 · d6 1/1")
+   *  so remaining HD are visible without opening the Rest dialog. */
+  hitDicePools?: HitDicePool[];
 }
 
 function getHpColor(currentHp: number, maxHp: number): string {
@@ -28,6 +32,7 @@ export function HPTracker({
   maxHp,
   tempHp,
   patchState,
+  hitDicePools,
 }: HPTrackerProps) {
   const [inputValue, setInputValue] = useState("");
   const [open, setOpen] = useState(false);
@@ -140,6 +145,15 @@ export function HPTracker({
               HP: {currentHp} / {maxHp}
               {tempHp > 0 && ` (${tempHp} temp)`}
             </p>
+
+            {hitDicePools && hitDicePools.length > 0 && (
+              <p className="text-xs text-muted-foreground mb-3">
+                Hit Dice:{" "}
+                {hitDicePools
+                  .map((p) => `d${p.die} ${p.max - p.spent}/${p.max}`)
+                  .join(" · ")}
+              </p>
+            )}
 
             <Input
               ref={inputRef}

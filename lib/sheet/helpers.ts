@@ -1,12 +1,19 @@
 import type { CharacterState } from "@/lib/types/character";
 import type { GrantEffect } from "@/lib/types/effects";
 
-/** Returns a CharacterState with all fields defaulted. Merges with existing partial state. */
+/** Returns a CharacterState with all fields defaulted. Merges with existing partial state.
+ *
+ *  The spread carries EVERY persisted field through hydration — fields the
+ *  defaults below don't mention (`exhaustion`, `feature_uses`,
+ *  `active_effects`, `concentrating_on`, `hit_dice_spent`, `currency`,
+ *  toggles, …) must survive a page load, or the next patch computed from the
+ *  hydrated state silently overwrites the DB's values. */
 export function initializeState(
   partial: CharacterState,
   maxHp: number,
 ): CharacterState {
   return {
+    ...partial,
     current_hp: partial.current_hp ?? maxHp,
     temp_hp: partial.temp_hp ?? 0,
     conditions: partial.conditions ?? [],

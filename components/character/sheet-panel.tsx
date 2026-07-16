@@ -20,12 +20,14 @@ import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
 import {
   useCharacter,
   useCharacterState,
+  useRest,
 } from "@/lib/character/character-context";
 
 export function SheetPanel() {
   const { character, schema, contentRefs, hasSheet, evalResult, maxHp } =
     useCharacter();
   const { state, patchState } = useCharacterState();
+  const { hitDicePools } = useRest();
 
   if (!hasSheet) {
     return (
@@ -76,6 +78,7 @@ export function SheetPanel() {
           state={state}
           patchState={patchState}
           maxHp={maxHp}
+          hitDicePools={hitDicePools}
         />
       </div>
 
@@ -121,6 +124,7 @@ export function SheetPanel() {
         state={state}
         patchState={patchState}
         maxHp={maxHp}
+        hitDicePools={hitDicePools}
       />
     </>
   );
