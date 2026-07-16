@@ -10,6 +10,13 @@ export const statConditionSchema = z.object({
 
 const effectOpSchema = z.enum(["add", "set", "multiply", "grant", "max", "min"]);
 
+/** State-gated condition on a mechanical effect (see `checkCondition` in the engine). */
+export const stateConditionSchema = z.object({
+  field: z.string().min(1),
+  op: z.enum(["eq", "neq"]),
+  value: z.union([z.string(), z.boolean()]),
+});
+
 // In Zod v4, .refine() mutates the ZodObject in-place and returns the same instance,
 // so the refined schema can be used directly in a discriminatedUnion.
 export const mechanicalEffectSchema = z
@@ -19,6 +26,10 @@ export const mechanicalEffectSchema = z
     op: z.union([effectOpSchema, z.literal("formula")]),
     value: z.union([z.number(), z.string()]).optional(),
     expr: z.string().optional(),
+    condition: z
+      .union([stateConditionSchema, z.array(stateConditionSchema)])
+      .optional(),
+    tag: z.string().optional(),
   })
   .refine(
     (e) => {

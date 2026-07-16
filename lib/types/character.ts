@@ -1,6 +1,7 @@
 import type { NarrativeData, NarrativeRichData } from "./narrative";
 import type { Currency } from "./inventory";
 import type { SpellSlotsUsed, ConcentrationState } from "./spells";
+import type { ActiveEffect } from "./active-effects";
 
 export type CharacterVisibility = "private" | "campaign" | "public";
 
@@ -95,6 +96,10 @@ export interface CharacterState {
   /** Uses spent per feature resource. Key = FeatureResource.slug; value = spent count.
    *  Max is computed per render; spent clamped to [0, max] on read. */
   feature_uses?: Record<string, number>;
+  /** Runtime buffs/debuffs snapshotting content Effect[] payloads with durations.
+   *  Mutated wholesale via the pure helpers in lib/active-effects/helpers.ts;
+   *  cleared entirely by a long rest. */
+  active_effects?: ActiveEffect[];
   // Equipment state
   equipped_armor?: "none" | "light" | "medium" | "heavy";
   shield_equipped?: boolean;

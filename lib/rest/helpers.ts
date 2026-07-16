@@ -58,11 +58,14 @@ export function computeShortRestEffects(
  * - `death_saves = { successes: 0, failures: 0 }`
  * - `exhaustion = max(0, (state.exhaustion ?? 0) - 1)`
  * - `concentrating_on = null`
+ * - `active_effects = []` (8+ in-game hours outlasts every non-`special`
+ *   duration; re-applying "until dispelled" effects is the honest default)
  * - All `spell_slots_used[*]` → 0 (includes pact)
  * - All `feature_uses[slug]` → 0 where recovery is "short" OR "long"
  *
  * Does NOT touch: HD (deferred phase), conditions (other than exhaustion),
- * currency, inventory, notes.
+ * currency, inventory, notes. Short rests leave active effects alone
+ * (RAW: concentration and buffs can persist through an hour).
  */
 export function computeLongRestEffects(
   state: CharacterState,
@@ -74,6 +77,7 @@ export function computeLongRestEffects(
   const deathSaves = state.death_saves ?? { successes: 0, failures: 0 };
   const exhaustion = state.exhaustion ?? 0;
   const concentrating = state.concentrating_on ?? null;
+  const activeEffects = state.active_effects ?? [];
   const slots = (state.spell_slots_used ?? {}) as Record<string, number>;
   const uses = (state.feature_uses ?? {}) as Record<string, number>;
 
@@ -99,6 +103,7 @@ export function computeLongRestEffects(
     death_saves: { successes: 0, failures: 0 },
     exhaustion: Math.max(0, exhaustion - 1),
     concentrating_on: null,
+    active_effects: [],
     spell_slots_used: zeroedSlots,
     feature_uses: zeroedUses,
   };
@@ -111,6 +116,7 @@ export function computeLongRestEffects(
     deathSaves.failures !== 0 ||
     exhaustion > 0 ||
     concentrating !== null ||
+    activeEffects.length > 0 ||
     slotsChanged ||
     usesChanged;
 

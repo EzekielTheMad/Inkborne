@@ -13,6 +13,7 @@ import { SavingThrows } from "@/components/sheet/saving-throws";
 import { PassiveSenses } from "@/components/sheet/passive-senses";
 import { Defenses } from "@/components/sheet/defenses";
 import { ResourcesWidget } from "@/components/sheet/resources-widget";
+import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
 import { Conditions } from "@/components/sheet/conditions";
 import { DeathSaves } from "@/components/sheet/death-saves";
 import { QuickNotes } from "@/components/sheet/quick-notes";
@@ -203,6 +204,9 @@ export function MobileSheet({
 
           {/* Feature Resources */}
           <ResourcesWidget />
+
+          {/* Active effects (runtime buffs with durations) */}
+          <ActiveEffectsWidget />
 
           {/* Activation toggles (e.g. Rage) */}
           <ActivationToggles

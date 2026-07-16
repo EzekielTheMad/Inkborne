@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAGIC_SCHOOLS, DAMAGE_TYPES } from "@/lib/types/taxonomies";
+import { effectDurationSchema } from "@/lib/schemas/active-effects";
 import { cantripDieSchema } from "./mechanical";
 
 const spellDamageSchema = z.object({
@@ -25,6 +26,9 @@ export const spellDataSchema = z.object({
   components: z.array(z.enum(["V", "S", "M"])),
   material: z.string().optional(),
   duration: z.string().min(1),
+  /** Pre-parsed duration (enriched via migration for the starter buff set;
+   *  `parseSpellDuration` is the fallback for everything else). */
+  duration_structured: effectDurationSchema.optional(),
   concentration: z.boolean(),
   ritual: z.boolean(),
   description: z.string().min(1),

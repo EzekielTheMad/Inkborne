@@ -6,11 +6,13 @@ import {
   useCharacterState,
   useInventory,
   useSpells,
+  useActiveEffects,
 } from "@/lib/character/character-context";
 import type {
   CharacterWithSystem,
   CharacterState,
 } from "@/lib/types/character";
+import type { ActiveEffect } from "@/lib/types/active-effects";
 
 // Mock the supabase paths the provider invokes.
 vi.mock("@/lib/sheet/update-state", () => ({
@@ -308,6 +310,143 @@ describe("<CharacterProvider> public hook surface", () => {
     });
     expect(mockedAddSpell).toHaveBeenCalled();
     expect(screen.getByTestId("count").textContent).toBe("1");
+  });
+
+  it("useActiveEffects().applyEffect patches state atomically (concentration replacement)", async () => {
+    const bless: ActiveEffect = {
+      id: "e-bless",
+      name: "Bless",
+      slug: "bless",
+      source: "spell",
+      content_id: null,
+      effects: [],
+      duration: { type: "minutes", value: 1 },
+      concentration: true,
+      cast_at_level: 1,
+      applied_at: "2026-07-15T12:00:00.000Z",
+      expires_at: null,
+    };
+    function Probe() {
+      const { activeEffects, applyEffect } = useActiveEffects();
+      return (
+        <button
+          data-testid="apply"
+          onClick={() => {
+            void applyEffect(bless);
+          }}
+        >
+          {activeEffects.map((e) => e.name).join(",") || "none"}
+        </button>
+      );
+    }
+    renderWithProvider(Probe, {
+      initialState: {
+        active_effects: [
+          {
+            ...bless,
+            id: "e-old",
+            name: "Old Concentration",
+            slug: "old-conc",
+          },
+        ],
+      } as CharacterState,
+    });
+    expect(screen.getByTestId("apply").textContent).toBe("Old Concentration");
+    await act(async () => {
+      screen.getByTestId("apply").click();
+    });
+    // One atomic patch: old concentration effect stripped, new appended,
+    // concentrating_on replaced.
+    expect(mockedUpdateState).toHaveBeenCalledTimes(1);
+    const patch = mockedUpdateState.mock.calls[0][1] as CharacterState;
+    expect(patch.active_effects?.map((e) => e.id)).toEqual(["e-bless"]);
+    expect(patch.concentrating_on).toMatchObject({
+      spell_slug: "bless",
+      slot_level: 1,
+    });
+    expect(screen.getByTestId("apply").textContent).toBe("Bless");
+  });
+
+  it("useActiveEffects().removeEffect clears concentrating_on with the last linked entry", async () => {
+    function Probe() {
+      const { activeEffects, removeEffect } = useActiveEffects();
+      return (
+        <button
+          data-testid="remove"
+          onClick={() => {
+            void removeEffect("e-bless");
+          }}
+        >
+          {String(activeEffects.length)}
+        </button>
+      );
+    }
+    renderWithProvider(Probe, {
+      initialState: {
+        active_effects: [
+          {
+            id: "e-bless",
+            name: "Bless",
+            slug: "bless",
+            source: "spell",
+            content_id: null,
+            effects: [],
+            duration: { type: "minutes", value: 1 },
+            concentration: true,
+            applied_at: "2026-07-15T12:00:00.000Z",
+            expires_at: null,
+          },
+        ],
+        concentrating_on: {
+          spell_slug: "bless",
+          spell_name: "Bless",
+          slot_level: 1,
+          started_at: "2026-07-15T12:00:00.000Z",
+        },
+      } as CharacterState,
+    });
+    await act(async () => {
+      screen.getByTestId("remove").click();
+    });
+    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
+      active_effects: [],
+      concentrating_on: null,
+    });
+    expect(screen.getByTestId("remove").textContent).toBe("0");
+  });
+
+  it("active-effect snapshots feed evalResult (Shield-shaped add raises a stat)", () => {
+    function Probe() {
+      const { evalResult } = useCharacter();
+      return (
+        <span data-testid="ac-bonus">
+          {String(evalResult.stats.ac_bonus ?? 0)}
+        </span>
+      );
+    }
+    renderWithProvider(Probe, {
+      initialState: {
+        active_effects: [
+          {
+            id: "e-shield",
+            name: "Shield",
+            slug: "shield",
+            source: "spell",
+            content_id: null,
+            effects: [
+              { type: "mechanical", stat: "ac_bonus", op: "add", value: 5 },
+            ],
+            duration: { type: "rounds", value: 1 },
+            concentration: false,
+            applied_at: "2026-07-15T12:00:00.000Z",
+            expires_at: null,
+          },
+        ],
+      } as CharacterState,
+    });
+    // mockSchema has no derived stats, so the add lands in stats — proving
+    // the snapshot flowed through evaluate() via the combined effects array.
+    expect(screen.getByTestId("ac-bonus").textContent).toBe("5");
   });
 
   it("useCharacter() throws when called outside <CharacterProvider>", () => {
