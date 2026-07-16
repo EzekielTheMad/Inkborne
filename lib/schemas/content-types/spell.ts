@@ -33,6 +33,9 @@ export const spellDataSchema = z.object({
   ritual: z.boolean(),
   description: z.string().min(1),
   higher_level: z.string().optional(),
+  /** Present when the spell makes a spell attack (melee/ranged). Backfilled
+   *  for SRD spells by migration 00040; dnd5eapi carries it natively. */
+  attack_type: z.enum(["melee", "ranged"]).nullable().optional(),
   damage: spellDamageSchema.nullable().default(null),
   heal_at_slot_level: z.record(z.string(), z.string()).nullable().optional().default(null),
   dc: spellDcSchema.nullable().default(null),

@@ -9,6 +9,8 @@ import { SlotTracker } from "@/components/sheet/spells/slot-tracker";
 import { SpellRow } from "@/components/sheet/spells/spell-row";
 import { AddSpellPanel } from "@/components/sheet/spells/add-spell-panel";
 import { SheetEmptyState } from "@/components/sheet/empty-state";
+import { CastDialog } from "@/components/sheet/spells/cast-dialog";
+import { getSpellCastability } from "@/lib/spells/casting";
 import type { CharacterSpell } from "@/lib/types/spells";
 
 const CASTER_CLASSES = [
@@ -34,6 +36,10 @@ export function SpellsTab() {
   const { character } = useCharacter();
   const { casterInfo, spells, updateSpell, removeSpell } = useSpells();
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [castTarget, setCastTarget] = useState<{
+    spell: CharacterSpell;
+    castability: "full" | "ritual-only";
+  } | null>(null);
 
   /** Spells sorted by level (cantrips first, then 1st-9th), then by name. */
   const sortedSpells = useMemo(() => {
@@ -120,21 +126,40 @@ export function SpellsTab() {
                 </span>
               </div>
               <div className="divide-y divide-border/30">
-                {group.spells.map((spell) => (
-                  <SpellRow
-                    key={spell.id}
-                    spell={spell}
-                    allowPrepareToggle={anyClassPrepared}
-                    onTogglePrepared={() =>
-                      updateSpell(spell.id, { is_prepared: !spell.is_prepared })
-                    }
-                    onRemove={() => removeSpell(spell.id)}
-                  />
-                ))}
+                {group.spells.map((spell) => {
+                  const castability = getSpellCastability(spell, casterInfo);
+                  return (
+                    <SpellRow
+                      key={spell.id}
+                      spell={spell}
+                      allowPrepareToggle={anyClassPrepared}
+                      castability={castability}
+                      onTogglePrepared={() =>
+                        updateSpell(spell.id, { is_prepared: !spell.is_prepared })
+                      }
+                      onRemove={() => removeSpell(spell.id)}
+                      onCast={
+                        castability !== "none"
+                          ? () => setCastTarget({ spell, castability })
+                          : undefined
+                      }
+                    />
+                  );
+                })}
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {castTarget && (
+        <CastDialog
+          key={castTarget.spell.id}
+          spell={castTarget.spell}
+          castability={castTarget.castability}
+          open
+          onClose={() => setCastTarget(null)}
+        />
       )}
     </div>
   );

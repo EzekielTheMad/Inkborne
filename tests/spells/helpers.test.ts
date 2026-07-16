@@ -4,6 +4,7 @@ import {
   computeSpellAttackBonus,
   computeMaxPrepared,
   computeCasterLevel,
+  computePactSlotLevel,
   resolveFeatureGrantedSpells,
 } from "@/lib/spells/helpers";
 import type { CasterClass } from "@/lib/types/spells";
@@ -233,5 +234,43 @@ describe("resolveFeatureGrantedSpells", () => {
       { life: { spellcastingExtra: [{ level: 1, spells: ["bless"] }] } },
     );
     expect(result).toEqual([]);
+  });
+});
+
+describe("computePactSlotLevel", () => {
+  const warlockData = (pactLevel: number, count: number, atLevel: number) => {
+    const levels = Array.from({ length: 20 }, () => ({
+      spellcasting: { spell_slots: [0, 0, 0, 0, 0, 0, 0, 0, 0] },
+    }));
+    levels[atLevel - 1] = {
+      spellcasting: {
+        spell_slots: Array.from({ length: 9 }, (_, i) =>
+          i === pactLevel - 1 ? count : 0,
+        ),
+      },
+    };
+    return { warlock: { levels } };
+  };
+
+  it("returns the slot level pact slots share", () => {
+    expect(
+      computePactSlotLevel([{ slug: "warlock", level: 3 }], warlockData(2, 2, 3)),
+    ).toBe(2);
+  });
+
+  it("returns null without warlock levels", () => {
+    expect(computePactSlotLevel([{ slug: "wizard", level: 5 }], {})).toBeNull();
+  });
+
+  it("returns null when the warlock row has no slot data", () => {
+    expect(
+      computePactSlotLevel([{ slug: "warlock", level: 1 }], { warlock: {} }),
+    ).toBeNull();
+  });
+
+  it("returns null when every slot count is zero", () => {
+    expect(
+      computePactSlotLevel([{ slug: "warlock", level: 3 }], warlockData(2, 0, 3)),
+    ).toBeNull();
   });
 });

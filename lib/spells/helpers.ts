@@ -102,6 +102,25 @@ export function computeMaxSlots(
 }
 
 /**
+ * Compute the pact slot LEVEL for a warlock (the slot level all pact slots
+ * share, e.g. warlock 3 → 2nd-level slots). `computeMaxSlots` collapses the
+ * pact pool to a count; the cast dialog also needs the level so pact slots
+ * can be offered as a first-class cast option. Returns null when the
+ * character has no pact slots.
+ */
+export function computePactSlotLevel(
+  classes: Array<{ slug: string; level: number }>,
+  classData: Record<string, { levels?: Array<{ spellcasting?: { spell_slots?: number[] } | null }> }>,
+): number | null {
+  const warlock = classes.find((c) => c.slug === "warlock");
+  if (!warlock) return null;
+  const slots = classData["warlock"]?.levels?.[warlock.level - 1]?.spellcasting?.spell_slots;
+  if (!slots) return null;
+  const index = slots.findIndex((s) => s > 0);
+  return index >= 0 ? index + 1 : null;
+}
+
+/**
  * Resolve feature-granted spells (always-prepared from class/subclass features).
  * Reads each class's subclass data.spellcastingExtra and returns entries at or below class level.
  */
