@@ -7,7 +7,10 @@ import {
   useInventory,
   useSpells,
   useActiveEffects,
+  useRest,
 } from "@/lib/character/character-context";
+import type { ClassContentData } from "@/lib/character/character-context";
+import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type {
   CharacterWithSystem,
   CharacterState,
@@ -95,6 +98,9 @@ interface ProbeProps {
   initialState?: CharacterState;
   primaryColor?: string | null;
   onPrimaryColorChange?: (c: string | null) => void;
+  character?: CharacterWithSystem;
+  contentRefs?: ContentRefWithContent[];
+  classData?: ClassContentData;
 }
 
 function renderWithProvider(
@@ -103,13 +109,13 @@ function renderWithProvider(
 ) {
   return render(
     <CharacterProvider
-      character={mockCharacter}
+      character={overrides.character ?? mockCharacter}
       schema={mockSchema as never}
-      contentRefs={[]}
+      contentRefs={overrides.contentRefs ?? []}
       initialState={overrides.initialState ?? ({} as never)}
       initialInventory={[]}
       initialSpells={[]}
-      classData={{} as never}
+      classData={overrides.classData ?? ({} as never)}
       allEffects={[]}
       baseStatsWithLevel={{
         level: 1,
@@ -447,6 +453,99 @@ describe("<CharacterProvider> public hook surface", () => {
     // mockSchema has no derived stats, so the add lands in stats — proving
     // the snapshot flowed through evaluate() via the combined effects array.
     expect(screen.getByTestId("ac-bonus").textContent).toBe("5");
+  });
+
+  // --- Arcane Recovery through useRest() (T8) ---
+
+  // Wizard 3 fixture: full caster (multiclass slots {1:4, 2:2}), owning the
+  // arcane-recovery feature (usages 1, recovery long — the PR #24 enrichment
+  // shape), with two spent 1st-level slots.
+  const wizardCharacter = {
+    ...mockCharacter,
+    choices: { classes: [{ slug: "wizard", level: 3 }] },
+  } as unknown as CharacterWithSystem;
+
+  const wizardClassData = {
+    wizard: {
+      slug: "wizard",
+      data: {
+        hit_die: 6,
+        spellcasting: { type: "full", ability: "intelligence" },
+      },
+    },
+  } as unknown as ClassContentData;
+
+  const arcaneRecoveryRef = {
+    content_definitions: {
+      id: "content-ar",
+      name: "Arcane Recovery",
+      slug: "arcane-recovery",
+      content_type: "feature",
+      data: { class: "wizard", level: 1, usages: 1, recovery: "long rest" },
+      effects: [],
+    },
+  } as unknown as ContentRefWithContent;
+
+  function renderRestProbe(initialState: CharacterState, picks: Record<string, number>) {
+    function Probe() {
+      const { shortRest, arcaneRecovery } = useRest();
+      return (
+        <button data-testid="rest" onClick={() => shortRest(picks)}>
+          {String(arcaneRecovery.available)}:{arcaneRecovery.budget}
+        </button>
+      );
+    }
+    renderWithProvider(Probe, {
+      initialState,
+      character: wizardCharacter,
+      contentRefs: [arcaneRecoveryRef],
+      classData: wizardClassData,
+    });
+  }
+
+  it("useRest().shortRest folds Arcane Recovery picks into ONE atomic patch", async () => {
+    renderRestProbe(
+      { spell_slots_used: { "1": 2 } } as CharacterState,
+      { "1": 2 },
+    );
+    // Wizard 3: available, budget ⌈3/2⌉ = 2.
+    expect(screen.getByTestId("rest").textContent).toBe("true:2");
+    await act(async () => {
+      screen.getByTestId("rest").click();
+    });
+    expect(mockedUpdateState).toHaveBeenCalledTimes(1);
+    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
+      spell_slots_used: { "1": 0 },
+      feature_uses: { "arcane-recovery": 1 },
+    });
+  });
+
+  it("useRest().shortRest ignores invalid picks instead of writing state", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    renderRestProbe(
+      { spell_slots_used: { "1": 2 } } as CharacterState,
+      { "1": 5 }, // more than spent AND over budget
+    );
+    await act(async () => {
+      screen.getByTestId("rest").click();
+    });
+    // Picks rejected; nothing else recoverable on a short rest → no write.
+    expect(mockedUpdateState).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[arcane-recovery]"),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("useRest().arcaneRecovery is unavailable once the feature use is spent", () => {
+    renderRestProbe(
+      {
+        spell_slots_used: { "1": 2 },
+        feature_uses: { "arcane-recovery": 1 },
+      } as CharacterState,
+      {},
+    );
+    expect(screen.getByTestId("rest").textContent).toBe("false:2");
   });
 
   it("useCharacter() throws when called outside <CharacterProvider>", () => {

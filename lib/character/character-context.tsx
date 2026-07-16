@@ -67,6 +67,15 @@ import {
   computeShortRestEffects,
   computeLongRestEffects,
 } from "@/lib/rest/helpers";
+import {
+  arcaneRecoveryClassLevel,
+  computeArcaneRecoveryInfo,
+  mergeShortRestWithRecovery,
+  totalPickedLevels,
+  validateArcaneRecoveryPicks,
+  type ArcaneRecoveryInfo,
+  type ArcaneRecoveryPicks,
+} from "@/lib/rest/arcane-recovery";
 import type { ActiveEffect, CustomEffectInput } from "@/lib/types/active-effects";
 import {
   collectActiveEffects,
@@ -836,10 +845,15 @@ export function useResources(): {
 
 /** Orchestrate short and long rests: compute effects, apply atomic state patch.
  *  Also owns hit dice — pools are a rest-time resource: spend-to-heal during a
- *  short rest, ⌊total/2⌋ (min 1, largest die first) recovery on a long rest. */
+ *  short rest, ⌊total/2⌋ (min 1, largest die first) recovery on a long rest —
+ *  and Arcane Recovery: valid slot picks fold into the short-rest patch so the
+ *  executed rest stays ONE `patchState` write. */
 export function useRest(): {
   exhaustion: number;
-  shortRest: () => void;
+  /** Execute a short rest. Optional Arcane Recovery picks (slot level →
+   *  count) are validated and folded into the same atomic patch; invalid or
+   *  unavailable picks are ignored with a console warning. */
+  shortRest: (arcaneRecoveryPicks?: ArcaneRecoveryPicks) => void;
   longRest: () => void;
   setExhaustion: (level: number) => void;
   canShortRest: boolean;
@@ -849,17 +863,66 @@ export function useRest(): {
   /** Roll 1dX+CON and apply spend + heal in one atomic patch. Resolves null
    *  when the pool is empty or HP is already full. */
   spendHitDie: (classSlug: string) => Promise<RollResult | null>;
+  /** Arcane Recovery availability + budget + recoverable slot levels for the
+   *  short-rest pane (design §4.6 / D8). */
+  arcaneRecovery: ArcaneRecoveryInfo;
 } {
   const ctx = useCharacterContext();
-  const { state, resources, maxHp, patchState, hitDicePools, spendHitDie } = ctx;
+  const {
+    state,
+    resources,
+    maxHp,
+    patchState,
+    hitDicePools,
+    spendHitDie,
+    character,
+    contentRefs,
+    maxSlots,
+  } = ctx;
   const exhaustion = (state.exhaustion as number | undefined) ?? 0;
 
   const shortEffects = computeShortRestEffects(state, resources);
   const longEffects = computeLongRestEffects(state, maxHp, resources, hitDicePools);
 
-  const shortRest = () => {
-    if (!shortEffects.canApply) return;
-    patchState(shortEffects.statePatch);
+  const arcaneRecovery = computeArcaneRecoveryInfo({
+    wizardLevel: arcaneRecoveryClassLevel(
+      character.choices?.classes ?? [],
+      contentRefs,
+    ),
+    resources,
+    state,
+    maxSlots,
+  });
+
+  const shortRest = (arcaneRecoveryPicks?: ArcaneRecoveryPicks) => {
+    // Validate picks before folding them in — the dialog enforces the budget,
+    // but the hook is the last line of defense for the RAW invariants.
+    let picks: ArcaneRecoveryPicks | null = null;
+    if (arcaneRecoveryPicks && totalPickedLevels(arcaneRecoveryPicks) > 0) {
+      if (!arcaneRecovery.available) {
+        console.warn(
+          "[arcane-recovery] Ignoring picks — Arcane Recovery is not available.",
+        );
+      } else {
+        const check = validateArcaneRecoveryPicks(
+          arcaneRecoveryPicks,
+          arcaneRecovery.budget,
+          maxSlots,
+          (state.spell_slots_used ?? {}) as SpellSlotsUsed,
+        );
+        if (check.valid) {
+          picks = arcaneRecoveryPicks;
+        } else {
+          console.warn(`[arcane-recovery] Ignoring invalid picks: ${check.reason}`);
+        }
+      }
+    }
+
+    if (!shortEffects.canApply && !picks) return;
+    const patch = picks
+      ? mergeShortRestWithRecovery(state, shortEffects.statePatch, picks)
+      : shortEffects.statePatch;
+    patchState(patch);
   };
 
   const longRest = () => {
@@ -881,5 +944,6 @@ export function useRest(): {
     canLongRest: longEffects.canApply,
     hitDicePools,
     spendHitDie,
+    arcaneRecovery,
   };
 }

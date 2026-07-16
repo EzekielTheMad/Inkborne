@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RestDialog } from "@/components/sheet/rest-dialog";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
+import type { ArcaneRecoveryInfo } from "@/lib/rest/arcane-recovery";
 
 interface RestHookMock {
   shortRest: ReturnType<typeof vi.fn>;
@@ -12,6 +13,7 @@ interface RestHookMock {
   setExhaustion: ReturnType<typeof vi.fn>;
   hitDicePools: HitDicePool[];
   spendHitDie: ReturnType<typeof vi.fn>;
+  arcaneRecovery: ArcaneRecoveryInfo;
 }
 
 let mockUseRest: () => RestHookMock;
@@ -27,6 +29,7 @@ function buildMock(overrides: Partial<RestHookMock> = {}): RestHookMock {
     setExhaustion: vi.fn(),
     hitDicePools: [],
     spendHitDie: vi.fn().mockResolvedValue(null),
+    arcaneRecovery: { available: false, budget: 0, recoverableSlots: {} },
     ...overrides,
   };
 }
@@ -168,5 +171,110 @@ describe("RestDialog — hit dice section", () => {
       hitDicePools: [{ classSlug: "fighter", die: 10, max: 3, spent: 0 }],
     });
     expect(screen.queryByText(/recover .* hit d/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("RestDialog — Arcane Recovery section", () => {
+  // Wizard 5 (budget 3) with one spent 1st and one spent 2nd-level slot.
+  const availableRecovery: ArcaneRecoveryInfo = {
+    available: true,
+    budget: 3,
+    recoverableSlots: { "1": 2, "2": 1 },
+  };
+
+  const plusButton = (level: string) =>
+    screen.getByRole("button", {
+      name: new RegExp(`recover one more ${level}-level slot`, "i"),
+    });
+  const minusButton = (level: string) =>
+    screen.getByRole("button", {
+      name: new RegExp(`recover one fewer ${level}-level slot`, "i"),
+    });
+
+  it("hides the section when arcane recovery is unavailable", () => {
+    setup();
+    expect(screen.queryByText(/arcane recovery/i)).not.toBeInTheDocument();
+  });
+
+  it("renders budget, guidance, and one row per recoverable slot level", () => {
+    setup({ arcaneRecovery: availableRecovery });
+    expect(screen.getByText("Arcane Recovery")).toBeInTheDocument();
+    expect(screen.getByText("0/3 slot levels")).toBeInTheDocument();
+    expect(screen.getByText(/none 6th level or higher/i)).toBeInTheDocument();
+    expect(screen.getByText(/1st level/)).toBeInTheDocument();
+    expect(screen.getByText(/2nd level/)).toBeInTheDocument();
+  });
+
+  it("suppresses 'No short-rest recovery available' when the section shows", () => {
+    setup({ arcaneRecovery: availableRecovery });
+    expect(
+      screen.queryByText(/no short-rest recovery available/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("steppers update the live budget and the preview line", () => {
+    setup({ arcaneRecovery: availableRecovery });
+    fireEvent.click(plusButton("1st"));
+    expect(screen.getByText("1/3 slot levels")).toBeInTheDocument();
+    fireEvent.click(plusButton("2nd"));
+    expect(screen.getByText("3/3 slot levels")).toBeInTheDocument();
+    expect(
+      screen.getByText(/recover 3 spell slot levels \(arcane recovery\)/i),
+    ).toBeInTheDocument();
+    fireEvent.click(minusButton("2nd"));
+    expect(screen.getByText("1/3 slot levels")).toBeInTheDocument();
+    expect(
+      screen.getByText(/recover 1 spell slot level \(arcane recovery\)/i),
+    ).toBeInTheDocument();
+  });
+
+  it("disables + when the level exceeds the remaining budget", () => {
+    setup({ arcaneRecovery: availableRecovery });
+    // Pick 1st twice → 2/3 used, 1 remaining: the 2nd-level + must disable.
+    fireEvent.click(plusButton("1st"));
+    fireEvent.click(plusButton("1st"));
+    expect(plusButton("2nd")).toBeDisabled();
+    expect(plusButton("2nd")).toHaveAttribute(
+      "title",
+      "Not enough recovery budget remaining",
+    );
+  });
+
+  it("disables + when every spent slot at that level is already picked", () => {
+    setup({ arcaneRecovery: availableRecovery });
+    fireEvent.click(plusButton("2nd")); // only 1 spent at 2nd
+    expect(plusButton("2nd")).toBeDisabled();
+    expect(plusButton("2nd")).toHaveAttribute(
+      "title",
+      "No more spent slots at this level",
+    );
+  });
+
+  it("disables − at zero picks", () => {
+    setup({ arcaneRecovery: availableRecovery });
+    expect(minusButton("1st")).toBeDisabled();
+  });
+
+  it("passes the picks to shortRest and closes", () => {
+    const { shortRest, onClose } = setup({ arcaneRecovery: availableRecovery });
+    fireEvent.click(plusButton("1st"));
+    fireEvent.click(plusButton("2nd"));
+    fireEvent.click(screen.getByRole("button", { name: /take short rest/i }));
+    expect(shortRest).toHaveBeenCalledWith({ "1": 1, "2": 1 });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("passes empty picks when nothing was selected", () => {
+    const { shortRest } = setup({ arcaneRecovery: availableRecovery });
+    fireEvent.click(screen.getByRole("button", { name: /take short rest/i }));
+    expect(shortRest).toHaveBeenCalledWith({});
+  });
+
+  it("enables Take Short Rest via picks even when canShortRest is false", () => {
+    setup({ arcaneRecovery: availableRecovery, canShortRest: false });
+    const restButton = screen.getByRole("button", { name: /take short rest/i });
+    expect(restButton).toBeDisabled();
+    fireEvent.click(plusButton("1st"));
+    expect(restButton).toBeEnabled();
   });
 });
