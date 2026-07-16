@@ -108,6 +108,8 @@ These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each nee
 
 ## 7. Status log (append-only — newest first)
 
+- **2026-07-16** — M3 T9 (Claude): added `e2e/m3-gameplay.spec.ts` — Playwright UAT proving M3 exit criteria against the live stack (cast → slot → effect → AC, upcast damage roll → toast/log/`character_rolls` persistence, no concentration prompt for non-concentration effects, hit-die spend + short rest with Arcane Recovery). Full e2e suite (now 6 tests) green twice consecutively; 1109 vitest unchanged.
+
 - **2026-07-15** — Project re-orientation session (Claude). Verified main @ `31a4996` + 620 tests green; merged stranded UAT a11y/dup-key fixes as #58; rescued journey design bundle into `docs/design-briefs/design_handoff_journey_alpha/`; added M5.5 campaigns milestone (proposed) to ROADMAP; wrote this game plan. Retired GSD/superpowers workflow. Next up: Track A (A1 needs Victor's Unraid access; A2 needs decision #1).
 - **2026-06-19** — Re-orientation + full build-a-character UAT (PASS end-to-end). Punch list captured; ROADMAP refreshed.
 - **2026-05 and earlier** — See `ROADMAP.md` "What changed since 2026-04-25" and git history (#19–#57).
