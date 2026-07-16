@@ -5,6 +5,7 @@ import type { CharacterWithSystem, CharacterState } from "@/lib/types/character"
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import type { HitDicePool } from "@/lib/hit-dice/helpers";
 import { AbilityCard } from "@/components/sheet/ability-card";
 import { CombatStats } from "@/components/sheet/combat-stats";
 import { HPTracker } from "@/components/sheet/hp-tracker";
@@ -45,6 +46,8 @@ interface MobileSheetProps {
   state: CharacterState;
   patchState: (patch: Partial<CharacterState>) => Promise<void>;
   maxHp: number;
+  /** Read-only hit-dice pools threaded into the HP tracker popover. */
+  hitDicePools?: HitDicePool[];
 }
 
 export function MobileSheet({
@@ -55,6 +58,7 @@ export function MobileSheet({
   state,
   patchState,
   maxHp,
+  hitDicePools,
 }: MobileSheetProps) {
   const [activeTab, setActiveTab] = useState<TabId>("stats");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -179,6 +183,7 @@ export function MobileSheet({
                 maxHp={maxHp}
                 tempHp={state.temp_hp ?? 0}
                 patchState={patchState}
+                hitDicePools={hitDicePools}
               />
               {/* Death saves — returns null when HP > 0, so this slot stays hidden
                   during normal play. */}

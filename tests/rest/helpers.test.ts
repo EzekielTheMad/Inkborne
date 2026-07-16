@@ -5,6 +5,14 @@ import {
 } from "@/lib/rest/helpers";
 import type { CharacterState } from "@/lib/types/character";
 import type { FeatureResource } from "@/lib/types/resources";
+import type { HitDicePool } from "@/lib/hit-dice/helpers";
+
+const mkPool = (
+  classSlug: string,
+  die: number,
+  max: number,
+  spent: number,
+): HitDicePool => ({ classSlug, die, max, spent });
 
 const mkResource = (
   slug: string,
@@ -192,5 +200,77 @@ describe("computeLongRestEffects", () => {
     const state: CharacterState = { current_hp: 10 };
     const result = computeLongRestEffects(state, 50, []);
     expect(result.canApply).toBe(true);
+  });
+});
+
+describe("computeLongRestEffects — hit dice recovery", () => {
+  const restedState: CharacterState = {
+    current_hp: 50,
+    temp_hp: 0,
+    death_saves: { successes: 0, failures: 0 },
+    exhaustion: 0,
+    concentrating_on: null,
+    spell_slots_used: {},
+    feature_uses: {},
+  };
+
+  it("recovers ⌊total/2⌋ dice, largest die first (Fighter 3/Wizard 2, all spent)", () => {
+    const state: CharacterState = {
+      ...restedState,
+      hit_dice_spent: { fighter: 3, wizard: 2 },
+    };
+    const pools = [mkPool("fighter", 10, 3, 3), mkPool("wizard", 6, 2, 2)];
+    const result = computeLongRestEffects(state, 50, [], pools);
+    // Budget ⌊5/2⌋ = 2, both restored from the d10 pool.
+    expect(result.statePatch.hit_dice_spent).toEqual({ fighter: 1, wizard: 2 });
+  });
+
+  it("applies the min-1 floor for a level-1 character", () => {
+    const state: CharacterState = {
+      ...restedState,
+      hit_dice_spent: { wizard: 1 },
+    };
+    const pools = [mkPool("wizard", 6, 1, 1)];
+    const result = computeLongRestEffects(state, 50, [], pools);
+    expect(result.statePatch.hit_dice_spent).toEqual({ wizard: 0 });
+  });
+
+  it("canApply=true when the ONLY change is spent hit dice", () => {
+    const pools = [mkPool("fighter", 10, 3, 1)];
+    const result = computeLongRestEffects(
+      { ...restedState, hit_dice_spent: { fighter: 1 } },
+      50,
+      [],
+      pools,
+    );
+    expect(result.canApply).toBe(true);
+  });
+
+  it("omits hit_dice_spent from the patch when nothing is spent", () => {
+    const pools = [mkPool("fighter", 10, 3, 0), mkPool("wizard", 6, 2, 0)];
+    const result = computeLongRestEffects(restedState, 50, [], pools);
+    expect(result.statePatch).not.toHaveProperty("hit_dice_spent");
+    expect(result.canApply).toBe(false);
+  });
+
+  it("omits hit_dice_spent when called without pools (legacy callers untouched)", () => {
+    const result = computeLongRestEffects(
+      { ...restedState, hit_dice_spent: { fighter: 2 } },
+      50,
+      [],
+    );
+    expect(result.statePatch).not.toHaveProperty("hit_dice_spent");
+  });
+
+  it("rebuilds the spent map from pools, self-healing stale class keys away", () => {
+    const state: CharacterState = {
+      ...restedState,
+      // "sorcerer" no longer among the character's classes.
+      hit_dice_spent: { fighter: 2, sorcerer: 3 },
+    };
+    const pools = [mkPool("fighter", 10, 3, 2)];
+    const result = computeLongRestEffects(state, 50, [], pools);
+    // Budget ⌊3/2⌋ = 1 recovers one die; the stale "sorcerer" key is gone.
+    expect(result.statePatch.hit_dice_spent).toEqual({ fighter: 1 });
   });
 });

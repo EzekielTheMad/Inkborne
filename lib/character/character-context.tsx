@@ -67,6 +67,12 @@ import {
   removeActiveEffectPatch,
   buildCustomActiveEffect,
 } from "@/lib/active-effects/helpers";
+import {
+  computeHitDicePools,
+  buildHitDieRollRequest,
+  spendHitDiePatch,
+  type HitDicePool,
+} from "@/lib/hit-dice/helpers";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -94,6 +100,8 @@ export type ClassContentData = Record<
   {
     slug: string;
     data: {
+      /** Hit die size (e.g. 10 for a d10). Drives hit-dice pools + max HP. */
+      hit_die?: number;
       spellcasting?: {
         ability?: string;
         type?: CasterClass["type"];
@@ -147,6 +155,10 @@ interface CharacterContextValue {
   // Rolls (hydrated history + session, newest first)
   rolls: RollLogEntry[];
   roll: (request: RollRequest) => RollResult;
+
+  // Hit dice (per-class pools; max computed from class levels)
+  hitDicePools: HitDicePool[];
+  spendHitDie: (classSlug: string) => Promise<RollResult | null>;
 
   // Spells
   spells: CharacterSpell[];
@@ -542,6 +554,39 @@ export function CharacterProvider({
     return computeResources(contentRefs, classChoices);
   }, [contentRefs, character.choices?.classes]);
 
+  // --- Hit dice ---
+  // Pools are fully derived: max = class level, die = class content hit_die,
+  // spent read (clamped) from state.hit_dice_spent.
+  const hitDicePools = useMemo<HitDicePool[]>(() => {
+    const classChoices = (character.choices?.classes ?? []).map((c) => ({
+      slug: c.slug,
+      level: c.level,
+    }));
+    return computeHitDicePools(classChoices, classData, state);
+  }, [character.choices?.classes, classData, state]);
+
+  // Spend one hit die: roll 1dX+CON through the shared pipeline (toast → log
+  // → persist), then apply the spend + heal as ONE atomic patch. Gated on
+  // dice remaining and HP not already full; returns null when it can't spend.
+  const spendHitDie = useCallback(
+    async (classSlug: string): Promise<RollResult | null> => {
+      const pool = hitDicePools.find((p) => p.classSlug === classSlug);
+      if (!pool || pool.spent >= pool.max) return null;
+
+      const currentHp = state.current_hp ?? maxHp;
+      if (currentHp >= maxHp) return null;
+
+      const conScore =
+        (evalResult.stats.constitution as number | undefined) ?? 10;
+      const conMod = Math.floor((conScore - 10) / 2);
+
+      const result = roll(buildHitDieRollRequest(pool, conMod));
+      await patchState(spendHitDiePatch(state, classSlug, result.total, maxHp));
+      return result;
+    },
+    [hitDicePools, state, maxHp, evalResult.stats.constitution, roll, patchState],
+  );
+
   const value: CharacterContextValue = {
     character,
     schema,
@@ -564,6 +609,8 @@ export function CharacterProvider({
     resources,
     rolls,
     roll,
+    hitDicePools,
+    spendHitDie,
     spells,
     slotState,
     maxSlots,
@@ -736,7 +783,9 @@ export function useResources(): {
   return { resources, uses, spend, restore, setUsed };
 }
 
-/** Orchestrate short and long rests: compute effects, apply atomic state patch. */
+/** Orchestrate short and long rests: compute effects, apply atomic state patch.
+ *  Also owns hit dice — pools are a rest-time resource: spend-to-heal during a
+ *  short rest, ⌊total/2⌋ (min 1, largest die first) recovery on a long rest. */
 export function useRest(): {
   exhaustion: number;
   shortRest: () => void;
@@ -744,13 +793,18 @@ export function useRest(): {
   setExhaustion: (level: number) => void;
   canShortRest: boolean;
   canLongRest: boolean;
+  /** Per-class hit-dice pools (max = class level, die from class content). */
+  hitDicePools: HitDicePool[];
+  /** Roll 1dX+CON and apply spend + heal in one atomic patch. Resolves null
+   *  when the pool is empty or HP is already full. */
+  spendHitDie: (classSlug: string) => Promise<RollResult | null>;
 } {
   const ctx = useCharacterContext();
-  const { state, resources, maxHp, patchState } = ctx;
+  const { state, resources, maxHp, patchState, hitDicePools, spendHitDie } = ctx;
   const exhaustion = (state.exhaustion as number | undefined) ?? 0;
 
   const shortEffects = computeShortRestEffects(state, resources);
-  const longEffects = computeLongRestEffects(state, maxHp, resources);
+  const longEffects = computeLongRestEffects(state, maxHp, resources, hitDicePools);
 
   const shortRest = () => {
     if (!shortEffects.canApply) return;
@@ -774,5 +828,7 @@ export function useRest(): {
     setExhaustion,
     canShortRest: shortEffects.canApply,
     canLongRest: longEffects.canApply,
+    hitDicePools,
+    spendHitDie,
   };
 }

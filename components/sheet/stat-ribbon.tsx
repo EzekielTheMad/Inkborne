@@ -7,6 +7,7 @@ import { RestButton } from "@/components/sheet/rest-button";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { CharacterState } from "@/lib/types/character";
+import type { HitDicePool } from "@/lib/hit-dice/helpers";
 
 interface StatRibbonProps {
   schema: SystemSchemaDefinition;
@@ -14,6 +15,8 @@ interface StatRibbonProps {
   state: CharacterState;
   maxHp: number;
   patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  /** Read-only hit-dice pools threaded into the HP tracker popover. */
+  hitDicePools?: HitDicePool[];
 }
 
 export function StatRibbon({
@@ -22,6 +25,7 @@ export function StatRibbon({
   state,
   maxHp,
   patchState,
+  hitDicePools,
 }: StatRibbonProps) {
   const { stats, computed } = evalResult;
 
@@ -70,6 +74,7 @@ export function StatRibbon({
           maxHp={maxHp}
           tempHp={state.temp_hp ?? 0}
           patchState={patchState}
+          hitDicePools={hitDicePools}
         />
       </div>
 

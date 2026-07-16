@@ -100,6 +100,11 @@ export interface CharacterState {
    *  Mutated wholesale via the pure helpers in lib/active-effects/helpers.ts;
    *  cleared entirely by a long rest. */
   active_effects?: ActiveEffect[];
+  /** Hit dice spent per class. Key = class slug; value = spent count.
+   *  Max per class = class level (computed per render via
+   *  lib/hit-dice/helpers.ts; spent clamped to [0, max] on read).
+   *  Long rest restores ⌊total HD / 2⌋ (min 1), largest die first. */
+  hit_dice_spent?: Record<string, number>;
   // Equipment state
   equipped_armor?: "none" | "light" | "medium" | "heavy";
   shield_equipped?: boolean;

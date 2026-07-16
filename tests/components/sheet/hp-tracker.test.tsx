@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { HPTracker } from "@/components/sheet/hp-tracker";
+import type { HitDicePool } from "@/lib/hit-dice/helpers";
 
 interface SetupOpts {
   currentHp: number;
   maxHp: number;
   tempHp?: number;
+  hitDicePools?: HitDicePool[];
 }
 
-function setup({ currentHp, maxHp, tempHp = 0 }: SetupOpts) {
+function setup({ currentHp, maxHp, tempHp = 0, hitDicePools }: SetupOpts) {
   const patchState = vi.fn().mockResolvedValue(undefined);
   render(
     <HPTracker
@@ -16,6 +18,7 @@ function setup({ currentHp, maxHp, tempHp = 0 }: SetupOpts) {
       maxHp={maxHp}
       tempHp={tempHp}
       patchState={patchState}
+      hitDicePools={hitDicePools}
     />,
   );
   return { patchState };
@@ -81,5 +84,36 @@ describe("HPTracker — death-save auto-reset on 0→>0 (PR #17)", () => {
     expect(patchState).toHaveBeenCalledWith({ temp_hp: 3 });
     const patch = patchState.mock.calls[0][0];
     expect(patch).not.toHaveProperty("death_saves");
+  });
+});
+
+describe("HPTracker — hit dice summary line (M3 T4)", () => {
+  it("shows remaining hit dice per pool in the popover", async () => {
+    setup({
+      currentHp: 10,
+      maxHp: 20,
+      hitDicePools: [
+        { classSlug: "fighter", die: 10, max: 5, spent: 2 },
+        { classSlug: "wizard", die: 6, max: 1, spent: 0 },
+      ],
+    });
+    fireEvent.click(screen.getByRole("button", { name: /hp tracker/i }));
+    expect(
+      await screen.findByText(/hit dice: d10 3\/5 · d6 1\/1/i),
+    ).toBeInTheDocument();
+  });
+
+  it("omits the line when no pools are provided", async () => {
+    setup({ currentHp: 10, maxHp: 20 });
+    fireEvent.click(screen.getByRole("button", { name: /hp tracker/i }));
+    await screen.findByPlaceholderText("Amount");
+    expect(screen.queryByText(/hit dice:/i)).not.toBeInTheDocument();
+  });
+
+  it("omits the line when pools are empty", async () => {
+    setup({ currentHp: 10, maxHp: 20, hitDicePools: [] });
+    fireEvent.click(screen.getByRole("button", { name: /hp tracker/i }));
+    await screen.findByPlaceholderText("Amount");
+    expect(screen.queryByText(/hit dice:/i)).not.toBeInTheDocument();
   });
 });

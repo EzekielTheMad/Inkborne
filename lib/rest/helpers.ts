@@ -1,5 +1,9 @@
 import type { CharacterState } from "@/lib/types/character";
 import type { FeatureResource } from "@/lib/types/resources";
+import {
+  computeLongRestHdRecovery,
+  type HitDicePool,
+} from "@/lib/hit-dice/helpers";
 
 export interface RestEffects {
   statePatch: Partial<CharacterState>;
@@ -62,15 +66,20 @@ export function computeShortRestEffects(
  *   duration; re-applying "until dispelled" effects is the honest default)
  * - All `spell_slots_used[*]` → 0 (includes pact)
  * - All `feature_uses[slug]` → 0 where recovery is "short" OR "long"
+ * - `hit_dice_spent` recovery when `hitDicePools` is provided and any dice
+ *   are spent: restore ⌊total HD / 2⌋ (min 1), largest die first (RAW; the
+ *   allocation lives in computeLongRestHdRecovery). The rebuilt map is keyed
+ *   from the pools, so stale keys from removed classes self-heal away.
  *
- * Does NOT touch: HD (deferred phase), conditions (other than exhaustion),
- * currency, inventory, notes. Short rests leave active effects alone
- * (RAW: concentration and buffs can persist through an hour).
+ * Does NOT touch: conditions (other than exhaustion), currency, inventory,
+ * notes. Short rests leave active effects alone (RAW: concentration and
+ * buffs can persist through an hour).
  */
 export function computeLongRestEffects(
   state: CharacterState,
   maxHp: number,
   resources: FeatureResource[],
+  hitDicePools: HitDicePool[] = [],
 ): RestEffects {
   const currentHp = state.current_hp ?? maxHp;
   const tempHp = state.temp_hp ?? 0;
@@ -108,6 +117,22 @@ export function computeLongRestEffects(
     feature_uses: zeroedUses,
   };
 
+  // Hit-dice recovery: ⌊total/2⌋ min 1, largest die first. Only included in
+  // the patch when something is actually spent (keeps the patch minimal and
+  // legacy no-pool callers untouched).
+  const hdSpent = hitDicePools.some((p) => p.spent > 0);
+  if (hdSpent) {
+    const recovery = computeLongRestHdRecovery(hitDicePools);
+    const nextSpent: Record<string, number> = {};
+    for (const pool of hitDicePools) {
+      nextSpent[pool.classSlug] = Math.max(
+        0,
+        pool.spent - (recovery[pool.classSlug] ?? 0),
+      );
+    }
+    patch.hit_dice_spent = nextSpent;
+  }
+
   // Detect no-op: every field would be unchanged
   const canApply =
     currentHp !== maxHp ||
@@ -118,7 +143,8 @@ export function computeLongRestEffects(
     concentrating !== null ||
     activeEffects.length > 0 ||
     slotsChanged ||
-    usesChanged;
+    usesChanged ||
+    hdSpent;
 
   return { statePatch: patch, canApply };
 }
