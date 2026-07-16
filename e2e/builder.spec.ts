@@ -18,9 +18,9 @@ test("creates a character and steps into the builder", async ({ page }) => {
   const characterName = `${E2E_CHARACTER_PREFIX} Builder ${Date.now()}`;
 
   await page.goto("/characters/new");
-  await expect(page.getByText("Create New Character")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /begin a new character/i })).toBeVisible();
 
-  await page.getByLabel("Character Name").fill(characterName);
+  await page.getByLabel(/what will they be called/i).fill(characterName);
 
   // With a single published game system the form uses a hidden input; if more
   // systems ever get published a <select> appears instead — handle both.
@@ -29,7 +29,7 @@ test("creates a character and steps into the builder", async ({ page }) => {
     await systemSelect.selectOption({ index: 1 });
   }
 
-  await page.getByRole("button", { name: "Create Character" }).click();
+  await page.getByRole("button", { name: /begin/i }).click();
 
   // The createCharacter server action inserts the row and redirects to the builder.
   await page.waitForURL(/\/characters\/[0-9a-f-]{36}\/builder/, { timeout: 60_000 });

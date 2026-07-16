@@ -15,13 +15,13 @@ setup("signs in with email/password and lands on the dashboard", async ({ page }
   await page
     .getByLabel("Password", { exact: true })
     .fill(process.env.E2E_TEST_PASSWORD!);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByRole("button", { name: /sign in/i }).click();
 
   // Login pushes to /dashboard on success; a slow first Supabase response
   // (project resuming from pause) is covered by the generous timeout.
   await page.waitForURL("**/dashboard", { timeout: 60_000 });
   await expect(page.getByRole("heading", { name: /^Welcome/ })).toBeVisible();
-  await expect(page.getByText("Your characters and campaigns.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Your characters" })).toBeVisible();
 
   await page.context().storageState({ path: STORAGE_STATE });
 });
