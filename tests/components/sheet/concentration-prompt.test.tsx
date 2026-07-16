@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ConcentrationPrompt } from "@/components/sheet/concentration-prompt";
 import type { PendingConcentrationCheck } from "@/lib/active-effects/concentration";
+import type { ActiveEffect } from "@/lib/types/active-effects";
 import type { ConcentrationState } from "@/lib/types/spells";
 import type { RollRequest } from "@/lib/dice/types";
 
@@ -11,6 +12,7 @@ import type { RollRequest } from "@/lib/dice/types";
 
 let mockConcentration: ConcentrationState | null = null;
 let mockPendingCheck: PendingConcentrationCheck | null = null;
+let mockActiveEffects: ActiveEffect[] = [];
 const resolveCheck = vi.fn().mockResolvedValue(undefined);
 
 // roll() echoes a controllable total so success/failure paths are exact.
@@ -43,6 +45,7 @@ vi.mock("@/lib/character/character-context", () => ({
   }),
   useCharacter: () => ({ evalResult: mockEvalResult }),
   useRolls: () => ({ rolls: [], roll }),
+  useActiveEffects: () => ({ activeEffects: mockActiveEffects }),
 }));
 
 const CONCENTRATING: ConcentrationState = {
@@ -56,6 +59,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockConcentration = CONCENTRATING;
   mockPendingCheck = { damage: 22, dc: 11 };
+  mockActiveEffects = [];
   mockRollTotal = 15;
 });
 
@@ -108,6 +112,31 @@ describe("ConcentrationPrompt", () => {
     render(<ConcentrationPrompt />);
     fireEvent.click(screen.getByRole("button", { name: /roll con save/i }));
     expect(resolveCheck).toHaveBeenCalledWith("drop");
+  });
+
+  it("appends active roll_save riders to the save (Bless helps keep Bless)", () => {
+    mockActiveEffects = [
+      {
+        id: "e-bless",
+        name: "Bless",
+        slug: "bless",
+        source: "spell",
+        content_id: "c1",
+        effects: [
+          { type: "mechanical", stat: "roll_save", op: "add", value: "1d4" },
+        ],
+        duration: { type: "minutes", value: 1 },
+        concentration: true,
+        applied_at: "2026-07-15T12:00:00.000Z",
+        expires_at: null,
+      },
+    ];
+    render(<ConcentrationPrompt />);
+    fireEvent.click(screen.getByRole("button", { name: /roll con save/i }));
+    expect(roll.mock.calls[0][0]).toMatchObject({
+      expression: "1d20+5+1d4",
+      meta: { roll_modifiers: [{ name: "Bless", dice: "1d4" }] },
+    });
   });
 
   it("supports the manual Keep override without rolling", () => {

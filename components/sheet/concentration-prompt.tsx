@@ -11,8 +11,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buildConcentrationSaveRequest } from "@/lib/active-effects/concentration";
+import { collectRollModifiers } from "@/lib/active-effects/helpers";
+import { rollModifierKindFor } from "@/lib/rolls/requests";
 import { formatModifier, getSaveModifier } from "@/lib/sheet/helpers";
 import {
+  useActiveEffects,
   useCharacter,
   useConcentration,
   useRolls,
@@ -34,6 +37,7 @@ export function ConcentrationPrompt() {
   const { concentration, pendingCheck, resolveCheck } = useConcentration();
   const { evalResult } = useCharacter();
   const { roll } = useRolls();
+  const { activeEffects } = useActiveEffects();
 
   if (!pendingCheck || !concentration) return null;
 
@@ -56,6 +60,9 @@ export function ConcentrationPrompt() {
         concentration.spell_name,
         saveModifier,
         pendingCheck,
+        // Bless-style roll_save riders apply — a concentration check IS a
+        // CON save (same convention as RollPopover's d20 surfaces).
+        collectRollModifiers(activeEffects, rollModifierKindFor("concentration")),
       ),
     );
     void resolveCheck(result.total >= pendingCheck.dc ? "keep" : "drop");

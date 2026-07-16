@@ -108,10 +108,25 @@ describe("buildConcentrationSaveRequest", () => {
     expect(
       buildConcentrationSaveRequest("Bless", 0, { damage: 14, dc: 10 })
         .expression,
-    ).toBe("1d20+0");
+    ).toBe("1d20");
     expect(
       buildConcentrationSaveRequest("Bless", -1, { damage: 14, dc: 10 })
         .expression,
     ).toBe("1d20-1");
+  });
+
+  it("appends roll_save riders (a concentration check IS a CON save)", () => {
+    const request = buildConcentrationSaveRequest(
+      "Bless",
+      2,
+      { damage: 22, dc: 11 },
+      [{ name: "Bless", dice: "1d4" }],
+    );
+    expect(request.expression).toBe("1d20+2+1d4");
+    expect(request.meta).toEqual({
+      dc: 11,
+      damage: 22,
+      roll_modifiers: [{ name: "Bless", dice: "1d4" }],
+    });
   });
 });

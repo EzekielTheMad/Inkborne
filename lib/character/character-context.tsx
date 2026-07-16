@@ -82,7 +82,6 @@ import {
   applyActiveEffectPatch,
   removeActiveEffectPatch,
   buildCustomActiveEffect,
-  applyRollModifiers,
 } from "@/lib/active-effects/helpers";
 import {
   computeConcentrationDropPatch,
@@ -623,11 +622,11 @@ export function CharacterProvider({
 
   const roll = useCallback(
     (request: RollRequest): RollResult => {
-      // Active-effect roll modifiers (Bless +1d4, Bane -1d4…) append to
-      // matching kinds before execution (design §6.4) — the breakdown then
-      // shows the extra dice with their source named in the label.
-      const modified = applyRollModifiers(request, activeEffects);
-      const result = executeRoll(modified);
+      // Active-effect roll modifiers (Bless +1d4, Bane -1d4…) are collected
+      // by the roll SURFACES (RollPopover, ConcentrationPrompt) via
+      // `collectRollModifiers` and arrive already baked into the request —
+      // execution here stays a pure pass-through.
+      const result = executeRoll(request);
       const entry: RollLogEntry = {
         id:
           typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -635,9 +634,9 @@ export function CharacterProvider({
             : `roll-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         character_id: character.id,
         user_id: character.user_id,
-        kind: modified.kind,
-        label: modified.label,
-        expression: modified.expression,
+        kind: request.kind,
+        label: request.label,
+        expression: request.expression,
         result,
         total: result.total,
         rolled_at: result.rolled_at,
@@ -649,7 +648,7 @@ export function CharacterProvider({
       });
       return result;
     },
-    [character.id, character.user_id, activeEffects],
+    [character.id, character.user_id],
   );
 
   const resources = useMemo<FeatureResource[]>(() => {

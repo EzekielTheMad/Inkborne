@@ -1,7 +1,8 @@
 import type { CharacterState } from "@/lib/types/character";
-import type { ActiveEffect } from "@/lib/types/active-effects";
+import type { ActiveEffect, RollModifier } from "@/lib/types/active-effects";
 import type { RollRequest } from "@/lib/dice/types";
 import { dropConcentrationEffects } from "@/lib/active-effects/helpers";
+import { buildD20RollRequest } from "@/lib/rolls/requests";
 
 // ---------------------------------------------------------------------------
 // Concentration lifecycle — pure domain helpers (design §6.6, T7).
@@ -51,20 +52,22 @@ export interface PendingConcentrationCheck {
 /**
  * Build the CON-save `RollRequest` the concentration prompt executes.
  * Kind `concentration` so the roll toasts/logs/persists like every other
- * roll — and so Bless-style `roll_save` modifiers apply (a concentration
- * check IS a Constitution saving throw).
+ * roll. Callers pass `rollModifiers` from
+ * `collectRollModifiers(activeEffects, "save")` — a concentration check IS
+ * a Constitution saving throw, so Bless's `+1d4` rides along (including,
+ * fittingly, on the save to keep Bless itself).
  */
 export function buildConcentrationSaveRequest(
   spellName: string,
   conSaveModifier: number,
   check: PendingConcentrationCheck,
+  rollModifiers: readonly RollModifier[] = [],
 ): RollRequest {
-  const mod =
-    conSaveModifier >= 0 ? `+${conSaveModifier}` : `${conSaveModifier}`;
-  return {
+  return buildD20RollRequest({
     kind: "concentration",
     label: `Concentration Save — ${spellName}`,
-    expression: `1d20${mod}`,
+    modifier: conSaveModifier,
+    rollModifiers,
     meta: { dc: check.dc, damage: check.damage },
-  };
+  });
 }
