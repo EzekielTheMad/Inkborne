@@ -162,9 +162,14 @@ export function NarrativeTab({
                 <X className="mr-1 size-3.5" />
                 Cancel
               </Button>
-              <Button variant="secondary" size="sm" onClick={handleManualSave}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleManualSave}
+                disabled={saveStatus === "saving"}
+              >
                 <Save className="mr-1 size-3.5" />
-                Save
+                {saveStatus === "saving" ? "Saving..." : "Save"}
               </Button>
             </>
           )}

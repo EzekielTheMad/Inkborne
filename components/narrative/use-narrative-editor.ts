@@ -121,6 +121,7 @@ export function useNarrativeEditor({
 
   // ---- Debounce timer ----
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
   // Use refs for latest state so the flush closure always reads current values
   const narrativeRef = useRef(localNarrative);
@@ -134,42 +135,76 @@ export function useNarrativeEditor({
   }, [localNarrative, localRich, localChoices]);
 
   // ---- Flush save (sends only dirty sections) ----
-  const flushSave = useCallback(async () => {
-    const promises: Promise<unknown>[] = [];
+  const performFlush = useCallback(async (): Promise<boolean> => {
+    const sections = {
+      narrative: dirtyNarrative.current,
+      rich: dirtyRich.current,
+      choices: dirtyChoices.current,
+    };
 
-    if (dirtyNarrative.current) {
-      dirtyNarrative.current = false;
-      promises.push(saveNarrative(character.id, narrativeRef.current));
+    if (!sections.narrative && !sections.rich && !sections.choices) return true;
+
+    const narrativeSnapshot = { ...narrativeRef.current };
+    const richSnapshot = { ...richRef.current };
+    const choicesSnapshot = { ...choicesRef.current };
+
+    if (sections.narrative) dirtyNarrative.current = false;
+    if (sections.rich) dirtyRich.current = false;
+    if (sections.choices) dirtyChoices.current = false;
+
+    const promises: Promise<{ success: true } | { error: string }>[] = [];
+    if (sections.narrative) {
+      promises.push(saveNarrative(character.id, narrativeSnapshot));
     }
-    if (dirtyRich.current) {
-      dirtyRich.current = false;
-      promises.push(saveNarrativeRich(character.id, richRef.current));
+    if (sections.rich) {
+      promises.push(saveNarrativeRich(character.id, richSnapshot));
     }
-    if (dirtyChoices.current) {
-      dirtyChoices.current = false;
+    if (sections.choices) {
       promises.push(
         savePersonalityChoices(character.id, {
-          personality_traits: choicesRef.current.personality_traits,
-          ideals: choicesRef.current.ideals,
-          bonds: choicesRef.current.bonds,
-          flaws: choicesRef.current.flaws,
+          personality_traits: choicesSnapshot.personality_traits,
+          ideals: choicesSnapshot.ideals,
+          bonds: choicesSnapshot.bonds,
+          flaws: choicesSnapshot.flaws,
         }),
       );
     }
 
-    if (promises.length === 0) return;
+    const restoreDirtySections = () => {
+      if (sections.narrative) dirtyNarrative.current = true;
+      if (sections.rich) dirtyRich.current = true;
+      if (sections.choices) dirtyChoices.current = true;
+    };
 
     setSaveStatus("saving");
     try {
       const results = await Promise.all(promises);
-      const hasError = results.some(
-        (r) => r && typeof r === "object" && "error" in r,
-      );
-      setSaveStatus(hasError ? "error" : "saved");
+      if (results.some((result) => "error" in result)) {
+        restoreDirtySections();
+        setSaveStatus("error");
+        return false;
+      }
+
+      if (sections.narrative) setSavedNarrative(narrativeSnapshot);
+      if (sections.rich) setSavedRich(richSnapshot);
+      if (sections.choices) setSavedChoices(choicesSnapshot);
+      setSaveStatus("saved");
+      return true;
     } catch {
+      restoreDirtySections();
       setSaveStatus("error");
+      return false;
     }
   }, [character.id]);
+
+  const flushSave = useCallback((): Promise<boolean> => {
+    const operation = saveQueue.current.then(performFlush, performFlush);
+    saveQueue.current = operation.then(
+      () => undefined,
+      () => undefined,
+    );
+    return operation;
+  }, [performFlush]);
 
   // ---- Debounced save scheduler ----
   const scheduleAutoSave = useCallback(() => {
@@ -245,11 +280,8 @@ export function useNarrativeEditor({
     dirtyNarrative.current = true;
     dirtyRich.current = true;
     dirtyChoices.current = true;
-    await flushSave();
-    // Persist to saved state so view mode shows latest
-    setSavedNarrative({ ...narrativeRef.current });
-    setSavedRich({ ...richRef.current });
-    setSavedChoices({ ...choicesRef.current });
+    const saved = await flushSave();
+    if (!saved) return;
     // Exit edit mode and refresh server data
     setEditMode(false);
     router.refresh();
