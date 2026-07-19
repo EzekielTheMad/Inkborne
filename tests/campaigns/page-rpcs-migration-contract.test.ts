@@ -18,6 +18,12 @@ describe("campaign page RPC migration contract", () => {
     expect(migration).toContain("page_visibility not in ('campaign', 'dm_only')");
   });
 
+  it("does not let a player attach content beneath a hidden page they cannot view", () => {
+    expect(migration).toContain("parent page not found or unavailable");
+    expect(migration).toContain("parent.created_by = actor_id");
+    expect(migration).toContain("parent.visibility = 'campaign'");
+  });
+
   it("allows only the creator or campaign owner to edit", () => {
     expect(migration).toContain("private.is_campaign_owner(existing_page.campaign_id)");
     expect(migration).toContain("existing_page.created_by = actor_id");

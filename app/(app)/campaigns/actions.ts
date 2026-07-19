@@ -36,6 +36,21 @@ const updatePageInput = z.object({
   }),
 });
 
+const campaignIdInput = z.object({ campaignId: z.string().uuid() });
+
+const updateCampaignInput = campaignIdInput.extend({
+  name: z.string().trim().min(1).max(100),
+  description: z.string().trim().max(2000),
+});
+
+const campaignCharacterInput = campaignIdInput.extend({
+  characterId: z.string().uuid(),
+});
+
+const removeMemberInput = campaignIdInput.extend({
+  memberUserId: z.string().uuid(),
+});
+
 async function authenticatedClient() {
   const supabase = await createClient();
   const {
@@ -106,6 +121,154 @@ export async function joinCampaign(formData: FormData): Promise<never> {
 
   revalidatePath("/campaigns");
   redirect(`/campaigns/${campaignId}`);
+}
+
+export async function updateCampaign(formData: FormData): Promise<never> {
+  const { supabase, user } = await authenticatedClient();
+  const parsed = updateCampaignInput.safeParse({
+    campaignId: formData.get("campaign_id"),
+    name: formData.get("name"),
+    description: formData.get("description") ?? "",
+  });
+  if (!parsed.success) redirect("/campaigns?error=invalid_campaign");
+
+  const { data: updatedCampaign, error } = await supabase
+    .from("campaigns")
+    .update({ name: parsed.data.name, description: parsed.data.description })
+    .eq("id", parsed.data.campaignId)
+    .eq("owner_id", user.id)
+    .select("id")
+    .single();
+
+  if (error || !updatedCampaign) {
+    await reportServerError({
+      source: "server_action",
+      message: error?.message ?? "Campaign update returned no row",
+      userId: user.id,
+      context: { operation: "update_campaign", campaignId: parsed.data.campaignId },
+    });
+    redirect(`/campaigns/${parsed.data.campaignId}/settings?error=update_failed`);
+  }
+
+  revalidatePath("/campaigns");
+  revalidatePath(`/campaigns/${parsed.data.campaignId}`);
+  redirect(`/campaigns/${parsed.data.campaignId}/settings?saved=1`);
+}
+
+export async function rotateCampaignInvite(formData: FormData): Promise<never> {
+  const { supabase, user } = await authenticatedClient();
+  const parsed = campaignIdInput.safeParse({ campaignId: formData.get("campaign_id") });
+  if (!parsed.success) redirect("/campaigns");
+
+  const { error } = await supabase.rpc("rotate_campaign_invite_code", {
+    target_campaign_id: parsed.data.campaignId,
+  });
+  if (error) {
+    await reportServerError({
+      source: "server_action",
+      message: error.message,
+      userId: user.id,
+      context: { operation: "rotate_campaign_invite", campaignId: parsed.data.campaignId },
+    });
+    redirect(`/campaigns/${parsed.data.campaignId}/settings?error=rotate_failed`);
+  }
+
+  revalidatePath(`/campaigns/${parsed.data.campaignId}`);
+  redirect(`/campaigns/${parsed.data.campaignId}/settings?rotated=1`);
+}
+
+export async function assignCharacterToCampaign(formData: FormData): Promise<never> {
+  const { supabase, user } = await authenticatedClient();
+  const parsed = campaignCharacterInput.safeParse({
+    campaignId: formData.get("campaign_id"),
+    characterId: formData.get("character_id"),
+  });
+  if (!parsed.success) redirect("/campaigns?error=invalid_character");
+
+  const { data: assignedCharacter, error } = await supabase
+    .from("characters")
+    .update({ campaign_id: parsed.data.campaignId })
+    .eq("id", parsed.data.characterId)
+    .eq("user_id", user.id)
+    .select("id")
+    .single();
+  if (error || !assignedCharacter) {
+    await reportServerError({
+      source: "server_action",
+      message: error?.message ?? "Character assignment returned no row",
+      userId: user.id,
+      context: {
+        operation: "assign_character_to_campaign",
+        campaignId: parsed.data.campaignId,
+        characterId: parsed.data.characterId,
+      },
+    });
+    redirect(`/campaigns/${parsed.data.campaignId}?error=assign_failed`);
+  }
+
+  revalidatePath("/characters");
+  revalidatePath(`/campaigns/${parsed.data.campaignId}`);
+  redirect(`/campaigns/${parsed.data.campaignId}`);
+}
+
+export async function unassignCharacterFromCampaign(formData: FormData): Promise<never> {
+  const { supabase, user } = await authenticatedClient();
+  const parsed = campaignCharacterInput.safeParse({
+    campaignId: formData.get("campaign_id"),
+    characterId: formData.get("character_id"),
+  });
+  if (!parsed.success) redirect("/campaigns");
+
+  const { data: unassignedCharacter, error } = await supabase
+    .from("characters")
+    .update({ campaign_id: null })
+    .eq("id", parsed.data.characterId)
+    .eq("user_id", user.id)
+    .eq("campaign_id", parsed.data.campaignId)
+    .select("id")
+    .single();
+  if (error || !unassignedCharacter) {
+    redirect(`/campaigns/${parsed.data.campaignId}?error=unassign_failed`);
+  }
+
+  revalidatePath("/characters");
+  revalidatePath(`/campaigns/${parsed.data.campaignId}`);
+  redirect(`/campaigns/${parsed.data.campaignId}`);
+}
+
+export async function leaveCampaign(formData: FormData): Promise<never> {
+  const { supabase } = await authenticatedClient();
+  const parsed = campaignIdInput.safeParse({ campaignId: formData.get("campaign_id") });
+  if (!parsed.success) redirect("/campaigns");
+
+  const { error } = await supabase.rpc("leave_campaign", {
+    target_campaign_id: parsed.data.campaignId,
+  });
+  if (error) redirect(`/campaigns/${parsed.data.campaignId}?error=leave_failed`);
+
+  revalidatePath("/campaigns");
+  revalidatePath("/characters");
+  redirect("/campaigns");
+}
+
+export async function removeCampaignMember(formData: FormData): Promise<never> {
+  const { supabase } = await authenticatedClient();
+  const parsed = removeMemberInput.safeParse({
+    campaignId: formData.get("campaign_id"),
+    memberUserId: formData.get("member_user_id"),
+  });
+  if (!parsed.success) redirect("/campaigns");
+
+  const { error } = await supabase.rpc("remove_campaign_member", {
+    target_campaign_id: parsed.data.campaignId,
+    target_user_id: parsed.data.memberUserId,
+  });
+  if (error) {
+    redirect(`/campaigns/${parsed.data.campaignId}/settings?error=remove_failed`);
+  }
+
+  revalidatePath(`/campaigns/${parsed.data.campaignId}`);
+  redirect(`/campaigns/${parsed.data.campaignId}/settings`);
 }
 
 export async function createCampaignPage(formData: FormData): Promise<never> {

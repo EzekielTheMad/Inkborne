@@ -951,6 +951,10 @@ export type Database = {
         Args: { provided_invite_code: string }
         Returns: string
       }
+      leave_campaign: {
+        Args: { target_campaign_id: string }
+        Returns: undefined
+      }
       patch_character_state: {
         Args: { character_id: string; state_patch: Json }
         Returns: undefined
@@ -958,6 +962,10 @@ export type Database = {
       rotate_campaign_invite_code: {
         Args: { target_campaign_id: string }
         Returns: string
+      }
+      remove_campaign_member: {
+        Args: { target_campaign_id: string; target_user_id: string }
+        Returns: undefined
       }
       update_campaign_page: {
         Args: {

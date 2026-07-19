@@ -7,15 +7,22 @@ import {
   ScrollTextIcon,
   UserRoundIcon,
 } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import {
+  assignCharacterToCampaign,
+  leaveCampaign,
+  unassignCharacterFromCampaign,
+} from "@/app/(app)/campaigns/actions";
+import { ConfirmActionButton } from "@/components/campaigns/confirm-action-button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 
 interface CampaignPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }
 
-export default async function CampaignPage({ params }: CampaignPageProps) {
-  const { id } = await params;
+export default async function CampaignPage({ params, searchParams }: CampaignPageProps) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,13 +31,13 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
 
   const { data: campaign } = await supabase
     .from("campaigns")
-    .select("id, name, description, owner_id, invite_code, game_systems(name)")
+    .select("id, name, description, owner_id, invite_code, system_id, game_systems(name)")
     .eq("id", id)
     .single();
   if (!campaign) notFound();
 
   const isOwner = campaign.owner_id === user.id;
-  const [membersResult, charactersResult, pagesResult] = await Promise.all([
+  const [membersResult, charactersResult, pagesResult, availableCharactersResult] = await Promise.all([
     supabase
       .from("campaign_members")
       .select("user_id, role, profiles(display_name, avatar_url)")
@@ -47,12 +54,21 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
       .select("id, title, parent_id, visibility, created_by, updated_at")
       .eq("campaign_id", id)
       .order("title"),
+    supabase
+      .from("characters")
+      .select("id, name, level")
+      .eq("user_id", user.id)
+      .eq("system_id", campaign.system_id)
+      .is("campaign_id", null)
+      .eq("archived", false)
+      .order("name"),
   ]);
 
   for (const [source, result] of [
     ["members", membersResult],
     ["characters", charactersResult],
     ["pages", pagesResult],
+    ["available characters", availableCharactersResult],
   ] as const) {
     if (result.error) {
       console.error(`[CampaignPage] Failed to load ${source}:`, result.error);
@@ -90,13 +106,29 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
             </p>
           )}
         </div>
-        <Link
-          href={`/campaigns/${campaign.id}/pages/new`}
-          className={buttonVariants({ variant: "gold" })}
-        >
-          + New page
-        </Link>
+        <div className="flex gap-2">
+          {isOwner && (
+            <Link
+              href={`/campaigns/${campaign.id}/settings`}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Settings
+            </Link>
+          )}
+          <Link
+            href={`/campaigns/${campaign.id}/pages/new`}
+            className={buttonVariants({ variant: "gold" })}
+          >
+            + New page
+          </Link>
+        </div>
       </header>
+
+      {query.error && (
+        <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          The campaign change could not be completed. Please try again.
+        </p>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <main className="space-y-6">
@@ -152,25 +184,58 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
             {(charactersResult.data ?? []).length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 {(charactersResult.data ?? []).map((character) => (
-                  <Link
+                  <div
                     key={character.id}
-                    href={`/characters/${character.id}`}
-                    className="j-card-paper flex items-center justify-between gap-3 p-4 transition-colors hover:border-accent/40"
+                    className="j-card-paper flex items-center justify-between gap-3 p-4"
                   >
-                    <div className="min-w-0">
-                      <p className="j-display truncate text-base text-foreground">{character.name}</p>
+                    <Link href={`/characters/${character.id}`} className="min-w-0 flex-1 group">
+                      <p className="j-display truncate text-base text-foreground transition-colors group-hover:text-accent">
+                        {character.name}
+                      </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">Level {character.level}</p>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                      {character.visibility === "private" && (
+                        <LockKeyholeIcon className="size-3.5 text-muted-foreground" />
+                      )}
+                      {character.user_id === user.id && (
+                        <form action={unassignCharacterFromCampaign}>
+                          <input type="hidden" name="campaign_id" value={campaign.id} />
+                          <input type="hidden" name="character_id" value={character.id} />
+                          <Button type="submit" variant="ghost" size="sm">Remove</Button>
+                        </form>
+                      )}
                     </div>
-                    {character.visibility === "private" && (
-                      <LockKeyholeIcon className="size-3.5 text-muted-foreground" />
-                    )}
-                  </Link>
+                  </div>
                 ))}
               </div>
             ) : (
               <p className="rounded-lg border border-dashed border-border px-4 py-5 text-center text-sm text-muted-foreground">
                 No campaign characters are visible yet.
               </p>
+            )}
+
+            {(availableCharactersResult.data ?? []).length > 0 && (
+              <form
+                action={assignCharacterToCampaign}
+                className="mt-3 flex flex-col gap-2 rounded-lg border border-border bg-paper-2 p-3 sm:flex-row"
+              >
+                <input type="hidden" name="campaign_id" value={campaign.id} />
+                <select
+                  name="character_id"
+                  aria-label="Character to add"
+                  className="h-8 min-w-0 flex-1 rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  required
+                >
+                  <option value="">Add one of your characters</option>
+                  {(availableCharactersResult.data ?? []).map((character) => (
+                    <option key={character.id} value={character.id}>
+                      {character.name} · Level {character.level}
+                    </option>
+                  ))}
+                </select>
+                <Button type="submit" variant="outline" size="sm">Add character</Button>
+              </form>
             )}
           </section>
         </main>
@@ -208,9 +273,23 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
                 {campaign.invite_code}
               </p>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                Anyone with this code can join as a player. Rotation controls come next.
+                Anyone with this code can join as a player. Rotate it from campaign settings.
               </p>
             </section>
+          )}
+
+          {!isOwner && (
+            <form action={leaveCampaign}>
+              <input type="hidden" name="campaign_id" value={campaign.id} />
+              <ConfirmActionButton
+                type="submit"
+                variant="outline"
+                className="w-full text-destructive"
+                confirmation="Leave this campaign? Your characters will be detached from it."
+              >
+                Leave campaign
+              </ConfirmActionButton>
+            </form>
           )}
         </aside>
       </div>

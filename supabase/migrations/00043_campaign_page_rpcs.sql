@@ -37,6 +37,20 @@ BEGIN
     RAISE EXCEPTION 'Invalid page visibility' USING ERRCODE = '22023';
   END IF;
 
+  IF parent_page_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1
+    FROM public.campaign_pages AS parent
+    WHERE parent.id = parent_page_id
+      AND parent.campaign_id = target_campaign_id
+      AND (
+        private.is_campaign_owner(target_campaign_id)
+        OR parent.created_by = actor_id
+        OR parent.visibility = 'campaign'
+      )
+  ) THEN
+    RAISE EXCEPTION 'Parent page not found or unavailable' USING ERRCODE = '42501';
+  END IF;
+
   base_slug := trim(BOTH '-' FROM regexp_replace(lower(page_title), '[^a-z0-9]+', '-', 'g'));
   IF base_slug = '' THEN
     base_slug := 'page';
