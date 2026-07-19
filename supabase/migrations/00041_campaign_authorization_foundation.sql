@@ -6,7 +6,19 @@
 
 CREATE SCHEMA IF NOT EXISTS private;
 REVOKE ALL ON SCHEMA private FROM PUBLIC;
-GRANT USAGE ON SCHEMA private TO authenticated, service_role;
+GRANT USAGE ON SCHEMA private TO authenticated;
+
+-- Harden existing functions flagged by the hosted Security Advisor. The auth
+-- trigger remains callable only by Supabase's auth administrator; the state
+-- patch RPC remains available only to signed-in clients and the service role.
+ALTER FUNCTION public.handle_new_user() SET search_path = '';
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;
+
+ALTER FUNCTION public.patch_character_state(uuid, jsonb) SET search_path = '';
+REVOKE ALL ON FUNCTION public.patch_character_state(uuid, jsonb) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.patch_character_state(uuid, jsonb)
+  TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- RLS helpers. These live outside the exposed public schema and run as the
@@ -145,19 +157,29 @@ REVOKE ALL ON FUNCTION private.can_access_campaign(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION private.can_assign_character_to_campaign(uuid, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION private.can_view_character(uuid) FROM PUBLIC;
 
-GRANT EXECUTE ON FUNCTION private.is_campaign_owner(uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION private.is_campaign_member(uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION private.can_access_campaign(uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION private.can_assign_character_to_campaign(uuid, uuid) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION private.can_view_character(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION private.is_campaign_owner(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.is_campaign_member(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.can_access_campaign(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.can_assign_character_to_campaign(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION private.can_view_character(uuid) TO authenticated;
 
 CREATE INDEX IF NOT EXISTS idx_campaigns_owner_id
   ON public.campaigns(owner_id);
+CREATE INDEX IF NOT EXISTS idx_campaigns_system_id
+  ON public.campaigns(system_id);
 CREATE INDEX IF NOT EXISTS idx_campaign_members_user_id
   ON public.campaign_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_characters_user_id
+  ON public.characters(user_id);
+CREATE INDEX IF NOT EXISTS idx_characters_system_id
+  ON public.characters(system_id);
 CREATE INDEX IF NOT EXISTS idx_characters_campaign_id
   ON public.characters(campaign_id)
   WHERE campaign_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_character_content_refs_content_id
+  ON public.character_content_refs(content_id);
+CREATE INDEX IF NOT EXISTS idx_character_rolls_user_id
+  ON public.character_rolls(user_id);
 
 -- ---------------------------------------------------------------------------
 -- Campaign identity and owner membership.
@@ -462,6 +484,7 @@ CREATE POLICY "Page creators and campaign owner can delete pages"
     OR created_by = (SELECT auth.uid())
   );
 
+REVOKE ALL ON public.campaign_pages FROM PUBLIC, anon;
 GRANT SELECT, INSERT, UPDATE, DELETE
   ON public.campaign_pages TO authenticated;
 

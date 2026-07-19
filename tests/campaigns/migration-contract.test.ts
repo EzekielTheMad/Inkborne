@@ -18,6 +18,27 @@ describe("campaign authorization migration contract", () => {
     expect(migration).toContain("private.is_campaign_owner");
     expect(migration).toContain("private.is_campaign_member");
     expect(migration).toContain("SET search_path = ''");
+    expect(migration).toContain(
+      "GRANT USAGE ON SCHEMA private TO authenticated;",
+    );
+    expect(migration).not.toContain(
+      "GRANT USAGE ON SCHEMA private TO authenticated, service_role;",
+    );
+  });
+
+  it("hardens existing public functions before adding campaign APIs", () => {
+    expect(migration).toContain(
+      "ALTER FUNCTION public.handle_new_user() SET search_path = '';",
+    );
+    expect(migration).toContain(
+      "GRANT EXECUTE ON FUNCTION public.handle_new_user() TO supabase_auth_admin;",
+    );
+    expect(migration).toContain(
+      "ALTER FUNCTION public.patch_character_state(uuid, jsonb) SET search_path = '';",
+    );
+    expect(migration).toContain(
+      "REVOKE ALL ON FUNCTION public.patch_character_state(uuid, jsonb) FROM PUBLIC, anon;",
+    );
   });
 
   it("bootstraps owner membership and removes arbitrary player self-insert", () => {
@@ -41,6 +62,17 @@ describe("campaign authorization migration contract", () => {
   it("defines only campaign and DM-only page audiences", () => {
     expect(migration).toContain("CREATE TABLE public.campaign_pages");
     expect(migration).toContain("CHECK (visibility IN ('campaign', 'dm_only'))");
+    expect(migration).toContain(
+      "REVOKE ALL ON public.campaign_pages FROM PUBLIC, anon;",
+    );
     expect(migration).not.toContain("visibility IN ('campaign', 'dm_only', 'public')");
+  });
+
+  it("indexes campaign foreign keys used by policies and joins", () => {
+    expect(migration).toContain("idx_campaigns_system_id");
+    expect(migration).toContain("idx_characters_user_id");
+    expect(migration).toContain("idx_characters_system_id");
+    expect(migration).toContain("idx_character_content_refs_content_id");
+    expect(migration).toContain("idx_character_rolls_user_id");
   });
 });
