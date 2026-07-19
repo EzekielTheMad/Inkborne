@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element -- User-uploaded portraits use arbitrary storage URLs. */
+
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 

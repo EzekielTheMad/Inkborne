@@ -23,7 +23,7 @@ interface AsiSelectorProps {
  * Allows +2 to one ability OR +1 to two abilities (total budget of 2).
  */
 export function AsiSelector({
-  featureSlug: _featureSlug,
+  featureSlug,
   currentChoice,
   onSelect,
 }: AsiSelectorProps) {
@@ -79,7 +79,10 @@ export function AsiSelector({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-3">
+    <div
+      className="space-y-3 rounded-lg border border-accent/30 bg-accent/5 p-3"
+      data-feature-slug={featureSlug}
+    >
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">
           Ability Score Improvement

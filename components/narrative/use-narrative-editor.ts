@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { JSONContent } from "@tiptap/react";
 import type { CharacterWithSystem, CharacterChoices } from "@/lib/types/character";
@@ -124,11 +124,14 @@ export function useNarrativeEditor({
 
   // Use refs for latest state so the flush closure always reads current values
   const narrativeRef = useRef(localNarrative);
-  narrativeRef.current = localNarrative;
   const richRef = useRef(localRich);
-  richRef.current = localRich;
   const choicesRef = useRef(localChoices);
-  choicesRef.current = localChoices;
+
+  useEffect(() => {
+    narrativeRef.current = localNarrative;
+    richRef.current = localRich;
+    choicesRef.current = localChoices;
+  }, [localNarrative, localRich, localChoices]);
 
   // ---- Flush save (sends only dirty sections) ----
   const flushSave = useCallback(async () => {

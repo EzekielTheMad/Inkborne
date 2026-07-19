@@ -15,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ContentBrowser, type ContentEntry } from "@/components/builder/content-browser";
 import { ContentPreview } from "@/components/builder/content-preview";
 import { ChoiceSelector } from "@/components/builder/choice-selector";
@@ -78,7 +77,7 @@ export function RaceStepClient({
   schema,
 }: RaceStepClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
     character.choices ?? {},

@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element -- User-upload crop previews require raw image dimensions. */
+
 import { useRef, useState, useCallback } from "react";
 import { Upload, Download, Trash2, Loader2, Crop } from "lucide-react";
 import imageCompression from "browser-image-compression";
@@ -44,7 +46,6 @@ export function CharacterPortrait({
   characterName,
   portraitUrl,
   tokenUrl,
-  portraitCrop,
   editable,
   onPortraitChange,
   onTokenChange,

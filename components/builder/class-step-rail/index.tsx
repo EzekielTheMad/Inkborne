@@ -113,6 +113,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
   // Local HP rolls accumulated during the current draft flow, merged over the persisted hpRolls prop.
   const [draftHpRolls, setDraftHpRolls] = useState<Record<string, HpRollRecord>>({});
 
+  /* eslint-disable react-hooks/set-state-in-effect -- These effects reconcile
+     successful parent-owned class mutations back into this local workflow UI. */
   // PR-C: close picker after a successful add and focus the new class's pane.
   const prevLengthRef = useRef(selectedClasses.length);
   useEffect(() => {
@@ -137,6 +139,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     }
     prevLevelsRef.current = selectedClasses.map((c) => c.level);
   }, [selectedClasses, levelUpDraft]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const totalLevel = selectedClasses.reduce((sum, c) => sum + c.level, 0);
   const levelsRemaining = MAX_TOTAL_LEVEL - totalLevel;

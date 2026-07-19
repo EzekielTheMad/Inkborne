@@ -68,6 +68,8 @@ const mockSchema = {
   sheet_sections: [],
 };
 
+type CharacterProviderProps = React.ComponentProps<typeof CharacterProvider>;
+
 function wrap(
   children: React.ReactNode,
   providerOverrides: Partial<React.ComponentProps<typeof CharacterProvider>> = {},
@@ -75,12 +77,12 @@ function wrap(
   return render(
     <CharacterProvider
       character={mockCharacter}
-      schema={mockSchema as any}
+      schema={mockSchema}
       contentRefs={[]}
-      initialState={{} as any}
+      initialState={{} as CharacterProviderProps["initialState"]}
       initialInventory={[]}
       initialSpells={[]}
-      classData={{} as any}
+      classData={{} as CharacterProviderProps["classData"]}
       allEffects={[]}
       baseStatsWithLevel={{
         level: 1,
@@ -91,7 +93,7 @@ function wrap(
         wisdom: 10,
         charisma: 10,
       }}
-      structuredSources={{} as any}
+      structuredSources={{} as CharacterProviderProps["structuredSources"]}
       isOwner={false}
       isDm={false}
       hasSheet={true}

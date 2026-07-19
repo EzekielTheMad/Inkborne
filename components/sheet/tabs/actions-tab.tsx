@@ -43,8 +43,6 @@ interface AttackRow {
 }
 
 export function ActionsTab({
-  character,
-  schema,
   evalResult,
   contentRefs,
 }: ActionsTabProps) {

@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 interface UserDropdownProps {
   displayName: string;
@@ -18,7 +17,6 @@ interface UserDropdownProps {
 }
 
 export function UserDropdown({ displayName, avatarUrl, email }: UserDropdownProps) {
-  const router = useRouter();
   const initials = displayName
     ? displayName.slice(0, 2).toUpperCase()
     : email.slice(0, 2).toUpperCase();

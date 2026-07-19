@@ -61,7 +61,7 @@ export function BackgroundStepClient({
   availableLanguages = [],
 }: BackgroundStepClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
     character.choices ?? {},

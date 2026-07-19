@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,22 +24,19 @@ const TAGS: { value: FeedbackTag; label: string }[] = [
  * user agent automatically. Submission requires text; tag is optional.
  */
 export function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      {open ? <FeedbackDialogForm onClose={onClose} /> : null}
+    </Dialog>
+  );
+}
+
+function FeedbackDialogForm({ onClose }: Pick<FeedbackDialogProps, "onClose">) {
   const [text, setText] = useState("");
   const [tag, setTag] = useState<FeedbackTag | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  // Reset state when dialog re-opens.
-  useEffect(() => {
-    if (open) {
-      setText("");
-      setTag(null);
-      setError(null);
-      setSuccess(false);
-      setSubmitting(false);
-    }
-  }, [open]);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -75,8 +72,7 @@ export function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
   const submitDisabled = submitting || success || text.trim().length === 0;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+    <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Send Feedback</DialogTitle>
         </DialogHeader>
@@ -149,7 +145,6 @@ export function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }

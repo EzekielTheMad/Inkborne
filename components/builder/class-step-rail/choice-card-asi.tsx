@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { AsiChoice, AsiAllocation } from "@/lib/types/character";
 
@@ -30,14 +30,10 @@ function inferMode(allocations: AsiAllocation[] | undefined): Mode {
 export function ChoiceCardASI({ featureSlug, currentChoice, onSelect }: ChoiceCardASIProps) {
   const [mode, setMode] = useState<Mode>(inferMode(currentChoice?.allocations));
   const [splitPicks, setSplitPicks] = useState<string[]>(() =>
-    (currentChoice?.allocations ?? []).filter((a) => a.amount === 1).map((a) => a.ability),
+    (currentChoice?.allocations ?? [])
+      .filter((allocation) => allocation.amount === 1)
+      .map((allocation) => allocation.ability),
   );
-
-  // If parent state changes externally, sync.
-  useEffect(() => {
-    setMode(inferMode(currentChoice?.allocations));
-    setSplitPicks((currentChoice?.allocations ?? []).filter((a) => a.amount === 1).map((a) => a.ability));
-  }, [currentChoice, featureSlug]);
 
   const isMade = !!currentChoice && currentChoice.allocations.length > 0;
 

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
 import {
   CharacterProvider,
   useRolls,
@@ -208,7 +209,9 @@ describe("useRolls()", () => {
     let captured: RollLogEntry[] = [];
     function CaptureProbe() {
       const { rolls, roll } = useRolls();
-      captured = rolls;
+      useEffect(() => {
+        captured = rolls;
+      }, [rolls]);
       return (
         <button
           data-testid="roll"

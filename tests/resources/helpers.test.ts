@@ -71,6 +71,7 @@ describe("computeResources", () => {
         name: slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
         content_type: contentType,
         data,
+        effects: [],
         version: 1,
       },
     };

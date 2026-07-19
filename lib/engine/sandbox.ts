@@ -16,6 +16,8 @@ export function executeScript(
   _script: string,
   _characterContext: Record<string, unknown>
 ): SandboxResult {
+  void _script;
+  void _characterContext;
   // Stub — returns no modifications
   return { modifications: {} };
 }

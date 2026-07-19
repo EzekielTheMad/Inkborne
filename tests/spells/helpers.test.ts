@@ -9,7 +9,7 @@ import {
 } from "@/lib/spells/helpers";
 import type { CasterClass } from "@/lib/types/spells";
 
-function makeCasterClass(overrides: Partial<CasterClass>): CasterClass {
+function makeCasterClass(overrides: Partial<CasterClass> = {}): CasterClass {
   return {
     slug: "wizard",
     level: 1,

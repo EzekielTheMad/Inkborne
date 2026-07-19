@@ -32,7 +32,7 @@ describe("useIsMobile", () => {
     expect(result.current).toBe(false);
   });
 
-  it("returns true when viewport is mobile after useEffect runs", () => {
+  it("returns true when viewport is mobile", () => {
     mockMql.matches = true;
     const { result } = renderHook(() => useIsMobile());
     // The hook always returns false on first render (SSR-safe). The useEffect
@@ -52,6 +52,7 @@ describe("useIsMobile", () => {
     expect(result.current).toBe(false);
 
     act(() => {
+      mockMql.matches = true;
       changeListener?.({ matches: true });
     });
     expect(result.current).toBe(true);

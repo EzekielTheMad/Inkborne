@@ -82,7 +82,7 @@ interface ProficiencyCategory {
   items: string[];
 }
 
-export function Proficiencies({ grants, contentRefs }: ProficienciesProps) {
+export function Proficiencies({ grants }: ProficienciesProps) {
   // Only consider proficiency grants (value === "proficient")
   const profGrants = grants.filter((g) => g.value === "proficient");
 

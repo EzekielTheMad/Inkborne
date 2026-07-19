@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { updateCharacter } from "@/lib/supabase/character-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices } from "@/lib/types/character";
-import type { SystemSchemaDefinition, AbilityScoreDefinition } from "@/lib/types/system";
-import type { Effect, MechanicalEffect } from "@/lib/types/effects";
+import type { SystemSchemaDefinition } from "@/lib/types/system";
+import type { Effect } from "@/lib/types/effects";
 
 type AbilityMethod = "standard_array" | "point_buy" | "manual";
 
@@ -58,9 +56,10 @@ export function AbilitiesStepClient({
   schema,
 }: AbilitiesStepClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-
-  const abilities = schema?.ability_scores ?? [];
+  const abilities = useMemo(
+    () => schema?.ability_scores ?? [],
+    [schema?.ability_scores],
+  );
 
   const [method, setMethod] = useState<AbilityMethod>(
     character.choices?.ability_method ?? "standard_array",
@@ -138,7 +137,7 @@ export function AbilitiesStepClient({
 
     // From ASI choices
     const asiChoices = character.choices?.asi_choices ?? {};
-    for (const [featureSlug, asiChoice] of Object.entries(asiChoices)) {
+    for (const asiChoice of Object.values(asiChoices)) {
       if (asiChoice?.allocations) {
         for (const alloc of asiChoice.allocations) {
           if (alloc.amount !== 0) {

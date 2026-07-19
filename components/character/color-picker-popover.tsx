@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -26,13 +26,22 @@ export function ColorPickerPopover({
   onChange,
   children,
 }: ColorPickerPopoverProps) {
+  const [open, setOpen] = useState(false);
   const [hexInput, setHexInput] = useState(currentColor ?? "");
   const [nativeColorDraft, setNativeColorDraft] = useState<string | null>(null);
 
-  // Keep the input synced when the parent's color changes externally.
-  useEffect(() => {
-    setHexInput(currentColor ?? "");
-  }, [currentColor]);
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setHexInput(currentColor ?? "");
+      setNativeColorDraft(null);
+    }
+    setOpen(nextOpen);
+  };
+
+  const applyColor = (color: string | null) => {
+    setHexInput(color ?? "");
+    onChange(color);
+  };
 
   const isHexValid = hexInput === "" || HEX_RE.test(hexInput);
 
@@ -40,11 +49,11 @@ export function ColorPickerPopover({
     if (hexInput === "") return;
     if (!isHexValid) return;
     const normalized = hexInput.startsWith("#") ? hexInput : `#${hexInput}`;
-    onChange(normalized.toLowerCase());
+    applyColor(normalized.toLowerCase());
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger render={children as React.ReactElement} />
       <PopoverContent className="w-64 p-3">
         <div className="space-y-3">
@@ -59,7 +68,7 @@ export function ColorPickerPopover({
                   key={p.hex}
                   type="button"
                   aria-label={`Set character color to ${p.name}`}
-                  onClick={() => onChange(p.hex)}
+                  onClick={() => applyColor(p.hex)}
                   className={cn(
                     "h-[18px] w-[18px] rounded-full border border-border transition-shadow",
                     isSelected && "ring-1 ring-white/70 ring-offset-1 ring-offset-popover",
@@ -102,7 +111,7 @@ export function ColorPickerPopover({
                 onChange={(e) => setNativeColorDraft(e.target.value)}
                 onBlur={() => {
                   if (nativeColorDraft) {
-                    onChange(nativeColorDraft.toLowerCase());
+                    applyColor(nativeColorDraft.toLowerCase());
                     setNativeColorDraft(null);
                   }
                 }}
@@ -112,7 +121,7 @@ export function ColorPickerPopover({
             <button
               type="button"
               aria-label="Reset character color to default"
-              onClick={() => onChange(null)}
+              onClick={() => applyColor(null)}
               className="ml-auto text-xs text-muted-foreground hover:text-foreground"
             >
               Reset
