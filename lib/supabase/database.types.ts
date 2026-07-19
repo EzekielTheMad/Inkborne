@@ -114,33 +114,113 @@ export type Database = {
           },
         ]
       }
+      campaign_pages: {
+        Row: {
+          campaign_id: string
+          content: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          parent_id: string | null
+          revision: number
+          slug: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          visibility: string
+        }
+        Insert: {
+          campaign_id: string
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          parent_id?: string | null
+          revision?: number
+          slug: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility?: string
+        }
+        Update: {
+          campaign_id?: string
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          parent_id?: string | null
+          revision?: number
+          slug?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_pages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_pages_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_pages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_pages_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           created_at: string
           description: string
+          hp_rule: string | null
           id: string
           invite_code: string
           name: string
           owner_id: string
           system_id: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string
+          hp_rule?: string | null
           id?: string
           invite_code?: string
           name: string
           owner_id: string
           system_id: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string
+          hp_rule?: string | null
           id?: string
           invite_code?: string
           name?: string
           owner_id?: string
           system_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -850,6 +930,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_campaign_page: {
+        Args: {
+          page_title: string
+          page_visibility?: string
+          parent_page_id?: string | null
+          target_campaign_id: string
+        }
+        Returns: string
+      }
       copy_character: {
         Args: {
           copied_name?: string | null
@@ -858,9 +947,27 @@ export type Database = {
         }
         Returns: string
       }
+      join_campaign_by_invite_code: {
+        Args: { provided_invite_code: string }
+        Returns: string
+      }
       patch_character_state: {
         Args: { character_id: string; state_patch: Json }
         Returns: undefined
+      }
+      rotate_campaign_invite_code: {
+        Args: { target_campaign_id: string }
+        Returns: string
+      }
+      update_campaign_page: {
+        Args: {
+          expected_revision: number
+          page_content: Json
+          page_title: string
+          page_visibility: string
+          target_page_id: string
+        }
+        Returns: number
       }
     }
     Enums: {

@@ -60,4 +60,3 @@ export async function copyCharacter(formData: FormData): Promise<never> {
   revalidatePath("/characters");
   redirect(`/characters/${copiedCharacterId}`);
 }
-

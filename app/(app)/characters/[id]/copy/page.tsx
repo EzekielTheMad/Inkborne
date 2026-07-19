@@ -135,4 +135,3 @@ export default async function CopyCharacterPage({
     </div>
   );
 }
-

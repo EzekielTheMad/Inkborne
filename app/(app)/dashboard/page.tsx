@@ -226,24 +226,24 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* Campaigns teaser strip */}
+      {/* Campaigns strip */}
       <section
         aria-label="Campaigns"
         className="flex flex-col gap-2 rounded-lg border border-border bg-paper-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Coming next folio
+            Shared worlds
           </p>
           <p className="text-[13px] text-muted-foreground">
-            Campaigns — sessions, NPCs, secrets, in one place.
+            Campaigns — characters, lore, and secrets in one chronicle.
           </p>
         </div>
         <Link
           href="/campaigns"
           className="text-xs text-accent transition-colors hover:text-accent/80"
         >
-          Watch this space →
+          Open campaigns →
         </Link>
       </section>
     </div>

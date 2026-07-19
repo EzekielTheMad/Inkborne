@@ -184,4 +184,3 @@ $$;
 
 REVOKE ALL ON FUNCTION public.copy_character(uuid, uuid, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.copy_character(uuid, uuid, text) TO authenticated;
-
