@@ -850,6 +850,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      copy_character: {
+        Args: {
+          copied_name?: string | null
+          source_character_id: string
+          target_campaign_id?: string | null
+        }
+        Returns: string
+      }
       patch_character_state: {
         Args: { character_id: string; state_patch: Json }
         Returns: undefined

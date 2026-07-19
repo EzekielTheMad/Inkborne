@@ -151,4 +151,40 @@ describe("<CharacterHeader> color carry-through", () => {
       container.querySelector('[aria-label="Change character color"]'),
     ).toBeFalsy();
   });
+
+  it("does not offer edit or copy actions to a non-owner", () => {
+    const { container } = wrap(
+      <CharacterHeader
+        character={mockCharacter}
+        inspiration={false}
+        onToggleInspiration={() => {}}
+      />,
+      { isOwner: false, isDm: true },
+    );
+
+    expect(
+      container.querySelector(`a[href="/characters/${mockCharacter.id}/builder"]`),
+    ).toBeFalsy();
+    expect(
+      container.querySelector(`a[href="/characters/${mockCharacter.id}/copy"]`),
+    ).toBeFalsy();
+  });
+
+  it("offers edit and copy actions to the character owner", () => {
+    const { container } = wrap(
+      <CharacterHeader
+        character={mockCharacter}
+        inspiration={false}
+        onToggleInspiration={() => {}}
+      />,
+      { isOwner: true },
+    );
+
+    expect(
+      container.querySelector(`a[href="/characters/${mockCharacter.id}/builder"]`),
+    ).toBeTruthy();
+    expect(
+      container.querySelector(`a[href="/characters/${mockCharacter.id}/copy"]`),
+    ).toBeTruthy();
+  });
 });

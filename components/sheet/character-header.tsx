@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftIcon, PencilIcon, StarIcon } from "lucide-react";
+import { ArrowLeftIcon, CopyIcon, PencilIcon, StarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { CharacterWithSystem } from "@/lib/types/character";
@@ -143,16 +143,31 @@ export function CharacterHeader({
           <StarIcon className={cn("size-4", inspiration && "fill-current")} />
         </Button>
 
-        <Link href={`/characters/${character.id}/builder`}>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Edit character"
-            className="text-white hover:bg-white/15 hover:text-white"
-          >
-            <PencilIcon />
-          </Button>
-        </Link>
+        {isOwner && (
+          <Link href={`/characters/${character.id}/builder`}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Edit character"
+              className="text-white hover:bg-white/15 hover:text-white"
+            >
+              <PencilIcon />
+            </Button>
+          </Link>
+        )}
+
+        {isOwner && (
+          <Link href={`/characters/${character.id}/copy`}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Copy character"
+              className="text-white/80 hover:bg-white/15 hover:text-white"
+            >
+              <CopyIcon />
+            </Button>
+          </Link>
+        )}
       </header>
     );
   }
@@ -198,16 +213,31 @@ export function CharacterHeader({
           />
         </Button>
 
-        <Link href={`/characters/${character.id}/builder`}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-          >
-            <PencilIcon />
-            Edit
-          </Button>
-        </Link>
+        {isOwner && (
+          <Link href={`/characters/${character.id}/builder`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            >
+              <PencilIcon />
+              Edit
+            </Button>
+          </Link>
+        )}
+
+        {isOwner && (
+          <Link href={`/characters/${character.id}/copy`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            >
+              <CopyIcon />
+              Copy
+            </Button>
+          </Link>
+        )}
 
         <Link href="/characters">
           <Button
