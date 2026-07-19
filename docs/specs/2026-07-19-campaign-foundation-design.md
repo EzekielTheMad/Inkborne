@@ -1,6 +1,6 @@
 # Campaign foundation design
 
-**Status:** accepted foundation contract
+**Status:** implemented locally; pending database apply and authenticated UAT
 **Date:** 2026-07-19
 
 ## Product contract
@@ -42,9 +42,15 @@ Parents must belong to the same campaign. Moving a page across campaigns or chan
 
 ## Delivery sequence
 
-1. Repair campaign membership and character-view RLS; add campaign pages.
-2. Add campaign CRUD, invite-code joining, roster, and character assignment.
-3. Add character copy with an explicit copy manifest for sheet-owned child data.
-4. Add wiki tree, page editor, backlinks, and revision-conflict handling.
+1. ✅ Repair campaign membership and character-view RLS; add campaign pages.
+2. ✅ Add campaign CRUD, invite-code joining, roster, and character assignment.
+3. ✅ Add character copy with an explicit copy manifest for sheet-owned child data.
+4. ◐ Add wiki tree, page editor, backlinks, and revision-conflict handling. The tree, editor, and conflict protection are complete; backlinks remain.
 5. Add short-lived edit leases/presence if concurrent editing warrants it.
 6. Design public publishing as a separate filtered read model.
+
+## Verification state
+
+- Migrations `00041`–`00044` are committed but have not been applied to the hosted Supabase project from this environment.
+- Static migration contracts, authorization unit tests, the full Vitest suite, strict lint, TypeScript, and the production build pass.
+- Authenticated browser UAT is required after applying the migrations. Test DM and player sessions should cover hidden/shared pages, read-only DM character access, character copy/assignment, invite rotation, leave/remove cleanup, and stale page revisions.

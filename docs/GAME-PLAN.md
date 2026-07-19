@@ -1,6 +1,6 @@
 # Inkborne — Game Plan & Working Handbook
 
-**Last updated:** 2026-07-15
+**Last updated:** 2026-07-19
 **Audience:** Any coding agent (Claude, Codex, etc.) or human picking up this project. This document is deliberately tool-agnostic and self-contained.
 **Companion docs:** [`ROADMAP.md`](ROADMAP.md) (milestone-level source of truth) · [`architecture/00-overview.md`](architecture/00-overview.md) (codebase map) · [`design-briefs/`](design-briefs/) (aesthetic direction)
 
@@ -36,7 +36,7 @@ Going forward:
 
 **Shipped on `main`** (see `ROADMAP.md` "Where we are today" for the full list): auth (email/Google/Discord), full character builder (race→class→abilities→background→equipment) with the polished class rail / preview modal / multiclass / level-up flows and full mobile support, character sheet with HP/skills/saves/conditions/rests/feature resources, spell selection (Phase 1, no casting), inventory + magic items, unified character page with **sheet + narrative tabs** (backstory editor, portrait upload with crop/compression), feedback widget + error reporting + `/admin` hub, 5e 2014 SRD content seeded.
 
-**Not built yet:** spell *casting* + dice + effects durations (M3), homebrew authoring/import (M4), monsters/NPCs (M5), **campaigns beyond a placeholder page and two migrations** (proposed M5.5), journey aesthetic polish (M2 second half).
+**Not built yet:** homebrew authoring/import (M4), monsters/NPCs (M5), campaign wiki backlinks/public publishing/live presence (later M5.5), and public-beta polish. The campaign foundation, membership lifecycle, character copy/assignment, wiki tree/editor, and revision-safe collaboration are implemented locally as of 2026-07-19, pending hosted migration apply and authenticated UAT.
 
 **The single gate to closed alpha #1 is database backups** — PR [#33](https://github.com/EzekielTheMad/Inkborne/pull/33) is code-complete; deployment is parked on a Supabase pooler credential and needs Victor's Unraid hardware (details in §4, Track A).
 
@@ -84,7 +84,7 @@ These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each nee
 1. **M3 — Gameplay foundations:** ✅ **COMPLETE 2026-07-16** (spec `docs/specs/2026-07-15-m3-gameplay-foundations-*.md`; PRs #61, #65, #66, #68–#72, #74; migrations 00038–00040 applied to prod; live-browser UAT green with zero bugs). Alpha #2 ("can you *play* a character?") is content-ready.
 2. **M4 — Homebrew + importer:** `/library`, schema-driven authoring forms, MPMB JS import pipeline (reuse `scripts/transformers/`), sharing, preview-character validation.
 3. **M5 — New content types:** monsters → NPCs → companions/sidekicks.
-4. **M5.5 — Campaigns + narrative depth** *(proposed 2026-07-15 — the LegendKeeper layer; ordering vs M5 is Victor's call, see §6)*: campaign CRUD/membership, DM/player roles, campaign wiki with cross-links, character-timeline/relationship expansion, character↔campaign narrative links.
+4. **M5.5 — Campaigns + narrative depth** *(in progress 2026-07-19 — campaign foundation implemented before M5)*: campaign CRUD/membership, DM/player roles, character copy/assignment, wiki tree/editor, visibility controls, and revision conflicts are implemented locally. Remaining: hosted migration/UAT, backlinks, character↔campaign narrative links, timeline/relationship expansion, and later publishing/presence decisions.
 5. **M6/M7/M8** — Spell Phase 3, PDF importer, public-beta polish.
 
 ## 5. Agent playbook — how to pick up work
@@ -101,7 +101,7 @@ These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each nee
 |---|----------|--------|--------|
 | 1 | Equipment step: silently grant defaults vs build a chooser UI | A2 | **Session default applied 2026-07-16: chooser built** (PR #64) — veto/revise freely |
 | 2 | Landing page variant A / B / C | B1 | **Session default applied 2026-07-16: variant B** (bundle README's recommendation, PR #67) — A/C mockups remain in the bundle |
-| 3 | M5 vs M5.5 ordering (DM content first, or campaigns first?) | Track D sequencing | Open |
+| 3 | M5 vs M5.5 ordering (DM content first, or campaigns first?) | Track D sequencing | **Resolved 2026-07-19: campaigns first** |
 | 4 | Sharing model: public publishing vs campaign-only | M4 | Open |
 | 5 | Multi-system (e.g. Daggerheart) timing | post-beta | Open |
 | 6 | Real-time multiplayer vs async | M5.5 architecture | Open |
@@ -120,6 +120,8 @@ These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each nee
 | ki feature: numeric per-level `additional` array | Widen schema to `(string\|number)[]` |
 
 ## 7. Status log (append-only — newest first)
+
+- **2026-07-19** — Codex campaign foundation sprint. Patched production dependency vulnerabilities, established strict CI/check gates, fixed server spell reconciliation and narrative autosave retry behavior, then implemented the first M5.5 slice: owner/member/page authorization, character copy with optional campaign assignment, campaign CRUD/joining/roster, wiki tree + rich editor, DM/player page visibility, revision-safe saves, invite rotation, character attach/detach, and atomic leave/member-removal cleanup. Local verification: **96 Vitest files / 1159 tests**, strict lint, TypeScript, and production build green. Migrations `00041`–`00044` still require hosted Supabase apply plus authenticated DM/player UAT.
 
 - **2026-07-16** — Agentic sprint close-out (Claude, orchestrated session). **Tracks A (agent-doable), B, C (except C1), and D/M3 are DONE.** 17 PRs merged (#33, #57–#59, #61–#74 minus #60); tests 620 → **1109 unit + 6 live E2E**; migrations 00038–00040 applied to prod. Highlights: M2 journey polish shipped (landing variant B); equipment chooser shipped; subclass discoverability + set-level gating fixed (A4 confirmed real); M3 gameplay foundations complete and UAT-verified in-browser with zero bugs. Latent bugs fixed en route: `initializeState` dropped persisted play-state fields on load (PR #68); Supabase project found auto-paused and restored, data intact. **Still open:** PR #60 (C1, blocked on decision #8), A1 backups deploy (Victor's Unraid), A8 alpha invites (Victor). Session defaults applied for decisions #1/#2 (see §6). Also: UAT Smoke Cleric deleted from prod; 15 stale branches + worktrees removed; e2e selectors repaired post-redesign (#73).
 - **2026-07-16** — M3 T9 (Claude): added `e2e/m3-gameplay.spec.ts` — Playwright UAT proving M3 exit criteria against the live stack (cast → slot → effect → AC, upcast damage roll → toast/log/`character_rolls` persistence, no concentration prompt for non-concentration effects, hit-die spend + short rest with Arcane Recovery). Full e2e suite (now 6 tests) green twice consecutively; 1109 vitest unchanged.

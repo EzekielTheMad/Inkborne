@@ -2,7 +2,7 @@
 
 **Status:** Living draft. Update freely.
 **Owner:** Victor
-**Last updated:** 2026-07-16
+**Last updated:** 2026-07-19
 
 > **Working on this project?** Start with [`docs/GAME-PLAN.md`](GAME-PLAN.md) — the agent-agnostic entry point with the current task backlog, workflow conventions, and repo orientation. This file is the milestone-level source of truth; the game plan is the working-level one.
 
@@ -218,11 +218,11 @@ Combined because authoring and importing share the same user-owned content infra
 
 ---
 
-### M5.5 — Campaigns + narrative depth (the LegendKeeper layer) — *proposed 2026-07-15*
+### M5.5 — Campaigns + narrative depth (the LegendKeeper layer) — *in progress 2026-07-19*
 **Goal:** Deliver the second half of the founding vision: characters belong to campaigns, and campaigns carry a LegendKeeper-style wiki/narrative space shared between DM and players.
 **Estimated effort:** 4–6 weeks.
 
-> **Status: proposed, not yet sequenced.** The original vision ("character assigned to a larger campaign, campaign has a LegendKeeper-esque narrative/wiki, support players *and* DMs") had no milestone on this roadmap until now. Foundations exist: `campaigns` table (migration `00004`), campaign HP rule (migration `00036`), a hidden placeholder page at `app/(app)/campaigns/`, and the character-level narrative tab (backstory, portraits) already shipped. **Victor decides the ordering** — it could swap with or interleave M5 (monsters etc. are DM-facing and pair naturally with campaigns).
+> **Status: in progress on the Codex campaign branch.** Campaigns were selected ahead of M5. The local implementation now includes authorization/RLS, CRUD and invite membership, character copy/assignment, DM/player roster views, a hierarchical rich-text wiki, DM-only/player-shared visibility, revision conflict protection, settings, invite rotation, and membership cleanup. Migrations `00041`–`00044` still need hosted Supabase apply and authenticated UAT before this slice can merge. Backlinks, character narrative links, timeline/relationship expansion, publishing, and optional live presence remain.
 
 **Scope (first cut — needs its own brainstorm/spec before implementation):**
 - Campaign CRUD + membership: DM creates a campaign, invites players, players assign characters
