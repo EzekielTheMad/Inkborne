@@ -115,40 +115,26 @@ export interface SearchSpellsOptions {
 }
 
 export async function searchSpells(
-  systemId: string,
+  characterId: string,
   query: string,
   options?: SearchSpellsOptions,
 ): Promise<
   ParsedContentDefinition[]
 > {
   const supabase = createClient();
-  let builder = supabase
-    .from("content_definitions")
-    .select(
-      "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
-    )
-    .eq("system_id", systemId)
-    .eq("content_type", "spell")
-    .ilike("name", `%${query}%`);
-
-  if (options?.classSlug) {
-    // Filter to spells where data.classes array contains classSlug
-    builder = builder.contains("data->classes", JSON.stringify([options.classSlug]));
-  }
-  if (options?.level != null) {
-    builder = builder.eq("data->>level", String(options.level));
-  }
-  if (options?.school) {
-    builder = builder.eq("data->>school", options.school);
-  }
-  if (options?.ritualOnly) {
-    builder = builder.eq("data->>ritual", "true");
-  }
-  if (options?.concentrationOnly) {
-    builder = builder.eq("data->>concentration", "true");
-  }
-
-  const { data, error } = await builder.order("name").limit(50);
+  const { data, error } = await supabase.rpc(
+    "search_usable_spells_for_character",
+    {
+      target_character_id: characterId,
+      search_query: query,
+      class_slug: options?.classSlug ?? null,
+      spell_level: options?.level ?? null,
+      spell_school: options?.school ?? null,
+      ritual_only: options?.ritualOnly ?? false,
+      concentration_only: options?.concentrationOnly ?? false,
+      result_limit: 50,
+    },
+  );
   if (error) {
     throw error;
   }

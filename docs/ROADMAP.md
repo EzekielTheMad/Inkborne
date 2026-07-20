@@ -174,7 +174,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-20): ◑ First private-spell vertical implemented and UAT-verified.** `/library` now supports owner-only spell creation and immutable edits; character spell discovery uses the latest owned definition while sheets remain pinned to the exact version originally selected. Manual two-account UAT proves RLS isolation and direct-link denial, and automated Playwright proves the v1 → edit v2 → old pin/new pin sequence. This does **not** complete M4: additional content types, sharing, MPMB importing, conflict resolution, and preview-character validation remain.
+**Status (2026-07-20): ◑ First multiplayer spell vertical implemented and UAT-verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. Hosted two-account Playwright proves wrong-campaign exclusion, first/final share versioning, edit isolation, and prepare/cast use of an old pin after unsharing. This does **not** complete M4: additional content types, optional public publishing, MPMB importing, conflict resolution, and preview-character validation remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -185,7 +185,7 @@ Combined because authoring and importing share the same user-owned content infra
 - `/library` page — "my content" view with filters by type, sort, search
 - Schema-driven authoring forms for each existing content type (race, class, feat, feature, spell, item, weapon, armor, background, subclass, trait)
 - Builder content discovery — pickers pull from `platform` + `user_owned` + `shared_with_me`
-- Sharing UI — toggle content between private / campaign-shared / public; settings page
+- Sharing UI — campaign-scoped sharing is implemented for spells; generalize it to other content types, then add separately controlled public publishing
 - Custom content types — UI for `custom_content_types` table that exists in schema today
 
 **Scope — Importer half (~2 weeks, leveraging existing transformers):**

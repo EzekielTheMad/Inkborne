@@ -39,7 +39,8 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           <p className="j-folio">Your rules, one source of truth</p>
           <h1 className="j-display mt-1.5 text-3xl text-foreground sm:text-4xl">Library</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Author private homebrew that flows into the same character sheets and gameplay tools as SRD content.
+            Author homebrew that flows into the same character sheets and gameplay tools as SRD content,
+            then share it with the campaigns you choose.
           </p>
         </div>
         <Link href="/library/spells/new" className={buttonVariants({ variant: "gold" })}>
@@ -76,7 +77,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         <section aria-labelledby="owned-spells-heading" className="space-y-3">
           <div className="flex items-center gap-2">
             <BookOpen className="size-4 text-accent" />
-            <h2 id="owned-spells-heading" className="j-folio">My private spells</h2>
+            <h2 id="owned-spells-heading" className="j-folio">My spells</h2>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {spells?.map((spell) => (
@@ -93,7 +94,11 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-1.5">
-                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="outline">
+                      {spell.scope === "shared"
+                        ? `Shared · ${spell.sharedCampaignCount} ${spell.sharedCampaignCount === 1 ? "campaign" : "campaigns"}`
+                        : "Private"}
+                    </Badge>
                     <Badge variant="secondary">v{spell.version}</Badge>
                   </div>
                 </div>

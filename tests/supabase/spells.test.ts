@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const fromMock = vi.fn();
+const rpcMock = vi.fn();
 const selectMock = vi.fn();
 const insertMock = vi.fn();
 const updateMock = vi.fn();
@@ -8,9 +9,6 @@ const deleteMock = vi.fn();
 const eqMock = vi.fn();
 const inMock = vi.fn();
 const orderMock = vi.fn();
-const limitMock = vi.fn();
-const ilikeMock = vi.fn();
-const containsMock = vi.fn();
 const singleMock = vi.fn();
 
 const validSpellDefinition = {
@@ -73,7 +71,10 @@ function snapshotFor(
 }
 
 vi.mock("@/lib/supabase/client", () => ({
-  createClient: () => ({ from: (table: string) => fromMock(table) }),
+  createClient: () => ({
+    from: (table: string) => fromMock(table),
+    rpc: rpcMock,
+  }),
 }));
 
 function makeChain() {
@@ -85,9 +86,6 @@ function makeChain() {
     eq: eqMock,
     in: inMock,
     order: orderMock,
-    limit: limitMock,
-    ilike: ilikeMock,
-    contains: containsMock,
     single: singleMock,
   };
 }
@@ -102,11 +100,9 @@ beforeEach(() => {
   eqMock.mockReturnValue(chain);
   inMock.mockReturnValue(chain);
   orderMock.mockReturnValue(chain);
-  limitMock.mockResolvedValue({ data: [], error: null });
-  ilikeMock.mockReturnValue(chain);
-  containsMock.mockReturnValue(chain);
   singleMock.mockResolvedValue({ data: {}, error: null });
   fromMock.mockReturnValue(chain);
+  rpcMock.mockResolvedValue({ data: [], error: null });
 });
 
 describe("getSpellsForCharacter", () => {
@@ -242,22 +238,54 @@ describe("removeCharacterSpell", () => {
 });
 
 describe("searchSpells", () => {
-  it("filters by class and level while relying on RLS for visible scopes", async () => {
+  it("passes the character and every filter to the visibility-aware RPC", async () => {
     const { searchSpells } = await import("@/lib/supabase/spells");
-    await searchSpells("sys-1", "fire", { classSlug: "wizard", level: 3 });
-    expect(fromMock).toHaveBeenCalledWith("content_definitions");
-    expect(eqMock).toHaveBeenCalledWith("system_id", "sys-1");
-    expect(eqMock).toHaveBeenCalledWith("content_type", "spell");
-    expect(eqMock).not.toHaveBeenCalledWith("scope", "platform");
-    expect(eqMock).toHaveBeenCalledWith("data->>level", "3");
-    expect(ilikeMock).toHaveBeenCalledWith("name", "%fire%");
-    expect(containsMock).toHaveBeenCalledWith("data->classes", JSON.stringify(["wizard"]));
-    expect(selectMock).toHaveBeenCalledWith(expect.stringContaining("version"));
+    await searchSpells("character-1", "fire", {
+      classSlug: "wizard",
+      level: 3,
+      school: "evocation",
+      ritualOnly: true,
+      concentrationOnly: true,
+    });
+
+    expect(rpcMock).toHaveBeenCalledWith(
+      "search_usable_spells_for_character",
+      {
+        target_character_id: "character-1",
+        search_query: "fire",
+        class_slug: "wizard",
+        spell_level: 3,
+        spell_school: "evocation",
+        ritual_only: true,
+        concentration_only: true,
+        result_limit: 50,
+      },
+    );
+    expect(fromMock).not.toHaveBeenCalledWith("content_definitions");
+  });
+
+  it("passes explicit neutral defaults when optional filters are absent", async () => {
+    const { searchSpells } = await import("@/lib/supabase/spells");
+    await searchSpells("character-1", "");
+
+    expect(rpcMock).toHaveBeenCalledWith(
+      "search_usable_spells_for_character",
+      {
+        target_character_id: "character-1",
+        search_query: "",
+        class_slug: null,
+        spell_level: null,
+        spell_school: null,
+        ritual_only: false,
+        concentration_only: false,
+        result_limit: 50,
+      },
+    );
   });
 
   it("validates results and omits only malformed definitions", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    limitMock.mockResolvedValueOnce({
+    rpcMock.mockResolvedValueOnce({
       data: [
         validSpellDefinition,
         {
@@ -271,7 +299,7 @@ describe("searchSpells", () => {
     });
 
     const { searchSpells } = await import("@/lib/supabase/spells");
-    const result = await searchSpells(validSpellDefinition.system_id, "fire");
+    const result = await searchSpells("character-1", "fire");
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -284,10 +312,10 @@ describe("searchSpells", () => {
   });
 
   it("rejects with the original structured query error", async () => {
-    limitMock.mockResolvedValueOnce({ data: null, error: structuredError });
+    rpcMock.mockResolvedValueOnce({ data: null, error: structuredError });
 
     const { searchSpells } = await import("@/lib/supabase/spells");
 
-    await expect(searchSpells("sys-1", "fire")).rejects.toBe(structuredError);
+    await expect(searchSpells("character-1", "fire")).rejects.toBe(structuredError);
   });
 });

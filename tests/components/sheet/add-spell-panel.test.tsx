@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AddSpellPanel } from "@/components/sheet/spells/add-spell-panel";
@@ -57,7 +57,7 @@ describe("AddSpellPanel", () => {
       <AddSpellPanel
         open
         onClose={() => {}}
-        systemId="system-1"
+        characterId="character-1"
       />,
     );
 
@@ -65,8 +65,46 @@ describe("AddSpellPanel", () => {
       await screen.findByText(/spells could not be loaded/i),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    expect(searchSpells).toHaveBeenCalledWith(
+      "character-1",
+      "",
+      { classSlug: "wizard" },
+    );
     await waitFor(() => expect(errorSpy).toHaveBeenCalled());
     errorSpy.mockRestore();
+  });
+
+  it("debounces character-aware searches and forwards the active filters", async () => {
+    render(
+      <AddSpellPanel
+        open
+        onClose={() => {}}
+        characterId="character-1"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(searchSpells).toHaveBeenCalledWith(
+        "character-1",
+        "",
+        { classSlug: "wizard" },
+      );
+    });
+    vi.mocked(searchSpells).mockClear();
+
+    fireEvent.change(screen.getByPlaceholderText(/search spells/i), {
+      target: { value: "fire" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "1st" }));
+
+    await waitFor(() => {
+      expect(searchSpells).toHaveBeenCalledTimes(1);
+      expect(searchSpells).toHaveBeenCalledWith(
+        "character-1",
+        "fire",
+        { classSlug: "wizard", level: 1 },
+      );
+    });
   });
 
   it("adds an owned homebrew result with its exact current version", async () => {
@@ -81,7 +119,7 @@ describe("AddSpellPanel", () => {
       effects: [],
     }]);
 
-    render(<AddSpellPanel open onClose={() => {}} systemId="system-1" />);
+    render(<AddSpellPanel open onClose={() => {}} characterId="character-1" />);
 
     expect(await screen.findByText("Homebrew · v3")).toBeVisible();
     screen.getByRole("button", { name: "Add" }).click();
@@ -114,7 +152,7 @@ describe("AddSpellPanel", () => {
       effects: [],
     }]);
 
-    render(<AddSpellPanel open onClose={() => {}} systemId="system-1" />);
+    render(<AddSpellPanel open onClose={() => {}} characterId="character-1" />);
 
     expect(await screen.findByText("Using v1")).toBeVisible();
     expect(context.addSpell).not.toHaveBeenCalled();

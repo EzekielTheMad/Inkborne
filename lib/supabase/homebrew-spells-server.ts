@@ -26,12 +26,39 @@ export interface HomebrewSpellRecord {
   data: SpellData;
   effects: unknown[];
   source: "homebrew";
-  scope: "personal";
+  scope: "personal" | "shared";
   owner_id: string;
   version: number;
   created_at: string;
   is_retired: boolean;
 }
+
+export interface OwnedHomebrewSpellSummary extends HomebrewSpellRecord {
+  sharedCampaignCount: number;
+}
+
+export interface HomebrewSpellCampaignOption {
+  id: string;
+  name: string;
+  shared: boolean;
+  eligible: boolean;
+}
+
+export interface HomebrewSpellCampaignAccess {
+  campaigns: HomebrewSpellCampaignOption[];
+  sharedCampaignCount: number;
+}
+
+export interface HomebrewSpellShareSuccess {
+  contentId: string;
+  version: number;
+  scope: "personal" | "shared";
+  sharedCampaignCount: number;
+}
+
+export type HomebrewSpellShareMutationResponse =
+  | HomebrewSpellShareSuccess
+  | HomebrewSpellMutationResult;
 
 export type HomebrewSpellMutationResult = {
   status: "idle" | "error" | "conflict";
@@ -57,7 +84,7 @@ const rowEnvelopeSchema = z.object({
   data: z.unknown(),
   effects: z.array(z.unknown()),
   source: z.literal("homebrew"),
-  scope: z.literal("personal"),
+  scope: z.enum(["personal", "shared"]),
   owner_id: z.string().uuid(),
   version: z.number().int().positive(),
   created_at: z.string().min(1),
@@ -67,6 +94,25 @@ const rowEnvelopeSchema = z.object({
 const classOptionSchema = z.object({
   slug: z.string().min(1),
   name: z.string().min(1),
+});
+
+const campaignAccessRpcRowSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  shared: z.boolean(),
+  eligible: z.boolean(),
+});
+
+const contentShareSchema = z.object({
+  content_id: z.string().uuid(),
+  campaign_id: z.string().uuid(),
+});
+
+const shareRpcRowSchema = z.object({
+  content_id: z.string().uuid(),
+  version: z.number().int().positive(),
+  scope: z.enum(["personal", "shared"]),
+  shared_campaign_count: z.number().int().nonnegative(),
 });
 
 function parseRecord(value: unknown): HomebrewSpellRecord {
@@ -211,6 +257,49 @@ function databaseMutationFailure(error: { code?: string } | null) {
   return failure("The spell could not be saved. Please try again.");
 }
 
+function databaseShareFailure(error: { code?: string; message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+  if (
+    error?.code === "40001"
+    || (error?.code === "P0001" && /(stale|version|conflict)/.test(message))
+  ) {
+    return {
+      status: "conflict" as const,
+      message: "This spell changed in another session. Reload it before changing campaign access.",
+    };
+  }
+  return failure("Campaign access could not be updated. Please try again.");
+}
+
+function parseShareRpcRow(value: unknown): HomebrewSpellShareSuccess {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  const parsed = shareRpcRowSchema.safeParse(candidate);
+  if (!parsed.success) {
+    throw new Error("The database returned an invalid campaign share result.");
+  }
+  return {
+    contentId: parsed.data.content_id,
+    version: parsed.data.version,
+    scope: parsed.data.scope,
+    sharedCampaignCount: parsed.data.shared_campaign_count,
+  };
+}
+
+async function loadOwnedCampaignAccess(
+  supabase: ServerSupabaseClient,
+  contentId: string,
+): Promise<HomebrewSpellCampaignAccess> {
+  const { data, error } = await supabase.rpc("list_owned_content_campaign_access", {
+    target_content_id: contentId,
+  });
+  if (error) throw error;
+  const campaigns = z.array(campaignAccessRpcRowSchema).parse(data ?? []);
+  return {
+    campaigns,
+    sharedCampaignCount: campaigns.filter((campaign) => campaign.shared).length,
+  };
+}
+
 export async function listHomebrewSpellClassOptions(): Promise<
   HomebrewSpellClassOption[]
 > {
@@ -220,7 +309,7 @@ export async function listHomebrewSpellClassOptions(): Promise<
   return loadClassOptions(supabase, system.id);
 }
 
-export async function listOwnedHomebrewSpells(): Promise<HomebrewSpellRecord[]> {
+export async function listOwnedHomebrewSpells(): Promise<OwnedHomebrewSpellSummary[]> {
   const { supabase, userId } = await requireAuthenticatedSession();
   const system = await resolvePublishedSystem(supabase);
   if (!system) throw new Error("The D&D 5e (2014) system is unavailable.");
@@ -231,12 +320,33 @@ export async function listOwnedHomebrewSpells(): Promise<HomebrewSpellRecord[]> 
     .eq("system_id", system.id)
     .eq("source", "homebrew")
     .eq("content_type", "spell")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .order("name");
 
   if (error) throw error;
-  return (data ?? []).map(parseRecord);
+  const spells = (data ?? []).map(parseRecord);
+  const sharedIds = spells
+    .filter((spell) => spell.scope === "shared")
+    .map((spell) => spell.id);
+  if (sharedIds.length === 0) {
+    return spells.map((spell) => ({ ...spell, sharedCampaignCount: 0 }));
+  }
+
+  const { data: shares, error: sharesError } = await supabase
+    .from("content_shares")
+    .select("content_id, campaign_id")
+    .in("content_id", sharedIds);
+  if (sharesError) throw sharesError;
+
+  const counts = new Map<string, number>();
+  for (const share of z.array(contentShareSchema).parse(shares ?? [])) {
+    counts.set(share.content_id, (counts.get(share.content_id) ?? 0) + 1);
+  }
+  return spells.map((spell) => ({
+    ...spell,
+    sharedCampaignCount: counts.get(spell.id) ?? 0,
+  }));
 }
 
 export async function getOwnedHomebrewSpell(
@@ -256,12 +366,62 @@ export async function getOwnedHomebrewSpell(
     .eq("system_id", system.id)
     .eq("source", "homebrew")
     .eq("content_type", "spell")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .maybeSingle();
 
   if (error) throw error;
   return data ? parseRecord(data) : null;
+}
+
+export async function getHomebrewSpellCampaignAccess(
+  id: string,
+): Promise<HomebrewSpellCampaignAccess | null> {
+  const { supabase } = await requireAuthenticatedSession();
+  const parsedId = z.string().uuid().safeParse(id);
+  if (!parsedId.success) return null;
+  try {
+    return await loadOwnedCampaignAccess(supabase, parsedId.data);
+  } catch (error) {
+    if ((error as { code?: string }).code === "42501") return null;
+    throw error;
+  }
+}
+
+export async function setHomebrewSpellCampaignShare(
+  contentId: string,
+  campaignId: string,
+  enabled: boolean,
+  expectedVersion: number,
+): Promise<HomebrewSpellShareMutationResponse> {
+  const session = await authenticatedSession();
+  if (!session) return failure("Sign in before changing campaign access.");
+
+  const input = z.object({
+    contentId: z.string().uuid(),
+    campaignId: z.string().uuid(),
+    enabled: z.boolean(),
+    expectedVersion: z.number().int().positive(),
+  }).safeParse({ contentId, campaignId, enabled, expectedVersion });
+  if (!input.success) return failure("The spell, campaign, or version is invalid.");
+
+  const { data, error } = await session.supabase.rpc("set_content_campaign_share", {
+    target_content_id: input.data.contentId,
+    target_campaign_id: input.data.campaignId,
+    enabled: input.data.enabled,
+    expected_version: input.data.expectedVersion,
+  });
+  if (error) return databaseShareFailure(error);
+
+  try {
+    const result = parseShareRpcRow(data);
+    if (result.contentId !== input.data.contentId) {
+      return failure("Campaign access could not be updated. Please try again.");
+    }
+    return result;
+  } catch {
+    return failure("Campaign access could not be updated. Please try again.");
+  }
 }
 
 export async function createHomebrewSpellRecord(
@@ -330,14 +490,13 @@ export async function updateHomebrewSpellRecord(
       name: parsed.data.name,
       data: parsed.data.data as unknown as Json,
       effects: [],
-      scope: "personal",
     })
     .eq("id", identity.data.id)
     .eq("owner_id", session.userId)
     .eq("system_id", context.systemId)
     .eq("source", "homebrew")
     .eq("content_type", "spell")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .eq("version", identity.data.expectedVersion)
     .select(HOME_BREW_SELECT)
@@ -360,7 +519,7 @@ export async function updateHomebrewSpellRecord(
     .eq("system_id", context.systemId)
     .eq("source", "homebrew")
     .eq("content_type", "spell")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .maybeSingle();
 

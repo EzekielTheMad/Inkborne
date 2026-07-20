@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
+  setShare: vi.fn(),
   update: vi.fn(),
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => {
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/homebrew-spells-server", () => ({
   createHomebrewSpellRecord: mocks.create,
   updateHomebrewSpellRecord: mocks.update,
+  setHomebrewSpellCampaignShare: mocks.setShare,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
@@ -22,6 +24,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import {
   createHomebrewSpell,
+  toggleHomebrewSpellCampaignShare,
   updateHomebrewSpell,
 } from "@/app/(app)/library/spells/actions";
 
@@ -84,5 +87,59 @@ describe("homebrew spell actions", () => {
     );
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library/spells/spell-id/edit");
+  });
+
+  it("validates campaign share inputs before calling the RPC helper", async () => {
+    await expect(toggleHomebrewSpellCampaignShare(idle, new FormData()))
+      .resolves.toMatchObject({ status: "error" });
+    expect(mocks.setShare).not.toHaveBeenCalled();
+  });
+
+  it("maps a successful share and revalidates both library views", async () => {
+    const formData = new FormData();
+    formData.set("content_id", "33333333-3333-4333-8333-333333333333");
+    formData.set("campaign_id", "44444444-4444-4444-8444-444444444444");
+    formData.set("enabled", "true");
+    formData.set("expected_version", "3");
+    mocks.setShare.mockResolvedValue({
+      contentId: "33333333-3333-4333-8333-333333333333",
+      version: 4,
+      scope: "shared",
+      sharedCampaignCount: 1,
+    });
+
+    await expect(toggleHomebrewSpellCampaignShare(idle, formData)).resolves.toEqual({
+      status: "idle",
+      message: "Campaign access granted.",
+      contentId: "33333333-3333-4333-8333-333333333333",
+      campaignId: "44444444-4444-4444-8444-444444444444",
+      enabled: true,
+      version: 4,
+      scope: "shared",
+      sharedCampaignCount: 1,
+    });
+    expect(mocks.setShare).toHaveBeenCalledWith(
+      "33333333-3333-4333-8333-333333333333",
+      "44444444-4444-4444-8444-444444444444",
+      true,
+      3,
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(
+      "/library/spells/33333333-3333-4333-8333-333333333333/edit",
+    );
+  });
+
+  it("returns campaign access conflicts without revalidation", async () => {
+    const formData = new FormData();
+    formData.set("content_id", "33333333-3333-4333-8333-333333333333");
+    formData.set("campaign_id", "44444444-4444-4444-8444-444444444444");
+    formData.set("enabled", "false");
+    formData.set("expected_version", "4");
+    const conflict = { status: "conflict" as const, message: "Reload latest access." };
+    mocks.setShare.mockResolvedValue(conflict);
+
+    await expect(toggleHomebrewSpellCampaignShare(idle, formData)).resolves.toEqual(conflict);
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

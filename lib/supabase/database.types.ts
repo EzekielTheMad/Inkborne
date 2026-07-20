@@ -1302,6 +1302,15 @@ export type Database = {
         Args: { target_campaign_id: string }
         Returns: undefined
       }
+      list_owned_content_campaign_access: {
+        Args: { target_content_id: string }
+        Returns: {
+          eligible: boolean
+          id: string
+          name: string
+          shared: boolean
+        }[]
+      }
       patch_character_state: {
         Args: { character_id: string; state_patch: Json }
         Returns: undefined
@@ -1329,6 +1338,45 @@ export type Database = {
           write_dm_notes: boolean
         }
         Returns: undefined
+      }
+      search_usable_spells_for_character: {
+        Args: {
+          class_slug?: string | null
+          concentration_only?: boolean | null
+          result_limit?: number | null
+          ritual_only?: boolean | null
+          search_query?: string | null
+          spell_level?: number | null
+          spell_school?: string | null
+          target_character_id: string
+        }
+        Returns: {
+          content_type: string
+          data: Json
+          effects: Json
+          id: string
+          name: string
+          owner_id: string | null
+          scope: string
+          slug: string
+          source: string
+          system_id: string
+          version: number
+        }[]
+      }
+      set_content_campaign_share: {
+        Args: {
+          enabled: boolean
+          expected_version: number
+          target_campaign_id: string
+          target_content_id: string
+        }
+        Returns: {
+          content_id: string
+          scope: string
+          shared_campaign_count: number
+          version: number
+        }[]
       }
       sync_character_feature_refs: {
         Args: { target_character_id: string }

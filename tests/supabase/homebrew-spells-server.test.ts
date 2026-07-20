@@ -10,14 +10,17 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 import {
   createHomebrewSpellRecord,
   getOwnedHomebrewSpell,
+  getHomebrewSpellCampaignAccess,
   listHomebrewSpellClassOptions,
   listOwnedHomebrewSpells,
+  setHomebrewSpellCampaignShare,
   updateHomebrewSpellRecord,
 } from "@/lib/supabase/homebrew-spells-server";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const SYSTEM_ID = "22222222-2222-4222-8222-222222222222";
 const SPELL_ID = "33333333-3333-4333-8333-333333333333";
+const SECOND_SPELL_ID = "66666666-6666-4666-8666-666666666666";
 
 interface DatabaseResponse {
   data: unknown;
@@ -30,12 +33,14 @@ interface QueryCall {
   payload?: unknown;
   selection?: string;
   filters: Array<[string, unknown]>;
+  inFilters: Array<[string, unknown[]]>;
   order?: string;
 }
 
 function makeClient(
   responses: DatabaseResponse[],
   authenticated = true,
+  rpcResponse: DatabaseResponse = { data: null, error: null },
 ): { client: unknown; calls: QueryCall[] } {
   const calls: QueryCall[] = [];
   let responseIndex = 0;
@@ -52,6 +57,7 @@ function makeClient(
         table,
         operation: "select",
         filters: [],
+        inFilters: [],
       };
       calls.push(call);
 
@@ -74,6 +80,10 @@ function makeClient(
           call.filters.push([column, value]);
           return builder;
         },
+        in(column: string, values: unknown[]) {
+          call.inFilters.push([column, values]);
+          return builder;
+        },
         order(column: string) {
           call.order = column;
           return builder;
@@ -87,6 +97,7 @@ function makeClient(
 
       return builder;
     }),
+    rpc: vi.fn().mockResolvedValue(rpcResponse),
   };
 
   return { client, calls };
@@ -138,9 +149,13 @@ const spellData = {
   dependencies: [],
 };
 
-function row(version = 1) {
+function row(
+  version = 1,
+  scope: "personal" | "shared" = "personal",
+  id = SPELL_ID,
+) {
   return {
-    id: SPELL_ID,
+    id,
     system_id: SYSTEM_ID,
     content_type: "spell",
     slug: "arcane-burst-a1b2c3d4",
@@ -148,7 +163,7 @@ function row(version = 1) {
     data: spellData,
     effects: [],
     source: "homebrew",
-    scope: "personal",
+    scope,
     owner_id: USER_ID,
     version,
     created_at: "2026-07-20T00:00:00.000Z",
@@ -158,6 +173,10 @@ function row(version = 1) {
 
 function expectFilters(call: QueryCall, expected: Array<[string, unknown]>) {
   for (const filter of expected) expect(call.filters).toContainEqual(filter);
+}
+
+function expectInFilter(call: QueryCall, column: string, values: unknown[]) {
+  expect(call.inFilters).toContainEqual([column, values]);
 }
 
 beforeEach(() => {
@@ -298,22 +317,45 @@ describe("createHomebrewSpellRecord", () => {
 });
 
 describe("owner-scoped reads", () => {
-  it("lists only active personal spells owned in the resolved system", async () => {
+  it("lists active personal and shared spells with campaign counts", async () => {
     const db = makeClient([
       { data: { id: SYSTEM_ID }, error: null },
-      { data: [row()], error: null },
+      { data: [row(3, "shared"), row(2, "shared", SECOND_SPELL_ID)], error: null },
+      {
+        data: [
+          {
+            content_id: SPELL_ID,
+            campaign_id: "44444444-4444-4444-8444-444444444444",
+          },
+          {
+            content_id: SPELL_ID,
+            campaign_id: "55555555-5555-4555-8555-555555555555",
+          },
+          {
+            content_id: SECOND_SPELL_ID,
+            campaign_id: "77777777-7777-4777-8777-777777777777",
+          },
+        ],
+        error: null,
+      },
     ]);
     createClientMock.mockResolvedValue(db.client);
 
-    await expect(listOwnedHomebrewSpells()).resolves.toEqual([row()]);
+    await expect(listOwnedHomebrewSpells()).resolves.toEqual([
+      { ...row(3, "shared"), sharedCampaignCount: 2 },
+      { ...row(2, "shared", SECOND_SPELL_ID), sharedCampaignCount: 1 },
+    ]);
     expectFilters(db.calls[1], [
       ["owner_id", USER_ID],
       ["system_id", SYSTEM_ID],
       ["source", "homebrew"],
       ["content_type", "spell"],
-      ["scope", "personal"],
       ["is_retired", false],
     ]);
+    expectInFilter(db.calls[1], "scope", ["personal", "shared"]);
+    expectInFilter(db.calls[2], "content_id", [SPELL_ID, SECOND_SPELL_ID]);
+    expect(db.calls.filter((call) => call.table === "content_shares")).toHaveLength(1);
+    expect((db.client as { rpc: ReturnType<typeof vi.fn> }).rpc).not.toHaveBeenCalled();
   });
 
   it("gets one spell with the same complete ownership boundary", async () => {
@@ -330,9 +372,9 @@ describe("owner-scoped reads", () => {
       ["system_id", SYSTEM_ID],
       ["source", "homebrew"],
       ["content_type", "spell"],
-      ["scope", "personal"],
       ["is_retired", false],
     ]);
+    expectInFilter(db.calls[1], "scope", ["personal", "shared"]);
   });
 
   it("returns null for a malformed id only after verifying the session", async () => {
@@ -341,6 +383,120 @@ describe("owner-scoped reads", () => {
     await expect(getOwnedHomebrewSpell("not-a-uuid")).resolves.toBeNull();
     expect(createClientMock).toHaveBeenCalledOnce();
     expect(db.calls).toHaveLength(0);
+  });
+});
+
+describe("getHomebrewSpellCampaignAccess", () => {
+  it("loads the RPC's same-system membership and current-share union", async () => {
+    const CAMPAIGN_A = "44444444-4444-4444-8444-444444444444";
+    const CAMPAIGN_B = "55555555-5555-4555-8555-555555555555";
+    const db = makeClient([], true, {
+      data: [
+        { id: CAMPAIGN_A, name: "Tuesday Group", shared: true, eligible: true },
+        { id: CAMPAIGN_B, name: "Weekend Game", shared: false, eligible: true },
+      ],
+      error: null,
+    });
+    createClientMock.mockResolvedValue(db.client);
+
+    await expect(getHomebrewSpellCampaignAccess(SPELL_ID)).resolves.toEqual({
+      campaigns: [
+        { id: CAMPAIGN_A, name: "Tuesday Group", shared: true, eligible: true },
+        { id: CAMPAIGN_B, name: "Weekend Game", shared: false, eligible: true },
+      ],
+      sharedCampaignCount: 1,
+    });
+    expect(db.calls).toHaveLength(0);
+    expect((db.client as { rpc: ReturnType<typeof vi.fn> }).rpc).toHaveBeenCalledWith(
+      "list_owned_content_campaign_access",
+      { target_content_id: SPELL_ID },
+    );
+  });
+
+  it("keeps a current share manageable after the author leaves its campaign", async () => {
+    const FORMER_CAMPAIGN = "44444444-4444-4444-8444-444444444444";
+    const db = makeClient([], true, {
+      data: [{ id: FORMER_CAMPAIGN, name: "Former Group", shared: true, eligible: false }],
+      error: null,
+    });
+    createClientMock.mockResolvedValue(db.client);
+
+    await expect(getHomebrewSpellCampaignAccess(SPELL_ID)).resolves.toEqual({
+      campaigns: [{
+        id: FORMER_CAMPAIGN,
+        name: "Former Group",
+        shared: true,
+        eligible: false,
+      }],
+      sharedCampaignCount: 1,
+    });
+  });
+
+  it("does not load campaign data for content the caller does not own", async () => {
+    const db = makeClient([], true, {
+      data: null,
+      error: { code: "42501", message: "Active owned homebrew content was not found" },
+    });
+    createClientMock.mockResolvedValue(db.client);
+    await expect(getHomebrewSpellCampaignAccess(SPELL_ID)).resolves.toBeNull();
+    expect(db.calls).toHaveLength(0);
+  });
+});
+
+describe("setHomebrewSpellCampaignShare", () => {
+  const CAMPAIGN_ID = "44444444-4444-4444-8444-444444444444";
+
+  it("passes validated optimistic inputs to the atomic RPC and parses its row", async () => {
+    const db = makeClient([], true, {
+      data: [{
+        content_id: SPELL_ID,
+        version: 2,
+        scope: "shared",
+        shared_campaign_count: 1,
+      }],
+      error: null,
+    });
+    createClientMock.mockResolvedValue(db.client);
+
+    await expect(setHomebrewSpellCampaignShare(SPELL_ID, CAMPAIGN_ID, true, 1))
+      .resolves.toEqual({
+        contentId: SPELL_ID,
+        version: 2,
+        scope: "shared",
+        sharedCampaignCount: 1,
+      });
+    expect((db.client as { rpc: ReturnType<typeof vi.fn> }).rpc).toHaveBeenCalledWith(
+      "set_content_campaign_share",
+      {
+        target_content_id: SPELL_ID,
+        target_campaign_id: CAMPAIGN_ID,
+        enabled: true,
+        expected_version: 1,
+      },
+    );
+  });
+
+  it("returns a recoverable conflict for a stale expected version", async () => {
+    const db = makeClient([], true, {
+      data: null,
+      error: { code: "40001", message: "stale content version" },
+    });
+    createClientMock.mockResolvedValue(db.client);
+    await expect(setHomebrewSpellCampaignShare(SPELL_ID, CAMPAIGN_ID, false, 2))
+      .resolves.toMatchObject({ status: "conflict" });
+  });
+
+  it("rejects malformed identifiers and signed-out callers before the RPC", async () => {
+    const malformed = makeClient([]);
+    createClientMock.mockResolvedValue(malformed.client);
+    await expect(setHomebrewSpellCampaignShare("bad", CAMPAIGN_ID, true, 1))
+      .resolves.toMatchObject({ status: "error" });
+    expect((malformed.client as { rpc: ReturnType<typeof vi.fn> }).rpc).not.toHaveBeenCalled();
+
+    const signedOut = makeClient([], false);
+    createClientMock.mockResolvedValue(signedOut.client);
+    await expect(setHomebrewSpellCampaignShare(SPELL_ID, CAMPAIGN_ID, true, 1))
+      .resolves.toEqual({ status: "error", message: "Sign in before changing campaign access." });
   });
 });
 
@@ -361,7 +517,6 @@ describe("updateHomebrewSpellRecord", () => {
       name: "Arcane Burst",
       data: expect.objectContaining({ level: 2, classes: ["wizard"] }),
       effects: [],
-      scope: "personal",
     });
     expectFilters(update, [
       ["id", SPELL_ID],
@@ -369,10 +524,10 @@ describe("updateHomebrewSpellRecord", () => {
       ["system_id", SYSTEM_ID],
       ["source", "homebrew"],
       ["content_type", "spell"],
-      ["scope", "personal"],
       ["is_retired", false],
       ["version", 3],
     ]);
+    expectInFilter(update, "scope", ["personal", "shared"]);
   });
 
   it("returns a structured conflict when the expected version is stale", async () => {
@@ -394,9 +549,23 @@ describe("updateHomebrewSpellRecord", () => {
       ["system_id", SYSTEM_ID],
       ["source", "homebrew"],
       ["content_type", "spell"],
-      ["scope", "personal"],
       ["is_retired", false],
     ]);
+    expectInFilter(db.calls[3], "scope", ["personal", "shared"]);
+  });
+
+  it("preserves shared scope while saving a new rules version", async () => {
+    const db = makeClient([
+      { data: { id: SYSTEM_ID }, error: null },
+      { data: [{ slug: "wizard", name: "Wizard" }], error: null },
+      { data: row(5, "shared"), error: null },
+    ]);
+    createClientMock.mockResolvedValue(db.client);
+
+    await expect(updateHomebrewSpellRecord(SPELL_ID, 4, form()))
+      .resolves.toEqual(row(5, "shared"));
+    expect(db.calls[2].payload).not.toHaveProperty("scope");
+    expectInFilter(db.calls[2], "scope", ["personal", "shared"]);
   });
 
   it("does not report missing or unauthorized content as a conflict", async () => {

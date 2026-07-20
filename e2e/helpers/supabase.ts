@@ -79,6 +79,68 @@ export async function getCampaignFixture(campaignId: string): Promise<{
   return { inviteCode: data.invite_code, systemId: data.system_id };
 }
 
+export async function seedHomebrewSharingCampaign(input: {
+  name: string;
+  playerEmail: string;
+  playerPassword: string;
+}): Promise<{ id: string; systemId: string }> {
+  const service = createServiceClient();
+  const [ownerId, playerId] = await Promise.all([
+    getTestUserId(),
+    getUserIdForCredentials(input.playerEmail, input.playerPassword),
+  ]);
+  const { data: systems, error: systemsError } = await service
+    .from("game_systems")
+    .select("id")
+    .eq("status", "published")
+    .order("name")
+    .limit(1);
+  if (systemsError || !systems?.length) {
+    throw new Error(
+      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+    );
+  }
+
+  const { data: campaign, error: campaignError } = await service
+    .from("campaigns")
+    .insert({
+      name: input.name,
+      description: "Disposable campaign-scoped homebrew acceptance fixture.",
+      owner_id: ownerId,
+      system_id: systems[0].id,
+    })
+    .select("id")
+    .single();
+  if (campaignError || !campaign) {
+    throw new Error(`Could not seed homebrew campaign: ${campaignError?.message}`);
+  }
+
+  const { error: membershipError } = await service.from("campaign_members").upsert({
+    campaign_id: campaign.id,
+    user_id: playerId,
+    role: "player",
+  });
+  if (membershipError) {
+    throw new Error(`Could not seed campaign membership: ${membershipError.message}`);
+  }
+  return { id: campaign.id, systemId: systems[0].id };
+}
+
+export async function assignCharactersToCampaign(
+  characterIds: string[],
+  campaignId: string,
+): Promise<void> {
+  if (characterIds.length === 0) return;
+  const service = createServiceClient();
+  const { error } = await service
+    .from("characters")
+    .update({ campaign_id: campaignId })
+    .in("id", characterIds);
+  if (error) {
+    throw new Error(`Could not assign E2E characters to campaign: ${error.message}`);
+  }
+}
+
 async function seedClassContentRef(
   service: SupabaseClient,
   characterId: string,
@@ -371,7 +433,7 @@ async function seedWizardCharacterForUser(
   return character.id;
 }
 
-/** Deletes only explicitly tracked private E2E spell definitions owned by the
+/** Deletes only explicitly tracked E2E spell definitions owned by the
  * authenticated E2E user. Character references must be removed first. */
 export async function deleteHomebrewSpellsById(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
@@ -392,7 +454,7 @@ export async function deleteHomebrewSpellsById(ids: string[]): Promise<void> {
   }
 }
 
-/** Safety net for private homebrew left by interrupted E2E runs. */
+/** Safety net for homebrew left by interrupted E2E runs. */
 export async function sweepE2EHomebrewSpells(): Promise<number> {
   const service = createServiceClient();
   const userId = await getTestUserId();
@@ -443,15 +505,21 @@ export async function deleteCharactersById(ids: string[]): Promise<void> {
   }
 }
 
-/** Safety net: removes any leftover E2E-prefixed characters owned by the test
- *  user (e.g. from a previous crashed run). */
+/** Safety net: removes leftover E2E-prefixed characters owned by either UAT
+ *  account (e.g. from a previous crashed two-account run). */
 export async function sweepE2ECharacters(): Promise<number> {
   const service = createServiceClient();
-  const userId = await getTestUserId();
+  const userIds = [await getTestUserId()];
+  if (process.env.E2E_PLAYER_EMAIL && process.env.E2E_PLAYER_PASSWORD) {
+    userIds.push(await getUserIdForCredentials(
+      process.env.E2E_PLAYER_EMAIL,
+      process.env.E2E_PLAYER_PASSWORD,
+    ));
+  }
   const { data, error } = await service
     .from("characters")
     .delete()
-    .eq("user_id", userId)
+    .in("user_id", [...new Set(userIds)])
     .like("name", `${E2E_CHARACTER_PREFIX}%`)
     .select("id");
   if (error) {

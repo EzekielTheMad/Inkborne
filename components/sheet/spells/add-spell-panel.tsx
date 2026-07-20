@@ -21,7 +21,7 @@ interface SpellSearchResult {
 interface AddSpellPanelProps {
   open: boolean;
   onClose: () => void;
-  systemId: string;
+  characterId: string;
 }
 
 const LEVEL_PILLS: Array<{ key: string; label: string; level: number }> = [
@@ -65,7 +65,7 @@ function getMaxCastableLevel(
   return maxLevel;
 }
 
-export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
+export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps) {
   const { casterInfo, maxSlots, addSpell, removeSpell, spells } = useSpells();
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
@@ -142,7 +142,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     if (selectedClass) opts.classSlug = selectedClass;
     if (selectedLevel != null) opts.level = selectedLevel;
     try {
-      const data = await searchSpells(systemId, query, opts);
+      const data = await searchSpells(characterId, query, opts);
       // Exclude spell levels above what this character can cast. Cantrips are
       // always available to casters.
       const filtered = data.filter((spell) => {
@@ -160,7 +160,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     } finally {
       if (requestId === searchRequest.current) setLoading(false);
     }
-  }, [systemId, query, selectedClass, selectedLevel, maxCastableLevel]);
+  }, [characterId, query, selectedClass, selectedLevel, maxCastableLevel]);
 
   useEffect(() => {
     if (!open) return;
