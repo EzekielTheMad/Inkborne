@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Plus, Sparkles } from "lucide-react";
+import { BookOpen, Plus, Sparkles, Upload } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -43,10 +43,16 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
             then share it with the campaigns you choose.
           </p>
         </div>
-        <Link href="/library/spells/new" className={buttonVariants({ variant: "gold" })}>
-          <Plus className="size-4" />
-          Create spell
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/library/import" className={buttonVariants({ variant: "outline" })}>
+            <Upload className="size-4" />
+            Import MPMB
+          </Link>
+          <Link href="/library/spells/new" className={buttonVariants({ variant: "gold" })}>
+            <Plus className="size-4" />
+            Create spell
+          </Link>
+        </div>
       </div>
 
       {notice && (

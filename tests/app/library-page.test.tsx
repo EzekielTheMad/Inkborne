@@ -51,5 +51,9 @@ describe("LibraryPage", () => {
     expect(screen.getByText("Private")).toBeVisible();
     expect(screen.getByText("Shared · 2 campaigns")).toBeVisible();
     expect(screen.getByText("My spells")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Import MPMB" })).toHaveAttribute(
+      "href",
+      "/library/import",
+    );
   });
 });

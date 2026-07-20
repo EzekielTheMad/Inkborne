@@ -264,7 +264,7 @@ describe("searchSpells", () => {
     expect(fromMock).not.toHaveBeenCalledWith("content_definitions");
   });
 
-  it("passes explicit neutral defaults when optional filters are absent", async () => {
+  it("lets the RPC apply neutral defaults when optional filters are absent", async () => {
     const { searchSpells } = await import("@/lib/supabase/spells");
     await searchSpells("character-1", "");
 
@@ -273,9 +273,9 @@ describe("searchSpells", () => {
       {
         target_character_id: "character-1",
         search_query: "",
-        class_slug: null,
-        spell_level: null,
-        spell_school: null,
+        class_slug: undefined,
+        spell_level: undefined,
+        spell_school: undefined,
         ritual_only: false,
         concentration_only: false,
         result_limit: 50,

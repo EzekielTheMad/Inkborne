@@ -127,9 +127,9 @@ export async function searchSpells(
     {
       target_character_id: characterId,
       search_query: query,
-      class_slug: options?.classSlug ?? null,
-      spell_level: options?.level ?? null,
-      spell_school: options?.school ?? null,
+      class_slug: options?.classSlug,
+      spell_level: options?.level,
+      spell_school: options?.school,
       ritual_only: options?.ritualOnly ?? false,
       concentration_only: options?.concentrationOnly ?? false,
       result_limit: 50,

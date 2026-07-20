@@ -831,6 +831,245 @@ export type Database = {
           },
         ]
       }
+      content_import_items: {
+        Row: {
+          candidate_data: Json | null
+          candidate_effects: Json | null
+          candidate_name: string | null
+          candidate_slug: string | null
+          committed_content_id: string | null
+          content_type: string
+          created_at: string
+          diagnostics: Json
+          id: string
+          import_id: string
+          location_column: number
+          location_line: number
+          mapping_status: string
+          ordinal: number
+          registry: string
+          selected: boolean
+          source_key: string
+          source_refs: Json
+        }
+        Insert: {
+          candidate_data?: Json | null
+          candidate_effects?: Json | null
+          candidate_name?: string | null
+          candidate_slug?: string | null
+          committed_content_id?: string | null
+          content_type: string
+          created_at?: string
+          diagnostics?: Json
+          id?: string
+          import_id: string
+          location_column: number
+          location_line: number
+          mapping_status: string
+          ordinal: number
+          registry: string
+          selected?: boolean
+          source_key: string
+          source_refs?: Json
+        }
+        Update: {
+          candidate_data?: Json | null
+          candidate_effects?: Json | null
+          candidate_name?: string | null
+          candidate_slug?: string | null
+          committed_content_id?: string | null
+          content_type?: string
+          created_at?: string
+          diagnostics?: Json
+          id?: string
+          import_id?: string
+          location_column?: number
+          location_line?: number
+          mapping_status?: string
+          ordinal?: number
+          registry?: string
+          selected?: boolean
+          source_key?: string
+          source_refs?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_import_items_committed_content_id_fkey"
+            columns: ["committed_content_id"]
+            isOneToOne: false
+            referencedRelation: "content_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_import_items_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "content_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_import_origins: {
+        Row: {
+          content_id: string
+          created_at: string
+          import_id: string
+          import_item_id: string
+          mapper_version: string
+          original_filename: string
+          owner_id: string
+          parser_version: string
+          registry: string
+          sharing_rights_granted_at: string | null
+          sharing_rights_status: string
+          source_format: string
+          source_key: string
+          source_sha256: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          import_id: string
+          import_item_id: string
+          mapper_version: string
+          original_filename: string
+          owner_id: string
+          parser_version: string
+          registry: string
+          sharing_rights_granted_at?: string | null
+          sharing_rights_status?: string
+          source_format: string
+          source_key: string
+          source_sha256: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          import_id?: string
+          import_item_id?: string
+          mapper_version?: string
+          original_filename?: string
+          owner_id?: string
+          parser_version?: string
+          registry?: string
+          sharing_rights_granted_at?: string | null
+          sharing_rights_status?: string
+          source_format?: string
+          source_key?: string
+          source_sha256?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_import_origins_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: true
+            referencedRelation: "content_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_import_origins_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "content_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_import_origins_import_item_id_fkey"
+            columns: ["import_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_import_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_import_origins_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_imports: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          file_diagnostics: Json
+          id: string
+          mapper_version: string
+          mapping_summary: Json
+          original_filename: string
+          owner_id: string
+          parser_version: string
+          required_sheet_version: string | null
+          revision: number
+          rights_attestation_version: string
+          rights_attested_at: string
+          source_bytes: number
+          source_format: string
+          source_metadata: Json
+          source_sha256: string
+          status: string
+          system_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          file_diagnostics?: Json
+          id?: string
+          mapper_version: string
+          mapping_summary?: Json
+          original_filename: string
+          owner_id: string
+          parser_version: string
+          required_sheet_version?: string | null
+          revision?: number
+          rights_attestation_version: string
+          rights_attested_at?: string
+          source_bytes: number
+          source_format?: string
+          source_metadata?: Json
+          source_sha256: string
+          status?: string
+          system_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          file_diagnostics?: Json
+          id?: string
+          mapper_version?: string
+          mapping_summary?: Json
+          original_filename?: string
+          owner_id?: string
+          parser_version?: string
+          required_sheet_version?: string | null
+          revision?: number
+          rights_attestation_version?: string
+          rights_attested_at?: string
+          source_bytes?: number
+          source_format?: string
+          source_metadata?: Json
+          source_sha256?: string
+          status?: string
+          system_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_imports_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_imports_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "game_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_shares: {
         Row: {
           campaign_id: string
@@ -1273,6 +1512,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_mpmb_import: {
+        Args: { target_import_id: string }
+        Returns: boolean
+      }
+      commit_mpmb_import: {
+        Args: { expected_revision: number; target_import_id: string }
+        Returns: {
+          content_id: string
+          item_id: string
+          version: number
+        }[]
+      }
       copy_character: {
         Args: {
           copied_name?: string
@@ -1341,13 +1592,13 @@ export type Database = {
       }
       search_usable_spells_for_character: {
         Args: {
-          class_slug?: string | null
-          concentration_only?: boolean | null
-          result_limit?: number | null
-          ritual_only?: boolean | null
-          search_query?: string | null
-          spell_level?: number | null
-          spell_school?: string | null
+          class_slug?: string
+          concentration_only?: boolean
+          result_limit?: number
+          ritual_only?: boolean
+          search_query?: string
+          spell_level?: number
+          spell_school?: string
           target_character_id: string
         }
         Returns: {
@@ -1356,7 +1607,7 @@ export type Database = {
           effects: Json
           id: string
           name: string
-          owner_id: string | null
+          owner_id: string
           scope: string
           slug: string
           source: string
@@ -1377,6 +1628,35 @@ export type Database = {
           shared_campaign_count: number
           version: number
         }[]
+      }
+      set_mpmb_import_item_selected: {
+        Args: {
+          expected_revision: number
+          selected: boolean
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          revision: number
+          selected_count: number
+        }[]
+      }
+      stage_mpmb_import: {
+        Args: {
+          file_diagnostics: Json
+          mapped_items: Json
+          mapper_version: string
+          mapping_summary: Json
+          parser_version: string
+          required_sheet_version: string | null
+          rights_attestation_version: string
+          safe_original_filename: string
+          source_bytes: number
+          source_metadata: Json
+          source_sha256: string
+          target_system_id: string
+        }
+        Returns: string
       }
       sync_character_feature_refs: {
         Args: { target_character_id: string }

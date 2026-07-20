@@ -4,6 +4,8 @@ export const MPMB_REGISTRIES = [
   "FeatsList",
 ] as const;
 
+export const MPMB_PARSER_VERSION = "1.0.0";
+
 export type MpmbRegistryName = (typeof MPMB_REGISTRIES)[number];
 
 export interface MpmbSourceLocation {
