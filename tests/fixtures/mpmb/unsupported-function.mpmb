@@ -1,0 +1,6 @@
+FeatsList["unsafe prerequisite"] = {
+  name: "Unsafe Prerequisite",
+  prereqeval: function (character) {
+    return character.level > 1;
+  },
+};
