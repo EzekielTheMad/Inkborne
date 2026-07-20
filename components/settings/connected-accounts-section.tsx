@@ -174,6 +174,7 @@ export function ConnectedAccountsSection({
                   <Button
                     variant="outline"
                     size="sm"
+                    aria-label={`Disconnect ${provider.label}`}
                     onClick={() => setConfirmingDisconnect(provider.key)}
                     disabled={loading === provider.key || confirming}
                   >
@@ -183,6 +184,7 @@ export function ConnectedAccountsSection({
                   <Button
                     variant="outline"
                     size="sm"
+                    aria-label={`${available ? "Connect" : "Unavailable"} ${provider.label}`}
                     onClick={() => handleConnect(provider.key)}
                     disabled={loading === provider.key || !available}
                   >

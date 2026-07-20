@@ -52,7 +52,7 @@ describe("ConnectedAccountsSection", () => {
     expect(screen.getByText("Google")).toBeVisible();
     expect(screen.getByText("Connected")).toBeVisible();
     expect(screen.getByText("Setup required")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Unavailable" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Unavailable Discord" })).toBeDisabled();
   });
 
   it("starts OAuth linking with the settings callback", async () => {
@@ -69,7 +69,7 @@ describe("ConnectedAccountsSection", () => {
     });
 
     render(<ConnectedAccountsSection identities={[emailIdentity]} />);
-    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+    fireEvent.click(screen.getByRole("button", { name: "Connect Google" }));
 
     await waitFor(() => {
       expect(auth.linkIdentity).toHaveBeenCalledWith({
@@ -102,7 +102,7 @@ describe("ConnectedAccountsSection", () => {
     auth.unlinkIdentity.mockResolvedValue({ data: {}, error: null });
 
     render(<ConnectedAccountsSection identities={[emailIdentity, googleIdentity]} />);
-    fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect Google" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
 
     await waitFor(() => {
@@ -126,7 +126,7 @@ describe("ConnectedAccountsSection", () => {
     });
 
     render(<ConnectedAccountsSection identities={[emailIdentity, googleIdentity]} />);
-    fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect Google" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
 
     expect(await screen.findByText("Cannot disconnect your only login method")).toBeVisible();
