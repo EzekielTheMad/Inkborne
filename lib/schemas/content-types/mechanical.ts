@@ -55,7 +55,10 @@ export type ProficiencyGrants = z.infer<typeof proficiencyGrantsSchema>;
 
 // Spellcasting known — cantrips/spells known per level for a class
 export const spellcastingKnownSchema = z.object({
-  cantrips: z.array(z.number().int().nonnegative()).length(20).optional(),
+  cantrips: z.array(z.number().int().nonnegative()).refine(
+    (values) => values.length === 0 || values.length === 20,
+    { message: "Cantrip progression must be empty or contain all 20 class levels" },
+  ).optional(),
   spells: z.union([
     z.array(z.number().int().nonnegative()).length(20),
     z.literal("all"),
@@ -65,9 +68,20 @@ export const spellcastingKnownSchema = z.object({
 export type SpellcastingKnown = z.infer<typeof spellcastingKnownSchema>;
 
 // Spellcasting list reference — which spell list a class uses
+const spellLevelSchema = z.number().int().min(0).max(9);
+const spellLevelRangeSchema = z.union([
+  z.tuple([spellLevelSchema, spellLevelSchema]),
+  z.object({ min: spellLevelSchema, max: spellLevelSchema }),
+]).refine(
+  (range) => (Array.isArray(range) ? range[0] <= range[1] : range.min <= range.max),
+  { message: "Spell level range minimum cannot exceed its maximum" },
+).transform((range): [number, number] => (
+  Array.isArray(range) ? [range[0], range[1]] : [range.min, range.max]
+));
+
 export const spellcastingListSchema = z.object({
   class: z.string().min(1),
-  level: z.tuple([z.number().int().min(0), z.number().int().min(0).max(9)]),
+  level: spellLevelRangeSchema,
 });
 export type SpellcastingList = z.infer<typeof spellcastingListSchema>;
 
@@ -128,7 +142,7 @@ export const toolProfsSchema = z.array(
     z.string().min(1),           // fixed tool slug: "thieves-tools"
     z.object({
       choose: z.number().int().positive(),
-      from: z.union([z.literal("any"), z.array(z.string().min(1))]),
+      from: z.union([z.string().min(1), z.array(z.string().min(1))]),
     }),
   ])
 ).default([]);

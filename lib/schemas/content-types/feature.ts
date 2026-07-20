@@ -67,7 +67,7 @@ export const featureDataSchema = z.object({
   action: z.enum(ACTION_TYPES).nullable().default(null),
   usages: z.union([z.number(), z.array(z.number().nullable()).length(20)]).optional(),
   recovery: z.enum(RECOVERY_TYPES).nullable().default(null),
-  additional: z.array(z.string().nullable()).length(20).optional(),
+  additional: z.array(z.union([z.string(), z.number()]).nullable()).length(20).optional(),
   scores: abilityScoreArraySchema.optional(),
   scoresMaximum: abilityScoreArraySchema.optional(),
   vision: z.array(visionEntrySchema).default([]),
