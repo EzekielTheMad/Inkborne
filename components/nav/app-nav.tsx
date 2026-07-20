@@ -20,6 +20,7 @@ export function AppNav({ displayName, avatarUrl, email, isAdmin }: AppNavProps) 
           <NavLink href="/dashboard">Dashboard</NavLink>
           <NavLink href="/characters">Characters</NavLink>
           <NavLink href="/campaigns">Campaigns</NavLink>
+          <NavLink href="/library">Library</NavLink>
         </nav>
       </div>
       <div className="hidden md:flex items-center gap-2">

@@ -174,6 +174,8 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
+**Status (2026-07-20): ◑ First private-spell vertical implemented and UAT-verified.** `/library` now supports owner-only spell creation and immutable edits; character spell discovery uses the latest owned definition while sheets remain pinned to the exact version originally selected. Manual two-account UAT proves RLS isolation and direct-link denial, and automated Playwright proves the v1 → edit v2 → old pin/new pin sequence. This does **not** complete M4: additional content types, sharing, MPMB importing, conflict resolution, and preview-character validation remain.
+
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
 

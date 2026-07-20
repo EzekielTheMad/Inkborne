@@ -8,7 +8,7 @@ const foundationSql = readFileSync(
     "supabase/migrations/20260720171627_content_version_pinning_and_rls.sql",
   ),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 const hardeningSql = readFileSync(
   join(
@@ -16,7 +16,7 @@ const hardeningSql = readFileSync(
     "supabase/migrations/20260720173545_content_version_policy_performance.sql",
   ),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 describe("content version hardening migration contract", () => {
   it("preserves the formerly current version when upgrading linked rows", () => {

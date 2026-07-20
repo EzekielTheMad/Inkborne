@@ -77,6 +77,9 @@ export function MobileNav({ displayName, avatarUrl, email, isAdmin }: MobileNavP
             <NavLink href="/campaigns" onClick={() => setOpen(false)} className="text-base">
               Campaigns
             </NavLink>
+            <NavLink href="/library" onClick={() => setOpen(false)} className="text-base">
+              Library
+            </NavLink>
           </nav>
 
           <Separator className="my-4" />

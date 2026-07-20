@@ -9,7 +9,7 @@ const migration = readFileSync(
     "supabase/migrations/20260720185305_character_content_boundary_guards.sql",
   ),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 function functionBody(qualifiedName: string): string {
   const escapedName = qualifiedName.replaceAll(".", "\\.");

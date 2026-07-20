@@ -15,6 +15,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  *  crashed runs are identifiable and swept by global teardown. */
 export const E2E_CHARACTER_PREFIX = "E2E Smoke";
 export const E2E_CAMPAIGN_PREFIX = "E2E Campaign";
+export const E2E_HOMEBREW_PREFIX = "E2E Homebrew";
 
 function env(name: string): string {
   const value = process.env[name];
@@ -272,8 +273,25 @@ export async function seedSheetCharacter(name: string): Promise<string> {
  * Expected slots (wizard 3): 4× 1st, 2× 2nd.
  */
 export async function seedWizardCharacter(name: string): Promise<string> {
+  return seedWizardCharacterForUser(name, await getTestUserId());
+}
+
+export async function seedWizardCharacterForCredentials(
+  name: string,
+  email: string,
+  password: string,
+): Promise<string> {
+  return seedWizardCharacterForUser(
+    name,
+    await getUserIdForCredentials(email, password),
+  );
+}
+
+async function seedWizardCharacterForUser(
+  name: string,
+  userId: string,
+): Promise<string> {
   const service = createServiceClient();
-  const userId = await getTestUserId();
 
   const { data: systems, error: systemsError } = await service
     .from("game_systems")
@@ -351,6 +369,45 @@ export async function seedWizardCharacter(name: string): Promise<string> {
   }
 
   return character.id;
+}
+
+/** Deletes only explicitly tracked private E2E spell definitions owned by the
+ * authenticated E2E user. Character references must be removed first. */
+export async function deleteHomebrewSpellsById(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const service = createServiceClient();
+  const userId = await getTestUserId();
+  const { error } = await service
+    .from("content_definitions")
+    .delete()
+    .in("id", ids)
+    .eq("owner_id", userId)
+    .eq("source", "homebrew")
+    .eq("content_type", "spell")
+    .like("name", `${E2E_HOMEBREW_PREFIX}%`);
+  if (error) {
+    throw new Error(
+      `E2E cleanup failed for homebrew spells [${ids.join(", ")}]: ${error.message}`,
+    );
+  }
+}
+
+/** Safety net for private homebrew left by interrupted E2E runs. */
+export async function sweepE2EHomebrewSpells(): Promise<number> {
+  const service = createServiceClient();
+  const userId = await getTestUserId();
+  const { data, error } = await service
+    .from("content_definitions")
+    .delete()
+    .eq("owner_id", userId)
+    .eq("source", "homebrew")
+    .eq("content_type", "spell")
+    .like("name", `${E2E_HOMEBREW_PREFIX}%`)
+    .select("id");
+  if (error) {
+    throw new Error(`E2E homebrew sweep failed: ${error.message}`);
+  }
+  return data?.length ?? 0;
 }
 
 /** Counts persisted `character_rolls` rows for a character (service role),

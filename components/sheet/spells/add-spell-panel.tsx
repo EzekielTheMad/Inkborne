@@ -14,6 +14,7 @@ interface SpellSearchResult {
   name: string;
   slug: string;
   content_type: string;
+  source: "srd" | "homebrew";
   data: Record<string, unknown>;
 }
 
@@ -121,12 +122,13 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     typeof selectedCaster.spellsKnown === "number" &&
     leveledSpellsKnown >= selectedCaster.spellsKnown;
 
-  // Map from content_id → spell row id for the current class (so we can remove by id).
+  // Track the current immutable pin so edits can be surfaced without silently
+  // changing what the character uses.
   const existingByContentId = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, { rowId: string; version: number | null }>();
     for (const s of spells) {
       if (s.class_slug === selectedClass && s.content_id) {
-        map.set(s.content_id, s.id);
+        map.set(s.content_id, { rowId: s.id, version: s.content_version });
       }
     }
     return map;
@@ -321,8 +323,9 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
           const school = (spell.data?.school as string | undefined) ?? "";
           const ritual = !!spell.data?.ritual;
           const concentration = !!spell.data?.concentration;
-          const existingRowId = existingByContentId.get(spell.id);
-          const isAlreadyAdded = !!existingRowId;
+          const existing = existingByContentId.get(spell.id);
+          const isAlreadyAdded = !!existing;
+          const hasNewerVersion = existing?.version != null && existing.version < spell.version;
           const isBusy = busyId === spell.id;
           const isCantripAtCap = level === 0 && cantripsAtCap && !isAlreadyAdded;
           const isLeveledAtCap = level > 0 && leveledSpellsAtCap && !isAlreadyAdded;
@@ -341,6 +344,9 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium truncate">{spell.name}</span>
+                  {spell.source === "homebrew" && (
+                    <span className="text-[9px] text-accent">Homebrew · v{spell.version}</span>
+                  )}
                   {ritual && <span className="text-[9px] text-muted-foreground">R</span>}
                   {concentration && <span className="text-[9px] text-muted-foreground">C</span>}
                 </div>
@@ -349,18 +355,24 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
                   {school && ` · ${school}`}
                 </p>
               </div>
-              {isAlreadyAdded ? (
+              {existing ? (
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => handleRemove(existingRowId, spell.id)}
+                  onClick={() => handleRemove(existing.rowId, spell.id)}
                   disabled={isBusy}
                   className="shrink-0 h-7 text-muted-foreground hover:text-destructive group"
-                  title="Remove spell"
+                  title={
+                    hasNewerVersion
+                      ? `Character uses v${existing.version}; remove and add again to use v${spell.version}`
+                      : "Remove spell"
+                  }
                 >
                   <Check className="size-3.5 mr-1 group-hover:hidden" />
                   <Trash2 className="size-3.5 mr-1 hidden group-hover:inline" />
-                  <span className="group-hover:hidden">Added</span>
+                  <span className="group-hover:hidden">
+                    {hasNewerVersion ? `Using v${existing.version}` : "Added"}
+                  </span>
                   <span className="hidden group-hover:inline">Remove</span>
                 </Button>
               ) : (
