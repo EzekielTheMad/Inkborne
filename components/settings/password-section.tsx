@@ -9,15 +9,15 @@ import { createClient } from "@/lib/supabase/client";
 
 interface PasswordSectionProps {
   hasPasswordIdentity: boolean;
+  email: string;
 }
 
-export function PasswordSection({ hasPasswordIdentity }: PasswordSectionProps) {
+export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionProps) {
+  const [passwordEnabled, setPasswordEnabled] = useState(hasPasswordIdentity);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  if (!hasPasswordIdentity) return null;
 
   const passwordsMatch = newPassword === confirmPassword;
   const isValid = newPassword.length >= 8 && passwordsMatch;
@@ -33,7 +33,13 @@ export function PasswordSection({ hasPasswordIdentity }: PasswordSectionProps) {
     if (error) {
       setMessage({ type: "error", text: error.message });
     } else {
-      setMessage({ type: "success", text: "Password updated successfully" });
+      setPasswordEnabled(true);
+      setMessage({
+        type: "success",
+        text: passwordEnabled
+          ? "Password updated successfully"
+          : `Email and password login enabled for ${email}`,
+      });
       setNewPassword("");
       setConfirmPassword("");
     }
@@ -43,9 +49,14 @@ export function PasswordSection({ hasPasswordIdentity }: PasswordSectionProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Password</CardTitle>
+        <CardTitle>{passwordEnabled ? "Password" : "Add email & password login"}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {passwordEnabled
+            ? `Use a password to sign in as ${email}.`
+            : `Set a password to add ${email} as another login method for this same Inkborne profile.`}
+        </p>
         <div className="space-y-2">
           <Label htmlFor="newPassword">New Password</Label>
           <Input
@@ -78,7 +89,13 @@ export function PasswordSection({ hasPasswordIdentity }: PasswordSectionProps) {
         )}
 
         <Button onClick={handleChangePassword} disabled={saving || !isValid}>
-          {saving ? "Updating..." : "Update Password"}
+          {saving
+            ? passwordEnabled
+              ? "Updating..."
+              : "Adding login..."
+            : passwordEnabled
+              ? "Update Password"
+              : "Add email login"}
         </Button>
       </CardContent>
     </Card>

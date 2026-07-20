@@ -39,10 +39,12 @@ export function OAuthButtons({ onSelect }: { onSelect: (provider: OAuthProvider)
     "inline-flex h-10 w-full items-center justify-center gap-2.5 rounded-md border border-border-strong bg-white/[0.03] text-[13px] font-medium text-foreground transition-colors hover:border-accent hover:bg-accent/[0.04]";
   return (
     <div className="flex flex-col gap-2">
-      <button type="button" className={base} onClick={() => onSelect("discord")}>
-        <DiscordIcon />
-        Continue with Discord
-      </button>
+      {process.env.NEXT_PUBLIC_DISCORD_AUTH_ENABLED === "true" && (
+        <button type="button" className={base} onClick={() => onSelect("discord")}>
+          <DiscordIcon />
+          Continue with Discord
+        </button>
+      )}
       <button type="button" className={base} onClick={() => onSelect("google")}>
         <GoogleIcon />
         Continue with Google

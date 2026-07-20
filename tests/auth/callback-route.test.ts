@@ -50,6 +50,24 @@ describe("auth callback GET", () => {
     expect(locationOf(res)).toBe("http://localhost:3000/characters/123");
   });
 
+  it("returns linked OAuth identities to settings with a success marker", async () => {
+    mockExchange(null);
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings?linked=google");
+  });
+
+  it("returns failed identity links to settings with an error marker", async () => {
+    mockExchange({ message: "invalid grant" });
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=discord"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=discord");
+  });
+
+  it("rejects protocol-relative callback destinations", async () => {
+    mockExchange(null);
+    const res = await GET(callbackRequest("code=abc&next=//example.com"));
+    expect(locationOf(res)).toBe("http://localhost:3000/dashboard");
+  });
+
   it("redirects to /auth/reset-password when type is recovery", async () => {
     mockExchange(null);
     // `next` param is ignored when type=recovery so the user always lands on
