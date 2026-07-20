@@ -174,7 +174,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-20): ◑ First multiplayer spell vertical implemented and UAT-verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. Hosted two-account Playwright proves wrong-campaign exclusion, first/final share versioning, edit isolation, and prepare/cast use of an old pin after unsharing. This does **not** complete M4: additional content types, optional public publishing, MPMB importing, conflict resolution, and preview-character validation remain.
+**Status (2026-07-20): ◑ Spell sharing and the private MPMB importer foundation are implemented and UAT-verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, atomically commits selected valid spells/feats as personal homebrew, and blocks imported content from campaign sharing pending a future rights workflow. This does **not** complete M4: additional content types, missing-info editing, conflict resolution, preview-character validation, and optional public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
