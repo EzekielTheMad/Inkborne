@@ -16,7 +16,7 @@
  *   2 — configuration / connection error
  */
 import { createClient } from "@supabase/supabase-js";
-import { parseContentDefinition } from "@/lib/supabase/content-definitions";
+import { parseContentDefinition } from "@/lib/supabase/content-definitions-parser";
 
 async function main(): Promise<void> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
