@@ -2,6 +2,7 @@
 
 import type { JSONContent } from "@tiptap/react";
 import { RichTextEditor } from "./rich-text-editor";
+import { normalizeRichTextContent } from "@/lib/editor/content";
 
 interface RichTextRendererProps {
   content: JSONContent | null;
@@ -15,13 +16,14 @@ interface RichTextRendererProps {
  * If content is null or empty, renders nothing.
  */
 export function RichTextRenderer({ content, minHeight }: RichTextRendererProps) {
-  if (!content || (content.type === "doc" && !content.content?.length)) {
+  const normalizedContent = normalizeRichTextContent(content);
+  if (!normalizedContent.content?.length) {
     return null;
   }
 
   return (
     <RichTextEditor
-      content={content}
+      content={normalizedContent}
       editable={false}
       minHeight={minHeight ?? "auto"}
     />

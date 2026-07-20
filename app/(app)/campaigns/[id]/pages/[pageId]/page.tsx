@@ -6,6 +6,7 @@ import { CampaignPageEditor } from "@/components/campaigns/campaign-page-editor"
 import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeRichTextContent } from "@/lib/editor/content";
 
 interface CampaignWikiPageProps {
   params: Promise<{ id: string; pageId: string }>;
@@ -31,7 +32,7 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
   if (!campaign || !page) notFound();
 
   const canEdit = campaign.owner_id === user.id || page.created_by === user.id;
-  const content = page.content as JSONContent;
+  const content = normalizeRichTextContent(page.content) as JSONContent;
   const visibility = page.visibility === "dm_only" ? "dm_only" : "campaign";
 
   return (

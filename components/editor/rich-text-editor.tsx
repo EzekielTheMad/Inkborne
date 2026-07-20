@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { EditorToolbar } from "./editor-toolbar";
 import { MentionList, type MentionListRef } from "./mention-list";
 import type { MentionItem } from "@/lib/types/narrative";
+import { normalizeRichTextContent } from "@/lib/editor/content";
 
 interface RichTextEditorProps {
   content: JSONContent | null;
@@ -135,7 +136,7 @@ export function RichTextEditor({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       LinkExtension.configure({
         openOnClick: !editable,
         autolink: true,
@@ -154,7 +155,7 @@ export function RichTextEditor({
       }),
     ],
     immediatelyRender: false,
-    content: content ?? undefined,
+    content: normalizeRichTextContent(content),
     editable,
     onUpdate: ({ editor: e }) => {
       onChangeRef.current?.(e.getJSON());
@@ -182,9 +183,10 @@ export function RichTextEditor({
     (newContent: JSONContent | null) => {
       if (!editor) return;
       const currentJSON = JSON.stringify(editor.getJSON());
-      const newJSON = JSON.stringify(newContent ?? {});
-      if (currentJSON !== newJSON && newContent) {
-        editor.commands.setContent(newContent);
+      const normalizedContent = normalizeRichTextContent(newContent);
+      const newJSON = JSON.stringify(normalizedContent);
+      if (currentJSON !== newJSON) {
+        editor.commands.setContent(normalizedContent);
       }
     },
     [editor],

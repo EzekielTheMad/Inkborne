@@ -6,6 +6,7 @@ import { z } from "zod";
 import type { Json } from "@/lib/supabase/database.types";
 import { reportServerError } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeRichTextContent } from "@/lib/editor/content";
 
 const createCampaignInput = z.object({
   name: z.string().trim().min(1).max(100),
@@ -28,7 +29,7 @@ const updatePageInput = z.object({
   revision: z.coerce.number().int().positive(),
   content: z.string().transform((value, context) => {
     try {
-      return JSON.parse(value) as Json;
+      return normalizeRichTextContent(JSON.parse(value)) as Json;
     } catch {
       context.addIssue({ code: "custom", message: "Invalid page content" });
       return z.NEVER;
