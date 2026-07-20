@@ -2,6 +2,8 @@
  * Types for spell management.
  */
 
+import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions-parser";
+
 export interface CharacterSpell {
   id: string;
   character_id: string;
@@ -15,14 +17,7 @@ export interface CharacterSpell {
   source: "selection" | "feature" | "feat" | "item";
   custom_data: Record<string, unknown> | null;
   created_at: string;
-  content_definitions?: {
-    id: string;
-    name: string;
-    slug: string;
-    content_type: string;
-    data: Record<string, unknown>;
-    effects: Array<Record<string, unknown>>;
-  } | null;
+  content_definitions?: ParsedContentDefinition | null;
 }
 
 export interface SpellSlotsUsed {

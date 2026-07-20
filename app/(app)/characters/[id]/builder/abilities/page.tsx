@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { AbilitiesStepClient } from "./abilities-step-client";
 
@@ -28,20 +29,13 @@ export default async function AbilitiesStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
-  const { data: contentRefs, error: contentRefsError } = await supabase
-    .from("character_content_refs")
-    .select("*, content_definitions (id, name, slug, content_type, data, effects)")
-    .eq("character_id", id);
-
-  if (contentRefsError) {
-    console.error("[AbilitiesStepPage] Error fetching content refs:", contentRefsError.message, contentRefsError.details, contentRefsError.hint);
-  }
+  const contentRefs = await getContentRefsByCharacter(id);
 
   return (
     <AbilitiesStepClient
       characterId={id}
       character={character}
-      contentRefs={contentRefs ?? []}
+      contentRefs={contentRefs}
       schema={character.game_systems?.schema_definition}
     />
   );

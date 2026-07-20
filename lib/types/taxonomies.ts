@@ -42,7 +42,7 @@ export const PROFICIENCY_TYPES = [
 export type ProficiencyType = (typeof PROFICIENCY_TYPES)[number];
 
 export const ITEM_RARITIES = [
-  "Common", "Uncommon", "Rare", "Very Rare", "Legendary", "Artifact",
+  "Common", "Uncommon", "Rare", "Very Rare", "Legendary", "Artifact", "Varies",
 ] as const;
 export type ItemRarity = (typeof ITEM_RARITIES)[number];
 

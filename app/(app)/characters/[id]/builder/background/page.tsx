@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { getContentByType } from "@/lib/supabase/content-definitions";
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { BackgroundStepClient } from "./background-step-client";
 
@@ -28,43 +30,21 @@ export default async function BackgroundStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
-  console.log("[BackgroundStepPage] Fetching background content for system:", character.system_id);
-  const { data: backgroundContent, error: backgroundError } = await supabase
-    .from("content_definitions")
-    .select("id, name, slug, content_type, data, effects, version, source")
-    .eq("system_id", character.system_id)
-    .eq("content_type", "background")
-    .order("name");
-
-  if (backgroundError) {
-    console.error("[BackgroundStepPage] Error fetching backgrounds:", backgroundError.message, backgroundError.details, backgroundError.hint);
-  }
-
-  const { data: contentRefs, error: contentRefsError } = await supabase
-    .from("character_content_refs")
-    .select("*, content_definitions (id, name, slug, content_type, data, effects)")
-    .eq("character_id", id);
-
-  if (contentRefsError) {
-    console.error("[BackgroundStepPage] Error fetching content refs:", contentRefsError.message, contentRefsError.details, contentRefsError.hint);
-  }
-
-  // Fetch all languages for resolving "all_languages" choice
-  const { data: languages } = await supabase
-    .from("content_definitions")
-    .select("slug, name")
-    .eq("system_id", character.system_id)
-    .eq("content_type", "language")
-    .order("name");
+  const [backgroundContent, contentRefs, languages] = await Promise.all([
+    getContentByType(character.system_id, "background"),
+    getContentRefsByCharacter(id),
+    // Used to resolve the "all_languages" choice.
+    getContentByType(character.system_id, "language"),
+  ]);
 
   return (
     <BackgroundStepClient
       characterId={id}
       character={character}
-      backgrounds={backgroundContent ?? []}
-      contentRefs={contentRefs ?? []}
+      backgrounds={backgroundContent}
+      contentRefs={contentRefs}
       schema={character.game_systems?.schema_definition}
-      availableLanguages={(languages ?? []).map((l) => l.slug)}
+      availableLanguages={languages.map((language) => language.slug)}
     />
   );
 }

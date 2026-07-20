@@ -1,3 +1,5 @@
+import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions-parser";
+
 export interface InventoryItem {
   id: string;
   character_id: string;
@@ -11,14 +13,7 @@ export interface InventoryItem {
   notes: string | null;
   custom_data: Record<string, unknown> | null;
   created_at: string;
-  content_definitions?: {
-    id: string;
-    name: string;
-    slug: string;
-    content_type: string;
-    data: Record<string, unknown>;
-    effects: Array<Record<string, unknown>>;
-  } | null;
+  content_definitions?: ParsedContentDefinition | null;
 }
 
 export interface Currency {

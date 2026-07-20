@@ -1,8 +1,24 @@
 import { createClient } from "@/lib/supabase/client";
+import {
+  parseContentDefinitions,
+  parseNestedContentDefinition,
+  type ParsedContentDefinition,
+} from "@/lib/supabase/content-definitions-parser";
 import type { CharacterSpell, AddSpellPayload, SpellUpdate } from "@/lib/types/spells";
 
 const SPELLS_SELECT =
-  "*, content_definitions(id, name, slug, content_type, data, effects)";
+  "*, content_definitions(id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id)";
+
+function parseCharacterSpellRow(
+  raw: Record<string, unknown>,
+): CharacterSpell {
+  return {
+    ...raw,
+    content_definitions: parseNestedContentDefinition(
+      raw.content_definitions,
+    ),
+  } as unknown as CharacterSpell;
+}
 
 export async function getSpellsForCharacter(
   characterId: string,
@@ -15,10 +31,11 @@ export async function getSpellsForCharacter(
     .order("name");
 
   if (error) {
-    console.error("[getSpellsForCharacter] Error:", error.message);
-    return [];
+    throw error;
   }
-  return (data ?? []) as CharacterSpell[];
+  return (data ?? []).map((row) =>
+    parseCharacterSpellRow(row as Record<string, unknown>),
+  );
 }
 
 export async function addCharacterSpell(
@@ -43,10 +60,11 @@ export async function addCharacterSpell(
     .single();
 
   if (error) {
-    console.error("[addCharacterSpell] Error:", error.message);
-    return null;
+    throw error;
   }
-  return data as CharacterSpell;
+  return data
+    ? parseCharacterSpellRow(data as Record<string, unknown>)
+    : null;
 }
 
 export async function updateCharacterSpell(
@@ -60,7 +78,7 @@ export async function updateCharacterSpell(
     .eq("id", spellId);
 
   if (error) {
-    console.error("[updateCharacterSpell] Error:", error.message);
+    throw error;
   }
 }
 
@@ -72,7 +90,7 @@ export async function removeCharacterSpell(spellId: string): Promise<void> {
     .eq("id", spellId);
 
   if (error) {
-    console.error("[removeCharacterSpell] Error:", error.message);
+    throw error;
   }
 }
 
@@ -89,18 +107,14 @@ export async function searchSpells(
   query: string,
   options?: SearchSpellsOptions,
 ): Promise<
-  Array<{
-    id: string;
-    name: string;
-    slug: string;
-    content_type: string;
-    data: Record<string, unknown>;
-  }>
+  ParsedContentDefinition[]
 > {
   const supabase = createClient();
   let builder = supabase
     .from("content_definitions")
-    .select("id, name, slug, content_type, data")
+    .select(
+      "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
+    )
     .eq("system_id", systemId)
     .eq("content_type", "spell")
     .eq("scope", "platform")
@@ -125,8 +139,7 @@ export async function searchSpells(
 
   const { data, error } = await builder.order("name").limit(50);
   if (error) {
-    console.error("[searchSpells] Error:", error.message);
-    return [];
+    throw error;
   }
-  return data ?? [];
+  return parseContentDefinitions(data ?? []);
 }

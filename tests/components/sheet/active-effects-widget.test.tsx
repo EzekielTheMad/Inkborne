@@ -147,6 +147,8 @@ describe("ActiveEffectsWidget", () => {
           name: "Cure Wounds",
           slug: "cure-wounds",
           content_type: "spell",
+          version: 1,
+          source: "srd",
           data: { level: 1, duration: "Instantaneous", concentration: false },
           effects: [],
         },

@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { getContentByType } from "@/lib/supabase/content-definitions";
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { RaceStepClient } from "./race-step-client";
 
@@ -30,54 +32,23 @@ export default async function RaceStepPage({ params }: PageProps) {
 
   const systemId = character.system_id;
 
-  console.log("[RaceStepPage] Fetching race content for system:", systemId);
-  const { data: raceContent, error: raceError } = await supabase
-    .from("content_definitions")
-    .select("id, name, slug, content_type, data, effects, version, source")
-    .eq("system_id", systemId)
-    .eq("content_type", "race")
-    .order("name");
-
-  if (raceError) {
-    console.error("[RaceStepPage] Error fetching races:", raceError.message, raceError.details, raceError.hint);
-  }
-
-  const { data: subraceContent, error: subraceError } = await supabase
-    .from("content_definitions")
-    .select("id, name, slug, content_type, data, effects, version, source")
-    .eq("system_id", systemId)
-    .eq("content_type", "subrace")
-    .order("name");
-
-  if (subraceError) {
-    console.error("[RaceStepPage] Error fetching subraces:", subraceError.message, subraceError.details, subraceError.hint);
-  }
-
-  const { data: contentRefs, error: contentRefsError } = await supabase
-    .from("character_content_refs")
-    .select("*, content_definitions (id, name, slug, content_type, data, effects)")
-    .eq("character_id", id);
-
-  if (contentRefsError) {
-    console.error("[RaceStepPage] Error fetching content refs:", contentRefsError.message, contentRefsError.details, contentRefsError.hint);
-  }
-
-  // Fetch traits for resolving race trait choices (e.g., Dwarf tool proficiency, Half-Elf skill versatility)
-  const { data: traitContent } = await supabase
-    .from("content_definitions")
-    .select("id, name, slug, content_type, data, effects, version, source")
-    .eq("system_id", systemId)
-    .eq("content_type", "trait")
-    .order("name");
+  const [raceContent, subraceContent, traitContent, contentRefs] =
+    await Promise.all([
+      getContentByType(systemId, "race"),
+      getContentByType(systemId, "subrace"),
+      // Traits resolve race choices such as Dwarf tool proficiency.
+      getContentByType(systemId, "trait"),
+      getContentRefsByCharacter(id),
+    ]);
 
   return (
     <RaceStepClient
       characterId={id}
       character={character}
-      races={raceContent ?? []}
-      subraces={subraceContent ?? []}
-      traits={traitContent ?? []}
-      contentRefs={contentRefs ?? []}
+      races={raceContent}
+      subraces={subraceContent}
+      traits={traitContent}
+      contentRefs={contentRefs}
       schema={character.game_systems?.schema_definition}
     />
   );

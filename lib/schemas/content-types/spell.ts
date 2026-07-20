@@ -4,7 +4,7 @@ import { effectDurationSchema } from "@/lib/schemas/active-effects";
 import { cantripDieSchema } from "./mechanical";
 
 const spellDamageSchema = z.object({
-  type: z.enum(DAMAGE_TYPES),
+  type: z.enum(DAMAGE_TYPES).nullable(),
   dice_at_slot_level: z.record(z.string(), z.string()),
 });
 

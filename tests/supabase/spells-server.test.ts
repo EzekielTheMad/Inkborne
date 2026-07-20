@@ -9,6 +9,41 @@ interface QueryResponse<T> {
   error: { message: string } | null;
 }
 
+const SYSTEM_ID = "22222222-2222-4222-8222-222222222222";
+const BLESS_ID = "11111111-1111-4111-8111-111111111111";
+const AID_ID = "33333333-3333-4333-8333-333333333333";
+
+function makeSpellDefinition(params: {
+  id: string;
+  slug: string;
+  name: string;
+  data?: Record<string, unknown>;
+}) {
+  return {
+    ...params,
+    content_type: "spell",
+    version: 1,
+    source: "srd",
+    system_id: SYSTEM_ID,
+    scope: "platform",
+    owner_id: null,
+    effects: [],
+    data: params.data ?? {
+      level: 1,
+      school: "evocation",
+      casting_time: "1 action",
+      range: "30 feet",
+      components: ["V", "S"],
+      duration: "1 minute",
+      concentration: false,
+      ritual: false,
+      description: `${params.name} description`,
+      classes: ["cleric"],
+      subclasses: [],
+    },
+  };
+}
+
 function makeQuery<T>(response: QueryResponse<T>) {
   const query = {
     eq: vi.fn(),
@@ -25,7 +60,7 @@ function makeQuery<T>(response: QueryResponse<T>) {
 
 function makeClient(options?: {
   existing?: Array<{ id: string; class_slug: string; content_id: string | null }>;
-  definitions?: Array<{ id: string; slug: string; name: string }>;
+  definitions?: Array<Record<string, unknown>>;
   existingError?: { message: string } | null;
   insertError?: { message: string } | null;
   deleteError?: { message: string } | null;
@@ -72,20 +107,20 @@ describe("syncAlwaysPreparedSpells", () => {
   it("inserts missing grants and removes stale, duplicate, and invalid rows", async () => {
     const db = makeClient({
       existing: [
-        { id: "keep", class_slug: "cleric", content_id: "spell-bless" },
+        { id: "keep", class_slug: "cleric", content_id: BLESS_ID },
         { id: "stale", class_slug: "cleric", content_id: "spell-old" },
-        { id: "duplicate", class_slug: "cleric", content_id: "spell-bless" },
+        { id: "duplicate", class_slug: "cleric", content_id: BLESS_ID },
         { id: "invalid", class_slug: "cleric", content_id: null },
       ],
       definitions: [
-        { id: "spell-bless", slug: "bless", name: "Bless" },
-        { id: "spell-aid", slug: "aid", name: "Aid" },
+        makeSpellDefinition({ id: BLESS_ID, slug: "bless", name: "Bless" }),
+        makeSpellDefinition({ id: AID_ID, slug: "aid", name: "Aid" }),
       ],
     });
 
     const result = await syncAlwaysPreparedSpells(db.client, {
       characterId: "char-1",
-      systemId: "system-1",
+      systemId: SYSTEM_ID,
       granted: [
         { spell_slug: "bless", class_slug: "cleric" },
         { spell_slug: "bless", class_slug: "cleric" },
@@ -94,11 +129,11 @@ describe("syncAlwaysPreparedSpells", () => {
       ],
     });
 
-    expect(db.definitionQuery.eq).toHaveBeenCalledWith("system_id", "system-1");
+    expect(db.definitionQuery.eq).toHaveBeenCalledWith("system_id", SYSTEM_ID);
     expect(db.characterSpells.insert).toHaveBeenCalledWith([
       expect.objectContaining({
         character_id: "char-1",
-        content_id: "spell-aid",
+        content_id: AID_ID,
         name: "Aid",
         class_slug: "cleric",
         always_prepared: true,
@@ -152,5 +187,32 @@ describe("syncAlwaysPreparedSpells", () => {
 
     expect(db.characterSpells.insert).not.toHaveBeenCalled();
     expect(db.characterSpells.delete).not.toHaveBeenCalled();
+  });
+
+  it("fails closed before deleting rows when a definition is malformed", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const db = makeClient({
+      existing: [{ id: "keep", class_slug: "cleric", content_id: BLESS_ID }],
+      definitions: [
+        makeSpellDefinition({
+          id: BLESS_ID,
+          slug: "bless",
+          name: "Bless",
+          data: { level: "invalid" },
+        }),
+      ],
+    });
+
+    await expect(
+      syncAlwaysPreparedSpells(db.client, {
+        characterId: "char-1",
+        systemId: SYSTEM_ID,
+        granted: [{ spell_slug: "bless", class_slug: "cleric" }],
+      }),
+    ).rejects.toThrow("refusing to reconcile feature spells");
+
+    expect(db.characterSpells.insert).not.toHaveBeenCalled();
+    expect(db.characterSpells.delete).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });

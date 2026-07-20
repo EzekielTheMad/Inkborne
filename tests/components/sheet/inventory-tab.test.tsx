@@ -92,6 +92,8 @@ describe("InventoryTab", () => {
           name: "Longsword",
           slug: "longsword",
           content_type: "weapon",
+          version: 1,
+          source: "srd",
           data: {
             damage: { dice: "1d8", type: "slashing" },
             weight: 3,

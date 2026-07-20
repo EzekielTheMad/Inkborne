@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { AddItemPanel } from "@/components/sheet/inventory/add-item-panel";
+import { searchItems } from "@/lib/supabase/inventory";
 
 vi.mock("@/lib/supabase/inventory", () => ({
   searchItems: vi.fn().mockResolvedValue([
@@ -75,5 +76,29 @@ describe("AddItemPanel", () => {
     const button = screen.getByRole("button", { name: /custom item/i });
     fireEvent.click(button);
     expect(screen.getByPlaceholderText(/item name/i)).toBeInTheDocument();
+  });
+
+  it("shows a retryable error when the content search fails", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(searchItems).mockRejectedValueOnce({
+      code: "42501",
+      message: "permission denied",
+    });
+
+    render(
+      <AddItemPanel
+        open={true}
+        onClose={() => {}}
+        onAdd={() => {}}
+        systemId="sys-1"
+      />,
+    );
+
+    expect(
+      await screen.findByText(/items could not be loaded/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    await waitFor(() => expect(errorSpy).toHaveBeenCalled());
+    errorSpy.mockRestore();
   });
 });

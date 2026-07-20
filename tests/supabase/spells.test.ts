@@ -13,6 +13,45 @@ const ilikeMock = vi.fn();
 const containsMock = vi.fn();
 const singleMock = vi.fn();
 
+const validSpellDefinition = {
+  id: "11111111-1111-4111-8111-111111111111",
+  name: "Fire Bolt",
+  slug: "fire-bolt",
+  content_type: "spell",
+  version: 1,
+  source: "srd",
+  system_id: "22222222-2222-4222-8222-222222222222",
+  scope: "platform",
+  owner_id: null,
+  effects: [],
+  data: {
+    level: 0,
+    school: "evocation",
+    casting_time: "1 action",
+    range: "120 feet",
+    components: ["V", "S"],
+    duration: "Instantaneous",
+    concentration: false,
+    ritual: false,
+    description: "A mote of fire streaks toward a creature.",
+    damage: {
+      type: "fire",
+      dice_at_slot_level: { "1": "1d10" },
+    },
+    dc: null,
+    area_of_effect: null,
+    classes: ["wizard"],
+    subclasses: [],
+  },
+};
+
+const structuredError = {
+  code: "42501",
+  message: "permission denied for table content_definitions",
+  details: null,
+  hint: "Grant SELECT to authenticated",
+};
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({ from: (table: string) => fromMock(table) }),
 }));
@@ -60,6 +99,47 @@ describe("getSpellsForCharacter", () => {
       expect.stringContaining("content_definitions"),
     );
     expect(eqMock).toHaveBeenCalledWith("character_id", "char-1");
+    expect(selectMock).toHaveBeenCalledWith(expect.stringContaining("version"));
+    expect(selectMock).toHaveBeenCalledWith(expect.stringContaining("source"));
+  });
+
+  it("retains a valid parent row but nulls a malformed joined definition", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    orderMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: "spell-1",
+          character_id: "char-1",
+          content_id: "bad-content",
+          name: "Custom spell",
+          content_definitions: {
+            ...validSpellDefinition,
+            data: { level: "not-a-number" },
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const { getSpellsForCharacter } = await import("@/lib/supabase/spells");
+    const result = await getSpellsForCharacter("char-1");
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ id: "spell-1", name: "Custom spell" });
+    expect(result[0].content_definitions).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Bad data for fire-bolt (spell)"),
+      expect.anything(),
+    );
+    errorSpy.mockRestore();
+  });
+
+  it("rejects with the original structured query error", async () => {
+    orderMock.mockResolvedValueOnce({ data: null, error: structuredError });
+
+    const { getSpellsForCharacter } = await import("@/lib/supabase/spells");
+
+    await expect(getSpellsForCharacter("char-1")).rejects.toBe(structuredError);
   });
 });
 
@@ -95,6 +175,19 @@ describe("addCharacterSpell", () => {
       }),
     );
   });
+
+  it("rejects with the original structured insert error", async () => {
+    singleMock.mockResolvedValueOnce({ data: null, error: structuredError });
+    const { addCharacterSpell } = await import("@/lib/supabase/spells");
+
+    await expect(
+      addCharacterSpell("char-1", {
+        content_id: "c1",
+        name: "Fireball",
+        class_slug: "wizard",
+      }),
+    ).rejects.toBe(structuredError);
+  });
 });
 
 describe("updateCharacterSpell", () => {
@@ -104,6 +197,15 @@ describe("updateCharacterSpell", () => {
     await updateCharacterSpell("spell-1", { is_prepared: true });
     expect(updateMock).toHaveBeenCalledWith({ is_prepared: true });
     expect(eqMock).toHaveBeenCalledWith("id", "spell-1");
+  });
+
+  it("rejects with the original structured update error", async () => {
+    eqMock.mockResolvedValueOnce({ error: structuredError });
+    const { updateCharacterSpell } = await import("@/lib/supabase/spells");
+
+    await expect(
+      updateCharacterSpell("spell-1", { is_prepared: true }),
+    ).rejects.toBe(structuredError);
   });
 });
 
@@ -128,5 +230,42 @@ describe("searchSpells", () => {
     expect(eqMock).toHaveBeenCalledWith("data->>level", "3");
     expect(ilikeMock).toHaveBeenCalledWith("name", "%fire%");
     expect(containsMock).toHaveBeenCalledWith("data->classes", JSON.stringify(["wizard"]));
+    expect(selectMock).toHaveBeenCalledWith(expect.stringContaining("version"));
+  });
+
+  it("validates results and omits only malformed definitions", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    limitMock.mockResolvedValueOnce({
+      data: [
+        validSpellDefinition,
+        {
+          ...validSpellDefinition,
+          id: "33333333-3333-4333-8333-333333333333",
+          slug: "broken-spell",
+          data: { level: "three" },
+        },
+      ],
+      error: null,
+    });
+
+    const { searchSpells } = await import("@/lib/supabase/spells");
+    const result = await searchSpells(validSpellDefinition.system_id, "fire");
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      slug: "fire-bolt",
+      version: 1,
+      source: "srd",
+    });
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+  });
+
+  it("rejects with the original structured query error", async () => {
+    limitMock.mockResolvedValueOnce({ data: null, error: structuredError });
+
+    const { searchSpells } = await import("@/lib/supabase/spells");
+
+    await expect(searchSpells("sys-1", "fire")).rejects.toBe(structuredError);
   });
 });

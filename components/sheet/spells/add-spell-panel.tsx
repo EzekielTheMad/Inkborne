@@ -72,8 +72,11 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
   );
   const [results, setResults] = useState<SpellSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequest = useRef(0);
 
   const selectedCaster = casterInfo.classes.find((c) => c.slug === selectedClass);
   const maxCastableLevel = useMemo(
@@ -129,26 +132,41 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
   }, [spells, selectedClass]);
 
   const runSearch = useCallback(async () => {
+    const requestId = ++searchRequest.current;
     setLoading(true);
+    setSearchError(null);
     const opts: SearchSpellsOptions = {};
     if (selectedClass) opts.classSlug = selectedClass;
     if (selectedLevel != null) opts.level = selectedLevel;
-    const data = await searchSpells(systemId, query, opts);
-    // Client-side filter: exclude spell levels above what this character can cast.
-    // Cantrips (level 0) are always available to casters.
-    const filtered = data.filter((spell) => {
-      const level = (spell.data?.level as number | undefined) ?? 0;
-      if (level === 0) return true;
-      return level <= maxCastableLevel;
-    });
-    setResults(filtered);
-    setLoading(false);
+    try {
+      const data = await searchSpells(systemId, query, opts);
+      // Exclude spell levels above what this character can cast. Cantrips are
+      // always available to casters.
+      const filtered = data.filter((spell) => {
+        const level = (spell.data?.level as number | undefined) ?? 0;
+        if (level === 0) return true;
+        return level <= maxCastableLevel;
+      });
+      if (requestId === searchRequest.current) setResults(filtered);
+    } catch (error) {
+      console.error("[AddSpellPanel] Search failed:", error);
+      if (requestId === searchRequest.current) {
+        setResults([]);
+        setSearchError("Spells could not be loaded. Please try again.");
+      }
+    } finally {
+      if (requestId === searchRequest.current) setLoading(false);
+    }
   }, [systemId, query, selectedClass, selectedLevel, maxCastableLevel]);
 
   useEffect(() => {
     if (!open) return;
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(runSearch, 200);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      searchRequest.current += 1;
+    };
   }, [runSearch, open]);
 
   if (!open) return null;
@@ -172,6 +190,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
           : "known";
 
     setBusyId(spell.id);
+    setActionError(null);
     try {
       await addSpell({
         content_id: spell.id,
@@ -181,6 +200,9 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
         is_prepared: false,
         in_spellbook: intent === "spellbook",
       });
+    } catch (error) {
+      console.error("[AddSpellPanel] Add failed:", error);
+      setActionError("The spell could not be added. Please try again.");
     } finally {
       setBusyId(null);
     }
@@ -188,8 +210,12 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
 
   const handleRemove = async (spellRowId: string, spellId: string) => {
     setBusyId(spellId);
+    setActionError(null);
     try {
       await removeSpell(spellRowId);
+    } catch (error) {
+      console.error("[AddSpellPanel] Remove failed:", error);
+      setActionError("The spell could not be removed. Please try again.");
     } finally {
       setBusyId(null);
     }
@@ -265,11 +291,25 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
         })}
       </div>
 
+      {actionError && (
+        <p className="text-xs text-destructive" role="alert">
+          {actionError}
+        </p>
+      )}
+
       <div className="max-h-[400px] overflow-y-auto space-y-1">
         {loading && (
           <p className="text-xs text-muted-foreground text-center py-4">Searching…</p>
         )}
-        {!loading && results.length === 0 && (
+        {!loading && searchError && (
+          <div className="space-y-2 py-4 text-center" role="alert">
+            <p className="text-xs text-destructive">{searchError}</p>
+            <Button variant="outline" size="sm" onClick={runSearch}>
+              Try again
+            </Button>
+          </div>
+        )}
+        {!loading && !searchError && results.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-4">
             No spells found. Try adjusting filters.
           </p>

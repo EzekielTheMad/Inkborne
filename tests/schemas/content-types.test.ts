@@ -111,6 +111,17 @@ describe("Feature Data Schema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("accepts numeric per-level additional values", () => {
+    const result = featureDataSchema.safeParse({
+      class: "monk",
+      subclass: null,
+      level: 2,
+      description: "Your access to ki grows with your monk level.",
+      additional: Array.from({ length: 20 }, (_, index) => index + 2),
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("Schema Registry", () => {
@@ -167,6 +178,59 @@ describe("Class Data Schema", () => {
           spellcasting: { cantrips_known: 3, spell_slots: [2, 0, 0, 0, 0, 0, 0, 0, 0] },
         },
       ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("normalizes object-shaped spell level ranges", () => {
+    const result = classDataSchema.safeParse({
+      hit_die: 8,
+      spellcasting: {
+        ability: "charisma",
+        type: "full",
+        focus: "musical instrument",
+        ritual_casting: true,
+      },
+      multiclass: { prerequisites: [], proficiencies_gained: [] },
+      saving_throws: ["dexterity", "charisma"],
+      starting_proficiencies: ["light-armor"],
+      levels: [{ level: 1, features: [], spellcasting: null }],
+      spellcastingList: { class: "bard", level: { min: 0, max: 9 } },
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.spellcastingList?.level).toEqual([0, 9]);
+    }
+  });
+
+  it("accepts empty half-caster cantrip progression", () => {
+    const result = classDataSchema.safeParse({
+      hit_die: 10,
+      spellcasting: {
+        ability: "charisma",
+        type: "half",
+        focus: "holy symbol",
+        ritual_casting: false,
+      },
+      multiclass: { prerequisites: [], proficiencies_gained: [] },
+      saving_throws: ["wisdom", "charisma"],
+      starting_proficiencies: ["all-armor", "shields"],
+      levels: [{ level: 1, features: [], spellcasting: null }],
+      spellcastingKnown: { cantrips: [], spells: "all", prepared: true },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a named tool proficiency category", () => {
+    const result = classDataSchema.safeParse({
+      hit_die: 8,
+      spellcasting: null,
+      multiclass: { prerequisites: [], proficiencies_gained: [] },
+      saving_throws: ["dexterity", "charisma"],
+      starting_proficiencies: [],
+      levels: [{ level: 1, features: [], spellcasting: null }],
+      toolProfs: [{ choose: 3, from: "musical instrument" }],
     });
     expect(result.success).toBe(true);
   });
@@ -247,6 +311,26 @@ describe("Spell Data Schema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("accepts a damage table whose damage type varies", () => {
+    const result = spellDataSchema.safeParse({
+      level: 1,
+      school: "enchantment",
+      casting_time: "1 action",
+      range: "90 feet",
+      components: ["V", "S", "M"],
+      duration: "1 minute",
+      concentration: false,
+      ritual: false,
+      description: "The spell's effect is resolved from its text.",
+      damage: { type: null, dice_at_slot_level: { "1": "5d8" } },
+      dc: null,
+      area_of_effect: null,
+      classes: ["wizard"],
+      subclasses: [],
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("Weapon Data Schema", () => {
@@ -290,6 +374,15 @@ describe("Magic Item Data Schema", () => {
       rarity: "Uncommon",
       description: "Any critical hit against you becomes a normal hit",
       equipment_category: "Armor",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts items whose rarity varies by form", () => {
+    const result = magicItemDataSchema.safeParse({
+      rarity: "Varies",
+      description: "The rarity depends on the specific item form.",
+      equipment_category: "Wondrous Item",
     });
     expect(result.success).toBe(true);
   });
