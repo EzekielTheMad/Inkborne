@@ -7,7 +7,10 @@ import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeRichTextContent } from "@/lib/editor/content";
-import { findCampaignPageBacklinks } from "@/lib/campaigns/backlinks";
+import {
+  findCampaignPageBacklinks,
+  findCharacterNarrativeBacklinks,
+} from "@/lib/campaigns/backlinks";
 
 interface CampaignWikiPageProps {
   params: Promise<{ id: string; pageId: string }>;
@@ -21,7 +24,12 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: campaign }, { data: page }, { data: linkCandidates }] = await Promise.all([
+  const [
+    { data: campaign },
+    { data: page },
+    { data: linkCandidates },
+    { data: characterCandidates },
+  ] = await Promise.all([
     supabase.from("campaigns").select("id, name, owner_id").eq("id", id).single(),
     supabase
       .from("campaign_pages")
@@ -34,13 +42,39 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
       .select("id, title, content")
       .eq("campaign_id", id)
       .order("title"),
+    supabase
+      .from("characters")
+      .select("id, name, narrative_rich")
+      .eq("campaign_id", id)
+      .eq("archived", false)
+      .order("name"),
   ]);
   if (!campaign || !page) notFound();
+
+  const characterIds = (characterCandidates ?? []).map((candidate) => candidate.id);
+  const { data: visibleDmNotes } = characterIds.length
+    ? await supabase
+        .from("character_dm_notes")
+        .select("character_id, content")
+        .in("character_id", characterIds)
+    : { data: [] };
+  const dmNotesByCharacter = new Map(
+    (visibleDmNotes ?? []).map((note) => [note.character_id, note.content]),
+  );
 
   const canEdit = campaign.owner_id === user.id || page.created_by === user.id;
   const content = normalizeRichTextContent(page.content) as JSONContent;
   const visibility = page.visibility === "dm_only" ? "dm_only" : "campaign";
   const backlinks = findCampaignPageBacklinks(linkCandidates ?? [], page.id);
+  const characterBacklinks = findCharacterNarrativeBacklinks(
+    (characterCandidates ?? []).map((candidate) => ({
+      id: candidate.id,
+      name: candidate.name,
+      narrativeRich: candidate.narrative_rich,
+      dmNotes: dmNotesByCharacter.get(candidate.id),
+    })),
+    page.id,
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -84,7 +118,7 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
         </article>
       )}
 
-      {backlinks.length > 0 && (
+      {(backlinks.length > 0 || characterBacklinks.length > 0) && (
         <aside className="j-card-paper p-5">
           <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
             Linked from
@@ -97,6 +131,17 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
                 className="rounded-full border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-accent/50 hover:text-accent"
               >
                 {backlink.title}
+              </Link>
+            ))}
+            {characterBacklinks.map((backlink) => (
+              <Link
+                key={`character-${backlink.id}`}
+                href={`/characters/${backlink.id}`}
+                className="rounded-full border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-accent/50 hover:text-accent"
+              >
+                {backlink.name}
+                {backlink.source === "dm_notes" && " · DM notes"}
+                {backlink.source === "narrative_and_dm_notes" && " · Story + DM notes"}
               </Link>
             ))}
           </div>

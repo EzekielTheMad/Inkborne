@@ -6,10 +6,12 @@ import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
 
 interface DistinguishingFeaturesCardProps {
   content: JSONContent | null | undefined;
+  campaignId?: string | null;
 }
 
 export function DistinguishingFeaturesCard({
   content,
+  campaignId,
 }: DistinguishingFeaturesCardProps) {
   if (!content || (content.type === "doc" && !content.content?.length)) {
     return null;
@@ -21,7 +23,7 @@ export function DistinguishingFeaturesCard({
         <CardTitle className="text-accent">Distinguishing Features</CardTitle>
       </CardHeader>
       <CardContent>
-        <RichTextRenderer content={content} />
+        <RichTextRenderer content={content} campaignId={campaignId ?? undefined} />
       </CardContent>
     </Card>
   );

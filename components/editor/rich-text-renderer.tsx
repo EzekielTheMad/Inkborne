@@ -7,6 +7,7 @@ import { normalizeRichTextContent } from "@/lib/editor/content";
 interface RichTextRendererProps {
   content: JSONContent | null;
   minHeight?: string;
+  campaignId?: string;
 }
 
 /**
@@ -15,7 +16,7 @@ interface RichTextRendererProps {
  * Mention nodes are rendered via CSS as gold-accent styled text.
  * If content is null or empty, renders nothing.
  */
-export function RichTextRenderer({ content, minHeight }: RichTextRendererProps) {
+export function RichTextRenderer({ content, minHeight, campaignId }: RichTextRendererProps) {
   const normalizedContent = normalizeRichTextContent(content);
   if (!normalizedContent.content?.length) {
     return null;
@@ -26,6 +27,7 @@ export function RichTextRenderer({ content, minHeight }: RichTextRendererProps) 
       content={normalizedContent}
       editable={false}
       minHeight={minHeight ?? "auto"}
+      campaignId={campaignId}
     />
   );
 }

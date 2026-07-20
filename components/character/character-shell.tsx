@@ -13,8 +13,13 @@ import {
   useCharacterState,
   usePortrait,
 } from "@/lib/character/character-context";
+import type { CampaignPageBacklink } from "@/lib/campaigns/backlinks";
 
-export function CharacterShell() {
+interface CharacterShellProps {
+  campaignPageBacklinks: CampaignPageBacklink[];
+}
+
+export function CharacterShell({ campaignPageBacklinks }: CharacterShellProps) {
   const { character, hasSheet } = useCharacter();
   const { state, patchState } = useCharacterState();
   const { portrait } = usePortrait();
@@ -77,7 +82,7 @@ export function CharacterShell() {
         </TabsContent>
 
         <TabsContent value="narrative" className="flex-1 overflow-y-auto mt-0">
-          <NarrativePanel />
+          <NarrativePanel campaignPageBacklinks={campaignPageBacklinks} />
         </TabsContent>
       </Tabs>
 

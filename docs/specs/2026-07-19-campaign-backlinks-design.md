@@ -1,6 +1,6 @@
 # Campaign wiki links and backlinks
 
-**Status:** approved implementation slice
+**Status:** implemented and UAT-covered
 **Date:** 2026-07-19
 
 ## Goal
@@ -31,6 +31,11 @@ the referenced wiki page then shows every visible page that points back to it.
   at render time. This avoids a second authorization surface and is appropriate
   for small campaign wikis. Add a normalized link index only after profiling
   shows the scan is material.
+- Shared character narrative fields also contribute backlinks to campaign
+  pages. DM notes are loaded through their separate RLS boundary and only
+  contribute when the current user is the character owner or campaign DM.
+- Character narrative views show visible campaign pages that `@`-mention that
+  character, completing navigation in both directions.
 
 ## Verification
 
@@ -39,3 +44,5 @@ the referenced wiki page then shows every visible page that points back to it.
 - Component tests cover separate `#` and `@` suggestion URLs.
 - Two-account Playwright UAT proves a shared backlink is visible and a backlink
   from a DM-only page is absent from the player view.
+- The same UAT covers character-story and DM-note backlinks plus the reverse
+  campaign-page-to-character backlink.

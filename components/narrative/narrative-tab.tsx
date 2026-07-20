@@ -253,24 +253,29 @@ export function NarrativeTab({
               <PersonalityCard choices={choices} narrative={narrative} />
               <DistinguishingFeaturesCard
                 content={rich.distinguishing_features}
+                campaignId={campaignId}
               />
               <BackstoryCard
                 title="Where They Came From"
                 content={rich.backstory_origin}
+                campaignId={campaignId}
               />
               <BackstoryCard
                 title="The Turning Point"
                 content={rich.backstory_turning_point}
+                campaignId={campaignId}
               />
               <BackstoryCard
                 title="What They Left Behind"
                 content={rich.backstory_left_behind}
+                campaignId={campaignId}
               />
               {(isOwner || isDm) && (
                 <BackstoryCard
                   title="What the DM Should Know"
                   content={rich.backstory_dm_notes}
                   dmOnly
+                  campaignId={campaignId}
                 />
               )}
               <FunTraitsCard funTraits={narrative.fun_traits} />

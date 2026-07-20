@@ -11,6 +11,7 @@ import { resolveFeatureGrantedSpells } from "@/lib/spells/helpers";
 import { syncAlwaysPreparedSpells } from "@/lib/supabase/spells-server";
 import { reportServerError } from "@/lib/supabase/errors";
 import type { Effect } from "@/lib/types/effects";
+import { findCampaignPageCharacterBacklinks } from "@/lib/campaigns/backlinks";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -172,6 +173,35 @@ export default async function CharacterPage({ params }: PageProps) {
     });
   }
 
+  const [{ data: dmNotes }, { data: campaignLinkCandidates }] = await Promise.all([
+    supabase
+      .from("character_dm_notes")
+      .select("content")
+      .eq("character_id", id)
+      .maybeSingle(),
+    character.campaign_id
+      ? supabase
+          .from("campaign_pages")
+          .select("id, title, content")
+          .eq("campaign_id", character.campaign_id)
+          .order("title")
+      : Promise.resolve({ data: [] }),
+  ]);
+  const characterForView = dmNotes
+    ? {
+        ...character,
+        narrative_rich: {
+          ...character.narrative_rich,
+          backstory_dm_notes: dmNotes.content,
+        },
+      }
+    : character;
+
+  const campaignPageBacklinks = findCampaignPageCharacterBacklinks(
+    campaignLinkCandidates ?? [],
+    character.id,
+  );
+
   // Fetch class features at the character's current levels
   let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
 
@@ -236,7 +266,7 @@ export default async function CharacterPage({ params }: PageProps) {
 
   return (
     <CharacterPageClient
-      character={character}
+      character={characterForView}
       schema={schema}
       evalResult={evalResult}
       contentRefs={contentRefs}
@@ -252,6 +282,7 @@ export default async function CharacterPage({ params }: PageProps) {
       initialSpells={spellRowsAfterSync ?? spellRows ?? []}
       initialRolls={(rollRows ?? []) as import("@/lib/types/rolls").RollLogEntry[]}
       classData={classData}
+      campaignPageBacklinks={campaignPageBacklinks}
     />
   );
 }

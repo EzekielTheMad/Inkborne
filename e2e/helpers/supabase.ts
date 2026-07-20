@@ -127,6 +127,30 @@ export async function setCampaignPageContent(pageId: string, content: unknown): 
   }
 }
 
+export async function setCharacterNarrativeLinks(input: {
+  characterId: string;
+  sharedNarrative: unknown;
+  dmNotes?: unknown;
+}): Promise<void> {
+  const service = createServiceClient();
+  const { error: characterError } = await service
+    .from("characters")
+    .update({ narrative_rich: input.sharedNarrative })
+    .eq("id", input.characterId);
+  if (characterError) {
+    throw new Error(`Could not seed character narrative: ${characterError.message}`);
+  }
+  if (input.dmNotes === undefined) return;
+
+  const { error: notesError } = await service.from("character_dm_notes").upsert({
+    character_id: input.characterId,
+    content: input.dmNotes,
+  });
+  if (notesError) {
+    throw new Error(`Could not seed character DM notes: ${notesError.message}`);
+  }
+}
+
 export async function deleteCampaignsById(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
   const service = createServiceClient();

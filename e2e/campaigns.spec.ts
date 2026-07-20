@@ -7,6 +7,7 @@ import {
   getCampaignFixture,
   seedCampaignCharacter,
   setCampaignPageContent,
+  setCharacterNarrativeLinks,
 } from "./helpers/supabase";
 
 const BASE_URL = "http://localhost:3000";
@@ -124,6 +125,31 @@ test.describe("campaign DM/player UAT", () => {
       email: playerCredential("E2E_PLAYER_EMAIL"),
       password: playerCredential("E2E_PLAYER_PASSWORD"),
     });
+    const characterMentionDocument = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            ...pageMentionDocument.content[0].content,
+            {
+              type: "mention",
+              attrs: {
+                id: playerCharacterId,
+                label: playerCharacterName,
+                mentionSuggestionChar: "@",
+              },
+            },
+          ],
+        },
+      ],
+    };
+    await setCampaignPageContent(sharedSourceId, characterMentionDocument);
+    await setCharacterNarrativeLinks({
+      characterId: playerCharacterId,
+      sharedNarrative: { backstory_origin: pageMentionDocument },
+      dmNotes: pageMentionDocument,
+    });
 
     const player = await signInPlayer(browser);
     try {
@@ -151,6 +177,14 @@ test.describe("campaign DM/player UAT", () => {
       await expect(player.page.getByRole("heading", { name: "Linked from" })).toBeVisible();
       await expect(player.page.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
       await expect(player.page.getByRole("link", { name: dmSecretTitle })).toHaveCount(0);
+      await expect(
+        player.page.getByRole("link", { name: `${playerCharacterName} · Story + DM notes` }),
+      ).toBeVisible();
+
+      await player.page.goto(`/characters/${playerCharacterId}`);
+      await player.page.getByRole("tab", { name: "Narrative" }).click();
+      await expect(player.page.getByRole("heading", { name: "Linked from campaign" })).toBeVisible();
+      await expect(player.page.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
 
       await dmPage.goto(`/campaigns/${campaignId}`);
       await expect(dmPage.getByRole("link", { name: playerSecretTitle })).toBeVisible();
@@ -159,6 +193,9 @@ test.describe("campaign DM/player UAT", () => {
       await dmPage.goto(`/campaigns/${campaignId}/pages/${sharedPageId}`);
       await expect(dmPage.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
       await expect(dmPage.getByRole("link", { name: dmSecretTitle })).toBeVisible();
+      await expect(
+        dmPage.getByRole("link", { name: `${playerCharacterName} · Story + DM notes` }),
+      ).toBeVisible();
 
       await dmPage.goto(`/campaigns/${campaignId}/pages/${playerSecretId}`);
       await expect(dmPage.getByLabel("Title")).toHaveValue(playerSecretTitle);

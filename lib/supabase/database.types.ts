@@ -280,6 +280,32 @@ export type Database = {
           },
         ]
       }
+      character_dm_notes: {
+        Row: {
+          character_id: string
+          content: Json
+          updated_at: string
+        }
+        Insert: {
+          character_id: string
+          content?: Json
+          updated_at?: string
+        }
+        Update: {
+          character_id?: string
+          content?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_dm_notes_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: true
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       character_inventory: {
         Row: {
           attuned: boolean
@@ -961,6 +987,15 @@ export type Database = {
       rotate_campaign_invite_code: {
         Args: { target_campaign_id: string }
         Returns: string
+      }
+      save_character_narrative_rich: {
+        Args: {
+          dm_notes: Json
+          shared_narrative: Json
+          target_character_id: string
+          write_dm_notes: boolean
+        }
+        Returns: undefined
       }
       remove_campaign_member: {
         Args: { target_campaign_id: string; target_user_id: string }
