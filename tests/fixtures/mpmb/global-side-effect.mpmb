@@ -1,0 +1,2 @@
+globalThis.__inkborneMpmbExecuted = true;
+SourceList["SIDE"] = { name: "Must never execute" };
