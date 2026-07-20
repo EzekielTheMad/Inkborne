@@ -36,7 +36,7 @@ Going forward:
 
 **Shipped on `main`** (see `ROADMAP.md` "Where we are today" for the full list): auth (email/Google/Discord), full character builder (race→class→abilities→background→equipment) with the polished class rail / preview modal / multiclass / level-up flows and full mobile support, character sheet with HP/skills/saves/conditions/rests/feature resources, spell selection (Phase 1, no casting), inventory + magic items, unified character page with **sheet + narrative tabs** (backstory editor, portrait upload with crop/compression), feedback widget + error reporting + `/admin` hub, 5e 2014 SRD content seeded.
 
-**Not built yet:** homebrew authoring/import (M4), monsters/NPCs (M5), campaign wiki backlinks/public publishing/live presence (later M5.5), and public-beta polish. The campaign foundation, membership lifecycle, character copy/assignment, wiki tree/editor, and revision-safe collaboration are implemented locally as of 2026-07-19, pending hosted migration apply and authenticated UAT.
+**Not built yet:** homebrew authoring/import (M4), monsters/NPCs (M5), campaign wiki backlinks/public publishing/live presence (later M5.5), and public-beta polish. The campaign foundation, membership lifecycle, character copy/assignment, wiki tree/editor, and revision-safe collaboration are deployed to production as of 2026-07-19. Authenticated browser DM/player UAT remains.
 
 **The single gate to closed alpha #1 is database backups** — PR [#33](https://github.com/EzekielTheMad/Inkborne/pull/33) is code-complete; deployment is parked on a Supabase pooler credential and needs Victor's Unraid hardware (details in §4, Track A).
 
@@ -84,7 +84,7 @@ These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each nee
 1. **M3 — Gameplay foundations:** ✅ **COMPLETE 2026-07-16** (spec `docs/specs/2026-07-15-m3-gameplay-foundations-*.md`; PRs #61, #65, #66, #68–#72, #74; migrations 00038–00040 applied to prod; live-browser UAT green with zero bugs). Alpha #2 ("can you *play* a character?") is content-ready.
 2. **M4 — Homebrew + importer:** `/library`, schema-driven authoring forms, MPMB JS import pipeline (reuse `scripts/transformers/`), sharing, preview-character validation.
 3. **M5 — New content types:** monsters → NPCs → companions/sidekicks.
-4. **M5.5 — Campaigns + narrative depth** *(in progress 2026-07-19 — campaign foundation implemented before M5)*: campaign CRUD/membership, DM/player roles, character copy/assignment, wiki tree/editor, visibility controls, and revision conflicts are implemented locally. Remaining: hosted migration/UAT, backlinks, character↔campaign narrative links, timeline/relationship expansion, and later publishing/presence decisions.
+4. **M5.5 — Campaigns + narrative depth** *(in progress 2026-07-19 — campaign foundation implemented before M5)*: campaign CRUD/membership, DM/player roles, character copy/assignment, wiki tree/editor, visibility controls, and revision conflicts are deployed. Production migration and rollback-only database smoke UAT are complete. Remaining: authenticated browser DM/player UAT, backlinks, character↔campaign narrative links, timeline/relationship expansion, and later publishing/presence decisions.
 5. **M6/M7/M8** — Spell Phase 3, PDF importer, public-beta polish.
 
 ## 5. Agent playbook — how to pick up work
@@ -120,6 +120,8 @@ These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each nee
 | ki feature: numeric per-level `additional` array | Widen schema to `(string\|number)[]` |
 
 ## 7. Status log (append-only — newest first)
+
+- **2026-07-19** — Campaign production rollout. Applied migrations `00041`–`00050`, including least-privilege API grants, policy/index advisor fixes, portrait-listing hardening, `INSERT ... RETURNING` visibility, and pgcrypto qualification for invite rotation. Generated types were reconciled with the live schema. A rollback-only authenticated database smoke test passed campaign creation, owner membership, page creation/update/conflict rejection, character copy, invite rotation, and owner-leave protection. Final verification: **96 Vitest files / 1169 tests**, strict lint, TypeScript, and production build green. Remaining hosted setting: enable leaked-password protection; authenticated browser DM/player UAT still recommended.
 
 - **2026-07-19** — Codex campaign foundation sprint. Patched production dependency vulnerabilities, established strict CI/check gates, fixed server spell reconciliation and narrative autosave retry behavior, then implemented the first M5.5 slice: owner/member/page authorization, character copy with optional campaign assignment, campaign CRUD/joining/roster, wiki tree + rich editor, DM/player page visibility, revision-safe saves, invite rotation, character attach/detach, and atomic leave/member-removal cleanup. Local verification: **96 Vitest files / 1159 tests**, strict lint, TypeScript, and production build green. Migrations `00041`–`00044` still require hosted Supabase apply plus authenticated DM/player UAT.
 

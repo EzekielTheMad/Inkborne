@@ -13,10 +13,6 @@
 // the consuming module (e.g. `lib/supabase/feedback.ts`, `lib/supabase/errors.ts`)
 // and use `Omit<Tables<"...">, "status"> & { status: MyUnion }` pattern.
 //
-// NOTE: `character_rolls` (migration 00038) was added BY HAND in the generated
-// style — the migration has not been applied to the live project yet. Apply
-// 00038, then regenerate; the hand-written block will be replaced verbatim.
-
 export type Json =
   | string
   | number
@@ -467,6 +463,7 @@ export type Database = {
           name: string
           narrative: Json
           narrative_rich: Json
+          primary_color: string | null
           state: Json
           system_id: string
           user_id: string
@@ -483,6 +480,7 @@ export type Database = {
           name: string
           narrative?: Json
           narrative_rich?: Json
+          primary_color?: string | null
           state?: Json
           system_id: string
           user_id: string
@@ -499,6 +497,7 @@ export type Database = {
           name?: string
           narrative?: Json
           narrative_rich?: Json
+          primary_color?: string | null
           state?: Json
           system_id?: string
           user_id?: string
@@ -934,16 +933,16 @@ export type Database = {
         Args: {
           page_title: string
           page_visibility?: string
-          parent_page_id?: string | null
+          parent_page_id?: string
           target_campaign_id: string
         }
         Returns: string
       }
       copy_character: {
         Args: {
-          copied_name?: string | null
+          copied_name?: string
           source_character_id: string
-          target_campaign_id?: string | null
+          target_campaign_id?: string
         }
         Returns: string
       }
