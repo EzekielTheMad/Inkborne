@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import {
   parseContentDefinition,
-  parseContentDefinitions,
   type ParsedContentDefinition,
 } from "@/lib/supabase/content-definitions-parser";
 import { createClient } from "@/lib/supabase/server";
@@ -139,22 +138,4 @@ export async function getContentRefsByChoiceSource(
 
   if (error) throw error;
   return data ?? [];
-}
-
-export async function getContentByTypeAndSystem(
-  systemId: string,
-  contentType: string,
-): Promise<ParsedContentDefinition[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("content_definitions")
-    .select(
-      "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
-    )
-    .eq("system_id", systemId)
-    .eq("content_type", contentType)
-    .order("name");
-
-  if (error) throw error;
-  return parseContentDefinitions(data ?? []);
 }

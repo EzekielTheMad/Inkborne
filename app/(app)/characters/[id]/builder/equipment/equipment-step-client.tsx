@@ -135,20 +135,21 @@ export function EquipmentStepClient({
         catalog,
       );
 
-      // Sequential inserts keep sort_order deterministic; addInventoryItem
-      // resolves null (and logs) on failure rather than throwing.
-      const failures: string[] = [];
+      // Sequential inserts keep sort_order deterministic. The data layer
+      // throws the structured database error so confirmation cannot be marked
+      // complete after a failed grant.
       for (const grant of items) {
-        const inserted = await addInventoryItem(characterId, {
-          content_id: grant.content_id,
-          name: grant.name,
-          content_type: grant.content_type,
-          quantity: grant.quantity,
-        });
-        if (!inserted) failures.push(grant.name);
-      }
-      if (failures.length > 0) {
-        throw new Error(`Could not add: ${failures.join(", ")}`);
+        try {
+          await addInventoryItem(characterId, {
+            content_id: grant.content_id,
+            name: grant.name,
+            content_type: grant.content_type,
+            quantity: grant.quantity,
+          });
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          throw new Error(`Could not add ${grant.name}: ${detail}`);
+        }
       }
 
       if (Object.keys(currency).length > 0) {

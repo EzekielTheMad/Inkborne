@@ -41,7 +41,7 @@ export interface AddItemPanelProps {
     content_type: string;
     quantity?: number;
     custom_data?: Record<string, unknown> | null;
-  }) => void;
+  }) => void | Promise<void>;
   systemId: string;
 }
 
@@ -56,27 +56,46 @@ export function AddItemPanel({
   const [magicalOnly, setMagicalOnly] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [showCustom, setShowCustom] = useState(false);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequest = useRef(0);
 
   const runSearch = useCallback(async () => {
+    const requestId = ++searchRequest.current;
     setLoading(true);
+    setSearchError(null);
     const opts: SearchItemsOptions = {
       ...(category ? CATEGORY_TO_CONTENT_TYPE[category] : {}),
       magicalOnly: magicalOnly || undefined,
     };
-    const data = await searchItems(systemId, query, opts);
-    setResults(data);
-    setLoading(false);
+    try {
+      const data = await searchItems(systemId, query, opts);
+      if (requestId === searchRequest.current) setResults(data);
+    } catch (error) {
+      console.error("[AddItemPanel] Search failed:", error);
+      if (requestId === searchRequest.current) {
+        setResults([]);
+        setSearchError("Items could not be loaded. Please try again.");
+      }
+    } finally {
+      if (requestId === searchRequest.current) setLoading(false);
+    }
   }, [systemId, query, category, magicalOnly]);
 
   useEffect(() => {
     if (!open) return;
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(runSearch, 200);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      searchRequest.current += 1;
+    };
   }, [runSearch, open]);
 
   if (!open) return null;
@@ -85,14 +104,37 @@ export function AddItemPanel({
   const setQuantity = (id: string, q: number) =>
     setQuantities((prev) => ({ ...prev, [id]: q }));
 
-  const handleAdd = (item: SearchResult, qty: number) => {
-    onAdd({
-      content_id: item.id,
-      name: item.name,
-      content_type: item.content_type,
-      quantity: qty,
-    });
-    setExpandedId(null);
+  const handleAdd = async (item: SearchResult, qty: number) => {
+    if (busyId) return;
+    setBusyId(item.id);
+    setActionError(null);
+    try {
+      await onAdd({
+        content_id: item.id,
+        name: item.name,
+        content_type: item.content_type,
+        quantity: qty,
+      });
+      setExpandedId(null);
+    } catch (error) {
+      console.error("[AddItemPanel] Add failed:", error);
+      setActionError("The item could not be added. Please try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleCustomAdd = async (
+    item: Parameters<AddItemPanelProps["onAdd"]>[0],
+  ) => {
+    setActionError(null);
+    try {
+      await onAdd(item);
+      setShowCustom(false);
+    } catch (error) {
+      console.error("[AddItemPanel] Custom item add failed:", error);
+      setActionError("The custom item could not be added. Please try again.");
+    }
   };
 
   return (
@@ -121,13 +163,27 @@ export function AddItemPanel({
         onMagicalToggle={setMagicalOnly}
       />
 
+      {actionError && (
+        <p className="text-xs text-destructive" role="alert">
+          {actionError}
+        </p>
+      )}
+
       <div className="max-h-[400px] overflow-y-auto space-y-1">
         {loading && (
           <p className="text-xs text-muted-foreground text-center py-4">
             Searching…
           </p>
         )}
-        {!loading && results.length === 0 && (
+        {!loading && searchError && (
+          <div className="space-y-2 py-4 text-center" role="alert">
+            <p className="text-xs text-destructive">{searchError}</p>
+            <Button variant="outline" size="sm" onClick={runSearch}>
+              Try again
+            </Button>
+          </div>
+        )}
+        {!loading && !searchError && results.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-4">
             No items found. Try adjusting filters.
           </p>
@@ -164,7 +220,9 @@ export function AddItemPanel({
                     item={item}
                     quantity={getQuantity(item.id)}
                     onQuantityChange={(q) => setQuantity(item.id, q)}
-                    onAdd={() => handleAdd(item, getQuantity(item.id))}
+                    onAdd={() => {
+                      void handleAdd(item, getQuantity(item.id));
+                    }}
                   />
                 </div>
               )}
@@ -176,8 +234,7 @@ export function AddItemPanel({
       {showCustom ? (
         <CustomItemForm
           onAdd={(item) => {
-            onAdd(item);
-            setShowCustom(false);
+            void handleCustomAdd(item);
           }}
           onCancel={() => setShowCustom(false)}
         />

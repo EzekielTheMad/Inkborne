@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { createClient } from "@/lib/supabase/server";
+import { parseContentDefinitions } from "@/lib/supabase/content-definitions-parser";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -56,14 +57,22 @@ export async function syncAlwaysPreparedSpells(
   if (slugs.length > 0) {
     const { data, error } = await supabase
       .from("content_definitions")
-      .select("id, slug, name")
+      .select(
+        "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
+      )
       .eq("system_id", systemId)
       .eq("content_type", "spell")
       .eq("scope", "platform")
       .in("slug", slugs);
 
     if (error) throw queryError("loading granted spell definitions", error);
-    spellRows = data ?? [];
+    const parsed = parseContentDefinitions(data ?? []);
+    if (parsed.length !== (data ?? []).length) {
+      throw new Error(
+        "[syncAlwaysPreparedSpells] refusing to reconcile feature spells because a definition failed validation",
+      );
+    }
+    spellRows = parsed.map(({ id, slug, name }) => ({ id, slug, name }));
   }
 
   const definitionBySlug = new Map(spellRows.map((row) => [row.slug, row]));
