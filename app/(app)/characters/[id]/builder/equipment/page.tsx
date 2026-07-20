@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getContentByType } from "@/lib/supabase/content-definitions";
 import { redirect, notFound } from "next/navigation";
 import { EquipmentStepClient } from "./equipment-step-client";
 import type { EquipmentCatalogItem } from "@/lib/builder/equipment-choices";
@@ -31,54 +32,25 @@ export default async function EquipmentStepPage({ params }: PageProps) {
 
   // Load class content to get starting equipment text
   const classSlug = character.choices?.classes?.[0]?.slug;
-  let classContent = null;
-  if (classSlug) {
-    console.log("[EquipmentStepPage] Fetching class content for slug:", classSlug);
-    const { data, error: classError } = await supabase
-      .from("content_definitions")
-      .select("id, name, slug, data")
-      .eq("system_id", character.system_id)
-      .eq("content_type", "class")
-      .eq("slug", classSlug)
-      .single();
-    if (classError) {
-      console.error("[EquipmentStepPage] Error fetching class content:", classError.message, classError.details, classError.hint);
-    }
-    classContent = data;
-  }
+  const classesPromise = getContentByType(character.system_id, "class");
 
   // Load background content — backgrounds grant starting equipment too
   const backgroundSlug = character.choices?.background;
-  let backgroundContent = null;
-  if (backgroundSlug) {
-    const { data, error: backgroundError } = await supabase
-      .from("content_definitions")
-      .select("id, name, slug, data")
-      .eq("system_id", character.system_id)
-      .eq("content_type", "background")
-      .eq("slug", backgroundSlug)
-      .single();
-    if (backgroundError) {
-      console.error("[EquipmentStepPage] Error fetching background content:", backgroundError.message, backgroundError.details, backgroundError.hint);
-    }
-    backgroundContent = data;
-  }
+  const backgroundsPromise = getContentByType(character.system_id, "background");
 
-  // Equipment catalog for resolving choices to real content definitions.
-  // Trimmed server-side so the client payload stays small.
-  const { data: catalogRows, error: catalogError } = await supabase
-    .from("content_definitions")
-    .select("id, name, slug, content_type, data")
-    .eq("system_id", character.system_id)
-    .eq("scope", "platform")
-    .in("content_type", ["weapon", "armor", "item"])
-    .order("name");
+  const [classes, backgrounds, weapons, armor, items] = await Promise.all([
+    classesPromise,
+    backgroundsPromise,
+    getContentByType(character.system_id, "weapon"),
+    getContentByType(character.system_id, "armor"),
+    getContentByType(character.system_id, "item"),
+  ]);
 
-  if (catalogError) {
-    console.error("[EquipmentStepPage] Error fetching equipment catalog:", catalogError.message, catalogError.details, catalogError.hint);
-  }
+  const classContent = classes.find((entry) => entry.slug === classSlug) ?? null;
+  const backgroundContent =
+    backgrounds.find((entry) => entry.slug === backgroundSlug) ?? null;
 
-  const catalog: EquipmentCatalogItem[] = (catalogRows ?? []).map((row) => {
+  const catalog: EquipmentCatalogItem[] = [...weapons, ...armor, ...items].map((row) => {
     const data = (row.data ?? {}) as Record<string, unknown>;
     return {
       id: row.id,

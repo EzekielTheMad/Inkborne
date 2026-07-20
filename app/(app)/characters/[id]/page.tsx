@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { getCharacterWithSystem } from "@/lib/supabase/characters";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getContentByType } from "@/lib/supabase/content-definitions";
+import { parseNestedContentDefinition } from "@/lib/supabase/content-definitions-parser";
 import { evaluate } from "@/lib/engine/evaluator";
 import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
@@ -11,6 +13,8 @@ import { resolveFeatureGrantedSpells } from "@/lib/spells/helpers";
 import { syncAlwaysPreparedSpells } from "@/lib/supabase/spells-server";
 import { reportServerError } from "@/lib/supabase/errors";
 import type { Effect } from "@/lib/types/effects";
+import type { InventoryItem } from "@/lib/types/inventory";
+import type { CharacterSpell } from "@/lib/types/spells";
 import { findCampaignPageCharacterBacklinks } from "@/lib/campaigns/backlinks";
 import { normalizeRichTextContent } from "@/lib/editor/content";
 import type { JSONContent } from "@tiptap/react";
@@ -22,6 +26,9 @@ import type {
 interface PageProps {
   params: Promise<{ id: string }>;
 }
+
+const JOINED_CONTENT_SELECT =
+  "*, content_definitions(id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id)";
 
 export default async function CharacterPage({ params }: PageProps) {
   const { id } = await params;
@@ -51,15 +58,20 @@ export default async function CharacterPage({ params }: PageProps) {
   }
 
   // Fetch content refs for sheet evaluation
-  const contentRefs = await getContentRefsByCharacter(id).catch(() => []);
+  const contentRefs = await getContentRefsByCharacter(id);
 
   // Fetch inventory
-  const { data: inventoryRows } = await supabase
+  const { data: inventoryRowsRaw, error: inventoryError } = await supabase
     .from("character_inventory")
-    .select("*, content_definitions(id, name, slug, content_type, data, effects)")
+    .select(JOINED_CONTENT_SELECT)
     .eq("character_id", id)
     .order("sort_order")
     .order("name");
+  if (inventoryError) throw inventoryError;
+  const inventoryRows = (inventoryRowsRaw ?? []).map((row) => ({
+    ...row,
+    content_definitions: parseNestedContentDefinition(row.content_definitions),
+  })) as InventoryItem[];
 
   // Fetch the most recent persisted rolls for the roll log (newest first).
   const { data: rollRows } = await supabase
@@ -70,11 +82,16 @@ export default async function CharacterPage({ params }: PageProps) {
     .limit(50);
 
   // Fetch spells for this character.
-  const { data: spellRows } = await supabase
+  const { data: spellRowsRaw, error: spellRowsError } = await supabase
     .from("character_spells")
-    .select("*, content_definitions(id, name, slug, content_type, data, effects)")
+    .select(JOINED_CONTENT_SELECT)
     .eq("character_id", id)
     .order("name");
+  if (spellRowsError) throw spellRowsError;
+  const spellRows = (spellRowsRaw ?? []).map((row) => ({
+    ...row,
+    content_definitions: parseNestedContentDefinition(row.content_definitions),
+  })) as CharacterSpell[];
 
   // Fetch class content for caster classes to derive spellcasting metadata.
   const classChoices =
@@ -85,39 +102,27 @@ export default async function CharacterPage({ params }: PageProps) {
     .map((c) => c.subclass)
     .filter((s): s is string => !!s);
 
-  const [classContentRes, subclassContentRes] = await Promise.all([
-    classSlugs.length > 0
-      ? supabase
-          .from("content_definitions")
-          .select("slug, data")
-          .eq("system_id", character.system_id)
-          .eq("content_type", "class")
-          .in("slug", classSlugs)
-      : Promise.resolve({
-          data: [] as Array<{ slug: string; data: Record<string, unknown> }>,
-          error: null,
-        }),
-    subclassSlugs.length > 0
-      ? supabase
-          .from("content_definitions")
-          .select("slug, data")
-          .eq("system_id", character.system_id)
-          .eq("content_type", "subclass")
-          .in("slug", subclassSlugs)
-      : Promise.resolve({
-          data: [] as Array<{ slug: string; data: Record<string, unknown> }>,
-          error: null,
-        }),
-  ]);
+  const [allClassContent, allSubclassContent, allFeatureContent] =
+    await Promise.all([
+      getContentByType(character.system_id, "class"),
+      getContentByType(character.system_id, "subclass"),
+      getContentByType(character.system_id, "feature"),
+    ]);
+  const classContent = allClassContent.filter((entry) =>
+    classSlugs.includes(entry.slug),
+  );
+  const subclassContent = allSubclassContent.filter((entry) =>
+    subclassSlugs.includes(entry.slug),
+  );
 
   const classData: Record<string, { slug: string; data: Record<string, unknown> }> = {};
-  for (const row of classContentRes.data ?? []) {
+  for (const row of classContent) {
     classData[row.slug] = row;
   }
 
   const subclassData: Record<string, { spellcastingExtra?: Array<{ level: number; spells: string[] }> | null }> = {};
-  for (const row of subclassContentRes.data ?? []) {
-    const extras = (row.data as Record<string, unknown>)?.spellcastingExtra;
+  for (const row of subclassContent) {
+    const extras = row.data.spellcastingExtra;
     subclassData[row.slug] = {
       spellcastingExtra: Array.isArray(extras)
         ? (extras as Array<{ level: number; spells: string[] }>)
@@ -126,11 +131,10 @@ export default async function CharacterPage({ params }: PageProps) {
   }
 
   let spellRowsAfterSync = spellRows;
-  const classMetadataError = classContentRes.error ?? subclassContentRes.error;
 
   // Viewing a character is read-only for DMs. Only the character owner may
   // reconcile derived, feature-granted spell rows.
-  if (isOwner && !classMetadataError) {
+  if (isOwner) {
     const granted = resolveFeatureGrantedSpells(classChoices, subclassData);
     try {
       const syncResult = await syncAlwaysPreparedSpells(supabase, {
@@ -148,11 +152,16 @@ export default async function CharacterPage({ params }: PageProps) {
       if (syncResult.inserted > 0 || syncResult.deleted > 0) {
         const { data, error } = await supabase
           .from("character_spells")
-          .select("*, content_definitions(id, name, slug, content_type, data, effects)")
+          .select(JOINED_CONTENT_SELECT)
           .eq("character_id", id)
           .order("name");
         if (error) throw error;
-        spellRowsAfterSync = data;
+        spellRowsAfterSync = (data ?? []).map((row) => ({
+          ...row,
+          content_definitions: parseNestedContentDefinition(
+            row.content_definitions,
+          ),
+        })) as CharacterSpell[];
       }
     } catch (error) {
       const syncError = error instanceof Error ? error : new Error(String(error));
@@ -165,18 +174,6 @@ export default async function CharacterPage({ params }: PageProps) {
         context: { characterId: id, operation: "sync_feature_granted_spells" },
       });
     }
-  } else if (isOwner && classMetadataError) {
-    const metadataError = new Error(
-      `[CharacterPage] Failed to load class metadata: ${classMetadataError.message}`,
-    );
-    console.error(metadataError);
-    await reportServerError({
-      source: "manual",
-      message: metadataError.message,
-      stack: metadataError.stack,
-      userId: user.id,
-      context: { characterId: id, operation: "load_class_metadata" },
-    });
   }
 
   const [
@@ -234,25 +231,18 @@ export default async function CharacterPage({ params }: PageProps) {
   let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
 
   if (classChoices.length > 0) {
-    const { data: featureRows } = await supabase
-      .from("content_definitions")
-      .select("effects, data")
-      .eq("system_id", character.system_id)
-      .eq("content_type", "feature")
-      .in("data->>class", classChoices.map((c: { slug: string }) => c.slug));
-
-    if (featureRows) {
-      classFeatures = featureRows.filter((f) => {
-        const featureClass = f.data?.class as string | undefined;
-        const featureLevel = f.data?.level as number | undefined;
-        const featureSubclass = f.data?.subclass as string | null | undefined;
-        if (!featureClass || featureLevel == null) return false;
-        const classEntry = classChoices.find((c: { slug: string }) => c.slug === featureClass);
-        if (!classEntry || featureLevel > classEntry.level) return false;
-        if (featureSubclass) return classEntry.subclass === featureSubclass;
-        return true;
-      });
-    }
+    classFeatures = allFeatureContent.filter((feature) => {
+      const featureClass = feature.data.class as string | undefined;
+      const featureLevel = feature.data.level as number | undefined;
+      const featureSubclass = feature.data.subclass as string | null | undefined;
+      if (!featureClass || featureLevel == null) return false;
+      const classEntry = classChoices.find(
+        (choice: { slug: string }) => choice.slug === featureClass,
+      );
+      if (!classEntry || featureLevel > classEntry.level) return false;
+      if (featureSubclass) return classEntry.subclass === featureSubclass;
+      return true;
+    });
   }
 
   // Collect all effects

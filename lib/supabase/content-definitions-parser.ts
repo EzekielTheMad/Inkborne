@@ -97,3 +97,31 @@ export function parseContentDefinitions(
   }
   return parsed;
 }
+
+/**
+ * Parse a `content_definitions` value embedded by a PostgREST relationship.
+ *
+ * To-one joins normally arrive as an object or `null`, but some generated
+ * query types model the same relationship as a single-element array. An
+ * absent join remains `null`; malformed definitions are reported by the
+ * canonical parser and also become `null` so callers can retain custom parent
+ * rows without trusting invalid definition data.
+ */
+export function parseNestedContentDefinition(
+  raw: unknown,
+): ParsedContentDefinition | null {
+  if (raw == null) return null;
+
+  if (Array.isArray(raw)) {
+    if (raw.length === 0) return null;
+    if (raw.length !== 1) {
+      console.error(
+        `[content-definitions] Expected one joined definition, received ${raw.length}`,
+      );
+      return null;
+    }
+    return parseContentDefinition(raw[0]);
+  }
+
+  return parseContentDefinition(raw);
+}

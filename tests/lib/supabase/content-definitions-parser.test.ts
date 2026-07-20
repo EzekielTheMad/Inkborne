@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   parseContentDefinition,
   parseContentDefinitions,
+  parseNestedContentDefinition,
 } from "@/lib/supabase/content-definitions-parser";
 
 const validClassRow = {
@@ -96,6 +97,32 @@ describe("parseContentDefinitions", () => {
 
     expect(result.map((row) => row.slug)).toEqual(["wizard", "mage"]);
     expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+  });
+});
+
+describe("parseNestedContentDefinition", () => {
+  it("accepts object and single-element PostgREST join shapes", () => {
+    expect(parseNestedContentDefinition(validClassRow)?.slug).toBe("wizard");
+    expect(parseNestedContentDefinition([validClassRow])?.slug).toBe("wizard");
+  });
+
+  it("keeps absent joins null without logging", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(parseNestedContentDefinition(null)).toBeNull();
+    expect(parseNestedContentDefinition([])).toBeNull();
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("rejects ambiguous multi-row joins", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(parseNestedContentDefinition([validClassRow, validClassRow])).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Expected one joined definition"),
+    );
     errorSpy.mockRestore();
   });
 });
