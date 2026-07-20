@@ -251,7 +251,7 @@ describe("EquipmentStepClient", () => {
   });
 
   it("surfaces an error and stays unconfirmed when a grant fails", async () => {
-    mockedAddInventoryItem.mockResolvedValue(null);
+    mockedAddInventoryItem.mockRejectedValue(new Error("permission denied"));
     renderStep({
       equipment: "A mace or a warhammer",
       startingEquipment: { selections: { "class:0": "a" }, picks: {} },
