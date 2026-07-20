@@ -8,6 +8,7 @@ export interface CharacterSpell {
   id: string;
   character_id: string;
   content_id: string | null;
+  content_version: number | null;
   name: string;
   class_slug: string;
   is_known: boolean;
@@ -77,6 +78,7 @@ export interface CasterInfo {
 
 export interface AddSpellPayload {
   content_id: string | null;
+  content_version?: number | null;
   name: string;
   class_slug: string;
   is_known?: boolean;

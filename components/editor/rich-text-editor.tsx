@@ -143,7 +143,10 @@ export function RichTextEditor({
   editable = true,
 }: RichTextEditorProps) {
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const editor = useEditor({
     extensions: [

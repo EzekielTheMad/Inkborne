@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { LevelRail } from "@/components/builder/class-step-rail/level-rail";
 import { LevelRailMobile } from "@/components/builder/class-step-rail/level-rail-mobile";
 import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
@@ -100,12 +100,12 @@ export function ClassStepRail(props: ClassStepRailProps) {
 
   const initialClassIndex = 0;
   const initialLevel = selectedClasses[0]?.level ?? 1;
-  const [selected, setSelected] = useState<SelectedKey>({
+  const [selectedState, setSelected] = useState<SelectedKey>({
     classIndex: initialClassIndex,
     level: initialLevel,
   });
-  const [showPicker, setShowPicker] = useState(false);
-  const [levelUpDraft, setLevelUpDraft] = useState<LevelUpDraft | null>(null);
+  const [pickerOpenedAtClassCount, setPickerOpenedAtClassCount] = useState<number | null>(null);
+  const [pendingLevelUpDraft, setLevelUpDraft] = useState<LevelUpDraft | null>(null);
   // Mobile-only: which class/level the level-detail bottom sheet shows (null = closed).
   // Mobile has no static main pane, so this sheet is how per-level choices are reached
   // outside the level-up flow (UAT A3).
@@ -113,34 +113,27 @@ export function ClassStepRail(props: ClassStepRailProps) {
   // Local HP rolls accumulated during the current draft flow, merged over the persisted hpRolls prop.
   const [draftHpRolls, setDraftHpRolls] = useState<Record<string, HpRollRecord>>({});
 
-  /* eslint-disable react-hooks/set-state-in-effect -- These effects reconcile
-     successful parent-owned class mutations back into this local workflow UI. */
-  // PR-C: close picker after a successful add and focus the new class's pane.
-  const prevLengthRef = useRef(selectedClasses.length);
-  useEffect(() => {
-    if (selectedClasses.length > prevLengthRef.current) {
-      setShowPicker(false);
-      setSelected({ classIndex: selectedClasses.length - 1, level: 1 });
-    }
-    prevLengthRef.current = selectedClasses.length;
-  }, [selectedClasses.length]);
-
-  // Level-up flow: clear draft when the parent confirms (selectedClasses[i].level bumps).
-  const prevLevelsRef = useRef(selectedClasses.map((c) => c.level));
-  useEffect(() => {
-    if (levelUpDraft) {
-      const prevLevel = prevLevelsRef.current[levelUpDraft.classIndex];
-      const currLevel = selectedClasses[levelUpDraft.classIndex]?.level;
-      if (currLevel !== undefined && prevLevel !== undefined && currLevel > prevLevel) {
-        setLevelUpDraft(null);
-        setDraftHpRolls({});
-        setSelected({ classIndex: levelUpDraft.classIndex, level: currLevel });
-      }
-    }
-    prevLevelsRef.current = selectedClasses.map((c) => c.level);
-  }, [selectedClasses, levelUpDraft]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
+  // Treat parent-owned class/level changes as acknowledgements instead of
+  // mirroring them into local state from an effect. This keeps the successful
+  // add/level-up transition synchronous without a cascading render.
+  const pickerClosedByAddition =
+    pickerOpenedAtClassCount !== null && selectedClasses.length > pickerOpenedAtClassCount;
+  const completedLevelUp =
+    pendingLevelUpDraft !== null &&
+    (selectedClasses[pendingLevelUpDraft.classIndex]?.level ?? 0) >= pendingLevelUpDraft.draftLevel;
+  const showPicker = pickerOpenedAtClassCount !== null && !pickerClosedByAddition;
+  const levelUpDraft = completedLevelUp ? null : pendingLevelUpDraft;
+  const selected: SelectedKey = pickerClosedByAddition
+    ? { classIndex: selectedClasses.length - 1, level: 1 }
+    : completedLevelUp && pendingLevelUpDraft
+      ? {
+          classIndex: pendingLevelUpDraft.classIndex,
+          level: selectedClasses[pendingLevelUpDraft.classIndex]?.level ?? pendingLevelUpDraft.draftLevel,
+        }
+      : selectedState;
+  const setShowPicker = (open: boolean) => {
+    setPickerOpenedAtClassCount(open ? selectedClasses.length : null);
+  };
   const totalLevel = selectedClasses.reduce((sum, c) => sum + c.level, 0);
   const levelsRemaining = MAX_TOTAL_LEVEL - totalLevel;
 
@@ -213,6 +206,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       if (railDisabled) return;
       if (isActiveFlowRail && level !== draftLevelValue) return;
       setShowPicker(false);
+      if (completedLevelUp) setLevelUpDraft(null);
       setSelected({ classIndex: idx, level });
     };
 
@@ -234,6 +228,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       } else if (selected.classIndex === idx && selected.level > newLevel) {
         setSelected({ classIndex: idx, level: newLevel });
       }
+      if (completedLevelUp) setLevelUpDraft(null);
       onLevelChange(idx, newLevel);
     };
 
@@ -241,6 +236,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       if (buttonState !== "idle") return;
       setShowPicker(false);
       setMobileDetail(null);
+      setDraftHpRolls({});
       setLevelUpDraft({ classIndex: idx, draftLevel: cls.level + 1 });
     };
 

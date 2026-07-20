@@ -142,6 +142,7 @@ export function EquipmentStepClient({
         try {
           await addInventoryItem(characterId, {
             content_id: grant.content_id,
+            content_version: grant.content_version,
             name: grant.name,
             content_type: grant.content_type,
             quantity: grant.quantity,

@@ -37,6 +37,7 @@ export interface AddItemPanelProps {
   onClose: () => void;
   onAdd: (item: {
     content_id: string | null;
+    content_version?: number | null;
     name: string;
     content_type: string;
     quantity?: number;
@@ -111,6 +112,7 @@ export function AddItemPanel({
     try {
       await onAdd({
         content_id: item.id,
+        content_version: item.version,
         name: item.name,
         content_type: item.content_type,
         quantity: qty,

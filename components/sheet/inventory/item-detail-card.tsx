@@ -8,6 +8,7 @@ import { rarityTextClass } from "@/lib/inventory/rarity-colors";
 
 export interface SearchResult {
   id: string;
+  version: number;
   name: string;
   slug: string;
   content_type: string;

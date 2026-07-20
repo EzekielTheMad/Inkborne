@@ -1,21 +1,25 @@
 import { createClient } from "@/lib/supabase/client";
 import {
   parseContentDefinitions,
-  parseNestedContentDefinition,
+  parseNestedContentVersionSnapshot,
   type ParsedContentDefinition,
 } from "@/lib/supabase/content-definitions-parser";
 import type { CharacterSpell, AddSpellPayload, SpellUpdate } from "@/lib/types/spells";
 
 const SPELLS_SELECT =
-  "*, content_definitions(id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id)";
+  `*, content_versions!character_spells_content_version_fkey(
+    content_id, version, system_id_snapshot, content_type_snapshot,
+    slug_snapshot, name_snapshot, data_snapshot, effects_snapshot,
+    source_snapshot, scope_snapshot, owner_id_snapshot
+  )`;
 
 function parseCharacterSpellRow(
   raw: Record<string, unknown>,
 ): CharacterSpell {
   return {
     ...raw,
-    content_definitions: parseNestedContentDefinition(
-      raw.content_definitions,
+    content_definitions: parseNestedContentVersionSnapshot(
+      raw.content_versions,
     ),
   } as unknown as CharacterSpell;
 }
@@ -42,12 +46,20 @@ export async function addCharacterSpell(
   characterId: string,
   payload: AddSpellPayload,
 ): Promise<CharacterSpell | null> {
+  if (payload.content_id && !Number.isInteger(payload.content_version)) {
+    throw new Error("A definition-backed spell requires a content version.");
+  }
+  if (!payload.content_id && payload.content_version != null) {
+    throw new Error("A custom spell cannot specify a content version.");
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("character_spells")
     .insert({
       character_id: characterId,
       content_id: payload.content_id ?? null,
+      content_version: payload.content_id ? payload.content_version : null,
       name: payload.name,
       class_slug: payload.class_slug,
       is_known: payload.is_known ?? false,
@@ -117,7 +129,6 @@ export async function searchSpells(
     )
     .eq("system_id", systemId)
     .eq("content_type", "spell")
-    .eq("scope", "platform")
     .ilike("name", `%${query}%`);
 
   if (options?.classSlug) {

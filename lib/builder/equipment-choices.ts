@@ -21,6 +21,7 @@ import type { StartingEquipmentSelections } from "@/lib/types/character";
 /** Trimmed catalog row passed from the server (content_definitions subset). */
 export interface EquipmentCatalogItem {
   id: string;
+  version: number;
   name: string;
   slug: string;
   content_type: string; // "weapon" | "armor" | "item"
@@ -82,6 +83,7 @@ export interface CategoryChoice {
 
 export interface InventoryGrant {
   content_id: string | null;
+  content_version: number | null;
   name: string;
   content_type: string;
   quantity: number;
@@ -561,12 +563,14 @@ export function buildInventoryGrants(
           resolved
             ? {
                 content_id: resolved.id,
+                content_version: resolved.version,
                 name: resolved.name,
                 content_type: resolved.content_type,
                 quantity: item.quantity,
               }
             : {
                 content_id: null,
+                content_version: null,
                 name: titleCaseFirst(item.name),
                 content_type: "item",
                 quantity: item.quantity,
@@ -583,6 +587,7 @@ export function buildInventoryGrants(
       if (value.startsWith("custom:")) {
         push({
           content_id: null,
+          content_version: null,
           name: value.slice("custom:".length),
           content_type: "item",
           quantity: 1,
@@ -592,6 +597,7 @@ export function buildInventoryGrants(
         if (catalogItem) {
           push({
             content_id: catalogItem.id,
+            content_version: catalogItem.version,
             name: catalogItem.name,
             content_type: catalogItem.content_type,
             quantity: 1,

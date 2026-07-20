@@ -101,6 +101,7 @@ import {
 
 export interface AddItemPayload {
   content_id: string | null;
+  content_version?: number | null;
   name: string;
   content_type: string;
   quantity?: number;

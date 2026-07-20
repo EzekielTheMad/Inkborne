@@ -78,6 +78,37 @@ export async function getCampaignFixture(campaignId: string): Promise<{
   return { inviteCode: data.invite_code, systemId: data.system_id };
 }
 
+async function seedClassContentRef(
+  service: SupabaseClient,
+  characterId: string,
+  systemId: string,
+  classSlug: string,
+  level: number,
+): Promise<void> {
+  const { data: classDefinition, error: classError } = await service
+    .from("content_definitions")
+    .select("id, version")
+    .eq("system_id", systemId)
+    .eq("content_type", "class")
+    .eq("slug", classSlug)
+    .single();
+  if (classError || !classDefinition) {
+    throw new Error(
+      `Could not resolve ${classSlug} class content: ${classError?.message ?? "no row"}`,
+    );
+  }
+
+  const { error: refError } = await service.from("character_content_refs").insert({
+    character_id: characterId,
+    content_id: classDefinition.id,
+    content_version: classDefinition.version,
+    context: { source: "class", level },
+  });
+  if (refError) {
+    throw new Error(`Could not seed ${classSlug} class content ref: ${refError.message}`);
+  }
+}
+
 export async function seedCampaignCharacter(input: {
   name: string;
   systemId: string;
@@ -113,6 +144,7 @@ export async function seedCampaignCharacter(input: {
   if (error || !data) {
     throw new Error(`Could not seed campaign character: ${error?.message}`);
   }
+  await seedClassContentRef(service, data.id, input.systemId, "fighter", 1);
   return data.id;
 }
 
@@ -222,6 +254,7 @@ export async function seedSheetCharacter(name: string): Promise<string> {
   if (error || !data) {
     throw new Error(`Could not seed sheet character: ${error?.message}`);
   }
+  await seedClassContentRef(service, data.id, systems[0].id, "fighter", 1);
   return data.id;
 }
 
@@ -232,9 +265,8 @@ export async function seedSheetCharacter(name: string): Promise<string> {
  * - base stats give DEX +2 (base AC 12; Mage Armor 15), CON +2, INT +3;
  * - `character_spells` rows for Magic Missile and Mage Armor (known +
  *   prepared + in spellbook — content ids resolved from platform SRD content);
- * - a `character_content_refs` row for the Arcane Recovery feature, which is
- *   what surfaces it as a feature resource (the builder writes feature refs;
- *   `computeResources` derives resources from content refs only).
+ * - the pinned Wizard class ref lets the page's feature-grant sync materialize
+ *   Arcane Recovery exactly as the real builder flow does.
  *
  * Expected max HP: d6 max (6) + 2×d6 avg (4) + CON mod (+2) × 3 = 20.
  * Expected slots (wizard 3): 4× 1st, 2× 2nd.
@@ -283,12 +315,13 @@ export async function seedWizardCharacter(name: string): Promise<string> {
   if (characterError || !character) {
     throw new Error(`Could not seed wizard character: ${characterError?.message}`);
   }
+  await seedClassContentRef(service, character.id, systemId, "wizard", 3);
 
   // Known spells — content ids resolved from the platform SRD content.
   const spellSlugs = ["magic-missile", "mage-armor"];
   const { data: spellDefs, error: spellsError } = await service
     .from("content_definitions")
-    .select("id, name, slug")
+    .select("id, name, slug, version")
     .eq("system_id", systemId)
     .eq("content_type", "spell")
     .eq("scope", "platform")
@@ -304,6 +337,7 @@ export async function seedWizardCharacter(name: string): Promise<string> {
     spellDefs!.map((def) => ({
       character_id: character.id,
       content_id: def.id,
+      content_version: def.version,
       name: def.name,
       class_slug: "wizard",
       is_known: true,
@@ -314,31 +348,6 @@ export async function seedWizardCharacter(name: string): Promise<string> {
   );
   if (spellInsertError) {
     throw new Error(`Could not seed character spells: ${spellInsertError.message}`);
-  }
-
-  // Arcane Recovery feature ref → feature resource (short-rest slot recovery).
-  const { data: feature, error: featureError } = await service
-    .from("content_definitions")
-    .select("id")
-    .eq("system_id", systemId)
-    .eq("content_type", "feature")
-    .eq("scope", "platform")
-    .eq("slug", "arcane-recovery")
-    .single();
-  if (featureError || !feature) {
-    throw new Error(
-      `Could not resolve the arcane-recovery feature: ${featureError?.message ?? "no row"}`,
-    );
-  }
-  const { error: refError } = await service.from("character_content_refs").insert({
-    character_id: character.id,
-    content_id: feature.id,
-    content_version: 1,
-    context: {},
-    choice_source: "class",
-  });
-  if (refError) {
-    throw new Error(`Could not seed arcane-recovery content ref: ${refError.message}`);
   }
 
   return character.id;

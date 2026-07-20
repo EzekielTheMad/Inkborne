@@ -2,217 +2,203 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { syncAlwaysPreparedSpells } from "@/lib/supabase/spells-server";
+import {
+  applyActiveSpellGrantOverlays,
+  getActiveSpellGrants,
+  syncAlwaysPreparedSpells,
+} from "@/lib/supabase/spells-server";
+import type { CharacterSpell } from "@/lib/types/spells";
 
-interface QueryResponse<T> {
-  data?: T;
+const SPELL_ID = "11111111-1111-4111-8111-111111111111";
+
+function makeClient(response: {
+  data: unknown;
   error: { message: string } | null;
-}
-
-const SYSTEM_ID = "22222222-2222-4222-8222-222222222222";
-const BLESS_ID = "11111111-1111-4111-8111-111111111111";
-const AID_ID = "33333333-3333-4333-8333-333333333333";
-
-function makeSpellDefinition(params: {
-  id: string;
-  slug: string;
-  name: string;
-  data?: Record<string, unknown>;
 }) {
+  const rpc = vi.fn().mockResolvedValue(response);
   return {
-    ...params,
-    content_type: "spell",
-    version: 1,
-    source: "srd",
-    system_id: SYSTEM_ID,
-    scope: "platform",
-    owner_id: null,
-    effects: [],
-    data: params.data ?? {
-      level: 1,
-      school: "evocation",
-      casting_time: "1 action",
-      range: "30 feet",
-      components: ["V", "S"],
-      duration: "1 minute",
-      concentration: false,
-      ritual: false,
-      description: `${params.name} description`,
-      classes: ["cleric"],
-      subclasses: [],
-    },
-  };
-}
-
-function makeQuery<T>(response: QueryResponse<T>) {
-  const query = {
-    eq: vi.fn(),
-    in: vi.fn(),
-    then: <TResult1 = QueryResponse<T>, TResult2 = never>(
-      onFulfilled?: ((value: QueryResponse<T>) => TResult1 | PromiseLike<TResult1>) | null,
-      onRejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
-    ) => Promise.resolve(response).then(onFulfilled, onRejected),
-  };
-  query.eq.mockReturnValue(query);
-  query.in.mockReturnValue(query);
-  return query;
-}
-
-function makeClient(options?: {
-  existing?: Array<{ id: string; class_slug: string; content_id: string | null }>;
-  definitions?: Array<Record<string, unknown>>;
-  existingError?: { message: string } | null;
-  insertError?: { message: string } | null;
-  deleteError?: { message: string } | null;
-}) {
-  const existingQuery = makeQuery({
-    data: options?.existing ?? [],
-    error: options?.existingError ?? null,
-  });
-  const definitionQuery = makeQuery({
-    data: options?.definitions ?? [],
-    error: null,
-  });
-  const deleteQuery = makeQuery({
-    data: null,
-    error: options?.deleteError ?? null,
-  });
-
-  const characterSpells = {
-    select: vi.fn(() => existingQuery),
-    insert: vi.fn().mockResolvedValue({ error: options?.insertError ?? null }),
-    delete: vi.fn(() => deleteQuery),
-  };
-  const contentDefinitions = {
-    select: vi.fn(() => definitionQuery),
-  };
-  const from = vi.fn((table: string) => {
-    if (table === "character_spells") return characterSpells;
-    if (table === "content_definitions") return contentDefinitions;
-    throw new Error(`Unexpected table: ${table}`);
-  });
-
-  return {
-    client: { from } as unknown as Parameters<typeof syncAlwaysPreparedSpells>[0],
-    from,
-    existingQuery,
-    definitionQuery,
-    characterSpells,
-    contentDefinitions,
-    deleteQuery,
+    client: { rpc } as unknown as Parameters<typeof syncAlwaysPreparedSpells>[0],
+    rpc,
   };
 }
 
 describe("syncAlwaysPreparedSpells", () => {
-  it("inserts missing grants and removes stale, duplicate, and invalid rows", async () => {
+  it("atomically reconciles from the pinned database manifest", async () => {
     const db = makeClient({
-      existing: [
-        { id: "keep", class_slug: "cleric", content_id: BLESS_ID },
-        { id: "stale", class_slug: "cleric", content_id: "spell-old" },
-        { id: "duplicate", class_slug: "cleric", content_id: BLESS_ID },
-        { id: "invalid", class_slug: "cleric", content_id: null },
+      data: [
+        {
+          inserted: 2,
+          deleted: 1,
+          active_grants: [
+            {
+              content_id: SPELL_ID,
+              content_version: 1,
+              class_slug: "cleric",
+            },
+          ],
+        },
       ],
-      definitions: [
-        makeSpellDefinition({ id: BLESS_ID, slug: "bless", name: "Bless" }),
-        makeSpellDefinition({ id: AID_ID, slug: "aid", name: "Aid" }),
+      error: null,
+    });
+
+    await expect(
+      syncAlwaysPreparedSpells(db.client, { characterId: "char-1" }),
+    ).resolves.toEqual({
+      inserted: 2,
+      deleted: 1,
+      activeGrants: [
+        {
+          content_id: SPELL_ID,
+          content_version: 1,
+          class_slug: "cleric",
+        },
       ],
     });
 
-    const result = await syncAlwaysPreparedSpells(db.client, {
-      characterId: "char-1",
-      systemId: SYSTEM_ID,
-      granted: [
-        { spell_slug: "bless", class_slug: "cleric" },
-        { spell_slug: "bless", class_slug: "cleric" },
-        { spell_slug: "aid", class_slug: "cleric" },
-        { spell_slug: "missing", class_slug: "cleric" },
-      ],
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(db.rpc).toHaveBeenCalledWith("sync_character_spell_grants", {
+      target_character_id: "char-1",
+    });
+  });
+
+  it("surfaces a database failure without attempting client-side fallback", async () => {
+    const db = makeClient({
+      data: null,
+      error: { message: "permission denied" },
     });
 
-    expect(db.definitionQuery.eq).toHaveBeenCalledWith("system_id", SYSTEM_ID);
-    expect(db.characterSpells.insert).toHaveBeenCalledWith([
-      expect.objectContaining({
-        character_id: "char-1",
-        content_id: AID_ID,
-        name: "Aid",
+    await expect(
+      syncAlwaysPreparedSpells(db.client, { characterId: "char-1" }),
+    ).rejects.toThrow("[syncAlwaysPreparedSpells] failed: permission denied");
+
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    null,
+    [],
+    [{ inserted: -1, deleted: 0, active_grants: [] }],
+    [{ inserted: 1, deleted: 0 }],
+    [
+      { inserted: 1, deleted: 0, active_grants: [] },
+      { inserted: 0, deleted: 0, active_grants: [] },
+    ],
+  ])("fails closed for a malformed RPC result: %j", async (data) => {
+    const db = makeClient({ data, error: null });
+
+    await expect(
+      syncAlwaysPreparedSpells(db.client, { characterId: "char-1" }),
+    ).rejects.toThrow("invalid spell-grant reconciliation result");
+  });
+});
+
+describe("getActiveSpellGrants", () => {
+  const activeGrants = [
+    {
+      content_id: SPELL_ID,
+      content_version: 1,
+      class_slug: "cleric",
+    },
+  ];
+
+  it("uses the read-only viewer RPC", async () => {
+    const db = makeClient({ data: activeGrants, error: null });
+
+    await expect(
+      getActiveSpellGrants(db.client, { characterId: "char-1" }),
+    ).resolves.toEqual(activeGrants);
+    expect(db.rpc).toHaveBeenCalledWith(
+      "get_active_character_spell_grants",
+      { target_character_id: "char-1" },
+    );
+  });
+
+  it("fails closed for unauthorized or malformed viewer results", async () => {
+    const unauthorized = makeClient({
+      data: null,
+      error: { message: "unavailable" },
+    });
+    await expect(
+      getActiveSpellGrants(unauthorized.client, { characterId: "char-1" }),
+    ).rejects.toThrow("[getActiveSpellGrants] failed: unavailable");
+
+    const malformed = makeClient({ data: [{ content_id: SPELL_ID }], error: null });
+    await expect(
+      getActiveSpellGrants(malformed.client, { characterId: "char-1" }),
+    ).rejects.toThrow("invalid active spell-grant result");
+  });
+});
+
+describe("applyActiveSpellGrantOverlays", () => {
+  const selectedSpell: CharacterSpell = {
+    id: "selected-row",
+    character_id: "character-1",
+    content_id: SPELL_ID,
+    content_version: 7,
+    name: "Bless",
+    class_slug: "cleric",
+    is_known: true,
+    is_prepared: false,
+    always_prepared: false,
+    in_spellbook: false,
+    source: "selection",
+    custom_data: { note: "player acquisition" },
+    created_at: "2026-07-20T00:00:00.000Z",
+  };
+
+  it("overlays an active pinned grant without replacing selection provenance", () => {
+    const [result] = applyActiveSpellGrantOverlays([selectedSpell], [
+      {
+        content_id: SPELL_ID,
+        content_version: 1,
         class_slug: "cleric",
-        always_prepared: true,
-        source: "feature",
-      }),
+      },
     ]);
-    expect(db.deleteQuery.in).toHaveBeenCalledWith(
-      "id",
-      expect.arrayContaining(["stale", "duplicate", "invalid"]),
-    );
+
     expect(result).toEqual({
-      inserted: 1,
-      deleted: 3,
-      missingSpellSlugs: ["missing"],
+      ...selectedSpell,
+      is_prepared: true,
+      always_prepared: true,
     });
+    expect(result.id).toBe("selected-row");
+    expect(result.source).toBe("selection");
+    expect(result.content_version).toBe(7);
+    expect(result.custom_data).toEqual({ note: "player acquisition" });
   });
 
-  it("removes all feature rows when no grants remain", async () => {
-    const db = makeClient({
-      existing: [
-        { id: "old-1", class_slug: "cleric", content_id: "spell-1" },
-        { id: "old-2", class_slug: "paladin", content_id: "spell-2" },
-      ],
-    });
+  it("restores the untouched selected state when the grant becomes dormant", () => {
+    const [result] = applyActiveSpellGrantOverlays([selectedSpell], []);
 
-    const result = await syncAlwaysPreparedSpells(db.client, {
-      characterId: "char-1",
-      systemId: "system-1",
-      granted: [],
-    });
-
-    expect(db.contentDefinitions.select).not.toHaveBeenCalled();
-    expect(db.characterSpells.insert).not.toHaveBeenCalled();
-    expect(db.deleteQuery.in).toHaveBeenCalledWith(
-      "id",
-      expect.arrayContaining(["old-1", "old-2"]),
-    );
-    expect(result).toEqual({ inserted: 0, deleted: 2, missingSpellSlugs: [] });
+    expect(result).toBe(selectedSpell);
+    expect(result.is_prepared).toBe(false);
+    expect(result.always_prepared).toBe(false);
+    expect(result.source).toBe("selection");
   });
 
-  it("throws instead of silently continuing after a database error", async () => {
-    const db = makeClient({ existingError: { message: "permission denied" } });
+  it("does not overlay the same spell acquired for another class", () => {
+    const [result] = applyActiveSpellGrantOverlays([selectedSpell], [
+      {
+        content_id: SPELL_ID,
+        content_version: 1,
+        class_slug: "paladin",
+      },
+    ]);
 
-    await expect(
-      syncAlwaysPreparedSpells(db.client, {
-        characterId: "char-1",
-        systemId: "system-1",
-        granted: [],
-      }),
-    ).rejects.toThrow("loading existing feature spells failed: permission denied");
-
-    expect(db.characterSpells.insert).not.toHaveBeenCalled();
-    expect(db.characterSpells.delete).not.toHaveBeenCalled();
+    expect(result).toBe(selectedSpell);
   });
 
-  it("fails closed before deleting rows when a definition is malformed", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const db = makeClient({
-      existing: [{ id: "keep", class_slug: "cleric", content_id: BLESS_ID }],
-      definitions: [
-        makeSpellDefinition({
-          id: BLESS_ID,
-          slug: "bless",
-          name: "Bless",
-          data: { level: "invalid" },
-        }),
-      ],
-    });
+  it("renders the same overlay for owner-sync and read-only DM manifests", () => {
+    const ownerManifest = [
+      {
+        content_id: SPELL_ID,
+        content_version: 1,
+        class_slug: "cleric",
+      },
+    ];
+    const dmManifest = structuredClone(ownerManifest);
 
-    await expect(
-      syncAlwaysPreparedSpells(db.client, {
-        characterId: "char-1",
-        systemId: SYSTEM_ID,
-        granted: [{ spell_slug: "bless", class_slug: "cleric" }],
-      }),
-    ).rejects.toThrow("refusing to reconcile feature spells");
-
-    expect(db.characterSpells.insert).not.toHaveBeenCalled();
-    expect(db.characterSpells.delete).not.toHaveBeenCalled();
-    errorSpy.mockRestore();
+    expect(
+      applyActiveSpellGrantOverlays([selectedSpell], dmManifest),
+    ).toEqual(applyActiveSpellGrantOverlays([selectedSpell], ownerManifest));
   });
 });

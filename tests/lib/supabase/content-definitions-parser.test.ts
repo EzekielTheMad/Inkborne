@@ -4,6 +4,8 @@ import {
   parseContentDefinition,
   parseContentDefinitions,
   parseNestedContentDefinition,
+  parseContentVersionSnapshot,
+  parseNestedContentVersionSnapshot,
 } from "@/lib/supabase/content-definitions-parser";
 
 const validClassRow = {
@@ -26,6 +28,20 @@ const validClassRow = {
     levels: [{ level: 1, features: [], spellcasting: null }],
     source_refs: [],
   },
+};
+
+const validClassSnapshot = {
+  content_id: validClassRow.id,
+  version: validClassRow.version,
+  system_id_snapshot: validClassRow.system_id,
+  content_type_snapshot: validClassRow.content_type,
+  slug_snapshot: validClassRow.slug,
+  name_snapshot: validClassRow.name,
+  data_snapshot: validClassRow.data,
+  effects_snapshot: validClassRow.effects,
+  source_snapshot: validClassRow.source,
+  scope_snapshot: validClassRow.scope,
+  owner_id_snapshot: validClassRow.owner_id,
 };
 
 describe("parseContentDefinition", () => {
@@ -122,6 +138,45 @@ describe("parseNestedContentDefinition", () => {
     expect(parseNestedContentDefinition([validClassRow, validClassRow])).toBeNull();
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining("Expected one joined definition"),
+    );
+    errorSpy.mockRestore();
+  });
+});
+
+describe("parseContentVersionSnapshot", () => {
+  it("maps an immutable snapshot into a validated definition", () => {
+    expect(parseContentVersionSnapshot(validClassSnapshot)).toMatchObject({
+      id: validClassRow.id,
+      version: 1,
+      slug: "wizard",
+      name: "Wizard",
+      content_type: "class",
+      source: "srd",
+      data: { hit_die: 6 },
+    });
+  });
+
+  it("accepts the to-one PostgREST relationship shapes", () => {
+    expect(parseNestedContentVersionSnapshot(validClassSnapshot)?.slug).toBe(
+      "wizard",
+    );
+    expect(
+      parseNestedContentVersionSnapshot([validClassSnapshot])?.slug,
+    ).toBe("wizard");
+  });
+
+  it("fails closed for malformed snapshots", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(
+      parseContentVersionSnapshot({
+        ...validClassSnapshot,
+        version: 0,
+      }),
+    ).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Bad snapshot"),
+      expect.anything(),
     );
     errorSpy.mockRestore();
   });

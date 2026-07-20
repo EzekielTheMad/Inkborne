@@ -10,6 +10,7 @@ import { useSpells } from "@/lib/character/character-context";
 
 interface SpellSearchResult {
   id: string;
+  version: number;
   name: string;
   slug: string;
   content_type: string;
@@ -194,6 +195,7 @@ export function AddSpellPanel({ open, onClose, systemId }: AddSpellPanelProps) {
     try {
       await addSpell({
         content_id: spell.id,
+        content_version: spell.version,
         name: spell.name,
         class_slug: selectedClass,
         is_known: intent === "known",

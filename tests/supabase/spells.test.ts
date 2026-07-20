@@ -52,6 +52,26 @@ const structuredError = {
   hint: "Grant SELECT to authenticated",
 };
 
+function snapshotFor(
+  definition: typeof validSpellDefinition,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    content_id: definition.id,
+    version: definition.version,
+    system_id_snapshot: definition.system_id,
+    content_type_snapshot: definition.content_type,
+    slug_snapshot: definition.slug,
+    name_snapshot: definition.name,
+    data_snapshot: definition.data,
+    effects_snapshot: definition.effects,
+    source_snapshot: definition.source,
+    scope_snapshot: definition.scope,
+    owner_id_snapshot: definition.owner_id,
+    ...overrides,
+  };
+}
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({ from: (table: string) => fromMock(table) }),
 }));
@@ -90,13 +110,13 @@ beforeEach(() => {
 });
 
 describe("getSpellsForCharacter", () => {
-  it("queries character_spells with join and character_id filter", async () => {
+  it("queries character_spells with an exact content version join", async () => {
     orderMock.mockResolvedValueOnce({ data: [], error: null });
     const { getSpellsForCharacter } = await import("@/lib/supabase/spells");
     await getSpellsForCharacter("char-1");
     expect(fromMock).toHaveBeenCalledWith("character_spells");
     expect(selectMock).toHaveBeenCalledWith(
-      expect.stringContaining("content_definitions"),
+      expect.stringContaining("content_versions!character_spells_content_version_fkey"),
     );
     expect(eqMock).toHaveBeenCalledWith("character_id", "char-1");
     expect(selectMock).toHaveBeenCalledWith(expect.stringContaining("version"));
@@ -112,10 +132,9 @@ describe("getSpellsForCharacter", () => {
           character_id: "char-1",
           content_id: "bad-content",
           name: "Custom spell",
-          content_definitions: {
-            ...validSpellDefinition,
-            data: { level: "not-a-number" },
-          },
+          content_versions: snapshotFor(validSpellDefinition, {
+            data_snapshot: { level: "not-a-number" },
+          }),
         },
       ],
       error: null,
@@ -158,6 +177,7 @@ describe("addCharacterSpell", () => {
     const { addCharacterSpell } = await import("@/lib/supabase/spells");
     await addCharacterSpell("char-1", {
       content_id: "c1",
+      content_version: 1,
       name: "Fireball",
       class_slug: "wizard",
       is_known: true,
@@ -167,6 +187,7 @@ describe("addCharacterSpell", () => {
       expect.objectContaining({
         character_id: "char-1",
         content_id: "c1",
+        content_version: 1,
         name: "Fireball",
         class_slug: "wizard",
         is_known: true,
@@ -183,6 +204,7 @@ describe("addCharacterSpell", () => {
     await expect(
       addCharacterSpell("char-1", {
         content_id: "c1",
+        content_version: 1,
         name: "Fireball",
         class_slug: "wizard",
       }),
@@ -220,13 +242,13 @@ describe("removeCharacterSpell", () => {
 });
 
 describe("searchSpells", () => {
-  it("filters by class, level, and platform scope", async () => {
+  it("filters by class and level while relying on RLS for visible scopes", async () => {
     const { searchSpells } = await import("@/lib/supabase/spells");
     await searchSpells("sys-1", "fire", { classSlug: "wizard", level: 3 });
     expect(fromMock).toHaveBeenCalledWith("content_definitions");
     expect(eqMock).toHaveBeenCalledWith("system_id", "sys-1");
     expect(eqMock).toHaveBeenCalledWith("content_type", "spell");
-    expect(eqMock).toHaveBeenCalledWith("scope", "platform");
+    expect(eqMock).not.toHaveBeenCalledWith("scope", "platform");
     expect(eqMock).toHaveBeenCalledWith("data->>level", "3");
     expect(ilikeMock).toHaveBeenCalledWith("name", "%fire%");
     expect(containsMock).toHaveBeenCalledWith("data->classes", JSON.stringify(["wizard"]));

@@ -110,6 +110,23 @@ describe("computeResources", () => {
     });
   });
 
+  it("deduplicates overlapping legacy and feature-grant refs by resource slug", () => {
+    const data = {
+      class: "wizard",
+      level: 1,
+      description: "x",
+      usages: 1,
+      recovery: "short rest",
+    };
+    const result = computeResources(
+      [feature("arcane-recovery", data), feature("arcane-recovery", data)],
+      [{ slug: "wizard", level: 3 }],
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].slug).toBe("arcane-recovery");
+  });
+
   it("resolves per-level array usages against class level", () => {
     const rageArr = [2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 99];
     const refs = [feature("rage", {

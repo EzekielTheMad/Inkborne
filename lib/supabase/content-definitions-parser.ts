@@ -21,11 +21,27 @@ export interface ParsedContentDefinition<
   content_type: string;
   version: number;
   source: "srd" | "homebrew";
+  version_created_at?: string;
   data: TData;
   effects: Effect[];
 }
 
 const contentDefinitionIdSchema = z.string().uuid();
+
+const contentVersionSnapshotSchema = z.object({
+  content_id: z.string().uuid(),
+  version: z.number().int().positive(),
+  system_id_snapshot: z.string().uuid(),
+  content_type_snapshot: z.string().min(1),
+  slug_snapshot: z.string().min(1),
+  name_snapshot: z.string().min(1),
+  data_snapshot: z.record(z.string(), z.unknown()),
+  effects_snapshot: z.unknown(),
+  source_snapshot: z.enum(["srd", "homebrew"]),
+  scope_snapshot: z.enum(["platform", "personal", "shared"]),
+  owner_id_snapshot: z.string().uuid().nullable(),
+  created_at: z.string().datetime({ offset: true }).optional(),
+});
 
 /**
  * Parse one raw `content_definitions` row.
@@ -124,4 +140,59 @@ export function parseNestedContentDefinition(
   }
 
   return parseContentDefinition(raw);
+}
+
+/**
+ * Parse one immutable `content_versions` snapshot into the same trusted shape
+ * used for current catalog definitions. Character-bound reads use this path so
+ * a later homebrew or platform update cannot silently change an existing
+ * character.
+ */
+export function parseContentVersionSnapshot(
+  raw: unknown,
+): ParsedContentDefinition | null {
+  const snapshot = contentVersionSnapshotSchema.safeParse(raw);
+  if (!snapshot.success) {
+    const maybeContentId = (raw as { content_id?: unknown } | null)?.content_id;
+    console.error(
+      `[content-versions] Bad snapshot for ${typeof maybeContentId === "string" ? maybeContentId : "<unknown>"}:`,
+      snapshot.error.issues,
+    );
+    return null;
+  }
+
+  return parseContentDefinition({
+    id: snapshot.data.content_id,
+    system_id: snapshot.data.system_id_snapshot,
+    content_type: snapshot.data.content_type_snapshot,
+    slug: snapshot.data.slug_snapshot,
+    name: snapshot.data.name_snapshot,
+    data: snapshot.data.data_snapshot,
+    effects: snapshot.data.effects_snapshot,
+    source: snapshot.data.source_snapshot,
+    scope: snapshot.data.scope_snapshot,
+    owner_id: snapshot.data.owner_id_snapshot,
+    version: snapshot.data.version,
+    version_created_at: snapshot.data.created_at,
+  });
+}
+
+/** Parse a PostgREST to-one snapshot relationship. */
+export function parseNestedContentVersionSnapshot(
+  raw: unknown,
+): ParsedContentDefinition | null {
+  if (raw == null) return null;
+
+  if (Array.isArray(raw)) {
+    if (raw.length === 0) return null;
+    if (raw.length !== 1) {
+      console.error(
+        `[content-versions] Expected one joined snapshot, received ${raw.length}`,
+      );
+      return null;
+    }
+    return parseContentVersionSnapshot(raw[0]);
+  }
+
+  return parseContentVersionSnapshot(raw);
 }

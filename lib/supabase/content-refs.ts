@@ -3,7 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import {
-  parseContentDefinition,
+  parseNestedContentVersionSnapshot,
   type ParsedContentDefinition,
 } from "@/lib/supabase/content-definitions-parser";
 import { createClient } from "@/lib/supabase/server";
@@ -21,7 +21,7 @@ const contentRefEnvelopeSchema = z.object({
   context: z.record(z.string(), z.unknown()),
   choice_source: z.string().nullable(),
   created_at: z.string().min(1),
-  content_definitions: z.unknown(),
+  content_versions: z.unknown(),
 });
 
 /** Parse one joined content ref, returning null only for that malformed row. */
@@ -38,7 +38,9 @@ export function parseContentRefWithContent(
     return null;
   }
 
-  const definition = parseContentDefinition(envelope.data.content_definitions);
+  const definition = parseNestedContentVersionSnapshot(
+    envelope.data.content_versions,
+  );
   if (definition === null) return null;
 
   return {
@@ -61,7 +63,11 @@ export async function getContentRefsByCharacter(
     .from("character_content_refs")
     .select(
       `id, character_id, content_id, content_version, context, choice_source, created_at,
-       content_definitions (id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id)`,
+       content_versions!character_content_refs_content_version_fkey (
+         content_id, version, system_id_snapshot, content_type_snapshot,
+         slug_snapshot, name_snapshot, data_snapshot, effects_snapshot,
+         source_snapshot, scope_snapshot, owner_id_snapshot, created_at
+       )`,
     )
     .eq("character_id", characterId);
 

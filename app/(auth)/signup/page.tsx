@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,47 +14,31 @@ import {
   AuthLabel,
 } from "@/components/auth/auth-shell";
 import { OAuthButtons, type OAuthProvider } from "@/components/auth/oauth-buttons";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { signup, type SignupActionState } from "./actions";
+
+const initialSignupState: SignupActionState = { error: null };
 
 export default function SignupPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
+  const [state, formAction, pending] = useActionState(signup, initialSignupState);
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  async function handleOAuth(provider: OAuthProvider) {
+    setOauthError(null);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: displayName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
+      if (error) setOauthError(error.message);
+    } catch {
+      setOauthError("Unable to start sign up. Please try again.");
     }
   }
 
-  async function handleOAuth(provider: OAuthProvider) {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setError(error.message);
-  }
+  const error = oauthError ?? state.error;
 
   return (
     <AuthShell marginalia={"“Open a new notebook.”"}>
@@ -70,42 +55,45 @@ export default function SignupPage() {
 
         {error && <AuthErrorBanner title="That didn&rsquo;t take.">{error}</AuthErrorBanner>}
 
-        <form onSubmit={handleSignup} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="space-y-1.5">
             <AuthLabel htmlFor="displayName">What should we call you?</AuthLabel>
             <Input
               id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              name="displayName"
+              autoComplete="name"
               placeholder="A name (any will do)"
               required
             />
           </div>
           <div className="space-y-1.5">
             <AuthLabel htmlFor="email">Email</AuthLabel>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <Input id="email" name="email" type="email" autoComplete="email" required />
           </div>
           <div className="space-y-1.5">
             <AuthLabel htmlFor="password">Choose a password</AuthLabel>
             <Input
               id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               placeholder="At least 8 characters"
               required
               minLength={8}
             />
           </div>
-          <Button type="submit" variant="gold" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create account →"}
+          <Button
+            type="submit"
+            variant="gold"
+            className="w-full"
+            disabled={pending}
+            aria-disabled={pending}
+          >
+            {pending ? "Creating account..." : "Create account →"}
           </Button>
+          <span className="sr-only" role="status" aria-live="polite">
+            {pending ? "Creating account" : ""}
+          </span>
         </form>
 
         <p className="mt-5 text-center text-[12.5px] leading-relaxed text-muted-foreground">

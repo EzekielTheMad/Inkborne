@@ -1,150 +1,122 @@
 import "server-only";
 
+import { z } from "zod";
+
 import type { createClient } from "@/lib/supabase/server";
-import { parseContentDefinitions } from "@/lib/supabase/content-definitions-parser";
+import type { CharacterSpell } from "@/lib/types/spells";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
-
-export interface GrantedSpell {
-  spell_slug: string;
-  class_slug: string;
-}
 
 export interface SpellSyncResult {
   inserted: number;
   deleted: number;
-  missingSpellSlugs: string[];
+  activeGrants: ActiveSpellGrant[];
 }
 
-interface ExistingFeatureSpell {
-  id: string;
+export interface ActiveSpellGrant {
+  content_id: string;
+  content_version: number;
   class_slug: string;
-  content_id: string | null;
 }
+
+const activeSpellGrantSchema = z.object({
+  content_id: z.string().uuid(),
+  content_version: z.number().int().positive(),
+  class_slug: z.string().min(1),
+});
+
+const spellSyncResultSchema = z
+  .array(
+    z.object({
+      inserted: z.number().int().nonnegative(),
+      deleted: z.number().int().nonnegative(),
+      active_grants: z.array(activeSpellGrantSchema),
+    }),
+  )
+  .length(1);
 
 function queryError(operation: string, error: { message?: string }): Error {
   return new Error(
-    `[syncAlwaysPreparedSpells] ${operation} failed: ${error.message ?? "unknown database error"}`,
+    `[${operation}] failed: ${error.message ?? "unknown database error"}`,
   );
 }
 
 /**
- * Reconciles feature-granted spells for a character using the authenticated
- * server client. Only character owners should call this mutation.
+ * Atomically reconciles feature-granted spell rows from the immutable grant
+ * manifest captured when class/subclass controllers were pinned. The RPC
+ * derives active levels from the stored character choices and never consults
+ * current content definitions.
  */
 export async function syncAlwaysPreparedSpells(
   supabase: ServerSupabaseClient,
-  params: {
-    characterId: string;
-    systemId: string;
-    granted: GrantedSpell[];
-  },
+  params: { characterId: string },
 ): Promise<SpellSyncResult> {
-  const { characterId, systemId, granted } = params;
+  const { data, error } = await supabase.rpc("sync_character_spell_grants", {
+    target_character_id: params.characterId,
+  });
 
-  const { data: existingRows, error: existingError } = await supabase
-    .from("character_spells")
-    .select("id, class_slug, content_id")
-    .eq("character_id", characterId)
-    .eq("source", "feature");
-
-  if (existingError) throw queryError("loading existing feature spells", existingError);
-
-  const existing = (existingRows ?? []) as ExistingFeatureSpell[];
-  const slugs = Array.from(new Set(granted.map((entry) => entry.spell_slug)));
-
-  let spellRows: Array<{ id: string; slug: string; name: string }> = [];
-  if (slugs.length > 0) {
-    const { data, error } = await supabase
-      .from("content_definitions")
-      .select(
-        "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
-      )
-      .eq("system_id", systemId)
-      .eq("content_type", "spell")
-      .eq("scope", "platform")
-      .in("slug", slugs);
-
-    if (error) throw queryError("loading granted spell definitions", error);
-    const parsed = parseContentDefinitions(data ?? []);
-    if (parsed.length !== (data ?? []).length) {
-      throw new Error(
-        "[syncAlwaysPreparedSpells] refusing to reconcile feature spells because a definition failed validation",
-      );
-    }
-    spellRows = parsed.map(({ id, slug, name }) => ({ id, slug, name }));
+  if (error) {
+    throw queryError("syncAlwaysPreparedSpells", error);
   }
 
-  const definitionBySlug = new Map(spellRows.map((row) => [row.slug, row]));
-  const missingSpellSlugs = slugs.filter((slug) => !definitionBySlug.has(slug));
-  const existingKeys = new Set<string>();
-  const duplicateOrInvalidIds = new Set<string>();
-
-  for (const row of existing) {
-    if (!row.content_id) {
-      duplicateOrInvalidIds.add(row.id);
-      continue;
-    }
-    const key = `${row.content_id}:${row.class_slug}`;
-    if (existingKeys.has(key)) duplicateOrInvalidIds.add(row.id);
-    else existingKeys.add(key);
-  }
-
-  const desiredKeys = new Set<string>();
-  const toInsert: Array<{
-    character_id: string;
-    content_id: string;
-    name: string;
-    class_slug: string;
-    is_prepared: boolean;
-    always_prepared: boolean;
-    source: "feature";
-  }> = [];
-
-  for (const entry of granted) {
-    const definition = definitionBySlug.get(entry.spell_slug);
-    if (!definition) continue;
-
-    const key = `${definition.id}:${entry.class_slug}`;
-    if (desiredKeys.has(key)) continue;
-    desiredKeys.add(key);
-
-    if (!existingKeys.has(key)) {
-      toInsert.push({
-        character_id: characterId,
-        content_id: definition.id,
-        name: definition.name,
-        class_slug: entry.class_slug,
-        is_prepared: true,
-        always_prepared: true,
-        source: "feature",
-      });
-    }
-  }
-
-  if (toInsert.length > 0) {
-    const { error } = await supabase.from("character_spells").insert(toInsert);
-    if (error) throw queryError("inserting feature spells", error);
-  }
-
-  const staleIds = new Set(duplicateOrInvalidIds);
-  for (const row of existing) {
-    if (!row.content_id) continue;
-    const key = `${row.content_id}:${row.class_slug}`;
-    if (!desiredKeys.has(key)) staleIds.add(row.id);
-  }
-
-  if (staleIds.size > 0) {
-    const { error } = await supabase
-      .from("character_spells")
-      .delete()
-      .in("id", Array.from(staleIds));
-    if (error) throw queryError("deleting stale feature spells", error);
+  const parsed = spellSyncResultSchema.safeParse(data);
+  if (!parsed.success) {
+    throw new Error(
+      "[syncAlwaysPreparedSpells] refusing an invalid spell-grant reconciliation result",
+    );
   }
 
   return {
-    inserted: toInsert.length,
-    deleted: staleIds.size,
-    missingSpellSlugs,
+    inserted: parsed.data[0].inserted,
+    deleted: parsed.data[0].deleted,
+    activeGrants: parsed.data[0].active_grants,
   };
+}
+
+/** Read the same active manifest used by owner reconciliation without writing. */
+export async function getActiveSpellGrants(
+  supabase: ServerSupabaseClient,
+  params: { characterId: string },
+): Promise<ActiveSpellGrant[]> {
+  const { data, error } = await supabase.rpc(
+    "get_active_character_spell_grants",
+    { target_character_id: params.characterId },
+  );
+
+  if (error) {
+    throw queryError("getActiveSpellGrants", error);
+  }
+
+  const parsed = z.array(activeSpellGrantSchema).safeParse(data);
+  if (!parsed.success) {
+    throw new Error(
+      "[getActiveSpellGrants] refusing an invalid active spell-grant result",
+    );
+  }
+
+  return parsed.data;
+}
+
+/**
+ * Apply always-prepared state without overwriting acquisition provenance.
+ * The existing character_spells uniqueness rule is logical (content + class),
+ * so an explicitly selected version intentionally takes display precedence
+ * over a differently-versioned pinned grant. The pinned grant supplies only
+ * temporary preparation state and becomes the physical spell identity if the
+ * selected acquisition is later removed while the grant remains active.
+ */
+export function applyActiveSpellGrantOverlays(
+  spells: CharacterSpell[],
+  activeGrants: ActiveSpellGrant[],
+): CharacterSpell[] {
+  const activeKeys = new Set(
+    activeGrants.map((grant) => `${grant.content_id}:${grant.class_slug}`),
+  );
+
+  return spells.map((spell) =>
+    spell.content_id &&
+    activeKeys.has(`${spell.content_id}:${spell.class_slug}`)
+      ? { ...spell, is_prepared: true, always_prepared: true }
+      : spell,
+  );
 }
