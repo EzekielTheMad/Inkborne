@@ -22,14 +22,25 @@ interface RichTextEditorProps {
   editable?: boolean;
 }
 
-function createMentionSuggestion(campaignId?: string) {
+export function buildMentionSearchUrl(
+  campaignId: string,
+  kind: "character" | "page",
+  query: string,
+): string {
+  return `/api/campaigns/${encodeURIComponent(campaignId)}/mentions?kind=${kind}&q=${encodeURIComponent(query)}`;
+}
+
+function createMentionSuggestion(
+  campaignId: string | undefined,
+  char: "@" | "#",
+  kind: "character" | "page",
+) {
   return {
+    char,
     items: async ({ query }: { query: string }): Promise<MentionItem[]> => {
       if (!campaignId || query.length < 1) return [];
       try {
-        const res = await fetch(
-          `/api/characters/search?q=${encodeURIComponent(query)}&campaignId=${encodeURIComponent(campaignId)}`,
-        );
+        const res = await fetch(buildMentionSearchUrl(campaignId, kind, query));
         if (!res.ok) return [];
         return (await res.json()) as MentionItem[];
       } catch {
@@ -151,7 +162,25 @@ export function RichTextEditor({
         HTMLAttributes: {
           class: "mention",
         },
-        suggestion: createMentionSuggestion(campaignId),
+        suggestions: [
+          createMentionSuggestion(campaignId, "@", "character"),
+          createMentionSuggestion(campaignId, "#", "page"),
+        ],
+        renderText: ({ node, suggestion }) =>
+          `${suggestion?.char ?? "@"}${node.attrs.label ?? node.attrs.id}`,
+        renderHTML: ({ node, suggestion }) => {
+          const char = suggestion?.char ?? "@";
+          const label = node.attrs.label ?? node.attrs.id;
+          const href =
+            char === "#" && campaignId
+              ? `/campaigns/${campaignId}/pages/${node.attrs.id}`
+              : char === "@"
+                ? `/characters/${node.attrs.id}`
+                : null;
+          return href
+            ? ["a", { class: "mention", href }, `${char}${label}`]
+            : ["span", { class: "mention" }, `${char}${label}`];
+        },
       }),
     ],
     immediatelyRender: false,

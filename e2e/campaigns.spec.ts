@@ -6,6 +6,7 @@ import {
   E2E_CHARACTER_PREFIX,
   getCampaignFixture,
   seedCampaignCharacter,
+  setCampaignPageContent,
 } from "./helpers/supabase";
 
 const BASE_URL = "http://localhost:3000";
@@ -14,6 +15,7 @@ const campaignName = `${E2E_CAMPAIGN_PREFIX} ${runId}`;
 const playerCharacterName = `${E2E_CHARACTER_PREFIX} Campaign Player ${runId}`;
 const dmSecretTitle = `DM Secret ${runId}`;
 const sharedPageTitle = `Shared Lore ${runId}`;
+const sharedSourceTitle = `Shared Source ${runId}`;
 const playerSecretTitle = `Player Secret ${runId}`;
 
 let campaignId: string | null = null;
@@ -89,6 +91,32 @@ test.describe("campaign DM/player UAT", () => {
 
     const dmSecretId = await createCampaignPage(dmPage, campaignId!, dmSecretTitle, "dm_only");
     const sharedPageId = await createCampaignPage(dmPage, campaignId!, sharedPageTitle, "campaign");
+    const sharedSourceId = await createCampaignPage(
+      dmPage,
+      campaignId!,
+      sharedSourceTitle,
+      "campaign",
+    );
+    const pageMentionDocument = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "mention",
+              attrs: {
+                id: sharedPageId,
+                label: sharedPageTitle,
+                mentionSuggestionChar: "#",
+              },
+            },
+          ],
+        },
+      ],
+    };
+    await setCampaignPageContent(dmSecretId, pageMentionDocument);
+    await setCampaignPageContent(sharedSourceId, pageMentionDocument);
 
     playerCharacterId = await seedCampaignCharacter({
       name: playerCharacterName,
@@ -120,10 +148,17 @@ test.describe("campaign DM/player UAT", () => {
       await player.page.goto(`/campaigns/${campaignId}/pages/${sharedPageId}`);
       await expect(player.page.getByRole("heading", { name: sharedPageTitle })).toBeVisible();
       await expect(player.page.getByLabel("Title")).toHaveCount(0);
+      await expect(player.page.getByRole("heading", { name: "Linked from" })).toBeVisible();
+      await expect(player.page.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
+      await expect(player.page.getByRole("link", { name: dmSecretTitle })).toHaveCount(0);
 
       await dmPage.goto(`/campaigns/${campaignId}`);
       await expect(dmPage.getByRole("link", { name: playerSecretTitle })).toBeVisible();
       await expect(dmPage.getByRole("link", { name: playerCharacterName })).toBeVisible();
+
+      await dmPage.goto(`/campaigns/${campaignId}/pages/${sharedPageId}`);
+      await expect(dmPage.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
+      await expect(dmPage.getByRole("link", { name: dmSecretTitle })).toBeVisible();
 
       await dmPage.goto(`/campaigns/${campaignId}/pages/${playerSecretId}`);
       await expect(dmPage.getByLabel("Title")).toHaveValue(playerSecretTitle);

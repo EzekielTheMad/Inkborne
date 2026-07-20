@@ -7,6 +7,7 @@ import { RichTextRenderer } from "@/components/editor/rich-text-renderer";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeRichTextContent } from "@/lib/editor/content";
+import { findCampaignPageBacklinks } from "@/lib/campaigns/backlinks";
 
 interface CampaignWikiPageProps {
   params: Promise<{ id: string; pageId: string }>;
@@ -20,7 +21,7 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: campaign }, { data: page }] = await Promise.all([
+  const [{ data: campaign }, { data: page }, { data: linkCandidates }] = await Promise.all([
     supabase.from("campaigns").select("id, name, owner_id").eq("id", id).single(),
     supabase
       .from("campaign_pages")
@@ -28,12 +29,18 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
       .eq("id", pageId)
       .eq("campaign_id", id)
       .single(),
+    supabase
+      .from("campaign_pages")
+      .select("id, title, content")
+      .eq("campaign_id", id)
+      .order("title"),
   ]);
   if (!campaign || !page) notFound();
 
   const canEdit = campaign.owner_id === user.id || page.created_by === user.id;
   const content = normalizeRichTextContent(page.content) as JSONContent;
   const visibility = page.visibility === "dm_only" ? "dm_only" : "campaign";
+  const backlinks = findCampaignPageBacklinks(linkCandidates ?? [], page.id);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -75,6 +82,25 @@ export default async function CampaignWikiPage({ params }: CampaignWikiPageProps
             <p className="text-sm italic text-muted-foreground">This page is still blank.</p>
           )}
         </article>
+      )}
+
+      {backlinks.length > 0 && (
+        <aside className="j-card-paper p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+            Linked from
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {backlinks.map((backlink) => (
+              <Link
+                key={backlink.id}
+                href={`/campaigns/${campaign.id}/pages/${backlink.id}`}
+                className="rounded-full border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:border-accent/50 hover:text-accent"
+              >
+                {backlink.title}
+              </Link>
+            ))}
+          </div>
+        </aside>
       )}
     </div>
   );

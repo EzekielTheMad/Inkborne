@@ -116,6 +116,17 @@ export async function seedCampaignCharacter(input: {
   return data.id;
 }
 
+export async function setCampaignPageContent(pageId: string, content: unknown): Promise<void> {
+  const service = createServiceClient();
+  const { error } = await service
+    .from("campaign_pages")
+    .update({ content })
+    .eq("id", pageId);
+  if (error) {
+    throw new Error(`Could not seed campaign page content: ${error.message}`);
+  }
+}
+
 export async function deleteCampaignsById(ids: string[]): Promise<void> {
   if (ids.length === 0) return;
   const service = createServiceClient();

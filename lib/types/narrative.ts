@@ -42,7 +42,7 @@ export interface PersonalityFields {
 export interface MentionItem {
   id: string;
   label: string;
-  entityType: "character" | "npc";
+  entityType: "character" | "npc" | "page";
 }
 
 export interface Npc {
