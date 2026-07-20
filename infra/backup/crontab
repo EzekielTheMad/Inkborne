@@ -5,4 +5,8 @@
 # and verifies hashes; cheap insurance against silent bit-rot.
 0 7 * * 0 /app/scripts/run-check.sh >> /var/log/inkborne-backup.log 2>&1
 
+# Rotate the persistent file log after scheduled maintenance. `copytruncate`
+# keeps both cron and the entrypoint's `tail -F` attached safely.
+15 7 * * * /usr/sbin/logrotate --state /var/lib/logrotate/inkborne-backup.status /etc/logrotate.d/inkborne-backup >> /var/log/inkborne-backup.log 2>&1
+
 # Trailing newline required for POSIX cron.

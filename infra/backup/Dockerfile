@@ -1,7 +1,7 @@
 # Inkborne backup runner.
 #
-# Base on the official postgres:15 image so pg_dump matches Supabase's
-# Postgres major version. Add restic + rclone + cron + tini on top.
+# Base on the official Postgres 17 image so pg_dump matches the hosted
+# Inkborne database major version. Add restic + rclone + cron + tini on top.
 
 FROM postgres:17-bookworm
 
@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         restic \
         rclone \
         cron \
+        logrotate \
+        util-linux \
         curl \
         ca-certificates \
         jq \
@@ -21,8 +23,12 @@ WORKDIR /app
 
 COPY scripts/ /app/scripts/
 COPY crontab /app/crontab
+COPY logrotate.conf /etc/logrotate.d/inkborne-backup
 
 RUN chmod +x /app/scripts/*.sh \
+    && chmod 644 /etc/logrotate.d/inkborne-backup \
+    && mkdir -p /backup-staging /run/lock \
+    && chmod 700 /backup-staging \
     && touch /var/log/inkborne-backup.log \
     && chmod 644 /var/log/inkborne-backup.log
 
