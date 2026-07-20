@@ -16,6 +16,8 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
   const [passwordEnabled, setPasswordEnabled] = useState(hasPasswordIdentity);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [nonce, setNonce] = useState("");
+  const [requiresReauthentication, setRequiresReauthentication] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -28,12 +30,30 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
     setMessage(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+      ...(requiresReauthentication ? { nonce: nonce.trim() } : {}),
+    });
 
     if (error) {
-      setMessage({ type: "error", text: error.message });
+      if (error.code === "reauthentication_needed") {
+        const { error: reauthenticationError } = await supabase.auth.reauthenticate();
+        if (reauthenticationError) {
+          setMessage({ type: "error", text: reauthenticationError.message });
+        } else {
+          setRequiresReauthentication(true);
+          setMessage({
+            type: "success",
+            text: `We sent a security code to ${email}. Enter it below to finish changing your password.`,
+          });
+        }
+      } else {
+        setMessage({ type: "error", text: error.message });
+      }
     } else {
       setPasswordEnabled(true);
+      setRequiresReauthentication(false);
+      setNonce("");
       setMessage({
         type: "success",
         text: passwordEnabled
@@ -68,6 +88,21 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
           />
         </div>
 
+        {requiresReauthentication && (
+          <div className="space-y-2">
+            <Label htmlFor="passwordNonce">Security Code</Label>
+            <Input
+              id="passwordNonce"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={nonce}
+              onChange={(event) => setNonce(event.target.value)}
+              placeholder="Enter the code from your email"
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm Password</Label>
           <Input
@@ -88,11 +123,16 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
           </p>
         )}
 
-        <Button onClick={handleChangePassword} disabled={saving || !isValid}>
+        <Button
+          onClick={handleChangePassword}
+          disabled={saving || !isValid || (requiresReauthentication && !nonce.trim())}
+        >
           {saving
             ? passwordEnabled
               ? "Updating..."
               : "Adding login..."
+            : requiresReauthentication
+              ? "Verify and update password"
             : passwordEnabled
               ? "Update Password"
               : "Add email login"}

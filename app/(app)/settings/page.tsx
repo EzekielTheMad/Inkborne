@@ -6,6 +6,7 @@ import { PasswordSection } from "@/components/settings/password-section";
 import { ConnectedAccountsSection } from "@/components/settings/connected-accounts-section";
 import { AppearanceSection } from "@/components/settings/appearance-section";
 import { DangerZoneSection } from "@/components/settings/danger-zone-section";
+import { isLinkableIdentityProvider } from "@/lib/auth/identity-providers";
 
 export default async function SettingsPage({
   searchParams,
@@ -13,8 +14,8 @@ export default async function SettingsPage({
   searchParams: Promise<{ linked?: string | string[]; linkError?: string | string[] }>;
 }) {
   const query = await searchParams;
-  const linkedProvider = typeof query.linked === "string" ? query.linked : null;
-  const linkErrorProvider = typeof query.linkError === "string" ? query.linkError : null;
+  const requestedLinkedProvider = typeof query.linked === "string" ? query.linked : null;
+  const requestedLinkErrorProvider = typeof query.linkError === "string" ? query.linkError : null;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -30,11 +31,23 @@ export default async function SettingsPage({
     console.error("[SettingsPage] Error fetching profile:", profileError.message, profileError.details, profileError.hint);
   }
 
-  const hasPasswordIdentity = user.identities?.some(
-    (identity) => identity.provider === "email"
-  ) ?? false;
+  const { data: identitiesData, error: identitiesError } = await supabase.auth.getUserIdentities();
+  const currentIdentities = identitiesError ? (user.identities ?? []) : identitiesData.identities;
+  const linkedProvider = isLinkableIdentityProvider(requestedLinkedProvider)
+    && currentIdentities.some((identity) => identity.provider === requestedLinkedProvider)
+    ? requestedLinkedProvider
+    : null;
+  const linkErrorProvider = isLinkableIdentityProvider(requestedLinkErrorProvider)
+    ? requestedLinkErrorProvider
+    : isLinkableIdentityProvider(requestedLinkedProvider) && !linkedProvider
+      ? requestedLinkedProvider
+      : null;
 
-  const identities = (user.identities ?? []).map((identity) => ({
+  const hasPasswordIdentity = currentIdentities.some(
+    (identity) => identity.provider === "email"
+  );
+
+  const identities = currentIdentities.map((identity) => ({
     id: identity.id,
     identityId: identity.identity_id,
     userId: identity.user_id,

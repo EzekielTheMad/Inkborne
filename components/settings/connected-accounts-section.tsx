@@ -5,6 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
+import {
+  buildIdentityCallbackUrl,
+  LINKABLE_IDENTITY_PROVIDERS,
+  type LinkableIdentityProvider,
+} from "@/lib/auth/identity-providers";
 
 interface Identity {
   id: string;
@@ -20,16 +25,18 @@ interface ConnectedAccountsSectionProps {
   discordEnabled?: boolean;
 }
 
-const PROVIDERS = [
-  { key: "discord", label: "Discord" },
-  { key: "google", label: "Google" },
-] as const;
-
-export function buildIdentityCallbackUrl(origin: string, provider: "discord" | "google") {
-  const callbackUrl = new URL("/auth/callback", origin);
-  callbackUrl.searchParams.set("next", "/settings");
-  callbackUrl.searchParams.set("linked", provider);
-  return callbackUrl.toString();
+function toIdentity(identity: {
+  id: string;
+  identity_id: string;
+  user_id: string;
+  provider: string;
+}): Identity {
+  return {
+    id: identity.id,
+    identityId: identity.identity_id,
+    userId: identity.user_id,
+    provider: identity.provider,
+  };
 }
 
 export function ConnectedAccountsSection({
@@ -40,6 +47,7 @@ export function ConnectedAccountsSection({
 }: ConnectedAccountsSectionProps) {
   const [identities, setIdentities] = useState(initialIdentities);
   const [loading, setLoading] = useState<string | null>(null);
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     linkedProvider
       ? { type: "success", text: `${linkedProvider} connected to this Inkborne profile` }
@@ -52,14 +60,26 @@ export function ConnectedAccountsSection({
     return identities.some((i) => i.provider === provider);
   }
 
-  function getIdentity(provider: string) {
-    return identities.find((i) => i.provider === provider);
-  }
-
-  async function handleConnect(provider: "discord" | "google") {
+  async function handleConnect(provider: LinkableIdentityProvider) {
     setLoading(provider);
     setMessage(null);
     const supabase = createClient();
+
+    const { data: currentData, error: currentError } = await supabase.auth.getUserIdentities();
+    if (currentError) {
+      setMessage({ type: "error", text: "We couldn't verify your current login methods. Please try again." });
+      setLoading(null);
+      return;
+    }
+
+    const currentIdentities = currentData.identities.map(toIdentity);
+    setIdentities(currentIdentities);
+    if (currentIdentities.some((identity) => identity.provider === provider)) {
+      setMessage({ type: "success", text: `${provider} is already connected` });
+      setLoading(null);
+      return;
+    }
+
     const { data, error } = await supabase.auth.linkIdentity({
       provider,
       options: {
@@ -78,31 +98,48 @@ export function ConnectedAccountsSection({
     }
   }
 
-  async function handleDisconnect(provider: string) {
-    const identity = getIdentity(provider);
-    if (!identity) return;
-
-    // Prevent disconnecting the last identity
-    if (identities.length <= 1) {
-      setMessage({ type: "error", text: "Cannot disconnect your only login method" });
-      return;
-    }
-
+  async function handleDisconnect(provider: LinkableIdentityProvider) {
     setLoading(provider);
     setMessage(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.unlinkIdentity({
-      id: identity.id,
-      identity_id: identity.identityId,
-      user_id: identity.userId,
-      provider: identity.provider,
-    });
+
+    const { data: currentData, error: currentError } = await supabase.auth.getUserIdentities();
+    if (currentError) {
+      setMessage({ type: "error", text: "We couldn't verify your current login methods. Please try again." });
+      setLoading(null);
+      return;
+    }
+
+    const currentIdentities = currentData.identities.map(toIdentity);
+    setIdentities(currentIdentities);
+    const identity = currentData.identities.find((item) => item.provider === provider);
+    if (!identity) {
+      setMessage({ type: "error", text: `${provider} is no longer connected` });
+      setConfirmingDisconnect(null);
+      setLoading(null);
+      return;
+    }
+
+    if (currentIdentities.length <= 1) {
+      setMessage({ type: "error", text: "Cannot disconnect your only login method" });
+      setConfirmingDisconnect(null);
+      setLoading(null);
+      return;
+    }
+
+    const { error } = await supabase.auth.unlinkIdentity(identity);
     if (error) {
       setMessage({ type: "error", text: error.message });
     } else {
-      setIdentities((prev) => prev.filter((i) => i.id !== identity.id));
+      const { data: refreshedData, error: refreshedError } = await supabase.auth.getUserIdentities();
+      setIdentities(
+        refreshedError
+          ? currentIdentities.filter((item) => item.id !== identity.id)
+          : refreshedData.identities.map(toIdentity),
+      );
       setMessage({ type: "success", text: `${provider} disconnected` });
     }
+    setConfirmingDisconnect(null);
     setLoading(null);
   }
 
@@ -116,43 +153,72 @@ export function ConnectedAccountsSection({
           Connect additional sign-in methods while logged in. Each one opens this same profile,
           characters, and campaigns.
         </p>
-        {PROVIDERS.map((provider) => {
+        {LINKABLE_IDENTITY_PROVIDERS.map((provider) => {
           const connected = isConnected(provider.key);
-          const available = provider.key !== "discord" || discordEnabled;
+          const available = !provider.requiresDiscordFlag || discordEnabled;
+          const confirming = confirmingDisconnect === provider.key;
           return (
-            <div key={provider.key} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-foreground font-medium">{provider.label}</span>
+            <div key={provider.key} className="space-y-3 rounded-md border border-border/60 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-foreground font-medium">{provider.label}</span>
+                  {connected ? (
+                    <Badge variant="secondary">Connected</Badge>
+                  ) : !available ? (
+                    <Badge variant="outline">Setup required</Badge>
+                  ) : (
+                    <Badge variant="outline">Not connected</Badge>
+                  )}
+                </div>
                 {connected ? (
-                  <Badge variant="secondary">Connected</Badge>
-                ) : !available ? (
-                  <Badge variant="outline">Setup required</Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmingDisconnect(provider.key)}
+                    disabled={loading === provider.key || confirming}
+                  >
+                    Disconnect
+                  </Button>
                 ) : (
-                  <Badge variant="outline">Not connected</Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleConnect(provider.key)}
+                    disabled={loading === provider.key || !available}
+                  >
+                    {!available
+                      ? "Unavailable"
+                      : loading === provider.key
+                        ? "Connecting..."
+                        : "Connect"}
+                  </Button>
                 )}
               </div>
-              {connected ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDisconnect(provider.key)}
-                  disabled={loading === provider.key}
-                >
-                  {loading === provider.key ? "Disconnecting..." : "Disconnect"}
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleConnect(provider.key)}
-                  disabled={loading === provider.key || !available}
-                >
-                  {!available
-                    ? "Unavailable"
-                    : loading === provider.key
-                      ? "Connecting..."
-                      : "Connect"}
-                </Button>
+              {confirming && (
+                <div className="space-y-3" role="group" aria-label={`Confirm disconnect ${provider.label}`}>
+                  <p className="text-sm text-muted-foreground">
+                    You will no longer be able to sign in with {provider.label}. Make sure another
+                    login method works before continuing.
+                  </p>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirmingDisconnect(null)}
+                      disabled={loading === provider.key}
+                    >
+                      Keep connected
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDisconnect(provider.key)}
+                      disabled={loading === provider.key}
+                    >
+                      {loading === provider.key ? "Disconnecting..." : "Confirm disconnect"}
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           );

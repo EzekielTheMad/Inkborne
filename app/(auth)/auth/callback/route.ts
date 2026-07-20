@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { isLinkableIdentityProvider } from "@/lib/auth/identity-providers";
 import { NextResponse } from "next/server";
-
-const LINK_PROVIDERS = new Set(["discord", "google"]);
 
 function safePath(value: string | null, fallback: string): string {
   return value?.startsWith("/") && !value.startsWith("//") ? value : fallback;
@@ -21,15 +20,21 @@ export async function GET(request: Request) {
     ? "/auth/reset-password"
     : safePath(searchParams.get("next"), "/dashboard");
   const requestedProvider = searchParams.get("linked");
-  const linkedProvider = requestedProvider && LINK_PROVIDERS.has(requestedProvider)
-    ? requestedProvider
-    : null;
+  const linkedProvider = isLinkableIdentityProvider(requestedProvider) ? requestedProvider : null;
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const destination = linkedProvider ? addQuery(next, "linked", linkedProvider) : next;
+      if (linkedProvider) {
+        const { data, error: identitiesError } = await supabase.auth.getUserIdentities();
+        const linked = !identitiesError
+          && data.identities.some((identity) => identity.provider === linkedProvider);
+        const destination = addQuery(next, linked ? "linked" : "linkError", linkedProvider);
+        return NextResponse.redirect(`${origin}${destination}`);
+      }
+
+      const destination = next;
       return NextResponse.redirect(`${origin}${destination}`);
     }
   }

@@ -7,9 +7,9 @@ vi.mock("@/lib/supabase/client", () => ({
 
 import { createClient } from "@/lib/supabase/client";
 import {
-  buildIdentityCallbackUrl,
   ConnectedAccountsSection,
 } from "@/components/settings/connected-accounts-section";
+import { buildIdentityCallbackUrl } from "@/lib/auth/identity-providers";
 
 const mockedCreateClient = vi.mocked(createClient);
 const emailIdentity = {
@@ -27,6 +27,7 @@ const googleIdentity = {
 
 function mockAuth() {
   const auth = {
+    getUserIdentities: vi.fn(),
     linkIdentity: vi.fn(),
     unlinkIdentity: vi.fn(),
   };
@@ -56,6 +57,12 @@ describe("ConnectedAccountsSection", () => {
 
   it("starts OAuth linking with the settings callback", async () => {
     const auth = mockAuth();
+    auth.getUserIdentities.mockResolvedValue({
+      data: { identities: [
+        { id: "email-id", identity_id: "email-identity-id", user_id: "user-id", provider: "email" },
+      ] },
+      error: null,
+    });
     auth.linkIdentity.mockResolvedValue({
       data: { provider: "google", url: null },
       error: { message: "Manual linking is disabled" },
@@ -78,10 +85,25 @@ describe("ConnectedAccountsSection", () => {
 
   it("unlinks with Supabase's identity_id field", async () => {
     const auth = mockAuth();
+    auth.getUserIdentities
+      .mockResolvedValueOnce({
+        data: { identities: [
+          { id: "email-id", identity_id: "email-identity-id", user_id: "user-id", provider: "email" },
+          { id: "google-id", identity_id: "google-identity-id", user_id: "user-id", provider: "google" },
+        ] },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { identities: [
+          { id: "email-id", identity_id: "email-identity-id", user_id: "user-id", provider: "email" },
+        ] },
+        error: null,
+      });
     auth.unlinkIdentity.mockResolvedValue({ data: {}, error: null });
 
     render(<ConnectedAccountsSection identities={[emailIdentity, googleIdentity]} />);
     fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
 
     await waitFor(() => {
       expect(auth.unlinkIdentity).toHaveBeenCalledWith({
@@ -92,5 +114,22 @@ describe("ConnectedAccountsSection", () => {
       });
     });
     expect(screen.getByText("google disconnected")).toBeVisible();
+  });
+
+  it("rechecks current identities and blocks disconnecting the last login method", async () => {
+    const auth = mockAuth();
+    auth.getUserIdentities.mockResolvedValue({
+      data: { identities: [
+        { id: "google-id", identity_id: "google-identity-id", user_id: "user-id", provider: "google" },
+      ] },
+      error: null,
+    });
+
+    render(<ConnectedAccountsSection identities={[emailIdentity, googleIdentity]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+
+    expect(await screen.findByText("Cannot disconnect your only login method")).toBeVisible();
+    expect(auth.unlinkIdentity).not.toHaveBeenCalled();
   });
 });

@@ -9,10 +9,17 @@ import { GET } from "@/app/(auth)/auth/callback/route";
 
 const mockedCreateClient = vi.mocked(createClient);
 
-function mockExchange(error: { message: string } | null) {
+function mockExchange(
+  error: { message: string } | null,
+  identities: Array<{ provider: string }> = [],
+) {
   const supabase = {
     auth: {
       exchangeCodeForSession: vi.fn().mockResolvedValue({ error }),
+      getUserIdentities: vi.fn().mockResolvedValue({
+        data: { identities },
+        error: null,
+      }),
     },
   };
   mockedCreateClient.mockResolvedValue(supabase as never);
@@ -51,9 +58,15 @@ describe("auth callback GET", () => {
   });
 
   it("returns linked OAuth identities to settings with a success marker", async () => {
-    mockExchange(null);
+    mockExchange(null, [{ provider: "google" }]);
     const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
     expect(locationOf(res)).toBe("http://localhost:3000/settings?linked=google");
+  });
+
+  it("does not report success unless the requested identity is attached", async () => {
+    mockExchange(null, [{ provider: "email" }]);
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=google");
   });
 
   it("returns failed identity links to settings with an error marker", async () => {

@@ -43,4 +43,45 @@ describe("PasswordSection", () => {
     ).toBeVisible();
     expect(screen.getByRole("button", { name: "Update Password" })).toBeVisible();
   });
+
+  it("supports Supabase secure password change reauthentication", async () => {
+    const updateUser = vi.fn()
+      .mockResolvedValueOnce({
+        error: { code: "reauthentication_needed", message: "Reauthentication needed" },
+      })
+      .mockResolvedValueOnce({ error: null });
+    const reauthenticate = vi.fn().mockResolvedValue({ error: null });
+    mockedCreateClient.mockReturnValue({ auth: { updateUser, reauthenticate } } as never);
+
+    render(
+      <PasswordSection
+        hasPasswordIdentity={true}
+        email="adventurer@example.com"
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("New Password"), {
+      target: { value: "A-valid-password-123" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm Password"), {
+      target: { value: "A-valid-password-123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Update Password" }));
+
+    expect(await screen.findByLabelText("Security Code")).toBeVisible();
+    expect(reauthenticate).toHaveBeenCalledOnce();
+
+    fireEvent.change(screen.getByLabelText("Security Code"), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Verify and update password" }));
+
+    await waitFor(() => {
+      expect(updateUser).toHaveBeenLastCalledWith({
+        password: "A-valid-password-123",
+        nonce: "123456",
+      });
+    });
+    expect(screen.getByText("Password updated successfully")).toBeVisible();
+  });
 });
