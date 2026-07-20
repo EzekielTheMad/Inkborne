@@ -186,6 +186,21 @@ test.describe("campaign DM/player UAT", () => {
       await expect(player.page.getByRole("heading", { name: "Linked from campaign" })).toBeVisible();
       await expect(player.page.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
 
+      const timelineTitle = `The Crossing ${runId}`;
+      await player.page.getByRole("button", { name: "Add event" }).click();
+      await player.page.getByLabel("Event title").fill(timelineTitle);
+      await player.page.getByLabel("When").fill("Third winter");
+      await player.page.getByLabel("Visible to").selectOption("dm_only");
+      await player.page.getByRole("button", { name: "Add event" }).click();
+      await expect(player.page.getByText(timelineTitle, { exact: true })).toBeVisible();
+
+      const relationshipName = `Mira ${runId}`;
+      await player.page.getByRole("button", { name: "Add person" }).click();
+      await player.page.getByLabel("Name", { exact: true }).fill(relationshipName);
+      await player.page.getByLabel("Relationship").fill("Mentor");
+      await player.page.getByRole("button", { name: "Add person" }).click();
+      await expect(player.page.getByText(relationshipName, { exact: true })).toBeVisible();
+
       await dmPage.goto(`/campaigns/${campaignId}`);
       await expect(dmPage.getByRole("link", { name: playerSecretTitle })).toBeVisible();
       await expect(dmPage.getByRole("link", { name: playerCharacterName })).toBeVisible();
@@ -208,6 +223,13 @@ test.describe("campaign DM/player UAT", () => {
       await expect(dmPage.getByRole("button", { name: "Edit character" })).toHaveCount(0);
       await expect(dmPage.getByRole("button", { name: "Copy character" })).toHaveCount(0);
       await expect(dmPage.getByRole("button", { name: "Change character color" })).toHaveCount(0);
+      await dmPage.getByRole("tab", { name: "Narrative" }).click();
+      await expect(dmPage.getByText(timelineTitle, { exact: true })).toBeVisible();
+      await expect(dmPage.getByText(relationshipName, { exact: true })).toBeVisible();
+      await expect(dmPage.getByRole("button", { name: "Add event" })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: "Add person" })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: `Edit ${timelineTitle}` })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: `Edit ${relationshipName}` })).toHaveCount(0);
     } finally {
       await player.close();
     }

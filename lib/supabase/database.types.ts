@@ -477,6 +477,60 @@ export type Database = {
           },
         ]
       }
+      character_timeline_events: {
+        Row: {
+          character_id: string
+          created_at: string
+          created_by: string
+          date_label: string | null
+          description: Json
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          created_by: string
+          date_label?: string | null
+          description?: Json
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          created_by?: string
+          date_label?: string | null
+          description?: Json
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_timeline_events_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_timeline_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           archived: boolean

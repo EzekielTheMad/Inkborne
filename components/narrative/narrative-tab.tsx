@@ -29,6 +29,12 @@ import { FunTraitsForm } from "./edit/fun-traits-form";
 
 // Portrait
 import { CharacterPortrait } from "./character-portrait";
+import { TimelineSection } from "./timeline-section";
+import { RelationshipsSection } from "./relationships-section";
+import type {
+  CharacterRelationship,
+  CharacterTimelineEvent,
+} from "@/lib/types/narrative";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -41,6 +47,8 @@ interface NarrativeTabProps {
   isDm: boolean;
   onPortraitChange?: (url: string | null) => void;
   onCropChange?: (crop: { x: number; y: number; width: number; height: number }) => void;
+  timelineEvents: CharacterTimelineEvent[];
+  relationships: CharacterRelationship[];
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +62,8 @@ export function NarrativeTab({
   isDm,
   onPortraitChange: onPortraitChangeParent,
   onCropChange: onCropChangeParent,
+  timelineEvents,
+  relationships,
 }: NarrativeTabProps) {
   const editor = useNarrativeEditor({
     character,
@@ -295,6 +305,21 @@ export function NarrativeTab({
           )}
         </>
       )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <TimelineSection
+          characterId={character.id}
+          campaignId={campaignId}
+          events={timelineEvents}
+          isOwner={isOwner}
+        />
+        <RelationshipsSection
+          characterId={character.id}
+          campaignId={campaignId}
+          relationships={relationships}
+          isOwner={isOwner}
+        />
+      </div>
     </div>
   );
 }

@@ -14,12 +14,22 @@ import {
   usePortrait,
 } from "@/lib/character/character-context";
 import type { CampaignPageBacklink } from "@/lib/campaigns/backlinks";
+import type {
+  CharacterRelationship,
+  CharacterTimelineEvent,
+} from "@/lib/types/narrative";
 
 interface CharacterShellProps {
   campaignPageBacklinks: CampaignPageBacklink[];
+  timelineEvents: CharacterTimelineEvent[];
+  relationships: CharacterRelationship[];
 }
 
-export function CharacterShell({ campaignPageBacklinks }: CharacterShellProps) {
+export function CharacterShell({
+  campaignPageBacklinks,
+  timelineEvents,
+  relationships,
+}: CharacterShellProps) {
   const { character, hasSheet } = useCharacter();
   const { state, patchState } = useCharacterState();
   const { portrait } = usePortrait();
@@ -82,7 +92,11 @@ export function CharacterShell({ campaignPageBacklinks }: CharacterShellProps) {
         </TabsContent>
 
         <TabsContent value="narrative" className="flex-1 overflow-y-auto mt-0">
-          <NarrativePanel campaignPageBacklinks={campaignPageBacklinks} />
+          <NarrativePanel
+            campaignPageBacklinks={campaignPageBacklinks}
+            timelineEvents={timelineEvents}
+            relationships={relationships}
+          />
         </TabsContent>
       </Tabs>
 

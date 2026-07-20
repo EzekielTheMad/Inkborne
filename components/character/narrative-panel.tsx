@@ -4,12 +4,22 @@ import Link from "next/link";
 import { NarrativeTab } from "@/components/narrative/narrative-tab";
 import { useCharacter, usePortrait } from "@/lib/character/character-context";
 import type { CampaignPageBacklink } from "@/lib/campaigns/backlinks";
+import type {
+  CharacterRelationship,
+  CharacterTimelineEvent,
+} from "@/lib/types/narrative";
 
 interface NarrativePanelProps {
   campaignPageBacklinks: CampaignPageBacklink[];
+  timelineEvents: CharacterTimelineEvent[];
+  relationships: CharacterRelationship[];
 }
 
-export function NarrativePanel({ campaignPageBacklinks }: NarrativePanelProps) {
+export function NarrativePanel({
+  campaignPageBacklinks,
+  timelineEvents,
+  relationships,
+}: NarrativePanelProps) {
   const { character, isOwner, isDm } = useCharacter();
   const { setPortrait } = usePortrait();
 
@@ -22,6 +32,8 @@ export function NarrativePanel({ campaignPageBacklinks }: NarrativePanelProps) {
         isDm={isDm}
         onPortraitChange={(url) => setPortrait({ url: url ?? undefined })}
         onCropChange={(crop) => setPortrait({ crop })}
+        timelineEvents={timelineEvents}
+        relationships={relationships}
       />
       {character.campaign_id && campaignPageBacklinks.length > 0 && (
         <aside className="j-card-paper mt-6 p-5">

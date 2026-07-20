@@ -12,6 +12,12 @@ import { syncAlwaysPreparedSpells } from "@/lib/supabase/spells-server";
 import { reportServerError } from "@/lib/supabase/errors";
 import type { Effect } from "@/lib/types/effects";
 import { findCampaignPageCharacterBacklinks } from "@/lib/campaigns/backlinks";
+import { normalizeRichTextContent } from "@/lib/editor/content";
+import type { JSONContent } from "@tiptap/react";
+import type {
+  CharacterRelationship,
+  CharacterTimelineEvent,
+} from "@/lib/types/narrative";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -173,7 +179,12 @@ export default async function CharacterPage({ params }: PageProps) {
     });
   }
 
-  const [{ data: dmNotes }, { data: campaignLinkCandidates }] = await Promise.all([
+  const [
+    { data: dmNotes },
+    { data: campaignLinkCandidates },
+    { data: timelineRows },
+    { data: relationshipRows },
+  ] = await Promise.all([
     supabase
       .from("character_dm_notes")
       .select("content")
@@ -186,6 +197,13 @@ export default async function CharacterPage({ params }: PageProps) {
           .eq("campaign_id", character.campaign_id)
           .order("title")
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("character_timeline_events")
+      .select("*")
+      .eq("character_id", id)
+      .order("sort_order")
+      .order("created_at"),
+    supabase.from("npcs").select("*").eq("character_id", id).order("created_at"),
   ]);
   const characterForView = dmNotes
     ? {
@@ -201,6 +219,16 @@ export default async function CharacterPage({ params }: PageProps) {
     campaignLinkCandidates ?? [],
     character.id,
   );
+  const timelineEvents: CharacterTimelineEvent[] = (timelineRows ?? []).map((event) => ({
+    ...event,
+    description: normalizeRichTextContent(event.description) as JSONContent,
+    visibility: event.visibility === "campaign" ? "campaign" : "dm_only",
+  }));
+  const relationships: CharacterRelationship[] = (relationshipRows ?? []).map((relationship) => ({
+    ...relationship,
+    description: normalizeRichTextContent(relationship.description) as JSONContent,
+    visibility: relationship.visibility === "campaign" ? "campaign" : "dm_only",
+  }));
 
   // Fetch class features at the character's current levels
   let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
@@ -283,6 +311,8 @@ export default async function CharacterPage({ params }: PageProps) {
       initialRolls={(rollRows ?? []) as import("@/lib/types/rolls").RollLogEntry[]}
       classData={classData}
       campaignPageBacklinks={campaignPageBacklinks}
+      timelineEvents={timelineEvents}
+      relationships={relationships}
     />
   );
 }
