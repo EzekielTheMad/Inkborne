@@ -92,8 +92,9 @@ chmod +x restore-drill.sh
 The script restores the snapshot inside the backup container's tmpfs, copies
 the correct `inkborne.dump` container path to a temporary host directory,
 starts an isolated pinned `supabase/postgres:17.6` container with hosted
-extensions available, restores with `--exit-on-error`, prints key row counts,
-and securely removes all temporary artifacts on exit.
+extensions available, creates an empty database from `template0`, restores
+with `--exit-on-error`, prints key row counts, and securely removes all
+temporary artifacts on exit.
 
 **Pass criteria:** the script prints `PASS` and the displayed counts for
 `public.characters`, `auth.users`, and `public.feedback` match production

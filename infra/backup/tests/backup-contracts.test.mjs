@@ -124,6 +124,8 @@ test("static deployment contracts keep credentials, plaintext, versions, and log
   assert.match(read("README.md"), /supabase\/postgres:17\.6/);
   assert.doesNotMatch(read("README.md"), /postgres:15/);
   assert.match(read("restore-drill.sh"), /supabase\/postgres:17\.6\.1\.150/);
+  assert.match(read("restore-drill.sh"), /createdb .*--template=template0 inkborne_restore/);
+  assert.match(read("restore-drill.sh"), /pg_restore[\s\S]*-d inkborne_restore/);
   assert.match(read(".env.example"), /pooler\.supabase\.com:5432\/postgres\?sslmode=require/);
 });
 

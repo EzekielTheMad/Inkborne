@@ -50,13 +50,17 @@ fi
 
 docker cp "$HOST_WORKDIR/inkborne.dump" "$RESTORE_CONTAINER:/tmp/inkborne.dump"
 
+echo "[restore] Creating an empty restore database"
+docker exec "$RESTORE_CONTAINER" \
+  createdb -U postgres --template=template0 inkborne_restore
+
 echo "[restore] Restoring with errors treated as fatal"
 docker exec "$RESTORE_CONTAINER" \
   pg_restore --exit-on-error --no-owner --no-privileges \
-    -U postgres -d postgres /tmp/inkborne.dump
+    -U postgres -d inkborne_restore /tmp/inkborne.dump
 
 echo "[restore] Key restored row counts"
-docker exec "$RESTORE_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c \
+docker exec "$RESTORE_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d inkborne_restore -c \
   "SELECT 'characters' AS table_name, COUNT(*) FROM public.characters
    UNION ALL SELECT 'auth.users', COUNT(*) FROM auth.users
    UNION ALL SELECT 'feedback', COUNT(*) FROM public.feedback;"
