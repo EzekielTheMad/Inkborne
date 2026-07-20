@@ -19,6 +19,10 @@ suite:
    non-firing for non-concentration effects, hit-die spending, and short rest
    with Arcane Recovery. The three scenarios share the character and run in
    serial mode.
+5. **`campaigns.spec.ts`** — authenticated DM/player campaign UAT: campaign
+   creation and joining, DM-only/shared page visibility, player-authored
+   secrets remaining visible to the DM, character assignment, and DM
+   read-only character access.
 
 The tests run against the **real Supabase backend** — there is no test double.
 Every character the suite creates is deleted afterwards (per-spec `afterAll`
@@ -47,6 +51,8 @@ The suite refuses to run without all of these:
 | `SUPABASE_SERVICE_ROLE_KEY` | `.env.local` | Fixture seeding + cleanup — the `characters` table has **no DELETE RLS policy**, so deleting test characters requires the service role. Never exposed to the page. |
 | `E2E_TEST_EMAIL` | **runner-supplied** | Test account email |
 | `E2E_TEST_PASSWORD` | **runner-supplied** | Test account password |
+| `E2E_PLAYER_EMAIL` | **runner-supplied** | Second test account used as a campaign player |
+| `E2E_PLAYER_PASSWORD` | **runner-supplied** | Campaign player test account password |
 
 `playwright.config.ts` loads `.env.local` from the repo root; already-set
 environment variables take precedence, so CI can inject everything and skip
