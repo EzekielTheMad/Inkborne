@@ -35,6 +35,8 @@ describe("getItemData", () => {
         slug: "longsword",
         content_type: "weapon",
         data: { damage: "1d8", weight: 3 },
+        version: 1,
+        source: "srd",
         effects: [],
       },
     });
@@ -49,6 +51,8 @@ describe("getItemData", () => {
         slug: "longsword",
         content_type: "weapon",
         data: { damage: "1d8", weight: 3 },
+        version: 1,
+        source: "srd",
         effects: [],
       },
       custom_data: { weight: 5 },
@@ -68,7 +72,7 @@ describe("getItemWeight", () => {
       custom_data: { weight: 10 },
       content_definitions: {
         id: "c1", name: "X", slug: "x", content_type: "item",
-        data: { weight: 2 }, effects: [],
+        data: { weight: 2 }, version: 1, source: "srd", effects: [],
       },
     });
     expect(getItemWeight(item)).toBe(10);
@@ -78,7 +82,7 @@ describe("getItemWeight", () => {
     const item = makeItem({
       content_definitions: {
         id: "c1", name: "X", slug: "x", content_type: "item",
-        data: { weight: 2 }, effects: [],
+        data: { weight: 2 }, version: 1, source: "srd", effects: [],
       },
     });
     expect(getItemWeight(item)).toBe(2);
@@ -93,7 +97,7 @@ describe("getItemWeight", () => {
     const item = makeItem({
       content_definitions: {
         id: "c1", name: "X", slug: "x", content_type: "item",
-        data: { weight: "heavy" }, effects: [],
+        data: { weight: "heavy" }, version: 1, source: "srd", effects: [],
       },
     });
     expect(getItemWeight(item)).toBe(0);
@@ -105,7 +109,7 @@ describe("isShield", () => {
     const item = makeItem({
       content_definitions: {
         id: "c1", name: "Shield", slug: "shield", content_type: "armor",
-        data: { armor_category: "Shield" }, effects: [],
+        data: { armor_category: "Shield" }, version: 1, source: "srd", effects: [],
       },
     });
     expect(isShield(item)).toBe(true);
@@ -115,7 +119,7 @@ describe("isShield", () => {
     const item = makeItem({
       content_definitions: {
         id: "c1", name: "Plate", slug: "plate", content_type: "armor",
-        data: { armor_category: "Heavy" }, effects: [],
+        data: { armor_category: "Heavy" }, version: 1, source: "srd", effects: [],
       },
     });
     expect(isShield(item)).toBe(false);
@@ -133,7 +137,7 @@ describe("isBodyArmor", () => {
       content_type: "armor",
       content_definitions: {
         id: "c1", name: "Plate", slug: "plate", content_type: "armor",
-        data: { armor_category: "Heavy" }, effects: [],
+        data: { armor_category: "Heavy" }, version: 1, source: "srd", effects: [],
       },
     });
     expect(isBodyArmor(item)).toBe(true);
@@ -144,7 +148,7 @@ describe("isBodyArmor", () => {
       content_type: "armor",
       content_definitions: {
         id: "c1", name: "Shield", slug: "shield", content_type: "armor",
-        data: { armor_category: "Shield" }, effects: [],
+        data: { armor_category: "Shield" }, version: 1, source: "srd", effects: [],
       },
     });
     expect(isBodyArmor(item)).toBe(false);

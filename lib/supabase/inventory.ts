@@ -1,8 +1,22 @@
 import { createClient } from "@/lib/supabase/client";
+import {
+  parseContentDefinitions,
+  parseNestedContentDefinition,
+  type ParsedContentDefinition,
+} from "@/lib/supabase/content-definitions-parser";
 import type { InventoryItem } from "@/lib/types/inventory";
 
 const INVENTORY_SELECT =
-  "*, content_definitions(id, name, slug, content_type, data, effects)";
+  "*, content_definitions(id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id)";
+
+function parseInventoryRow(raw: Record<string, unknown>): InventoryItem {
+  return {
+    ...raw,
+    content_definitions: parseNestedContentDefinition(
+      raw.content_definitions,
+    ),
+  } as unknown as InventoryItem;
+}
 
 export async function getInventoryForCharacter(
   characterId: string,
@@ -16,10 +30,11 @@ export async function getInventoryForCharacter(
     .order("name");
 
   if (error) {
-    console.error("[getInventory] Error:", error.message);
-    return [];
+    throw error;
   }
-  return data ?? [];
+  return (data ?? []).map((row) =>
+    parseInventoryRow(row as Record<string, unknown>),
+  );
 }
 
 export async function addInventoryItem(
@@ -47,10 +62,9 @@ export async function addInventoryItem(
     .single();
 
   if (error) {
-    console.error("[addInventoryItem] Error:", error.message);
-    return null;
+    throw error;
   }
-  return data;
+  return data ? parseInventoryRow(data as Record<string, unknown>) : null;
 }
 
 export async function updateInventoryItem(
@@ -69,7 +83,7 @@ export async function updateInventoryItem(
     .eq("id", itemId);
 
   if (error) {
-    console.error("[updateInventoryItem] Error:", error.message);
+    throw error;
   }
 }
 
@@ -81,7 +95,7 @@ export async function removeInventoryItem(itemId: string): Promise<void> {
     .eq("id", itemId);
 
   if (error) {
-    console.error("[removeInventoryItem] Error:", error.message);
+    throw error;
   }
 }
 
@@ -91,29 +105,29 @@ export interface SearchItemsOptions {
   magicalOnly?: boolean;
 }
 
+export type ItemSearchResult = Omit<
+  ParsedContentDefinition,
+  "effects"
+> & {
+  effects: Array<Record<string, unknown>>;
+};
+
 export async function searchItems(
   systemId: string,
   query: string,
   options?: SearchItemsOptions,
 ): Promise<
-  Array<{
-    id: string;
-    name: string;
-    slug: string;
-    content_type: string;
-    data: Record<string, unknown>;
-    effects: Array<Record<string, unknown>>;
-  }>
+  ItemSearchResult[]
 > {
   const supabase = createClient();
   let builder = supabase
     .from("content_definitions")
-    .select("id, name, slug, content_type, data, effects")
+    .select(
+      "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
+    )
     .eq("system_id", systemId)
     .eq("scope", "platform")
-    .ilike("name", `%${query}%`)
-    .order("name")
-    .limit(50);
+    .ilike("name", `%${query}%`);
 
   // Equipment category filter
   if (options?.equipmentCategory === "Weapon") {
@@ -148,12 +162,14 @@ export async function searchItems(
     );
   }
 
-  const { data, error } = await builder;
+  const { data, error } = await builder.order("name").limit(50);
   if (error) {
-    console.error("[searchItems] Error:", error.message);
-    return [];
+    throw error;
   }
-  return data ?? [];
+  return parseContentDefinitions(data ?? []).map((definition) => ({
+    ...definition,
+    effects: definition.effects as unknown as Array<Record<string, unknown>>,
+  }));
 }
 
 export async function unequipAllArmor(characterId: string): Promise<void> {
@@ -166,6 +182,6 @@ export async function unequipAllArmor(characterId: string): Promise<void> {
     .eq("equipped", true);
 
   if (error) {
-    console.error("[unequipAllArmor] Error:", error.message);
+    throw error;
   }
 }
