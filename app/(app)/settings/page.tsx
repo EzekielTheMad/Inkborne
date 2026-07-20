@@ -7,7 +7,14 @@ import { ConnectedAccountsSection } from "@/components/settings/connected-accoun
 import { AppearanceSection } from "@/components/settings/appearance-section";
 import { DangerZoneSection } from "@/components/settings/danger-zone-section";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ linked?: string | string[]; linkError?: string | string[] }>;
+}) {
+  const query = await searchParams;
+  const linkedProvider = typeof query.linked === "string" ? query.linked : null;
+  const linkErrorProvider = typeof query.linkError === "string" ? query.linkError : null;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -29,6 +36,8 @@ export default async function SettingsPage() {
 
   const identities = (user.identities ?? []).map((identity) => ({
     id: identity.id,
+    identityId: identity.identity_id,
+    userId: identity.user_id,
     provider: identity.provider,
   }));
 
@@ -47,9 +56,14 @@ export default async function SettingsPage() {
 
       <EmailSection email={user.email || ""} />
 
-      <PasswordSection hasPasswordIdentity={hasPasswordIdentity} />
+      <PasswordSection hasPasswordIdentity={hasPasswordIdentity} email={user.email || "your email"} />
 
-      <ConnectedAccountsSection identities={identities} />
+      <ConnectedAccountsSection
+        identities={identities}
+        linkedProvider={linkedProvider}
+        linkErrorProvider={linkErrorProvider}
+        discordEnabled={process.env.NEXT_PUBLIC_DISCORD_AUTH_ENABLED === "true"}
+      />
 
       <AppearanceSection />
 

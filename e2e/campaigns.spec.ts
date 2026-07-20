@@ -1,0 +1,237 @@
+import { expect, test, type Browser, type Page } from "@playwright/test";
+import {
+  deleteCampaignsById,
+  deleteCharactersById,
+  E2E_CAMPAIGN_PREFIX,
+  E2E_CHARACTER_PREFIX,
+  getCampaignFixture,
+  seedCampaignCharacter,
+  setCampaignPageContent,
+  setCharacterNarrativeLinks,
+} from "./helpers/supabase";
+
+const BASE_URL = "http://localhost:3000";
+const runId = Date.now();
+const campaignName = `${E2E_CAMPAIGN_PREFIX} ${runId}`;
+const playerCharacterName = `${E2E_CHARACTER_PREFIX} Campaign Player ${runId}`;
+const dmSecretTitle = `DM Secret ${runId}`;
+const sharedPageTitle = `Shared Lore ${runId}`;
+const sharedSourceTitle = `Shared Source ${runId}`;
+const playerSecretTitle = `Player Secret ${runId}`;
+
+let campaignId: string | null = null;
+let playerCharacterId: string | null = null;
+
+function playerCredential(name: "E2E_PLAYER_EMAIL" | "E2E_PLAYER_PASSWORD"): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing ${name}; see e2e/README.md.`);
+  return value;
+}
+
+async function signInPlayer(browser: Browser): Promise<{ page: Page; close: () => Promise<void> }> {
+  const context = await browser.newContext({
+    baseURL: BASE_URL,
+    storageState: { cookies: [], origins: [] },
+  });
+  const page = await context.newPage();
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(playerCredential("E2E_PLAYER_EMAIL"));
+  await page.getByLabel("Password", { exact: true }).fill(playerCredential("E2E_PLAYER_PASSWORD"));
+  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.waitForURL("**/dashboard", { timeout: 60_000 });
+  return { page, close: () => context.close() };
+}
+
+async function createCampaignPage(
+  page: Page,
+  targetCampaignId: string,
+  title: string,
+  visibility: "campaign" | "dm_only",
+): Promise<string> {
+  await page.goto(`/campaigns/${targetCampaignId}/pages/new`);
+  await page.getByLabel("Page title").fill(title);
+  await page.getByLabel("Who can see it?").selectOption(visibility);
+  await Promise.all([
+    page.waitForURL((url) =>
+      new RegExp(`^/campaigns/${targetCampaignId}/pages/[0-9a-f-]{36}$`).test(url.pathname),
+    ),
+    page.getByRole("button", { name: "Create page" }).click(),
+  ]);
+  const pageId = new URL(page.url()).pathname.split("/").at(-1);
+  if (!pageId) throw new Error(`Could not read page id from ${page.url()}`);
+  return pageId;
+}
+
+test.describe("campaign DM/player UAT", () => {
+  test.afterAll(async () => {
+    if (campaignId) await deleteCampaignsById([campaignId]);
+    if (playerCharacterId) await deleteCharactersById([playerCharacterId]);
+  });
+
+  test("enforces ownership, membership, visibility, and character boundaries", async ({
+    browser,
+    page: dmPage,
+  }) => {
+    await dmPage.goto("/campaigns");
+    await dmPage.getByRole("link", { name: "+ Begin a campaign" }).click();
+    await dmPage.getByLabel("Campaign name").fill(campaignName);
+    await dmPage.getByLabel("Game system").selectOption({ index: 1 });
+    await dmPage.getByLabel("Opening note").fill("Disposable two-role campaign acceptance test.");
+    await Promise.all([
+      dmPage.waitForURL((url) => /^\/campaigns\/[0-9a-f-]{36}$/.test(url.pathname)),
+      dmPage.getByRole("button", { name: "Create campaign" }).click(),
+    ]);
+
+    campaignId = new URL(dmPage.url()).pathname.split("/").at(-1) ?? null;
+    expect(campaignId).toBeTruthy();
+    await expect(dmPage.getByRole("heading", { name: campaignName })).toBeVisible();
+    await expect(dmPage.getByText("DM workspace")).toBeVisible();
+
+    const fixture = await getCampaignFixture(campaignId!);
+    await expect(dmPage.getByText(fixture.inviteCode, { exact: true })).toBeVisible();
+
+    const dmSecretId = await createCampaignPage(dmPage, campaignId!, dmSecretTitle, "dm_only");
+    const sharedPageId = await createCampaignPage(dmPage, campaignId!, sharedPageTitle, "campaign");
+    const sharedSourceId = await createCampaignPage(
+      dmPage,
+      campaignId!,
+      sharedSourceTitle,
+      "campaign",
+    );
+    const pageMentionDocument = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "mention",
+              attrs: {
+                id: sharedPageId,
+                label: sharedPageTitle,
+                mentionSuggestionChar: "#",
+              },
+            },
+          ],
+        },
+      ],
+    };
+    await setCampaignPageContent(dmSecretId, pageMentionDocument);
+    await setCampaignPageContent(sharedSourceId, pageMentionDocument);
+
+    playerCharacterId = await seedCampaignCharacter({
+      name: playerCharacterName,
+      systemId: fixture.systemId,
+      email: playerCredential("E2E_PLAYER_EMAIL"),
+      password: playerCredential("E2E_PLAYER_PASSWORD"),
+    });
+    const characterMentionDocument = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            ...pageMentionDocument.content[0].content,
+            {
+              type: "mention",
+              attrs: {
+                id: playerCharacterId,
+                label: playerCharacterName,
+                mentionSuggestionChar: "@",
+              },
+            },
+          ],
+        },
+      ],
+    };
+    await setCampaignPageContent(sharedSourceId, characterMentionDocument);
+    await setCharacterNarrativeLinks({
+      characterId: playerCharacterId,
+      sharedNarrative: { backstory_origin: pageMentionDocument },
+      dmNotes: pageMentionDocument,
+    });
+
+    const player = await signInPlayer(browser);
+    try {
+      await player.page.goto("/campaigns");
+      await player.page.getByLabel("Join with an invite code").fill(fixture.inviteCode);
+      await player.page.getByRole("button", { name: "Join campaign" }).click();
+      await player.page.waitForURL(`**/campaigns/${campaignId}`);
+      await expect(player.page.getByText("Player view")).toBeVisible();
+      await expect(player.page.getByRole("link", { name: sharedPageTitle })).toBeVisible();
+      await expect(player.page.getByRole("link", { name: dmSecretTitle })).toHaveCount(0);
+
+      await player.page.getByLabel("Character to add").selectOption(playerCharacterId);
+      await player.page.getByRole("button", { name: "Add character" }).click();
+      await expect(player.page.getByRole("link", { name: playerCharacterName })).toBeVisible();
+
+      const playerSecretId = await createCampaignPage(
+        player.page,
+        campaignId!,
+        playerSecretTitle,
+        "dm_only",
+      );
+      await player.page.goto(`/campaigns/${campaignId}/pages/${sharedPageId}`);
+      await expect(player.page.getByRole("heading", { name: sharedPageTitle })).toBeVisible();
+      await expect(player.page.getByLabel("Title")).toHaveCount(0);
+      await expect(player.page.getByRole("heading", { name: "Linked from" })).toBeVisible();
+      await expect(player.page.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
+      await expect(player.page.getByRole("link", { name: dmSecretTitle })).toHaveCount(0);
+      await expect(
+        player.page.getByRole("link", { name: `${playerCharacterName} · Story + DM notes` }),
+      ).toBeVisible();
+
+      await player.page.goto(`/characters/${playerCharacterId}`);
+      await player.page.getByRole("tab", { name: "Narrative" }).click();
+      await expect(player.page.getByRole("heading", { name: "Linked from campaign" })).toBeVisible();
+      await expect(player.page.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
+
+      const timelineTitle = `The Crossing ${runId}`;
+      await player.page.getByRole("button", { name: "Add event" }).click();
+      await player.page.getByLabel("Event title").fill(timelineTitle);
+      await player.page.getByLabel("When").fill("Third winter");
+      await player.page.getByLabel("Visible to").selectOption("dm_only");
+      await player.page.getByRole("button", { name: "Add event" }).click();
+      await expect(player.page.getByText(timelineTitle, { exact: true })).toBeVisible();
+
+      const relationshipName = `Mira ${runId}`;
+      await player.page.getByRole("button", { name: "Add person" }).click();
+      await player.page.getByLabel("Name", { exact: true }).fill(relationshipName);
+      await player.page.getByLabel("Relationship").fill("Mentor");
+      await player.page.getByRole("button", { name: "Add person" }).click();
+      await expect(player.page.getByText(relationshipName, { exact: true })).toBeVisible();
+
+      await dmPage.goto(`/campaigns/${campaignId}`);
+      await expect(dmPage.getByRole("link", { name: playerSecretTitle })).toBeVisible();
+      await expect(dmPage.getByRole("link", { name: playerCharacterName })).toBeVisible();
+
+      await dmPage.goto(`/campaigns/${campaignId}/pages/${sharedPageId}`);
+      await expect(dmPage.getByRole("link", { name: sharedSourceTitle })).toBeVisible();
+      await expect(dmPage.getByRole("link", { name: dmSecretTitle })).toBeVisible();
+      await expect(
+        dmPage.getByRole("link", { name: `${playerCharacterName} · Story + DM notes` }),
+      ).toBeVisible();
+
+      await dmPage.goto(`/campaigns/${campaignId}/pages/${playerSecretId}`);
+      await expect(dmPage.getByLabel("Title")).toHaveValue(playerSecretTitle);
+
+      await dmPage.goto(`/campaigns/${campaignId}/pages/${dmSecretId}`);
+      await expect(dmPage.getByLabel("Title")).toHaveValue(dmSecretTitle);
+
+      await dmPage.goto(`/characters/${playerCharacterId}`);
+      await expect(dmPage.getByText(playerCharacterName, { exact: true }).first()).toBeVisible();
+      await expect(dmPage.getByRole("button", { name: "Edit character" })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: "Copy character" })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: "Change character color" })).toHaveCount(0);
+      await dmPage.getByRole("tab", { name: "Narrative" }).click();
+      await expect(dmPage.getByText(timelineTitle, { exact: true })).toBeVisible();
+      await expect(dmPage.getByText(relationshipName, { exact: true })).toBeVisible();
+      await expect(dmPage.getByRole("button", { name: "Add event" })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: "Add person" })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: `Edit ${timelineTitle}` })).toHaveCount(0);
+      await expect(dmPage.getByRole("button", { name: `Edit ${relationshipName}` })).toHaveCount(0);
+    } finally {
+      await player.close();
+    }
+  });
+});

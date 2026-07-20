@@ -29,6 +29,12 @@ import { FunTraitsForm } from "./edit/fun-traits-form";
 
 // Portrait
 import { CharacterPortrait } from "./character-portrait";
+import { TimelineSection } from "./timeline-section";
+import { RelationshipsSection } from "./relationships-section";
+import type {
+  CharacterRelationship,
+  CharacterTimelineEvent,
+} from "@/lib/types/narrative";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -41,6 +47,8 @@ interface NarrativeTabProps {
   isDm: boolean;
   onPortraitChange?: (url: string | null) => void;
   onCropChange?: (crop: { x: number; y: number; width: number; height: number }) => void;
+  timelineEvents: CharacterTimelineEvent[];
+  relationships: CharacterRelationship[];
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +62,8 @@ export function NarrativeTab({
   isDm,
   onPortraitChange: onPortraitChangeParent,
   onCropChange: onCropChangeParent,
+  timelineEvents,
+  relationships,
 }: NarrativeTabProps) {
   const editor = useNarrativeEditor({
     character,
@@ -162,9 +172,14 @@ export function NarrativeTab({
                 <X className="mr-1 size-3.5" />
                 Cancel
               </Button>
-              <Button variant="secondary" size="sm" onClick={handleManualSave}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleManualSave}
+                disabled={saveStatus === "saving"}
+              >
                 <Save className="mr-1 size-3.5" />
-                Save
+                {saveStatus === "saving" ? "Saving..." : "Save"}
               </Button>
             </>
           )}
@@ -248,24 +263,29 @@ export function NarrativeTab({
               <PersonalityCard choices={choices} narrative={narrative} />
               <DistinguishingFeaturesCard
                 content={rich.distinguishing_features}
+                campaignId={campaignId}
               />
               <BackstoryCard
                 title="Where They Came From"
                 content={rich.backstory_origin}
+                campaignId={campaignId}
               />
               <BackstoryCard
                 title="The Turning Point"
                 content={rich.backstory_turning_point}
+                campaignId={campaignId}
               />
               <BackstoryCard
                 title="What They Left Behind"
                 content={rich.backstory_left_behind}
+                campaignId={campaignId}
               />
               {(isOwner || isDm) && (
                 <BackstoryCard
                   title="What the DM Should Know"
                   content={rich.backstory_dm_notes}
                   dmOnly
+                  campaignId={campaignId}
                 />
               )}
               <FunTraitsCard funTraits={narrative.fun_traits} />
@@ -285,6 +305,21 @@ export function NarrativeTab({
           )}
         </>
       )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <TimelineSection
+          characterId={character.id}
+          campaignId={campaignId}
+          events={timelineEvents}
+          isOwner={isOwner}
+        />
+        <RelationshipsSection
+          characterId={character.id}
+          campaignId={campaignId}
+          relationships={relationships}
+          isOwner={isOwner}
+        />
+      </div>
     </div>
   );
 }

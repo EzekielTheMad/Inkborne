@@ -25,7 +25,8 @@ describe("System Schema Definition", () => {
   });
 
   it("rejects schema missing ability_scores", () => {
-    const { ability_scores, ...rest } = MINIMAL_VALID_SCHEMA;
+    const rest: Partial<typeof MINIMAL_VALID_SCHEMA> = { ...MINIMAL_VALID_SCHEMA };
+    delete rest.ability_scores;
     const result = systemSchemaDefinitionSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });

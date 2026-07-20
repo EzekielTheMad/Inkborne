@@ -5,19 +5,24 @@ import type { Effect } from "@/lib/types/effects";
 
 const schema: SystemSchemaDefinition = {
   ability_scores: [
-    { slug: "strength", name: "Strength", abbreviation: "STR" },
-    { slug: "dexterity", name: "Dexterity", abbreviation: "DEX" },
-    { slug: "constitution", name: "Constitution", abbreviation: "CON" },
-    { slug: "intelligence", name: "Intelligence", abbreviation: "INT" },
-    { slug: "wisdom", name: "Wisdom", abbreviation: "WIS" },
-    { slug: "charisma", name: "Charisma", abbreviation: "CHA" },
+    { slug: "strength", name: "Strength", abbr: "STR" },
+    { slug: "dexterity", name: "Dexterity", abbr: "DEX" },
+    { slug: "constitution", name: "Constitution", abbr: "CON" },
+    { slug: "intelligence", name: "Intelligence", abbr: "INT" },
+    { slug: "wisdom", name: "Wisdom", abbr: "WIS" },
+    { slug: "charisma", name: "Charisma", abbr: "CHA" },
   ],
+  proficiency_levels: [],
   derived_stats: [
     { slug: "armor_class", name: "Armor Class", formula: "10 + mod(dexterity)" },
     { slug: "movement_speed", name: "Speed", base: 30 },
   ],
   content_types: [],
+  skills: [],
+  resources: [],
+  currencies: [],
   creation_steps: [],
+  sheet_sections: [],
 };
 
 const baseStats = {

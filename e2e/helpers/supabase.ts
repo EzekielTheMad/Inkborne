@@ -14,6 +14,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 /** All E2E-created characters carry this prefix so stale leftovers from
  *  crashed runs are identifiable and swept by global teardown. */
 export const E2E_CHARACTER_PREFIX = "E2E Smoke";
+export const E2E_CAMPAIGN_PREFIX = "E2E Campaign";
 
 function env(name: string): string {
   const value = process.env[name];
@@ -36,19 +37,140 @@ export function createServiceClient(): SupabaseClient {
 /** Signs in with the test credentials (anon key) and returns the user id.
  *  Doubles as an early validation that the credentials are correct. */
 export async function getTestUserId(): Promise<string> {
+  return getUserIdForCredentials(
+    env("E2E_TEST_EMAIL"),
+    env("E2E_TEST_PASSWORD"),
+  );
+}
+
+export async function getUserIdForCredentials(
+  email: string,
+  password: string,
+): Promise<string> {
   const client = createClient(
     env("NEXT_PUBLIC_SUPABASE_URL"),
     env("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
   const { data, error } = await client.auth.signInWithPassword({
-    email: env("E2E_TEST_EMAIL"),
-    password: env("E2E_TEST_PASSWORD"),
+    email,
+    password,
   });
   if (error || !data.user) {
     throw new Error(`Could not sign in as E2E test user: ${error?.message}`);
   }
   return data.user.id;
+}
+
+export async function getCampaignFixture(campaignId: string): Promise<{
+  inviteCode: string;
+  systemId: string;
+}> {
+  const service = createServiceClient();
+  const { data, error } = await service
+    .from("campaigns")
+    .select("invite_code, system_id")
+    .eq("id", campaignId)
+    .single();
+  if (error || !data) {
+    throw new Error(`Could not load E2E campaign: ${error?.message ?? "no row"}`);
+  }
+  return { inviteCode: data.invite_code, systemId: data.system_id };
+}
+
+export async function seedCampaignCharacter(input: {
+  name: string;
+  systemId: string;
+  email: string;
+  password: string;
+}): Promise<string> {
+  const service = createServiceClient();
+  const userId = await getUserIdForCredentials(input.email, input.password);
+  const { data, error } = await service
+    .from("characters")
+    .insert({
+      name: input.name,
+      user_id: userId,
+      system_id: input.systemId,
+      level: 1,
+      base_stats: {
+        strength: 15,
+        dexterity: 14,
+        constitution: 13,
+        intelligence: 12,
+        wisdom: 10,
+        charisma: 8,
+      },
+      choices: {
+        classes: [{ slug: "fighter", level: 1 }],
+        race: "human",
+        background: "soldier",
+        ability_method: "standard_array",
+      },
+    })
+    .select("id")
+    .single();
+  if (error || !data) {
+    throw new Error(`Could not seed campaign character: ${error?.message}`);
+  }
+  return data.id;
+}
+
+export async function setCampaignPageContent(pageId: string, content: unknown): Promise<void> {
+  const service = createServiceClient();
+  const { error } = await service
+    .from("campaign_pages")
+    .update({ content })
+    .eq("id", pageId);
+  if (error) {
+    throw new Error(`Could not seed campaign page content: ${error.message}`);
+  }
+}
+
+export async function setCharacterNarrativeLinks(input: {
+  characterId: string;
+  sharedNarrative: unknown;
+  dmNotes?: unknown;
+}): Promise<void> {
+  const service = createServiceClient();
+  const { error: characterError } = await service
+    .from("characters")
+    .update({ narrative_rich: input.sharedNarrative })
+    .eq("id", input.characterId);
+  if (characterError) {
+    throw new Error(`Could not seed character narrative: ${characterError.message}`);
+  }
+  if (input.dmNotes === undefined) return;
+
+  const { error: notesError } = await service.from("character_dm_notes").upsert({
+    character_id: input.characterId,
+    content: input.dmNotes,
+  });
+  if (notesError) {
+    throw new Error(`Could not seed character DM notes: ${notesError.message}`);
+  }
+}
+
+export async function deleteCampaignsById(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const service = createServiceClient();
+  const { error } = await service.from("campaigns").delete().in("id", ids);
+  if (error) {
+    throw new Error(`E2E campaign cleanup failed: ${error.message}`);
+  }
+}
+
+export async function sweepE2ECampaigns(): Promise<number> {
+  const service = createServiceClient();
+  const { data, error } = await service
+    .from("campaigns")
+    .delete()
+    .like("name", `${E2E_CAMPAIGN_PREFIX}%`)
+    .select("id");
+  if (error) {
+    throw new Error(`E2E campaign sweep failed: ${error.message}`);
+  }
+  return data?.length ?? 0;
 }
 
 /**

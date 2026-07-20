@@ -42,7 +42,22 @@ export interface PersonalityFields {
 export interface MentionItem {
   id: string;
   label: string;
-  entityType: "character" | "npc";
+  entityType: "character" | "npc" | "page";
+}
+
+export type CharacterStoryVisibility = "dm_only" | "campaign";
+
+export interface CharacterTimelineEvent {
+  id: string;
+  character_id: string;
+  created_by: string;
+  title: string;
+  date_label: string | null;
+  description: JSONContent;
+  visibility: CharacterStoryVisibility;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Npc {
@@ -57,3 +72,7 @@ export interface Npc {
   metadata: Record<string, unknown>;
   created_at: string;
 }
+
+export type CharacterRelationship = Omit<Npc, "visibility"> & {
+  visibility: CharacterStoryVisibility;
+};

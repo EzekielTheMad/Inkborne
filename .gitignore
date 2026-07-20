@@ -53,5 +53,9 @@ next-env.d.ts
 # superpowers
 .superpowers/
 
+# local agent workspaces and handoff notes
+.claude/worktrees/
+.continue-here.md
+
 # SRD raw data
 data/srd-2014/raw/

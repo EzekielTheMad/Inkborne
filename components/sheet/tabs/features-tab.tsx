@@ -23,7 +23,6 @@ interface FeaturesTabProps {
 }
 
 export function FeaturesTab({
-  character,
   schema,
   contentRefs,
 }: FeaturesTabProps) {

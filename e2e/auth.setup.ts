@@ -21,7 +21,7 @@ setup("signs in with email/password and lands on the dashboard", async ({ page }
   // (project resuming from pause) is covered by the generous timeout.
   await page.waitForURL("**/dashboard", { timeout: 60_000 });
   await expect(page.getByRole("heading", { name: /^Welcome/ })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Your characters" })).toBeVisible();
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Characters" })).toBeVisible();
 
   await page.context().storageState({ path: STORAGE_STATE });
 });

@@ -115,7 +115,7 @@ export function ClassLevelPane({
               if (choice.type === "asi") {
                 return (
                   <ChoiceCardASI
-                    key={`${choice.type}-${idx}`}
+                    key={choice.featureSlug ?? `${choice.type}-${idx}`}
                     featureSlug={choice.featureSlug!}
                     currentChoice={localChoices.asi_choices?.[choice.featureSlug!]}
                     onSelect={(c) => onAsiSelect(choice.featureSlug!, c)}

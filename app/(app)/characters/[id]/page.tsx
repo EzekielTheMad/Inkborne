@@ -7,7 +7,17 @@ import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { CharacterPageClient } from "@/components/character/character-page-client";
+import { resolveFeatureGrantedSpells } from "@/lib/spells/helpers";
+import { syncAlwaysPreparedSpells } from "@/lib/supabase/spells-server";
+import { reportServerError } from "@/lib/supabase/errors";
 import type { Effect } from "@/lib/types/effects";
+import { findCampaignPageCharacterBacklinks } from "@/lib/campaigns/backlinks";
+import { normalizeRichTextContent } from "@/lib/editor/content";
+import type { JSONContent } from "@tiptap/react";
+import type {
+  CharacterRelationship,
+  CharacterTimelineEvent,
+} from "@/lib/types/narrative";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -83,7 +93,10 @@ export default async function CharacterPage({ params }: PageProps) {
           .eq("system_id", character.system_id)
           .eq("content_type", "class")
           .in("slug", classSlugs)
-      : Promise.resolve({ data: [] as Array<{ slug: string; data: Record<string, unknown> }> }),
+      : Promise.resolve({
+          data: [] as Array<{ slug: string; data: Record<string, unknown> }>,
+          error: null,
+        }),
     subclassSlugs.length > 0
       ? supabase
           .from("content_definitions")
@@ -91,7 +104,10 @@ export default async function CharacterPage({ params }: PageProps) {
           .eq("system_id", character.system_id)
           .eq("content_type", "subclass")
           .in("slug", subclassSlugs)
-      : Promise.resolve({ data: [] as Array<{ slug: string; data: Record<string, unknown> }> }),
+      : Promise.resolve({
+          data: [] as Array<{ slug: string; data: Record<string, unknown> }>,
+          error: null,
+        }),
   ]);
 
   const classData: Record<string, { slug: string; data: Record<string, unknown> }> = {};
@@ -109,22 +125,110 @@ export default async function CharacterPage({ params }: PageProps) {
     };
   }
 
-  // Run always-prepared sync.
-  if (classChoices.length > 0) {
-    const { resolveFeatureGrantedSpells } = await import("@/lib/spells/helpers");
-    const { syncAlwaysPreparedSpells } = await import("@/lib/supabase/spells");
+  let spellRowsAfterSync = spellRows;
+  const classMetadataError = classContentRes.error ?? subclassContentRes.error;
+
+  // Viewing a character is read-only for DMs. Only the character owner may
+  // reconcile derived, feature-granted spell rows.
+  if (isOwner && !classMetadataError) {
     const granted = resolveFeatureGrantedSpells(classChoices, subclassData);
-    if (granted.length > 0) {
-      await syncAlwaysPreparedSpells(id, granted, {});
+    try {
+      const syncResult = await syncAlwaysPreparedSpells(supabase, {
+        characterId: id,
+        systemId: character.system_id,
+        granted,
+      });
+
+      if (syncResult.missingSpellSlugs.length > 0) {
+        console.warn(
+          `[CharacterPage] Missing spell definitions: ${syncResult.missingSpellSlugs.join(", ")}`,
+        );
+      }
+
+      if (syncResult.inserted > 0 || syncResult.deleted > 0) {
+        const { data, error } = await supabase
+          .from("character_spells")
+          .select("*, content_definitions(id, name, slug, content_type, data, effects)")
+          .eq("character_id", id)
+          .order("name");
+        if (error) throw error;
+        spellRowsAfterSync = data;
+      }
+    } catch (error) {
+      const syncError = error instanceof Error ? error : new Error(String(error));
+      console.error("[CharacterPage] Failed to sync feature-granted spells:", syncError);
+      await reportServerError({
+        source: "manual",
+        message: syncError.message,
+        stack: syncError.stack,
+        userId: user.id,
+        context: { characterId: id, operation: "sync_feature_granted_spells" },
+      });
     }
+  } else if (isOwner && classMetadataError) {
+    const metadataError = new Error(
+      `[CharacterPage] Failed to load class metadata: ${classMetadataError.message}`,
+    );
+    console.error(metadataError);
+    await reportServerError({
+      source: "manual",
+      message: metadataError.message,
+      stack: metadataError.stack,
+      userId: user.id,
+      context: { characterId: id, operation: "load_class_metadata" },
+    });
   }
 
-  // Re-fetch spells after sync so the client gets the feature-granted rows.
-  const { data: spellRowsAfterSync } = await supabase
-    .from("character_spells")
-    .select("*, content_definitions(id, name, slug, content_type, data, effects)")
-    .eq("character_id", id)
-    .order("name");
+  const [
+    { data: dmNotes },
+    { data: campaignLinkCandidates },
+    { data: timelineRows },
+    { data: relationshipRows },
+  ] = await Promise.all([
+    supabase
+      .from("character_dm_notes")
+      .select("content")
+      .eq("character_id", id)
+      .maybeSingle(),
+    character.campaign_id
+      ? supabase
+          .from("campaign_pages")
+          .select("id, title, content")
+          .eq("campaign_id", character.campaign_id)
+          .order("title")
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("character_timeline_events")
+      .select("*")
+      .eq("character_id", id)
+      .order("sort_order")
+      .order("created_at"),
+    supabase.from("npcs").select("*").eq("character_id", id).order("created_at"),
+  ]);
+  const characterForView = dmNotes
+    ? {
+        ...character,
+        narrative_rich: {
+          ...character.narrative_rich,
+          backstory_dm_notes: dmNotes.content,
+        },
+      }
+    : character;
+
+  const campaignPageBacklinks = findCampaignPageCharacterBacklinks(
+    campaignLinkCandidates ?? [],
+    character.id,
+  );
+  const timelineEvents: CharacterTimelineEvent[] = (timelineRows ?? []).map((event) => ({
+    ...event,
+    description: normalizeRichTextContent(event.description) as JSONContent,
+    visibility: event.visibility === "campaign" ? "campaign" : "dm_only",
+  }));
+  const relationships: CharacterRelationship[] = (relationshipRows ?? []).map((relationship) => ({
+    ...relationship,
+    description: normalizeRichTextContent(relationship.description) as JSONContent,
+    visibility: relationship.visibility === "campaign" ? "campaign" : "dm_only",
+  }));
 
   // Fetch class features at the character's current levels
   let classFeatures: Array<{ effects: Effect[]; data: Record<string, unknown> }> = [];
@@ -190,7 +294,7 @@ export default async function CharacterPage({ params }: PageProps) {
 
   return (
     <CharacterPageClient
-      character={character}
+      character={characterForView}
       schema={schema}
       evalResult={evalResult}
       contentRefs={contentRefs}
@@ -206,6 +310,9 @@ export default async function CharacterPage({ params }: PageProps) {
       initialSpells={spellRowsAfterSync ?? spellRows ?? []}
       initialRolls={(rollRows ?? []) as import("@/lib/types/rolls").RollLogEntry[]}
       classData={classData}
+      campaignPageBacklinks={campaignPageBacklinks}
+      timelineEvents={timelineEvents}
+      relationships={relationships}
     />
   );
 }

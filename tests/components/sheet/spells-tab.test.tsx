@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { SpellsTab } from "@/components/sheet/tabs/spells-tab";
+import type { CasterClass } from "@/lib/types/spells";
 
 vi.mock("@/lib/character/character-context", () => {
   return {
@@ -12,14 +13,14 @@ vi.mock("@/lib/character/character-context", () => {
   };
 });
 
-let useSpellsMockData: ReturnType<typeof buildMock>;
-function useSpellsMock() {
-  return useSpellsMockData;
-}
-
-function buildMock(overrides: Partial<ReturnType<typeof buildMock>> = {}) {
+function makeDefaultMock() {
   return {
-    casterInfo: { isCaster: false, classes: [], spellDc: 0, spellAttackBonus: 0 },
+    casterInfo: {
+      isCaster: false,
+      classes: [] as CasterClass[],
+      spellDc: 0,
+      spellAttackBonus: 0,
+    },
     spells: [],
     slotState: {},
     maxSlots: {},
@@ -28,8 +29,18 @@ function buildMock(overrides: Partial<ReturnType<typeof buildMock>> = {}) {
     updateSpell: vi.fn(),
     removeSpell: vi.fn(),
     setConcentration: vi.fn(),
-    ...overrides,
   };
+}
+
+type SpellsMockData = ReturnType<typeof makeDefaultMock>;
+
+let useSpellsMockData: SpellsMockData;
+function useSpellsMock() {
+  return useSpellsMockData;
+}
+
+function buildMock(overrides: Partial<SpellsMockData> = {}): SpellsMockData {
+  return { ...makeDefaultMock(), ...overrides };
 }
 
 describe("SpellsTab", () => {

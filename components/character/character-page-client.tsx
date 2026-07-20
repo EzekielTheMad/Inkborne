@@ -13,6 +13,11 @@ import type { ClassContentData } from "@/lib/character/character-context";
 import { CharacterProvider } from "@/lib/character/character-context";
 import { CharacterShell } from "@/components/character/character-shell";
 import { characterColorStyle } from "@/lib/character/character-color-style";
+import type { CampaignPageBacklink } from "@/lib/campaigns/backlinks";
+import type {
+  CharacterRelationship,
+  CharacterTimelineEvent,
+} from "@/lib/types/narrative";
 
 interface CharacterPageClientProps {
   character: CharacterWithSystem;
@@ -31,6 +36,9 @@ interface CharacterPageClientProps {
   initialSpells: CharacterSpell[];
   initialRolls?: RollLogEntry[];
   classData: ClassContentData;
+  campaignPageBacklinks: CampaignPageBacklink[];
+  timelineEvents: CharacterTimelineEvent[];
+  relationships: CharacterRelationship[];
 }
 
 export function CharacterPageClient(props: CharacterPageClientProps) {
@@ -50,6 +58,9 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
     initialSpells,
     initialRolls,
     classData,
+    campaignPageBacklinks,
+    timelineEvents,
+    relationships,
   } = props;
 
   const [primaryColor, setPrimaryColor] = useState<string | null>(
@@ -77,7 +88,11 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
         primaryColor={primaryColor}
         onPrimaryColorChange={setPrimaryColor}
       >
-        <CharacterShell />
+        <CharacterShell
+          campaignPageBacklinks={campaignPageBacklinks}
+          timelineEvents={timelineEvents}
+          relationships={relationships}
+        />
       </CharacterProvider>
     </div>
   );

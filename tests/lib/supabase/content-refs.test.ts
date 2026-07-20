@@ -3,9 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getContentRefsByCharacter,
   addContentRef,
-  removeContentRef,
   removeContentRefsByChoiceSource,
-  getContentRefsByChoiceSource,
 } from "@/lib/supabase/content-refs";
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -53,7 +51,7 @@ describe("getContentRefsByCharacter", () => {
 describe("addContentRef", () => {
   it("inserts a content ref and returns the result", async () => {
     const ref = { id: "r1", character_id: "c1", content_id: "cd1" };
-    const { chain } = mockSupabase(ref);
+    mockSupabase(ref);
 
     const result = await addContentRef({
       character_id: "c1",

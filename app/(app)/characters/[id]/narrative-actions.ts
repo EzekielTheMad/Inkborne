@@ -7,6 +7,8 @@ import {
   deleteCharacterImage,
 } from "@/lib/supabase/storage";
 import type { NarrativeData, NarrativeRichData, PersonalityFields } from "@/lib/types/narrative";
+import { normalizeRichTextContent } from "@/lib/editor/content";
+import type { Json } from "@/lib/supabase/database.types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -88,14 +90,19 @@ export async function saveNarrativeRich(
   const { supabase, character } = ctx;
 
   const current = (character.narrative_rich as NarrativeRichData) ?? {};
-  const merged = { ...current, ...narrativeRichData };
+  const { backstory_dm_notes: currentLegacyDmNotes, ...currentShared } = current;
+  const { backstory_dm_notes: dmNotes, ...sharedUpdates } = narrativeRichData;
+  const merged = { ...currentShared, ...sharedUpdates };
 
   console.log("[saveNarrativeRich] Saving narrative_rich for character:", characterId);
 
-  const { error } = await supabase
-    .from("characters")
-    .update({ narrative_rich: merged })
-    .eq("id", characterId);
+  const writeDmNotes = dmNotes !== undefined || currentLegacyDmNotes !== undefined;
+  const { error } = await supabase.rpc("save_character_narrative_rich", {
+    target_character_id: characterId,
+    shared_narrative: merged as Json,
+    dm_notes: normalizeRichTextContent(dmNotes ?? currentLegacyDmNotes) as Json,
+    write_dm_notes: writeDmNotes,
+  });
 
   if (error) {
     console.error("[saveNarrativeRich] Error:", error.message, error.details, error.hint);

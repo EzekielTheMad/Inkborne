@@ -2,10 +2,12 @@
 
 import type { JSONContent } from "@tiptap/react";
 import { RichTextEditor } from "./rich-text-editor";
+import { normalizeRichTextContent } from "@/lib/editor/content";
 
 interface RichTextRendererProps {
   content: JSONContent | null;
   minHeight?: string;
+  campaignId?: string;
 }
 
 /**
@@ -14,16 +16,18 @@ interface RichTextRendererProps {
  * Mention nodes are rendered via CSS as gold-accent styled text.
  * If content is null or empty, renders nothing.
  */
-export function RichTextRenderer({ content, minHeight }: RichTextRendererProps) {
-  if (!content || (content.type === "doc" && !content.content?.length)) {
+export function RichTextRenderer({ content, minHeight, campaignId }: RichTextRendererProps) {
+  const normalizedContent = normalizeRichTextContent(content);
+  if (!normalizedContent.content?.length) {
     return null;
   }
 
   return (
     <RichTextEditor
-      content={content}
+      content={normalizedContent}
       editable={false}
       minHeight={minHeight ?? "auto"}
+      campaignId={campaignId}
     />
   );
 }

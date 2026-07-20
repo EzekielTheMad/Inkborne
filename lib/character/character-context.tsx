@@ -141,7 +141,7 @@ export type ClassContentData = Record<
   }
 >;
 
-interface CharacterContextValue {
+export interface CharacterContextValue {
   // Identity
   character: CharacterWithSystem;
   schema: SystemSchemaDefinition;

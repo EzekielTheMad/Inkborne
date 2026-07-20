@@ -9,9 +9,10 @@ interface BackstoryCardProps {
   title: string;
   content: JSONContent | null | undefined;
   dmOnly?: boolean;
+  campaignId?: string | null;
 }
 
-export function BackstoryCard({ title, content, dmOnly }: BackstoryCardProps) {
+export function BackstoryCard({ title, content, dmOnly, campaignId }: BackstoryCardProps) {
   if (!content || (content.type === "doc" && !content.content?.length)) {
     return null;
   }
@@ -30,7 +31,7 @@ export function BackstoryCard({ title, content, dmOnly }: BackstoryCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <RichTextRenderer content={content} />
+        <RichTextRenderer content={content} campaignId={campaignId ?? undefined} />
       </CardContent>
     </Card>
   );

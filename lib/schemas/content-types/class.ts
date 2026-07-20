@@ -32,7 +32,6 @@ import {
   spellcastingKnownSchema,
   spellcastingListSchema,
   spellcastingExtraSchema,
-  languageProfsSchema,
   toolProfsSchema,
 } from "./mechanical";
 

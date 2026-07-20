@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -23,12 +23,33 @@ interface LevelRailSetLevelSheetProps {
 }
 
 export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
-  const { open, onOpenChange, classSlug, className_, classIndex, currentLevel, maxLevel, onLevelChange } = props;
-  const [draftLevel, setDraftLevel] = useState<number>(currentLevel);
+  const { open, onOpenChange, ...contentProps } = props;
 
-  useEffect(() => {
-    if (open) setDraftLevel(currentLevel);
-  }, [open, currentLevel]);
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <LevelRailSetLevelContent
+          {...contentProps}
+          onOpenChange={onOpenChange}
+        />
+      ) : null}
+    </Drawer>
+  );
+}
+
+type LevelRailSetLevelContentProps = Omit<LevelRailSetLevelSheetProps, "open">;
+
+function LevelRailSetLevelContent(props: LevelRailSetLevelContentProps) {
+  const {
+    onOpenChange,
+    classSlug,
+    className_,
+    classIndex,
+    currentLevel,
+    maxLevel,
+    onLevelChange,
+  } = props;
+  const [draftLevel, setDraftLevel] = useState<number>(currentLevel);
 
   const selectId = `set-level-${classSlug}-select`;
 
@@ -42,8 +63,7 @@ export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+    <DrawerContent>
         <DrawerHeader>
           {/* No custom `id` here: Radix wires `aria-labelledby` to its own generated
               title id, and its a11y check looks that id up in the DOM. Overriding it
@@ -76,7 +96,6 @@ export function LevelRailSetLevelSheet(props: LevelRailSetLevelSheetProps) {
             Confirm
           </Button>
         </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+    </DrawerContent>
   );
 }

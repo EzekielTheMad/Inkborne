@@ -3,10 +3,14 @@
  * test account (individual specs delete their own fixtures in afterAll; this
  * catches leftovers from crashed or interrupted runs).
  */
-import { sweepE2ECharacters } from "./helpers/supabase";
+import { sweepE2ECampaigns, sweepE2ECharacters } from "./helpers/supabase";
 
 export default async function globalTeardown(): Promise<void> {
   try {
+    const campaignsRemoved = await sweepE2ECampaigns();
+    if (campaignsRemoved > 0) {
+      console.log(`[e2e] Swept ${campaignsRemoved} leftover E2E campaign(s).`);
+    }
     const removed = await sweepE2ECharacters();
     if (removed > 0) {
       console.log(`[e2e] Swept ${removed} leftover E2E character(s).`);
