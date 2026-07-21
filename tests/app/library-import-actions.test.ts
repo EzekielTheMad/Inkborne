@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   stage: vi.fn(),
   toggle: vi.fn(),
+  repair: vi.fn(),
   commit: vi.fn(),
   cancel: vi.fn(),
   revalidatePath: vi.fn(),
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/mpmb-imports-server", () => ({
   stageMpmbImportFile: mocks.stage,
   setMpmbImportItemSelected: mocks.toggle,
+  repairMpmbImportSpellItem: mocks.repair,
   commitMpmbImport: mocks.commit,
   cancelMpmbImport: mocks.cancel,
 }));
@@ -23,6 +25,7 @@ vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 import {
   abandonMpmbImport,
   finishMpmbImport,
+  repairMpmbImportSpell,
   startMpmbImport,
   toggleMpmbImportItem,
 } from "@/app/(app)/library/import/actions";
@@ -30,6 +33,7 @@ import {
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 const ITEM_ID = "44444444-4444-4444-8444-444444444444";
 const idle = { status: "idle" as const };
+const idleRepair = { status: "idle" as const, message: "" };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -74,6 +78,73 @@ describe("MPMB import actions", () => {
     });
     expect(mocks.toggle).toHaveBeenCalledWith(IMPORT_ID, ITEM_ID, false, 3);
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/library/import/${IMPORT_ID}`);
+  });
+
+  it("returns field errors before invoking an invalid spell repair", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "3");
+    formData.set("repair_material", "true");
+
+    await expect(repairMpmbImportSpell(idleRepair, formData)).resolves.toEqual(
+      expect.objectContaining({
+        status: "error",
+        fieldErrors: expect.objectContaining({
+          material: expect.arrayContaining([expect.any(String)]),
+        }),
+      }),
+    );
+    expect(mocks.repair).not.toHaveBeenCalled();
+  });
+
+  it("submits only supported repair fields, revalidates, then redirects", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "3");
+    formData.set("repair_material", "true");
+    formData.set("repair_dc", "true");
+    formData.set("material", "  a silver thread  ");
+    formData.set("save_ability", "wisdom");
+    formData.set("save_success", "half");
+    mocks.repair.mockResolvedValue({
+      status: "success",
+      importId: IMPORT_ID,
+    });
+
+    await expect(repairMpmbImportSpell(idleRepair, formData)).rejects.toThrow(
+      `REDIRECT:/library/import/${IMPORT_ID}?repaired=1`,
+    );
+    expect(mocks.repair).toHaveBeenCalledWith(IMPORT_ID, ITEM_ID, 3, {
+      material: "a silver thread",
+      dc: { type: "wisdom", success: "half" },
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(
+      `/library/import/${IMPORT_ID}`,
+    );
+    expect(mocks.revalidatePath.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.redirect.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("returns a stale repair conflict without revalidating", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "2");
+    formData.set("repair_material", "true");
+    formData.set("material", "a silver thread");
+    mocks.repair.mockResolvedValue({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
+
+    await expect(repairMpmbImportSpell(idleRepair, formData)).resolves.toEqual({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
   it("commits, revalidates the library, and redirects to the completed review", async () => {

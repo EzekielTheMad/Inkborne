@@ -848,9 +848,12 @@ export type Database = {
           mapping_status: string
           ordinal: number
           registry: string
+          resolved_diagnostics: Json
           selected: boolean
           source_key: string
           source_refs: Json
+          user_edited_at: string | null
+          user_edited_fields: string[]
         }
         Insert: {
           candidate_data?: Json | null
@@ -868,9 +871,12 @@ export type Database = {
           mapping_status: string
           ordinal: number
           registry: string
+          resolved_diagnostics?: Json
           selected?: boolean
           source_key: string
           source_refs?: Json
+          user_edited_at?: string | null
+          user_edited_fields?: string[]
         }
         Update: {
           candidate_data?: Json | null
@@ -888,9 +894,12 @@ export type Database = {
           mapping_status?: string
           ordinal?: number
           registry?: string
+          resolved_diagnostics?: Json
           selected?: boolean
           source_key?: string
           source_refs?: Json
+          user_edited_at?: string | null
+          user_edited_fields?: string[]
         }
         Relationships: [
           {
@@ -1576,6 +1585,19 @@ export type Database = {
       remove_campaign_member: {
         Args: { target_campaign_id: string; target_user_id: string }
         Returns: undefined
+      }
+      repair_mpmb_import_spell_item: {
+        Args: {
+          expected_revision: number
+          repair_patch: Json
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          mapping_status: string
+          revision: number
+          selected: boolean
+        }[]
       }
       rotate_campaign_invite_code: {
         Args: { target_campaign_id: string }

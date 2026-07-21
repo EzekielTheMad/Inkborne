@@ -6,6 +6,7 @@ import {
   FileCode2,
   Import,
   LockKeyhole,
+  PencilLine,
   XCircle,
 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
@@ -26,6 +27,7 @@ interface MpmbImportReviewPageProps {
   searchParams: Promise<{
     committed?: string | string[];
     error?: string | string[];
+    repaired?: string | string[];
   }>;
 }
 
@@ -67,6 +69,7 @@ export default async function MpmbImportReviewPage({
     ? Number(query.committed)
     : null;
   const error = typeof query.error === "string" ? query.error.slice(0, 300) : null;
+  const repaired = query.repaired === "1";
   const selectedCount = review.items.filter((item) => item.selected).length;
   const completed = review.status === "completed";
 
@@ -97,7 +100,7 @@ export default async function MpmbImportReviewPage({
         </Badge>
       </div>
 
-      {(Number.isFinite(committed) || error) && (
+      {(Number.isFinite(committed) || repaired || error) && (
         <div
           role={error ? "alert" : "status"}
           className={cn(
@@ -107,7 +110,10 @@ export default async function MpmbImportReviewPage({
               : "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
           )}
         >
-          {error ?? `${committed} ${committed === 1 ? "definition" : "definitions"} added to your private library.`}
+          {error
+            ?? (repaired
+              ? "Missing details saved. The review has been updated."
+              : `${committed} ${committed === 1 ? "definition" : "definitions"} added to your private library.`)}
         </div>
       )}
 
@@ -165,6 +171,9 @@ export default async function MpmbImportReviewPage({
                         {presentation.label}
                       </span>
                       <Badge variant="outline" className="capitalize">{item.contentType}</Badge>
+                      {item.userEditedFields.length > 0 && (
+                        <Badge variant="secondary">User corrected</Badge>
+                      )}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.registry}.{item.sourceKey} · line {item.location.line}
@@ -178,6 +187,15 @@ export default async function MpmbImportReviewPage({
                       revision={review.revision}
                       selected={item.selected}
                     />
+                  )}
+                  {item.repairable && !completed && review.status === "review" && (
+                    <Link
+                      href={`/library/import/${review.id}/items/${item.id}/edit`}
+                      className={buttonVariants({ variant: "outline", size: "sm" })}
+                    >
+                      <PencilLine className="size-3.5" />
+                      Add missing details
+                    </Link>
                   )}
                   {item.committedContentId && (
                     <Badge variant="secondary">Imported</Badge>

@@ -97,6 +97,7 @@ describe("MPMB spell mapping", () => {
 
     expect(mapped.status).toBe("needs_info");
     expect(mapped.candidate).not.toBeNull();
+    expect(spellDataSchema.safeParse(mapped.candidate?.data).success).toBe(true);
     expect(mapped.issues).toContainEqual(
       expect.objectContaining({
         code: "spell.material.required",
@@ -136,6 +137,7 @@ describe("MPMB spell mapping", () => {
 
     expect(mapped.status).toBe("needs_info");
     expect(spellData(mapped).dc).toBeNull();
+    expect(spellDataSchema.safeParse(mapped.candidate?.data).success).toBe(true);
     expect(mapped.issues).toContainEqual(
       expect.objectContaining({ code: "spell.save.success_unknown" }),
     );

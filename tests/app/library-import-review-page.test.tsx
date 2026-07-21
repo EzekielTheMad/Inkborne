@@ -59,6 +59,9 @@ const review = {
       candidateName: "Ember Ward",
       selected: true,
       committedContentId: null,
+      repairable: false,
+      userEditedFields: [],
+      userEditedAt: null,
       diagnostics: [{
         code: "source.unknown.PHB",
         severity: "warning" as const,
@@ -76,10 +79,33 @@ const review = {
       candidateName: "Cross-Trained",
       selected: false,
       committedContentId: null,
+      repairable: false,
+      userEditedFields: [],
+      userEditedAt: null,
       diagnostics: [{
         code: "feat.prerequisite.compound",
         severity: "blocking" as const,
         message: "Choose an exact prerequisite.",
+      }],
+    },
+    {
+      id: "77777777-7777-4777-8777-777777777777",
+      ordinal: 2,
+      registry: "SpellsList" as const,
+      sourceKey: "ash veil",
+      contentType: "spell" as const,
+      location: { line: 25, column: 1 },
+      mappingStatus: "needs_info" as const,
+      candidateName: "Ash Veil",
+      selected: false,
+      committedContentId: null,
+      repairable: true,
+      userEditedFields: [],
+      userEditedAt: null,
+      diagnostics: [{
+        code: "spell.material.required",
+        severity: "blocking" as const,
+        message: "Add the material component text.",
       }],
     },
   ],
@@ -101,11 +127,16 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getByRole("heading", { name: "fixture.mpmb" })).toBeVisible();
     expect(screen.getByText("Ember Ward")).toBeVisible();
     expect(screen.getByText("Cross-Trained")).toBeVisible();
+    expect(screen.getByText("Ash Veil")).toBeVisible();
     expect(screen.getAllByText("Ready")).toHaveLength(2);
-    expect(screen.getByText("Needs review")).toBeVisible();
+    expect(screen.getAllByText("Needs review")).toHaveLength(2);
     expect(screen.getByText(/feat\.prerequisite\.compound/)).toBeVisible();
     expect(screen.getByText(/database records their provenance/i)).toBeVisible();
     expect(screen.getByRole("button", { name: "Import 1" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "Add missing details" })).toHaveAttribute(
+      "href",
+      `/library/import/${IMPORT_ID}/items/77777777-7777-4777-8777-777777777777/edit`,
+    );
   });
 
   it("renders a committed notice and removes mutation controls", async () => {
@@ -128,6 +159,7 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getByText("1 definition added to your private library.")).toBeVisible();
     expect(screen.getByText("Committed")).toBeVisible();
     expect(screen.queryByRole("button", { name: /Import/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Add missing details" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View library" })).toBeVisible();
   });
 

@@ -10,6 +10,8 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 
 import {
+  getOwnedMpmbImportSpellRepairItem,
+  repairMpmbImportSpellItem,
   sanitizeMpmbImportFilename,
   stageMpmbImportFile,
 } from "@/lib/supabase/mpmb-imports-server";
@@ -17,6 +19,7 @@ import {
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const SYSTEM_ID = "22222222-2222-4222-8222-222222222222";
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
+const ITEM_ID = "44444444-4444-4444-8444-444444444444";
 
 const validSource = `
   // RAW_SENTINEL_DO_NOT_PERSIST
@@ -211,5 +214,164 @@ describe("stageMpmbImportFile", () => {
         status: "error",
         message: "The import could not be saved. Please try again.",
       });
+  });
+});
+
+function queryBuilder(response: DatabaseResponse) {
+  const filters: Array<[string, unknown]> = [];
+  const builder = {
+    select: vi.fn(() => builder),
+    eq: vi.fn((column: string, value: unknown) => {
+      filters.push([column, value]);
+      return builder;
+    }),
+    maybeSingle: vi.fn().mockResolvedValue(response),
+  };
+  return { builder, filters };
+}
+
+function authenticatedClient(overrides?: {
+  from?: ReturnType<typeof vi.fn>;
+  rpc?: ReturnType<typeof vi.fn>;
+}) {
+  return {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: USER_ID } },
+        error: null,
+      }),
+    },
+    from: overrides?.from ?? vi.fn(),
+    rpc: overrides?.rpc ?? vi.fn(),
+  };
+}
+
+describe("guided spell repair", () => {
+  it("loads only an owned open candidate with a supported blocker", async () => {
+    const importQuery = queryBuilder({
+      data: { id: IMPORT_ID, revision: 4, status: "review" },
+      error: null,
+    });
+    const itemQuery = queryBuilder({
+      data: {
+        id: ITEM_ID,
+        import_id: IMPORT_ID,
+        content_type: "spell",
+        mapping_status: "needs_info",
+        candidate_name: "Ash Veil",
+        candidate_data: {
+          level: 1,
+          school: "abjuration",
+          casting_time: "1 action",
+          range: "Self",
+          components: ["V", "S", "M"],
+          duration: "1 minute",
+          concentration: false,
+          ritual: false,
+          description: "A synthetic spell.",
+          damage: null,
+          heal_at_slot_level: null,
+          dc: null,
+          area_of_effect: null,
+          classes: [],
+          subclasses: [],
+          dependencies: [],
+        },
+        committed_content_id: null,
+        diagnostics: [
+          {
+            code: "spell.material.required",
+            severity: "blocking",
+            path: "compMaterial",
+            message: "Material text is required.",
+          },
+          {
+            code: "spell.damage.review",
+            severity: "blocking",
+            path: "damage",
+            message: "Review damage.",
+          },
+        ],
+        user_edited_fields: [],
+      },
+      error: null,
+    });
+    const from = vi.fn()
+      .mockReturnValueOnce(importQuery.builder)
+      .mockReturnValueOnce(itemQuery.builder);
+    createClientMock.mockResolvedValue(authenticatedClient({ from }));
+
+    await expect(
+      getOwnedMpmbImportSpellRepairItem(IMPORT_ID, ITEM_ID),
+    ).resolves.toMatchObject({
+      importId: IMPORT_ID,
+      itemId: ITEM_ID,
+      revision: 4,
+      candidateName: "Ash Veil",
+      repairFields: { material: true, dc: false },
+      otherBlockingIssues: 1,
+    });
+    expect(importQuery.filters).toEqual([
+      ["id", IMPORT_ID],
+      ["owner_id", USER_ID],
+    ]);
+    expect(itemQuery.filters).toEqual([
+      ["id", ITEM_ID],
+      ["import_id", IMPORT_ID],
+    ]);
+  });
+
+  it("sends only the validated narrow repair patch to the RPC", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    await expect(repairMpmbImportSpellItem(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      {
+        material: "a silver thread",
+        dc: { type: "wisdom", success: "half" },
+      },
+    )).resolves.toEqual({ status: "success", importId: IMPORT_ID });
+    expect(rpc).toHaveBeenCalledWith("repair_mpmb_import_spell_item", {
+      target_import_id: IMPORT_ID,
+      target_item_id: ITEM_ID,
+      expected_revision: 4,
+      repair_patch: {
+        material: "a silver thread",
+        dc: { type: "wisdom", success: "half" },
+      },
+    });
+  });
+
+  it("rejects broad patches and maps stale revisions without leaking database errors", async () => {
+    const rpc = vi.fn();
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    await expect(repairMpmbImportSpellItem(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      { material: "" },
+    )).resolves.toEqual({
+      status: "error",
+      message: "The spell repair is invalid.",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+
+    rpc.mockResolvedValue({
+      data: null,
+      error: { code: "40001", message: "internal detail" },
+    });
+    await expect(repairMpmbImportSpellItem(
+      IMPORT_ID,
+      ITEM_ID,
+      3,
+      { material: "a silver thread" },
+    )).resolves.toEqual({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
   });
 });
