@@ -1,0 +1,57 @@
+name: Backup contracts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/backup/**"
+      - ".github/workflows/backup-contracts.yml"
+  pull_request:
+    paths:
+      - "infra/backup/**"
+      - ".github/workflows/backup-contracts.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-contracts-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    name: Contracts (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Run backup contracts and failure injection
+        run: node --test infra/backup/tests/backup-contracts.node.mjs
+
+  image:
+    name: Compose and image validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Render Compose configuration
+        working-directory: infra/backup
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+
+      - name: Build backup image
+        run: docker build --file infra/backup/Dockerfile infra/backup
