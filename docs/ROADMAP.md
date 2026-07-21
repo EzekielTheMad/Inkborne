@@ -174,7 +174,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-21): ◑ Spell sharing and the private MPMB importer foundation are implemented and UAT-verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through narrowly validated missing spell details, atomically commits selected valid spells/feats as personal homebrew, and blocks imported content from campaign sharing pending a future rights workflow. This does **not** complete M4: additional content types, broader missing-info editing, conflict resolution, preview-character validation, and optional public publishing remain.
+**Status (2026-07-21): ◑ Spell sharing and the private MPMB importer workflow through conflict resolution are implemented and UAT-verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through narrowly validated missing spell details, resolves owned-content collisions with explicit Keep both / Replace decisions, preserves immutable versions and existing character pins, refuses to replace campaign-shared targets, atomically commits selected valid spells/feats as personal homebrew, and blocks imported content from campaign sharing pending a future rights workflow. This does **not** complete M4: additional authoring/content types, broader missing-info editing, preview-character calculation validation, and separately controlled public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -192,7 +192,7 @@ Combined because authoring and importing share the same user-owned content infra
 - File upload pipeline (extends portrait upload infrastructure from migration `00024`)
 - MPMB JS parser — reuses logic from existing `scripts/transformers/` that we used to seed the SRD
 - Validation step — runs Zod schemas against parsed output, surfaces gaps
-- Conflict resolution UI — "you already have a feat called Lucky; merge / replace / keep both?"
+- Conflict resolution UI — implemented for explicit Keep both / Replace outcomes; field-level merge remains intentionally out of scope until it can be made rules-safe
 - Missing-info wizard — fields the parser couldn't extract get a form for the user
 - Audit log — what was imported, what was skipped, what needs attention
 - **Calculation correctness verification:** test character built with imported content produces correct sheet calculations. The engine evaluates effects → derived stats; if imported content has malformed effects, it shows immediately. Build a "preview character" feature that uses imported content before commit.
