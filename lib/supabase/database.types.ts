@@ -1671,6 +1671,19 @@ export type Database = {
         Args: { target_campaign_id: string; target_user_id: string }
         Returns: undefined
       }
+      repair_mpmb_import_feat_item: {
+        Args: {
+          expected_revision: number
+          repair_patch: Json
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          mapping_status: string
+          revision: number
+          selected: boolean
+        }[]
+      }
       repair_mpmb_import_spell_item: {
         Args: {
           expected_revision: number
