@@ -838,6 +838,8 @@ export type Database = {
           candidate_name: string | null
           candidate_slug: string | null
           committed_content_id: string | null
+          conflict_resolution: string | null
+          conflict_resolved_at: string | null
           content_type: string
           created_at: string
           diagnostics: Json
@@ -848,6 +850,8 @@ export type Database = {
           mapping_status: string
           ordinal: number
           registry: string
+          replacement_content_id: string | null
+          replacement_expected_version: number | null
           resolved_diagnostics: Json
           selected: boolean
           source_key: string
@@ -861,6 +865,8 @@ export type Database = {
           candidate_name?: string | null
           candidate_slug?: string | null
           committed_content_id?: string | null
+          conflict_resolution?: string | null
+          conflict_resolved_at?: string | null
           content_type: string
           created_at?: string
           diagnostics?: Json
@@ -871,6 +877,8 @@ export type Database = {
           mapping_status: string
           ordinal: number
           registry: string
+          replacement_content_id?: string | null
+          replacement_expected_version?: number | null
           resolved_diagnostics?: Json
           selected?: boolean
           source_key: string
@@ -884,6 +892,8 @@ export type Database = {
           candidate_name?: string | null
           candidate_slug?: string | null
           committed_content_id?: string | null
+          conflict_resolution?: string | null
+          conflict_resolved_at?: string | null
           content_type?: string
           created_at?: string
           diagnostics?: Json
@@ -894,6 +904,8 @@ export type Database = {
           mapping_status?: string
           ordinal?: number
           registry?: string
+          replacement_content_id?: string | null
+          replacement_expected_version?: number | null
           resolved_diagnostics?: Json
           selected?: boolean
           source_key?: string
@@ -916,12 +928,22 @@ export type Database = {
             referencedRelation: "content_imports"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_import_items_replacement_version_fkey"
+            columns: ["replacement_content_id", "replacement_expected_version"]
+            isOneToOne: false
+            referencedRelation: "content_versions"
+            referencedColumns: ["content_id", "version"]
+          },
         ]
       }
       content_import_origins: {
         Row: {
           content_id: string
+          content_version: number
           created_at: string
+          disposition: string
+          id: string
           import_id: string
           import_item_id: string
           mapper_version: string
@@ -929,6 +951,7 @@ export type Database = {
           owner_id: string
           parser_version: string
           registry: string
+          replaced_from_version: number | null
           sharing_rights_granted_at: string | null
           sharing_rights_status: string
           source_format: string
@@ -937,7 +960,10 @@ export type Database = {
         }
         Insert: {
           content_id: string
+          content_version: number
           created_at?: string
+          disposition?: string
+          id?: string
           import_id: string
           import_item_id: string
           mapper_version: string
@@ -945,6 +971,7 @@ export type Database = {
           owner_id: string
           parser_version: string
           registry: string
+          replaced_from_version?: number | null
           sharing_rights_granted_at?: string | null
           sharing_rights_status?: string
           source_format: string
@@ -953,7 +980,10 @@ export type Database = {
         }
         Update: {
           content_id?: string
+          content_version?: number
           created_at?: string
+          disposition?: string
+          id?: string
           import_id?: string
           import_item_id?: string
           mapper_version?: string
@@ -961,6 +991,7 @@ export type Database = {
           owner_id?: string
           parser_version?: string
           registry?: string
+          replaced_from_version?: number | null
           sharing_rights_granted_at?: string | null
           sharing_rights_status?: string
           source_format?: string
@@ -971,9 +1002,16 @@ export type Database = {
           {
             foreignKeyName: "content_import_origins_content_id_fkey"
             columns: ["content_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "content_definitions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_import_origins_content_version_fkey"
+            columns: ["content_id", "content_version"]
+            isOneToOne: false
+            referencedRelation: "content_versions"
+            referencedColumns: ["content_id", "version"]
           },
           {
             foreignKeyName: "content_import_origins_import_id_fkey"
@@ -995,6 +1033,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_import_origins_replaced_from_version_fkey"
+            columns: ["content_id", "replaced_from_version"]
+            isOneToOne: false
+            referencedRelation: "content_versions"
+            referencedColumns: ["content_id", "version"]
           },
         ]
       }
@@ -1562,6 +1607,20 @@ export type Database = {
         Args: { target_campaign_id: string }
         Returns: undefined
       }
+      list_mpmb_import_item_conflicts: {
+        Args: { target_import_id: string }
+        Returns: {
+          content_id: string
+          import_item_id: string
+          name: string
+          previously_imported: boolean
+          replaceable: boolean
+          scope: string
+          shared_campaign_count: number
+          slug: string
+          version: number
+        }[]
+      }
       list_owned_content_campaign_access: {
         Args: { target_content_id: string }
         Returns: {
@@ -1597,6 +1656,22 @@ export type Database = {
           mapping_status: string
           revision: number
           selected: boolean
+        }[]
+      }
+      resolve_mpmb_import_item_conflict: {
+        Args: {
+          expected_revision: number
+          resolution_strategy: string
+          target_content_id?: string
+          target_content_version?: number
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          conflict_resolution: string
+          replacement_content_id: string
+          replacement_expected_version: number
+          revision: number
         }[]
       }
       rotate_campaign_invite_code: {

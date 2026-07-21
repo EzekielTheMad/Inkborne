@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileCode2,
+  GitCompareArrows,
   Import,
   LockKeyhole,
   PencilLine,
@@ -28,6 +29,7 @@ interface MpmbImportReviewPageProps {
     committed?: string | string[];
     error?: string | string[];
     repaired?: string | string[];
+    resolved?: string | string[];
   }>;
 }
 
@@ -70,7 +72,13 @@ export default async function MpmbImportReviewPage({
     : null;
   const error = typeof query.error === "string" ? query.error.slice(0, 300) : null;
   const repaired = query.repaired === "1";
+  const resolved = query.resolved === "1";
   const selectedCount = review.items.filter((item) => item.selected).length;
+  const unresolvedSelectedConflicts = review.items.filter((item) =>
+    item.selected
+    && !item.conflictResolved
+    && (item.hasLiveConflict || item.conflictResolution !== null)
+  ).length;
   const completed = review.status === "completed";
 
   return (
@@ -100,7 +108,7 @@ export default async function MpmbImportReviewPage({
         </Badge>
       </div>
 
-      {(Number.isFinite(committed) || repaired || error) && (
+      {(Number.isFinite(committed) || repaired || resolved || error) && (
         <div
           role={error ? "alert" : "status"}
           className={cn(
@@ -113,7 +121,9 @@ export default async function MpmbImportReviewPage({
           {error
             ?? (repaired
               ? "Missing details saved. The review has been updated."
-              : `${committed} ${committed === 1 ? "definition" : "definitions"} added to your private library.`)}
+              : resolved
+                ? "Conflict resolution saved. The review has been updated."
+                : `${committed} ${committed === 1 ? "definition" : "definitions"} added to your private library.`)}
         </div>
       )}
 
@@ -160,7 +170,7 @@ export default async function MpmbImportReviewPage({
             const StatusIcon = presentation.icon;
             return (
               <article key={item.id} className="j-card-paper p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="j-display truncate text-lg text-foreground">
@@ -174,32 +184,54 @@ export default async function MpmbImportReviewPage({
                       {item.userEditedFields.length > 0 && (
                         <Badge variant="secondary">User corrected</Badge>
                       )}
+                      {!item.conflictResolved
+                        && (item.hasLiveConflict || item.conflictResolution !== null) && (
+                        <Badge variant="destructive">Conflict</Badge>
+                      )}
+                      {item.conflictResolved && item.conflictResolution === "keep_both" && (
+                        <Badge variant="secondary">Keep both</Badge>
+                      )}
+                      {item.conflictResolved && item.conflictResolution === "replace" && (
+                        <Badge variant="secondary">Replace</Badge>
+                      )}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.registry}.{item.sourceKey} · line {item.location.line}
                     </p>
                   </div>
 
-                  {item.mappingStatus === "valid" && !completed && review.status === "review" && (
-                    <MpmbImportSelectionButton
-                      importId={review.id}
-                      itemId={item.id}
-                      revision={review.revision}
-                      selected={item.selected}
-                    />
-                  )}
-                  {item.repairable && !completed && review.status === "review" && (
-                    <Link
-                      href={`/library/import/${review.id}/items/${item.id}/edit`}
-                      className={buttonVariants({ variant: "outline", size: "sm" })}
-                    >
-                      <PencilLine className="size-3.5" />
-                      Add missing details
-                    </Link>
-                  )}
-                  {item.committedContentId && (
-                    <Badge variant="secondary">Imported</Badge>
-                  )}
+                  <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:shrink-0 sm:items-end">
+                    {item.mappingStatus === "valid" && !completed && review.status === "review" && (
+                      <MpmbImportSelectionButton
+                        importId={review.id}
+                        itemId={item.id}
+                        revision={review.revision}
+                        selected={item.selected}
+                      />
+                    )}
+                    {item.repairable && !completed && review.status === "review" && (
+                      <Link
+                        href={`/library/import/${review.id}/items/${item.id}/edit`}
+                        className={buttonVariants({ variant: "outline", size: "sm" })}
+                      >
+                        <PencilLine className="size-3.5" />
+                        Add missing details
+                      </Link>
+                    )}
+                    {(item.hasLiveConflict || item.conflictResolution !== null)
+                      && !completed && review.status === "review" && (
+                      <Link
+                        href={`/library/import/${review.id}/items/${item.id}/conflict`}
+                        className={buttonVariants({ variant: "outline", size: "sm" })}
+                      >
+                        <GitCompareArrows className="size-3.5" />
+                        {item.conflictResolved ? "Change resolution" : "Resolve conflict"}
+                      </Link>
+                    )}
+                    {item.committedContentId && (
+                      <Badge variant="secondary">Imported</Badge>
+                    )}
+                  </div>
                 </div>
 
                 {item.diagnostics.length > 0 && (
@@ -227,14 +259,26 @@ export default async function MpmbImportReviewPage({
               <input type="hidden" name="import_id" value={review.id} />
               <Button type="submit" variant="ghost">Cancel import</Button>
             </form>
-            <form action={finishMpmbImport}>
-              <input type="hidden" name="import_id" value={review.id} />
-              <input type="hidden" name="expected_revision" value={review.revision} />
-              <Button type="submit" variant="gold" disabled={selectedCount === 0}>
-                <Import className="size-4" />
-                Import {selectedCount || "selected"}
-              </Button>
-            </form>
+            <div className="flex flex-col items-end gap-1.5">
+              <form action={finishMpmbImport}>
+                <input type="hidden" name="import_id" value={review.id} />
+                <input type="hidden" name="expected_revision" value={review.revision} />
+                <Button
+                  type="submit"
+                  variant="gold"
+                  disabled={selectedCount === 0 || unresolvedSelectedConflicts > 0}
+                >
+                  <Import className="size-4" />
+                  Import {selectedCount || "selected"}
+                </Button>
+              </form>
+              {unresolvedSelectedConflicts > 0 && (
+                <p className="max-w-72 text-right text-xs text-amber-700 dark:text-amber-300">
+                  Resolve {unresolvedSelectedConflicts} selected
+                  {unresolvedSelectedConflicts === 1 ? " conflict" : " conflicts"} before importing.
+                </p>
+              )}
+            </div>
           </>
         ) : (
           <Link href="/library" className={buttonVariants({ variant: "gold" })}>

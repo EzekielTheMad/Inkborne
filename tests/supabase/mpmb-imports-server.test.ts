@@ -10,8 +10,11 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 
 import {
+  getOwnedMpmbImportConflictItem,
+  getOwnedMpmbImportReview,
   getOwnedMpmbImportSpellRepairItem,
   repairMpmbImportSpellItem,
+  resolveMpmbImportItemConflict,
   sanitizeMpmbImportFilename,
   stageMpmbImportFile,
 } from "@/lib/supabase/mpmb-imports-server";
@@ -20,6 +23,8 @@ const USER_ID = "11111111-1111-4111-8111-111111111111";
 const SYSTEM_ID = "22222222-2222-4222-8222-222222222222";
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 const ITEM_ID = "44444444-4444-4444-8444-444444444444";
+const TARGET_ID = "55555555-5555-4555-8555-555555555555";
+const SHARED_TARGET_ID = "66666666-6666-4666-8666-666666666666";
 
 const validSource = `
   // RAW_SENTINEL_DO_NOT_PERSIST
@@ -372,6 +377,316 @@ describe("guided spell repair", () => {
     )).resolves.toEqual({
       status: "conflict",
       message: "This import changed in another session. Reload and try again.",
+    });
+  });
+});
+
+function orderedQueryBuilder(response: DatabaseResponse) {
+  const filters: Array<[string, unknown]> = [];
+  const builder = {
+    select: vi.fn(() => builder),
+    eq: vi.fn((column: string, value: unknown) => {
+      filters.push([column, value]);
+      return builder;
+    }),
+    order: vi.fn().mockResolvedValue(response),
+    maybeSingle: vi.fn().mockResolvedValue(response),
+  };
+  return { builder, filters };
+}
+
+function conflictReviewClient(
+  status: "review" | "completed" = "review",
+  hasLiveConflict = true,
+) {
+  const importQuery = orderedQueryBuilder({
+    data: {
+      id: IMPORT_ID,
+      original_filename: "conflicts.mpmb",
+      source_bytes: 128,
+      source_sha256: "a".repeat(64),
+      parser_version: "1.0.0",
+      mapper_version: "1.0.0",
+      required_sheet_version: null,
+      status,
+      revision: 4,
+      mapping_summary: {
+        valid: 1,
+        needsInfo: 0,
+        unsupported: 0,
+        warnings: 0,
+        blockingIssues: 0,
+      },
+    },
+    error: null,
+  });
+  const itemQuery = orderedQueryBuilder({
+    data: [{
+      id: ITEM_ID,
+      ordinal: 0,
+      registry: "SpellsList",
+      source_key: "ash veil",
+      content_type: "spell",
+      location_line: 2,
+      location_column: 3,
+      mapping_status: "valid",
+      candidate_name: "Ash Veil",
+      candidate_data: { secret_rules_payload: "must-not-cross" },
+      selected: true,
+      committed_content_id: null,
+      diagnostics: [],
+      resolved_diagnostics: [],
+      user_edited_fields: [],
+      user_edited_at: null,
+      conflict_resolution: "replace",
+      replacement_content_id: TARGET_ID,
+      replacement_expected_version: 7,
+    }],
+    error: null,
+  });
+  const rpc = vi.fn().mockResolvedValue({
+    data: hasLiveConflict ? [
+      {
+        import_item_id: ITEM_ID,
+        content_id: TARGET_ID,
+        name: "Ash Veil",
+        slug: "ash-veil",
+        version: 7,
+        scope: "personal",
+        shared_campaign_count: 0,
+        replaceable: true,
+        previously_imported: true,
+      },
+      {
+        import_item_id: ITEM_ID,
+        content_id: SHARED_TARGET_ID,
+        name: "Ash Veil",
+        slug: "ash-veil-shared",
+        version: 2,
+        scope: "shared",
+        shared_campaign_count: 1,
+        replaceable: false,
+        previously_imported: false,
+      },
+    ] : [],
+    error: null,
+  });
+  const from = vi.fn()
+    .mockReturnValueOnce(importQuery.builder)
+    .mockReturnValueOnce(itemQuery.builder);
+  return { client: authenticatedClient({ from, rpc }), importQuery, itemQuery, rpc };
+}
+
+describe("MPMB import conflict resolution", () => {
+  it("does not ask the open-import RPC to resolve completed review conflicts", async () => {
+    const db = conflictReviewClient("completed");
+    createClientMock.mockResolvedValue(db.client);
+
+    const review = await getOwnedMpmbImportReview(IMPORT_ID);
+
+    expect(review?.status).toBe("completed");
+    expect(review?.items[0]).toMatchObject({
+      conflicts: [],
+      hasLiveConflict: false,
+      conflictResolved: true,
+      conflictResolution: "replace",
+      replacementContentId: TARGET_ID,
+      replacementExpectedVersion: 7,
+    });
+    expect(db.rpc).not.toHaveBeenCalled();
+  });
+
+  it("loads one sanitized conflict batch and never returns candidate JSON", async () => {
+    const db = conflictReviewClient();
+    createClientMock.mockResolvedValue(db.client);
+
+    const review = await getOwnedMpmbImportReview(IMPORT_ID);
+
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(db.rpc).toHaveBeenCalledWith("list_mpmb_import_item_conflicts", {
+      target_import_id: IMPORT_ID,
+    });
+    expect(db.importQuery.filters).toEqual([
+      ["id", IMPORT_ID],
+      ["owner_id", USER_ID],
+    ]);
+    expect(db.itemQuery.filters).toEqual([["import_id", IMPORT_ID]]);
+    expect(review?.items[0]).toMatchObject({
+      conflictResolution: "replace",
+      replacementContentId: TARGET_ID,
+      replacementExpectedVersion: 7,
+      hasLiveConflict: true,
+      conflictResolved: true,
+      conflicts: [
+        {
+          id: TARGET_ID,
+          name: "Ash Veil",
+          version: 7,
+          scope: "personal",
+          sharedCampaignCount: 0,
+          previouslyImported: true,
+          replaceable: true,
+        },
+        {
+          id: SHARED_TARGET_ID,
+          scope: "shared",
+          sharedCampaignCount: 1,
+          previouslyImported: false,
+          replaceable: false,
+        },
+      ],
+    });
+    expect(JSON.stringify(review)).not.toContain("candidate_data");
+    expect(JSON.stringify(review)).not.toContain("must-not-cross");
+    expect(JSON.stringify(review)).not.toContain("ash-veil-shared");
+  });
+
+  it("normalizes a saved choice away after its live conflict disappears", async () => {
+    const db = conflictReviewClient("review", false);
+    createClientMock.mockResolvedValue(db.client);
+
+    const review = await getOwnedMpmbImportReview(IMPORT_ID);
+
+    expect(review?.items[0]).toMatchObject({
+      hasLiveConflict: false,
+      conflictResolved: false,
+      conflictResolution: null,
+      replacementContentId: null,
+      replacementExpectedVersion: null,
+      conflicts: [],
+    });
+  });
+
+  it("does not expose the conflict route after every live match disappears", async () => {
+    const db = conflictReviewClient("review", false);
+    createClientMock.mockResolvedValue(db.client);
+
+    await expect(
+      getOwnedMpmbImportConflictItem(IMPORT_ID, ITEM_ID),
+    ).resolves.toBeNull();
+  });
+
+  it("returns a conflict-page DTO with the same sanitized targets", async () => {
+    const db = conflictReviewClient();
+    createClientMock.mockResolvedValue(db.client);
+
+    const item = await getOwnedMpmbImportConflictItem(IMPORT_ID, ITEM_ID);
+
+    expect(item).toMatchObject({
+      importId: IMPORT_ID,
+      itemId: ITEM_ID,
+      revision: 4,
+      candidateName: "Ash Veil",
+      contentType: "spell",
+      conflictResolution: "replace",
+      replacementContentId: TARGET_ID,
+      replacementExpectedVersion: 7,
+      conflicts: expect.any(Array),
+    });
+    expect(JSON.stringify(item)).not.toContain("candidate_data");
+    expect(JSON.stringify(item)).not.toContain("must-not-cross");
+  });
+
+  it("validates the exact choice shape before calling the resolution RPC", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    await expect(resolveMpmbImportItemConflict(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      "keep_both",
+      TARGET_ID,
+      7,
+    )).resolves.toEqual({
+      status: "error",
+      message: "The conflict choice is invalid.",
+    });
+    await expect(resolveMpmbImportItemConflict(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      "replace",
+    )).resolves.toEqual({
+      status: "error",
+      message: "The conflict choice is invalid.",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("requires an authenticated session before resolving a conflict", async () => {
+    const db = makeClient(false);
+    createClientMock.mockResolvedValue(db.client);
+
+    await expect(resolveMpmbImportItemConflict(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      "keep_both",
+    )).resolves.toEqual({
+      status: "error",
+      message: "Sign in to resolve this import conflict.",
+    });
+    expect(db.rpc).not.toHaveBeenCalled();
+  });
+
+  it("sends only IDs, revisions, and strategy to the resolution RPC", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [{ revision: 5 }], error: null });
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    await expect(resolveMpmbImportItemConflict(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      "replace",
+      TARGET_ID,
+      7,
+    )).resolves.toEqual({ status: "success", importId: IMPORT_ID });
+    expect(rpc).toHaveBeenCalledWith("resolve_mpmb_import_item_conflict", {
+      target_import_id: IMPORT_ID,
+      target_item_id: ITEM_ID,
+      expected_revision: 4,
+      resolution_strategy: "replace",
+      target_content_id: TARGET_ID,
+      target_content_version: 7,
+    });
+    expect(JSON.stringify(rpc.mock.calls)).not.toContain("candidate");
+  });
+
+  it("maps stale and shared targets to recoverable, non-leaking conflicts", async () => {
+    const rpc = vi.fn();
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: "40001", message: "Replacement target changed in another session: private detail" },
+    });
+    await expect(resolveMpmbImportItemConflict(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      "replace",
+      TARGET_ID,
+      7,
+    )).resolves.toEqual({
+      status: "conflict",
+      message: "This import or replacement changed in another session. Reload and try again.",
+    });
+
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: "42501", message: "Shared content must be unshared before replacement: private detail" },
+    });
+    await expect(resolveMpmbImportItemConflict(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      "replace",
+      SHARED_TARGET_ID,
+      2,
+    )).resolves.toEqual({
+      status: "conflict",
+      message: "That definition is shared with a campaign. Unshare it or keep both.",
     });
   });
 });

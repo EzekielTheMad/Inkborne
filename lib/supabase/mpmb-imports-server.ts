@@ -38,6 +38,18 @@ export type MpmbImportMutationResult =
   | { status: "success"; importId: string; importedCount?: number }
   | { status: "error" | "conflict"; message: string };
 
+export type MpmbImportConflictResolution = "keep_both" | "replace";
+
+export interface MpmbImportConflictTarget {
+  id: string;
+  name: string;
+  version: number;
+  scope: "personal" | "shared";
+  sharedCampaignCount: number;
+  previouslyImported: boolean;
+  replaceable: boolean;
+}
+
 export interface MpmbImportReviewItem {
   id: string;
   ordinal: number;
@@ -50,6 +62,12 @@ export interface MpmbImportReviewItem {
   selected: boolean;
   committedContentId: string | null;
   repairable: boolean;
+  conflictResolution: MpmbImportConflictResolution | null;
+  replacementContentId: string | null;
+  replacementExpectedVersion: number | null;
+  conflicts: MpmbImportConflictTarget[];
+  hasLiveConflict: boolean;
+  conflictResolved: boolean;
   userEditedFields: string[];
   userEditedAt: string | null;
   diagnostics: Array<{
@@ -58,6 +76,18 @@ export interface MpmbImportReviewItem {
     path?: string;
     message?: string;
   }>;
+}
+
+export interface MpmbImportConflictItem {
+  importId: string;
+  itemId: string;
+  revision: number;
+  candidateName: string;
+  contentType: "spell" | "feat";
+  conflictResolution: MpmbImportConflictResolution | null;
+  replacementContentId: string | null;
+  replacementExpectedVersion: number | null;
+  conflicts: MpmbImportConflictTarget[];
 }
 
 export interface MpmbImportSpellRepairItem {
@@ -151,6 +181,47 @@ const reviewItemSchema = z.object({
   resolved_diagnostics: z.array(reviewDiagnosticSchema),
   user_edited_fields: z.array(z.string()),
   user_edited_at: z.string().nullable(),
+  conflict_resolution: z.enum(["keep_both", "replace"]).nullable(),
+  replacement_content_id: z.string().uuid().nullable(),
+  replacement_expected_version: z.number().int().positive().nullable(),
+});
+
+const conflictRpcRowSchema = z.object({
+  import_item_id: z.string().uuid(),
+  content_id: z.string().uuid(),
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  version: z.number().int().positive(),
+  scope: z.enum(["personal", "shared"]),
+  shared_campaign_count: z.coerce.number().int().nonnegative(),
+  replaceable: z.boolean(),
+  previously_imported: z.boolean(),
+}).strict();
+
+const conflictResolutionInputSchema = z.object({
+  importId: z.string().uuid(),
+  itemId: z.string().uuid(),
+  expectedRevision: z.number().int().positive(),
+  strategy: z.enum(["keep_both", "replace"]),
+  replacementContentId: z.string().uuid().nullable(),
+  replacementExpectedVersion: z.number().int().positive().nullable(),
+}).strict().superRefine((value, context) => {
+  const hasTarget = value.replacementContentId !== null;
+  const hasVersion = value.replacementExpectedVersion !== null;
+  if (value.strategy === "keep_both" && (hasTarget || hasVersion)) {
+    context.addIssue({
+      code: "custom",
+      path: ["strategy"],
+      message: "Keep both cannot include a replacement target.",
+    });
+  }
+  if (value.strategy === "replace" && (!hasTarget || !hasVersion)) {
+    context.addIssue({
+      code: "custom",
+      path: ["replacementContentId"],
+      message: "Choose the exact definition to replace.",
+    });
+  }
 });
 
 const spellRepairPatchSchema = z.object({
@@ -223,6 +294,84 @@ function databaseFailure(error: { code?: string; message?: string } | null) {
   return {
     status: "error" as const,
     message: "The import could not be saved. Please try again.",
+  };
+}
+
+type DatabaseError = { code?: string; message?: string };
+
+async function listOwnedMpmbImportConflicts(
+  supabase: ServerSupabaseClient,
+  importId: string,
+): Promise<Map<string, MpmbImportConflictTarget[]>> {
+  const { data, error } = await supabase.rpc("list_mpmb_import_item_conflicts", {
+    target_import_id: importId,
+  });
+  if (error) throw new Error("Import conflicts could not be loaded.");
+
+  const parsed = z.array(conflictRpcRowSchema).safeParse(data ?? []);
+  if (!parsed.success) {
+    throw new Error("The database returned invalid import conflicts.");
+  }
+
+  const grouped = new Map<string, MpmbImportConflictTarget[]>();
+  for (const row of parsed.data) {
+    const target: MpmbImportConflictTarget = {
+      id: row.content_id,
+      name: row.name,
+      version: row.version,
+      scope: row.scope,
+      sharedCampaignCount: row.shared_campaign_count,
+      previouslyImported: row.previously_imported,
+      replaceable: row.replaceable,
+    };
+    const existing = grouped.get(row.import_item_id);
+    if (existing) existing.push(target);
+    else grouped.set(row.import_item_id, [target]);
+  }
+  return grouped;
+}
+
+function isResolvedLiveConflict(
+  resolution: MpmbImportConflictResolution | null,
+  replacementContentId: string | null,
+  replacementExpectedVersion: number | null,
+  conflicts: MpmbImportConflictTarget[],
+): boolean {
+  if (conflicts.length === 0 || resolution === null) return false;
+  if (resolution === "keep_both") return true;
+  return conflicts.some(
+    (target) => target.id === replacementContentId
+      && target.version === replacementExpectedVersion
+      && target.replaceable,
+  );
+}
+
+function conflictResolutionFailure(error: DatabaseError | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+  if (/share|campaign/.test(message)) {
+    return {
+      status: "conflict" as const,
+      message: "That definition is shared with a campaign. Unshare it or keep both.",
+    };
+  }
+  if (
+    error?.code === "40001"
+    || (error?.code === "P0001" && /(stale|version|conflict|changed)/.test(message))
+  ) {
+    return {
+      status: "conflict" as const,
+      message: "This import or replacement changed in another session. Reload and try again.",
+    };
+  }
+  if (error?.code === "P0001" && /(target|replace|available|valid)/.test(message)) {
+    return {
+      status: "conflict" as const,
+      message: "That replacement is no longer available. Reload and choose again.",
+    };
+  }
+  return {
+    status: "error" as const,
+    message: "The conflict choice could not be saved. Please try again.",
   };
 }
 
@@ -333,17 +482,23 @@ export async function getOwnedMpmbImportReview(
     .maybeSingle();
   if (importError) throw importError;
   if (!importData) return null;
+  const envelope = importEnvelopeSchema.parse(importData);
 
-  const { data: itemData, error: itemError } = await session.supabase
-    .from("content_import_items")
-    .select(
-      "id, ordinal, registry, source_key, content_type, location_line, location_column, mapping_status, candidate_name, candidate_data, selected, committed_content_id, diagnostics, resolved_diagnostics, user_edited_fields, user_edited_at",
-    )
-    .eq("import_id", id.data)
-    .order("ordinal");
+  const [itemResult, conflictsByItem] = await Promise.all([
+    session.supabase
+      .from("content_import_items")
+      .select(
+        "id, ordinal, registry, source_key, content_type, location_line, location_column, mapping_status, candidate_name, candidate_data, selected, committed_content_id, diagnostics, resolved_diagnostics, user_edited_fields, user_edited_at, conflict_resolution, replacement_content_id, replacement_expected_version",
+      )
+      .eq("import_id", id.data)
+      .order("ordinal"),
+    envelope.status === "review"
+      ? listOwnedMpmbImportConflicts(session.supabase, id.data)
+      : Promise.resolve(new Map<string, MpmbImportConflictTarget[]>()),
+  ]);
+  const { data: itemData, error: itemError } = itemResult;
   if (itemError) throw itemError;
 
-  const envelope = importEnvelopeSchema.parse(importData);
   const items = z.array(reviewItemSchema).parse(itemData ?? []);
   return {
     id: envelope.id,
@@ -356,35 +511,66 @@ export async function getOwnedMpmbImportReview(
     status: envelope.status,
     revision: envelope.revision,
     summary: envelope.mapping_summary,
-    items: items.map((item) => ({
-      id: item.id,
-      ordinal: item.ordinal,
-      registry: item.registry,
-      sourceKey: item.source_key,
-      contentType: item.content_type,
-      location: { line: item.location_line, column: item.location_column },
-      mappingStatus: item.mapping_status,
-      candidateName: item.candidate_name,
-      selected: item.selected,
-      committedContentId: item.committed_content_id,
-      repairable: envelope.status === "review"
-        && item.mapping_status === "needs_info"
-        && item.content_type === "spell"
-        && item.candidate_data !== null
-        && spellDataSchema.safeParse(item.candidate_data).success
-        && item.committed_content_id === null
-        && item.diagnostics.some(
-          (diagnostic) =>
-            diagnostic.severity === "blocking"
-            && (
-              diagnostic.code === MATERIAL_REPAIR_CODE
-              || diagnostic.code === SAVE_REPAIR_CODE
+    items: items.map((item) => {
+      const conflicts = conflictsByItem.get(item.id) ?? [];
+      // A saved choice is no longer actionable once every live same-name
+      // definition disappears. Normalize stale persistence out of the DTO so
+      // the review does not block a now-conflict-free item or offer a dead
+      // replacement link. Commit independently rechecks live conflicts.
+      const staleOpenResolution = envelope.status === "review"
+        && conflicts.length === 0;
+      const conflictResolution = staleOpenResolution
+        ? null
+        : item.conflict_resolution;
+      const replacementContentId = staleOpenResolution
+        ? null
+        : item.replacement_content_id;
+      const replacementExpectedVersion = staleOpenResolution
+        ? null
+        : item.replacement_expected_version;
+      return {
+        id: item.id,
+        ordinal: item.ordinal,
+        registry: item.registry,
+        sourceKey: item.source_key,
+        contentType: item.content_type,
+        location: { line: item.location_line, column: item.location_column },
+        mappingStatus: item.mapping_status,
+        candidateName: item.candidate_name,
+        selected: item.selected,
+        committedContentId: item.committed_content_id,
+        repairable: envelope.status === "review"
+          && item.mapping_status === "needs_info"
+          && item.content_type === "spell"
+          && item.candidate_data !== null
+          && spellDataSchema.safeParse(item.candidate_data).success
+          && item.committed_content_id === null
+          && item.diagnostics.some(
+            (diagnostic) =>
+              diagnostic.severity === "blocking"
+              && (
+                diagnostic.code === MATERIAL_REPAIR_CODE
+                || diagnostic.code === SAVE_REPAIR_CODE
+              ),
+          ),
+        conflictResolution,
+        replacementContentId,
+        replacementExpectedVersion,
+        conflicts,
+        hasLiveConflict: conflicts.length > 0,
+        conflictResolved: envelope.status !== "review"
+          ? conflictResolution !== null
+          : isResolvedLiveConflict(
+              conflictResolution,
+              replacementContentId,
+              replacementExpectedVersion,
+              conflicts,
             ),
-        ),
-      userEditedFields: item.user_edited_fields,
-      userEditedAt: item.user_edited_at,
-      diagnostics: item.diagnostics,
-    })),
+        userEditedFields: item.user_edited_fields,
+        userEditedAt: item.user_edited_at,
+        diagnostics: item.diagnostics,
+      };
+    }),
   };
 }
 
@@ -470,6 +656,47 @@ export async function getOwnedMpmbImportSpellRepairItem(
   };
 }
 
+export async function getOwnedMpmbImportConflictItem(
+  importId: string,
+  itemId: string,
+): Promise<MpmbImportConflictItem | null> {
+  const identifiers = z.object({
+    importId: z.string().uuid(),
+    itemId: z.string().uuid(),
+  }).strict().safeParse({ importId, itemId });
+  if (!identifiers.success) return null;
+
+  // Reuse the owned review DTO so this route receives the same live conflict
+  // calculation as the review page. Candidate data is consumed only inside
+  // the server-only DAL and is deliberately absent from the returned object.
+  const review = await getOwnedMpmbImportReview(identifiers.data.importId);
+  if (!review || review.status !== "review") return null;
+  const item = review.items.find(
+    (candidate) => candidate.id === identifiers.data.itemId,
+  );
+  if (
+    !item
+    || item.mappingStatus !== "valid"
+    || item.committedContentId !== null
+    || item.candidateName === null
+    || (item.conflicts.length === 0 && item.conflictResolution === null)
+  ) {
+    return null;
+  }
+
+  return {
+    importId: review.id,
+    itemId: item.id,
+    revision: review.revision,
+    candidateName: item.candidateName,
+    contentType: item.contentType,
+    conflictResolution: item.conflictResolution,
+    replacementContentId: item.replacementContentId,
+    replacementExpectedVersion: item.replacementExpectedVersion,
+    conflicts: item.conflicts,
+  };
+}
+
 export async function repairMpmbImportSpellItem(
   importId: string,
   itemId: string,
@@ -526,6 +753,42 @@ export async function setMpmbImportItemSelected(
     expected_revision: input.data.expectedRevision,
   });
   if (error) return databaseFailure(error);
+  return { status: "success", importId: input.data.importId };
+}
+
+export async function resolveMpmbImportItemConflict(
+  importId: string,
+  itemId: string,
+  expectedRevision: number,
+  strategy: MpmbImportConflictResolution,
+  replacementContentId: string | null = null,
+  replacementExpectedVersion: number | null = null,
+): Promise<MpmbImportMutationResult> {
+  const session = await authenticatedSession();
+  if (!session) {
+    return { status: "error", message: "Sign in to resolve this import conflict." };
+  }
+  const input = conflictResolutionInputSchema.safeParse({
+    importId,
+    itemId,
+    expectedRevision,
+    strategy,
+    replacementContentId,
+    replacementExpectedVersion,
+  });
+  if (!input.success) {
+    return { status: "error", message: "The conflict choice is invalid." };
+  }
+
+  const { error } = await session.supabase.rpc("resolve_mpmb_import_item_conflict", {
+    target_import_id: input.data.importId,
+    target_item_id: input.data.itemId,
+    expected_revision: input.data.expectedRevision,
+    resolution_strategy: input.data.strategy,
+    target_content_id: input.data.replacementContentId ?? undefined,
+    target_content_version: input.data.replacementExpectedVersion ?? undefined,
+  });
+  if (error) return conflictResolutionFailure(error);
   return { status: "success", importId: input.data.importId };
 }
 

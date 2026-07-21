@@ -60,6 +60,12 @@ const review = {
       selected: true,
       committedContentId: null,
       repairable: false,
+      conflictResolution: null,
+      replacementContentId: null,
+      replacementExpectedVersion: null,
+      conflicts: [],
+      hasLiveConflict: false,
+      conflictResolved: false,
       userEditedFields: [],
       userEditedAt: null,
       diagnostics: [{
@@ -80,6 +86,12 @@ const review = {
       selected: false,
       committedContentId: null,
       repairable: false,
+      conflictResolution: null,
+      replacementContentId: null,
+      replacementExpectedVersion: null,
+      conflicts: [],
+      hasLiveConflict: false,
+      conflictResolved: false,
       userEditedFields: [],
       userEditedAt: null,
       diagnostics: [{
@@ -100,6 +112,12 @@ const review = {
       selected: false,
       committedContentId: null,
       repairable: true,
+      conflictResolution: null,
+      replacementContentId: null,
+      replacementExpectedVersion: null,
+      conflicts: [],
+      hasLiveConflict: false,
+      conflictResolved: false,
       userEditedFields: [],
       userEditedAt: null,
       diagnostics: [{
@@ -161,6 +179,65 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.queryByRole("button", { name: /Import/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Add missing details" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View library" })).toBeVisible();
+  });
+
+  it("blocks commit until a selected live conflict has an explicit resolution", async () => {
+    mocks.getReview.mockResolvedValue({
+      ...review,
+      items: review.items.map((item, index) => index === 0
+        ? {
+            ...item,
+            hasLiveConflict: true,
+            conflictResolved: false,
+            conflicts: [{
+              id: "88888888-8888-4888-8888-888888888888",
+              name: "Ember Ward",
+              version: 2,
+              scope: "personal",
+              sharedCampaignCount: 0,
+              previouslyImported: false,
+              replaceable: true,
+            }],
+          }
+        : item),
+    });
+
+    render(await MpmbImportReviewPage({
+      params: Promise.resolve({ id: IMPORT_ID }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByText("Conflict")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Resolve conflict" })).toHaveAttribute(
+      "href",
+      `/library/import/${IMPORT_ID}/items/44444444-4444-4444-8444-444444444444/conflict`,
+    );
+    expect(screen.getByRole("button", { name: "Import 1" })).toBeDisabled();
+    expect(screen.getByText(/Resolve 1 selected conflict/)).toBeVisible();
+  });
+
+  it("shows a resolved keep-both choice and allows commit", async () => {
+    mocks.getReview.mockResolvedValue({
+      ...review,
+      items: review.items.map((item, index) => index === 0
+        ? {
+            ...item,
+            hasLiveConflict: true,
+            conflictResolution: "keep_both" as const,
+            conflictResolved: true,
+          }
+        : item),
+    });
+
+    render(await MpmbImportReviewPage({
+      params: Promise.resolve({ id: IMPORT_ID }),
+      searchParams: Promise.resolve({ resolved: "1" }),
+    }));
+
+    expect(screen.getByText("Conflict resolution saved. The review has been updated.")).toBeVisible();
+    expect(screen.getByText("Keep both")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Change resolution" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Import 1" })).toBeEnabled();
   });
 
   it("does not reveal another user's missing review", async () => {

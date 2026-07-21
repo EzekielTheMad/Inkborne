@@ -8,6 +8,7 @@ import {
   cancelMpmbImport,
   commitMpmbImport,
   repairMpmbImportSpellItem,
+  resolveMpmbImportItemConflict,
   setMpmbImportItemSelected,
   stageMpmbImportFile,
   type MpmbImportMutationResult,
@@ -22,6 +23,50 @@ export interface MpmbSpellRepairActionState {
   message: string;
   fieldErrors?: Record<string, string[] | undefined>;
 }
+
+export interface MpmbImportConflictActionState {
+  status: "idle" | "error" | "conflict";
+  message: string;
+  fieldErrors?: Record<string, string[] | undefined>;
+}
+
+const nullableUuid = z.preprocess(
+  (value) => value === "" || value === null ? null : value,
+  z.string().uuid("Choose a valid replacement.").nullable(),
+);
+
+const nullablePositiveInteger = z.preprocess(
+  (value) => value === "" || value === null ? null : value,
+  z.coerce.number().int().positive().nullable(),
+);
+
+const conflictResolutionFormSchema = z.object({
+  import_id: z.string().uuid("The import identifier is invalid."),
+  item_id: z.string().uuid("The item identifier is invalid."),
+  expected_revision: z.coerce.number().int().positive(),
+  strategy: z.enum(["keep_both", "replace"], {
+    message: "Choose whether to keep both or replace a definition.",
+  }),
+  target_content_id: nullableUuid,
+  target_content_version: nullablePositiveInteger,
+}).strict().superRefine((value, context) => {
+  const hasTarget = value.target_content_id !== null;
+  const hasVersion = value.target_content_version !== null;
+  if (value.strategy === "keep_both" && (hasTarget || hasVersion)) {
+    context.addIssue({
+      code: "custom",
+      path: ["strategy"],
+      message: "Keep both cannot include a replacement target.",
+    });
+  }
+  if (value.strategy === "replace" && (!hasTarget || !hasVersion)) {
+    context.addIssue({
+      code: "custom",
+      path: ["target_content_id"],
+      message: "Choose the exact definition to replace.",
+    });
+  }
+});
 
 const spellRepairFormSchema = z.object({
   import_id: z.string().uuid("The import identifier is invalid."),
@@ -162,6 +207,44 @@ export async function repairMpmbImportSpell(
 
   revalidatePath(`/library/import/${parsed.data.import_id}`);
   redirect(`/library/import/${parsed.data.import_id}?repaired=1`);
+}
+
+export async function resolveMpmbImportConflict(
+  _previousState: MpmbImportConflictActionState,
+  formData: FormData,
+): Promise<MpmbImportConflictActionState> {
+  const parsed = conflictResolutionFormSchema.safeParse({
+    import_id: formData.get("import_id"),
+    item_id: formData.get("item_id"),
+    expected_revision: formData.get("expected_revision"),
+    strategy: formData.get("strategy"),
+    target_content_id: formData.get("target_content_id"),
+    target_content_version: formData.get("target_content_version"),
+  });
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Correct the highlighted conflict choice.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const result = await resolveMpmbImportItemConflict(
+    parsed.data.import_id,
+    parsed.data.item_id,
+    parsed.data.expected_revision,
+    parsed.data.strategy,
+    parsed.data.target_content_id,
+    parsed.data.target_content_version,
+  );
+  if (result.status !== "success") {
+    return { status: result.status, message: result.message };
+  }
+
+  const reviewPath = `/library/import/${parsed.data.import_id}`;
+  revalidatePath(reviewPath);
+  revalidatePath(`${reviewPath}/items/${parsed.data.item_id}/conflict`);
+  redirect(`${reviewPath}?resolved=1`);
 }
 
 export async function finishMpmbImport(formData: FormData): Promise<void> {

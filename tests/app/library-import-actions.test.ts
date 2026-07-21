@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   stage: vi.fn(),
   toggle: vi.fn(),
   repair: vi.fn(),
+  resolveConflict: vi.fn(),
   commit: vi.fn(),
   cancel: vi.fn(),
   revalidatePath: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock("@/lib/supabase/mpmb-imports-server", () => ({
   stageMpmbImportFile: mocks.stage,
   setMpmbImportItemSelected: mocks.toggle,
   repairMpmbImportSpellItem: mocks.repair,
+  resolveMpmbImportItemConflict: mocks.resolveConflict,
   commitMpmbImport: mocks.commit,
   cancelMpmbImport: mocks.cancel,
 }));
@@ -26,14 +28,17 @@ import {
   abandonMpmbImport,
   finishMpmbImport,
   repairMpmbImportSpell,
+  resolveMpmbImportConflict,
   startMpmbImport,
   toggleMpmbImportItem,
 } from "@/app/(app)/library/import/actions";
 
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 const ITEM_ID = "44444444-4444-4444-8444-444444444444";
+const TARGET_ID = "55555555-5555-4555-8555-555555555555";
 const idle = { status: "idle" as const };
 const idleRepair = { status: "idle" as const, message: "" };
+const idleConflict = { status: "idle" as const, message: "" };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -144,6 +149,103 @@ describe("MPMB import actions", () => {
       status: "conflict",
       message: "This import changed in another session. Reload and try again.",
     });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed conflict choices before invoking the data layer", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "3");
+    formData.set("strategy", "merge");
+    formData.set("target_content_id", "not-a-uuid");
+    formData.set("target_content_version", "0");
+
+    await expect(
+      resolveMpmbImportConflict(idleConflict, formData),
+    ).resolves.toMatchObject({ status: "error", fieldErrors: expect.any(Object) });
+    expect(mocks.resolveConflict).not.toHaveBeenCalled();
+  });
+
+  it("accepts only the documented conflict FormData field names", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "3");
+    formData.set("resolution", "replace");
+    formData.set("replacement_content_id", TARGET_ID);
+    formData.set("replacement_expected_version", "7");
+
+    await expect(
+      resolveMpmbImportConflict(idleConflict, formData),
+    ).resolves.toMatchObject({ status: "error" });
+    expect(mocks.resolveConflict).not.toHaveBeenCalled();
+  });
+
+  it("submits only exact replacement identity, revalidates, then redirects", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "3");
+    formData.set("strategy", "replace");
+    formData.set("target_content_id", TARGET_ID);
+    formData.set("target_content_version", "7");
+    formData.set("candidate_data", JSON.stringify({ secret: "must-not-cross" }));
+    mocks.resolveConflict.mockResolvedValue({
+      status: "success",
+      importId: IMPORT_ID,
+    });
+
+    await expect(
+      resolveMpmbImportConflict(idleConflict, formData),
+    ).rejects.toThrow(`REDIRECT:/library/import/${IMPORT_ID}?resolved=1`);
+    expect(mocks.resolveConflict).toHaveBeenCalledWith(
+      IMPORT_ID,
+      ITEM_ID,
+      3,
+      "replace",
+      TARGET_ID,
+      7,
+    );
+    expect(JSON.stringify(mocks.resolveConflict.mock.calls)).not.toContain(
+      "must-not-cross",
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(
+      `/library/import/${IMPORT_ID}`,
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(
+      `/library/import/${IMPORT_ID}/items/${ITEM_ID}/conflict`,
+    );
+    expect(mocks.revalidatePath.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      mocks.redirect.mock.invocationCallOrder.at(-1)!,
+    );
+  });
+
+  it("submits keep-both without trusting a replacement target", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "3");
+    formData.set("strategy", "keep_both");
+    mocks.resolveConflict.mockResolvedValue({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
+
+    await expect(
+      resolveMpmbImportConflict(idleConflict, formData),
+    ).resolves.toEqual({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
+    expect(mocks.resolveConflict).toHaveBeenCalledWith(
+      IMPORT_ID,
+      ITEM_ID,
+      3,
+      "keep_both",
+      null,
+      null,
+    );
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
