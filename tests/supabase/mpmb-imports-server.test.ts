@@ -2,16 +2,20 @@ import { createHash } from "node:crypto";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createClientMock } = vi.hoisted(() => ({
+const { createAdminClientMock, createClientMock } = vi.hoisted(() => ({
+  createAdminClientMock: vi.fn(),
   createClientMock: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("@supabase/supabase-js", () => ({ createClient: createAdminClientMock }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 
 import {
   commitMpmbImport,
+  confirmOwnedMpmbImportPreview,
   getOwnedMpmbImportConflictItem,
+  getOwnedMpmbImportPreview,
   getOwnedMpmbImportReview,
   getOwnedMpmbImportSpellRepairItem,
   repairMpmbImportSpellItem,
@@ -19,6 +23,7 @@ import {
   sanitizeMpmbImportFilename,
   stageMpmbImportFile,
 } from "@/lib/supabase/mpmb-imports-server";
+import { featDataSchema } from "@/lib/schemas/content-types/feat";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const SYSTEM_ID = "22222222-2222-4222-8222-222222222222";
@@ -95,7 +100,9 @@ function makeClient(
 }
 
 beforeEach(() => {
+  createAdminClientMock.mockReset();
   createClientMock.mockReset();
+  vi.unstubAllEnvs();
 });
 
 describe("sanitizeMpmbImportFilename", () => {
@@ -404,11 +411,182 @@ function orderedQueryBuilder(response: DatabaseResponse) {
       filters.push([column, value]);
       return builder;
     }),
+    is: vi.fn((column: string, value: unknown) => {
+      filters.push([column, value]);
+      return builder;
+    }),
     order: vi.fn().mockResolvedValue(response),
     maybeSingle: vi.fn().mockResolvedValue(response),
   };
   return { builder, filters };
 }
+
+const PREVIEW_SCHEMA = {
+  ability_scores: [
+    { slug: "strength", name: "Strength", abbr: "STR" },
+    { slug: "dexterity", name: "Dexterity", abbr: "DEX" },
+    { slug: "constitution", name: "Constitution", abbr: "CON" },
+    { slug: "intelligence", name: "Intelligence", abbr: "INT" },
+    { slug: "wisdom", name: "Wisdom", abbr: "WIS" },
+    { slug: "charisma", name: "Charisma", abbr: "CHA" },
+  ],
+  proficiency_levels: [{ slug: "proficient", name: "Proficient", multiplier: 1 }],
+  derived_stats: [{ slug: "armor_class", name: "Armor Class", formula: "10 + mod(dexterity)" }],
+  skills: [],
+  resources: [],
+  content_types: [{ slug: "feat", name: "Feat" }],
+  currencies: [],
+  creation_steps: [{ step: 1, type: "details", label: "Details" }],
+  sheet_sections: [{ slug: "header", label: "Header" }],
+};
+
+const PREVIEW_FEAT_DATA = featDataSchema.parse({
+  description: "RAW_PREVIEW_RULES_SENTINEL",
+  prerequisites: [],
+  speed: { walk: 5 },
+  vision: [],
+  dmgres: [],
+  skills: [],
+  weaponProfs: [],
+  armorProfs: [],
+  toolProfs: [],
+  languageProfs: [],
+  spellcastingBonus: [],
+  extraLimitedFeatures: [],
+  calcChanges: [],
+  addMod: [],
+  source_refs: [],
+});
+
+function previewReviewClient({
+  previewRevision = null,
+  effects = [{ type: "mechanical", stat: "armor_class", op: "add", value: 1 }],
+}: {
+  previewRevision?: number | null;
+  effects?: unknown[];
+} = {}) {
+  const importQuery = orderedQueryBuilder({
+    data: {
+      id: IMPORT_ID,
+      original_filename: "preview.mpmb",
+      owner_id: USER_ID,
+      system_id: SYSTEM_ID,
+      status: "review",
+      revision: 4,
+      preview_validated_revision: previewRevision,
+    },
+    error: null,
+  });
+  const systemQuery = orderedQueryBuilder({
+    data: { schema_definition: PREVIEW_SCHEMA },
+    error: null,
+  });
+  const itemQuery = orderedQueryBuilder({
+    data: [{
+      id: ITEM_ID,
+      ordinal: 0,
+      source_key: "steadfast adept",
+      content_type: "feat",
+      candidate_name: "Steadfast Adept",
+      candidate_slug: "steadfast-adept",
+      candidate_data: PREVIEW_FEAT_DATA,
+      candidate_effects: effects,
+    }],
+    error: null,
+  });
+  const from = vi.fn()
+    .mockReturnValueOnce(importQuery.builder)
+    .mockReturnValueOnce(systemQuery.builder)
+    .mockReturnValueOnce(itemQuery.builder);
+  return {
+    client: authenticatedClient({ from }),
+    importQuery,
+    itemQuery,
+  };
+}
+
+describe("MPMB import calculation preview", () => {
+  it("loads owner-only candidates but returns only sanitized calculation output", async () => {
+    const db = previewReviewClient();
+    createClientMock.mockResolvedValue(db.client);
+
+    const preview = await getOwnedMpmbImportPreview(IMPORT_ID);
+
+    expect(db.importQuery.filters).toEqual([
+      ["id", IMPORT_ID],
+      ["owner_id", USER_ID],
+    ]);
+    expect(db.itemQuery.filters).toContainEqual(["import_id", IMPORT_ID]);
+    expect(preview).toMatchObject({
+      id: IMPORT_ID,
+      revision: 4,
+      previewValidated: false,
+      calculation: {
+        passed: true,
+        items: [{
+          id: ITEM_ID,
+          contentType: "feat",
+          status: "passed",
+        }],
+      },
+    });
+    const serialized = JSON.stringify(preview);
+    expect(serialized).not.toContain("candidate_data");
+    expect(serialized).not.toContain("candidate_effects");
+  });
+
+  it("reports a current validation stamp only for the same revision", async () => {
+    const db = previewReviewClient({ previewRevision: 4 });
+    createClientMock.mockResolvedValue(db.client);
+
+    await expect(getOwnedMpmbImportPreview(IMPORT_ID)).resolves.toMatchObject({
+      previewValidated: true,
+    });
+  });
+
+  it("recomputes before using the service-only stamp RPC", async () => {
+    const db = previewReviewClient();
+    const adminRpc = vi.fn().mockResolvedValue({ data: 4, error: null });
+    createClientMock.mockResolvedValue(db.client);
+    createAdminClientMock.mockReturnValue({ rpc: adminRpc });
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "server-only-test-key");
+
+    await expect(confirmOwnedMpmbImportPreview(IMPORT_ID, 4)).resolves.toEqual({
+      status: "success",
+      importId: IMPORT_ID,
+    });
+    expect(adminRpc).toHaveBeenCalledWith("record_mpmb_import_preview", {
+      target_import_id: IMPORT_ID,
+      validated_owner_id: USER_ID,
+      expected_revision: 4,
+    });
+  });
+
+  it("refuses stale or failed previews before the stamp RPC", async () => {
+    const stale = previewReviewClient();
+    createClientMock.mockResolvedValue(stale.client);
+    await expect(confirmOwnedMpmbImportPreview(IMPORT_ID, 3)).resolves.toMatchObject({
+      status: "conflict",
+    });
+    expect(createAdminClientMock).not.toHaveBeenCalled();
+
+    const failed = previewReviewClient({
+      effects: [{
+        type: "mechanical",
+        stat: "armor_class",
+        op: "formula",
+        expr: "not(",
+      }],
+    });
+    createClientMock.mockResolvedValue(failed.client);
+    await expect(confirmOwnedMpmbImportPreview(IMPORT_ID, 4)).resolves.toEqual({
+      status: "error",
+      message: "Resolve every calculation failure before confirming this preview.",
+    });
+    expect(createAdminClientMock).not.toHaveBeenCalled();
+  });
+});
 
 function conflictReviewClient(
   status: "review" | "completed" = "review",
@@ -425,6 +603,7 @@ function conflictReviewClient(
       required_sheet_version: null,
       status,
       revision: 4,
+      preview_validated_revision: null,
       mapping_summary: {
         valid: 1,
         needsInfo: 0,

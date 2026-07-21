@@ -4,10 +4,12 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileCode2,
+  FlaskConical,
   GitCompareArrows,
   Import,
   LockKeyhole,
   PencilLine,
+  ShieldCheck,
   XCircle,
 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
@@ -30,6 +32,7 @@ interface MpmbImportReviewPageProps {
     error?: string | string[];
     repaired?: string | string[];
     resolved?: string | string[];
+    previewed?: string | string[];
   }>;
 }
 
@@ -73,6 +76,7 @@ export default async function MpmbImportReviewPage({
   const error = typeof query.error === "string" ? query.error.slice(0, 300) : null;
   const repaired = query.repaired === "1";
   const resolved = query.resolved === "1";
+  const previewed = query.previewed === "1" && review.previewValidated;
   const selectedCount = review.items.filter((item) => item.selected).length;
   const unresolvedSelectedConflicts = review.items.filter((item) =>
     item.selected
@@ -108,7 +112,7 @@ export default async function MpmbImportReviewPage({
         </Badge>
       </div>
 
-      {(Number.isFinite(committed) || repaired || resolved || error) && (
+      {(Number.isFinite(committed) || repaired || resolved || previewed || error) && (
         <div
           role={error ? "alert" : "status"}
           className={cn(
@@ -123,6 +127,8 @@ export default async function MpmbImportReviewPage({
               ? "Missing details saved. The review has been updated."
               : resolved
                 ? "Conflict resolution saved. The review has been updated."
+                : previewed
+                  ? "Calculation preview confirmed for this review revision."
                 : `${committed} ${committed === 1 ? "definition" : "definitions"} added to your private library.`)}
         </div>
       )}
@@ -152,6 +158,18 @@ export default async function MpmbImportReviewPage({
           a separate sharing-rights workflow exists.
         </p>
       </div>
+
+      {review.status === "review" && review.previewValidated && (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200">
+          <p className="flex items-center gap-2 font-medium">
+            <ShieldCheck className="size-4" />
+            Calculations confirmed for revision {review.revision}
+          </p>
+          <p className="mt-1 text-xs opacity-80">
+            Changing a selection, repair, or conflict choice will require a new preview.
+          </p>
+        </div>
+      )}
 
       <section aria-labelledby="mapped-items-heading" className="space-y-3">
         <div className="flex items-center justify-between gap-3">
@@ -260,13 +278,31 @@ export default async function MpmbImportReviewPage({
               <Button type="submit" variant="ghost">Cancel import</Button>
             </form>
             <div className="flex flex-col items-end gap-1.5">
+              {selectedCount > 0 && unresolvedSelectedConflicts === 0 ? (
+                <Link
+                  href={`/library/import/${review.id}/preview`}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  <FlaskConical className="size-4" />
+                  {review.previewValidated ? "Review calculations" : "Preview calculations"}
+                </Link>
+              ) : (
+                <Button type="button" variant="outline" disabled>
+                  <FlaskConical className="size-4" />
+                  Preview calculations
+                </Button>
+              )}
               <form action={finishMpmbImport}>
                 <input type="hidden" name="import_id" value={review.id} />
                 <input type="hidden" name="expected_revision" value={review.revision} />
                 <Button
                   type="submit"
                   variant="gold"
-                  disabled={selectedCount === 0 || unresolvedSelectedConflicts > 0}
+                  disabled={
+                    selectedCount === 0
+                    || unresolvedSelectedConflicts > 0
+                    || !review.previewValidated
+                  }
                 >
                   <Import className="size-4" />
                   Import {selectedCount || "selected"}
@@ -276,6 +312,13 @@ export default async function MpmbImportReviewPage({
                 <p className="max-w-72 text-right text-xs text-amber-700 dark:text-amber-300">
                   Resolve {unresolvedSelectedConflicts} selected
                   {unresolvedSelectedConflicts === 1 ? " conflict" : " conflicts"} before importing.
+                </p>
+              )}
+              {selectedCount > 0
+                && unresolvedSelectedConflicts === 0
+                && !review.previewValidated && (
+                <p className="max-w-72 text-right text-xs text-muted-foreground">
+                  Preview and confirm this revision before importing.
                 </p>
               )}
             </div>
