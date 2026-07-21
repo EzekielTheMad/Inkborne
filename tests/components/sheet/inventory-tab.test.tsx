@@ -78,6 +78,7 @@ describe("InventoryTab", () => {
         id: "inv-1",
         character_id: "char-1",
         content_id: "c1",
+        content_version: 1,
         name: "Longsword",
         content_type: "weapon",
         quantity: 1,

@@ -1,19 +1,23 @@
 import { createClient } from "@/lib/supabase/client";
 import {
   parseContentDefinitions,
-  parseNestedContentDefinition,
+  parseNestedContentVersionSnapshot,
   type ParsedContentDefinition,
 } from "@/lib/supabase/content-definitions-parser";
 import type { InventoryItem } from "@/lib/types/inventory";
 
 const INVENTORY_SELECT =
-  "*, content_definitions(id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id)";
+  `*, content_versions!character_inventory_content_version_fkey(
+    content_id, version, system_id_snapshot, content_type_snapshot,
+    slug_snapshot, name_snapshot, data_snapshot, effects_snapshot,
+    source_snapshot, scope_snapshot, owner_id_snapshot
+  )`;
 
 function parseInventoryRow(raw: Record<string, unknown>): InventoryItem {
   return {
     ...raw,
-    content_definitions: parseNestedContentDefinition(
-      raw.content_definitions,
+    content_definitions: parseNestedContentVersionSnapshot(
+      raw.content_versions,
     ),
   } as unknown as InventoryItem;
 }
@@ -41,18 +45,27 @@ export async function addInventoryItem(
   characterId: string,
   item: {
     content_id?: string | null;
+    content_version?: number | null;
     name: string;
     content_type: string;
     quantity?: number;
     custom_data?: Record<string, unknown> | null;
   },
 ): Promise<InventoryItem | null> {
+  if (item.content_id && !Number.isInteger(item.content_version)) {
+    throw new Error("A definition-backed inventory item requires a content version.");
+  }
+  if (!item.content_id && item.content_version != null) {
+    throw new Error("A custom inventory item cannot specify a content version.");
+  }
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("character_inventory")
     .insert({
       character_id: characterId,
       content_id: item.content_id ?? null,
+      content_version: item.content_id ? item.content_version : null,
       name: item.name,
       content_type: item.content_type,
       quantity: item.quantity ?? 1,
@@ -126,7 +139,6 @@ export async function searchItems(
       "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
     )
     .eq("system_id", systemId)
-    .eq("scope", "platform")
     .ilike("name", `%${query}%`);
 
   // Equipment category filter

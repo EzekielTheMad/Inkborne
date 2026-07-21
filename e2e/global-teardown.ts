@@ -3,7 +3,11 @@
  * test account (individual specs delete their own fixtures in afterAll; this
  * catches leftovers from crashed or interrupted runs).
  */
-import { sweepE2ECampaigns, sweepE2ECharacters } from "./helpers/supabase";
+import {
+  sweepE2ECampaigns,
+  sweepE2ECharacters,
+  sweepE2EHomebrewSpells,
+} from "./helpers/supabase";
 
 export default async function globalTeardown(): Promise<void> {
   try {
@@ -14,6 +18,10 @@ export default async function globalTeardown(): Promise<void> {
     const removed = await sweepE2ECharacters();
     if (removed > 0) {
       console.log(`[e2e] Swept ${removed} leftover E2E character(s).`);
+    }
+    const spellsRemoved = await sweepE2EHomebrewSpells();
+    if (spellsRemoved > 0) {
+      console.log(`[e2e] Swept ${spellsRemoved} leftover E2E homebrew spell(s).`);
     }
   } catch (err) {
     // Best-effort: don't fail the run over a sweep error, but make it visible.

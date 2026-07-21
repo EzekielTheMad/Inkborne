@@ -56,6 +56,7 @@ export function SpellRow({
   const isCantrip = (data.level ?? 0) === 0;
   const school = formatSchool(data.school ?? "");
   const components = formatComponents(data.components);
+  const definition = spell.content_definitions;
 
   return (
     <div className="text-sm">
@@ -85,6 +86,11 @@ export function SpellRow({
             className={cn("size-3 text-muted-foreground transition-transform", expanded && "rotate-180")}
           />
           <span className="truncate font-medium">{spell.name}</span>
+          {definition?.source === "homebrew" && (
+            <Badge variant="outline" className="text-[9px] shrink-0 text-accent">
+              Homebrew · v{definition.version}
+            </Badge>
+          )}
           {school && <span className="text-xs text-muted-foreground shrink-0">{school}</span>}
           {components && <span className="text-xs text-muted-foreground shrink-0">{components}</span>}
           {spell.always_prepared && (

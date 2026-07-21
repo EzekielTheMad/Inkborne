@@ -59,11 +59,14 @@ export function FirstArrival({
     if (seenBefore) return;
     if (!consumeFirstArrival(characterId)) return;
 
-    setPhase("showing");
-    onSeen();
+    const show = setTimeout(() => {
+      setPhase("showing");
+      onSeen();
+    }, 0);
     const leave = setTimeout(() => setPhase("leaving"), 2300);
     const done = setTimeout(() => setPhase("hidden"), 3100);
     return () => {
+      clearTimeout(show);
       clearTimeout(leave);
       clearTimeout(done);
     };

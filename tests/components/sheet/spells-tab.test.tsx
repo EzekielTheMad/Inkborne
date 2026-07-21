@@ -1,7 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { SpellsTab } from "@/components/sheet/tabs/spells-tab";
 import type { CasterClass } from "@/lib/types/spells";
+
+const addSpellPanelRender = vi.hoisted(() => vi.fn());
+
+vi.mock("@/components/sheet/spells/add-spell-panel", () => ({
+  AddSpellPanel: (props: unknown) => {
+    addSpellPanelRender(props);
+    return null;
+  },
+}));
 
 vi.mock("@/lib/character/character-context", () => {
   return {
@@ -100,5 +109,36 @@ describe("SpellsTab", () => {
     });
     render(<SpellsTab />);
     expect(screen.getByRole("button", { name: /add spell/i })).toBeInTheDocument();
+  });
+
+  it("passes the active character id into spell discovery", () => {
+    addSpellPanelRender.mockClear();
+    useSpellsMockData = buildMock({
+      casterInfo: {
+        isCaster: true,
+        classes: [
+          {
+            slug: "wizard",
+            level: 3,
+            type: "full",
+            ability: "intelligence",
+            prepared: true,
+            cantripsKnown: 3,
+            spellsKnown: "all",
+            maxPrepared: 6,
+            ritualCasting: true,
+          },
+        ],
+        spellDc: 13,
+        spellAttackBonus: 5,
+      },
+    });
+
+    render(<SpellsTab />);
+    fireEvent.click(screen.getByRole("button", { name: /add spell/i }));
+
+    expect(addSpellPanelRender).toHaveBeenCalledWith(
+      expect.objectContaining({ characterId: "c1", open: true }),
+    );
   });
 });

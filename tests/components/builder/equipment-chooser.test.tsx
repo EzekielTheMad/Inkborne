@@ -12,6 +12,7 @@ const CLERIC_EQUIPMENT =
 const CATALOG: EquipmentCatalogItem[] = [
   {
     id: "id-mace",
+    version: 1,
     name: "Mace",
     slug: "mace",
     content_type: "weapon",
@@ -20,6 +21,7 @@ const CATALOG: EquipmentCatalogItem[] = [
   },
   {
     id: "id-amulet",
+    version: 1,
     name: "Amulet",
     slug: "amulet",
     content_type: "item",

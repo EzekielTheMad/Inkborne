@@ -23,6 +23,9 @@ suite:
    creation and joining, DM-only/shared page visibility, player-authored
    secrets remaining visible to the DM, character assignment, and DM
    read-only character access.
+6. **`homebrew-spell-sharing.spec.ts`** — two-account campaign-scoped homebrew
+   UAT: exact-campaign discovery, wrong-campaign exclusion, immutable version
+   pinning through edits, final unsharing, and continued use of an existing pin.
 
 The tests run against the **real Supabase backend** — there is no test double.
 Every character the suite creates is deleted afterwards (per-spec `afterAll`
@@ -37,6 +40,9 @@ npm run test:e2e
 
 Playwright's `webServer` starts `npm run dev` on port 3000 automatically (and
 reuses an already-running dev server outside CI).
+
+Set `E2E_BASE_URL` to use an alternate local port; Playwright starts Next.js on
+that URL's port and both two-account specs use the same origin.
 
 One-time setup: `npm install` then `npx playwright install chromium`.
 

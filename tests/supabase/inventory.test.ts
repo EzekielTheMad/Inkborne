@@ -39,6 +39,26 @@ const structuredError = {
   hint: "Grant SELECT to authenticated",
 };
 
+function snapshotFor(
+  definition: typeof validItemDefinition,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    content_id: definition.id,
+    version: definition.version,
+    system_id_snapshot: definition.system_id,
+    content_type_snapshot: definition.content_type,
+    slug_snapshot: definition.slug,
+    name_snapshot: definition.name,
+    data_snapshot: definition.data,
+    effects_snapshot: definition.effects,
+    source_snapshot: definition.source,
+    scope_snapshot: definition.scope,
+    owner_id_snapshot: definition.owner_id,
+    ...overrides,
+  };
+}
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     from: (table: string) => fromMock(table),
@@ -80,7 +100,7 @@ beforeEach(() => {
 });
 
 describe("getInventoryForCharacter", () => {
-  it("selects by character_id with content_definitions join", async () => {
+  it("selects by character_id with an exact content version join", async () => {
     orderMock.mockReturnValueOnce({
       order: vi.fn().mockResolvedValue({ data: [], error: null }),
     });
@@ -88,7 +108,7 @@ describe("getInventoryForCharacter", () => {
     await getInventoryForCharacter("char-1");
     expect(fromMock).toHaveBeenCalledWith("character_inventory");
     expect(selectMock).toHaveBeenCalledWith(
-      expect.stringContaining("content_definitions"),
+      expect.stringContaining("content_versions!character_inventory_content_version_fkey"),
     );
     expect(eqMock).toHaveBeenCalledWith("character_id", "char-1");
     expect(selectMock).toHaveBeenCalledWith(expect.stringContaining("version"));
@@ -105,10 +125,9 @@ describe("getInventoryForCharacter", () => {
             character_id: "char-1",
             content_id: "bad-content",
             name: "Custom item",
-            content_definitions: {
-              ...validItemDefinition,
-              data: { weight: "heavy" },
-            },
+            content_versions: snapshotFor(validItemDefinition, {
+              data_snapshot: { weight: "heavy" },
+            }),
           },
         ],
         error: null,
@@ -155,6 +174,7 @@ describe("addInventoryItem", () => {
     const { addInventoryItem } = await import("@/lib/supabase/inventory");
     const result = await addInventoryItem("char-1", {
       content_id: "c1",
+      content_version: 1,
       name: "Longsword",
       content_type: "weapon",
     });
@@ -162,6 +182,7 @@ describe("addInventoryItem", () => {
       expect.objectContaining({
         character_id: "char-1",
         content_id: "c1",
+        content_version: 1,
         name: "Longsword",
         content_type: "weapon",
         quantity: 1,
@@ -177,6 +198,7 @@ describe("addInventoryItem", () => {
     await expect(
       addInventoryItem("char-1", {
         content_id: "c1",
+        content_version: 1,
         name: "Longsword",
         content_type: "weapon",
       }),
@@ -251,7 +273,7 @@ describe("searchItems", () => {
       version: 1,
       source: "srd",
     });
-    expect(eqMock).toHaveBeenCalledWith("scope", "platform");
+    expect(eqMock).not.toHaveBeenCalledWith("scope", "platform");
     expect(inMock).toHaveBeenCalledWith("content_type", [
       "weapon",
       "armor",

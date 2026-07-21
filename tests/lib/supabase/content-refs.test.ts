@@ -46,7 +46,19 @@ const validRef = {
   context: {},
   choice_source: null,
   created_at: "2026-05-19T00:00:00Z",
-  content_definitions: validDefinition,
+  content_versions: {
+    content_id: validDefinition.id,
+    version: validDefinition.version,
+    system_id_snapshot: validDefinition.system_id,
+    content_type_snapshot: validDefinition.content_type,
+    slug_snapshot: validDefinition.slug,
+    name_snapshot: validDefinition.name,
+    data_snapshot: validDefinition.data,
+    effects_snapshot: validDefinition.effects,
+    source_snapshot: validDefinition.source,
+    scope_snapshot: validDefinition.scope,
+    owner_id_snapshot: validDefinition.owner_id,
+  },
 };
 
 function mockSupabase(data: unknown, error: unknown = null) {
@@ -99,11 +111,11 @@ describe("getContentRefsByCharacter", () => {
     const badRef = {
       ...validRef,
       id: "55555555-5555-4555-8555-555555555555",
-      content_definitions: {
-        ...validDefinition,
-        id: "66666666-6666-4666-8666-666666666666",
-        slug: "broken",
-        data: { hit_die: "not-a-number" },
+      content_versions: {
+        ...validRef.content_versions,
+        content_id: "66666666-6666-4666-8666-666666666666",
+        slug_snapshot: "broken",
+        data_snapshot: { hit_die: "not-a-number" },
       },
     };
     const { chain } = mockSupabase([validRef, badRef]);

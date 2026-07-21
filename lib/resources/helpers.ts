@@ -54,7 +54,17 @@ export function computeResources(
   classes: Array<{ slug: string; level: number }>,
 ): FeatureResource[] {
   const out: FeatureResource[] = [];
+  const resourceSlugs = new Set<string>();
   const characterLevel = classes.reduce((sum, c) => sum + c.level, 0);
+
+  const addResource = (resource: FeatureResource) => {
+    // A legacy/manual ref can overlap the exact feature-grant ref produced by
+    // the server sync. Resource state is slug-keyed, so render one canonical
+    // counter instead of duplicating both the UI key and the usage state.
+    if (resourceSlugs.has(resource.slug)) return;
+    resourceSlugs.add(resource.slug);
+    out.push(resource);
+  };
 
   for (const ref of contentRefs) {
     const def = ref.content_definitions;
@@ -93,7 +103,7 @@ export function computeResources(
     if (recovery != null) {
       const max = getMaxUses(usages, levelForMax);
       if (max > 0) {
-        out.push({
+        addResource({
           slug: def.slug,
           name: def.name,
           max,
@@ -115,7 +125,7 @@ export function computeResources(
         const extraMax = typeof extra.usages === "number" ? extra.usages : 0;
         if (extraMax <= 0) continue;
         const extraSlug = `${def.slug}.${slugifyExtra(extra.name)}`;
-        out.push({
+        addResource({
           slug: extraSlug,
           name: `${def.name}: ${extra.name}`,
           max: extraMax,

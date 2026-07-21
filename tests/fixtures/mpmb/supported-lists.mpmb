@@ -1,0 +1,30 @@
+"use strict";
+
+var iFileName = "Inkborne Static Parser Fixture.js";
+RequiredSheetVersion("13.1.14");
+
+SourceList.IBX = {
+  name: "Inkborne Examples",
+  abbreviation: "IBX",
+  group: "Synthetic fixtures",
+  url: "https://example.invalid/inkborne",
+};
+
+SpellsList["ember ward"] = {
+  name: "Ember Ward",
+  source: ["IBX", 1],
+  level: +1,
+  school: `Abj`,
+  ritual: !false,
+  description: "A harmless " + "synthetic spell.",
+  scaling: { dice: [1, 2, 3], modifier: -2, optional: null },
+};
+
+FeatsList["steadfast storyteller"] = {
+  name: "Steadfast Storyteller",
+  source: ["IBX", 2],
+  description: desc([
+    "Tell a synthetic tale.",
+    "Gain no mechanical advantage; this is only a parser fixture.",
+  ]),
+};

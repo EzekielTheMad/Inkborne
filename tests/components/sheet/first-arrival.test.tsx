@@ -30,13 +30,13 @@ describe("<FirstArrival>", () => {
     expect(onSeen).not.toHaveBeenCalled();
   });
 
-  it("plays the moment when marked, consumes the flag, and persists seen", () => {
+  it("plays the moment when marked, consumes the flag, and persists seen", async () => {
     markFirstArrival(CHARACTER_ID);
     expect(sessionStorage.getItem(STORAGE_KEY)).toBe("1");
 
     const { onSeen } = renderArrival();
 
-    expect(screen.getByTestId("first-arrival")).toBeInTheDocument();
+    expect(await screen.findByTestId("first-arrival")).toBeInTheDocument();
     expect(screen.getByText("Thalindra Moonweave")).toBeInTheDocument();
     expect(screen.getByText("Your character is ready")).toBeInTheDocument();
     // Flag is consumed so a reload won't replay it.

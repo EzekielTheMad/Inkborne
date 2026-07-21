@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,39 +14,31 @@ import {
   AuthLabel,
 } from "@/components/auth/auth-shell";
 import { OAuthButtons, type OAuthProvider } from "@/components/auth/oauth-buttons";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { login, type LoginActionState } from "./actions";
+
+const initialLoginState: LoginActionState = { error: null };
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
+  const [state, formAction, pending] = useActionState(login, initialLoginState);
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  async function handleOAuth(provider: OAuthProvider) {
+    setOauthError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      router.push("/dashboard");
+      if (error) setOauthError(error.message);
+    } catch {
+      setOauthError("Unable to start sign in. Please try again.");
     }
   }
 
-  async function handleOAuth(provider: OAuthProvider) {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setError(error.message);
-  }
+  const error = oauthError ?? state.error;
 
   return (
     <AuthShell marginalia={"“Open the notebook.”"}>
@@ -72,16 +65,10 @@ export default function LoginPage() {
           </AuthErrorBanner>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="space-y-1.5">
             <AuthLabel htmlFor="email">Email</AuthLabel>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <Input id="email" name="email" type="email" autoComplete="email" required />
           </div>
           <div className="space-y-1.5">
             <div className="flex items-baseline justify-between">
@@ -95,15 +82,24 @@ export default function LoginPage() {
             </div>
             <Input
               id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
             />
           </div>
-          <Button type="submit" variant="gold" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in →"}
+          <Button
+            type="submit"
+            variant="gold"
+            className="w-full"
+            disabled={pending}
+            aria-disabled={pending}
+          >
+            {pending ? "Signing in..." : "Sign in →"}
           </Button>
+          <span className="sr-only" role="status" aria-live="polite">
+            {pending ? "Signing in" : ""}
+          </span>
         </form>
 
         <p className="mt-5 text-center text-[12.5px] text-muted-foreground">

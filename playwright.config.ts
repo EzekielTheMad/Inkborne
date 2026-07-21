@@ -10,6 +10,8 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local"), quiet: true });
 
 /** Storage state produced by e2e/auth.setup.ts and reused by the other smokes. */
 export const STORAGE_STATE = path.resolve(__dirname, "e2e/.auth/user.json");
+const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
+const DEV_PORT = new URL(BASE_URL).port || "3000";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -28,7 +30,7 @@ export default defineConfig({
   globalSetup: "./e2e/global-setup.ts",
   globalTeardown: "./e2e/global-teardown.ts",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: BASE_URL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -46,8 +48,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
+    command: `npm run dev -- -p ${DEV_PORT}`,
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     // Dev-mode Next.js can take a while on first boot.
     timeout: 180_000,

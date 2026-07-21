@@ -31,6 +31,7 @@ const mockedUpdateCharacterState = vi.mocked(updateCharacterState);
 const CATALOG: EquipmentCatalogItem[] = [
   {
     id: "id-mace",
+    version: 1,
     name: "Mace",
     slug: "mace",
     content_type: "weapon",
@@ -39,6 +40,7 @@ const CATALOG: EquipmentCatalogItem[] = [
   },
   {
     id: "id-warhammer",
+    version: 1,
     name: "Warhammer",
     slug: "warhammer",
     content_type: "weapon",
@@ -47,6 +49,7 @@ const CATALOG: EquipmentCatalogItem[] = [
   },
   {
     id: "id-shield",
+    version: 1,
     name: "Shield",
     slug: "shield",
     content_type: "armor",
@@ -55,6 +58,7 @@ const CATALOG: EquipmentCatalogItem[] = [
   },
   {
     id: "id-amulet",
+    version: 1,
     name: "Amulet",
     slug: "amulet",
     content_type: "item",
@@ -188,18 +192,21 @@ describe("EquipmentStepClient", () => {
     expect(mockedAddInventoryItem).toHaveBeenCalledTimes(3);
     expect(mockedAddInventoryItem).toHaveBeenCalledWith("char-1", {
       content_id: "id-mace",
+      content_version: 1,
       name: "Mace",
       content_type: "weapon",
       quantity: 1,
     });
     expect(mockedAddInventoryItem).toHaveBeenCalledWith("char-1", {
       content_id: "id-shield",
+      content_version: 1,
       name: "Shield",
       content_type: "armor",
       quantity: 1,
     });
     expect(mockedAddInventoryItem).toHaveBeenCalledWith("char-1", {
       content_id: "id-amulet",
+      content_version: 1,
       name: "Amulet",
       content_type: "item",
       quantity: 1,

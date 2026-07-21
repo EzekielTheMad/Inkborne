@@ -12,6 +12,7 @@ function makeItem(overrides: Partial<InventoryItem>): InventoryItem {
     id: "test",
     character_id: "char1",
     content_id: null,
+    content_version: null,
     name: "Test",
     content_type: "item",
     quantity: 1,

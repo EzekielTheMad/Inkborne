@@ -15,6 +15,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  *  crashed runs are identifiable and swept by global teardown. */
 export const E2E_CHARACTER_PREFIX = "E2E Smoke";
 export const E2E_CAMPAIGN_PREFIX = "E2E Campaign";
+export const E2E_HOMEBREW_PREFIX = "E2E Homebrew";
 
 function env(name: string): string {
   const value = process.env[name];
@@ -78,6 +79,99 @@ export async function getCampaignFixture(campaignId: string): Promise<{
   return { inviteCode: data.invite_code, systemId: data.system_id };
 }
 
+export async function seedHomebrewSharingCampaign(input: {
+  name: string;
+  playerEmail: string;
+  playerPassword: string;
+}): Promise<{ id: string; systemId: string }> {
+  const service = createServiceClient();
+  const [ownerId, playerId] = await Promise.all([
+    getTestUserId(),
+    getUserIdForCredentials(input.playerEmail, input.playerPassword),
+  ]);
+  const { data: systems, error: systemsError } = await service
+    .from("game_systems")
+    .select("id")
+    .eq("status", "published")
+    .order("name")
+    .limit(1);
+  if (systemsError || !systems?.length) {
+    throw new Error(
+      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+    );
+  }
+
+  const { data: campaign, error: campaignError } = await service
+    .from("campaigns")
+    .insert({
+      name: input.name,
+      description: "Disposable campaign-scoped homebrew acceptance fixture.",
+      owner_id: ownerId,
+      system_id: systems[0].id,
+    })
+    .select("id")
+    .single();
+  if (campaignError || !campaign) {
+    throw new Error(`Could not seed homebrew campaign: ${campaignError?.message}`);
+  }
+
+  const { error: membershipError } = await service.from("campaign_members").upsert({
+    campaign_id: campaign.id,
+    user_id: playerId,
+    role: "player",
+  });
+  if (membershipError) {
+    throw new Error(`Could not seed campaign membership: ${membershipError.message}`);
+  }
+  return { id: campaign.id, systemId: systems[0].id };
+}
+
+export async function assignCharactersToCampaign(
+  characterIds: string[],
+  campaignId: string,
+): Promise<void> {
+  if (characterIds.length === 0) return;
+  const service = createServiceClient();
+  const { error } = await service
+    .from("characters")
+    .update({ campaign_id: campaignId })
+    .in("id", characterIds);
+  if (error) {
+    throw new Error(`Could not assign E2E characters to campaign: ${error.message}`);
+  }
+}
+
+async function seedClassContentRef(
+  service: SupabaseClient,
+  characterId: string,
+  systemId: string,
+  classSlug: string,
+  level: number,
+): Promise<void> {
+  const { data: classDefinition, error: classError } = await service
+    .from("content_definitions")
+    .select("id, version")
+    .eq("system_id", systemId)
+    .eq("content_type", "class")
+    .eq("slug", classSlug)
+    .single();
+  if (classError || !classDefinition) {
+    throw new Error(
+      `Could not resolve ${classSlug} class content: ${classError?.message ?? "no row"}`,
+    );
+  }
+
+  const { error: refError } = await service.from("character_content_refs").insert({
+    character_id: characterId,
+    content_id: classDefinition.id,
+    content_version: classDefinition.version,
+    context: { source: "class", level },
+  });
+  if (refError) {
+    throw new Error(`Could not seed ${classSlug} class content ref: ${refError.message}`);
+  }
+}
+
 export async function seedCampaignCharacter(input: {
   name: string;
   systemId: string;
@@ -113,6 +207,7 @@ export async function seedCampaignCharacter(input: {
   if (error || !data) {
     throw new Error(`Could not seed campaign character: ${error?.message}`);
   }
+  await seedClassContentRef(service, data.id, input.systemId, "fighter", 1);
   return data.id;
 }
 
@@ -222,6 +317,7 @@ export async function seedSheetCharacter(name: string): Promise<string> {
   if (error || !data) {
     throw new Error(`Could not seed sheet character: ${error?.message}`);
   }
+  await seedClassContentRef(service, data.id, systems[0].id, "fighter", 1);
   return data.id;
 }
 
@@ -232,16 +328,32 @@ export async function seedSheetCharacter(name: string): Promise<string> {
  * - base stats give DEX +2 (base AC 12; Mage Armor 15), CON +2, INT +3;
  * - `character_spells` rows for Magic Missile and Mage Armor (known +
  *   prepared + in spellbook — content ids resolved from platform SRD content);
- * - a `character_content_refs` row for the Arcane Recovery feature, which is
- *   what surfaces it as a feature resource (the builder writes feature refs;
- *   `computeResources` derives resources from content refs only).
+ * - the pinned Wizard class ref lets the page's feature-grant sync materialize
+ *   Arcane Recovery exactly as the real builder flow does.
  *
  * Expected max HP: d6 max (6) + 2×d6 avg (4) + CON mod (+2) × 3 = 20.
  * Expected slots (wizard 3): 4× 1st, 2× 2nd.
  */
 export async function seedWizardCharacter(name: string): Promise<string> {
+  return seedWizardCharacterForUser(name, await getTestUserId());
+}
+
+export async function seedWizardCharacterForCredentials(
+  name: string,
+  email: string,
+  password: string,
+): Promise<string> {
+  return seedWizardCharacterForUser(
+    name,
+    await getUserIdForCredentials(email, password),
+  );
+}
+
+async function seedWizardCharacterForUser(
+  name: string,
+  userId: string,
+): Promise<string> {
   const service = createServiceClient();
-  const userId = await getTestUserId();
 
   const { data: systems, error: systemsError } = await service
     .from("game_systems")
@@ -283,12 +395,13 @@ export async function seedWizardCharacter(name: string): Promise<string> {
   if (characterError || !character) {
     throw new Error(`Could not seed wizard character: ${characterError?.message}`);
   }
+  await seedClassContentRef(service, character.id, systemId, "wizard", 3);
 
   // Known spells — content ids resolved from the platform SRD content.
   const spellSlugs = ["magic-missile", "mage-armor"];
   const { data: spellDefs, error: spellsError } = await service
     .from("content_definitions")
-    .select("id, name, slug")
+    .select("id, name, slug, version")
     .eq("system_id", systemId)
     .eq("content_type", "spell")
     .eq("scope", "platform")
@@ -304,6 +417,7 @@ export async function seedWizardCharacter(name: string): Promise<string> {
     spellDefs!.map((def) => ({
       character_id: character.id,
       content_id: def.id,
+      content_version: def.version,
       name: def.name,
       class_slug: "wizard",
       is_known: true,
@@ -316,32 +430,46 @@ export async function seedWizardCharacter(name: string): Promise<string> {
     throw new Error(`Could not seed character spells: ${spellInsertError.message}`);
   }
 
-  // Arcane Recovery feature ref → feature resource (short-rest slot recovery).
-  const { data: feature, error: featureError } = await service
+  return character.id;
+}
+
+/** Deletes only explicitly tracked E2E spell definitions owned by the
+ * authenticated E2E user. Character references must be removed first. */
+export async function deleteHomebrewSpellsById(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const service = createServiceClient();
+  const userId = await getTestUserId();
+  const { error } = await service
     .from("content_definitions")
-    .select("id")
-    .eq("system_id", systemId)
-    .eq("content_type", "feature")
-    .eq("scope", "platform")
-    .eq("slug", "arcane-recovery")
-    .single();
-  if (featureError || !feature) {
+    .delete()
+    .in("id", ids)
+    .eq("owner_id", userId)
+    .eq("source", "homebrew")
+    .eq("content_type", "spell")
+    .like("name", `${E2E_HOMEBREW_PREFIX}%`);
+  if (error) {
     throw new Error(
-      `Could not resolve the arcane-recovery feature: ${featureError?.message ?? "no row"}`,
+      `E2E cleanup failed for homebrew spells [${ids.join(", ")}]: ${error.message}`,
     );
   }
-  const { error: refError } = await service.from("character_content_refs").insert({
-    character_id: character.id,
-    content_id: feature.id,
-    content_version: 1,
-    context: {},
-    choice_source: "class",
-  });
-  if (refError) {
-    throw new Error(`Could not seed arcane-recovery content ref: ${refError.message}`);
-  }
+}
 
-  return character.id;
+/** Safety net for homebrew left by interrupted E2E runs. */
+export async function sweepE2EHomebrewSpells(): Promise<number> {
+  const service = createServiceClient();
+  const userId = await getTestUserId();
+  const { data, error } = await service
+    .from("content_definitions")
+    .delete()
+    .eq("owner_id", userId)
+    .eq("source", "homebrew")
+    .eq("content_type", "spell")
+    .like("name", `${E2E_HOMEBREW_PREFIX}%`)
+    .select("id");
+  if (error) {
+    throw new Error(`E2E homebrew sweep failed: ${error.message}`);
+  }
+  return data?.length ?? 0;
 }
 
 /** Counts persisted `character_rolls` rows for a character (service role),
@@ -377,15 +505,21 @@ export async function deleteCharactersById(ids: string[]): Promise<void> {
   }
 }
 
-/** Safety net: removes any leftover E2E-prefixed characters owned by the test
- *  user (e.g. from a previous crashed run). */
+/** Safety net: removes leftover E2E-prefixed characters owned by either UAT
+ *  account (e.g. from a previous crashed two-account run). */
 export async function sweepE2ECharacters(): Promise<number> {
   const service = createServiceClient();
-  const userId = await getTestUserId();
+  const userIds = [await getTestUserId()];
+  if (process.env.E2E_PLAYER_EMAIL && process.env.E2E_PLAYER_PASSWORD) {
+    userIds.push(await getUserIdForCredentials(
+      process.env.E2E_PLAYER_EMAIL,
+      process.env.E2E_PLAYER_PASSWORD,
+    ));
+  }
   const { data, error } = await service
     .from("characters")
     .delete()
-    .eq("user_id", userId)
+    .in("user_id", [...new Set(userIds)])
     .like("name", `${E2E_CHARACTER_PREFIX}%`)
     .select("id");
   if (error) {

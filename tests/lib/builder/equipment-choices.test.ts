@@ -37,6 +37,7 @@ function catalogItem(
 ): EquipmentCatalogItem {
   return {
     id: `id-${partial.slug}`,
+    version: 1,
     content_type: "item",
     weapon_category: null,
     weapon_range: null,
@@ -457,30 +458,35 @@ describe("buildInventoryGrants", () => {
     expect(currency).toEqual({});
     expect(items).toContainEqual({
       content_id: "id-mace",
+      content_version: 1,
       name: "Mace",
       content_type: "weapon",
       quantity: 1,
     });
     expect(items).toContainEqual({
       content_id: "id-chain-mail",
+      content_version: 1,
       name: "Chain Mail",
       content_type: "armor",
       quantity: 1,
     });
     expect(items).toContainEqual({
       content_id: "id-crossbow-bolt",
+      content_version: 1,
       name: "Crossbow bolt",
       content_type: "item",
       quantity: 20,
     });
     expect(items).toContainEqual({
       content_id: "id-shield",
+      content_version: 1,
       name: "Shield",
       content_type: "armor",
       quantity: 1,
     });
     expect(items).toContainEqual({
       content_id: "id-amulet",
+      content_version: 1,
       name: "Amulet",
       content_type: "item",
       quantity: 1,
@@ -495,7 +501,7 @@ describe("buildInventoryGrants", () => {
     // Only the fixed group's concrete items grant (shield); its holy-symbol
     // slot is unpicked so nothing else lands.
     expect(items).toEqual([
-      { content_id: "id-shield", name: "Shield", content_type: "armor", quantity: 1 },
+      { content_id: "id-shield", content_version: 1, name: "Shield", content_type: "armor", quantity: 1 },
     ]);
   });
 
@@ -516,12 +522,14 @@ describe("buildInventoryGrants", () => {
     const { items } = buildInventoryGrants(groups, state, CATALOG);
     expect(items).toContainEqual({
       content_id: "id-longsword",
+      content_version: 1,
       name: "Longsword",
       content_type: "weapon",
       quantity: 2,
     });
     expect(items).toContainEqual({
       content_id: "id-handaxe",
+      content_version: 1,
       name: "Handaxe",
       content_type: "weapon",
       quantity: 2,
@@ -539,18 +547,21 @@ describe("buildInventoryGrants", () => {
     expect(currency).toEqual({ gp: 15 });
     expect(items).toContainEqual({
       content_id: "id-emblem",
+      content_version: 1,
       name: "Emblem",
       content_type: "item",
       quantity: 1,
     });
     expect(items).toContainEqual({
       content_id: "id-pouch",
+      content_version: 1,
       name: "Pouch",
       content_type: "item",
       quantity: 1,
     });
     expect(items).toContainEqual({
       content_id: "id-clothes-common",
+      content_version: 1,
       name: "Clothes, common",
       content_type: "item",
       quantity: 1,
@@ -558,12 +569,14 @@ describe("buildInventoryGrants", () => {
     // No SRD content definition → custom item with a readable name
     expect(items).toContainEqual({
       content_id: null,
+      content_version: null,
       name: "Stick of incense",
       content_type: "item",
       quantity: 5,
     });
     expect(items).toContainEqual({
       content_id: null,
+      content_version: null,
       name: "Prayer book",
       content_type: "item",
       quantity: 1,
@@ -578,7 +591,7 @@ describe("buildInventoryGrants", () => {
     };
     const { items } = buildInventoryGrants(groups, state, CATALOG);
     expect(items).toEqual([
-      { content_id: null, name: "Totem", content_type: "item", quantity: 1 },
+      { content_id: null, content_version: null, name: "Totem", content_type: "item", quantity: 1 },
     ]);
   });
 });

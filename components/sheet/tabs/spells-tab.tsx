@@ -98,7 +98,7 @@ export function SpellsTab() {
         <AddSpellPanel
           open={showAddPanel}
           onClose={() => setShowAddPanel(false)}
-          systemId={character.system_id}
+          characterId={character.id}
         />
       )}
 

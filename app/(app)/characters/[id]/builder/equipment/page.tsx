@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getContentByType } from "@/lib/supabase/content-definitions";
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { EquipmentStepClient } from "./equipment-step-client";
 import type { EquipmentCatalogItem } from "@/lib/builder/equipment-choices";
@@ -30,30 +31,39 @@ export default async function EquipmentStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
-  // Load class content to get starting equipment text
+  // Starting equipment comes from the exact class/background snapshots pinned
+  // to this character. Catalog items remain current because the player is
+  // making a new equipment selection now.
   const classSlug = character.choices?.classes?.[0]?.slug;
-  const classesPromise = getContentByType(character.system_id, "class");
-
-  // Load background content — backgrounds grant starting equipment too
   const backgroundSlug = character.choices?.background;
-  const backgroundsPromise = getContentByType(character.system_id, "background");
 
-  const [classes, backgrounds, weapons, armor, items] = await Promise.all([
-    classesPromise,
-    backgroundsPromise,
+  const [contentRefs, weapons, armor, items] = await Promise.all([
+    getContentRefsByCharacter(id),
     getContentByType(character.system_id, "weapon"),
     getContentByType(character.system_id, "armor"),
     getContentByType(character.system_id, "item"),
   ]);
 
-  const classContent = classes.find((entry) => entry.slug === classSlug) ?? null;
+  const classContent =
+    contentRefs
+      .map((ref) => ref.content_definitions)
+      .find(
+        (entry) =>
+          entry.content_type === "class" && entry.slug === classSlug,
+      ) ?? null;
   const backgroundContent =
-    backgrounds.find((entry) => entry.slug === backgroundSlug) ?? null;
+    contentRefs
+      .map((ref) => ref.content_definitions)
+      .find(
+        (entry) =>
+          entry.content_type === "background" && entry.slug === backgroundSlug,
+      ) ?? null;
 
   const catalog: EquipmentCatalogItem[] = [...weapons, ...armor, ...items].map((row) => {
     const data = (row.data ?? {}) as Record<string, unknown>;
     return {
       id: row.id,
+      version: row.version,
       name: row.name,
       slug: row.slug,
       content_type: row.content_type,

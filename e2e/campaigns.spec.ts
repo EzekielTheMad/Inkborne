@@ -10,7 +10,7 @@ import {
   setCharacterNarrativeLinks,
 } from "./helpers/supabase";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const runId = Date.now();
 const campaignName = `${E2E_CAMPAIGN_PREFIX} ${runId}`;
 const playerCharacterName = `${E2E_CHARACTER_PREFIX} Campaign Player ${runId}`;
