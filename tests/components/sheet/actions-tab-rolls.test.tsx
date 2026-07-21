@@ -60,6 +60,20 @@ const maceRef = {
   },
 } as unknown as ContentRefWithContent;
 
+const reactionFeatRef = {
+  id: "feat-ref-1",
+  content_definitions: {
+    id: "feat-content-1",
+    name: "Ember Sentinel",
+    slug: "ember-sentinel",
+    content_type: "feat",
+    data: {
+      description: "Raise a ward when danger strikes.",
+      action: "reaction",
+    },
+  },
+} as unknown as ContentRefWithContent;
+
 function setup() {
   return render(
     <ActionsTab
@@ -156,5 +170,23 @@ describe("<ActionsTab> — attack → damage crit chain", () => {
     seedNatural(9);
     await rollAttack();
     expect(screen.queryByText("Crit!")).not.toBeInTheDocument();
+  });
+});
+
+describe("<ActionsTab> — feat actions", () => {
+  it("shows a selected feat under its action filter", () => {
+    render(
+      <ActionsTab
+        character={character}
+        schema={schema}
+        evalResult={evalResult}
+        contentRefs={[reactionFeatRef]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reaction" }));
+    expect(screen.getByText("Ember Sentinel")).toBeInTheDocument();
+    expect(screen.getByText("Raise a ward when danger strikes.")).toBeInTheDocument();
+    expect(screen.getByText("reaction")).toBeInTheDocument();
   });
 });

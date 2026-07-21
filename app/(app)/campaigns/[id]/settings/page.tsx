@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   removeCampaignMember,
+  revokeCampaignSharedContent,
   rotateCampaignInvite,
   updateCampaign,
 } from "@/app/(app)/campaigns/actions";
@@ -9,11 +10,19 @@ import { ConfirmActionButton } from "@/components/campaigns/confirm-action-butto
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { listCampaignSharedContentForOwner } from "@/lib/supabase/campaign-shared-content-server";
 import { createClient } from "@/lib/supabase/server";
 
 interface CampaignSettingsPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; saved?: string; rotated?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    saved?: string;
+    rotated?: string;
+    content_error?: string;
+    content_revoked?: string;
+  }>;
 }
 
 export default async function CampaignSettingsPage({
@@ -41,6 +50,7 @@ export default async function CampaignSettingsPage({
       .order("joined_at"),
   ]);
   if (!campaign) notFound();
+  const sharedContent = await listCampaignSharedContentForOwner(id);
 
   return (
     <div className="mx-auto max-w-2xl space-y-7">
@@ -63,6 +73,16 @@ export default async function CampaignSettingsPage({
       {query.error && (
         <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           The campaign change could not be completed. Try again.
+        </p>
+      )}
+      {query.content_revoked && (
+        <p role="status" className="rounded-lg border border-accent/25 bg-accent/5 px-3 py-2 text-sm text-accent">
+          Campaign content access removed. Existing character pins were preserved.
+        </p>
+      )}
+      {query.content_error && (
+        <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          That content share could not be removed. Reload and try again.
         </p>
       )}
 
@@ -144,6 +164,46 @@ export default async function CampaignSettingsPage({
             );
           })}
         </div>
+      </section>
+
+      <section className="j-card-paper p-5 sm:p-6">
+        <h2 className="j-display text-xl text-foreground">Shared homebrew</h2>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          You can withdraw campaign access without changing the author&apos;s content or editing any character.
+        </p>
+        {sharedContent.length === 0 ? (
+          <p className="mt-4 rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+            No homebrew is currently shared with this campaign.
+          </p>
+        ) : (
+          <div className="mt-4 divide-y divide-border rounded-lg border border-border">
+            {sharedContent.map((content) => (
+              <div key={content.contentId} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{content.name}</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    <Badge variant="outline" className="capitalize">{content.contentType}</Badge>
+                    <Badge variant="secondary">v{content.version}</Badge>
+                  </div>
+                </div>
+                <form action={revokeCampaignSharedContent}>
+                  <input type="hidden" name="campaign_id" value={campaign.id} />
+                  <input type="hidden" name="content_id" value={content.contentId} />
+                  <input type="hidden" name="content_type" value={content.contentType} />
+                  <input type="hidden" name="expected_version" value={content.version} />
+                  <ConfirmActionButton
+                    type="submit"
+                    variant="outline"
+                    size="sm"
+                    confirmation={`Remove ${content.name} from this campaign? Existing character pins will remain.`}
+                  >
+                    Remove access
+                  </ConfirmActionButton>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <div className="flex justify-end">

@@ -12,7 +12,9 @@ vi.mock("@/lib/homebrew/feat-form", () => ({ mapHomebrewFeatFormData: mocks.mapF
 import {
   createHomebrewFeatRecord,
   getOwnedHomebrewFeat,
+  getOwnedHomebrewFeatCampaignAccess,
   listOwnedHomebrewFeats,
+  setHomebrewFeatCampaignShare,
   updateHomebrewFeatRecord,
 } from "@/lib/supabase/homebrew-feats-server";
 import { featDataSchema } from "@/lib/schemas/content-types/feat";
@@ -31,12 +33,14 @@ interface QueryCall {
   operation: "select" | "insert" | "update";
   payload?: unknown;
   filters: Array<[string, unknown]>;
+  inFilters: Array<[string, unknown[]]>;
   order?: string;
 }
 
 function makeClient(
   responses: DatabaseResponse[],
   authenticated = true,
+  rpcResponse: DatabaseResponse = { data: null, error: null },
 ): { client: unknown; calls: QueryCall[] } {
   let responseIndex = 0;
   const calls: QueryCall[] = [];
@@ -48,13 +52,14 @@ function makeClient(
     },
     from: vi.fn((table: string) => {
       const response = responses[responseIndex++] ?? { data: null, error: null };
-      const call: QueryCall = { table, operation: "select", filters: [] };
+      const call: QueryCall = { table, operation: "select", filters: [], inFilters: [] };
       calls.push(call);
       const builder = {
         select: vi.fn(() => builder),
         insert(payload: unknown) { call.operation = "insert"; call.payload = payload; return builder; },
         update(payload: unknown) { call.operation = "update"; call.payload = payload; return builder; },
         eq(column: string, value: unknown) { call.filters.push([column, value]); return builder; },
+        in(column: string, values: unknown[]) { call.inFilters.push([column, values]); return builder; },
         order(column: string) { call.order = column; return builder; },
         single: vi.fn().mockResolvedValue(response),
         maybeSingle: vi.fn().mockResolvedValue(response),
@@ -62,6 +67,7 @@ function makeClient(
       };
       return builder;
     }),
+    rpc: vi.fn().mockResolvedValue(rpcResponse),
   };
   return { client, calls };
 }
@@ -107,6 +113,14 @@ function expectFilters(call: QueryCall, expected: Array<[string, unknown]>) {
   for (const filter of expected) expect(call.filters).toContainEqual(filter);
 }
 
+function sharedRow(version = 2) {
+  return { ...row(version), scope: "shared" as const };
+}
+
+function expectInFilter(call: QueryCall, column: string, values: unknown[]) {
+  expect(call.inFilters).toContainEqual([column, values]);
+}
+
 beforeEach(() => {
   mocks.createClient.mockReset();
   mocks.mapForm.mockReset();
@@ -114,18 +128,22 @@ beforeEach(() => {
 });
 
 describe("homebrew feat reads", () => {
-  it("lists active personal feats within the full owner and content boundary", async () => {
+  it("lists active personal or shared feats within the full owner and content boundary", async () => {
     const db = makeClient([
       { data: { id: SYSTEM_ID }, error: null },
       { data: [row()], error: null },
     ]);
     mocks.createClient.mockResolvedValue(db.client);
 
-    await expect(listOwnedHomebrewFeats()).resolves.toEqual([row()]);
+    await expect(listOwnedHomebrewFeats()).resolves.toEqual([{
+      ...row(),
+      sharedCampaignCount: 0,
+    }]);
     expectFilters(db.calls[1], [
       ["owner_id", USER_ID], ["system_id", SYSTEM_ID], ["source", "homebrew"],
-      ["content_type", "feat"], ["scope", "personal"], ["is_retired", false],
+      ["content_type", "feat"], ["is_retired", false],
     ]);
+    expectInFilter(db.calls[1], "scope", ["personal", "shared"]);
     expect(db.calls[1].order).toBe("name");
   });
 
@@ -143,8 +161,109 @@ describe("homebrew feat reads", () => {
     await expect(getOwnedHomebrewFeat(FEAT_ID)).resolves.toBeNull();
     expectFilters(db.calls[1], [
       ["id", FEAT_ID], ["owner_id", USER_ID], ["system_id", SYSTEM_ID],
-      ["source", "homebrew"], ["content_type", "feat"], ["scope", "personal"], ["is_retired", false],
+      ["source", "homebrew"], ["content_type", "feat"], ["is_retired", false],
     ]);
+    expectInFilter(db.calls[1], "scope", ["personal", "shared"]);
+  });
+
+  it("counts exact campaign shares for shared feat summaries", async () => {
+    const db = makeClient([
+      { data: { id: SYSTEM_ID }, error: null },
+      { data: [sharedRow()], error: null },
+      {
+        data: [
+          { content_id: FEAT_ID, campaign_id: "44444444-4444-4444-8444-444444444444" },
+          { content_id: FEAT_ID, campaign_id: "55555555-5555-4555-8555-555555555555" },
+        ],
+        error: null,
+      },
+    ]);
+    mocks.createClient.mockResolvedValue(db.client);
+
+    await expect(listOwnedHomebrewFeats()).resolves.toEqual([{
+      ...sharedRow(),
+      sharedCampaignCount: 2,
+    }]);
+    expect(db.calls[2].table).toBe("content_shares");
+    expectInFilter(db.calls[2], "content_id", [FEAT_ID]);
+  });
+});
+
+describe("homebrew feat campaign access", () => {
+  const CAMPAIGN_ID = "44444444-4444-4444-8444-444444444444";
+
+  it("loads author-manageable same-system campaigns", async () => {
+    const db = makeClient([], true, {
+      data: [{ id: CAMPAIGN_ID, name: "Tuesday Group", shared: true, eligible: true }],
+      error: null,
+    });
+    mocks.createClient.mockResolvedValue(db.client);
+
+    await expect(getOwnedHomebrewFeatCampaignAccess(FEAT_ID)).resolves.toEqual({
+      campaigns: [{ id: CAMPAIGN_ID, name: "Tuesday Group", shared: true, eligible: true }],
+      sharedCampaignCount: 1,
+    });
+    expect((db.client as { rpc: ReturnType<typeof vi.fn> }).rpc).toHaveBeenCalledWith(
+      "list_owned_content_campaign_access",
+      { target_content_id: FEAT_ID },
+    );
+  });
+
+  it("does not hide campaign RPC failures behind an empty access model", async () => {
+    const db = makeClient([], true, {
+      data: null,
+      error: { code: "42501", message: "not owned" },
+    });
+    mocks.createClient.mockResolvedValue(db.client);
+    await expect(getOwnedHomebrewFeatCampaignAccess(FEAT_ID)).rejects.toMatchObject({
+      code: "42501",
+    });
+  });
+
+  it("passes validated optimistic inputs to the share RPC", async () => {
+    const db = makeClient([], true, {
+      data: [{
+        content_id: FEAT_ID,
+        version: 2,
+        scope: "shared",
+        shared_campaign_count: 1,
+      }],
+      error: null,
+    });
+    mocks.createClient.mockResolvedValue(db.client);
+
+    await expect(setHomebrewFeatCampaignShare(FEAT_ID, CAMPAIGN_ID, true, 1))
+      .resolves.toEqual({
+        contentId: FEAT_ID,
+        version: 2,
+        scope: "shared",
+        sharedCampaignCount: 1,
+      });
+    expect((db.client as { rpc: ReturnType<typeof vi.fn> }).rpc).toHaveBeenCalledWith(
+      "set_content_campaign_share",
+      {
+        target_content_id: FEAT_ID,
+        target_campaign_id: CAMPAIGN_ID,
+        enabled: true,
+        expected_version: 1,
+      },
+    );
+  });
+
+  it("maps stale share mutations and rejects malformed input", async () => {
+    const stale = makeClient([], true, {
+      data: null,
+      error: { code: "40001", message: "stale version" },
+    });
+    mocks.createClient.mockResolvedValue(stale.client);
+    await expect(setHomebrewFeatCampaignShare(FEAT_ID, CAMPAIGN_ID, false, 1))
+      .resolves.toMatchObject({ status: "conflict" });
+
+    const malformed = makeClient([]);
+    mocks.createClient.mockResolvedValue(malformed.client);
+    await expect(setHomebrewFeatCampaignShare("bad", CAMPAIGN_ID, true, 1))
+      .resolves.toMatchObject({ status: "error" });
+    expect((malformed.client as { rpc: ReturnType<typeof vi.fn> }).rpc).not.toHaveBeenCalled();
   });
 });
 
@@ -229,9 +348,10 @@ describe("updateHomebrewFeatRecord", () => {
     expect(db.calls[1].payload).toEqual({ name: row().name, data, effects });
     expectFilters(db.calls[1], [
       ["id", FEAT_ID], ["owner_id", USER_ID], ["system_id", SYSTEM_ID],
-      ["source", "homebrew"], ["content_type", "feat"], ["scope", "personal"],
+      ["source", "homebrew"], ["content_type", "feat"],
       ["is_retired", false], ["version", 3],
     ]);
+    expectInFilter(db.calls[1], "scope", ["personal", "shared"]);
   });
 
   it("distinguishes a stale version from a missing or unauthorized feat", async () => {
@@ -246,8 +366,9 @@ describe("updateHomebrewFeatRecord", () => {
     });
     expectFilters(stale.calls[2], [
       ["id", FEAT_ID], ["owner_id", USER_ID], ["system_id", SYSTEM_ID],
-      ["source", "homebrew"], ["content_type", "feat"], ["scope", "personal"], ["is_retired", false],
+      ["source", "homebrew"], ["content_type", "feat"], ["is_retired", false],
     ]);
+    expectInFilter(stale.calls[2], "scope", ["personal", "shared"]);
 
     const missing = makeClient([
       { data: { id: SYSTEM_ID }, error: null },

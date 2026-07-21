@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateCharacter } from "@/lib/supabase/character-client";
+import {
+  updateCharacter,
+  updateCharacterAndReturn,
+} from "@/lib/supabase/character-client";
 import {
   insertContentRef,
   removeContentRefById,
@@ -12,11 +15,20 @@ import { ContentBrowser, type ContentEntry } from "@/components/builder/content-
 import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
 import { ClassStepRail } from "@/components/builder/class-step-rail";
 import { StatPreview } from "@/components/builder/stat-preview";
-import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
+import type {
+  CharacterChoices,
+  AsiChoice,
+  HpRollRecord,
+  UsableFeatOption,
+} from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import { resolveHpRule, type HpRule } from "@/lib/builder/level-up-rules";
 import type { Effect } from "@/lib/types/effects";
 import { evaluate } from "@/lib/engine/evaluator";
+import {
+  searchUsableFeatsAction,
+  setCharacterAsiChoiceAction,
+} from "./actions";
 
 interface ClassStepClientProps {
   characterId: string;
@@ -30,6 +42,7 @@ interface ClassStepClientProps {
   classes: ContentEntry[];
   subclasses: ContentEntry[];
   features: ContentEntry[];
+  feats: UsableFeatOption[];
   spells: ContentEntry[];
   contentRefs: Array<{
     id: string;
@@ -54,6 +67,7 @@ export function ClassStepClient({
   classes,
   subclasses,
   features,
+  feats,
   spells,
   contentRefs,
   schema,
@@ -105,10 +119,12 @@ export function ClassStepClient({
     setLocalLevel(totalLevel);
 
     try {
-      await updateCharacter(characterId, {
+      const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: totalLevel,
       });
+      setLocalChoices(persisted.choices);
+      setLocalLevel(persisted.level);
       await insertContentRef({
         characterId,
         contentId: content.id,
@@ -148,10 +164,12 @@ export function ClassStepClient({
     setLocalLevel(totalLevel);
 
     try {
-      await updateCharacter(characterId, {
+      const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: totalLevel,
       });
+      setLocalChoices(persisted.choices);
+      setLocalLevel(persisted.level);
       startTransition(() => router.refresh());
     } catch (err) {
       setLocalChoices(prev.choices);
@@ -178,10 +196,12 @@ export function ClassStepClient({
     setLocalLevel(totalLevel);
 
     try {
-      await updateCharacter(characterId, {
+      const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: totalLevel,
       });
+      setLocalChoices(persisted.choices);
+      setLocalLevel(persisted.level);
       startTransition(() => router.refresh());
     } catch (err) {
       setLocalChoices(prev.choices);
@@ -222,10 +242,12 @@ export function ClassStepClient({
     setLocalLevel(newLevel);
 
     try {
-      await updateCharacter(characterId, {
+      const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: newLevel,
       });
+      setLocalChoices(persisted.choices);
+      setLocalLevel(persisted.level);
       const classContentRef = contentRefs.find(
         (ref) =>
           ref.content_definitions?.slug === removedClass.slug &&
@@ -365,12 +387,40 @@ export function ClassStepClient({
     setLocalChoices(newChoices);
 
     try {
-      await updateCharacter(characterId, { choices: newChoices });
+      const result = await setCharacterAsiChoiceAction({
+        characterId,
+        featureSlug,
+        choice: choice.mode === "feat"
+          ? {
+              mode: choice.mode,
+              featId: choice.featId,
+              featVersion: choice.featVersion,
+            }
+          : choice,
+      });
+      if (result.status !== "success") {
+        throw new Error(result.message);
+      }
+      setLocalChoices(result.choices);
+      startTransition(() => router.refresh());
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save ASI selection:", err);
+      throw err;
     }
   }
+
+  const handleFeatSearch = useCallback(async (featureSlug: string, query: string) => {
+    const result = await searchUsableFeatsAction({
+      characterId,
+      featureSlug,
+      query,
+    });
+    if (result.status !== "success") {
+      throw new Error(result.message);
+    }
+    return result.feats;
+  }, [characterId]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
@@ -383,6 +433,8 @@ export function ClassStepClient({
             classes={classes}
             subclasses={subclasses}
             features={features}
+            feats={feats}
+            onFeatSearch={handleFeatSearch}
             selectedClasses={selectedClasses}
             localChoices={localChoices}
             resolvedStats={resolvedStats}

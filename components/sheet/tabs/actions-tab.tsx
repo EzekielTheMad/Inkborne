@@ -121,31 +121,36 @@ export function ActionsTab({
     );
   }, []);
 
-  // Collect action-type features (class features with action metadata)
+  // Collect class features and selected feats with action metadata. Feats use
+  // the schema's `action` field while legacy class features use `action_type`.
   const actionFeatures = useMemo(() => {
     return contentRefs.filter((ref) => {
       const ct = ref.content_definitions?.content_type;
-      if (ct !== "feature") return false;
       const data = ref.content_definitions?.data;
-      return data?.action_type != null;
+      if (ct === "feature") return data?.action_type != null;
+      if (ct === "feat") return data?.action != null;
+      return false;
     });
   }, [contentRefs]);
+
+  const getActionType = useCallback((ref: ContentRefWithContent) => {
+    const data = ref.content_definitions?.data;
+    return String(data?.action_type ?? data?.action ?? "other");
+  }, []);
 
   // Filter action features by sub-filter
   const filteredActions = useMemo(() => {
     if (activeFilter === "all") return actionFeatures;
     if (activeFilter === "attack") return []; // attacks are in the table
     return actionFeatures.filter((ref) => {
-      const actionType = String(
-        ref.content_definitions?.data?.action_type ?? "other",
-      ).toLowerCase();
+      const actionType = getActionType(ref).toLowerCase();
       if (activeFilter === "bonus") return actionType.includes("bonus");
       if (activeFilter === "reaction") return actionType.includes("reaction");
       if (activeFilter === "action")
         return actionType === "action" || actionType === "standard";
       return actionType === "other" || !["action", "standard", "bonus", "reaction"].some((t) => actionType.includes(t));
     });
-  }, [actionFeatures, activeFilter]);
+  }, [actionFeatures, activeFilter, getActionType]);
 
   return (
     <div className="space-y-4">
@@ -261,7 +266,7 @@ export function ActionsTab({
                   {ref.content_definitions?.name ?? "Unknown Action"}
                 </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                  {String(ref.content_definitions?.data?.action_type ?? "Action")}
+                  {getActionType(ref)}
                 </span>
               </div>
               {ref.content_definitions?.data?.description != null && (

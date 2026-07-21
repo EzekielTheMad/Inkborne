@@ -10,7 +10,7 @@ import { ChoiceCardGeneric } from "@/components/builder/class-step-rail/choice-c
 import { HpPicker } from "@/components/builder/class-step-rail/hp-picker";
 import { LevelUpActionBar } from "@/components/builder/class-step-rail/level-up-action-bar";
 import type { ContentEntry } from "@/components/builder/content-browser";
-import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
+import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, UsableFeatSearch } from "@/lib/types/character";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
@@ -26,6 +26,8 @@ interface LevelUpPaneProps {
   subclasses: ContentEntry[];
   styleOptions: ContentEntry[];
   localChoices: CharacterChoices;
+  feats?: UsableFeatOption[];
+  onFeatSearch?: UsableFeatSearch;
   currentSubclass: string | undefined;
   classChoices: ChoiceEffect[];
   hpRule: HpRule;
@@ -53,7 +55,7 @@ function getFeatureDescription(features: ContentEntry[]): string | null {
 export function LevelUpPane(props: LevelUpPaneProps) {
   const {
     classContent, classIndex, isPrimaryClass, draftLevel, totalLevelAfterConfirm,
-    perLevelRow, subclasses, styleOptions, localChoices, currentSubclass, classChoices,
+    perLevelRow, subclasses, styleOptions, localChoices, feats = [], onFeatSearch, currentSubclass, classChoices,
     hpRule, conMod, hpRolls,
     onAsiSelect, onSubclassSelect, onFightingStyleSelect, onChoiceSelect, onHpRollChange,
     onCancel, onConfirm,
@@ -142,6 +144,8 @@ export function LevelUpPane(props: LevelUpPaneProps) {
                     key={choice.featureSlug}
                     featureSlug={choice.featureSlug}
                     currentChoice={localChoices.asi_choices?.[choice.featureSlug]}
+                    feats={feats}
+                    onSearch={onFeatSearch}
                     onSelect={(c) => onAsiSelect(choice.featureSlug!, c)}
                   />
                 );

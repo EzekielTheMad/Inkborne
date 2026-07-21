@@ -48,6 +48,7 @@ export default async function ClassStepPage({ params }: PageProps) {
       classes={classContent}
       subclasses={subclassContent}
       features={featureContent}
+      feats={[]}
       spells={spells}
       contentRefs={contentRefs}
       schema={character.game_systems?.schema_definition}

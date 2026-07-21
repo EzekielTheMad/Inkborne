@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/drawer";
 import { LevelUpPane } from "@/components/builder/class-step-rail/level-up-pane";
 import type { ContentEntry } from "@/components/builder/content-browser";
-import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
+import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, UsableFeatSearch } from "@/lib/types/character";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
@@ -27,6 +27,8 @@ interface LevelUpSheetProps {
   subclasses: ContentEntry[];
   styleOptions: ContentEntry[];
   localChoices: CharacterChoices;
+  feats?: UsableFeatOption[];
+  onFeatSearch?: UsableFeatSearch;
   currentSubclass: string | undefined;
   classChoices: ChoiceEffect[];
   hpRule: HpRule;
@@ -45,7 +47,7 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
   const {
     open, onOpenChange,
     classContent, classIndex, isPrimaryClass, draftLevel, totalLevelAfterConfirm,
-    perLevelRow, subclasses, styleOptions, localChoices, currentSubclass, classChoices,
+    perLevelRow, subclasses, styleOptions, localChoices, feats = [], onFeatSearch, currentSubclass, classChoices,
     hpRule, conMod, hpRolls,
     onAsiSelect, onSubclassSelect, onFightingStyleSelect, onChoiceSelect, onHpRollChange,
     onCancel, onConfirm,
@@ -74,6 +76,8 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
             subclasses={subclasses}
             styleOptions={styleOptions}
             localChoices={localChoices}
+            feats={feats}
+            onFeatSearch={onFeatSearch}
             currentSubclass={currentSubclass}
             classChoices={classChoices}
             hpRule={hpRule}

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the browser supabase client BEFORE importing the helper.
 const mockEq = vi.fn();
+const mockSingle = vi.fn();
+const mockSelect = vi.fn(() => ({ single: mockSingle }));
 const mockUpdate = vi.fn(() => ({ eq: mockEq }));
 const mockFrom = vi.fn(() => ({ update: mockUpdate }));
 const mockClient = { from: mockFrom };
@@ -12,6 +14,7 @@ vi.mock("@/lib/supabase/client", () => ({
 
 import {
   updateCharacter,
+  updateCharacterAndReturn,
   updateCharacterColor,
 } from "@/lib/supabase/character-client";
 
@@ -79,6 +82,54 @@ describe("updateCharacter", () => {
   it("is a no-op for an empty patch (defensive)", async () => {
     await updateCharacter("char-1", {});
     expect(mockFrom).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateCharacterAndReturn", () => {
+  beforeEach(() => {
+    mockEq.mockReset();
+    mockSelect.mockClear();
+    mockSingle.mockReset();
+    mockUpdate.mockClear();
+    mockFrom.mockClear();
+  });
+
+  it("returns the canonical choices after database triggers run", async () => {
+    mockEq.mockReturnValue({ select: mockSelect });
+    mockSingle.mockResolvedValue({
+      data: {
+        choices: { classes: [{ slug: "fighter", level: 3 }] },
+        level: 3,
+      },
+      error: null,
+    });
+
+    await expect(updateCharacterAndReturn("char-1", {
+      choices: {
+        classes: [{ slug: "fighter", level: 3 }],
+        asi_choices: {
+          "fighter-asi-4": {
+            mode: "feat",
+            featId: "feat-id",
+            featVersion: 1,
+            featName: "Sentinel",
+          },
+        },
+      },
+      level: 3,
+    })).resolves.toEqual({
+      choices: { classes: [{ slug: "fighter", level: 3 }] },
+      level: 3,
+    });
+    expect(mockSelect).toHaveBeenCalledWith("choices, level");
+  });
+
+  it("throws when the canonical row cannot be returned", async () => {
+    mockEq.mockReturnValue({ select: mockSelect });
+    mockSingle.mockResolvedValue({ data: null, error: { message: "RLS denied" } });
+
+    await expect(updateCharacterAndReturn("char-1", { level: 3 }))
+      .rejects.toThrow("RLS denied");
   });
 });
 

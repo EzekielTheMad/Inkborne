@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/client";
-import type { CharacterUpdatePatch } from "@/lib/types/character";
+import type {
+  CharacterChoices,
+  CharacterUpdatePatch,
+} from "@/lib/types/character";
 
 /**
  * Browser-side helper to write a partial patch to a characters row.
@@ -20,6 +23,38 @@ export async function updateCharacter(
     .update(patch)
     .eq("id", characterId);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * Writes a builder patch and returns the row after database triggers finish.
+ *
+ * Level changes use this path because the database may prune choices that are
+ * no longer earned. Returning that canonical snapshot prevents stale client
+ * state from restoring a removed choice later in the same builder session.
+ */
+export async function updateCharacterAndReturn(
+  characterId: string,
+  patch: CharacterUpdatePatch,
+): Promise<{ choices: CharacterChoices; level: number }> {
+  if (Object.keys(patch).length === 0) {
+    throw new Error("A character update cannot be empty.");
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("characters")
+    .update(patch)
+    .eq("id", characterId)
+    .select("choices, level")
+    .single();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("The updated character could not be loaded.");
+
+  return {
+    choices: (data.choices ?? {}) as CharacterChoices,
+    level: data.level,
+  };
 }
 
 /**

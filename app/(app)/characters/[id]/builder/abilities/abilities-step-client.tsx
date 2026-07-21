@@ -138,7 +138,7 @@ export function AbilitiesStepClient({
     // From ASI choices
     const asiChoices = character.choices?.asi_choices ?? {};
     for (const asiChoice of Object.values(asiChoices)) {
-      if (asiChoice?.allocations) {
+      if (asiChoice?.mode === "asi") {
         for (const alloc of asiChoice.allocations) {
           if (alloc.amount !== 0) {
             const slug = alloc.ability;

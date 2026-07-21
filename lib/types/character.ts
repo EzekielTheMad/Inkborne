@@ -11,11 +11,36 @@ export interface AsiAllocation {
   amount: number; // +1 or +2
 }
 
-/** Tracks ASI decisions per feature occurrence (keyed by feature slug) */
-export interface AsiChoice {
-  mode: "asi"; // future: | "feat"
-  allocations: AsiAllocation[];
+/** Tracks ASI decisions per feature occurrence (keyed by feature slug). */
+export type AsiChoice =
+  | {
+      mode: "asi";
+      allocations: AsiAllocation[];
+    }
+  | {
+      mode: "feat";
+      featId: string;
+      featVersion: number;
+      /** Display-only snapshot; authorization always uses the pinned id/version. */
+      featName: string;
+    };
+
+/** Minimal character-aware feat discovery DTO safe to pass to the builder. */
+export interface UsableFeatOption {
+  id: string;
+  name: string;
+  description: string;
+  version: number;
+  source: "platform" | "homebrew" | "imported";
+  scope: "platform" | "personal" | "shared";
+  prerequisiteMet: boolean;
+  prerequisiteReason: string | null;
 }
+
+export type UsableFeatSearch = (
+  featureSlug: string,
+  query: string,
+) => Promise<UsableFeatOption[]>;
 
 /** Campaign/system-level HP rule. Drives picker behavior and engine math.
  *  - free_choice: user picks Average / Roll / Manual per level

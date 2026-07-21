@@ -7,6 +7,8 @@ import type { Json } from "@/lib/supabase/database.types";
 import { reportServerError } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeRichTextContent } from "@/lib/editor/content";
+import { setHomebrewFeatCampaignShare } from "@/lib/supabase/homebrew-feats-server";
+import { setHomebrewSpellCampaignShare } from "@/lib/supabase/homebrew-spells-server";
 
 const createCampaignInput = z.object({
   name: z.string().trim().min(1).max(100),
@@ -52,6 +54,12 @@ const removeMemberInput = campaignIdInput.extend({
   memberUserId: z.string().uuid(),
 });
 
+const revokeSharedContentInput = campaignIdInput.extend({
+  contentId: z.string().uuid(),
+  contentType: z.enum(["spell", "feat"]),
+  expectedVersion: z.coerce.number().int().positive(),
+});
+
 async function authenticatedClient() {
   const supabase = await createClient();
   const {
@@ -59,6 +67,34 @@ async function authenticatedClient() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   return { supabase, user };
+}
+
+export async function revokeCampaignSharedContent(formData: FormData): Promise<never> {
+  await authenticatedClient();
+  const parsed = revokeSharedContentInput.safeParse({
+    campaignId: formData.get("campaign_id"),
+    contentId: formData.get("content_id"),
+    contentType: formData.get("content_type"),
+    expectedVersion: formData.get("expected_version"),
+  });
+  if (!parsed.success) redirect("/campaigns?error=invalid_content_share");
+
+  const mutation = parsed.data.contentType === "feat"
+    ? setHomebrewFeatCampaignShare
+    : setHomebrewSpellCampaignShare;
+  const result = await mutation(
+    parsed.data.contentId,
+    parsed.data.campaignId,
+    false,
+    parsed.data.expectedVersion,
+  );
+  if ("status" in result) {
+    redirect(`/campaigns/${parsed.data.campaignId}/settings?content_error=1`);
+  }
+
+  revalidatePath(`/campaigns/${parsed.data.campaignId}/settings`);
+  revalidatePath("/library");
+  redirect(`/campaigns/${parsed.data.campaignId}/settings?content_revoked=1`);
 }
 
 export async function createCampaign(formData: FormData): Promise<never> {
