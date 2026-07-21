@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { featDataSchema } from "@/lib/schemas/content-types/feat";
@@ -50,5 +50,25 @@ describe("FeatForm", () => {
     expect(screen.getByLabelText("Dexterity (DEX)")).toHaveValue(1);
     expect(screen.getByText(/changes create a new immutable version/i)).toBeVisible();
     expect(screen.getByRole("button", { name: "Save new version" })).toBeVisible();
+  });
+
+  it("retains authored values when React resets the form after validation", () => {
+    const view = render(<FeatForm mode="create" />);
+    const name = screen.getByLabelText("Name");
+    const description = screen.getByLabelText("Feat description");
+    const dexterity = screen.getByLabelText("Dexterity (DEX)");
+
+    fireEvent.change(name, { target: { value: "Ember Sentinel" } });
+    fireEvent.change(description, { target: { value: "A watchful ember marks you." } });
+    fireEvent.change(dexterity, { target: { value: "1" } });
+
+    const form = screen.getByRole("button", { name: "Create private feat" }).closest("form");
+    expect(form).not.toBeNull();
+    fireEvent.reset(form!);
+    view.rerender(<FeatForm mode="create" />);
+
+    expect(name).toHaveValue("Ember Sentinel");
+    expect(description).toHaveValue("A watchful ember marks you.");
+    expect(dexterity).toHaveValue(1);
   });
 });

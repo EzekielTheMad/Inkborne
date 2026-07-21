@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   createHomebrewFeat,
@@ -23,6 +23,18 @@ interface FeatFormInitialValue {
 interface FeatFormProps {
   mode: "create" | "edit";
   initialValue?: FeatFormInitialValue;
+}
+
+interface FeatFormFields {
+  name: string;
+  description: string;
+  prerequisiteAbility: string;
+  prerequisiteMinimum: string;
+  scores: Record<string, string>;
+  action: string;
+  extraAC: string;
+  usages: string;
+  recovery: string;
 }
 
 const ABILITIES = [
@@ -60,8 +72,32 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
   const data = initialValue?.data;
   const prerequisite = data?.prerequisites[0];
   const prerequisiteAbility = ABILITIES.some(([ability]) => ability === prerequisite?.stat)
-    ? prerequisite?.stat
+    ? prerequisite?.stat ?? ""
     : "";
+  const [fields, setFields] = useState<FeatFormFields>(() => ({
+    name: initialValue?.name ?? "",
+    description: data?.description ?? "",
+    prerequisiteAbility,
+    prerequisiteMinimum: prerequisiteAbility ? String(prerequisite?.value ?? "") : "",
+    scores: Object.fromEntries(
+      ABILITIES.map(([ability], index) => [ability, String(data?.scores?.[index] ?? 0)]),
+    ),
+    action: data?.action ?? "",
+    extraAC: String(data?.extraAC ?? 0),
+    usages: typeof data?.usages === "number" ? String(data.usages) : "",
+    recovery: data?.recovery ?? "",
+  }));
+
+  function setField<K extends keyof FeatFormFields>(key: K, value: FeatFormFields[K]) {
+    setFields((current) => ({ ...current, [key]: value }));
+  }
+
+  function setScore(ability: string, value: string) {
+    setFields((current) => ({
+      ...current,
+      scores: { ...current.scores, [ability]: value },
+    }));
+  }
 
   return (
     <form action={formAction} className="j-card-paper space-y-7 p-5 sm:p-7">
@@ -76,12 +112,12 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
         <legend className="j-folio mb-3">Basics</legend>
         <div className="space-y-2">
           <Label htmlFor="feat-name">Name</Label>
-          <Input id="feat-name" name="name" defaultValue={initialValue?.name} maxLength={100} required {...errorAttributes(state, "name")} />
+          <Input id="feat-name" name="name" value={fields.name} onChange={(event) => setField("name", event.target.value)} maxLength={100} required {...errorAttributes(state, "name")} />
           <FieldErrors state={state} name="name" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="feat-description">Feat description</Label>
-          <textarea id="feat-description" name="description" defaultValue={data?.description} rows={9} maxLength={20000} className={textareaClassName} required {...errorAttributes(state, "description")} />
+          <textarea id="feat-description" name="description" value={fields.description} onChange={(event) => setField("description", event.target.value)} rows={9} maxLength={20000} className={textareaClassName} required {...errorAttributes(state, "description")} />
           <FieldErrors state={state} name="description" />
         </div>
       </fieldset>
@@ -92,7 +128,7 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="feat-prerequisite-ability">Ability</Label>
-            <select id="feat-prerequisite-ability" name="prerequisite_ability" defaultValue={prerequisiteAbility} className={fieldClassName} {...errorAttributes(state, "prerequisite_ability")}>
+            <select id="feat-prerequisite-ability" name="prerequisite_ability" value={fields.prerequisiteAbility} onChange={(event) => setField("prerequisiteAbility", event.target.value)} className={fieldClassName} {...errorAttributes(state, "prerequisite_ability")}>
               <option value="">No prerequisite</option>
               {ABILITIES.map(([ability, label]) => <option key={ability} value={ability}>{label}</option>)}
             </select>
@@ -100,7 +136,7 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="feat-prerequisite-minimum">Minimum score</Label>
-            <Input id="feat-prerequisite-minimum" name="prerequisite_minimum" type="number" min="1" max="30" step="1" defaultValue={prerequisiteAbility ? prerequisite?.value : ""} {...errorAttributes(state, "prerequisite_minimum")} />
+            <Input id="feat-prerequisite-minimum" name="prerequisite_minimum" type="number" min="1" max="30" step="1" value={fields.prerequisiteMinimum} onChange={(event) => setField("prerequisiteMinimum", event.target.value)} {...errorAttributes(state, "prerequisite_minimum")} />
             <FieldErrors state={state} name="prerequisite_minimum" />
           </div>
         </div>
@@ -110,10 +146,10 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
         <legend className="j-folio mb-3">Ability score increases</legend>
         <p className="text-sm text-muted-foreground">Leave a score at 0 when this feat does not change it.</p>
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
-          {ABILITIES.map(([ability, label, abbreviation], index) => (
+          {ABILITIES.map(([ability, label, abbreviation]) => (
             <div key={ability} className="space-y-2">
               <Label htmlFor={`feat-ability-${ability}`}>{label} ({abbreviation})</Label>
-              <Input id={`feat-ability-${ability}`} name={`ability_${ability}`} type="number" min="0" max="5" step="1" defaultValue={data?.scores?.[index] ?? 0} {...errorAttributes(state, `ability_${ability}`)} />
+              <Input id={`feat-ability-${ability}`} name={`ability_${ability}`} type="number" min="0" max="5" step="1" value={fields.scores[ability] ?? "0"} onChange={(event) => setScore(ability, event.target.value)} {...errorAttributes(state, `ability_${ability}`)} />
               <FieldErrors state={state} name={`ability_${ability}`} />
             </div>
           ))}
@@ -126,7 +162,7 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="feat-action">Action economy</Label>
-            <select id="feat-action" name="action" defaultValue={data?.action ?? ""} className={fieldClassName} {...errorAttributes(state, "action")}>
+            <select id="feat-action" name="action" value={fields.action} onChange={(event) => setField("action", event.target.value)} className={fieldClassName} {...errorAttributes(state, "action")}>
               <option value="">No action tracked</option>
               <option value="action">Action</option>
               <option value="bonus action">Bonus action</option>
@@ -137,17 +173,17 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="feat-extra-ac">Flat AC bonus</Label>
-            <Input id="feat-extra-ac" name="extra_ac" type="number" min="-10" max="10" step="1" defaultValue={data?.extraAC ?? 0} {...errorAttributes(state, "extra_ac")} />
+            <Input id="feat-extra-ac" name="extra_ac" type="number" min="-10" max="10" step="1" value={fields.extraAC} onChange={(event) => setField("extraAC", event.target.value)} {...errorAttributes(state, "extra_ac")} />
             <FieldErrors state={state} name="extra_ac" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="feat-usages">Uses</Label>
-            <Input id="feat-usages" name="usages" type="number" min="1" step="1" defaultValue={typeof data?.usages === "number" ? data.usages : ""} {...errorAttributes(state, "usages")} />
+            <Input id="feat-usages" name="usages" type="number" min="1" step="1" value={fields.usages} onChange={(event) => setField("usages", event.target.value)} {...errorAttributes(state, "usages")} />
             <FieldErrors state={state} name="usages" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="feat-recovery">Recovery</Label>
-            <select id="feat-recovery" name="recovery" defaultValue={data?.recovery ?? ""} className={fieldClassName} {...errorAttributes(state, "recovery")}>
+            <select id="feat-recovery" name="recovery" value={fields.recovery} onChange={(event) => setField("recovery", event.target.value)} className={fieldClassName} {...errorAttributes(state, "recovery")}>
               <option value="">No tracked uses</option>
               <option value="short rest">Short rest</option>
               <option value="long rest">Long rest</option>
