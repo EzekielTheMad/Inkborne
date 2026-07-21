@@ -100,7 +100,11 @@ export function FeatForm({ mode, initialValue }: FeatFormProps) {
   }
 
   return (
-    <form action={formAction} className="j-card-paper space-y-7 p-5 sm:p-7">
+    <form
+      action={formAction}
+      onReset={(event) => event.preventDefault()}
+      className="j-card-paper space-y-7 p-5 sm:p-7"
+    >
       {initialValue && (
         <>
           <input type="hidden" name="id" value={initialValue.id} />

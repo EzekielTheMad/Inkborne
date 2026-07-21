@@ -56,11 +56,15 @@ describe("FeatForm", () => {
     const view = render(<FeatForm mode="create" />);
     const name = screen.getByLabelText("Name");
     const description = screen.getByLabelText("Feat description");
+    const prerequisite = screen.getByLabelText("Ability");
     const dexterity = screen.getByLabelText("Dexterity (DEX)");
+    const action = screen.getByLabelText("Action economy");
 
     fireEvent.change(name, { target: { value: "Ember Sentinel" } });
     fireEvent.change(description, { target: { value: "A watchful ember marks you." } });
+    fireEvent.change(prerequisite, { target: { value: "dexterity" } });
     fireEvent.change(dexterity, { target: { value: "1" } });
+    fireEvent.change(action, { target: { value: "reaction" } });
 
     const form = screen.getByRole("button", { name: "Create private feat" }).closest("form");
     expect(form).not.toBeNull();
@@ -69,6 +73,8 @@ describe("FeatForm", () => {
 
     expect(name).toHaveValue("Ember Sentinel");
     expect(description).toHaveValue("A watchful ember marks you.");
+    expect(prerequisite).toHaveValue("dexterity");
     expect(dexterity).toHaveValue(1);
+    expect(action).toHaveValue("reaction");
   });
 });
