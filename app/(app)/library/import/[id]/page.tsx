@@ -76,7 +76,7 @@ export default async function MpmbImportReviewPage({
   const error = typeof query.error === "string" ? query.error.slice(0, 300) : null;
   const repaired = query.repaired === "1";
   const resolved = query.resolved === "1";
-  const previewed = query.previewed === "1";
+  const previewed = query.previewed === "1" && review.previewValidated;
   const selectedCount = review.items.filter((item) => item.selected).length;
   const unresolvedSelectedConflicts = review.items.filter((item) =>
     item.selected

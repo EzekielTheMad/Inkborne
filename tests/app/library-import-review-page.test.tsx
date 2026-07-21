@@ -264,6 +264,17 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getByRole("button", { name: "Import 1" })).toBeEnabled();
   });
 
+  it("hides a stale confirmation notice after the review revision changes", async () => {
+    render(await MpmbImportReviewPage({
+      params: Promise.resolve({ id: IMPORT_ID }),
+      searchParams: Promise.resolve({ previewed: "1" }),
+    }));
+
+    expect(screen.queryByText(/Calculation preview confirmed/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Calculations confirmed for revision/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Import 1" })).toBeDisabled();
+  });
+
   it("does not reveal another user's missing review", async () => {
     mocks.getReview.mockResolvedValue(null);
     await expect(MpmbImportReviewPage({
