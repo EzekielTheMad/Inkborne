@@ -35,13 +35,22 @@ describe("MpmbImportSpellRepairForm", () => {
     render(
       <MpmbImportSpellRepairForm
         {...baseProps}
-        repairFields={{ material: true, dc: true }}
+        repairFields={{
+          material: true,
+          dc: true,
+          concentration: true,
+          ritual: true,
+        }}
       />,
     );
 
     expect(screen.getByLabelText("Required material")).toBeRequired();
     expect(screen.getByLabelText("Save ability")).toBeRequired();
     expect(screen.getByLabelText("On a successful save")).toBeRequired();
+    expect(screen.getByLabelText("Requires concentration?")).toBeRequired();
+    expect(screen.getByLabelText("Can be cast as a ritual?")).toBeRequired();
+    expect(screen.getByLabelText("Requires concentration?")).toHaveValue("");
+    expect(screen.getByLabelText("Can be cast as a ritual?")).toHaveValue("");
     expect(screen.getByText(/only the missing fields below will change/i)).toBeVisible();
     expect(screen.getByRole("button", { name: "Save missing details" })).toBeEnabled();
     expect(screen.getByRole("link", { name: "Back to review" })).toHaveAttribute(
@@ -64,7 +73,12 @@ describe("MpmbImportSpellRepairForm", () => {
     render(
       <MpmbImportSpellRepairForm
         {...baseProps}
-        repairFields={{ material: true, dc: false }}
+        repairFields={{
+          material: true,
+          dc: false,
+          concentration: false,
+          ritual: false,
+        }}
       />,
     );
 
@@ -74,5 +88,32 @@ describe("MpmbImportSpellRepairForm", () => {
     );
     expect(screen.queryByLabelText("Save ability")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Saving correction..." })).toBeDisabled();
+  });
+
+  it("blocks stale resubmission and offers a reload", () => {
+    hooks.useActionState.mockReturnValue([
+      {
+        status: "conflict",
+        message: "This import changed in another session.",
+      },
+      vi.fn(),
+      false,
+    ]);
+
+    render(
+      <MpmbImportSpellRepairForm
+        {...baseProps}
+        repairFields={{
+          material: false,
+          dc: false,
+          concentration: true,
+          ritual: false,
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Requires concentration?")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Reload latest" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save missing details" })).toBeDisabled();
   });
 });

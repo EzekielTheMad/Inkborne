@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/supabase/mpmb-imports-server", () => ({
-  getOwnedMpmbImportSpellRepairItem: mocks.getRepairItem,
+  getOwnedMpmbImportRepairItem: mocks.getRepairItem,
 }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: { getUser: mocks.getUser } }),
@@ -27,6 +27,13 @@ vi.mock("@/components/library/mpmb-import-spell-repair-form", () => ({
     candidateName: string;
   }) => <div>Repair form for {candidateName}</div>,
 }));
+vi.mock("@/components/library/mpmb-import-feat-repair-form", () => ({
+  MpmbImportFeatRepairForm: ({
+    candidateName,
+  }: {
+    candidateName: string;
+  }) => <div>Feat repair form for {candidateName}</div>,
+}));
 
 import MpmbImportSpellRepairPage from "@/app/(app)/library/import/[id]/items/[itemId]/edit/page";
 
@@ -34,6 +41,7 @@ const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 const ITEM_ID = "44444444-4444-4444-8444-444444444444";
 
 const repairItem = {
+  contentType: "spell" as const,
   importId: IMPORT_ID,
   itemId: ITEM_ID,
   revision: 3,
@@ -56,7 +64,12 @@ const repairItem = {
     subclasses: [],
     dependencies: [],
   },
-  repairFields: { material: true, dc: false },
+  repairFields: {
+    material: true,
+    dc: false,
+    concentration: false,
+    ritual: false,
+  },
   otherBlockingIssues: 1,
   userEditedFields: [],
 };
@@ -87,5 +100,36 @@ describe("MpmbImportSpellRepairPage", () => {
     await expect(MpmbImportSpellRepairPage({
       params: Promise.resolve({ id: IMPORT_ID, itemId: ITEM_ID }),
     })).rejects.toThrow("NOT_FOUND");
+  });
+
+  it("renders the finite feat repair form for a feat DTO", async () => {
+    mocks.getRepairItem.mockResolvedValue({
+      contentType: "feat",
+      importId: IMPORT_ID,
+      itemId: ITEM_ID,
+      revision: 4,
+      candidateName: "Ember Adept",
+      data: {
+        description: "A synthetic test feat.",
+        prerequisites: [],
+        action: null,
+        recovery: null,
+      },
+      repairFields: {
+        prerequisites: true,
+        action: true,
+        recovery: false,
+        spellcastingAbility: false,
+      },
+      otherBlockingIssues: 0,
+      userEditedFields: [],
+    });
+
+    render(await MpmbImportSpellRepairPage({
+      params: Promise.resolve({ id: IMPORT_ID, itemId: ITEM_ID }),
+    }));
+
+    expect(screen.getByText("Feat repair form for Ember Adept")).toBeVisible();
+    expect(screen.queryByText(/additional blocking issue/i)).not.toBeInTheDocument();
   });
 });

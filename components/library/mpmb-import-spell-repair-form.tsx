@@ -20,6 +20,8 @@ interface MpmbImportSpellRepairFormProps {
   repairFields: {
     material: boolean;
     dc: boolean;
+    concentration: boolean;
+    ritual: boolean;
   };
   initialMaterial?: string;
   initialSaveAbility?: string;
@@ -33,6 +35,14 @@ const initialState: MpmbSpellRepairActionState = {
 
 const selectClassName =
   "h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+const saveAbilities = [
+  "strength",
+  "dexterity",
+  "constitution",
+  "intelligence",
+  "wisdom",
+  "charisma",
+] as const;
 
 function FieldErrors({
   state,
@@ -44,10 +54,23 @@ function FieldErrors({
   const errors = state.fieldErrors?.[name];
   if (!errors?.length) return null;
   return (
-    <p className="text-xs text-destructive">
+    <p id={`spell-repair-${name}-error`} className="text-xs text-destructive">
       {errors.join(" ")}
     </p>
   );
+}
+
+function errorAttributes(
+  state: MpmbSpellRepairActionState,
+  name: string,
+  helpId?: string,
+) {
+  const invalid = Boolean(state.fieldErrors?.[name]?.length);
+  const errorId = invalid ? `spell-repair-${name}-error` : undefined;
+  return {
+    "aria-invalid": invalid || undefined,
+    "aria-describedby": [helpId, errorId].filter(Boolean).join(" ") || undefined,
+  } as const;
 }
 
 export function MpmbImportSpellRepairForm({
@@ -76,6 +99,12 @@ export function MpmbImportSpellRepairForm({
       {repairFields.dc && (
         <input type="hidden" name="repair_dc" value="true" />
       )}
+      {repairFields.concentration && (
+        <input type="hidden" name="repair_concentration" value="true" />
+      )}
+      {repairFields.ritual && (
+        <input type="hidden" name="repair_ritual" value="true" />
+      )}
 
       <div className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-3">
         <p className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -100,7 +129,7 @@ export function MpmbImportSpellRepairForm({
               maxLength={500}
               placeholder="For example: a pinch of powdered iron"
               required
-              aria-describedby="repair-material-help"
+              {...errorAttributes(state, "material", "repair-material-help")}
             />
             <p id="repair-material-help" className="text-xs text-muted-foreground">
               Copy the component text from a source you are allowed to use.
@@ -122,16 +151,10 @@ export function MpmbImportSpellRepairForm({
                 defaultValue={initialSaveAbility ?? ""}
                 className={selectClassName}
                 required
+                {...errorAttributes(state, "save_ability")}
               >
                 <option value="" disabled>Choose an ability</option>
-                {[
-                  "strength",
-                  "dexterity",
-                  "constitution",
-                  "intelligence",
-                  "wisdom",
-                  "charisma",
-                ].map((ability) => (
+                {saveAbilities.map((ability) => (
                   <option key={ability} value={ability}>
                     {ability[0].toUpperCase() + ability.slice(1)}
                   </option>
@@ -147,6 +170,7 @@ export function MpmbImportSpellRepairForm({
                 defaultValue={initialSaveSuccess ?? ""}
                 className={selectClassName}
                 required
+                {...errorAttributes(state, "save_success")}
               >
                 <option value="" disabled>Choose an outcome</option>
                 <option value="none">No effect</option>
@@ -155,6 +179,52 @@ export function MpmbImportSpellRepairForm({
               </select>
               <FieldErrors state={state} name="save_success" />
             </div>
+          </div>
+        </fieldset>
+      )}
+
+      {(repairFields.concentration || repairFields.ritual) && (
+        <fieldset className="space-y-4 border-t border-border pt-6">
+          <legend className="j-folio">Spell properties</legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {repairFields.concentration && (
+              <div className="space-y-2">
+                <Label htmlFor="repair-concentration">
+                  Requires concentration?
+                </Label>
+                <select
+                  id="repair-concentration"
+                  name="concentration"
+                  defaultValue=""
+                  className={selectClassName}
+                  required
+                  {...errorAttributes(state, "concentration")}
+                >
+                  <option value="" disabled>Choose Yes or No</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+                <FieldErrors state={state} name="concentration" />
+              </div>
+            )}
+            {repairFields.ritual && (
+              <div className="space-y-2">
+                <Label htmlFor="repair-ritual">Can be cast as a ritual?</Label>
+                <select
+                  id="repair-ritual"
+                  name="ritual"
+                  defaultValue=""
+                  className={selectClassName}
+                  required
+                  {...errorAttributes(state, "ritual")}
+                >
+                  <option value="" disabled>Choose Yes or No</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+                <FieldErrors state={state} name="ritual" />
+              </div>
+            )}
           </div>
         </fieldset>
       )}
@@ -175,7 +245,20 @@ export function MpmbImportSpellRepairForm({
         >
           Back to review
         </Link>
-        <Button type="submit" variant="gold" disabled={pending}>
+        {state.status === "conflict" && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Reload latest
+          </Button>
+        )}
+        <Button
+          type="submit"
+          variant="gold"
+          disabled={pending || state.status === "conflict"}
+        >
           <Save className="size-4" />
           {pending ? "Saving correction..." : "Save missing details"}
         </Button>

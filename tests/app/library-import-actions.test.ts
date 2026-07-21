@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   stage: vi.fn(),
   toggle: vi.fn(),
   repair: vi.fn(),
+  repairFeat: vi.fn(),
   resolveConflict: vi.fn(),
   confirmPreview: vi.fn(),
   commit: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("@/lib/supabase/mpmb-imports-server", () => ({
   stageMpmbImportFile: mocks.stage,
   setMpmbImportItemSelected: mocks.toggle,
   repairMpmbImportSpellItem: mocks.repair,
+  repairMpmbImportFeatItem: mocks.repairFeat,
   resolveMpmbImportItemConflict: mocks.resolveConflict,
   confirmOwnedMpmbImportPreview: mocks.confirmPreview,
   commitMpmbImport: mocks.commit,
@@ -31,6 +33,7 @@ import {
   confirmMpmbImportPreview,
   finishMpmbImport,
   repairMpmbImportSpell,
+  repairMpmbImportFeat,
   resolveMpmbImportConflict,
   startMpmbImport,
   toggleMpmbImportItem,
@@ -116,6 +119,10 @@ describe("MPMB import actions", () => {
     formData.set("material", "  a silver thread  ");
     formData.set("save_ability", "wisdom");
     formData.set("save_success", "half");
+    formData.set("repair_concentration", "true");
+    formData.set("repair_ritual", "true");
+    formData.set("concentration", "false");
+    formData.set("ritual", "true");
     mocks.repair.mockResolvedValue({
       status: "success",
       importId: IMPORT_ID,
@@ -127,6 +134,8 @@ describe("MPMB import actions", () => {
     expect(mocks.repair).toHaveBeenCalledWith(IMPORT_ID, ITEM_ID, 3, {
       material: "a silver thread",
       dc: { type: "wisdom", success: "half" },
+      concentration: false,
+      ritual: true,
     });
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
       `/library/import/${IMPORT_ID}`,
@@ -134,6 +143,125 @@ describe("MPMB import actions", () => {
     expect(mocks.revalidatePath.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.redirect.mock.invocationCallOrder[0],
     );
+  });
+
+  it("requires an explicit Yes or No for diagnosed spell booleans", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "3");
+    formData.set("repair_concentration", "true");
+
+    await expect(repairMpmbImportSpell(idleRepair, formData)).resolves.toEqual(
+      expect.objectContaining({
+        status: "error",
+        fieldErrors: expect.objectContaining({
+          concentration: expect.arrayContaining([expect.any(String)]),
+        }),
+      }),
+    );
+    expect(mocks.repair).not.toHaveBeenCalled();
+  });
+
+  it("submits a strict finite feat repair without trusting browser patch data", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "5");
+    formData.set("repair_prerequisites", "true");
+    formData.set("repair_action", "true");
+    formData.set("repair_recovery", "true");
+    formData.set("repair_spellcasting_ability", "true");
+    formData.set("prerequisite_ability", "dexterity");
+    formData.set("prerequisite_minimum", "13");
+    formData.set("action", "bonus action");
+    formData.set("recovery", "long rest");
+    formData.set("spellcasting_ability", "charisma");
+    formData.set("candidate_data", JSON.stringify({ secret: "must-not-cross" }));
+    formData.set("diagnostic_code", "feat.action.invalid");
+    mocks.repairFeat.mockResolvedValue({
+      status: "success",
+      importId: IMPORT_ID,
+    });
+
+    await expect(repairMpmbImportFeat(idleRepair, formData)).rejects.toThrow(
+      `REDIRECT:/library/import/${IMPORT_ID}?repaired=1`,
+    );
+    expect(mocks.repairFeat).toHaveBeenCalledWith(IMPORT_ID, ITEM_ID, 5, {
+      prerequisites: [{ stat: "dexterity", op: "gte", value: 13 }],
+      action: "bonus action",
+      recovery: "long rest",
+      spellcastingAbility: "charisma",
+    });
+    expect(JSON.stringify(mocks.repairFeat.mock.calls)).not.toContain(
+      "must-not-cross",
+    );
+    expect(mocks.revalidatePath.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      mocks.redirect.mock.invocationCallOrder.at(-1)!,
+    );
+  });
+
+  it("supports clearing optional feat repairs and rejects partial prerequisites", async () => {
+    const partial = new FormData();
+    partial.set("import_id", IMPORT_ID);
+    partial.set("item_id", ITEM_ID);
+    partial.set("expected_revision", "5");
+    partial.set("repair_prerequisites", "true");
+    partial.set("prerequisite_ability", "wisdom");
+
+    await expect(repairMpmbImportFeat(idleRepair, partial)).resolves.toEqual(
+      expect.objectContaining({
+        status: "error",
+        fieldErrors: expect.objectContaining({
+          prerequisite_minimum: expect.arrayContaining([expect.any(String)]),
+        }),
+      }),
+    );
+    expect(mocks.repairFeat).not.toHaveBeenCalled();
+
+    const clear = new FormData();
+    clear.set("import_id", IMPORT_ID);
+    clear.set("item_id", ITEM_ID);
+    clear.set("expected_revision", "5");
+    clear.set("repair_prerequisites", "true");
+    clear.set("repair_action", "true");
+    clear.set("repair_recovery", "true");
+    clear.set("repair_spellcasting_ability", "true");
+    mocks.repairFeat.mockResolvedValue({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
+
+    await expect(repairMpmbImportFeat(idleRepair, clear)).resolves.toEqual({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
+    expect(mocks.repairFeat).toHaveBeenLastCalledWith(IMPORT_ID, ITEM_ID, 5, {
+      prerequisites: [],
+      action: null,
+      recovery: null,
+      spellcastingAbility: null,
+    });
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("rejects feat values outside the finite UI enums", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("item_id", ITEM_ID);
+    formData.set("expected_revision", "5");
+    formData.set("repair_action", "true");
+    formData.set("action", "legendary action");
+
+    await expect(repairMpmbImportFeat(idleRepair, formData)).resolves.toEqual(
+      expect.objectContaining({
+        status: "error",
+        fieldErrors: expect.objectContaining({
+          action: expect.arrayContaining([expect.any(String)]),
+        }),
+      }),
+    );
+    expect(mocks.repairFeat).not.toHaveBeenCalled();
   });
 
   it("returns a stale repair conflict without revalidating", async () => {

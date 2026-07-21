@@ -8,6 +8,7 @@ import {
   cancelMpmbImport,
   commitMpmbImport,
   confirmOwnedMpmbImportPreview,
+  repairMpmbImportFeatItem,
   repairMpmbImportSpellItem,
   resolveMpmbImportItemConflict,
   setMpmbImportItemSelected,
@@ -24,6 +25,8 @@ export interface MpmbSpellRepairActionState {
   message: string;
   fieldErrors?: Record<string, string[] | undefined>;
 }
+
+export type MpmbFeatRepairActionState = MpmbSpellRepairActionState;
 
 export interface MpmbImportConflictActionState {
   status: "idle" | "error" | "conflict";
@@ -69,17 +72,39 @@ const conflictResolutionFormSchema = z.object({
   }
 });
 
+const explicitBoolean = z.enum(["true", "false"], {
+  message: "Choose Yes or No.",
+}).transform((value) => value === "true");
+
+const repairAbility = z.enum([
+  "strength",
+  "dexterity",
+  "constitution",
+  "intelligence",
+  "wisdom",
+  "charisma",
+]);
+
 const spellRepairFormSchema = z.object({
   import_id: z.string().uuid("The import identifier is invalid."),
   item_id: z.string().uuid("The item identifier is invalid."),
   expected_revision: z.coerce.number().int().positive(),
   repair_material: z.boolean(),
   repair_dc: z.boolean(),
+  repair_concentration: z.boolean(),
+  repair_ritual: z.boolean(),
   material: z.string().max(500),
   save_ability: z.string(),
   save_success: z.string(),
-}).superRefine((value, context) => {
-  if (!value.repair_material && !value.repair_dc) {
+  concentration: z.string(),
+  ritual: z.string(),
+}).strict().superRefine((value, context) => {
+  if (
+    !value.repair_material
+    && !value.repair_dc
+    && !value.repair_concentration
+    && !value.repair_ritual
+  ) {
     context.addIssue({
       code: "custom",
       path: ["import_id"],
@@ -118,6 +143,112 @@ const spellRepairFormSchema = z.object({
       code: "custom",
       path: ["save_success"],
       message: "Choose what happens on a successful save.",
+    });
+  }
+  if (
+    value.repair_concentration
+    && !explicitBoolean.safeParse(value.concentration).success
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["concentration"],
+      message: "Choose Yes or No for concentration.",
+    });
+  }
+  if (value.repair_ritual && !explicitBoolean.safeParse(value.ritual).success) {
+    context.addIssue({
+      code: "custom",
+      path: ["ritual"],
+      message: "Choose Yes or No for ritual casting.",
+    });
+  }
+});
+
+const featRepairFormSchema = z.object({
+  import_id: z.string().uuid("The import identifier is invalid."),
+  item_id: z.string().uuid("The item identifier is invalid."),
+  expected_revision: z.coerce.number().int().positive(),
+  repair_prerequisites: z.boolean(),
+  repair_action: z.boolean(),
+  repair_recovery: z.boolean(),
+  repair_spellcasting_ability: z.boolean(),
+  prerequisite_ability: z.string(),
+  prerequisite_minimum: z.string(),
+  action: z.string(),
+  recovery: z.string(),
+  spellcasting_ability: z.string(),
+}).strict().superRefine((value, context) => {
+  if (
+    !value.repair_prerequisites
+    && !value.repair_action
+    && !value.repair_recovery
+    && !value.repair_spellcasting_ability
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["import_id"],
+      message: "This item has no supported repair fields.",
+    });
+  }
+  if (value.repair_prerequisites) {
+    const hasAbility = value.prerequisite_ability.length > 0;
+    const hasMinimum = value.prerequisite_minimum.length > 0;
+    if (hasAbility && !repairAbility.safeParse(value.prerequisite_ability).success) {
+      context.addIssue({
+        code: "custom",
+        path: ["prerequisite_ability"],
+        message: "Choose a standard ability or no prerequisite.",
+      });
+    }
+    if (hasAbility !== hasMinimum) {
+      context.addIssue({
+        code: "custom",
+        path: hasAbility
+          ? ["prerequisite_minimum"]
+          : ["prerequisite_ability"],
+        message: "Choose both an ability and its minimum score.",
+      });
+    } else if (hasMinimum) {
+      const minimum = z.coerce.number().int().min(1).max(30)
+        .safeParse(value.prerequisite_minimum);
+      if (!minimum.success) {
+        context.addIssue({
+          code: "custom",
+          path: ["prerequisite_minimum"],
+          message: "Enter a whole-number minimum from 1 to 30.",
+        });
+      }
+    }
+  }
+  if (
+    value.repair_action
+    && !["", "action", "bonus action", "reaction", "free"].includes(value.action)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["action"],
+      message: "Choose a supported action or no tracked action.",
+    });
+  }
+  if (
+    value.repair_recovery
+    && !["", "short rest", "long rest", "dawn", "day"].includes(value.recovery)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["recovery"],
+      message: "Choose a supported recovery or no recovery.",
+    });
+  }
+  if (
+    value.repair_spellcasting_ability
+    && value.spellcasting_ability !== ""
+    && !repairAbility.safeParse(value.spellcasting_ability).success
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["spellcasting_ability"],
+      message: "Choose a standard ability or no spellcasting ability.",
     });
   }
 });
@@ -170,9 +301,13 @@ export async function repairMpmbImportSpell(
     expected_revision: formData.get("expected_revision"),
     repair_material: formData.get("repair_material") === "true",
     repair_dc: formData.get("repair_dc") === "true",
+    repair_concentration: formData.get("repair_concentration") === "true",
+    repair_ritual: formData.get("repair_ritual") === "true",
     material: String(formData.get("material") ?? ""),
     save_ability: String(formData.get("save_ability") ?? ""),
     save_success: String(formData.get("save_success") ?? ""),
+    concentration: String(formData.get("concentration") ?? ""),
+    ritual: String(formData.get("ritual") ?? ""),
   });
   if (!parsed.success) {
     return {
@@ -200,8 +335,95 @@ export async function repairMpmbImportSpell(
           },
         }
       : {}),
+    ...(parsed.data.repair_concentration
+      ? { concentration: parsed.data.concentration === "true" }
+      : {}),
+    ...(parsed.data.repair_ritual
+      ? { ritual: parsed.data.ritual === "true" }
+      : {}),
   };
   const result = await repairMpmbImportSpellItem(
+    parsed.data.import_id,
+    parsed.data.item_id,
+    parsed.data.expected_revision,
+    patch,
+  );
+  if (result.status !== "success") {
+    return { status: result.status, message: result.message };
+  }
+
+  revalidatePath(`/library/import/${parsed.data.import_id}`);
+  redirect(`/library/import/${parsed.data.import_id}?repaired=1`);
+}
+
+export async function repairMpmbImportFeat(
+  _previousState: MpmbFeatRepairActionState,
+  formData: FormData,
+): Promise<MpmbFeatRepairActionState> {
+  const parsed = featRepairFormSchema.safeParse({
+    import_id: formData.get("import_id"),
+    item_id: formData.get("item_id"),
+    expected_revision: formData.get("expected_revision"),
+    repair_prerequisites: formData.get("repair_prerequisites") === "true",
+    repair_action: formData.get("repair_action") === "true",
+    repair_recovery: formData.get("repair_recovery") === "true",
+    repair_spellcasting_ability:
+      formData.get("repair_spellcasting_ability") === "true",
+    prerequisite_ability: String(formData.get("prerequisite_ability") ?? ""),
+    prerequisite_minimum: String(formData.get("prerequisite_minimum") ?? ""),
+    action: String(formData.get("action") ?? ""),
+    recovery: String(formData.get("recovery") ?? ""),
+    spellcasting_ability: String(formData.get("spellcasting_ability") ?? ""),
+  });
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Correct the highlighted repair fields.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const abilityResult = repairAbility.safeParse(
+    parsed.data.prerequisite_ability,
+  );
+  const spellcastingAbilityResult = repairAbility.safeParse(
+    parsed.data.spellcasting_ability,
+  );
+  const patch = {
+    ...(parsed.data.repair_prerequisites
+      ? {
+          prerequisites: abilityResult.success
+            ? [{
+                stat: abilityResult.data,
+                op: "gte" as const,
+                value: Number(parsed.data.prerequisite_minimum),
+              }] as const
+            : [] as const,
+        }
+      : {}),
+    ...(parsed.data.repair_action
+      ? {
+          action: parsed.data.action === ""
+            ? null
+            : parsed.data.action as "action" | "bonus action" | "reaction" | "free",
+        }
+      : {}),
+    ...(parsed.data.repair_recovery
+      ? {
+          recovery: parsed.data.recovery === ""
+            ? null
+            : parsed.data.recovery as "short rest" | "long rest" | "dawn" | "day",
+        }
+      : {}),
+    ...(parsed.data.repair_spellcasting_ability
+      ? {
+          spellcastingAbility: spellcastingAbilityResult.success
+            ? spellcastingAbilityResult.data
+            : null,
+        }
+      : {}),
+  };
+  const result = await repairMpmbImportFeatItem(
     parsed.data.import_id,
     parsed.data.item_id,
     parsed.data.expected_revision,
