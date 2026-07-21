@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { listOwnedHomebrewFeats } from "@/lib/supabase/homebrew-feats-server";
 import { listOwnedHomebrewSpells } from "@/lib/supabase/homebrew-spells-server";
+import { createClient } from "@/lib/supabase/server";
 
 interface LibraryPageProps {
   searchParams: Promise<{ created?: string | string[]; updated?: string | string[] }>;
@@ -17,20 +18,29 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  let spells = null;
-  let loadError = false;
-  try {
-    spells = await listOwnedHomebrewSpells();
-  } catch (error) {
-    console.error("[LibraryPage] Failed to load owned homebrew spells", error);
-    loadError = true;
+  const [spellsResult, featsResult] = await Promise.allSettled([
+    listOwnedHomebrewSpells(),
+    listOwnedHomebrewFeats(),
+  ]);
+  const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
+  const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
+
+  if (spellsResult.status === "rejected") {
+    console.error("[LibraryPage] Failed to load owned homebrew spells", spellsResult.reason);
+  }
+  if (featsResult.status === "rejected") {
+    console.error("[LibraryPage] Failed to load owned homebrew feats", featsResult.reason);
   }
 
   const notice = typeof query.created === "string"
-    ? "Private spell created."
+    ? "Private homebrew created."
     : typeof query.updated === "string"
-      ? "A new spell version was saved. Existing character pins are unchanged."
+      ? "A new homebrew version was saved. Existing character pins are unchanged."
       : null;
+  const completelyEmpty = spells.length === 0
+    && feats.length === 0
+    && spellsResult.status === "fulfilled"
+    && featsResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -48,6 +58,10 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
             <Upload className="size-4" />
             Import MPMB
           </Link>
+          <Link href="/library/feats/new" className={buttonVariants({ variant: "outline" })}>
+            <Plus className="size-4" />
+            Create feat
+          </Link>
           <Link href="/library/spells/new" className={buttonVariants({ variant: "gold" })}>
             <Plus className="size-4" />
             Create spell
@@ -61,32 +75,32 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         </div>
       )}
 
-      {loadError ? (
-        <div className="j-card-paper p-8 text-center" role="alert">
-          <p className="font-medium text-foreground">Your library could not be loaded.</p>
-          <p className="mt-2 text-sm text-muted-foreground">Refresh the page to try again.</p>
-        </div>
-      ) : spells?.length === 0 ? (
+      {completelyEmpty && (
         <div className="j-card-paper flex flex-col items-center px-6 py-14 text-center">
           <div className="rounded-full border border-accent/30 bg-accent/10 p-3 text-accent">
             <Sparkles className="size-6" />
           </div>
-          <h2 className="j-display mt-4 text-xl text-foreground">Write your first private spell</h2>
+          <h2 className="j-display mt-4 text-xl text-foreground">Write your first private rule</h2>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-            Only you can see private homebrew. Once created, compatible characters can discover and pin an exact version.
+            Start with a spell or feat. Every change is versioned so character sheets can remain pinned to exactly what they chose.
           </p>
-          <Link href="/library/spells/new" className={buttonVariants({ variant: "outline", className: "mt-5" })}>
-            Begin authoring
-          </Link>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <Link href="/library/spells/new" className={buttonVariants({ variant: "outline" })}>Create spell</Link>
+            <Link href="/library/feats/new" className={buttonVariants({ variant: "outline" })}>Create feat</Link>
+          </div>
         </div>
-      ) : (
+      )}
+
+      {spellsResult.status === "rejected" ? (
+        <LibraryLoadError label="spells" />
+      ) : spells.length > 0 ? (
         <section aria-labelledby="owned-spells-heading" className="space-y-3">
           <div className="flex items-center gap-2">
             <BookOpen className="size-4 text-accent" />
             <h2 id="owned-spells-heading" className="j-folio">My spells</h2>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            {spells?.map((spell) => (
+            {spells.map((spell) => (
               <Link
                 key={spell.id}
                 href={`/library/spells/${spell.id}/edit`}
@@ -119,7 +133,49 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
             ))}
           </div>
         </section>
-      )}
+      ) : null}
+
+      {featsResult.status === "rejected" ? (
+        <LibraryLoadError label="feats" />
+      ) : feats.length > 0 ? (
+        <section aria-labelledby="owned-feats-heading" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-accent" />
+            <h2 id="owned-feats-heading" className="j-folio">My feats</h2>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {feats.map((feat) => (
+              <Link
+                key={feat.id}
+                href={`/library/feats/${feat.id}/edit`}
+                className="j-card-paper group p-5 transition-colors hover:border-accent/50"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="j-display truncate text-lg text-foreground group-hover:text-accent">{feat.name}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                      {feat.data.description}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="secondary">v{feat.version}</Badge>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function LibraryLoadError({ label }: { label: string }) {
+  return (
+    <div className="j-card-paper p-8 text-center" role="alert">
+      <p className="font-medium text-foreground">Your homebrew {label} could not be loaded.</p>
+      <p className="mt-2 text-sm text-muted-foreground">Refresh the page to try again.</p>
     </div>
   );
 }
