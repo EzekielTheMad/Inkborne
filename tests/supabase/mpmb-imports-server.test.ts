@@ -16,8 +16,9 @@ import {
   confirmOwnedMpmbImportPreview,
   getOwnedMpmbImportConflictItem,
   getOwnedMpmbImportPreview,
+  getOwnedMpmbImportRepairItem,
   getOwnedMpmbImportReview,
-  getOwnedMpmbImportSpellRepairItem,
+  repairMpmbImportFeatItem,
   repairMpmbImportSpellItem,
   resolveMpmbImportItemConflict,
   sanitizeMpmbImportFilename,
@@ -193,7 +194,7 @@ describe("stageMpmbImportFile", () => {
       source_sha256: createHash("sha256").update(new TextEncoder().encode(validSource)).digest("hex"),
       source_bytes: new TextEncoder().encode(validSource).byteLength,
       parser_version: "1.0.0",
-      mapper_version: "1.0.0",
+      mapper_version: "1.1.0",
       required_sheet_version: "13.1.14",
       rights_attestation_version: "private_use_v1",
       mapping_summary: expect.objectContaining({ valid: 1, needsInfo: 0 }),
@@ -315,13 +316,19 @@ describe("guided spell repair", () => {
     createClientMock.mockResolvedValue(authenticatedClient({ from }));
 
     await expect(
-      getOwnedMpmbImportSpellRepairItem(IMPORT_ID, ITEM_ID),
+      getOwnedMpmbImportRepairItem(IMPORT_ID, ITEM_ID),
     ).resolves.toMatchObject({
+      contentType: "spell",
       importId: IMPORT_ID,
       itemId: ITEM_ID,
       revision: 4,
       candidateName: "Ash Veil",
-      repairFields: { material: true, dc: false },
+      repairFields: {
+        material: true,
+        dc: false,
+        concentration: false,
+        ritual: false,
+      },
       otherBlockingIssues: 1,
     });
     expect(importQuery.filters).toEqual([
@@ -345,6 +352,8 @@ describe("guided spell repair", () => {
       {
         material: "a silver thread",
         dc: { type: "wisdom", success: "half" },
+        concentration: true,
+        ritual: false,
       },
     )).resolves.toEqual({ status: "success", importId: IMPORT_ID });
     expect(rpc).toHaveBeenCalledWith("repair_mpmb_import_spell_item", {
@@ -354,6 +363,8 @@ describe("guided spell repair", () => {
       repair_patch: {
         material: "a silver thread",
         dc: { type: "wisdom", success: "half" },
+        concentration: true,
+        ritual: false,
       },
     });
   });
@@ -456,6 +467,118 @@ const PREVIEW_FEAT_DATA = featDataSchema.parse({
   calcChanges: [],
   addMod: [],
   source_refs: [],
+});
+
+describe("guided feat repair", () => {
+  it("loads a schema-valid blocked feat without exposing arbitrary candidate fields", async () => {
+    const importQuery = queryBuilder({
+      data: { id: IMPORT_ID, revision: 7, status: "review" },
+      error: null,
+    });
+    const itemQuery = queryBuilder({
+      data: {
+        id: ITEM_ID,
+        import_id: IMPORT_ID,
+        content_type: "feat",
+        mapping_status: "needs_info",
+        candidate_name: "Steadfast Adept",
+        candidate_data: PREVIEW_FEAT_DATA,
+        candidate_effects: [],
+        committed_content_id: null,
+        diagnostics: [
+          {
+            code: "feat.prerequisite.compound",
+            severity: "blocking",
+            path: "prerequisite",
+            message: "Choose one supported prerequisite.",
+          },
+          {
+            code: "feat.action.invalid",
+            severity: "blocking",
+            path: "action",
+            message: "Choose a supported action.",
+          },
+          {
+            code: "feat.other.review",
+            severity: "blocking",
+            path: "other",
+            message: "Review another field.",
+          },
+        ],
+        user_edited_fields: [],
+      },
+      error: null,
+    });
+    const from = vi.fn()
+      .mockReturnValueOnce(importQuery.builder)
+      .mockReturnValueOnce(itemQuery.builder);
+    createClientMock.mockResolvedValue(authenticatedClient({ from }));
+
+    const item = await getOwnedMpmbImportRepairItem(IMPORT_ID, ITEM_ID);
+    expect(item).toMatchObject({
+      contentType: "feat",
+      revision: 7,
+      repairFields: {
+        prerequisites: true,
+        action: true,
+        recovery: false,
+        spellcastingAbility: false,
+      },
+      otherBlockingIssues: 1,
+    });
+    expect(JSON.stringify(item)).not.toContain("candidate_effects");
+  });
+
+  it("sends only a strict canonical feat patch to the RPC", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    await expect(repairMpmbImportFeatItem(
+      IMPORT_ID,
+      ITEM_ID,
+      7,
+      {
+        prerequisites: [{ stat: "dexterity", op: "gte", value: 13 }],
+        action: "reaction",
+        recovery: null,
+        spellcastingAbility: null,
+      },
+    )).resolves.toEqual({ status: "success", importId: IMPORT_ID });
+    expect(rpc).toHaveBeenCalledWith("repair_mpmb_import_feat_item", {
+      target_import_id: IMPORT_ID,
+      target_item_id: ITEM_ID,
+      expected_revision: 7,
+      repair_patch: {
+        prerequisites: [{ stat: "dexterity", op: "gte", value: 13 }],
+        action: "reaction",
+        recovery: null,
+        spellcastingAbility: null,
+      },
+    });
+    expect(JSON.stringify(rpc.mock.calls)).not.toContain("candidate_data");
+  });
+
+  it("rejects empty, broad, and out-of-range feat repairs before the RPC", async () => {
+    const rpc = vi.fn();
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    for (const patch of [
+      {},
+      { diagnostics: ["feat.action.invalid"] },
+      { prerequisites: [{ stat: "wisdom", op: "gte", value: 31 }] },
+    ]) {
+      await expect(repairMpmbImportFeatItem(
+        IMPORT_ID,
+        ITEM_ID,
+        7,
+        patch as never,
+      )).resolves.toEqual({
+        status: "error",
+        message: "The feat repair is invalid.",
+      });
+    }
+    expect(rpc).not.toHaveBeenCalled();
+  });
 });
 
 function previewReviewClient({
