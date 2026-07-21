@@ -2,7 +2,7 @@
 
 **Status:** Living draft. Update freely.
 **Owner:** Victor
-**Last updated:** 2026-07-19
+**Last updated:** 2026-07-21
 
 > **Working on this project?** Start with [`docs/GAME-PLAN.md`](GAME-PLAN.md) — the agent-agnostic entry point with the current task backlog, workflow conventions, and repo orientation. This file is the milestone-level source of truth; the game plan is the working-level one.
 
@@ -23,43 +23,25 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-> **Snapshot 2026-06-19.** M1 (pre-alpha consolidation) and the M2 *builder* design polish have shipped — including the full mobile builder (PR #47). The single thing gating closed alpha #1 is deploying database backups (code is done — PR #33 — parked on a Supabase credential). The M2 *journey* polish (landing/auth/dashboard aesthetic) is the main design work still outstanding, but it is **not** alpha-blocking. See "What changed since 2026-04-25" at the end of this section.
->
-> **Update 2026-07-15.** The UAT console-error punch items (dialog a11y titles + duplicate level-row key) merged as PR #58. The journey design handoff bundle was rescued off the stale `feat/mobile-builder` branch and now lives in-repo at `docs/design-briefs/design_handoff_journey_alpha/`. Backups (PR #33) remain the sole alpha gate.
->
-> **Update 2026-07-16 (agentic sprint).** **M2 is complete** (journey polish shipped, PR #67, landing variant B) and **M3 is complete** (dice + roll log, spell casting, hit dice, effects/durations/concentration, Arcane Recovery — PRs #61–#72, #74; migrations 00038–00040 applied; live-browser UAT green, zero bugs). Equipment chooser (#64) and subclass/set-level fixes (#63) closed the UAT punch list; Playwright E2E smoke exists (#62, 6 tests). Tests: 620 → 1109 unit + 6 E2E. **Alpha #1's only remaining gates are on Victor: deploy backups (PR #33 merged, Unraid deploy pending) and send the invites.** Alpha #1 and #2 could now even be combined, since gameplay shipped ahead of the invite. See `docs/GAME-PLAN.md` §7 for the full log and §6 for pending decisions (incl. the C1 schema-drift call).
+> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, and feat authoring/campaign sharing/ASI selection shipped in #91. The automated gate is **167 Vitest files / 1666 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
 
-**Shipped to production (`main` @ `31a4996`):**
-- Auth (email + Google + Discord OAuth)
-- Character creation flow: race → class → abilities → background → equipment
-- Character sheet: stat ribbon, HP tracker, skills, saves, defenses, conditions, rest dialog, feature resources, spell selection (read-only)
-- Spell Management Phase 1 (selection + display, no casting yet)
-- Inventory management with magic items
-- Feature Resources system (27 class features + 2 racial traits, PR #24)
-- Rest System (short/long rest orchestration)
-- Atomic state patches via `patch_character_state` RPC
-- **First-time UX fixes F1–F6** (PR #29): hide Campaigns card, single-system auto-select, dismissible alpha banner + feedback CTA, new-character helper text, auto-redirect into builder
-- **In-app feedback widget + `/admin/feedback`** (PR #19) and **self-hosted error reporting + `/admin/errors`** (PR #22), under an **admin hub** at `/admin` (PR #28)
-- **Generated Supabase types** `database.types.ts` (PR #26)
-- **M2 builder design polish:** class preview modal (#37), class step rail (#40), multiclass picker (#43), level-up flow (#45), **mobile builder pattern (#47)**, character primary-color carry-through (#52/#53). Mobile support also spans nav (`mobile-nav`) and the sheet (`mobile-sheet`).
-- **Post-M2 refactor #1:** character mutations consolidated behind typed helpers (PR #56)
-- Test coverage gaps G2/G3/G4 closed (HP tracker, createCharacter, auth callback — PR #31)
+**Shipped product surface:**
+- Email, Google, and Discord authentication; account linking is implemented in #80 but awaits manual provider-consent UAT.
+- Full responsive character builder and sheet, including direct-level gating, equipment choice, subclass prompts, inventory, spells, feat choices, exact-version content pins, and character copy.
+- M3 gameplay: dice and roll log, spell casting, resources, hit dice, effects/durations, concentration, and rests.
+- Unified character narrative plus campaign CRUD/membership, roles, roster, wiki tree/editor, backlinks, timelines/relationships, visibility controls, settings, and revision conflicts.
+- `/library` spell and feat authoring with immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation.
+- Fail-closed private MPMB import review with guided repair, explicit conflict resolution, audit provenance, and mandatory current-revision calculation preview.
+- Feedback/error administration, generated Supabase types, validated content fetch boundaries, and hardened local/offsite backup tooling.
 
-**In flight (open PRs):**
-- **#33 — Backup container scaffolding.** Code complete and reviewed (Docker + restic + rclone, daily `pg_dump`, 30-daily/12-monthly retention, weekly integrity check, Discord alerts). Unraid deploy is **parked on a Supabase pooler credential** (`Tenant or user not found` → needs the tenant-qualified username `postgres.<project-ref>` + the correct pooler host/password). B2 offsite tier deferred; Unraid-local only for now. **This is the one alpha blocker.**
-- **#57 — Content schema validation refactor (design spec).** Post-M2 refactor #2: run the existing Zod schemas at the server fetch boundary. Spec + full implementation plan written (`docs/superpowers/plans/2026-05-19-content-schema-validation.md`); execution pending. Pure robustness — not alpha-blocking.
+**Active M4 work:** broaden the guided repair editor for schema-known spell and feat fields, then extend authoring to additional content types. Optional public publishing remains deliberately separate from campaign sharing.
 
-**Designed but not yet built:**
-- **M2 journey polish** — landing / auth / dashboard / characters-list / sheet aesthetic pass (per `docs/design-briefs/journey-landing-to-sheet.md`). The Claude Design handoff bundle for this (landing A/B/C, auth, dashboard mockups + tokens) is now in-repo at `docs/design-briefs/design_handoff_journey_alpha/` (rescued 2026-07-15; `feat/mobile-builder` is now safe to retire). Not alpha-blocking.
+**External release work:**
+1. Deploy #90 on Victor's Unraid system, create a fresh backup, and complete the restore drill in `infra/backup/README.md`.
+2. Complete the account-linking browser matrix for #80 (Google, Discord, email security-code linking, unlink/relink).
+3. Send closed-alpha invites when Victor is ready.
 
-**Remaining before closed alpha #1:**
-1. **Backups deployed + restore drill** (PR #33) — the blocker; mostly external infra on Unraid.
-2. **Remaining UAT punch items** (console errors fixed in #58): equipment-step chooser decision, subclass discoverability, verify direct "Set level" doesn't skip subclass prompts — see `docs/GAME-PLAN.md` Track A.
-3. *(Optional, recommended)* **Playwright E2E smoke (G1)** — auth → builder → sheet. Not an alpha gate.
-
-**What changed since 2026-04-25:** every PR the previous snapshot listed as "in flight" (#19, #21, #22, #23, #24, #25, #26) has merged, plus the whole M2 builder-polish sequence (#34–#54), the first-time UX fixes (#29), test gaps (#31), the admin hub (#28), and post-M2 refactor #1 (#56). Backups (#33) were built and parked on a credential. Refactor #2 (#57) was specced + planned, then deferred in favor of the alpha push.
-
-**Roadmap items beyond this:** see milestones below.
+**Not built yet:** remaining M4 authoring/content types and public publishing; M5 monsters/library NPCs/companions/sidekicks; optional campaign live presence; PDF importing; and public-beta polish.
 
 ---
 
@@ -70,7 +52,7 @@ Each milestone has a **goal**, **scope**, **exit criteria**, and ideally a **fee
 ---
 
 ### M1 — Pre-alpha consolidation
-**Status (2026-06-19): ✅ Essentially complete.** All in-flight PRs merged, F1–F6 UX fixes shipped (#29), test gaps G2–G4 closed (#31), feedback / error / admin surfaces live. Only remaining item: deploy database backups (PR #33, parked on a credential) + a manual smoke pass. **Backups are the sole alpha gate.**
+**Status (2026-07-21): ✅ Code complete.** All consolidation, UX, testing, and backup-hardening work is merged, including #90. The only remaining item is the external Unraid deployment and restore drill.
 **Goal:** Land what's in flight, set up infrastructure for production use, fix known issues.
 **Estimated effort:** 1–2 weeks.
 
@@ -174,7 +156,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-21): ◑ Spell sharing and the private MPMB importer workflow through calculation preview are implemented and hosted-database verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through narrowly validated missing spell details, resolves owned-content collisions with explicit Keep both / Replace decisions, preserves immutable versions and existing character pins, refuses to replace campaign-shared targets, and requires a server-calculated preview of the exact selected revision before atomically committing spells/feats as personal homebrew. Imported content remains blocked from campaign sharing pending a future rights workflow. This does **not** complete M4: protected-preview browser UAT, additional authoring/content types, broader missing-info editing, and separately controlled public publishing remain.
+**Status (2026-07-21): ◑ Spell and feat authoring/sharing plus the private MPMB importer workflow through calculation preview are shipped and hosted-verified.** `/library` supports immutable spell/feat edits and campaign access controls; exact-campaign discovery, DM revocation, ASI feat selection, character copy, level-down pruning, and exact-version sheet pins are protected-preview verified. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through narrowly validated missing spell details, resolves owned-content collisions, preserves immutable pins, and requires a server-calculated preview of the exact selected revision before commit. Imported content remains private pending a future rights workflow. This does **not** complete M4: broader schema-known repair, additional authoring/content types, and separately controlled public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -185,7 +167,7 @@ Combined because authoring and importing share the same user-owned content infra
 - `/library` page — "my content" view with filters by type, sort, search
 - Schema-driven authoring forms for each existing content type (race, class, feat, feature, spell, item, weapon, armor, background, subclass, trait)
 - Builder content discovery — pickers pull from `platform` + `user_owned` + `shared_with_me`
-- Sharing UI — campaign-scoped sharing is implemented for spells; generalize it to other content types, then add separately controlled public publishing
+- Sharing UI — campaign-scoped sharing is implemented for spells and feats; generalize it to other content types, then add separately controlled public publishing
 - Custom content types — UI for `custom_content_types` table that exists in schema today
 
 **Scope — Importer half (~2 weeks, leveraging existing transformers):**
@@ -193,12 +175,12 @@ Combined because authoring and importing share the same user-owned content infra
 - MPMB JS parser — reuses logic from existing `scripts/transformers/` that we used to seed the SRD
 - Validation step — runs Zod schemas against parsed output, surfaces gaps
 - Conflict resolution UI — implemented for explicit Keep both / Replace outcomes; field-level merge remains intentionally out of scope until it can be made rules-safe
-- Missing-info wizard — fields the parser couldn't extract get a form for the user
+- Missing-info wizard — spell material text and save outcomes are implemented; broaden the editor to remaining schema-known spell/feat fields
 - Audit log — what was imported, what was skipped, what needs attention
 - **Calculation correctness verification:** implemented as a mandatory owner-only calculation harness before commit. Feats run through the same evaluator and structured-source path as the live sheet at levels 1/5/11/17; spells run through the production casting engine at every supported scaling tier; malformed schemas, formulas, dice, or calculations fail closed.
 
 **Exit criteria:**
-- A user can create a custom feat in `/library`, share it with their campaign, and see another user pick it during character creation
+- ✅ A user can create a custom feat in `/library`, share it with a campaign, and see another user choose it at an earned ASI with sheet-parity effects (#91)
 - A user can upload an MPMB community file (e.g., Tasha's Cauldron) → see content land in library → build a character with it → sheet calculations match expected values
 - PDF parsing explicitly **not in scope** for this milestone (deferred — see M7)
 
@@ -220,11 +202,11 @@ Combined because authoring and importing share the same user-owned content infra
 
 ---
 
-### M5.5 — Campaigns + narrative depth (the LegendKeeper layer) — *in progress 2026-07-19*
+### M5.5 — Campaigns + narrative depth (the LegendKeeper layer) — *foundation shipped 2026-07-20*
 **Goal:** Deliver the second half of the founding vision: characters belong to campaigns, and campaigns carry a LegendKeeper-style wiki/narrative space shared between DM and players.
 **Estimated effort:** 4–6 weeks.
 
-> **Status: in progress on the Codex campaign branch.** Campaigns were selected ahead of M5. The implementation includes authorization/RLS, CRUD and invite membership, character copy/assignment, DM/player roster views, a hierarchical rich-text wiki with visibility-safe backlinks, bidirectional character↔campaign narrative links, character timelines/relationships, DM-only/player-shared visibility, revision conflict protection, settings, invite rotation, and membership cleanup. Production migrations `00041`–`00055`, rollback-only database smoke UAT, and authenticated two-account browser UAT are complete. The application branch still needs to merge/deploy; the remaining feature decisions are publishing and optional live presence.
+> **Status: foundation shipped in #76.** Campaigns were selected ahead of M5. Authorization/RLS, CRUD and invite membership, character copy/assignment, DM/player roster views, a hierarchical rich-text wiki with visibility-safe backlinks, bidirectional character↔campaign narrative links, character timelines/relationships, DM-only/player-shared visibility, revision conflict protection, settings, invite rotation, and membership cleanup are merged and authenticated-UAT verified. Remaining work is optional public publishing and live presence.
 
 **Scope (first cut — needs its own brainstorm/spec before implementation):**
 - Campaign CRUD + membership: DM creates a campaign, invites players, players assign characters
@@ -391,12 +373,11 @@ Initial sequencing questions answered by Victor:
 
 These come up during the milestones; not decisions for today:
 
-1. **Public sharing vs campaign-only.** M4 needs this answered. Are users going to "publish" content for strangers to use, or only share with their campaign?
+1. **Public publishing controls and licensing.** Campaign-only sharing shipped first. Public publishing is optional and later; decide the visibility/redaction/licensing contract before building it.
 2. **Multi-system support timing.** Is Daggerheart (or another system) coming alongside D&D 5e, or after public beta? Each system takes content seeding effort.
-3. **DM view UI.** When does role-based UI (DM vs player) materialize? Probably needs to coincide with M5 (new content types — monsters are DM-facing).
-4. **Real-time multiplayer.** Should two players see live updates on the same character? Or async-only? Big architectural decision.
-5. **2024 SRD ingestion.** When the 2024 SRD's expanded feat list is wanted, who ingests it (us, with a proper script) or do users just import it themselves via M4?
-6. **Pricing model.** No discussion of monetization yet. Is this free-forever / tip jar / freemium / paid? Answer affects sharing model and feature gating.
+3. **Real-time multiplayer.** Revision-safe async collaboration is shipped. Decide whether live presence, locking, or merged simultaneous editing is worth the added complexity.
+4. **2024 SRD ingestion.** When the 2024 SRD's expanded feat list is wanted, who ingests it (us, with a proper script) or do users import it through M4?
+5. **Pricing model.** No discussion of monetization yet. Is this free-forever / tip jar / freemium / paid? The answer affects public sharing and feature gating.
 
 ---
 
@@ -404,8 +385,7 @@ These come up during the milestones; not decisions for today:
 
 These are mine to track:
 
-- **M1 backup setup** — Supabase service role key handling on Unraid (encrypted secrets store?), B2 bucket structure + retention policy
-- **M3 effects/durations system design** — needs its own brainstorm before implementation
+- **M1 backup operations** — first Unraid deployment, fresh backup, and restore drill using `infra/backup/README.md`
 - **M4 MPMB parser scope** — which MPMB community files should we use as test fixtures? Tasha's was named as a target; what else?
 - **M5 monster schema design** — much bigger than feature/spell schemas; needs design pass
 
