@@ -1,0 +1,10 @@
+# Never send runtime data or credentials to the Docker daemon/build cache.
+.env
+repo/
+logs/
+
+# The image copies only scripts, crontab, and logrotate configuration.
+tests/
+README.md
+docker-compose.yml
+.git*

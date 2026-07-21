@@ -35,11 +35,16 @@ region = ${SUPABASE_S3_REGION:-us-east-1}
 EOF
 chmod 600 /root/.config/rclone/rclone.conf
 
-# Init the local restic repo on first run. `restic cat config` is a cheap
-# way to detect an initialized repo without listing snapshots.
-if ! restic cat config >/dev/null 2>&1; then
+# Initialize only a truly empty repository. A non-empty repo that cannot be
+# opened means a wrong password, corruption, or permissions problem and must
+# stop startup instead of being misreported as an uninitialized repository.
+mkdir -p "$RESTIC_REPOSITORY"
+if [[ -z "$(find "$RESTIC_REPOSITORY" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
   echo "[entrypoint] Initializing restic repo at ${RESTIC_REPOSITORY}"
   restic init
+elif ! restic cat config >/dev/null 2>&1; then
+  echo "[entrypoint] FATAL: existing restic repository cannot be opened" >&2
+  exit 1
 fi
 
 # Cron runs without the docker env, so persist the secrets it needs into
@@ -51,17 +56,19 @@ fi
     [[ -n "$val" ]] && printf '%s=%q\n' "$v" "$val"
   done
 } > /etc/environment
+chmod 600 /etc/environment
 
 # Install the crontab for root.
 crontab /app/crontab
 echo "[entrypoint] Cron installed:"
 crontab -l | sed 's/^/    /'
 
-# Optional: trigger a backup immediately on container start. Useful when
-# rebuilding the image — set RUN_ON_START=1 in .env to enable.
+# Optional: trigger a backup immediately on container start. A requested
+# initial backup is a startup gate: failure stops the service instead of
+# leaving a falsely healthy container behind.
 if [[ "${RUN_ON_START:-0}" == "1" ]]; then
   echo "[entrypoint] RUN_ON_START=1 — running initial backup"
-  /app/scripts/run-backup.sh || echo "[entrypoint] initial backup failed (non-fatal at start)"
+  /app/scripts/run-backup.sh
 fi
 
 # Stream cron output to stdout so docker logs sees it.

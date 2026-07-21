@@ -23,5 +23,16 @@ services:
     volumes:
       - ./repo:/repo
       - ./logs:/var/log
+    # Database and Storage plaintext exist only in memory while a snapshot is
+    # assembled. Adjust BACKUP_STAGING_SIZE if the dataset outgrows 2 GiB.
+    tmpfs:
+      - /backup-staging:rw,noexec,nosuid,nodev,size=${BACKUP_STAGING_SIZE:-2g},mode=0700
+    # Cap Docker's copy of the tailed cron log as well as the file rotation
+    # configured inside the container.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     # No exposed ports — the container is pull-based and never accepts
     # inbound connections.
