@@ -68,6 +68,34 @@ function validFeat(overrides: MpmbStaticObject = {}): MpmbParsedEntry {
   });
 }
 
+const safeRepairCases: Array<{
+  label: string;
+  overrides: MpmbStaticObject;
+  issueCode: string;
+  expectedData: Record<string, unknown>;
+  missingDataKey?: string;
+}> = [
+  {
+    label: "action",
+    overrides: { action: "instant" },
+    issueCode: "feat.action.invalid",
+    expectedData: { action: null },
+  },
+  {
+    label: "recovery",
+    overrides: { recovery: "turn" },
+    issueCode: "feat.recovery.invalid",
+    expectedData: { recovery: null },
+  },
+  {
+    label: "spellcasting ability",
+    overrides: { spellcastingAbility: "Luck" },
+    issueCode: "feat.spellcastingAbility.invalid",
+    expectedData: {},
+    missingDataKey: "spellcastingAbility",
+  },
+];
+
 describe("MPMB feat mapping", () => {
   it("creates a schema-valid candidate and schema-valid narrative/mechanical effects", () => {
     const mapped = mapMpmbFeat(validFeat(), context);
@@ -104,10 +132,33 @@ describe("MPMB feat mapping", () => {
     );
 
     expect(mapped.status).toBe("needs_info");
-    expect(mapped.candidate).toBeNull();
+    expect(mapped.candidate).toMatchObject({
+      content_type: "feat",
+      data: { prerequisites: [] },
+    });
+    expect(featDataSchema.safeParse(mapped.candidate?.data).success).toBe(true);
     expect(mapped.issues).toContainEqual(
       expect.objectContaining({
         code: "feat.prerequisite.compound",
+        severity: "blocking",
+      }),
+    );
+  });
+
+  it("retains a safe candidate for an unsupported prerequisite", () => {
+    const mapped = mapMpmbFeat(
+      validFeat({ prerequisite: "13th-level fighter" }),
+      context,
+    );
+
+    expect(mapped.status).toBe("needs_info");
+    expect(mapped.candidate).toMatchObject({
+      content_type: "feat",
+      data: { prerequisites: [] },
+    });
+    expect(mapped.issues).toContainEqual(
+      expect.objectContaining({
+        code: "feat.prerequisite.unsupported",
         severity: "blocking",
       }),
     );
@@ -120,12 +171,55 @@ describe("MPMB feat mapping", () => {
     );
 
     expect(mapped.status).toBe("needs_info");
-    expect(mapped.candidate).toBeNull();
+    expect(mapped.candidate?.content_type).toBe("feat");
+    expect(mapped.candidate?.data).not.toHaveProperty("scores");
     expect(mapped.issues).toContainEqual(
       expect.objectContaining({
         code: "feat.scores.seventh_ability_unsupported",
         severity: "blocking",
       }),
+    );
+  });
+
+  it.each(safeRepairCases)(
+    "retains a schema-valid candidate when $label needs repair",
+    ({ overrides, issueCode, expectedData, missingDataKey }) => {
+      const mapped = mapMpmbFeat(validFeat(overrides), context);
+
+      expect(mapped.status).toBe("needs_info");
+      expect(mapped.candidate).toMatchObject({
+        content_type: "feat",
+        data: expectedData,
+      });
+      expect(featDataSchema.safeParse(mapped.candidate?.data).success).toBe(true);
+      if (missingDataKey) {
+        expect(mapped.candidate?.data).not.toHaveProperty(missingDataKey);
+      }
+      expect(mapped.issues).toContainEqual(
+        expect.objectContaining({ code: issueCode, severity: "blocking" }),
+      );
+    },
+  );
+
+  it("does not retain a candidate when the required description is missing", () => {
+    const mapped = mapMpmbFeat(
+      validFeat({ description: undefined as never }),
+      context,
+    );
+
+    expect(mapped.status).toBe("needs_info");
+    expect(mapped.candidate).toBeNull();
+    expect(mapped.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "feat.description.required",
+          severity: "blocking",
+        }),
+        expect.objectContaining({
+          code: "feat.schema.description",
+          severity: "blocking",
+        }),
+      ]),
     );
   });
 
