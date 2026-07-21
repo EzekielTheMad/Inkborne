@@ -7,6 +7,7 @@ import { z } from "zod";
 import {
   cancelMpmbImport,
   commitMpmbImport,
+  confirmOwnedMpmbImportPreview,
   repairMpmbImportSpellItem,
   resolveMpmbImportItemConflict,
   setMpmbImportItemSelected,
@@ -120,6 +121,11 @@ const spellRepairFormSchema = z.object({
     });
   }
 });
+
+const previewConfirmationFormSchema = z.object({
+  import_id: z.string().uuid("The import identifier is invalid."),
+  expected_revision: z.coerce.number().int().positive(),
+}).strict();
 
 export async function startMpmbImport(
   _previousState: MpmbImportActionState,
@@ -265,6 +271,32 @@ export async function finishMpmbImport(formData: FormData): Promise<void> {
   redirect(
     `/library/import/${importId}?committed=${result.importedCount ?? 0}`,
   );
+}
+
+export async function confirmMpmbImportPreview(
+  formData: FormData,
+): Promise<void> {
+  const parsed = previewConfirmationFormSchema.safeParse({
+    import_id: formData.get("import_id"),
+    expected_revision: formData.get("expected_revision"),
+  });
+  if (!parsed.success) {
+    redirect("/library/import?error=The%20preview%20confirmation%20is%20invalid.");
+  }
+
+  const result = await confirmOwnedMpmbImportPreview(
+    parsed.data.import_id,
+    parsed.data.expected_revision,
+  );
+  const previewPath = `/library/import/${parsed.data.import_id}/preview`;
+  if (result.status !== "success") {
+    redirect(`${previewPath}?error=${encodeURIComponent(result.message)}`);
+  }
+
+  const reviewPath = `/library/import/${parsed.data.import_id}`;
+  revalidatePath(reviewPath);
+  revalidatePath(previewPath);
+  redirect(`${reviewPath}?previewed=1`);
 }
 
 export async function abandonMpmbImport(formData: FormData): Promise<void> {

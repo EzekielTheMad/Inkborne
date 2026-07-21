@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   toggle: vi.fn(),
   repair: vi.fn(),
   resolveConflict: vi.fn(),
+  confirmPreview: vi.fn(),
   commit: vi.fn(),
   cancel: vi.fn(),
   revalidatePath: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("@/lib/supabase/mpmb-imports-server", () => ({
   setMpmbImportItemSelected: mocks.toggle,
   repairMpmbImportSpellItem: mocks.repair,
   resolveMpmbImportItemConflict: mocks.resolveConflict,
+  confirmOwnedMpmbImportPreview: mocks.confirmPreview,
   commitMpmbImport: mocks.commit,
   cancelMpmbImport: mocks.cancel,
 }));
@@ -26,6 +28,7 @@ vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 
 import {
   abandonMpmbImport,
+  confirmMpmbImportPreview,
   finishMpmbImport,
   repairMpmbImportSpell,
   resolveMpmbImportConflict,
@@ -265,6 +268,40 @@ describe("MPMB import actions", () => {
     expect(mocks.commit).toHaveBeenCalledWith(IMPORT_ID, 4);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/library/import/${IMPORT_ID}`);
+  });
+
+  it("confirms only an exact preview revision, revalidates, then returns to review", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("expected_revision", "4");
+    mocks.confirmPreview.mockResolvedValue({
+      status: "success",
+      importId: IMPORT_ID,
+    });
+
+    await expect(confirmMpmbImportPreview(formData)).rejects.toThrow(
+      `REDIRECT:/library/import/${IMPORT_ID}?previewed=1`,
+    );
+    expect(mocks.confirmPreview).toHaveBeenCalledWith(IMPORT_ID, 4);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/library/import/${IMPORT_ID}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(
+      `/library/import/${IMPORT_ID}/preview`,
+    );
+  });
+
+  it("returns preview conflicts to the preview route without revalidating", async () => {
+    const formData = new FormData();
+    formData.set("import_id", IMPORT_ID);
+    formData.set("expected_revision", "3");
+    mocks.confirmPreview.mockResolvedValue({
+      status: "conflict",
+      message: "Reload and preview again.",
+    });
+
+    await expect(confirmMpmbImportPreview(formData)).rejects.toThrow(
+      `REDIRECT:/library/import/${IMPORT_ID}/preview?error=Reload%20and%20preview%20again.`,
+    );
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 
   it("rejects malformed commit identifiers before using them in a redirect", async () => {

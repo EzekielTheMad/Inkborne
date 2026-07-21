@@ -7,6 +7,7 @@ import { evaluate } from "@/lib/engine/evaluator";
 import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
 import { computeMaxHp } from "@/lib/character/max-hp";
+import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import { CharacterPageClient } from "@/components/character/character-page-client";
 import {
   applyActiveSpellGrantOverlays,
@@ -257,18 +258,10 @@ export default async function CharacterPage({ params }: PageProps) {
   );
 
   // Build structured sources
-  const raceRef = contentRefs.find((r) => r.content_definitions?.content_type === "race");
-  const classRef = contentRefs.find((r) => r.content_definitions?.content_type === "class");
-  const featureRefs = contentRefs.filter((r) => r.content_definitions?.content_type === "feature");
-
-  const structuredSources: StructuredSources = {
-    raceData: raceRef?.content_definitions?.data as StructuredSources["raceData"],
-    classData: classRef?.content_definitions?.data as StructuredSources["classData"],
-    featureData: [
-      ...featureRefs.map((r) => r.content_definitions?.data as NonNullable<StructuredSources["featureData"]>[number]),
-    ].filter(Boolean),
-    level: character.level,
-  };
+  const structuredSources: StructuredSources = buildCharacterStructuredSources(
+    contentRefs,
+    character.level,
+  );
 
   // Run expression engine
   const baseStatsWithLevel = { ...character.base_stats, level: character.level };

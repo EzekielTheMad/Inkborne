@@ -174,7 +174,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-21): ◑ Spell sharing and the private MPMB importer workflow through conflict resolution are implemented and UAT-verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through narrowly validated missing spell details, resolves owned-content collisions with explicit Keep both / Replace decisions, preserves immutable versions and existing character pins, refuses to replace campaign-shared targets, atomically commits selected valid spells/feats as personal homebrew, and blocks imported content from campaign sharing pending a future rights workflow. This does **not** complete M4: additional authoring/content types, broader missing-info editing, preview-character calculation validation, and separately controlled public publishing remain.
+**Status (2026-07-21): ◑ Spell sharing and the private MPMB importer workflow through calculation preview are implemented and hosted-database verified.** `/library` supports spell creation, immutable edits, and multi-campaign access controls; character-aware discovery returns shared content only for the target character's exact campaign while sheets remain pinned to the selected version. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through narrowly validated missing spell details, resolves owned-content collisions with explicit Keep both / Replace decisions, preserves immutable versions and existing character pins, refuses to replace campaign-shared targets, and requires a server-calculated preview of the exact selected revision before atomically committing spells/feats as personal homebrew. Imported content remains blocked from campaign sharing pending a future rights workflow. This does **not** complete M4: protected-preview browser UAT, additional authoring/content types, broader missing-info editing, and separately controlled public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -195,7 +195,7 @@ Combined because authoring and importing share the same user-owned content infra
 - Conflict resolution UI — implemented for explicit Keep both / Replace outcomes; field-level merge remains intentionally out of scope until it can be made rules-safe
 - Missing-info wizard — fields the parser couldn't extract get a form for the user
 - Audit log — what was imported, what was skipped, what needs attention
-- **Calculation correctness verification:** test character built with imported content produces correct sheet calculations. The engine evaluates effects → derived stats; if imported content has malformed effects, it shows immediately. Build a "preview character" feature that uses imported content before commit.
+- **Calculation correctness verification:** implemented as a mandatory owner-only calculation harness before commit. Feats run through the same evaluator and structured-source path as the live sheet at levels 1/5/11/17; spells run through the production casting engine at every supported scaling tier; malformed schemas, formulas, dice, or calculations fail closed.
 
 **Exit criteria:**
 - A user can create a custom feat in `/library`, share it with their campaign, and see another user pick it during character creation
@@ -332,7 +332,7 @@ This was a specific concern raised. To address explicitly:
 - **The engine validates content via Zod schemas** (`lib/schemas/content-types/*`) — imported content runs through the same Zod validators as platform content. Malformed effects fail early.
 - **The engine evaluates effects deterministically** — if an imported feat has effects shaped correctly, they apply correctly. The same evaluator runs for platform and user content.
 - **Calculation tests already exist** (`tests/engine/evaluator.test.ts`, etc.) — they test the engine logic. Imported content correctness is then a matter of "is the import result schema-valid."
-- **M4 importer adds a "preview character" step** — before committing imports, build a test character using the new content. Eyeball the sheet. Sheet calculations are the verification.
+- **M4 importer adds a current-revision calculation preview** — before committing, each selected feat is evaluated independently at levels 1/5/11/17 and each selected spell is test-cast across its supported scaling range. The browser receives only sanitized results, and the database refuses a commit unless that exact review revision was confirmed.
 
 The risk vector isn't really "engine breaks" — it's "import script misinterprets the source format and produces semantically wrong content (e.g., gives a feat the wrong CON bonus)." That's caught by:
 - Schema validation (catches structural errors)

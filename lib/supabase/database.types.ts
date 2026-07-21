@@ -1054,6 +1054,8 @@ export type Database = {
           original_filename: string
           owner_id: string
           parser_version: string
+          preview_validated_at: string | null
+          preview_validated_revision: number | null
           required_sheet_version: string | null
           revision: number
           rights_attestation_version: string
@@ -1075,6 +1077,8 @@ export type Database = {
           original_filename: string
           owner_id: string
           parser_version: string
+          preview_validated_at?: string | null
+          preview_validated_revision?: number | null
           required_sheet_version?: string | null
           revision?: number
           rights_attestation_version: string
@@ -1096,6 +1100,8 @@ export type Database = {
           original_filename?: string
           owner_id?: string
           parser_version?: string
+          preview_validated_at?: string | null
+          preview_validated_revision?: number | null
           required_sheet_version?: string | null
           revision?: number
           rights_attestation_version?: string
@@ -1640,6 +1646,14 @@ export type Database = {
           retired_count: number
           upserted_count: number
         }[]
+      }
+      record_mpmb_import_preview: {
+        Args: {
+          expected_revision: number
+          target_import_id: string
+          validated_owner_id: string
+        }
+        Returns: number
       }
       remove_campaign_member: {
         Args: { target_campaign_id: string; target_user_id: string }

@@ -40,6 +40,7 @@ const review = {
   requiredSheetVersion: "13.1.14",
   status: "review" as const,
   revision: 2,
+  previewValidated: false,
   summary: {
     valid: 1,
     needsInfo: 1,
@@ -150,7 +151,12 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getAllByText("Needs review")).toHaveLength(2);
     expect(screen.getByText(/feat\.prerequisite\.compound/)).toBeVisible();
     expect(screen.getByText(/database records their provenance/i)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Import 1" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Import 1" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Preview calculations" })).toHaveAttribute(
+      "href",
+      `/library/import/${IMPORT_ID}/preview`,
+    );
+    expect(screen.getByText(/Preview and confirm this revision/)).toBeVisible();
     expect(screen.getByRole("link", { name: "Add missing details" })).toHaveAttribute(
       "href",
       `/library/import/${IMPORT_ID}/items/77777777-7777-4777-8777-777777777777/edit`,
@@ -216,7 +222,7 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getByText(/Resolve 1 selected conflict/)).toBeVisible();
   });
 
-  it("shows a resolved keep-both choice and allows commit", async () => {
+  it("shows a resolved keep-both choice but still requires a current preview", async () => {
     mocks.getReview.mockResolvedValue({
       ...review,
       items: review.items.map((item, index) => index === 0
@@ -237,6 +243,24 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getByText("Conflict resolution saved. The review has been updated.")).toBeVisible();
     expect(screen.getByText("Keep both")).toBeVisible();
     expect(screen.getByRole("link", { name: "Change resolution" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Import 1" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Preview calculations" })).toBeVisible();
+  });
+
+  it("enables commit only after calculations are confirmed for this revision", async () => {
+    mocks.getReview.mockResolvedValue({
+      ...review,
+      previewValidated: true,
+    });
+
+    render(await MpmbImportReviewPage({
+      params: Promise.resolve({ id: IMPORT_ID }),
+      searchParams: Promise.resolve({ previewed: "1" }),
+    }));
+
+    expect(screen.getByText(/Calculation preview confirmed/)).toBeVisible();
+    expect(screen.getByText(/Calculations confirmed for revision 2/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Review calculations" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Import 1" })).toBeEnabled();
   });
 

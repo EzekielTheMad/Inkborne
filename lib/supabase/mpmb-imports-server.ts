@@ -2,20 +2,33 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { mapParsedMpmbSource } from "@/lib/import/mpmb/map";
 import { parseMpmbSource } from "@/lib/import/mpmb/parser";
+import {
+  buildMpmbCalculationPreview,
+  type MpmbCalculationPreview,
+  type MpmbPreviewCandidate,
+  type MpmbPreviewItem,
+} from "@/lib/import/mpmb/preview";
 import {
   DEFAULT_MPMB_PARSER_LIMITS,
   MPMB_PARSER_VERSION,
   MpmbParseError,
 } from "@/lib/import/mpmb/types";
 import {
+  featDataSchema,
+  type FeatData,
+} from "@/lib/schemas/content-types/feat";
+import {
   spellDataSchema,
   type SpellData,
 } from "@/lib/schemas/content-types/spell";
-import type { Json } from "@/lib/supabase/database.types";
+import { effectSchema } from "@/lib/schemas/effects";
+import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
+import type { Database, Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 
 const HOMEBREW_SYSTEM_SLUG = "dnd-5e-2014";
@@ -122,6 +135,7 @@ export interface MpmbImportReview {
   requiredSheetVersion: string | null;
   status: "review" | "completed" | "cancelled";
   revision: number;
+  previewValidated: boolean;
   summary: {
     valid: number;
     needsInfo: number;
@@ -130,6 +144,14 @@ export interface MpmbImportReview {
     blockingIssues: number;
   };
   items: MpmbImportReviewItem[];
+}
+
+export interface MpmbImportCalculationPreview {
+  id: string;
+  originalFilename: string;
+  revision: number;
+  previewValidated: boolean;
+  calculation: MpmbCalculationPreview;
 }
 
 interface FileLike {
@@ -148,6 +170,7 @@ const importEnvelopeSchema = z.object({
   required_sheet_version: z.string().nullable(),
   status: z.enum(["review", "completed", "cancelled"]),
   revision: z.number().int().positive(),
+  preview_validated_revision: z.number().int().positive().nullable(),
   mapping_summary: z.object({
     valid: z.number().int().nonnegative(),
     needsInfo: z.number().int().nonnegative(),
@@ -156,6 +179,29 @@ const importEnvelopeSchema = z.object({
     blockingIssues: z.number().int().nonnegative(),
   }),
 });
+
+const previewImportEnvelopeSchema = z.object({
+  id: z.string().uuid(),
+  original_filename: z.string().min(1),
+  owner_id: z.string().uuid(),
+  system_id: z.string().uuid(),
+  status: z.enum(["review", "completed", "cancelled"]),
+  revision: z.number().int().positive(),
+  preview_validated_revision: z.number().int().positive().nullable(),
+});
+
+const previewItemRowSchema = z.object({
+  id: z.string().uuid(),
+  ordinal: z.number().int().nonnegative(),
+  source_key: z.string().min(1),
+  content_type: z.enum(["spell", "feat"]),
+  candidate_name: z.string().nullable(),
+  candidate_slug: z.string().nullable(),
+  candidate_data: z.unknown().nullable(),
+  candidate_effects: z.unknown().nullable(),
+});
+
+const previewEffectsSchema = z.array(effectSchema);
 
 const reviewDiagnosticSchema = z.object({
   code: z.string().optional(),
@@ -269,6 +315,17 @@ async function authenticatedSession(): Promise<
   } = await supabase.auth.getUser();
   if (error || !user) return null;
   return { supabase, userId: user.id };
+}
+
+function createServiceRoleClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) {
+    throw new Error("Import preview confirmation is not configured.");
+  }
+  return createAdminClient<Database>(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 async function resolvePublishedSystem(
@@ -479,7 +536,7 @@ export async function getOwnedMpmbImportReview(
   const { data: importData, error: importError } = await session.supabase
     .from("content_imports")
     .select(
-      "id, original_filename, source_bytes, source_sha256, parser_version, mapper_version, required_sheet_version, status, revision, mapping_summary",
+      "id, original_filename, source_bytes, source_sha256, parser_version, mapper_version, required_sheet_version, status, revision, preview_validated_revision, mapping_summary",
     )
     .eq("id", id.data)
     .eq("owner_id", session.userId)
@@ -514,6 +571,8 @@ export async function getOwnedMpmbImportReview(
     requiredSheetVersion: envelope.required_sheet_version,
     status: envelope.status,
     revision: envelope.revision,
+    previewValidated:
+      envelope.preview_validated_revision === envelope.revision,
     summary: envelope.mapping_summary,
     items: items.map((item) => {
       const conflicts = conflictsByItem.get(item.id) ?? [];
@@ -576,6 +635,210 @@ export async function getOwnedMpmbImportReview(
       };
     }),
   };
+}
+
+function invalidPreviewItem(
+  item: z.infer<typeof previewItemRowSchema>,
+  message: string,
+): Extract<MpmbPreviewItem, { status: "failed" }> {
+  return {
+    id: item.id,
+    contentType: item.content_type,
+    name: item.candidate_name ?? item.source_key,
+    status: "failed",
+    message,
+  };
+}
+
+function parsePreviewCandidate(
+  item: z.infer<typeof previewItemRowSchema>,
+): MpmbPreviewCandidate | Extract<MpmbPreviewItem, { status: "failed" }> {
+  if (!item.candidate_name || !item.candidate_slug) {
+    return invalidPreviewItem(
+      item,
+      "This staged item no longer has a complete content identity.",
+    );
+  }
+  const effects = previewEffectsSchema.safeParse(item.candidate_effects);
+  if (!effects.success) {
+    return invalidPreviewItem(
+      item,
+      "This staged item's effects no longer match the supported calculation schema.",
+    );
+  }
+
+  if (item.content_type === "feat") {
+    const data = featDataSchema.safeParse(item.candidate_data);
+    if (!data.success) {
+      return invalidPreviewItem(
+        item,
+        "This staged feat no longer matches the supported content schema.",
+      );
+    }
+    return {
+      id: item.id,
+      contentType: "feat",
+      name: item.candidate_name,
+      slug: item.candidate_slug,
+      data: data.data satisfies FeatData,
+      effects: effects.data,
+    };
+  }
+
+  const data = spellDataSchema.safeParse(item.candidate_data);
+  if (!data.success) {
+    return invalidPreviewItem(
+      item,
+      "This staged spell no longer matches the supported content schema.",
+    );
+  }
+  return {
+    id: item.id,
+    contentType: "spell",
+    name: item.candidate_name,
+    slug: item.candidate_slug,
+    data: data.data,
+    effects: effects.data,
+  };
+}
+
+async function loadOwnedMpmbImportPreview(
+  session: { supabase: ServerSupabaseClient; userId: string },
+  importId: string,
+): Promise<MpmbImportCalculationPreview | null> {
+  const { data: importData, error: importError } = await session.supabase
+    .from("content_imports")
+    .select(
+      "id, original_filename, owner_id, system_id, status, revision, preview_validated_revision",
+    )
+    .eq("id", importId)
+    .eq("owner_id", session.userId)
+    .maybeSingle();
+  if (importError) throw importError;
+  if (!importData) return null;
+  const envelope = previewImportEnvelopeSchema.parse(importData);
+  if (envelope.status !== "review") return null;
+
+  const [systemResult, itemResult] = await Promise.all([
+    session.supabase
+      .from("game_systems")
+      .select("schema_definition")
+      .eq("id", envelope.system_id)
+      .maybeSingle(),
+    session.supabase
+      .from("content_import_items")
+      .select(
+        "id, ordinal, source_key, content_type, candidate_name, candidate_slug, candidate_data, candidate_effects",
+      )
+      .eq("import_id", envelope.id)
+      .eq("mapping_status", "valid")
+      .eq("selected", true)
+      .is("committed_content_id", null)
+      .order("ordinal"),
+  ]);
+  if (systemResult.error) throw systemResult.error;
+  if (itemResult.error) throw itemResult.error;
+  const schema = systemSchemaDefinitionSchema.safeParse(
+    systemResult.data?.schema_definition,
+  );
+  if (!schema.success) {
+    throw new Error("The import's game system has an invalid calculation schema.");
+  }
+
+  const rows = z.array(previewItemRowSchema).parse(itemResult.data ?? []);
+  const parsed = rows.map(parsePreviewCandidate);
+  const candidates = parsed.filter(
+    (item): item is MpmbPreviewCandidate => !("status" in item),
+  );
+  const invalidById = new Map(
+    parsed
+      .filter(
+        (item): item is Extract<MpmbPreviewItem, { status: "failed" }> =>
+          "status" in item,
+      )
+      .map((item) => [item.id, item]),
+  );
+  const calculated = buildMpmbCalculationPreview(schema.data, candidates);
+  const calculatedById = new Map(calculated.items.map((item) => [item.id, item]));
+  const items = rows.map((row) =>
+    invalidById.get(row.id)
+    ?? calculatedById.get(row.id)
+    ?? invalidPreviewItem(row, "This staged item could not be evaluated."),
+  );
+
+  return {
+    id: envelope.id,
+    originalFilename: envelope.original_filename,
+    revision: envelope.revision,
+    previewValidated:
+      envelope.preview_validated_revision === envelope.revision,
+    calculation: {
+      ...calculated,
+      passed: items.length > 0 && items.every((item) => item.status === "passed"),
+      items,
+    },
+  };
+}
+
+export async function getOwnedMpmbImportPreview(
+  importId: string,
+): Promise<MpmbImportCalculationPreview | null> {
+  const session = await authenticatedSession();
+  if (!session) throw new Error("Authentication required.");
+  const id = z.string().uuid().safeParse(importId);
+  if (!id.success) return null;
+  return loadOwnedMpmbImportPreview(session, id.data);
+}
+
+export async function confirmOwnedMpmbImportPreview(
+  importId: string,
+  expectedRevision: number,
+): Promise<MpmbImportMutationResult> {
+  const session = await authenticatedSession();
+  if (!session) {
+    return { status: "error", message: "Sign in to confirm this preview." };
+  }
+  const input = z.object({
+    importId: z.string().uuid(),
+    expectedRevision: z.number().int().positive(),
+  }).safeParse({ importId, expectedRevision });
+  if (!input.success) {
+    return { status: "error", message: "The preview confirmation is invalid." };
+  }
+
+  const preview = await loadOwnedMpmbImportPreview(session, input.data.importId);
+  if (!preview) {
+    return { status: "error", message: "This import preview is no longer available." };
+  }
+  if (preview.revision !== input.data.expectedRevision) {
+    return {
+      status: "conflict",
+      message: "This import changed in another session. Reload and preview it again.",
+    };
+  }
+  if (!preview.calculation.passed) {
+    return {
+      status: "error",
+      message: "Resolve every calculation failure before confirming this preview.",
+    };
+  }
+
+  let admin: ReturnType<typeof createServiceRoleClient>;
+  try {
+    admin = createServiceRoleClient();
+  } catch {
+    return { status: "error", message: "The preview could not be confirmed." };
+  }
+  const { data, error } = await admin.rpc("record_mpmb_import_preview", {
+    target_import_id: input.data.importId,
+    validated_owner_id: session.userId,
+    expected_revision: input.data.expectedRevision,
+  });
+  if (error) return databaseFailure(error);
+  if (data !== input.data.expectedRevision) {
+    return { status: "error", message: "The preview could not be confirmed." };
+  }
+  return { status: "success", importId: input.data.importId };
 }
 
 export async function getOwnedMpmbImportSpellRepairItem(
