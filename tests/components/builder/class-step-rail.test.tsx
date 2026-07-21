@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { LevelPill } from "@/components/builder/class-step-rail/level-pill";
 import { FeatureCard } from "@/components/builder/class-step-rail/feature-card";
 import { CharacterStrip } from "@/components/builder/class-step-rail/character-strip";
@@ -76,7 +76,7 @@ import { ChoiceCardASI } from "@/components/builder/class-step-rail/choice-card-
 describe("ChoiceCardASI", () => {
   it("shows 'Choose' badge when no choice is made", () => {
     render(
-      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} onSelect={vi.fn()} />,
+      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={vi.fn()} />,
     );
     expect(screen.getByText("Choose")).toBeInTheDocument();
   });
@@ -86,6 +86,7 @@ describe("ChoiceCardASI", () => {
       <ChoiceCardASI
         featureSlug="paladin-asi-4"
         currentChoice={{ mode: "asi", allocations: [{ ability: "strength", amount: 2 }] }}
+        feats={[]}
         onSelect={vi.fn()}
       />,
     );
@@ -95,7 +96,7 @@ describe("ChoiceCardASI", () => {
   it("calls onSelect with a +2 allocation when the user picks +2 to strength", () => {
     const onSelect = vi.fn();
     render(
-      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} onSelect={onSelect} />,
+      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
     );
     // Toggle to "Increase one ability by 2" mode (default in this test) and click STR.
     fireEvent.click(screen.getByRole("button", { name: /^STR \+2$/ }));
@@ -108,7 +109,7 @@ describe("ChoiceCardASI", () => {
   it("calls onSelect with two +1 allocations in two-stat mode", () => {
     const onSelect = vi.fn();
     render(
-      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} onSelect={onSelect} />,
+      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
     );
     fireEvent.click(screen.getByRole("button", { name: /two abilities by \+1/i }));
     fireEvent.click(screen.getByRole("button", { name: /^STR \+1$/ }));
@@ -122,6 +123,152 @@ describe("ChoiceCardASI", () => {
         { ability: "dexterity", amount: 1 },
       ]),
     });
+  });
+
+  it("keeps a partial split local until both abilities are chosen", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /two abilities by \+1/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^STR \+1$/ }));
+
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(screen.getByText(/choose one more ability/i)).toBeInTheDocument();
+  });
+
+  it("selects an eligible exact feat version", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCardASI
+        featureSlug="paladin-asi-4"
+        currentChoice={undefined}
+        feats={[{
+          id: "11111111-1111-4111-8111-111111111111",
+          name: "Ember Sentinel",
+          description: "Stand watch against the dark.",
+          version: 3,
+          source: "homebrew",
+          scope: "shared",
+          prerequisiteMet: true,
+          prerequisiteReason: "Requires Dexterity 13 or higher (met)",
+        }]}
+        onSelect={onSelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
+    fireEvent.click(screen.getByRole("button", { name: /Ember Sentinel/ }));
+
+    expect(onSelect).toHaveBeenCalledWith({
+      mode: "feat",
+      featId: "11111111-1111-4111-8111-111111111111",
+      featVersion: 3,
+      featName: "Ember Sentinel",
+    });
+  });
+
+  it("shows but does not select a feat with an unmet prerequisite", () => {
+    const onSelect = vi.fn();
+    render(
+      <ChoiceCardASI
+        featureSlug="paladin-asi-4"
+        currentChoice={undefined}
+        feats={[{
+          id: "22222222-2222-4222-8222-222222222222",
+          name: "Titan Grip",
+          description: "A feat of impossible strength.",
+          version: 1,
+          source: "platform",
+          scope: "platform",
+          prerequisiteMet: false,
+          prerequisiteReason: "Requires Strength 15 or higher (currently 12)",
+        }]}
+        onSelect={onSelect}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
+    const featButton = screen.getByRole("button", { name: /Titan Grip/ });
+    expect(featButton).toBeDisabled();
+    expect(screen.getByText(/currently 12/)).toBeInTheDocument();
+    fireEvent.click(featButton);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("uses server-backed search so results beyond the first 50 are reachable", async () => {
+    const onSearch = vi.fn().mockImplementation(async (_featureSlug: string, query: string) =>
+      query === "late"
+        ? [{
+            id: "33333333-3333-4333-8333-333333333333",
+            name: "Late Alphabet Feat",
+            description: "Found by the database query.",
+            version: 1,
+            source: "platform" as const,
+            scope: "platform" as const,
+            prerequisiteMet: true,
+            prerequisiteReason: null,
+          }]
+        : [],
+    );
+    render(
+      <ChoiceCardASI
+        featureSlug="fighter-asi-4"
+        currentChoice={undefined}
+        feats={[]}
+        onSearch={onSearch}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
+    fireEvent.change(screen.getByPlaceholderText("Search available feats"), {
+      target: { value: "late" },
+    });
+
+    await waitFor(() => expect(onSearch).toHaveBeenCalledWith("fighter-asi-4", "late"));
+    expect(await screen.findByRole("button", { name: /Late Alphabet Feat/ })).toBeVisible();
+  });
+
+  it("ignores a stale feat-search response", async () => {
+    let resolveEmber!: (value: never[]) => void;
+    const onSearch = vi.fn().mockImplementation((_featureSlug: string, query: string) => {
+      if (query === "ember") {
+        return new Promise<never[]>((resolve) => { resolveEmber = resolve; });
+      }
+      return Promise.resolve(query === "titan"
+        ? [{
+            id: "44444444-4444-4444-8444-444444444444",
+            name: "Titan Guard",
+            description: "The newest result.",
+            version: 1,
+            source: "platform" as const,
+            scope: "platform" as const,
+            prerequisiteMet: true,
+            prerequisiteReason: null,
+          }]
+        : []);
+    });
+    render(
+      <ChoiceCardASI
+        featureSlug="fighter-asi-4"
+        currentChoice={undefined}
+        feats={[]}
+        onSearch={onSearch}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
+    const input = screen.getByPlaceholderText("Search available feats");
+    fireEvent.change(input, { target: { value: "ember" } });
+    await waitFor(() => expect(onSearch).toHaveBeenCalledWith("fighter-asi-4", "ember"));
+    fireEvent.change(input, { target: { value: "titan" } });
+    await waitFor(() => expect(onSearch).toHaveBeenCalledWith("fighter-asi-4", "titan"));
+    expect(await screen.findByRole("button", { name: /Titan Guard/ })).toBeVisible();
+
+    resolveEmber([]);
+    await waitFor(() => expect(screen.getByRole("button", { name: /Titan Guard/ })).toBeVisible());
   });
 });
 

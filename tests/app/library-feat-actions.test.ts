@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
+  share: vi.fn(),
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`); }),
   getUser: vi.fn(),
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
   createHomebrewFeatRecord: mocks.create,
   updateHomebrewFeatRecord: mocks.update,
+  setHomebrewFeatCampaignShare: mocks.share,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
@@ -18,7 +20,11 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: { getUser: mocks.getUser } }),
 }));
 
-import { createHomebrewFeat, updateHomebrewFeat } from "@/app/(app)/library/feats/actions";
+import {
+  createHomebrewFeat,
+  toggleHomebrewFeatCampaignShare,
+  updateHomebrewFeat,
+} from "@/app/(app)/library/feats/actions";
 
 const idle = { status: "idle" as const, message: "" };
 
@@ -76,5 +82,44 @@ describe("homebrew feat actions", () => {
     );
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library/feats/feat-id/edit");
+  });
+
+  it("rejects malformed campaign access before the data helper", async () => {
+    await expect(toggleHomebrewFeatCampaignShare(idle, new FormData())).resolves.toMatchObject({
+      status: "error",
+    });
+    expect(mocks.share).not.toHaveBeenCalled();
+  });
+
+  it("updates feat campaign access and revalidates both owner surfaces", async () => {
+    const input = new FormData();
+    input.set("content_id", "11111111-1111-4111-8111-111111111111");
+    input.set("campaign_id", "22222222-2222-4222-8222-222222222222");
+    input.set("enabled", "true");
+    input.set("expected_version", "2");
+    mocks.share.mockResolvedValue({
+      contentId: "11111111-1111-4111-8111-111111111111",
+      version: 3,
+      scope: "shared",
+      sharedCampaignCount: 1,
+    });
+
+    await expect(toggleHomebrewFeatCampaignShare(idle, input)).resolves.toMatchObject({
+      status: "idle",
+      enabled: true,
+      version: 3,
+      scope: "shared",
+      sharedCampaignCount: 1,
+    });
+    expect(mocks.share).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      "22222222-2222-4222-8222-222222222222",
+      true,
+      2,
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(
+      "/library/feats/11111111-1111-4111-8111-111111111111/edit",
+    );
   });
 });

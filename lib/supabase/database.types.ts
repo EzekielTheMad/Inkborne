@@ -1627,6 +1627,18 @@ export type Database = {
           version: number
         }[]
       }
+      list_campaign_shared_content_for_owner: {
+        Args: { target_campaign_id: string }
+        Returns: {
+          content_id: string
+          content_type: string
+          name: string
+          owner_id: string
+          scope: string
+          source: string
+          version: number
+        }[]
+      }
       list_owned_content_campaign_access: {
         Args: { target_content_id: string }
         Returns: {
@@ -1724,6 +1736,39 @@ export type Database = {
           source: string
           system_id: string
           version: number
+        }[]
+      }
+      search_usable_feats_for_character: {
+        Args: {
+          result_limit?: number
+          search_query?: string
+          target_character_id: string
+          target_feature_slug?: string | null
+        }
+        Returns: {
+          description: string
+          id: string
+          name: string
+          prerequisite_met: boolean
+          prerequisite_reason: string | null
+          scope: string
+          source: string
+          version: number
+        }[]
+      }
+      set_character_asi_choice: {
+        Args: {
+          ability_allocations?: Json | null
+          choice_mode: string
+          target_character_id: string
+          target_feat_id?: string | null
+          target_feat_version?: number | null
+          target_feature_slug: string
+        }
+        Returns: {
+          saved_choice: Json
+          saved_choices: Json
+          saved_feature_slug: string
         }[]
       }
       set_content_campaign_share: {

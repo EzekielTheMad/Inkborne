@@ -9,7 +9,7 @@ import { ChoiceCardFightingStyle } from "@/components/builder/class-step-rail/ch
 import { ChoiceCardGeneric } from "@/components/builder/class-step-rail/choice-card-generic";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
-import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
+import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, UsableFeatSearch } from "@/lib/types/character";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
 
@@ -22,13 +22,15 @@ interface ClassLevelPaneProps {
   subclasses: ContentEntry[];
   styleOptions: ContentEntry[];
   localChoices: CharacterChoices;
+  feats?: UsableFeatOption[];
+  onFeatSearch?: UsableFeatSearch;
   currentSubclass: string | undefined;
   classChoices: ChoiceEffect[];
   hitDie: number;
   hpRule: HpRule;
   conMod: number;
   hpRolls: Record<string, HpRollRecord>;
-  onAsiSelect: (featureSlug: string, choice: AsiChoice) => void;
+  onAsiSelect: (featureSlug: string, choice: AsiChoice) => Promise<void> | void;
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => void;
   onChoiceSelect: (choiceId: string, selections: string[]) => void;
@@ -50,6 +52,8 @@ export function ClassLevelPane({
   subclasses,
   styleOptions,
   localChoices,
+  feats = [],
+  onFeatSearch,
   currentSubclass,
   classChoices,
   hitDie,
@@ -118,6 +122,8 @@ export function ClassLevelPane({
                     key={choice.featureSlug ?? `${choice.type}-${idx}`}
                     featureSlug={choice.featureSlug!}
                     currentChoice={localChoices.asi_choices?.[choice.featureSlug!]}
+                    feats={feats}
+                    onSearch={onFeatSearch}
                     onSelect={(c) => onAsiSelect(choice.featureSlug!, c)}
                   />
                 );

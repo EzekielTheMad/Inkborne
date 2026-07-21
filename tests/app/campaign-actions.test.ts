@@ -24,6 +24,14 @@ vi.mock("@/lib/supabase/errors", () => ({
   reportServerError: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
+  setHomebrewFeatCampaignShare: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/homebrew-spells-server", () => ({
+  setHomebrewSpellCampaignShare: vi.fn(),
+}));
+
 import { revalidatePath } from "next/cache";
 import {
   assignCharacterToCampaign,
@@ -32,6 +40,7 @@ import {
   joinCampaign,
   leaveCampaign,
   removeCampaignMember,
+  revokeCampaignSharedContent,
   rotateCampaignInvite,
   unassignCharacterFromCampaign,
   updateCampaign,
@@ -39,11 +48,14 @@ import {
   type UpdateCampaignPageState,
 } from "@/app/(app)/campaigns/actions";
 import { createClient } from "@/lib/supabase/server";
+import { setHomebrewFeatCampaignShare } from "@/lib/supabase/homebrew-feats-server";
+import { setHomebrewSpellCampaignShare } from "@/lib/supabase/homebrew-spells-server";
 
 const mockedCreateClient = vi.mocked(createClient);
 const campaignId = "11111111-1111-4111-8111-111111111111";
 const systemId = "22222222-2222-4222-8222-222222222222";
 const pageId = "33333333-3333-4333-8333-333333333333";
+const contentId = "44444444-4444-4444-8444-444444444444";
 
 function makeFormData(fields: Record<string, string>) {
   const data = new FormData();
@@ -291,5 +303,50 @@ describe("campaign actions", () => {
       target_user_id: memberUserId,
     });
     expect(target).toBe(`/campaigns/${campaignId}/settings`);
+  });
+
+  it("lets the campaign settings action request feat access revocation", async () => {
+    mockSupabase();
+    vi.mocked(setHomebrewFeatCampaignShare).mockResolvedValue({
+      contentId,
+      version: 4,
+      scope: "personal",
+      sharedCampaignCount: 0,
+    });
+
+    const target = await captureRedirect(() =>
+      revokeCampaignSharedContent(makeFormData({
+        campaign_id: campaignId,
+        content_id: contentId,
+        content_type: "feat",
+        expected_version: "3",
+      })),
+    );
+
+    expect(setHomebrewFeatCampaignShare).toHaveBeenCalledWith(
+      contentId,
+      campaignId,
+      false,
+      3,
+    );
+    expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
+    expect(revalidatePath).toHaveBeenCalledWith(`/campaigns/${campaignId}/settings`);
+    expect(target).toBe(`/campaigns/${campaignId}/settings?content_revoked=1`);
+  });
+
+  it("does not accept an unsupported content type from a direct action call", async () => {
+    mockSupabase();
+    const target = await captureRedirect(() =>
+      revokeCampaignSharedContent(makeFormData({
+        campaign_id: campaignId,
+        content_id: contentId,
+        content_type: "monster",
+        expected_version: "1",
+      })),
+    );
+
+    expect(setHomebrewFeatCampaignShare).not.toHaveBeenCalled();
+    expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
+    expect(target).toBe("/campaigns?error=invalid_content_share");
   });
 });

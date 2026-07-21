@@ -25,7 +25,7 @@ export interface HomebrewFeatRecord {
   data: FeatData;
   effects: Effect[];
   source: "homebrew";
-  scope: "personal";
+  scope: "personal" | "shared";
   owner_id: string;
   version: number;
   created_at: string;
@@ -42,6 +42,33 @@ export type HomebrewFeatMutationResponse =
   | HomebrewFeatRecord
   | HomebrewFeatMutationResult;
 
+export interface HomebrewFeatCampaignOption {
+  id: string;
+  name: string;
+  shared: boolean;
+  eligible: boolean;
+}
+
+export interface OwnedHomebrewFeatSummary extends HomebrewFeatRecord {
+  sharedCampaignCount: number;
+}
+
+export interface HomebrewFeatCampaignAccess {
+  campaigns: HomebrewFeatCampaignOption[];
+  sharedCampaignCount: number;
+}
+
+export interface HomebrewFeatShareSuccess {
+  contentId: string;
+  version: number;
+  scope: "personal" | "shared";
+  sharedCampaignCount: number;
+}
+
+export type HomebrewFeatShareMutationResponse =
+  | HomebrewFeatShareSuccess
+  | HomebrewFeatMutationResult;
+
 const rowEnvelopeSchema = z.object({
   id: z.string().uuid(),
   system_id: z.string().uuid(),
@@ -51,11 +78,30 @@ const rowEnvelopeSchema = z.object({
   data: z.unknown(),
   effects: z.array(z.unknown()),
   source: z.literal("homebrew"),
-  scope: z.literal("personal"),
+  scope: z.enum(["personal", "shared"]),
   owner_id: z.string().uuid(),
   version: z.number().int().positive(),
   created_at: z.string().min(1),
   is_retired: z.boolean(),
+});
+
+const campaignAccessRpcRowSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  shared: z.boolean(),
+  eligible: z.boolean(),
+});
+
+const shareRpcRowSchema = z.object({
+  content_id: z.string().uuid(),
+  version: z.number().int().positive(),
+  scope: z.enum(["personal", "shared"]),
+  shared_campaign_count: z.number().int().nonnegative(),
+});
+
+const contentShareSchema = z.object({
+  content_id: z.string().uuid(),
+  campaign_id: z.string().uuid(),
 });
 
 function parseRecord(value: unknown): HomebrewFeatRecord {
@@ -145,6 +191,49 @@ function databaseMutationFailure(error: { code?: string } | null) {
   return failure("The feat could not be saved. Please try again.");
 }
 
+function databaseShareFailure(error: { code?: string; message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+  if (
+    error?.code === "40001"
+    || (error?.code === "P0001" && /(stale|version|conflict)/.test(message))
+  ) {
+    return {
+      status: "conflict" as const,
+      message: "This feat changed in another session. Reload it before changing campaign access.",
+    };
+  }
+  return failure("Campaign access could not be updated. Please try again.");
+}
+
+function parseShareRpcRow(value: unknown): HomebrewFeatShareSuccess {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  const parsed = shareRpcRowSchema.safeParse(candidate);
+  if (!parsed.success) {
+    throw new Error("The database returned an invalid campaign share result.");
+  }
+  return {
+    contentId: parsed.data.content_id,
+    version: parsed.data.version,
+    scope: parsed.data.scope,
+    sharedCampaignCount: parsed.data.shared_campaign_count,
+  };
+}
+
+async function loadOwnedCampaignAccess(
+  supabase: ServerSupabaseClient,
+  contentId: string,
+): Promise<HomebrewFeatCampaignAccess> {
+  const { data, error } = await supabase.rpc("list_owned_content_campaign_access", {
+    target_content_id: contentId,
+  });
+  if (error) throw error;
+  const campaigns = z.array(campaignAccessRpcRowSchema).parse(data ?? []);
+  return {
+    campaigns,
+    sharedCampaignCount: campaigns.filter((campaign) => campaign.shared).length,
+  };
+}
+
 /**
  * The form mapper constructs the only supported payload and derives its
  * effects, but the DAL repeats both schema checks at the trust boundary before
@@ -161,8 +250,8 @@ function validateMappedFeat(value: { data: unknown; effects: unknown }):
   return { data: data.data, effects: effects.data };
 }
 
-/** Return every active personal feat the authenticated owner may edit. */
-export async function listOwnedHomebrewFeats(): Promise<HomebrewFeatRecord[]> {
+/** Return every active personal or campaign-shared feat the owner may edit. */
+export async function listOwnedHomebrewFeats(): Promise<OwnedHomebrewFeatSummary[]> {
   const { supabase, userId } = await requireAuthenticatedSession();
   const system = await resolvePublishedSystem(supabase);
   if (!system) throw new Error("The D&D 5e (2014) system is unavailable.");
@@ -174,15 +263,36 @@ export async function listOwnedHomebrewFeats(): Promise<HomebrewFeatRecord[]> {
     .eq("system_id", system.id)
     .eq("source", "homebrew")
     .eq("content_type", "feat")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .order("name");
 
   if (error) throw error;
-  return (data ?? []).map(parseRecord);
+  const feats = (data ?? []).map(parseRecord);
+  const sharedIds = feats
+    .filter((feat) => feat.scope === "shared")
+    .map((feat) => feat.id);
+  if (sharedIds.length === 0) {
+    return feats.map((feat) => ({ ...feat, sharedCampaignCount: 0 }));
+  }
+
+  const { data: shares, error: sharesError } = await supabase
+    .from("content_shares")
+    .select("content_id, campaign_id")
+    .in("content_id", sharedIds);
+  if (sharesError) throw sharesError;
+
+  const counts = new Map<string, number>();
+  for (const share of z.array(contentShareSchema).parse(shares ?? [])) {
+    counts.set(share.content_id, (counts.get(share.content_id) ?? 0) + 1);
+  }
+  return feats.map((feat) => ({
+    ...feat,
+    sharedCampaignCount: counts.get(feat.id) ?? 0,
+  }));
 }
 
-/** Return a feat only when it is still active, private, and owned by caller. */
+/** Return a feat only when it is still active and owned by caller. */
 export async function getOwnedHomebrewFeat(
   id: string,
 ): Promise<HomebrewFeatRecord | null> {
@@ -200,12 +310,57 @@ export async function getOwnedHomebrewFeat(
     .eq("system_id", system.id)
     .eq("source", "homebrew")
     .eq("content_type", "feat")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .maybeSingle();
 
   if (error) throw error;
   return data ? parseRecord(data) : null;
+}
+
+export async function getOwnedHomebrewFeatCampaignAccess(
+  id: string,
+): Promise<HomebrewFeatCampaignAccess> {
+  const { supabase } = await requireAuthenticatedSession();
+  const parsedId = z.string().uuid().safeParse(id);
+  if (!parsedId.success) throw new Error("The feat identifier is invalid.");
+  return loadOwnedCampaignAccess(supabase, parsedId.data);
+}
+
+export async function setHomebrewFeatCampaignShare(
+  contentId: string,
+  campaignId: string,
+  enabled: boolean,
+  expectedVersion: number,
+): Promise<HomebrewFeatShareMutationResponse> {
+  const session = await authenticatedSession();
+  if (!session) return failure("Sign in before changing campaign access.");
+
+  const input = z.object({
+    contentId: z.string().uuid(),
+    campaignId: z.string().uuid(),
+    enabled: z.boolean(),
+    expectedVersion: z.number().int().positive(),
+  }).safeParse({ contentId, campaignId, enabled, expectedVersion });
+  if (!input.success) return failure("The feat, campaign, or version is invalid.");
+
+  const { data, error } = await session.supabase.rpc("set_content_campaign_share", {
+    target_content_id: input.data.contentId,
+    target_campaign_id: input.data.campaignId,
+    enabled: input.data.enabled,
+    expected_version: input.data.expectedVersion,
+  });
+  if (error) return databaseShareFailure(error);
+
+  try {
+    const result = parseShareRpcRow(data);
+    if (result.contentId !== input.data.contentId) {
+      return failure("Campaign access could not be updated. Please try again.");
+    }
+    return result;
+  } catch {
+    return failure("Campaign access could not be updated. Please try again.");
+  }
 }
 
 export async function createHomebrewFeatRecord(
@@ -286,7 +441,7 @@ export async function updateHomebrewFeatRecord(
     .eq("system_id", context.systemId)
     .eq("source", "homebrew")
     .eq("content_type", "feat")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .eq("version", identity.data.expectedVersion)
     .select(HOME_BREW_SELECT)
@@ -309,7 +464,7 @@ export async function updateHomebrewFeatRecord(
     .eq("system_id", context.systemId)
     .eq("source", "homebrew")
     .eq("content_type", "feat")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .maybeSingle();
 

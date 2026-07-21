@@ -16,7 +16,7 @@ import { classFeaturesPerLevel, buildRenderedPerLevel, pendingChoicesUpTo } from
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import { useIsMobile } from "@/lib/builder/use-is-mobile";
 import type { ContentEntry } from "@/components/builder/content-browser";
-import type { CharacterChoices, AsiChoice, HpRollRecord } from "@/lib/types/character";
+import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, UsableFeatSearch } from "@/lib/types/character";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
 
@@ -25,6 +25,8 @@ export interface ClassStepRailProps {
   classes: ContentEntry[];
   subclasses: ContentEntry[];
   features: ContentEntry[];
+  feats?: UsableFeatOption[];
+  onFeatSearch?: UsableFeatSearch;
   selectedClasses: Array<{
     slug: string;
     level: number;
@@ -77,6 +79,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
     classes,
     subclasses,
     features,
+    feats = [],
+    onFeatSearch,
     selectedClasses,
     localChoices,
     resolvedStats,
@@ -327,6 +331,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
             subclasses={subclasses}
             styleOptions={styleOptions}
             localChoices={localChoices}
+            feats={feats}
+            onFeatSearch={onFeatSearch}
             currentSubclass={cls.subclass}
             classChoices={classChoices}
             hpRule={hpRule}
@@ -398,6 +404,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
             subclasses={subclasses}
             styleOptions={styleOptions}
             localChoices={localChoices}
+            feats={feats}
+            onFeatSearch={onFeatSearch}
             currentSubclass={cls.subclass}
             classChoices={classChoices}
             hitDie={hitDie}
@@ -544,6 +552,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
           subclasses={subclasses}
           styleOptions={styleOptions}
           localChoices={localChoices}
+          feats={feats}
+          onFeatSearch={onFeatSearch}
           currentSubclass={cls.subclass}
           classChoices={classChoices}
           hpRule={hpRule}
@@ -620,6 +630,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
           subclasses={subclasses}
           styleOptions={styleOptionsForActive}
           localChoices={localChoices}
+          feats={feats}
+          onFeatSearch={onFeatSearch}
           currentSubclass={activeClass.subclass}
           classChoices={activeClassChoices}
           hitDie={hitDie}

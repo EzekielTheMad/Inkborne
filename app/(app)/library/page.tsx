@@ -158,7 +158,11 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-1.5">
-                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="outline">
+                      {feat.scope === "shared"
+                        ? `Shared · ${feat.sharedCampaignCount} ${feat.sharedCampaignCount === 1 ? "campaign" : "campaigns"}`
+                        : "Private"}
+                    </Badge>
                     <Badge variant="secondary">v{feat.version}</Badge>
                   </div>
                 </div>
