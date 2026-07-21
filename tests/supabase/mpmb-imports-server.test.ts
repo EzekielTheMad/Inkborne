@@ -10,6 +10,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: createClientMock }));
 
 import {
+  commitMpmbImport,
   getOwnedMpmbImportConflictItem,
   getOwnedMpmbImportReview,
   getOwnedMpmbImportSpellRepairItem,
@@ -378,6 +379,20 @@ describe("guided spell repair", () => {
       status: "conflict",
       message: "This import changed in another session. Reload and try again.",
     });
+
+    rpc.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "Import review changed in another session" },
+    });
+    await expect(repairMpmbImportSpellItem(
+      IMPORT_ID,
+      ITEM_ID,
+      3,
+      { material: "a silver thread" },
+    )).resolves.toEqual({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
+    });
   });
 });
 
@@ -675,6 +690,20 @@ describe("MPMB import conflict resolution", () => {
 
     rpc.mockResolvedValueOnce({
       data: null,
+      error: { code: "P0001", message: "Import review changed in another session" },
+    });
+    await expect(resolveMpmbImportItemConflict(
+      IMPORT_ID,
+      ITEM_ID,
+      4,
+      "keep_both",
+    )).resolves.toEqual({
+      status: "conflict",
+      message: "This import or replacement changed in another session. Reload and try again.",
+    });
+
+    rpc.mockResolvedValueOnce({
+      data: null,
       error: { code: "42501", message: "Shared content must be unshared before replacement: private detail" },
     });
     await expect(resolveMpmbImportItemConflict(
@@ -687,6 +716,19 @@ describe("MPMB import conflict resolution", () => {
     )).resolves.toEqual({
       status: "conflict",
       message: "That definition is shared with a campaign. Unshare it or keep both.",
+    });
+  });
+
+  it("maps non-retryable commit revision conflicts to a reload response", async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "Import review changed in another session" },
+    });
+    createClientMock.mockResolvedValue(authenticatedClient({ rpc }));
+
+    await expect(commitMpmbImport(IMPORT_ID, 4)).resolves.toEqual({
+      status: "conflict",
+      message: "This import changed in another session. Reload and try again.",
     });
   });
 });

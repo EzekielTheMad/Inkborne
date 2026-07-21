@@ -23,6 +23,16 @@ const indexHardeningMigration = readFileSync(
   .replaceAll("\r\n", "\n")
   .toLowerCase();
 
+const nonRetryableConflictMigration = readFileSync(
+  resolve(
+    process.cwd(),
+    "supabase/migrations/20260721152500_mpmb_import_nonretryable_conflicts.sql",
+  ),
+  "utf8",
+)
+  .replaceAll("\r\n", "\n")
+  .toLowerCase();
+
 const listFunction = migration.match(
   /create or replace function public\.list_mpmb_import_item_conflicts[\s\S]*?\n\$\$;/,
 )?.[0];
@@ -40,6 +50,31 @@ describe("MPMB import conflict resolution migration contract", () => {
     );
     expect(indexHardeningMigration).toMatch(
       /create index content_import_origins_replaced_from_version_idx[\s\S]*?on public\.content_import_origins\(content_id, replaced_from_version\)/,
+    );
+  });
+
+  it("translates optimistic conflicts out of retryable serialization failures", () => {
+    for (const functionName of [
+      "set_mpmb_import_item_selected",
+      "repair_mpmb_import_spell_item",
+      "resolve_mpmb_import_item_conflict",
+      "commit_mpmb_import",
+    ]) {
+      expect(nonRetryableConflictMigration).toContain(
+        `rename to ${functionName}_retryable_internal`,
+      );
+      expect(nonRetryableConflictMigration).toMatch(
+        new RegExp(
+          `create function public\\.${functionName}\\([\\s\\S]*?exception[\\s\\S]*?when serialization_failure then[\\s\\S]*?errcode = 'p0001'`,
+        ),
+      );
+    }
+
+    expect(nonRetryableConflictMigration).toMatch(
+      /revoke all on function public\.resolve_mpmb_import_item_conflict_retryable_internal\([\s\S]*?from public, anon, authenticated, service_role/,
+    );
+    expect(nonRetryableConflictMigration).not.toMatch(
+      /grant execute on function public\.[a-z_]+_retryable_internal/,
     );
   });
 

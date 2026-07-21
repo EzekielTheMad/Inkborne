@@ -285,7 +285,11 @@ async function resolvePublishedSystem(
 }
 
 function databaseFailure(error: { code?: string; message?: string } | null) {
-  if (error?.code === "40001") {
+  const message = error?.message?.toLowerCase() ?? "";
+  if (
+    error?.code === "40001"
+    || (error?.code === "P0001" && /(changed|revision|version|stale)/.test(message))
+  ) {
     return {
       status: "conflict" as const,
       message: "This import changed in another session. Reload and try again.",
