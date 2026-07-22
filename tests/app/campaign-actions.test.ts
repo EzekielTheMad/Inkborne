@@ -28,6 +28,10 @@ vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
   setHomebrewFeatCampaignShare: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
+  setHomebrewBackgroundCampaignShare: vi.fn(),
+}));
+
 vi.mock("@/lib/supabase/homebrew-spells-server", () => ({
   setHomebrewSpellCampaignShare: vi.fn(),
 }));
@@ -48,6 +52,7 @@ import {
   type UpdateCampaignPageState,
 } from "@/app/(app)/campaigns/actions";
 import { createClient } from "@/lib/supabase/server";
+import { setHomebrewBackgroundCampaignShare } from "@/lib/supabase/homebrew-backgrounds-server";
 import { setHomebrewFeatCampaignShare } from "@/lib/supabase/homebrew-feats-server";
 import { setHomebrewSpellCampaignShare } from "@/lib/supabase/homebrew-spells-server";
 
@@ -330,7 +335,37 @@ describe("campaign actions", () => {
       3,
     );
     expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
+    expect(setHomebrewBackgroundCampaignShare).not.toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith(`/campaigns/${campaignId}/settings`);
+    expect(target).toBe(`/campaigns/${campaignId}/settings?content_revoked=1`);
+  });
+
+  it("lets the campaign settings action request background access revocation", async () => {
+    mockSupabase();
+    vi.mocked(setHomebrewBackgroundCampaignShare).mockResolvedValue({
+      contentId,
+      version: 5,
+      scope: "personal",
+      sharedCampaignCount: 0,
+    });
+
+    const target = await captureRedirect(() =>
+      revokeCampaignSharedContent(makeFormData({
+        campaign_id: campaignId,
+        content_id: contentId,
+        content_type: "background",
+        expected_version: "4",
+      })),
+    );
+
+    expect(setHomebrewBackgroundCampaignShare).toHaveBeenCalledWith(
+      contentId,
+      campaignId,
+      false,
+      4,
+    );
+    expect(setHomebrewFeatCampaignShare).not.toHaveBeenCalled();
+    expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
     expect(target).toBe(`/campaigns/${campaignId}/settings?content_revoked=1`);
   });
 
@@ -347,6 +382,7 @@ describe("campaign actions", () => {
 
     expect(setHomebrewFeatCampaignShare).not.toHaveBeenCalled();
     expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
+    expect(setHomebrewBackgroundCampaignShare).not.toHaveBeenCalled();
     expect(target).toBe("/campaigns?error=invalid_content_share");
   });
 });

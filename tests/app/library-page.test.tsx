@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   listOwnedSpells: vi.fn(),
   listOwnedFeats: vi.fn(),
+  listOwnedBackgrounds: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -12,6 +13,9 @@ vi.mock("@/lib/supabase/homebrew-spells-server", () => ({
 }));
 vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
   listOwnedHomebrewFeats: mocks.listOwnedFeats,
+}));
+vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
+  listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
 }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: { getUser: mocks.getUser } }),
@@ -33,9 +37,10 @@ describe("LibraryPage", () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null });
     mocks.listOwnedSpells.mockResolvedValue([]);
     mocks.listOwnedFeats.mockResolvedValue([]);
+    mocks.listOwnedBackgrounds.mockResolvedValue([]);
   });
 
-  it("shows spell and feat sections with their versioned library links", async () => {
+  it("shows spell, feat, and background sections with their versioned library links", async () => {
     mocks.listOwnedSpells.mockResolvedValue([
       {
         id: "11111111-1111-4111-8111-111111111111",
@@ -63,6 +68,19 @@ describe("LibraryPage", () => {
         data: { description: "You have learned to move with exceptional speed." },
       },
     ]);
+    mocks.listOwnedBackgrounds.mockResolvedValue([
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        name: "Lantern Courier",
+        scope: "shared",
+        version: 4,
+        sharedCampaignCount: 1,
+        data: {
+          feature: { name: "Known Roads", description: "You remember hidden crossings." },
+          skills: ["survival", "perception"],
+        },
+      },
+    ]);
 
     render(await LibraryPage({ searchParams: Promise.resolve({}) }));
 
@@ -70,6 +88,7 @@ describe("LibraryPage", () => {
     expect(screen.getByText("Shared · 2 campaigns")).toBeVisible();
     expect(screen.getByText("My spells")).toBeVisible();
     expect(screen.getByText("My feats")).toBeVisible();
+    expect(screen.getByText("My backgrounds")).toBeVisible();
     expect(screen.getByRole("link", { name: /Fleet Adept/ })).toHaveAttribute(
       "href",
       "/library/feats/33333333-3333-4333-8333-333333333333/edit",
@@ -78,18 +97,27 @@ describe("LibraryPage", () => {
       "href",
       "/library/feats/new",
     );
+    expect(screen.getByRole("link", { name: "Create background" })).toHaveAttribute(
+      "href",
+      "/library/backgrounds/new",
+    );
+    expect(screen.getByRole("link", { name: /Lantern Courier/ })).toHaveAttribute(
+      "href",
+      "/library/backgrounds/44444444-4444-4444-8444-444444444444/edit",
+    );
     expect(screen.getByRole("link", { name: "Import MPMB" })).toHaveAttribute(
       "href",
       "/library/import",
     );
   });
 
-  it("offers both authoring paths when the library is empty", async () => {
+  it("offers every authoring path when the library is empty", async () => {
     render(await LibraryPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByText("Write your first private rule")).toBeVisible();
     expect(screen.getAllByRole("link", { name: "Create spell" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create feat" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Create background" })).toHaveLength(2);
   });
 
   it("keeps available content visible when one content type fails to load", async () => {
