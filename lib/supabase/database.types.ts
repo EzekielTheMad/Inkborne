@@ -1584,6 +1584,14 @@ export type Database = {
           version: number
         }[]
       }
+      commit_mpmb_import_retryable_internal: {
+        Args: { expected_revision: number; target_import_id: string }
+        Returns: {
+          content_id: string
+          item_id: string
+          version: number
+        }[]
+      }
       copy_character: {
         Args: {
           copied_name?: string
@@ -1613,6 +1621,18 @@ export type Database = {
         Args: { target_campaign_id: string }
         Returns: undefined
       }
+      list_campaign_shared_content_for_owner: {
+        Args: { target_campaign_id: string }
+        Returns: {
+          content_id: string
+          content_type: string
+          name: string
+          owner_id: string
+          scope: string
+          source: string
+          version: number
+        }[]
+      }
       list_mpmb_import_item_conflicts: {
         Args: { target_import_id: string }
         Returns: {
@@ -1624,18 +1644,6 @@ export type Database = {
           scope: string
           shared_campaign_count: number
           slug: string
-          version: number
-        }[]
-      }
-      list_campaign_shared_content_for_owner: {
-        Args: { target_campaign_id: string }
-        Returns: {
-          content_id: string
-          content_type: string
-          name: string
-          owner_id: string
-          scope: string
-          source: string
           version: number
         }[]
       }
@@ -1684,7 +1692,33 @@ export type Database = {
           selected: boolean
         }[]
       }
+      repair_mpmb_import_feat_item_retryable_internal: {
+        Args: {
+          expected_revision: number
+          repair_patch: Json
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          mapping_status: string
+          revision: number
+          selected: boolean
+        }[]
+      }
       repair_mpmb_import_spell_item: {
+        Args: {
+          expected_revision: number
+          repair_patch: Json
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          mapping_status: string
+          revision: number
+          selected: boolean
+        }[]
+      }
+      repair_mpmb_import_spell_item_retryable_internal: {
         Args: {
           expected_revision: number
           repair_patch: Json
@@ -1713,6 +1747,22 @@ export type Database = {
           revision: number
         }[]
       }
+      resolve_mpmb_import_item_conflict_retryable_internal: {
+        Args: {
+          expected_revision: number
+          resolution_strategy: string
+          target_content_id?: string
+          target_content_version?: number
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          conflict_resolution: string
+          replacement_content_id: string
+          replacement_expected_version: number
+          revision: number
+        }[]
+      }
       rotate_campaign_invite_code: {
         Args: { target_campaign_id: string }
         Returns: string
@@ -1725,6 +1775,24 @@ export type Database = {
           write_dm_notes: boolean
         }
         Returns: undefined
+      }
+      search_usable_feats_for_character: {
+        Args: {
+          result_limit?: number
+          search_query?: string
+          target_character_id: string
+          target_feature_slug?: string
+        }
+        Returns: {
+          description: string
+          id: string
+          name: string
+          prerequisite_met: boolean
+          prerequisite_reason: string
+          scope: string
+          source: string
+          version: number
+        }[]
       }
       search_usable_spells_for_character: {
         Args: {
@@ -1751,37 +1819,31 @@ export type Database = {
           version: number
         }[]
       }
-      search_usable_feats_for_character: {
-        Args: {
-          result_limit?: number
-          search_query?: string
-          target_character_id: string
-          target_feature_slug?: string | null
-        }
-        Returns: {
-          description: string
-          id: string
-          name: string
-          prerequisite_met: boolean
-          prerequisite_reason: string | null
-          scope: string
-          source: string
-          version: number
-        }[]
-      }
       set_character_asi_choice: {
         Args: {
-          ability_allocations?: Json | null
+          ability_allocations?: Json
           choice_mode: string
           target_character_id: string
-          target_feat_id?: string | null
-          target_feat_version?: number | null
+          target_feat_id?: string
+          target_feat_version?: number
           target_feature_slug: string
         }
         Returns: {
           saved_choice: Json
           saved_choices: Json
           saved_feature_slug: string
+        }[]
+      }
+      set_character_background: {
+        Args: {
+          target_character_id: string
+          target_content_id?: string
+          target_content_version?: number
+        }
+        Returns: {
+          saved_choices: Json
+          selected_content_id: string
+          selected_content_version: number
         }[]
       }
       set_content_campaign_share: {
@@ -1810,6 +1872,18 @@ export type Database = {
           selected_count: number
         }[]
       }
+      set_mpmb_import_item_selected_retryable_internal: {
+        Args: {
+          expected_revision: number
+          selected: boolean
+          target_import_id: string
+          target_item_id: string
+        }
+        Returns: {
+          revision: number
+          selected_count: number
+        }[]
+      }
       stage_mpmb_import: {
         Args: {
           file_diagnostics: Json
@@ -1817,7 +1891,7 @@ export type Database = {
           mapper_version: string
           mapping_summary: Json
           parser_version: string
-          required_sheet_version: string | null
+          required_sheet_version: string
           rights_attestation_version: string
           safe_original_filename: string
           source_bytes: number

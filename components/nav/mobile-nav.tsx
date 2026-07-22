@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FeedbackButton } from "@/components/feedback/feedback-button";
 import { NavLink } from "@/components/nav/nav-link";
 import { Menu, MessageSquare, Shield } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
@@ -38,7 +39,8 @@ export function MobileNav({ displayName, avatarUrl, email, isAdmin }: MobileNavP
   }
 
   return (
-    <div className="md:hidden">
+    <div className="flex items-center gap-1 md:hidden">
+      <FeedbackButton iconOnly />
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           render={

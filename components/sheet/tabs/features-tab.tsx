@@ -75,6 +75,10 @@ export function FeaturesTab({
     const ct = ref.content_definitions?.content_type;
     if (ct === "trait") return "Species Trait";
     if (ct === "feat") return "Feat";
+    if (ct === "background") {
+      const backgroundName = ref.content_definitions?.name?.trim();
+      return backgroundName ? `${backgroundName} Background` : "Background";
+    }
     if (ct === "feature") {
       // Try to figure out which class this feature comes from
       const source = ref.choice_source;
@@ -94,6 +98,37 @@ export function FeaturesTab({
     // Custom content type
     const def = schema.content_types.find((t) => t.slug === ct);
     return def?.name ?? ct ?? "Feature";
+  }
+
+  function getFeatureTitle(ref: ContentRefWithContent): string {
+    const definition = ref.content_definitions;
+    const feature = definition?.data?.feature;
+    if (
+      definition?.content_type === "background"
+      && feature != null
+      && typeof feature === "object"
+    ) {
+      const name = (feature as { name?: unknown }).name;
+      if (typeof name === "string" && name.trim()) return name.trim();
+    }
+    return definition?.name ?? "Unknown Feature";
+  }
+
+  function getFeatureDescription(ref: ContentRefWithContent): string | null {
+    const data = ref.content_definitions?.data;
+    if (typeof data?.description === "string") return data.description;
+    if (
+      ref.content_definitions?.content_type === "background"
+      && data?.feature != null
+      && typeof data.feature === "object"
+    ) {
+      const feature = data.feature as { name?: unknown; description?: unknown };
+      const description = typeof feature.description === "string"
+        ? feature.description.trim()
+        : "";
+      return description || null;
+    }
+    return null;
   }
 
   return (
@@ -120,22 +155,24 @@ export function FeaturesTab({
         <SheetEmptyState>No features match this filter.</SheetEmptyState>
       ) : (
         <div className="space-y-3">
-          {filteredRefs.map((ref) => (
-            <div
-              key={ref.id}
-              className="rounded-md border border-border bg-card p-3 space-y-1"
-            >
+          {filteredRefs.map((ref) => {
+            const description = getFeatureDescription(ref);
+            return (
+              <div
+                key={ref.id}
+                className="rounded-md border border-border bg-card p-3 space-y-1"
+              >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-accent font-medium text-sm">
-                  {ref.content_definitions?.name ?? "Unknown Feature"}
+                  {getFeatureTitle(ref)}
                 </span>
                 <span className="text-xs text-muted-foreground shrink-0">
                   {getSourceCitation(ref)}
                 </span>
               </div>
-              {ref.content_definitions?.data?.description != null && (
+              {description && (
                 <p className="text-sm text-foreground">
-                  {String(ref.content_definitions.data.description)}
+                  {description}
                 </p>
               )}
               {(() => {
@@ -172,8 +209,9 @@ export function FeaturesTab({
                     ))}
                   </div>
                 )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col bg-background">
       {/* Global error + promise-rejection listeners (authenticated only). */}
       <ErrorListeners />
-      <header className="border-b border-border">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <AppNav displayName={displayName} avatarUrl={avatarUrl} email={email} isAdmin={isAdmin} />
           <MobileNav displayName={displayName} avatarUrl={avatarUrl} email={email} isAdmin={isAdmin} />
