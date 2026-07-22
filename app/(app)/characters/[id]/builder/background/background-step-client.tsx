@@ -3,10 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateCharacter } from "@/lib/supabase/character-client";
-import {
-  insertContentRef,
-  removeContentRefById,
-} from "@/lib/supabase/content-refs-client";
+import { setCharacterBackground } from "@/lib/supabase/background-selection-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,10 +43,26 @@ interface BackgroundStepClientProps {
       content_type: string;
       data: Record<string, unknown>;
       effects: Effect[];
+      version: number;
+      source: string;
     };
   }>;
   schema: SystemSchemaDefinition | undefined;
   availableLanguages?: string[];
+}
+
+function getBackgroundSelectionError(
+  error: unknown,
+  action: "selected" | "cleared",
+) {
+  if (
+    error instanceof Error
+    && error.message.includes("starting equipment is confirmed")
+  ) {
+    return "Starting equipment is already confirmed. To protect your inventory, the background cannot be changed.";
+  }
+
+  return `The background could not be ${action}. Refresh and try again.`;
 }
 
 export function BackgroundStepClient({
@@ -63,19 +76,28 @@ export function BackgroundStepClient({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
+  const [selectedOverride, setSelectedOverride] = useState<ContentEntry | null>(null);
+  const [isChangingBackground, setIsChangingBackground] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [isSavingBackground, setIsSavingBackground] = useState(false);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
     character.choices ?? {},
   );
 
   const selectedBackground = localChoices.background;
   const hasBackground = !!selectedBackground;
-  const selectedBgContent = backgrounds.find(
-    (b) => b.slug === selectedBackground,
-  );
+  const pinnedBackground = contentRefs.find(
+    (ref) => ref.content_definitions?.content_type === "background",
+  )?.content_definitions;
+  const selectedBgContent = selectedOverride
+    ?? (selectedBackground && pinnedBackground ? pinnedBackground : undefined);
 
-  const allEffects: Effect[] = contentRefs.flatMap(
-    (ref) => ref.content_definitions?.effects ?? [],
-  );
+  const allEffects: Effect[] = [
+    ...contentRefs
+      .filter((ref) => ref.content_definitions?.content_type !== "background")
+      .flatMap((ref) => ref.content_definitions?.effects ?? []),
+    ...(selectedBgContent?.effects ?? []),
+  ];
 
   const bgChoices: ChoiceEffect[] = (selectedBgContent?.effects ?? []).filter(
     (e): e is ChoiceEffect => e.type === "choice",
@@ -94,77 +116,55 @@ export function BackgroundStepClient({
     (selectedBgContent?.data.flaws as string[] | undefined) ?? [];
 
   async function handleSelectBackground(content: ContentEntry) {
-    setPreviewContent(null);
+    if (isSavingBackground) return;
 
-    const newChoices = {
-      ...localChoices,
-      background: content.slug,
-      personality_traits: [],
-      ideals: [],
-      bonds: [],
-      flaws: [],
-    };
+    setPreviewContent(null);
+    setSelectionError(null);
 
     const prev = localChoices;
-    setLocalChoices(newChoices);
+    setIsSavingBackground(true);
 
     try {
-      await updateCharacter(characterId, { choices: newChoices });
-
-      const oldRef = contentRefs.find(
-        (ref) => ref.content_definitions?.content_type === "background",
-      );
-      if (oldRef) {
-        await removeContentRefById(oldRef.id);
-      }
-      await insertContentRef({
+      const saved = await setCharacterBackground(
         characterId,
-        contentId: content.id,
-        contentVersion: content.version,
-        context: { source: "background" },
-      });
+        content.id,
+        content.version,
+      );
+      setLocalChoices(saved.savedChoices);
+      setSelectedOverride(content);
+      setIsChangingBackground(false);
 
       startTransition(() => router.refresh());
-    } catch (err) {
+    } catch (error) {
       setLocalChoices(prev);
-      console.error("Failed to select background:", err);
+      setSelectionError(getBackgroundSelectionError(error, "selected"));
+    } finally {
+      setIsSavingBackground(false);
     }
   }
 
-  async function handleChangeBackground() {
-    const newChoices = {
-      ...localChoices,
-      background: undefined,
-      personality_traits: [],
-      ideals: [],
-      bonds: [],
-      flaws: [],
-    };
+  function handleStartChangingBackground() {
+    if (isSavingBackground) return;
 
-    const prev = localChoices;
-    setLocalChoices(newChoices);
+    setPreviewContent(null);
+    setSelectionError(null);
+    setIsChangingBackground(true);
+  }
 
-    try {
-      await updateCharacter(characterId, { choices: newChoices });
+  function handleKeepCurrentBackground() {
+    if (isSavingBackground) return;
 
-      const bgRef = contentRefs.find(
-        (ref) => ref.content_definitions?.content_type === "background",
-      );
-      if (bgRef) {
-        await removeContentRefById(bgRef.id);
-      }
-
-      startTransition(() => router.refresh());
-    } catch (err) {
-      setLocalChoices(prev);
-      console.error("Failed to clear background:", err);
-    }
+    setPreviewContent(null);
+    setSelectionError(null);
+    setIsChangingBackground(false);
   }
 
   async function handleNarrativeChange(
     field: "personality_traits" | "ideals" | "bonds" | "flaws",
     value: string[],
   ) {
+    if (isSavingBackground) return;
+
     const newChoices = { ...localChoices, [field]: value };
 
     const prev = localChoices;
@@ -179,6 +179,8 @@ export function BackgroundStepClient({
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
+    if (isSavingBackground) return;
+
     const newResolved = {
       ...localChoices.resolved_choices,
       [choiceId]: selections,
@@ -256,10 +258,14 @@ export function BackgroundStepClient({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <div className="space-y-6">
+      <fieldset
+        disabled={isSavingBackground}
+        aria-busy={isSavingBackground}
+        className="min-w-0 space-y-6 border-0 p-0"
+      >
         <h2 className="text-xl font-semibold">Background</h2>
 
-        {hasBackground && selectedBgContent ? (
+        {hasBackground && selectedBgContent && !isChangingBackground ? (
           <div className="space-y-4">
             <Card>
               <CardHeader>
@@ -268,9 +274,10 @@ export function BackgroundStepClient({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleChangeBackground}
+                    onClick={handleStartChangingBackground}
+                    disabled={isSavingBackground}
                   >
-                    Change Background
+                    {isSavingBackground ? "Saving..." : "Change Background"}
                   </Button>
                 </div>
               </CardHeader>
@@ -279,6 +286,27 @@ export function BackgroundStepClient({
                   <p className="text-sm text-muted-foreground">
                     {selectedBgContent.data.description}
                   </p>
+                )}
+
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge variant="outline">
+                    {selectedBgContent.source === "srd" ? "SRD" : "Homebrew"}
+                  </Badge>
+                  <Badge variant="secondary">v{selectedBgContent.version}</Badge>
+                </div>
+
+                {selectedBgContent.data.feature != null
+                  && typeof selectedBgContent.data.feature === "object" && (
+                  <div className="rounded-md border border-border bg-muted/40 px-3 py-2">
+                    <p className="text-sm font-medium text-accent">
+                      {String((selectedBgContent.data.feature as { name?: unknown }).name ?? "Background Feature")}
+                    </p>
+                    {(selectedBgContent.data.feature as { description?: unknown }).description != null && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {String((selectedBgContent.data.feature as { description?: unknown }).description)}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {/* Enriched background data */}
@@ -388,11 +416,34 @@ export function BackgroundStepClient({
             </Card>
           </div>
         ) : (
-          <ContentBrowser
-            entries={backgrounds}
-            contentTypeLabel="Background"
-            onSelect={setPreviewContent}
-          />
+          <div className="space-y-4">
+            {hasBackground && selectedBgContent && isChangingBackground && (
+              <Card>
+                <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium">
+                      Current background: {selectedBgContent.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      It stays saved until you confirm a replacement.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleKeepCurrentBackground}
+                  >
+                    Keep Current Background
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+            <ContentBrowser
+              entries={backgrounds}
+              contentTypeLabel="Background"
+              onSelect={setPreviewContent}
+            />
+          </div>
         )}
 
         <ContentPreview
@@ -401,6 +452,16 @@ export function BackgroundStepClient({
           onConfirm={handleSelectBackground}
           onCancel={() => setPreviewContent(null)}
         />
+
+        {selectionError && (
+          <p role="alert" className="text-sm text-destructive">
+            {selectionError}
+          </p>
+        )}
+
+        <p className="sr-only" aria-live="polite">
+          {isSavingBackground ? "Saving background." : ""}
+        </p>
 
         <div className="flex justify-between pt-4">
           <Button
@@ -420,7 +481,7 @@ export function BackgroundStepClient({
             Next: Equipment
           </Button>
         </div>
-      </div>
+      </fieldset>
 
       {schema && (
         <div className="hidden lg:block">

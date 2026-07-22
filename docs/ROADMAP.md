@@ -2,7 +2,7 @@
 
 **Status:** Living draft. Update freely.
 **Owner:** Victor
-**Last updated:** 2026-07-21
+**Last updated:** 2026-07-22
 
 > **Working on this project?** Start with [`docs/GAME-PLAN.md`](GAME-PLAN.md) — the agent-agnostic entry point with the current task backlog, workflow conventions, and repo orientation. This file is the milestone-level source of truth; the game plan is the working-level one.
 
@@ -15,6 +15,7 @@ This document layers the new vision items (homebrew authoring, content importer,
 A **community-driven, multi-system TTRPG character + campaign management platform** where:
 
 - Players build, manage, and play characters with a richer toolkit than D&D Beyond
+- Players and DMs browse every game definition they are entitled to use through a searchable, filterable encyclopedia; content browsing is never DM-only
 - Homebrew is first-class — users author their own content and import from existing sources (MPMB JS scripts, eventually PDFs)
 - DMs orchestrate campaigns with monsters, NPCs, companions, sidekicks, and shared content libraries
 - Narrative depth (LegendKeeper-inspired) is alongside the mechanical sheet, not behind it
@@ -23,25 +24,26 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, schema-known guided import repair shipped in #92, the representative importer-to-character exit flow is proved in #93, and background authoring/campaign sharing is protected-preview verified in #94. The automated gate is **176 Vitest files / 1732 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
+> **Snapshot 2026-07-22.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, schema-known guided import repair shipped in #92, the representative importer-to-character exit flow is proved in #93, and background authoring/campaign sharing is protected-preview verified in #94. The active release candidate adds atomic background replacement, exact pinned rendering, and persistent feedback access. Its local gate is **186 Vitest files / 1759 tests** plus strict lint/typecheck and a production build; both hosted migrations, rollback-only authenticated database verification, and protected-preview background/mobile-feedback UAT are green.
 
 **Shipped product surface:**
 - Email, Google, and Discord authentication; account linking is implemented in #80 but awaits manual provider-consent UAT.
 - Full responsive character builder and sheet, including direct-level gating, equipment choice, subclass prompts, inventory, spells, feat choices, exact-version content pins, and character copy.
 - M3 gameplay: dice and roll log, spell casting, resources, hit dice, effects/durations, concentration, and rests.
 - Unified character narrative plus campaign CRUD/membership, roles, roster, wiki tree/editor, backlinks, timelines/relationships, visibility controls, settings, and revision conflicts.
-- `/library` spell, feat, and background authoring with immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation.
+- `/library` currently provides spell, feat, and background authoring with immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation. The original player-facing compendium design is not implemented yet; the authoring workspace will be separated as Homebrew when that catalog ships.
 - Fail-closed private MPMB import review with finite schema-known spell/feat repair, explicit conflict resolution, audit provenance, and mandatory current-revision calculation preview.
+- Authenticated feedback capture records the current page path/query and browser context, with secure storage and an admin triage dashboard. Persistent desktop/mobile access and protected-preview submission with exact originating path/query are verified; the final admin-dashboard browser check still needs an admin session.
 - Feedback/error administration, generated Supabase types, validated content fetch boundaries, and hardened local/offsite backup tooling.
 
-**Active M4 work:** make background selection atomic and render exact pinned snapshots, then continue through the remaining character-construction content types. Optional public publishing remains deliberately separate from campaign sharing.
+**Active M4 work:** atomic background replacement and exact pinned snapshots are hosted/runtime and protected-preview verified in the active release candidate. The next internal alpha blocker is the entitlement-aware player compendium; remaining character-construction content types follow it. Optional public publishing remains deliberately separate from campaign sharing.
 
 **External release work:**
 1. Deploy #90 on Victor's Unraid system, create a fresh backup, and complete the restore drill in `infra/backup/README.md`.
 2. Complete the account-linking browser matrix for #80 (Google, Discord, email security-code linking, unlink/relink).
 3. Send closed-alpha invites when Victor is ready.
 
-**Not built yet:** remaining M4 authoring/content types and public publishing; M5 monsters/library NPCs/companions/sidekicks; optional campaign live presence; PDF importing; and public-beta polish.
+**Not built yet:** the player-accessible compendium from the original journey design; remaining M4 authoring/content types and public publishing; M5 monsters/library NPCs/companions/sidekicks; optional campaign live presence; PDF importing; and public-beta polish.
 
 ---
 
@@ -164,11 +166,18 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 Combined because authoring and importing share the same user-owned content infrastructure (the `/library`, the sharing UI, the builder integration). Building one without the other leaves a glaring gap — users author a feat from scratch but can't import the one they already have, or vice versa.
 
 **Scope — Authoring half (~2–3 weeks):**
-- `/library` page — "my content" view with filters by type, sort, search
+- Homebrew workspace — "my content" view with filters by type, sort, and search. The current `/library` authoring UI moves to `/homebrew` when `/library` becomes the player-facing compendium.
 - Schema-driven authoring forms for each existing content type (race, class, feat, feature, spell, item, weapon, armor, background, subclass, trait)
 - Builder content discovery — pickers pull from `platform` + `user_owned` + `shared_with_me`
 - Sharing UI — campaign-scoped sharing is implemented for spells and feats; generalize it to other content types, then add separately controlled public publishing
 - Custom content types — UI for `custom_content_types` table that exists in schema today
+
+**Scope — Player-facing compendium:**
+- A searchable, sortable, filterable encyclopedia available to every authenticated user, independent of DM status.
+- The visible catalog is the union of platform/SRD, personal, campaign-shared, and eventually public content the current user is entitled to access; unrelated private or campaign-secret content remains hidden.
+- Initial categories cover classes, species/races, backgrounds, feats, spells, items, weapons, armor, and conditions where structured data exists. Future content types join the same catalog rather than creating a separate DM-only library.
+- Builder discovery and compendium discovery share the same authorization semantics, while immutable character pins keep their existing preservation rules.
+- Layout and interactions follow `docs/design-briefs/design_handoff_journey_alpha/README.md`; the closed-alpha contract is in `docs/specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md`.
 
 **Scope — Importer half (~2 weeks, leveraging existing transformers):**
 - File upload pipeline (extends portrait upload infrastructure from migration `00024`)
@@ -187,18 +196,18 @@ Combined because authoring and importing share the same user-owned content infra
 ---
 
 ### M5 — New content types
-**Goal:** Library expands beyond character-construction content into full TTRPG ecosystem.
+**Goal:** The shared player/DM compendium expands beyond character-construction content into the full TTRPG ecosystem, with separate DM management tools where campaign orchestration requires them.
 **Estimated effort:** 4–6 weeks total, can be sequenced.
 
 **Scope (per type, ~1 week each):**
-- **Monsters** — stat block schema (AC, HP, attacks, saves, abilities, lair actions, legendary actions); display component (D&D Beyond stat-block style); searchable in library; importable via the M4 importer
+- **Monsters** — stat block schema (AC, HP, attacks, saves, abilities, lair actions, legendary actions); display component (D&D Beyond stat-block style); searchable by any entitled user in the compendium; importable via the M4 importer; separately usable from DM campaign-management tools
 - **NPCs (library-scoped)** — generalize the existing `npcs` table to support library NPCs (today it's character-attached only). NPCs differ from monsters in carrying personality + relationship metadata
 - **Companions** — stat block + character-tied (mounts, beast forms from Druid Wild Shape, summon spells). Hybrid of creature + character
 - **Sidekicks (Tasha's-style)** — simplified PCs with one of three archetypes (Expert / Spellcaster / Warrior). Partial features — different schema from full PCs
 
 **Recommended sequence:** Monsters first (highest demand, simplest). NPCs second. Companions / Sidekicks last (most complex, narrowest audience).
 
-**Exit criteria for full M5:** A DM can manage a library of monsters, NPCs, companions, and sidekicks alongside their players' characters.
+**Exit criteria for full M5:** Entitled players and DMs can browse monsters, NPCs, companions, and sidekicks in the same encyclopedia as spells and items; DMs can additionally manage and use those entries alongside campaign characters.
 
 ---
 

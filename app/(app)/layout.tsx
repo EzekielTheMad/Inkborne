@@ -4,6 +4,7 @@ import { AppNav } from "@/components/nav/app-nav";
 import { MobileNav } from "@/components/nav/mobile-nav";
 import { ErrorListeners } from "@/components/error/error-listeners";
 import { isAdminUserId } from "@/lib/auth/is-admin";
+import { FeedbackProvider } from "@/components/feedback/feedback-provider";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -28,11 +29,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex flex-col bg-background">
       {/* Global error + promise-rejection listeners (authenticated only). */}
       <ErrorListeners />
-      <header className="border-b border-border">
-        <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <AppNav displayName={displayName} avatarUrl={avatarUrl} email={email} isAdmin={isAdmin} />
-          <MobileNav displayName={displayName} avatarUrl={avatarUrl} email={email} isAdmin={isAdmin} />
-        </div>
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <FeedbackProvider>
+          <div className="container mx-auto flex h-14 items-center justify-between px-4">
+            <AppNav displayName={displayName} avatarUrl={avatarUrl} email={email} isAdmin={isAdmin} />
+            <MobileNav displayName={displayName} avatarUrl={avatarUrl} email={email} isAdmin={isAdmin} />
+          </div>
+        </FeedbackProvider>
       </header>
       <main className="flex-1 container mx-auto px-4 py-6">
         {children}

@@ -92,6 +92,19 @@ export function ContentPreview({
             </p>
           )}
 
+          {content.data.feature != null && typeof content.data.feature === "object" && (
+            <div className="rounded-md border border-border bg-muted/50 px-3 py-2">
+              <p className="text-sm font-medium text-accent">
+                {String((content.data.feature as { name?: unknown }).name ?? "Background Feature")}
+              </p>
+              {(content.data.feature as { description?: unknown }).description != null && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {String((content.data.feature as { description?: unknown }).description)}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Key stats line */}
           <div className="text-sm space-y-0.5">
             {content.data.hit_die != null && (
