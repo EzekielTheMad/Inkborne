@@ -12,6 +12,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local"), quiet: true });
 export const STORAGE_STATE = path.resolve(__dirname, "e2e/.auth/user.json");
 const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const DEV_PORT = new URL(BASE_URL).port || "3000";
+const VERCEL_BYPASS_SECRET = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -31,6 +32,12 @@ export default defineConfig({
   globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL: BASE_URL,
+    extraHTTPHeaders: VERCEL_BYPASS_SECRET
+      ? {
+          "x-vercel-protection-bypass": VERCEL_BYPASS_SECRET,
+          "x-vercel-set-bypass-cookie": "true",
+        }
+      : undefined,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

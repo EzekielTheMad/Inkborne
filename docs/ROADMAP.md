@@ -23,7 +23,7 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, and schema-known guided import repair shipped in #92. The automated gate is **169 Vitest files / 1692 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
+> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, schema-known guided import repair shipped in #92, and the representative importer-to-character exit flow is proved in #93. The automated gate is **170 Vitest files / 1694 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
 
 **Shipped product surface:**
 - Email, Google, and Discord authentication; account linking is implemented in #80 but awaits manual provider-consent UAT.
@@ -34,7 +34,7 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 - Fail-closed private MPMB import review with finite schema-known spell/feat repair, explicit conflict resolution, audit provenance, and mandatory current-revision calculation preview.
 - Feedback/error administration, generated Supabase types, validated content fetch boundaries, and hardened local/offsite backup tooling.
 
-**Active M4 work:** extend authoring and sharing to additional content types, then prove imported content in the character builder. Optional public publishing remains deliberately separate from campaign sharing.
+**Active M4 work:** extend authoring and sharing to backgrounds, then continue through the remaining character-construction content types. Optional public publishing remains deliberately separate from campaign sharing.
 
 **External release work:**
 1. Deploy #90 on Victor's Unraid system, create a fresh backup, and complete the restore drill in `infra/backup/README.md`.
@@ -156,7 +156,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-21): ◑ Spell and feat authoring/sharing plus the private MPMB importer workflow through calculation preview are shipped and hosted-verified.** `/library` supports immutable spell/feat edits and campaign access controls; exact-campaign discovery, DM revocation, ASI feat selection, character copy, level-down pruning, and exact-version sheet pins are protected-preview verified. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through finite schema-known spell and feat corrections, resolves owned-content collisions, preserves immutable pins, and requires a server-calculated preview of the exact selected revision before commit. Imported content remains private pending a future rights workflow. This does **not** complete M4: additional authoring/content types, imported-content builder proof, and separately controlled public publishing remain.
+**Status (2026-07-21): ◑ Spell and feat authoring/sharing plus the private MPMB importer workflow and its representative character exit flow are shipped and hosted-verified.** `/library` supports immutable spell/feat edits and campaign access controls; exact-campaign discovery, DM revocation, ASI feat selection, character copy, level-down pruning, and exact-version sheet pins are protected-preview verified. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through finite schema-known spell and feat corrections, resolves owned-content collisions, preserves immutable pins, and requires a server-calculated preview of the exact selected revision before commit. A rights-safe representative fixture is continuously proved from real upload through private library entries, exact-version feat/spell selection, live sheet effects, preparation, casting, and roll output. Imported content remains private pending a future rights workflow. This does **not** complete M4: additional authoring/content types and separately controlled public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -181,7 +181,7 @@ Combined because authoring and importing share the same user-owned content infra
 
 **Exit criteria:**
 - ✅ A user can create a custom feat in `/library`, share it with a campaign, and see another user choose it at an earned ASI with sheet-parity effects (#91)
-- A user can upload an MPMB community file (e.g., Tasha's Cauldron) → see content land in library → build a character with it → sheet calculations match expected values
+- ✅ A user can upload an MPMB file → see content land in library → build a character with exact-version feat/spell pins → see matching sheet calculations and cast output (#93, using an original rights-safe representative fixture)
 - PDF parsing explicitly **not in scope** for this milestone (deferred — see M7)
 
 ---
