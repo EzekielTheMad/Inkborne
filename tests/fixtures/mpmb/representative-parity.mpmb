@@ -14,7 +14,7 @@ SourceList.IBP = {
 };
 
 FeatsList["lantern keeper"] = {
-  name: "Lantern Keeper",
+  name: "__e2e__ Lantern Keeper",
   source: ["IBP", 4],
   description: desc([
     "You have practiced carrying a watch-light through invented midnight roads.",
@@ -32,7 +32,7 @@ FeatsList["lantern keeper"] = {
 };
 
 SpellsList["prism spark"] = {
-  name: "Prism Spark",
+  name: "__e2e__ Prism Spark",
   source: ["IBP", 8],
   level: 1,
   school: "Evoc",
