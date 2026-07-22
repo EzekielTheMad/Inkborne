@@ -23,18 +23,18 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, schema-known guided import repair shipped in #92, and the representative importer-to-character exit flow is proved in #93. The automated gate is **170 Vitest files / 1694 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
+> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, schema-known guided import repair shipped in #92, the representative importer-to-character exit flow is proved in #93, and background authoring/campaign sharing is protected-preview verified in #94. The automated gate is **176 Vitest files / 1732 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
 
 **Shipped product surface:**
 - Email, Google, and Discord authentication; account linking is implemented in #80 but awaits manual provider-consent UAT.
 - Full responsive character builder and sheet, including direct-level gating, equipment choice, subclass prompts, inventory, spells, feat choices, exact-version content pins, and character copy.
 - M3 gameplay: dice and roll log, spell casting, resources, hit dice, effects/durations, concentration, and rests.
 - Unified character narrative plus campaign CRUD/membership, roles, roster, wiki tree/editor, backlinks, timelines/relationships, visibility controls, settings, and revision conflicts.
-- `/library` spell and feat authoring with immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation.
+- `/library` spell, feat, and background authoring with immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation.
 - Fail-closed private MPMB import review with finite schema-known spell/feat repair, explicit conflict resolution, audit provenance, and mandatory current-revision calculation preview.
 - Feedback/error administration, generated Supabase types, validated content fetch boundaries, and hardened local/offsite backup tooling.
 
-**Active M4 work:** extend authoring and sharing to backgrounds, then continue through the remaining character-construction content types. Optional public publishing remains deliberately separate from campaign sharing.
+**Active M4 work:** make background selection atomic and render exact pinned snapshots, then continue through the remaining character-construction content types. Optional public publishing remains deliberately separate from campaign sharing.
 
 **External release work:**
 1. Deploy #90 on Victor's Unraid system, create a fresh backup, and complete the restore drill in `infra/backup/README.md`.
