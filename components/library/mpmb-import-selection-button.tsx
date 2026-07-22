@@ -6,7 +6,7 @@ import { useActionState } from "react";
 import {
   toggleMpmbImportItem,
   type MpmbImportActionState,
-} from "@/app/(app)/library/import/actions";
+} from "@/app/(app)/homebrew/import/actions";
 import { Button } from "@/components/ui/button";
 
 const initialState: MpmbImportActionState = { status: "idle" };

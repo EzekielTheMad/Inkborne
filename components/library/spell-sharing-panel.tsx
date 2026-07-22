@@ -7,7 +7,7 @@ import { RefreshCw, ShieldCheck, Users } from "lucide-react";
 import {
   toggleHomebrewSpellCampaignShare,
   type HomebrewSpellShareActionState,
-} from "@/app/(app)/library/spells/actions";
+} from "@/app/(app)/homebrew/spells/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { HomebrewSpellCampaignOption } from "@/lib/supabase/homebrew-spells-server";

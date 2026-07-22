@@ -57,7 +57,7 @@ test("private spell versions stay pinned while new characters discover the lates
   const originalName = `${E2E_HOMEBREW_PREFIX} Ember Thread ${stamp}`;
   const revisedName = `${originalName} Revised`;
 
-  await page.goto("/library/spells/new");
+  await page.goto("/homebrew/spells/new");
   await page.getByLabel("Name", { exact: true }).fill(originalName);
   await page.getByLabel("Level", { exact: true }).selectOption("1");
   await page.getByLabel("Casting time", { exact: true }).fill("1 action");
@@ -78,7 +78,7 @@ test("private spell versions stay pinned while new characters discover the lates
   const editLink = page.getByRole("link", { name: new RegExp(originalName) });
   await expect(editLink).toContainText("v1");
   const editHref = await editLink.getAttribute("href");
-  const definitionId = editHref?.match(/\/library\/spells\/([^/]+)\/edit/)?.[1];
+  const definitionId = editHref?.match(/\/homebrew\/spells\/([^/]+)\/edit/)?.[1];
   if (!definitionId) throw new Error("Could not capture created homebrew spell id");
   definitionIds.push(definitionId);
 

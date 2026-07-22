@@ -24,26 +24,26 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-> **Snapshot 2026-07-22.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, schema-known guided import repair shipped in #92, the representative importer-to-character exit flow is proved in #93, and background authoring/campaign sharing is protected-preview verified in #94. The active release candidate adds atomic background replacement, exact pinned rendering, and persistent feedback access. Its local gate is **186 Vitest files / 1759 tests** plus strict lint/typecheck and a production build; both hosted migrations, rollback-only authenticated database verification, and protected-preview background/mobile-feedback UAT are green.
+> **Snapshot 2026-07-22.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, the private MPMB workflow and spell/feat/background authoring are on `main`, backup hardening shipped in #90, and atomic background replacement plus persistent feedback access shipped in #95. The active release candidate adds the entitlement-aware player/DM compendium at `/library` and moves authoring/imports to `/homebrew` with compatibility redirects. Its local gate is **194 Vitest files / 1782 tests** plus strict lint/typecheck and a production build; rollback-only live RLS verification proves the platform + personal + campaign-shared union and unrelated-content isolation. Hosted preview UAT is the remaining compendium gate.
 
 **Shipped product surface:**
 - Email, Google, and Discord authentication; account linking is implemented in #80 but awaits manual provider-consent UAT.
 - Full responsive character builder and sheet, including direct-level gating, equipment choice, subclass prompts, inventory, spells, feat choices, exact-version content pins, and character copy.
 - M3 gameplay: dice and roll log, spell casting, resources, hit dice, effects/durations, concentration, and rests.
 - Unified character narrative plus campaign CRUD/membership, roles, roster, wiki tree/editor, backlinks, timelines/relationships, visibility controls, settings, and revision conflicts.
-- `/library` currently provides spell, feat, and background authoring with immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation. The original player-facing compendium design is not implemented yet; the authoring workspace will be separated as Homebrew when that catalog ships.
+- Spell, feat, and background authoring on `main` provides immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation.
 - Fail-closed private MPMB import review with finite schema-known spell/feat repair, explicit conflict resolution, audit provenance, and mandatory current-revision calculation preview.
 - Authenticated feedback capture records the current page path/query and browser context, with secure storage and an admin triage dashboard. Persistent desktop/mobile access and protected-preview submission with exact originating path/query are verified; the final admin-dashboard browser check still needs an admin session.
 - Feedback/error administration, generated Supabase types, validated content fetch boundaries, and hardened local/offsite backup tooling.
 
-**Active M4 work:** atomic background replacement and exact pinned snapshots are hosted/runtime and protected-preview verified in the active release candidate. The next internal alpha blocker is the entitlement-aware player compendium; remaining character-construction content types follow it. Optional public publishing remains deliberately separate from campaign sharing.
+**Active M4 work:** the entitlement-aware player/DM compendium is locally complete in the active release candidate. It covers eight seeded categories, read-only structured details, provenance, search/sort/filters/pagination, responsive layouts, `/homebrew` separation, and legacy redirects. Hosted preview UAT and release remain before it can be called shipped. Remaining authoring/content types follow it; optional public publishing remains deliberately separate from campaign sharing.
 
 **External release work:**
 1. Deploy #90 on Victor's Unraid system, create a fresh backup, and complete the restore drill in `infra/backup/README.md`.
 2. Complete the account-linking browser matrix for #80 (Google, Discord, email security-code linking, unlink/relink).
 3. Send closed-alpha invites when Victor is ready.
 
-**Not built yet:** the player-accessible compendium from the original journey design; remaining M4 authoring/content types and public publishing; M5 monsters/library NPCs/companions/sidekicks; optional campaign live presence; PDF importing; and public-beta polish.
+**Not built yet:** remaining M4 authoring/content types and public publishing; M5 monsters/library NPCs/companions/sidekicks; optional campaign live presence; PDF importing; and public-beta polish.
 
 ---
 
@@ -158,7 +158,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-21): ◑ Spell and feat authoring/sharing plus the private MPMB importer workflow and its representative character exit flow are shipped and hosted-verified.** `/library` supports immutable spell/feat edits and campaign access controls; exact-campaign discovery, DM revocation, ASI feat selection, character copy, level-down pruning, and exact-version sheet pins are protected-preview verified. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through finite schema-known spell and feat corrections, resolves owned-content collisions, preserves immutable pins, and requires a server-calculated preview of the exact selected revision before commit. A rights-safe representative fixture is continuously proved from real upload through private library entries, exact-version feat/spell selection, live sheet effects, preparation, casting, and roll output. Imported content remains private pending a future rights workflow. This does **not** complete M4: additional authoring/content types and separately controlled public publishing remain.
+**Status (2026-07-22): ◑ Spell/feat/background authoring and sharing plus the private MPMB importer are shipped and hosted-verified; the player/DM compendium is locally complete in an active release candidate.** Authoring/imports move to `/homebrew`; `/library` becomes the entitlement-aware encyclopedia with legacy redirects. Exact-campaign discovery, DM revocation, character pins, importer calculation gates, and the platform + personal + campaign-shared visibility boundary are covered. This does **not** complete M4: hosted compendium UAT/release, additional authoring/content types, and separately controlled public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -166,7 +166,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 Combined because authoring and importing share the same user-owned content infrastructure (the `/library`, the sharing UI, the builder integration). Building one without the other leaves a glaring gap — users author a feat from scratch but can't import the one they already have, or vice versa.
 
 **Scope — Authoring half (~2–3 weeks):**
-- Homebrew workspace — "my content" view with filters by type, sort, and search. The current `/library` authoring UI moves to `/homebrew` when `/library` becomes the player-facing compendium.
+- Homebrew workspace — the existing authoring/import UI moves to `/homebrew` in the active compendium release candidate; richer cross-type filters/sort/search remain follow-up work.
 - Schema-driven authoring forms for each existing content type (race, class, feat, feature, spell, item, weapon, armor, background, subclass, trait)
 - Builder content discovery — pickers pull from `platform` + `user_owned` + `shared_with_me`
 - Sharing UI — campaign-scoped sharing is implemented for spells and feats; generalize it to other content types, then add separately controlled public publishing

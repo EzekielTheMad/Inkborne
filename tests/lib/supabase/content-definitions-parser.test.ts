@@ -20,6 +20,7 @@ const validClassRow = {
   owner_id: null,
   effects: [],
   data: {
+    description: "A scholarly magic-user capable of manipulating reality",
     hit_die: 6,
     spellcasting: null,
     multiclass: { prerequisites: [], proficiencies_gained: [] },
@@ -50,11 +51,32 @@ describe("parseContentDefinition", () => {
 
     expect(result).toMatchObject({
       id: validClassRow.id,
+      system_id: validClassRow.system_id,
       content_type: "class",
       slug: "wizard",
       source: "srd",
+      scope: "platform",
+      owner_id: null,
     });
     expect(result?.data.hit_die).toBe(6);
+    expect(result?.data.description).toBe(validClassRow.data.description);
+  });
+
+  it("preserves access metadata from a selected row", () => {
+    const ownerId = "33333333-3333-4333-8333-333333333333";
+
+    expect(
+      parseContentDefinition({
+        ...validClassRow,
+        source: "homebrew",
+        scope: "shared",
+        owner_id: ownerId,
+      }),
+    ).toMatchObject({
+      system_id: validClassRow.system_id,
+      scope: "shared",
+      owner_id: ownerId,
+    });
   });
 
   it("returns null when the envelope or id is invalid", () => {
@@ -152,6 +174,9 @@ describe("parseContentVersionSnapshot", () => {
       name: "Wizard",
       content_type: "class",
       source: "srd",
+      system_id: validClassRow.system_id,
+      scope: "platform",
+      owner_id: null,
       data: { hit_die: 6 },
     });
   });

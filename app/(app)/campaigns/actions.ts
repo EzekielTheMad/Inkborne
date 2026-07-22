@@ -96,6 +96,7 @@ export async function revokeCampaignSharedContent(formData: FormData): Promise<n
   }
 
   revalidatePath(`/campaigns/${parsed.data.campaignId}/settings`);
+  revalidatePath("/homebrew");
   revalidatePath("/library");
   redirect(`/campaigns/${parsed.data.campaignId}/settings?content_revoked=1`);
 }

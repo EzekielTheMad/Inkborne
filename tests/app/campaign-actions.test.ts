@@ -337,6 +337,8 @@ describe("campaign actions", () => {
     expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
     expect(setHomebrewBackgroundCampaignShare).not.toHaveBeenCalled();
     expect(revalidatePath).toHaveBeenCalledWith(`/campaigns/${campaignId}/settings`);
+    expect(revalidatePath).toHaveBeenCalledWith("/homebrew");
+    expect(revalidatePath).toHaveBeenCalledWith("/library");
     expect(target).toBe(`/campaigns/${campaignId}/settings?content_revoked=1`);
   });
 

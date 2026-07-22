@@ -26,7 +26,7 @@ import {
   createHomebrewSpell,
   toggleHomebrewSpellCampaignShare,
   updateHomebrewSpell,
-} from "@/app/(app)/library/spells/actions";
+} from "@/app/(app)/homebrew/spells/actions";
 
 const idle = { status: "idle" as const, message: "" };
 
@@ -52,8 +52,9 @@ describe("homebrew spell actions", () => {
   it("revalidates and redirects after create", async () => {
     mocks.create.mockResolvedValue({ id: "spell-id" });
     await expect(createHomebrewSpell(idle, new FormData())).rejects.toThrow(
-      "REDIRECT:/library?created=spell-id",
+      "REDIRECT:/homebrew?created=spell-id",
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
   });
 
@@ -76,17 +77,18 @@ describe("homebrew spell actions", () => {
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
-  it("revalidates the library and edit route after update", async () => {
+  it("revalidates both catalogs and the homebrew edit route after update", async () => {
     const formData = new FormData();
     formData.set("id", "spell-id");
     formData.set("expected_version", "2");
     mocks.update.mockResolvedValue({ id: "spell-id" });
 
     await expect(updateHomebrewSpell(idle, formData)).rejects.toThrow(
-      "REDIRECT:/library?updated=spell-id",
+      "REDIRECT:/homebrew?updated=spell-id",
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/library/spells/spell-id/edit");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew/spells/spell-id/edit");
   });
 
   it("validates campaign share inputs before calling the RPC helper", async () => {
@@ -95,7 +97,7 @@ describe("homebrew spell actions", () => {
     expect(mocks.setShare).not.toHaveBeenCalled();
   });
 
-  it("maps a successful share and revalidates both library views", async () => {
+  it("maps a successful share and revalidates both catalog views", async () => {
     const formData = new FormData();
     formData.set("content_id", "33333333-3333-4333-8333-333333333333");
     formData.set("campaign_id", "44444444-4444-4444-8444-444444444444");
@@ -124,9 +126,10 @@ describe("homebrew spell actions", () => {
       true,
       3,
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      "/library/spells/33333333-3333-4333-8333-333333333333/edit",
+      "/homebrew/spells/33333333-3333-4333-8333-333333333333/edit",
     );
   });
 

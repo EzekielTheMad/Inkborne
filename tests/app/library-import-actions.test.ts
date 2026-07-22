@@ -37,7 +37,7 @@ import {
   resolveMpmbImportConflict,
   startMpmbImport,
   toggleMpmbImportItem,
-} from "@/app/(app)/library/import/actions";
+} from "@/app/(app)/homebrew/import/actions";
 
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 const ITEM_ID = "44444444-4444-4444-8444-444444444444";
@@ -63,7 +63,7 @@ describe("MPMB import actions", () => {
 
     mocks.stage.mockResolvedValueOnce({ status: "success", importId: IMPORT_ID });
     await expect(startMpmbImport(idle, formData)).rejects.toThrow(
-      `REDIRECT:/library/import/${IMPORT_ID}`,
+      `REDIRECT:/homebrew/import/${IMPORT_ID}`,
     );
   });
 
@@ -88,7 +88,7 @@ describe("MPMB import actions", () => {
       importId: IMPORT_ID,
     });
     expect(mocks.toggle).toHaveBeenCalledWith(IMPORT_ID, ITEM_ID, false, 3);
-    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/library/import/${IMPORT_ID}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/homebrew/import/${IMPORT_ID}`);
   });
 
   it("returns field errors before invoking an invalid spell repair", async () => {
@@ -129,7 +129,7 @@ describe("MPMB import actions", () => {
     });
 
     await expect(repairMpmbImportSpell(idleRepair, formData)).rejects.toThrow(
-      `REDIRECT:/library/import/${IMPORT_ID}?repaired=1`,
+      `REDIRECT:/homebrew/import/${IMPORT_ID}?repaired=1`,
     );
     expect(mocks.repair).toHaveBeenCalledWith(IMPORT_ID, ITEM_ID, 3, {
       material: "a silver thread",
@@ -138,7 +138,7 @@ describe("MPMB import actions", () => {
       ritual: true,
     });
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      `/library/import/${IMPORT_ID}`,
+      `/homebrew/import/${IMPORT_ID}`,
     );
     expect(mocks.revalidatePath.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.redirect.mock.invocationCallOrder[0],
@@ -185,7 +185,7 @@ describe("MPMB import actions", () => {
     });
 
     await expect(repairMpmbImportFeat(idleRepair, formData)).rejects.toThrow(
-      `REDIRECT:/library/import/${IMPORT_ID}?repaired=1`,
+      `REDIRECT:/homebrew/import/${IMPORT_ID}?repaired=1`,
     );
     expect(mocks.repairFeat).toHaveBeenCalledWith(IMPORT_ID, ITEM_ID, 5, {
       prerequisites: [{ stat: "dexterity", op: "gte", value: 13 }],
@@ -329,7 +329,7 @@ describe("MPMB import actions", () => {
 
     await expect(
       resolveMpmbImportConflict(idleConflict, formData),
-    ).rejects.toThrow(`REDIRECT:/library/import/${IMPORT_ID}?resolved=1`);
+    ).rejects.toThrow(`REDIRECT:/homebrew/import/${IMPORT_ID}?resolved=1`);
     expect(mocks.resolveConflict).toHaveBeenCalledWith(
       IMPORT_ID,
       ITEM_ID,
@@ -342,10 +342,10 @@ describe("MPMB import actions", () => {
       "must-not-cross",
     );
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      `/library/import/${IMPORT_ID}`,
+      `/homebrew/import/${IMPORT_ID}`,
     );
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      `/library/import/${IMPORT_ID}/items/${ITEM_ID}/conflict`,
+      `/homebrew/import/${IMPORT_ID}/items/${ITEM_ID}/conflict`,
     );
     expect(mocks.revalidatePath.mock.invocationCallOrder.at(-1)).toBeLessThan(
       mocks.redirect.mock.invocationCallOrder.at(-1)!,
@@ -391,11 +391,12 @@ describe("MPMB import actions", () => {
     });
 
     await expect(finishMpmbImport(formData)).rejects.toThrow(
-      `REDIRECT:/library/import/${IMPORT_ID}?committed=2`,
+      `REDIRECT:/homebrew/import/${IMPORT_ID}?committed=2`,
     );
     expect(mocks.commit).toHaveBeenCalledWith(IMPORT_ID, 4);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/library/import/${IMPORT_ID}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/homebrew/import/${IMPORT_ID}`);
   });
 
   it("confirms only an exact preview revision, revalidates, then returns to review", async () => {
@@ -408,12 +409,12 @@ describe("MPMB import actions", () => {
     });
 
     await expect(confirmMpmbImportPreview(formData)).rejects.toThrow(
-      `REDIRECT:/library/import/${IMPORT_ID}?previewed=1`,
+      `REDIRECT:/homebrew/import/${IMPORT_ID}?previewed=1`,
     );
     expect(mocks.confirmPreview).toHaveBeenCalledWith(IMPORT_ID, 4);
-    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/library/import/${IMPORT_ID}`);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/homebrew/import/${IMPORT_ID}`);
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      `/library/import/${IMPORT_ID}/preview`,
+      `/homebrew/import/${IMPORT_ID}/preview`,
     );
   });
 
@@ -427,7 +428,7 @@ describe("MPMB import actions", () => {
     });
 
     await expect(confirmMpmbImportPreview(formData)).rejects.toThrow(
-      `REDIRECT:/library/import/${IMPORT_ID}/preview?error=Reload%20and%20preview%20again.`,
+      `REDIRECT:/homebrew/import/${IMPORT_ID}/preview?error=Reload%20and%20preview%20again.`,
     );
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
@@ -438,7 +439,7 @@ describe("MPMB import actions", () => {
     formData.set("expected_revision", "1");
 
     await expect(finishMpmbImport(formData)).rejects.toThrow(
-      "REDIRECT:/library/import?error=The%20import%20identifier%20is%20invalid.",
+      "REDIRECT:/homebrew/import?error=The%20import%20identifier%20is%20invalid.",
     );
     expect(mocks.commit).not.toHaveBeenCalled();
   });
@@ -450,7 +451,7 @@ describe("MPMB import actions", () => {
     mocks.commit.mockResolvedValue({ status: "conflict", message: "Reload this review." });
 
     await expect(finishMpmbImport(formData)).rejects.toThrow(
-      `REDIRECT:/library/import/${IMPORT_ID}?error=Reload%20this%20review.`,
+      `REDIRECT:/homebrew/import/${IMPORT_ID}?error=Reload%20this%20review.`,
     );
     expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
@@ -460,8 +461,8 @@ describe("MPMB import actions", () => {
     formData.set("import_id", IMPORT_ID);
     mocks.cancel.mockResolvedValue({ status: "success", importId: IMPORT_ID });
 
-    await expect(abandonMpmbImport(formData)).rejects.toThrow("REDIRECT:/library");
+    await expect(abandonMpmbImport(formData)).rejects.toThrow("REDIRECT:/homebrew");
     expect(mocks.cancel).toHaveBeenCalledWith(IMPORT_ID);
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
   });
 });

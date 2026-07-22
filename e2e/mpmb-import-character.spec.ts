@@ -132,7 +132,7 @@ test("imports MPMB rules and uses their exact pins on a level-4 Wizard", async (
 }) => {
   if (!characterId) throw new Error("The E2E character was not seeded.");
 
-  await page.goto("/library/import");
+  await page.goto("/homebrew/import");
   await expect(page.getByRole("heading", { name: "Import MPMB content" })).toBeVisible();
   await page.getByLabel("MPMB import file").setInputFiles({
     name: filename,
@@ -142,8 +142,8 @@ test("imports MPMB rules and uses their exact pins on a level-4 Wizard", async (
   await page.getByRole("checkbox", { name: /private-use attestation/i }).check();
   await page.getByRole("button", { name: "Review import" }).click();
 
-  await page.waitForURL(/\/library\/import\/[0-9a-f-]{36}$/);
-  importId = page.url().match(/\/library\/import\/([0-9a-f-]{36})$/)?.[1];
+  await page.waitForURL(/\/homebrew\/import\/[0-9a-f-]{36}$/);
+  importId = page.url().match(/\/homebrew\/import\/([0-9a-f-]{36})$/)?.[1];
   if (!importId) throw new Error("Could not capture the staged MPMB import id.");
 
   await expect(page.getByRole("heading", { name: filename })).toBeVisible();
@@ -164,12 +164,12 @@ test("imports MPMB rules and uses their exact pins on a level-4 Wizard", async (
   await expect(spellPreview).toContainText("2d8 + 3");
   await page.getByRole("button", { name: "Confirm calculations" }).click();
 
-  await page.waitForURL(`**/library/import/${importId}?previewed=1`);
+  await page.waitForURL(`**/homebrew/import/${importId}?previewed=1`);
   await expect(page.getByText(/Calculations confirmed for revision/)).toBeVisible();
   await page.getByRole("button", { name: "Import 2" }).click();
-  await page.waitForURL(`**/library/import/${importId}?committed=2`);
-  await expect(page.getByText("2 definitions added to your private library.")).toBeVisible();
-  await page.getByRole("link", { name: "View library" }).click();
+  await page.waitForURL(`**/homebrew/import/${importId}?committed=2`);
+  await expect(page.getByText("2 definitions added to your private Homebrew collection.")).toBeVisible();
+  await page.getByRole("link", { name: "View Homebrew" }).click();
 
   const featCard = page.getByRole("link").filter({ hasText: featName });
   const spellCard = page.getByRole("link").filter({ hasText: spellName });

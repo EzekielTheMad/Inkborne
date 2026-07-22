@@ -7,7 +7,7 @@ import { useActionState } from "react";
 import {
   repairMpmbImportSpell,
   type MpmbSpellRepairActionState,
-} from "@/app/(app)/library/import/actions";
+} from "@/app/(app)/homebrew/import/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -240,7 +240,7 @@ export function MpmbImportSpellRepairForm({
 
       <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
         <Link
-          href={`/library/import/${importId}`}
+          href={`/homebrew/import/${importId}`}
           className={buttonVariants({ variant: "outline" })}
         >
           Back to review

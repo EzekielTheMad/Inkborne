@@ -139,6 +139,7 @@ describe("Schema Registry", () => {
 describe("Class Data Schema", () => {
   it("validates a non-caster class", () => {
     const result = classDataSchema.safeParse({
+      description: "A master of martial combat",
       hit_die: 10,
       spellcasting: null,
       multiclass: {
@@ -154,6 +155,9 @@ describe("Class Data Schema", () => {
       ],
     });
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.description).toBe("A master of martial combat");
+    }
   });
 
   it("validates a caster class with spell slots", () => {
@@ -374,8 +378,22 @@ describe("Magic Item Data Schema", () => {
       rarity: "Uncommon",
       description: "Any critical hit against you becomes a normal hit",
       equipment_category: "Armor",
+      requires_attunement: true,
     });
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.requires_attunement).toBe(true);
+    }
+  });
+
+  it("requires the seeded attunement flag to be boolean when present", () => {
+    expect(
+      magicItemDataSchema.safeParse({
+        rarity: "Rare",
+        description: "This item requires attunement.",
+        requires_attunement: "true",
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts items whose rarity varies by form", () => {

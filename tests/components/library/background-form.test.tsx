@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { backgroundDataSchema } from "@/lib/schemas/content-types/background";
 
-vi.mock("@/app/(app)/library/backgrounds/actions", () => ({
+vi.mock("@/app/(app)/homebrew/backgrounds/actions", () => ({
   createHomebrewBackground: vi.fn(),
   updateHomebrewBackground: vi.fn(),
 }));

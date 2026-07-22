@@ -59,8 +59,16 @@ describe("getContentByType", () => {
       "22222222-2222-4222-8222-222222222222",
     );
     expect(mockEq2).toHaveBeenCalledWith("content_type", "class");
+    expect(mockSelect).toHaveBeenCalledWith(
+      "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
+    );
     expect(result).toHaveLength(1);
-    expect(result[0].slug).toBe("wizard");
+    expect(result[0]).toMatchObject({
+      slug: "wizard",
+      system_id: validClassRow.system_id,
+      scope: "platform",
+      owner_id: null,
+    });
   });
 
   it("drops a malformed row without discarding valid rows", async () => {

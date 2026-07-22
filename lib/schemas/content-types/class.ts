@@ -42,6 +42,7 @@ const classProfArraySchema = z.object({
 });
 
 export const classDataSchema = z.object({
+  description: z.string().default(""),
   hit_die: z.number().int().positive(),
   spellcasting: spellcastingConfigSchema.nullable(),
   multiclass: multiclassSchema,

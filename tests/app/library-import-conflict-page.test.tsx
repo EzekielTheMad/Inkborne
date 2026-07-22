@@ -28,7 +28,7 @@ vi.mock("@/components/library/mpmb-import-conflict-resolution-form", () => ({
   ),
 }));
 
-import MpmbImportConflictPage from "@/app/(app)/library/import/[id]/items/[itemId]/conflict/page";
+import MpmbImportConflictPage from "@/app/(app)/homebrew/import/[id]/items/[itemId]/conflict/page";
 
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 const ITEM_ID = "44444444-4444-4444-8444-444444444444";
@@ -69,7 +69,7 @@ describe("MpmbImportConflictPage", () => {
     expect(screen.getByTestId("resolution-form")).toHaveTextContent("Ember Ward");
     expect(screen.getByRole("link", { name: "Back to import review" })).toHaveAttribute(
       "href",
-      `/library/import/${IMPORT_ID}`,
+      `/homebrew/import/${IMPORT_ID}`,
     );
   });
 

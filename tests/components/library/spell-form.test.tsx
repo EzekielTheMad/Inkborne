@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/app/(app)/library/spells/actions", () => ({
+vi.mock("@/app/(app)/homebrew/spells/actions", () => ({
   createHomebrewSpell: vi.fn(),
   updateHomebrewSpell: vi.fn(),
 }));

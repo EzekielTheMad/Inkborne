@@ -24,7 +24,7 @@ import {
   createHomebrewFeat,
   toggleHomebrewFeatCampaignShare,
   updateHomebrewFeat,
-} from "@/app/(app)/library/feats/actions";
+} from "@/app/(app)/homebrew/feats/actions";
 
 const idle = { status: "idle" as const, message: "" };
 
@@ -50,8 +50,9 @@ describe("homebrew feat actions", () => {
   it("revalidates and redirects after creation", async () => {
     mocks.create.mockResolvedValue({ id: "feat-id" });
     await expect(createHomebrewFeat(idle, new FormData())).rejects.toThrow(
-      "REDIRECT:/library?created=feat-id",
+      "REDIRECT:/homebrew?created=feat-id",
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
   });
 
@@ -71,17 +72,18 @@ describe("homebrew feat actions", () => {
     expect(mocks.update).toHaveBeenCalledWith("feat-id", 2, input);
   });
 
-  it("revalidates the library and edit route after update", async () => {
+  it("revalidates both catalogs and the homebrew edit route after update", async () => {
     const input = new FormData();
     input.set("id", "feat-id");
     input.set("expected_version", "2");
     mocks.update.mockResolvedValue({ id: "feat-id" });
 
     await expect(updateHomebrewFeat(idle, input)).rejects.toThrow(
-      "REDIRECT:/library?updated=feat-id",
+      "REDIRECT:/homebrew?updated=feat-id",
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/library/feats/feat-id/edit");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew/feats/feat-id/edit");
   });
 
   it("rejects malformed campaign access before the data helper", async () => {
@@ -117,9 +119,10 @@ describe("homebrew feat actions", () => {
       true,
       2,
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      "/library/feats/11111111-1111-4111-8111-111111111111/edit",
+      "/homebrew/feats/11111111-1111-4111-8111-111111111111/edit",
     );
   });
 });

@@ -7,7 +7,7 @@ import { RefreshCw, ShieldCheck, Users } from "lucide-react";
 import {
   toggleHomebrewFeatCampaignShare,
   type HomebrewFeatShareActionState,
-} from "@/app/(app)/library/feats/actions";
+} from "@/app/(app)/homebrew/feats/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { HomebrewFeatCampaignOption } from "@/lib/supabase/homebrew-feats-server";
