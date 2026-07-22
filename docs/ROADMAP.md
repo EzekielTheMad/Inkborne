@@ -23,7 +23,7 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, and feat authoring/campaign sharing/ASI selection shipped in #91. The automated gate is **167 Vitest files / 1666 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
+> **Snapshot 2026-07-21.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, spell authoring/sharing and the private MPMB workflow through calculation preview are on `main`, backup hardening shipped in #90, feat authoring/campaign sharing/ASI selection shipped in #91, and schema-known guided import repair shipped in #92. The automated gate is **169 Vitest files / 1692 tests** plus strict lint/typecheck, GitHub CI, GitGuardian, Vercel preview, hosted migration smoke, and protected-preview browser UAT for high-risk verticals.
 
 **Shipped product surface:**
 - Email, Google, and Discord authentication; account linking is implemented in #80 but awaits manual provider-consent UAT.
@@ -31,10 +31,10 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 - M3 gameplay: dice and roll log, spell casting, resources, hit dice, effects/durations, concentration, and rests.
 - Unified character narrative plus campaign CRUD/membership, roles, roster, wiki tree/editor, backlinks, timelines/relationships, visibility controls, settings, and revision conflicts.
 - `/library` spell and feat authoring with immutable versions, campaign-scoped sharing, character-aware discovery, DM revocation, and existing-pin preservation.
-- Fail-closed private MPMB import review with guided repair, explicit conflict resolution, audit provenance, and mandatory current-revision calculation preview.
+- Fail-closed private MPMB import review with finite schema-known spell/feat repair, explicit conflict resolution, audit provenance, and mandatory current-revision calculation preview.
 - Feedback/error administration, generated Supabase types, validated content fetch boundaries, and hardened local/offsite backup tooling.
 
-**Active M4 work:** broaden the guided repair editor for schema-known spell and feat fields, then extend authoring to additional content types. Optional public publishing remains deliberately separate from campaign sharing.
+**Active M4 work:** extend authoring and sharing to additional content types, then prove imported content in the character builder. Optional public publishing remains deliberately separate from campaign sharing.
 
 **External release work:**
 1. Deploy #90 on Victor's Unraid system, create a fresh backup, and complete the restore drill in `infra/backup/README.md`.
@@ -156,7 +156,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-21): ◑ Spell and feat authoring/sharing plus the private MPMB importer workflow through calculation preview are shipped and hosted-verified.** `/library` supports immutable spell/feat edits and campaign access controls; exact-campaign discovery, DM revocation, ASI feat selection, character copy, level-down pruning, and exact-version sheet pins are protected-preview verified. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through narrowly validated missing spell details, resolves owned-content collisions, preserves immutable pins, and requires a server-calculated preview of the exact selected revision before commit. Imported content remains private pending a future rights workflow. This does **not** complete M4: broader schema-known repair, additional authoring/content types, and separately controlled public publishing remain.
+**Status (2026-07-21): ◑ Spell and feat authoring/sharing plus the private MPMB importer workflow through calculation preview are shipped and hosted-verified.** `/library` supports immutable spell/feat edits and campaign access controls; exact-campaign discovery, DM revocation, ASI feat selection, character copy, level-down pruning, and exact-version sheet pins are protected-preview verified. The importer statically parses and maps MPMB JavaScript without executing or storing it, persists owner-only reviews, guides users through finite schema-known spell and feat corrections, resolves owned-content collisions, preserves immutable pins, and requires a server-calculated preview of the exact selected revision before commit. Imported content remains private pending a future rights workflow. This does **not** complete M4: additional authoring/content types, imported-content builder proof, and separately controlled public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -175,7 +175,7 @@ Combined because authoring and importing share the same user-owned content infra
 - MPMB JS parser — reuses logic from existing `scripts/transformers/` that we used to seed the SRD
 - Validation step — runs Zod schemas against parsed output, surfaces gaps
 - Conflict resolution UI — implemented for explicit Keep both / Replace outcomes; field-level merge remains intentionally out of scope until it can be made rules-safe
-- Missing-info wizard — spell material text and save outcomes are implemented; broaden the editor to remaining schema-known spell/feat fields
+- Missing-info wizard — finite schema-known spell fields (material, save outcome, concentration, ritual) and feat fields (single-ability prerequisite, action, recovery, spellcasting ability) are implemented; effect-coupled or candidate-less repairs remain fail-closed
 - Audit log — what was imported, what was skipped, what needs attention
 - **Calculation correctness verification:** implemented as a mandatory owner-only calculation harness before commit. Feats run through the same evaluator and structured-source path as the live sheet at levels 1/5/11/17; spells run through the production casting engine at every supported scaling tier; malformed schemas, formulas, dice, or calculations fail closed.
 

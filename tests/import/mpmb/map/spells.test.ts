@@ -79,6 +79,7 @@ describe("MPMB spell mapping", () => {
         components: ["V", "S", "M"],
         material: "a harmless ember",
         concentration: true,
+        ritual: false,
         description: "First line\nSecond line",
         classes: ["wizard", "artificer"],
         damage: null,
@@ -88,6 +89,27 @@ describe("MPMB spell mapping", () => {
     expect(spellDataSchema.safeParse(mapped.candidate?.data).success).toBe(true);
     expect("source_refs" in (mapped.candidate?.data ?? {})).toBe(false);
   });
+
+  it.each(["concentration", "ritual"] as const)(
+    "retains a safe candidate when %s needs repair",
+    (field) => {
+      const mapped = mapMpmbSpell(
+        validSpell({ [field]: "yes" } as MpmbStaticObject),
+        context,
+      );
+
+      expect(mapped.status).toBe("needs_info");
+      expect(mapped.candidate?.content_type).toBe("spell");
+      expect(spellData(mapped)[field]).toBe(false);
+      expect(spellDataSchema.safeParse(mapped.candidate?.data).success).toBe(true);
+      expect(mapped.issues).toContainEqual(
+        expect.objectContaining({
+          code: `spell.${field}.invalid`,
+          severity: "blocking",
+        }),
+      );
+    },
+  );
 
   it("blocks an M component without material text", () => {
     const mapped = mapMpmbSpell(

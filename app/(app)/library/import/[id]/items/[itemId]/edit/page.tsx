@@ -2,11 +2,12 @@ import Link from "next/link";
 import { AlertTriangle, ArrowLeft, ShieldCheck } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
+import { MpmbImportFeatRepairForm } from "@/components/library/mpmb-import-feat-repair-form";
 import { MpmbImportSpellRepairForm } from "@/components/library/mpmb-import-spell-repair-form";
 import { createClient } from "@/lib/supabase/server";
-import { getOwnedMpmbImportSpellRepairItem } from "@/lib/supabase/mpmb-imports-server";
+import { getOwnedMpmbImportRepairItem } from "@/lib/supabase/mpmb-imports-server";
 
-interface MpmbImportSpellRepairPageProps {
+interface MpmbImportRepairPageProps {
   params: Promise<{
     id: string;
     itemId: string;
@@ -22,21 +23,26 @@ const SAVE_ABILITIES = new Set([
   "charisma",
 ]);
 
-export default async function MpmbImportSpellRepairPage({
+export default async function MpmbImportRepairPage({
   params,
-}: MpmbImportSpellRepairPageProps) {
+}: MpmbImportRepairPageProps) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { id, itemId } = await params;
-  const item = await getOwnedMpmbImportSpellRepairItem(id, itemId);
+  const item = await getOwnedMpmbImportRepairItem(id, itemId);
   if (!item) notFound();
 
-  const initialSaveAbility =
-    item.data.dc && SAVE_ABILITIES.has(item.data.dc.type)
-      ? item.data.dc.type
-      : undefined;
+  const initialSaveAbility = item.contentType === "spell"
+    && item.data.dc
+    && SAVE_ABILITIES.has(item.data.dc.type)
+    ? item.data.dc.type
+    : undefined;
+  const initialFeatPrerequisite = item.contentType === "feat"
+    && SAVE_ABILITIES.has(item.data.prerequisites[0]?.stat ?? "")
+    ? item.data.prerequisites[0]
+    : undefined;
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-7">
@@ -80,23 +86,42 @@ export default async function MpmbImportSpellRepairPage({
             More review will still be required
           </p>
           <p className="mt-1 leading-relaxed">
-            This spell has {item.otherBlockingIssues} additional blocking
+            This {item.contentType} has {item.otherBlockingIssues} additional blocking
             {item.otherBlockingIssues === 1 ? " issue" : " issues"} that this
             guided repair does not change.
           </p>
         </div>
       )}
 
-      <MpmbImportSpellRepairForm
-        importId={item.importId}
-        itemId={item.itemId}
-        revision={item.revision}
-        candidateName={item.candidateName}
-        repairFields={item.repairFields}
-        initialMaterial={item.data.material}
-        initialSaveAbility={initialSaveAbility}
-        initialSaveSuccess={item.data.dc?.success}
-      />
+      {item.contentType === "spell" ? (
+        <MpmbImportSpellRepairForm
+          importId={item.importId}
+          itemId={item.itemId}
+          revision={item.revision}
+          candidateName={item.candidateName}
+          repairFields={item.repairFields}
+          initialMaterial={item.data.material}
+          initialSaveAbility={initialSaveAbility}
+          initialSaveSuccess={item.data.dc?.success}
+        />
+      ) : (
+        <MpmbImportFeatRepairForm
+          importId={item.importId}
+          itemId={item.itemId}
+          revision={item.revision}
+          candidateName={item.candidateName}
+          repairFields={item.repairFields}
+          initialPrerequisiteAbility={initialFeatPrerequisite?.stat}
+          initialPrerequisiteMinimum={initialFeatPrerequisite?.value}
+          initialAction={item.data.action}
+          initialRecovery={item.data.recovery}
+          initialSpellcastingAbility={
+            SAVE_ABILITIES.has(item.data.spellcastingAbility ?? "")
+              ? item.data.spellcastingAbility
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import type {
   MpmbSourceLocation,
 } from "../types";
 
-export const MPMB_MAPPER_VERSION = "1.0.0";
+export const MPMB_MAPPER_VERSION = "1.1.0";
 export const MPMB_PARSER_COMPATIBILITY = "1.x";
 
 export type MpmbMappingSeverity = "warning" | "blocking";

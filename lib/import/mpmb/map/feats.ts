@@ -265,9 +265,11 @@ export const mapMpmbFeat: MpmbItemMapper = (entry, context) => {
     }
   }
 
+  let effectsAreValid = true;
   for (const [index, effect] of effects.entries()) {
     const parsedEffect = effectSchema.safeParse(effect);
     if (!parsedEffect.success) {
+      effectsAreValid = false;
       for (const zodIssue of parsedEffect.error.issues) {
         const suffix = zodIssue.path.length > 0 ? `.${zodIssue.path.join(".")}` : "";
         issues.push(
@@ -287,7 +289,7 @@ export const mapMpmbFeat: MpmbItemMapper = (entry, context) => {
   const hasIdentity = Boolean(name && slug);
   const blocked = hasBlockingIssues(issues);
   const candidate =
-    hasIdentity && !blocked && data
+    hasIdentity && data && effectsAreValid
       ? {
           content_type: "feat" as const,
           slug,

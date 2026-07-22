@@ -26,6 +26,10 @@ import {
   spellDataSchema,
   type SpellData,
 } from "@/lib/schemas/content-types/spell";
+import {
+  ACTION_TYPES,
+  RECOVERY_TYPES,
+} from "@/lib/schemas/content-types/mechanical";
 import { effectSchema } from "@/lib/schemas/effects";
 import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
 import type { Database, Json } from "@/lib/supabase/database.types";
@@ -36,6 +40,8 @@ const PRIVATE_USE_ATTESTATION = "private_use_v1";
 const ALLOWED_EXTENSIONS = [".js", ".mpmb"];
 const MATERIAL_REPAIR_CODE = "spell.material.required";
 const SAVE_REPAIR_CODE = "spell.save.success_unknown";
+const CONCENTRATION_REPAIR_CODE = "spell.concentration.invalid";
+const RITUAL_REPAIR_CODE = "spell.ritual.invalid";
 const SPELL_SAVE_ABILITIES = [
   "strength",
   "dexterity",
@@ -44,6 +50,29 @@ const SPELL_SAVE_ABILITIES = [
   "wisdom",
   "charisma",
 ] as const;
+const SPELL_REPAIR_CODES = new Set([
+  MATERIAL_REPAIR_CODE,
+  SAVE_REPAIR_CODE,
+  CONCENTRATION_REPAIR_CODE,
+  RITUAL_REPAIR_CODE,
+]);
+const FEAT_PREREQUISITE_REPAIR_CODES = new Set([
+  "feat.prerequisite.ambiguous",
+  "feat.prerequisite.compound",
+  "feat.prerequisite.unsupported",
+  "feat.prerequisite.invalid",
+  "feat.prereqeval.not_automated",
+]);
+const FEAT_ACTION_REPAIR_CODE = "feat.action.invalid";
+const FEAT_RECOVERY_REPAIR_CODE = "feat.recovery.invalid";
+const FEAT_SPELLCASTING_ABILITY_REPAIR_CODE =
+  "feat.spellcastingAbility.invalid";
+const FEAT_REPAIR_CODES = new Set([
+  ...FEAT_PREREQUISITE_REPAIR_CODES,
+  FEAT_ACTION_REPAIR_CODE,
+  FEAT_RECOVERY_REPAIR_CODE,
+  FEAT_SPELLCASTING_ABILITY_REPAIR_CODE,
+]);
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -103,19 +132,40 @@ export interface MpmbImportConflictItem {
   conflicts: MpmbImportConflictTarget[];
 }
 
-export interface MpmbImportSpellRepairItem {
+interface MpmbImportRepairItemBase {
   importId: string;
   itemId: string;
   revision: number;
   candidateName: string;
+  otherBlockingIssues: number;
+  userEditedFields: string[];
+}
+
+export interface MpmbImportSpellRepairItem extends MpmbImportRepairItemBase {
+  contentType: "spell";
   data: SpellData;
   repairFields: {
     material: boolean;
     dc: boolean;
+    concentration: boolean;
+    ritual: boolean;
   };
-  otherBlockingIssues: number;
-  userEditedFields: string[];
 }
+
+export interface MpmbImportFeatRepairItem extends MpmbImportRepairItemBase {
+  contentType: "feat";
+  data: FeatData;
+  repairFields: {
+    prerequisites: boolean;
+    action: boolean;
+    recovery: boolean;
+    spellcastingAbility: boolean;
+  };
+}
+
+export type MpmbImportRepairItem =
+  | MpmbImportSpellRepairItem
+  | MpmbImportFeatRepairItem;
 
 export interface MpmbImportSpellRepairPatch {
   material?: string;
@@ -123,6 +173,19 @@ export interface MpmbImportSpellRepairPatch {
     type: (typeof SPELL_SAVE_ABILITIES)[number];
     success: "half" | "none" | "other";
   };
+  concentration?: boolean;
+  ritual?: boolean;
+}
+
+export interface MpmbImportFeatRepairPatch {
+  prerequisites?: readonly [] | readonly [{
+    readonly stat: (typeof SPELL_SAVE_ABILITIES)[number];
+    readonly op: "gte";
+    readonly value: number;
+  }];
+  action?: (typeof ACTION_TYPES)[number] | null;
+  recovery?: (typeof RECOVERY_TYPES)[number] | null;
+  spellcastingAbility?: (typeof SPELL_SAVE_ABILITIES)[number] | null;
 }
 
 export interface MpmbImportReview {
@@ -223,6 +286,7 @@ const reviewItemSchema = z.object({
   selected: z.boolean(),
   committed_content_id: z.string().uuid().nullable(),
   candidate_data: z.unknown().nullable(),
+  candidate_effects: z.unknown().nullable().optional(),
   diagnostics: z.array(reviewDiagnosticSchema),
   resolved_diagnostics: z.array(reviewDiagnosticSchema),
   user_edited_fields: z.array(z.string()),
@@ -276,8 +340,37 @@ const spellRepairPatchSchema = z.object({
     type: z.enum(SPELL_SAVE_ABILITIES),
     success: z.enum(["half", "none", "other"]),
   }).strict().optional(),
+  concentration: z.boolean().optional(),
+  ritual: z.boolean().optional(),
 }).strict().refine(
-  (patch) => patch.material !== undefined || patch.dc !== undefined,
+  (patch) =>
+    patch.material !== undefined
+    || patch.dc !== undefined
+    || patch.concentration !== undefined
+    || patch.ritual !== undefined,
+  "At least one repair is required.",
+);
+
+const featPrerequisiteRepairSchema = z.object({
+  stat: z.enum(SPELL_SAVE_ABILITIES),
+  op: z.literal("gte"),
+  value: z.number().int().min(1).max(30),
+}).strict();
+
+const featRepairPatchSchema = z.object({
+  prerequisites: z.union([
+    z.tuple([]),
+    z.tuple([featPrerequisiteRepairSchema]),
+  ]).optional(),
+  action: z.enum(ACTION_TYPES).nullable().optional(),
+  recovery: z.enum(RECOVERY_TYPES).nullable().optional(),
+  spellcastingAbility: z.enum(SPELL_SAVE_ABILITIES).nullable().optional(),
+}).strict().refine(
+  (patch) =>
+    patch.prerequisites !== undefined
+    || patch.action !== undefined
+    || patch.recovery !== undefined
+    || patch.spellcastingAbility !== undefined,
   "At least one repair is required.",
 );
 
@@ -405,6 +498,24 @@ function isResolvedLiveConflict(
       && target.version === replacementExpectedVersion
       && target.replaceable,
   );
+}
+
+function isRepairableBlockingDiagnostic(
+  contentType: "spell" | "feat",
+  diagnostic: z.infer<typeof reviewDiagnosticSchema>,
+): boolean {
+  if (diagnostic.severity !== "blocking" || !diagnostic.code) return false;
+  return contentType === "spell"
+    ? SPELL_REPAIR_CODES.has(diagnostic.code)
+    : FEAT_REPAIR_CODES.has(diagnostic.code);
+}
+
+function hasRepairableBlockingDiagnostic(
+  contentType: "spell" | "feat",
+  diagnostics: Array<z.infer<typeof reviewDiagnosticSchema>>,
+): boolean {
+  return diagnostics.some((diagnostic) =>
+    isRepairableBlockingDiagnostic(contentType, diagnostic));
 }
 
 function conflictResolutionFailure(error: DatabaseError | null) {
@@ -549,7 +660,7 @@ export async function getOwnedMpmbImportReview(
     session.supabase
       .from("content_import_items")
       .select(
-        "id, ordinal, registry, source_key, content_type, location_line, location_column, mapping_status, candidate_name, candidate_data, selected, committed_content_id, diagnostics, resolved_diagnostics, user_edited_fields, user_edited_at, conflict_resolution, replacement_content_id, replacement_expected_version",
+        "id, ordinal, registry, source_key, content_type, location_line, location_column, mapping_status, candidate_name, candidate_data, candidate_effects, selected, committed_content_id, diagnostics, resolved_diagnostics, user_edited_fields, user_edited_at, conflict_resolution, replacement_content_id, replacement_expected_version",
       )
       .eq("import_id", id.data)
       .order("ordinal"),
@@ -602,20 +713,20 @@ export async function getOwnedMpmbImportReview(
         candidateName: item.candidate_name,
         selected: item.selected,
         committedContentId: item.committed_content_id,
-        repairable: envelope.status === "review"
-          && item.mapping_status === "needs_info"
-          && item.content_type === "spell"
-          && item.candidate_data !== null
-          && spellDataSchema.safeParse(item.candidate_data).success
-          && item.committed_content_id === null
-          && item.diagnostics.some(
-            (diagnostic) =>
-              diagnostic.severity === "blocking"
-              && (
-                diagnostic.code === MATERIAL_REPAIR_CODE
-                || diagnostic.code === SAVE_REPAIR_CODE
-              ),
-          ),
+         repairable: envelope.status === "review"
+           && item.mapping_status === "needs_info"
+           && item.candidate_data !== null
+           && item.committed_content_id === null
+           && (
+             item.content_type === "spell"
+               ? spellDataSchema.safeParse(item.candidate_data).success
+               : featDataSchema.safeParse(item.candidate_data).success
+                 && previewEffectsSchema.safeParse(item.candidate_effects).success
+           )
+           && hasRepairableBlockingDiagnostic(
+             item.content_type,
+             item.diagnostics,
+           ),
         conflictResolution,
         replacementContentId,
         replacementExpectedVersion,
@@ -841,10 +952,10 @@ export async function confirmOwnedMpmbImportPreview(
   return { status: "success", importId: input.data.importId };
 }
 
-export async function getOwnedMpmbImportSpellRepairItem(
+export async function getOwnedMpmbImportRepairItem(
   importId: string,
   itemId: string,
-): Promise<MpmbImportSpellRepairItem | null> {
+): Promise<MpmbImportRepairItem | null> {
   const session = await authenticatedSession();
   if (!session) throw new Error("Authentication required.");
   const identifiers = z.object({
@@ -865,7 +976,7 @@ export async function getOwnedMpmbImportSpellRepairItem(
   const { data: itemData, error: itemError } = await session.supabase
     .from("content_import_items")
     .select(
-      "id, import_id, content_type, mapping_status, candidate_name, candidate_data, committed_content_id, diagnostics, user_edited_fields",
+      "id, import_id, content_type, mapping_status, candidate_name, candidate_data, candidate_effects, committed_content_id, diagnostics, user_edited_fields",
     )
     .eq("id", identifiers.data.itemId)
     .eq("import_id", identifiers.data.importId)
@@ -873,7 +984,6 @@ export async function getOwnedMpmbImportSpellRepairItem(
   if (itemError) throw itemError;
   if (
     !itemData
-    || itemData.content_type !== "spell"
     || itemData.mapping_status !== "needs_info"
     || itemData.committed_content_id !== null
     || !itemData.candidate_name
@@ -881,32 +991,92 @@ export async function getOwnedMpmbImportSpellRepairItem(
     return null;
   }
 
-  const data = spellDataSchema.safeParse(itemData.candidate_data);
   const diagnostics = z.array(reviewDiagnosticSchema).safeParse(
     itemData.diagnostics,
   );
   const userEditedFields = z.array(z.string()).safeParse(
     itemData.user_edited_fields,
   );
-  if (!data.success || !diagnostics.success || !userEditedFields.success) {
+  if (!diagnostics.success || !userEditedFields.success) {
     return null;
   }
 
+  if (itemData.content_type === "spell") {
+    const data = spellDataSchema.safeParse(itemData.candidate_data);
+    if (!data.success) return null;
+    const repairFields = {
+      material: diagnostics.data.some(
+        (diagnostic) =>
+          diagnostic.severity === "blocking"
+          && diagnostic.code === MATERIAL_REPAIR_CODE,
+      ),
+      dc: diagnostics.data.some(
+        (diagnostic) =>
+          diagnostic.severity === "blocking"
+          && diagnostic.code === SAVE_REPAIR_CODE,
+      ),
+      concentration: diagnostics.data.some(
+        (diagnostic) =>
+          diagnostic.severity === "blocking"
+          && diagnostic.code === CONCENTRATION_REPAIR_CODE,
+      ),
+      ritual: diagnostics.data.some(
+        (diagnostic) =>
+          diagnostic.severity === "blocking"
+          && diagnostic.code === RITUAL_REPAIR_CODE,
+      ),
+    };
+    if (!Object.values(repairFields).some(Boolean)) return null;
+
+    return {
+      contentType: "spell",
+      importId: identifiers.data.importId,
+      itemId: identifiers.data.itemId,
+      revision: z.number().int().positive().parse(importData.revision),
+      candidateName: itemData.candidate_name,
+      data: data.data,
+      repairFields,
+      otherBlockingIssues: diagnostics.data.filter(
+        (diagnostic) =>
+          diagnostic.severity === "blocking"
+          && (!diagnostic.code || !SPELL_REPAIR_CODES.has(diagnostic.code)),
+      ).length,
+      userEditedFields: userEditedFields.data,
+    };
+  }
+
+  const data = featDataSchema.safeParse(itemData.candidate_data);
+  const effects = previewEffectsSchema.safeParse(itemData.candidate_effects);
+  if (!data.success || !effects.success) return null;
   const repairFields = {
-    material: diagnostics.data.some(
+    prerequisites: diagnostics.data.some(
       (diagnostic) =>
         diagnostic.severity === "blocking"
-        && diagnostic.code === MATERIAL_REPAIR_CODE,
+        && Boolean(
+          diagnostic.code
+          && FEAT_PREREQUISITE_REPAIR_CODES.has(diagnostic.code),
+        ),
     ),
-    dc: diagnostics.data.some(
+    action: diagnostics.data.some(
       (diagnostic) =>
         diagnostic.severity === "blocking"
-        && diagnostic.code === SAVE_REPAIR_CODE,
+        && diagnostic.code === FEAT_ACTION_REPAIR_CODE,
+    ),
+    recovery: diagnostics.data.some(
+      (diagnostic) =>
+        diagnostic.severity === "blocking"
+        && diagnostic.code === FEAT_RECOVERY_REPAIR_CODE,
+    ),
+    spellcastingAbility: diagnostics.data.some(
+      (diagnostic) =>
+        diagnostic.severity === "blocking"
+        && diagnostic.code === FEAT_SPELLCASTING_ABILITY_REPAIR_CODE,
     ),
   };
-  if (!repairFields.material && !repairFields.dc) return null;
+  if (!Object.values(repairFields).some(Boolean)) return null;
 
   return {
+    contentType: "feat",
     importId: identifiers.data.importId,
     itemId: identifiers.data.itemId,
     revision: z.number().int().positive().parse(importData.revision),
@@ -916,8 +1086,7 @@ export async function getOwnedMpmbImportSpellRepairItem(
     otherBlockingIssues: diagnostics.data.filter(
       (diagnostic) =>
         diagnostic.severity === "blocking"
-        && diagnostic.code !== MATERIAL_REPAIR_CODE
-        && diagnostic.code !== SAVE_REPAIR_CODE,
+        && (!diagnostic.code || !FEAT_REPAIR_CODES.has(diagnostic.code)),
     ).length,
     userEditedFields: userEditedFields.data,
   };
@@ -986,6 +1155,39 @@ export async function repairMpmbImportSpellItem(
 
   const { error } = await session.supabase.rpc(
     "repair_mpmb_import_spell_item",
+    {
+      target_import_id: input.data.importId,
+      target_item_id: input.data.itemId,
+      expected_revision: input.data.expectedRevision,
+      repair_patch: asJson(input.data.patch),
+    },
+  );
+  if (error) return databaseFailure(error);
+  return { status: "success", importId: input.data.importId };
+}
+
+export async function repairMpmbImportFeatItem(
+  importId: string,
+  itemId: string,
+  expectedRevision: number,
+  patch: MpmbImportFeatRepairPatch,
+): Promise<MpmbImportMutationResult> {
+  const session = await authenticatedSession();
+  if (!session) {
+    return { status: "error", message: "Sign in to repair this import." };
+  }
+  const input = z.object({
+    importId: z.string().uuid(),
+    itemId: z.string().uuid(),
+    expectedRevision: z.number().int().positive(),
+    patch: featRepairPatchSchema,
+  }).safeParse({ importId, itemId, expectedRevision, patch });
+  if (!input.success) {
+    return { status: "error", message: "The feat repair is invalid." };
+  }
+
+  const { error } = await session.supabase.rpc(
+    "repair_mpmb_import_feat_item",
     {
       target_import_id: input.data.importId,
       target_item_id: input.data.itemId,
