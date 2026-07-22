@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
+import { useFeedbackTrigger } from "@/components/feedback/feedback-provider";
 
 interface FeedbackButtonProps {
   /** If true, render only the icon (no label) — useful for compact nav rows. */
@@ -16,14 +17,24 @@ interface FeedbackButtonProps {
  * when the user clicks.
  */
 export function FeedbackButton({ iconOnly = false }: FeedbackButtonProps) {
-  const [open, setOpen] = useState(false);
+  const openGlobalFeedback = useFeedbackTrigger();
+  const [localOpen, setLocalOpen] = useState(false);
+
+  function openFeedback() {
+    if (openGlobalFeedback) {
+      openGlobalFeedback();
+      return;
+    }
+
+    setLocalOpen(true);
+  }
 
   return (
     <>
       <Button
         variant="ghost"
         size={iconOnly ? "icon" : "sm"}
-        onClick={() => setOpen(true)}
+        onClick={openFeedback}
         aria-label="Send feedback"
         title="Send feedback"
         className="shrink-0"
@@ -31,7 +42,12 @@ export function FeedbackButton({ iconOnly = false }: FeedbackButtonProps) {
         <MessageSquare className="size-4" />
         {!iconOnly && <span className="ml-1.5">Feedback</span>}
       </Button>
-      <FeedbackDialog open={open} onClose={() => setOpen(false)} />
+      {!openGlobalFeedback && (
+        <FeedbackDialog
+          open={localOpen}
+          onClose={() => setLocalOpen(false)}
+        />
+      )}
     </>
   );
 }

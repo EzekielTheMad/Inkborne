@@ -9,6 +9,7 @@ import { FeedbackButton } from "@/components/feedback/feedback-button";
 import { NavLink } from "@/components/nav/nav-link";
 import { Menu, MessageSquare, Shield } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
+import { useFeedbackTrigger } from "@/components/feedback/feedback-provider";
 
 interface MobileNavProps {
   displayName: string;
@@ -20,9 +21,15 @@ interface MobileNavProps {
 export function MobileNav({ displayName, avatarUrl, email, isAdmin }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const openGlobalFeedback = useFeedbackTrigger();
 
   function openFeedback() {
     setOpen(false);
+    if (openGlobalFeedback) {
+      openGlobalFeedback();
+      return;
+    }
+
     setFeedbackOpen(true);
   }
 
@@ -120,7 +127,12 @@ export function MobileNav({ displayName, avatarUrl, email, isAdmin }: MobileNavP
         </SheetContent>
       </Sheet>
 
-      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      {!openGlobalFeedback && (
+        <FeedbackDialog
+          open={feedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+        />
+      )}
     </div>
   );
 }
