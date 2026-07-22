@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { listOwnedHomebrewBackgrounds } from "@/lib/supabase/homebrew-backgrounds-server";
 import { listOwnedHomebrewFeats } from "@/lib/supabase/homebrew-feats-server";
 import { listOwnedHomebrewSpells } from "@/lib/supabase/homebrew-spells-server";
 import { createClient } from "@/lib/supabase/server";
@@ -18,18 +19,26 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
+    listOwnedHomebrewBackgrounds(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
+  const backgrounds = backgroundsResult.status === "fulfilled" ? backgroundsResult.value : [];
 
   if (spellsResult.status === "rejected") {
     console.error("[LibraryPage] Failed to load owned homebrew spells", spellsResult.reason);
   }
   if (featsResult.status === "rejected") {
     console.error("[LibraryPage] Failed to load owned homebrew feats", featsResult.reason);
+  }
+  if (backgroundsResult.status === "rejected") {
+    console.error(
+      "[LibraryPage] Failed to load owned homebrew backgrounds",
+      backgroundsResult.reason,
+    );
   }
 
   const notice = typeof query.created === "string"
@@ -39,8 +48,10 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
       : null;
   const completelyEmpty = spells.length === 0
     && feats.length === 0
+    && backgrounds.length === 0
     && spellsResult.status === "fulfilled"
-    && featsResult.status === "fulfilled";
+    && featsResult.status === "fulfilled"
+    && backgroundsResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -62,6 +73,10 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
             <Plus className="size-4" />
             Create feat
           </Link>
+          <Link href="/library/backgrounds/new" className={buttonVariants({ variant: "outline" })}>
+            <Plus className="size-4" />
+            Create background
+          </Link>
           <Link href="/library/spells/new" className={buttonVariants({ variant: "gold" })}>
             <Plus className="size-4" />
             Create spell
@@ -82,11 +97,12 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
           </div>
           <h2 className="j-display mt-4 text-xl text-foreground">Write your first private rule</h2>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-            Start with a spell or feat. Every change is versioned so character sheets can remain pinned to exactly what they chose.
+            Start with a spell, feat, or background. Every change is versioned so character sheets can remain pinned to exactly what they chose.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link href="/library/spells/new" className={buttonVariants({ variant: "outline" })}>Create spell</Link>
             <Link href="/library/feats/new" className={buttonVariants({ variant: "outline" })}>Create feat</Link>
+            <Link href="/library/backgrounds/new" className={buttonVariants({ variant: "outline" })}>Create background</Link>
           </div>
         </div>
       )}
@@ -165,6 +181,55 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
                     </Badge>
                     <Badge variant="secondary">v{feat.version}</Badge>
                   </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {backgroundsResult.status === "rejected" ? (
+        <LibraryLoadError label="backgrounds" />
+      ) : backgrounds.length > 0 ? (
+        <section aria-labelledby="owned-backgrounds-heading" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <BookOpen className="size-4 text-accent" />
+            <h2 id="owned-backgrounds-heading" className="j-folio">My backgrounds</h2>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {backgrounds.map((background) => (
+              <Link
+                key={background.id}
+                href={`/library/backgrounds/${background.id}/edit`}
+                className="j-card-paper group p-5 transition-colors hover:border-accent/50"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="j-display truncate text-lg text-foreground group-hover:text-accent">
+                      {background.name}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                      {background.data.feature.name}: {background.data.feature.description}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Badge variant="outline">
+                      {background.scope === "shared"
+                        ? `Shared · ${background.sharedCampaignCount} ${background.sharedCampaignCount === 1 ? "campaign" : "campaigns"}`
+                        : "Private"}
+                    </Badge>
+                    <Badge variant="secondary">v{background.version}</Badge>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {background.data.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full bg-muted px-2 py-0.5 text-[10px] capitalize text-muted-foreground"
+                    >
+                      {skill.replaceAll("-", " ")}
+                    </span>
+                  ))}
                 </div>
               </Link>
             ))}
