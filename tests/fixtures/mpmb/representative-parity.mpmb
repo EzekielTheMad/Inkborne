@@ -1,0 +1,57 @@
+/*
+ * Rights-safe Inkborne fixture.
+ * All names and rules text below were written solely for automated testing.
+ */
+"use strict";
+
+var iFileName = "Inkborne Representative Parity Fixture.js";
+RequiredSheetVersion("13.1.14");
+
+SourceList.IBP = {
+  name: "Inkborne Parity Examples",
+  abbreviation: "IBP",
+  group: "Synthetic fixtures",
+};
+
+FeatsList["lantern keeper"] = {
+  name: "Lantern Keeper",
+  source: ["IBP", 4],
+  description: desc([
+    "You have practiced carrying a watch-light through invented midnight roads.",
+    "Your training sharpens your footing and steadies you against beguiling magic.",
+  ]),
+  scores: [0, 1, 0, 0, 0, 0],
+  speed: { walk: 5 },
+  vision: [["Darkvision", 60]],
+  dmgres: ["Fire"],
+  savetxt: {
+    adv_vs: ["Charmed"],
+    immune: ["Magical sleep"],
+  },
+  extraAC: { mod: 1 },
+};
+
+SpellsList["prism spark"] = {
+  name: "Prism Spark",
+  source: ["IBP", 8],
+  level: 1,
+  school: "Evoc",
+  time: "1 a",
+  range: "60 feet",
+  components: "V, S",
+  duration: "Instantaneous",
+  concentration: false,
+  ritual: false,
+  description: "A synthetic ray scatters harmless test-light around its target.",
+  attack_type: "ranged",
+  damage: {
+    type: "lightning",
+    dice_at_slot_level: {
+      "1": "1d8 + MOD",
+      "3": "2d8 + MOD",
+      "5": "3d8 + MOD",
+    },
+  },
+  dc: { type: "dexterity", success: "half" },
+  classes: ["Wizard"],
+};
