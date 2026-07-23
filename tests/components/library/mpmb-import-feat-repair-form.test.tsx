@@ -9,7 +9,7 @@ vi.mock("react", async (importOriginal) => ({
   ...await importOriginal<typeof import("react")>(),
   useActionState: hooks.useActionState,
 }));
-vi.mock("@/app/(app)/library/import/actions", () => ({
+vi.mock("@/app/(app)/homebrew/import/actions", () => ({
   repairMpmbImportFeat: vi.fn(),
 }));
 

@@ -7,7 +7,7 @@ import { RefreshCw, ShieldCheck, Users } from "lucide-react";
 import {
   toggleHomebrewBackgroundCampaignShare,
   type HomebrewBackgroundShareActionState,
-} from "@/app/(app)/library/backgrounds/actions";
+} from "@/app/(app)/homebrew/backgrounds/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { HomebrewBackgroundCampaignOption } from "@/lib/supabase/homebrew-backgrounds-server";

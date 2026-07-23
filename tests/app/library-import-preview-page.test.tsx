@@ -17,7 +17,7 @@ vi.mock("@/lib/supabase/mpmb-imports-server", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: { getUser: mocks.getUser } }),
 }));
-vi.mock("@/app/(app)/library/import/actions", () => ({
+vi.mock("@/app/(app)/homebrew/import/actions", () => ({
   confirmMpmbImportPreview: mocks.confirm,
 }));
 vi.mock("next/navigation", () => ({
@@ -25,7 +25,7 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
-import MpmbImportPreviewPage from "@/app/(app)/library/import/[id]/preview/page";
+import MpmbImportPreviewPage from "@/app/(app)/homebrew/import/[id]/preview/page";
 
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 
@@ -162,7 +162,7 @@ describe("MpmbImportPreviewPage", () => {
     expect(screen.getByText("Revision confirmed")).toBeVisible();
     expect(screen.getByRole("link", { name: "Return to import" })).toHaveAttribute(
       "href",
-      `/library/import/${IMPORT_ID}`,
+      `/homebrew/import/${IMPORT_ID}`,
     );
     expect(screen.queryByRole("button", { name: "Confirm calculations" })).not.toBeInTheDocument();
   });

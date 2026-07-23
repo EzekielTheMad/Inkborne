@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { featDataSchema } from "@/lib/schemas/content-types/feat";
 
-vi.mock("@/app/(app)/library/feats/actions", () => ({
+vi.mock("@/app/(app)/homebrew/feats/actions", () => ({
   createHomebrewFeat: vi.fn(),
   updateHomebrewFeat: vi.fn(),
 }));

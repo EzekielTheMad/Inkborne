@@ -7,7 +7,7 @@ import {
   createHomebrewBackground,
   updateHomebrewBackground,
   type HomebrewBackgroundActionState,
-} from "@/app/(app)/library/backgrounds/actions";
+} from "@/app/(app)/homebrew/backgrounds/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -335,7 +335,7 @@ export function BackgroundForm({ mode, initialValue }: BackgroundFormProps) {
           <p role="alert" className="text-sm text-destructive">{state.message}</p>
         )}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Link href="/library" className={buttonVariants({ variant: "outline" })}>Cancel</Link>
+          <Link href="/homebrew" className={buttonVariants({ variant: "outline" })}>Cancel</Link>
           {state.status === "conflict" && (
             <Button type="button" variant="outline" onClick={() => window.location.reload()}>
               Reload latest

@@ -9,7 +9,7 @@ vi.mock("react", async (importOriginal) => ({
   ...await importOriginal<typeof import("react")>(),
   useActionState: hooks.useActionState,
 }));
-vi.mock("@/app/(app)/library/import/actions", () => ({
+vi.mock("@/app/(app)/homebrew/import/actions", () => ({
   repairMpmbImportSpell: vi.fn(),
 }));
 
@@ -55,7 +55,7 @@ describe("MpmbImportSpellRepairForm", () => {
     expect(screen.getByRole("button", { name: "Save missing details" })).toBeEnabled();
     expect(screen.getByRole("link", { name: "Back to review" })).toHaveAttribute(
       "href",
-      `/library/import/${baseProps.importId}`,
+      `/homebrew/import/${baseProps.importId}`,
     );
   });
 

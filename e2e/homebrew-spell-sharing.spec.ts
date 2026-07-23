@@ -127,7 +127,7 @@ test("shares exact spell versions with exact campaign characters and preserves p
   const originalName = `${E2E_HOMEBREW_PREFIX} Campaign Thread ${runId}`;
   const revisedName = `${originalName} Revised`;
 
-  await ownerPage.goto("/library/spells/new");
+  await ownerPage.goto("/homebrew/spells/new");
   await ownerPage.getByLabel("Name", { exact: true }).fill(originalName);
   await ownerPage.getByLabel("Level", { exact: true }).selectOption("1");
   await ownerPage.getByLabel("Casting time", { exact: true }).fill("1 action");
@@ -146,7 +146,7 @@ test("shares exact spell versions with exact campaign characters and preserves p
 
   const editLink = ownerPage.getByRole("link", { name: new RegExp(originalName) });
   const editHref = await editLink.getAttribute("href");
-  const definitionId = editHref?.match(/\/library\/spells\/([^/]+)\/edit/)?.[1];
+  const definitionId = editHref?.match(/\/homebrew\/spells\/([^/]+)\/edit/)?.[1];
   if (!editHref || !definitionId) throw new Error("Could not capture homebrew spell id");
   definitionIds.push(definitionId);
 

@@ -16,11 +16,14 @@ export interface ParsedContentDefinition<
   TData extends Record<string, unknown> = Record<string, unknown>,
 > {
   id: string;
+  system_id?: string;
   name: string;
   slug: string;
   content_type: string;
   version: number;
   source: "srd" | "homebrew";
+  scope?: "platform" | "personal" | "shared";
+  owner_id?: string | null;
   version_created_at?: string;
   data: TData;
   effects: Effect[];
@@ -92,11 +95,14 @@ export function parseContentDefinition(
 
   return {
     id: id.data,
+    system_id: envelope.data.system_id,
     name: envelope.data.name,
     slug: envelope.data.slug,
     content_type: envelope.data.content_type,
     version: envelope.data.version,
     source: envelope.data.source,
+    scope: envelope.data.scope,
+    owner_id: envelope.data.owner_id,
     data: inner.data as Record<string, unknown>,
     effects: envelope.data.effects,
   };

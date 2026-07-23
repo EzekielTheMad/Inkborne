@@ -89,6 +89,9 @@ export function MobileNav({ displayName, avatarUrl, email, isAdmin }: MobileNavP
             <NavLink href="/library" onClick={() => setOpen(false)} className="text-base">
               Library
             </NavLink>
+            <NavLink href="/homebrew" onClick={() => setOpen(false)} className="text-base">
+              Homebrew
+            </NavLink>
           </nav>
 
           <Separator className="my-4" />

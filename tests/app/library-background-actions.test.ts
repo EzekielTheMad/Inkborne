@@ -24,7 +24,7 @@ import {
   createHomebrewBackground,
   toggleHomebrewBackgroundCampaignShare,
   updateHomebrewBackground,
-} from "@/app/(app)/library/backgrounds/actions";
+} from "@/app/(app)/homebrew/backgrounds/actions";
 
 const idle = { status: "idle" as const, message: "" };
 
@@ -52,8 +52,9 @@ describe("homebrew background actions", () => {
   it("revalidates and redirects after creation", async () => {
     mocks.create.mockResolvedValue({ id: "background-id" });
     await expect(createHomebrewBackground(idle, new FormData())).rejects.toThrow(
-      "REDIRECT:/library?created=background-id",
+      "REDIRECT:/homebrew?created=background-id",
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
   });
 
@@ -75,18 +76,19 @@ describe("homebrew background actions", () => {
     expect(mocks.update).toHaveBeenCalledWith("background-id", 2, input);
   });
 
-  it("revalidates the library and edit route after update", async () => {
+  it("revalidates both catalogs and the homebrew edit route after update", async () => {
     const input = new FormData();
     input.set("id", "background-id");
     input.set("expected_version", "2");
     mocks.update.mockResolvedValue({ id: "background-id" });
 
     await expect(updateHomebrewBackground(idle, input)).rejects.toThrow(
-      "REDIRECT:/library?updated=background-id",
+      "REDIRECT:/homebrew?updated=background-id",
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      "/library/backgrounds/background-id/edit",
+      "/homebrew/backgrounds/background-id/edit",
     );
   });
 
@@ -123,9 +125,10 @@ describe("homebrew background actions", () => {
       true,
       2,
     );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/homebrew");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/library");
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      "/library/backgrounds/11111111-1111-4111-8111-111111111111/edit",
+      "/homebrew/backgrounds/11111111-1111-4111-8111-111111111111/edit",
     );
   });
 });

@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/app/(app)/library/spells/actions", () => ({
+vi.mock("@/app/(app)/homebrew/spells/actions", () => ({
   toggleHomebrewSpellCampaignShare: vi.fn(),
 }));
 
 import { SpellSharingPanel } from "@/components/library/spell-sharing-panel";
-import { toggleHomebrewSpellCampaignShare } from "@/app/(app)/library/spells/actions";
+import { toggleHomebrewSpellCampaignShare } from "@/app/(app)/homebrew/spells/actions";
 
 const campaigns = [
   {

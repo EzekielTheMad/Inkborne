@@ -121,7 +121,14 @@ export async function seedHomebrewSharingCampaign(input: {
     role: "player",
   });
   if (membershipError) {
-    throw new Error(`Could not seed campaign membership: ${membershipError.message}`);
+    const { error: cleanupError } = await service
+      .from("campaigns")
+      .delete()
+      .eq("id", campaign.id);
+    throw new Error(
+      `Could not seed campaign membership: ${membershipError.message}`
+        + (cleanupError ? `; cleanup also failed: ${cleanupError.message}` : ""),
+    );
   }
   return { id: campaign.id, systemId: systems[0].id };
 }

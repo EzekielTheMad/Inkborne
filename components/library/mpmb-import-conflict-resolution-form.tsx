@@ -7,7 +7,7 @@ import { useActionState, useMemo, useState } from "react";
 import {
   resolveMpmbImportConflict,
   type MpmbImportConflictActionState,
-} from "@/app/(app)/library/import/actions";
+} from "@/app/(app)/homebrew/import/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { MpmbImportConflictTarget } from "@/lib/supabase/mpmb-imports-server";
@@ -185,7 +185,7 @@ export function MpmbImportConflictResolutionForm({
 
       <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
         <Link
-          href={`/library/import/${importId}`}
+          href={`/homebrew/import/${importId}`}
           className={buttonVariants({ variant: "outline" })}
         >
           Back to review

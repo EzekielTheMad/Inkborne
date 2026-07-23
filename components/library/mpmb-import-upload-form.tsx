@@ -7,7 +7,7 @@ import { useActionState } from "react";
 import {
   startMpmbImport,
   type MpmbImportActionState,
-} from "@/app/(app)/library/import/actions";
+} from "@/app/(app)/homebrew/import/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
@@ -68,7 +68,7 @@ export function MpmbImportUploadForm() {
       )}
 
       <div className="flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:justify-end">
-        <Link href="/library" className={buttonVariants({ variant: "outline" })}>
+        <Link href="/homebrew" className={buttonVariants({ variant: "outline" })}>
           Cancel
         </Link>
         <Button type="submit" variant="gold" disabled={pending}>

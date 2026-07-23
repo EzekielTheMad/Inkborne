@@ -26,7 +26,7 @@ vi.mock("@/components/library/mpmb-import-selection-button", () => ({
   ),
 }));
 
-import MpmbImportReviewPage from "@/app/(app)/library/import/[id]/page";
+import MpmbImportReviewPage from "@/app/(app)/homebrew/import/[id]/page";
 
 const IMPORT_ID = "33333333-3333-4333-8333-333333333333";
 
@@ -154,12 +154,12 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getByRole("button", { name: "Import 1" })).toBeDisabled();
     expect(screen.getByRole("link", { name: "Preview calculations" })).toHaveAttribute(
       "href",
-      `/library/import/${IMPORT_ID}/preview`,
+      `/homebrew/import/${IMPORT_ID}/preview`,
     );
     expect(screen.getByText(/Preview and confirm this revision/)).toBeVisible();
     expect(screen.getByRole("link", { name: "Add missing details" })).toHaveAttribute(
       "href",
-      `/library/import/${IMPORT_ID}/items/77777777-7777-4777-8777-777777777777/edit`,
+      `/homebrew/import/${IMPORT_ID}/items/77777777-7777-4777-8777-777777777777/edit`,
     );
   });
 
@@ -180,11 +180,11 @@ describe("MpmbImportReviewPage", () => {
       searchParams: Promise.resolve({ committed: "1" }),
     }));
 
-    expect(screen.getByText("1 definition added to your private library.")).toBeVisible();
+    expect(screen.getByText("1 definition added to your private Homebrew collection.")).toBeVisible();
     expect(screen.getByText("Committed")).toBeVisible();
     expect(screen.queryByRole("button", { name: /Import/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Add missing details" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View library" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "View Homebrew" })).toBeVisible();
   });
 
   it("blocks commit until a selected live conflict has an explicit resolution", async () => {
@@ -216,7 +216,7 @@ describe("MpmbImportReviewPage", () => {
     expect(screen.getByText("Conflict")).toBeVisible();
     expect(screen.getByRole("link", { name: "Resolve conflict" })).toHaveAttribute(
       "href",
-      `/library/import/${IMPORT_ID}/items/44444444-4444-4444-8444-444444444444/conflict`,
+      `/homebrew/import/${IMPORT_ID}/items/44444444-4444-4444-8444-444444444444/conflict`,
     );
     expect(screen.getByRole("button", { name: "Import 1" })).toBeDisabled();
     expect(screen.getByText(/Resolve 1 selected conflict/)).toBeVisible();

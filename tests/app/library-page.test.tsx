@@ -2,139 +2,62 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  listOwnedSpells: vi.fn(),
-  listOwnedFeats: vi.fn(),
-  listOwnedBackgrounds: vi.fn(),
   getUser: vi.fn(),
+  listSystems: vi.fn(),
+  listEntries: vi.fn(),
+  redirect: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/homebrew-spells-server", () => ({
-  listOwnedHomebrewSpells: mocks.listOwnedSpells,
-}));
-vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
-  listOwnedHomebrewFeats: mocks.listOwnedFeats,
-}));
-vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
-  listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
-}));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: { getUser: mocks.getUser } }),
 }));
+vi.mock("@/lib/supabase/compendium-server", () => ({
+  listCompendiumSystems: mocks.listSystems,
+  listCompendiumEntries: mocks.listEntries,
+}));
 vi.mock("next/navigation", () => ({
-  redirect: vi.fn(),
+  redirect: mocks.redirect,
 }));
 
 import LibraryPage from "@/app/(app)/library/page";
 
-const spellData = {
-  level: 1,
-  school: "evocation",
-  classes: ["wizard"],
-};
+const systemId = "22222222-2222-4222-8222-222222222222";
 
 describe("LibraryPage", () => {
   beforeEach(() => {
+    mocks.getUser.mockReset();
+    mocks.listSystems.mockReset();
+    mocks.listEntries.mockReset();
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null });
-    mocks.listOwnedSpells.mockResolvedValue([]);
-    mocks.listOwnedFeats.mockResolvedValue([]);
-    mocks.listOwnedBackgrounds.mockResolvedValue([]);
+    mocks.listSystems.mockResolvedValue([
+      { id: systemId, name: "D&D 5th Edition", slug: "dnd5e", versionLabel: "2014" },
+    ]);
+    mocks.listEntries.mockResolvedValue({ entries: [], total: 0, page: 1, pageSize: 24 });
+    mocks.redirect.mockReset();
   });
 
-  it("shows spell, feat, and background sections with their versioned library links", async () => {
-    mocks.listOwnedSpells.mockResolvedValue([
-      {
-        id: "11111111-1111-4111-8111-111111111111",
-        name: "Private Spark",
-        scope: "personal",
-        version: 1,
-        sharedCampaignCount: 0,
-        data: spellData,
-      },
-      {
-        id: "22222222-2222-4222-8222-222222222222",
-        name: "Shared Spark",
-        scope: "shared",
-        version: 3,
-        sharedCampaignCount: 2,
-        data: spellData,
-      },
-    ]);
-    mocks.listOwnedFeats.mockResolvedValue([
-      {
-        id: "33333333-3333-4333-8333-333333333333",
-        name: "Fleet Adept",
-        scope: "personal",
-        version: 2,
-        data: { description: "You have learned to move with exceptional speed." },
-      },
-    ]);
-    mocks.listOwnedBackgrounds.mockResolvedValue([
-      {
-        id: "44444444-4444-4444-8444-444444444444",
-        name: "Lantern Courier",
-        scope: "shared",
-        version: 4,
-        sharedCampaignCount: 1,
-        data: {
-          feature: { name: "Known Roads", description: "You remember hidden crossings." },
-          skills: ["survival", "perception"],
-        },
-      },
-    ]);
+  it("uses the published system and renders the player/DM compendium", async () => {
+    render(await LibraryPage({ searchParams: Promise.resolve({ category: "armor" }) }));
+
+    expect(mocks.listEntries).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: systemId,
+        category: "armor",
+        page: 1,
+      }),
+      "user-id",
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Library" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "Armor" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open Homebrew" })).toHaveAttribute("href", "/homebrew");
+  });
+
+  it("shows a safe empty state when no system is published", async () => {
+    mocks.listSystems.mockResolvedValue([]);
 
     render(await LibraryPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getAllByText("Private")).toHaveLength(2);
-    expect(screen.getByText("Shared · 2 campaigns")).toBeVisible();
-    expect(screen.getByText("My spells")).toBeVisible();
-    expect(screen.getByText("My feats")).toBeVisible();
-    expect(screen.getByText("My backgrounds")).toBeVisible();
-    expect(screen.getByRole("link", { name: /Fleet Adept/ })).toHaveAttribute(
-      "href",
-      "/library/feats/33333333-3333-4333-8333-333333333333/edit",
-    );
-    expect(screen.getByRole("link", { name: "Create feat" })).toHaveAttribute(
-      "href",
-      "/library/feats/new",
-    );
-    expect(screen.getByRole("link", { name: "Create background" })).toHaveAttribute(
-      "href",
-      "/library/backgrounds/new",
-    );
-    expect(screen.getByRole("link", { name: /Lantern Courier/ })).toHaveAttribute(
-      "href",
-      "/library/backgrounds/44444444-4444-4444-8444-444444444444/edit",
-    );
-    expect(screen.getByRole("link", { name: "Import MPMB" })).toHaveAttribute(
-      "href",
-      "/library/import",
-    );
-  });
-
-  it("offers every authoring path when the library is empty", async () => {
-    render(await LibraryPage({ searchParams: Promise.resolve({}) }));
-
-    expect(screen.getByText("Write your first private rule")).toBeVisible();
-    expect(screen.getAllByRole("link", { name: "Create spell" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "Create feat" })).toHaveLength(2);
-    expect(screen.getAllByRole("link", { name: "Create background" })).toHaveLength(2);
-  });
-
-  it("keeps available content visible when one content type fails to load", async () => {
-    mocks.listOwnedSpells.mockRejectedValue(new Error("spell read failed"));
-    mocks.listOwnedFeats.mockResolvedValue([
-      {
-        id: "33333333-3333-4333-8333-333333333333",
-        name: "Fleet Adept",
-        scope: "personal",
-        version: 2,
-        data: { description: "Fast." },
-      },
-    ]);
-
-    render(await LibraryPage({ searchParams: Promise.resolve({}) }));
-
-    expect(screen.getByText("Your homebrew spells could not be loaded.")).toBeVisible();
-    expect(screen.getByText("Fleet Adept")).toBeVisible();
+    expect(mocks.listEntries).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Library unavailable" })).toBeVisible();
   });
 });
