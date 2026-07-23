@@ -1,6 +1,6 @@
 # Closed-alpha feedback and compendium contract
 
-**Status:** Implemented locally; hosted preview UAT and release pending
+**Status:** Shipped and production-UAT verified on 2026-07-22
 **Owner:** Victor
 **Date:** 2026-07-22
 
