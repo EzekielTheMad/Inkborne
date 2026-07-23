@@ -72,6 +72,23 @@ describe("ConnectedAccountsSection", () => {
     expect(screen.getByRole("button", { name: "Connect Google" })).toBeDisabled();
   });
 
+  it("disables an open disconnect confirmation while another provider starts linking", async () => {
+    const auth = mockAuth();
+    auth.getUserIdentities.mockReturnValue(new Promise(() => undefined));
+
+    render(
+      <ConnectedAccountsSection
+        identities={[emailIdentity, googleIdentity]}
+        discordEnabled
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect Google" }));
+    fireEvent.click(screen.getByRole("button", { name: "Connect Discord" }));
+
+    expect(await screen.findByRole("button", { name: "Keep connected" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Confirm disconnect" })).toBeDisabled();
+  });
+
   it("starts OAuth linking with the settings callback", async () => {
     const auth = mockAuth();
     auth.getUserIdentities.mockResolvedValue({

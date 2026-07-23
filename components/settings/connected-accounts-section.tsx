@@ -230,7 +230,7 @@ export function ConnectedAccountsSection({
                       variant="ghost"
                       size="sm"
                       onClick={() => setConfirmingDisconnect(null)}
-                      disabled={loading === provider.key}
+                      disabled={loading !== null}
                     >
                       Keep connected
                     </Button>
@@ -238,7 +238,7 @@ export function ConnectedAccountsSection({
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDisconnect(provider.key)}
-                      disabled={loading === provider.key}
+                      disabled={loading !== null}
                     >
                       {loading === provider.key ? "Disconnecting..." : "Confirm disconnect"}
                     </Button>
