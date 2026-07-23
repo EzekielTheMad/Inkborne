@@ -216,17 +216,19 @@ test("shows authorized SRD and homebrew entries to the DM and campaign player", 
     await expect(sharedEntry).toBeVisible();
     await expect(sharedEntry).toContainText("Campaign shared");
     await sharedEntry.click();
+    await expect(player.page).toHaveURL(new RegExp(`/library/${sharedSpellId}(?:\\?|$)`));
     await expect(
       player.page.getByRole("heading", { name: sharedSpellName, exact: true }),
     ).toBeVisible();
     await expect(player.page.getByText("Campaign shared", { exact: true })).toBeVisible();
     await expect(player.page.getByText(/This view is read-only/)).toBeVisible();
     await player.page.getByRole("link", { name: "Back to Library" }).click();
-    const returnedUrl = new URL(player.page.url());
-    expect(returnedUrl.pathname).toBe("/library");
-    expect(returnedUrl.searchParams.get("category")).toBe("spells");
-    expect(returnedUrl.searchParams.get("provenance")).toBe("shared");
-    expect(returnedUrl.searchParams.get("q")).toBe(sharedSpellName);
+    await expect(player.page).toHaveURL((url) =>
+      url.pathname === "/library"
+      && url.searchParams.get("category") === "spells"
+      && url.searchParams.get("provenance") === "shared"
+      && url.searchParams.get("q") === sharedSpellName,
+    );
     await expect(compendiumEntry(player.page, sharedSpellName)).toBeVisible();
 
     await player.page.goto(

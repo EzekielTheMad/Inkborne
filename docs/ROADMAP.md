@@ -24,7 +24,7 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 
 ## Where we are today
 
-> **Snapshot 2026-07-22.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, the private MPMB workflow and spell/feat/background authoring are on `main`, backup hardening shipped in #90, and atomic background replacement plus persistent feedback access shipped in #95. The active release candidate adds the entitlement-aware player/DM compendium at `/library` and moves authoring/imports to `/homebrew` with compatibility redirects. Its local gate is **194 Vitest files / 1782 tests** plus strict lint/typecheck and a production build; rollback-only live RLS verification proves the platform + personal + campaign-shared union and unrelated-content isolation. Hosted preview UAT is the remaining compendium gate.
+> **Snapshot 2026-07-22.** M1–M3 are complete. The campaign/LegendKeeper foundation shipped in #76, the content-schema refactor shipped in #60, the private MPMB workflow and spell/feat/background authoring are on `main`, backup hardening shipped in #90, and atomic background replacement plus persistent feedback access shipped in #95. The entitlement-aware player/DM compendium shipped in #96 at `/library`, while authoring/imports moved to `/homebrew` with compatibility redirects. Its gate is **194 Vitest files / 1782 tests** plus strict lint/typecheck, a production build, rollback-only live RLS verification, hosted browser UAT, and a **4/4 production Playwright** acceptance suite proving owner/player entitlements, isolation, redirects, state preservation, and mobile navigation.
 
 **Shipped product surface:**
 - Email, Google, and Discord authentication; account linking is implemented in #80 but awaits manual provider-consent UAT.
@@ -36,7 +36,7 @@ A **community-driven, multi-system TTRPG character + campaign management platfor
 - Authenticated feedback capture records the current page path/query and browser context, with secure storage and an admin triage dashboard. Persistent desktop/mobile access and protected-preview submission with exact originating path/query are verified; the final admin-dashboard browser check still needs an admin session.
 - Feedback/error administration, generated Supabase types, validated content fetch boundaries, and hardened local/offsite backup tooling.
 
-**Active M4 work:** the entitlement-aware player/DM compendium is locally complete in the active release candidate. It covers eight seeded categories, read-only structured details, provenance, search/sort/filters/pagination, responsive layouts, `/homebrew` separation, and legacy redirects. Hosted preview UAT and release remain before it can be called shipped. Remaining authoring/content types follow it; optional public publishing remains deliberately separate from campaign sharing.
+**Active M4 work:** the entitlement-aware player/DM compendium is shipped and production-UAT verified. It covers eight seeded categories, read-only structured details, provenance, search/sort/filters/pagination, responsive layouts, `/homebrew` separation, and legacy redirects. Remaining authoring/content types follow it; optional public publishing remains deliberately separate from campaign sharing.
 
 **External release work:**
 1. Deploy #90 on Victor's Unraid system, create a fresh backup, and complete the restore drill in `infra/backup/README.md`.
@@ -158,7 +158,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 ---
 
 ### M4 — Homebrew + Importer (combined)
-**Status (2026-07-22): ◑ Spell/feat/background authoring and sharing plus the private MPMB importer are shipped and hosted-verified; the player/DM compendium is locally complete in an active release candidate.** Authoring/imports move to `/homebrew`; `/library` becomes the entitlement-aware encyclopedia with legacy redirects. Exact-campaign discovery, DM revocation, character pins, importer calculation gates, and the platform + personal + campaign-shared visibility boundary are covered. This does **not** complete M4: hosted compendium UAT/release, additional authoring/content types, and separately controlled public publishing remain.
+**Status (2026-07-22): ◑ Spell/feat/background authoring and sharing, the private MPMB importer, and the player/DM compendium are shipped and hosted-verified.** Authoring/imports live at `/homebrew`; `/library` is the entitlement-aware encyclopedia with legacy redirects. Exact-campaign discovery, DM revocation, character pins, importer calculation gates, and the platform + personal + campaign-shared visibility boundary are covered. This does **not** complete M4: additional authoring/content types and separately controlled public publishing remain.
 
 **Goal:** Users author their own content **and** import existing content (MPMB JS) into a unified library workflow.
 **Estimated effort:** ~5 weeks (combined from earlier separate milestones).
@@ -166,7 +166,7 @@ Same friend group. Now they can simulate combat: cast spells, attack, take damag
 Combined because authoring and importing share the same user-owned content infrastructure (the `/library`, the sharing UI, the builder integration). Building one without the other leaves a glaring gap — users author a feat from scratch but can't import the one they already have, or vice versa.
 
 **Scope — Authoring half (~2–3 weeks):**
-- Homebrew workspace — the existing authoring/import UI moves to `/homebrew` in the active compendium release candidate; richer cross-type filters/sort/search remain follow-up work.
+- Homebrew workspace — the authoring/import UI lives at `/homebrew`; richer cross-type filters/sort/search remain follow-up work.
 - Schema-driven authoring forms for each existing content type (race, class, feat, feature, spell, item, weapon, armor, background, subclass, trait)
 - Builder content discovery — pickers pull from `platform` + `user_owned` + `shared_with_me`
 - Sharing UI — campaign-scoped sharing is implemented for spells and feats; generalize it to other content types, then add separately controlled public publishing
