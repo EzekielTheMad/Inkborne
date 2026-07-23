@@ -15,3 +15,28 @@ export function buildIdentityCallbackUrl(origin: string, provider: LinkableIdent
   callbackUrl.searchParams.set("linked", provider);
   return callbackUrl.toString();
 }
+
+export function resolveIdentityLinkStatus({
+  requestedLinkedProvider,
+  requestedLinkErrorProvider,
+  currentProviders,
+}: {
+  requestedLinkedProvider: string | null;
+  requestedLinkErrorProvider: string | null;
+  currentProviders: Iterable<string>;
+}): {
+  linkedProvider: LinkableIdentityProvider | null;
+  linkErrorProvider: LinkableIdentityProvider | null;
+} {
+  const requestedProvider = isLinkableIdentityProvider(requestedLinkedProvider)
+    ? requestedLinkedProvider
+    : isLinkableIdentityProvider(requestedLinkErrorProvider)
+      ? requestedLinkErrorProvider
+      : null;
+  if (!requestedProvider) return { linkedProvider: null, linkErrorProvider: null };
+
+  const connected = new Set(currentProviders).has(requestedProvider);
+  return connected
+    ? { linkedProvider: requestedProvider, linkErrorProvider: null }
+    : { linkedProvider: null, linkErrorProvider: requestedProvider };
+}

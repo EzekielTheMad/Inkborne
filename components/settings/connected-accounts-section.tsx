@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,8 @@ interface ConnectedAccountsSectionProps {
   linkErrorProvider?: string | null;
   discordEnabled?: boolean;
 }
+
+const UNEXPECTED_AUTH_ERROR = "Something went wrong while updating your login methods. Please try again.";
 
 function toIdentity(identity: {
   id: string;
@@ -56,6 +58,18 @@ export function ConnectedAccountsSection({
         : null,
   );
 
+  useEffect(() => {
+    if (!linkedProvider && !linkErrorProvider) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("linked");
+    url.searchParams.delete("linkError");
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, [linkedProvider, linkErrorProvider]);
+
   function isConnected(provider: string) {
     return identities.some((i) => i.provider === provider);
   }
@@ -63,37 +77,38 @@ export function ConnectedAccountsSection({
   async function handleConnect(provider: LinkableIdentityProvider) {
     setLoading(provider);
     setMessage(null);
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
+      const { data: currentData, error: currentError } = await supabase.auth.getUserIdentities();
+      if (currentError) {
+        setMessage({ type: "error", text: "We couldn't verify your current login methods. Please try again." });
+        return;
+      }
 
-    const { data: currentData, error: currentError } = await supabase.auth.getUserIdentities();
-    if (currentError) {
-      setMessage({ type: "error", text: "We couldn't verify your current login methods. Please try again." });
-      setLoading(null);
-      return;
-    }
+      const currentIdentities = currentData.identities.map(toIdentity);
+      setIdentities(currentIdentities);
+      if (currentIdentities.some((identity) => identity.provider === provider)) {
+        setMessage({ type: "success", text: `${provider} is already connected` });
+        return;
+      }
 
-    const currentIdentities = currentData.identities.map(toIdentity);
-    setIdentities(currentIdentities);
-    if (currentIdentities.some((identity) => identity.provider === provider)) {
-      setMessage({ type: "success", text: `${provider} is already connected` });
-      setLoading(null);
-      return;
-    }
-
-    const { data, error } = await supabase.auth.linkIdentity({
-      provider,
-      options: {
-        redirectTo: buildIdentityCallbackUrl(window.location.origin, provider),
-        skipBrowserRedirect: true,
-      },
-    });
-    if (error) {
-      setMessage({ type: "error", text: error.message });
-      setLoading(null);
-    } else if (data.url) {
-      window.location.assign(data.url);
-    } else {
-      setMessage({ type: "error", text: `Unable to start ${provider} linking` });
+      const { data, error } = await supabase.auth.linkIdentity({
+        provider,
+        options: {
+          redirectTo: buildIdentityCallbackUrl(window.location.origin, provider),
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        setMessage({ type: "error", text: error.message });
+      } else if (data.url) {
+        window.location.assign(data.url);
+      } else {
+        setMessage({ type: "error", text: `Unable to start ${provider} linking` });
+      }
+    } catch {
+      setMessage({ type: "error", text: UNEXPECTED_AUTH_ERROR });
+    } finally {
       setLoading(null);
     }
   }
@@ -101,46 +116,45 @@ export function ConnectedAccountsSection({
   async function handleDisconnect(provider: LinkableIdentityProvider) {
     setLoading(provider);
     setMessage(null);
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
+      const { data: currentData, error: currentError } = await supabase.auth.getUserIdentities();
+      if (currentError) {
+        setMessage({ type: "error", text: "We couldn't verify your current login methods. Please try again." });
+        return;
+      }
 
-    const { data: currentData, error: currentError } = await supabase.auth.getUserIdentities();
-    if (currentError) {
-      setMessage({ type: "error", text: "We couldn't verify your current login methods. Please try again." });
-      setLoading(null);
-      return;
-    }
+      const currentIdentities = currentData.identities.map(toIdentity);
+      setIdentities(currentIdentities);
+      const identity = currentData.identities.find((item) => item.provider === provider);
+      if (!identity) {
+        setMessage({ type: "error", text: `${provider} is no longer connected` });
+        return;
+      }
 
-    const currentIdentities = currentData.identities.map(toIdentity);
-    setIdentities(currentIdentities);
-    const identity = currentData.identities.find((item) => item.provider === provider);
-    if (!identity) {
-      setMessage({ type: "error", text: `${provider} is no longer connected` });
+      if (currentIdentities.length <= 1) {
+        setMessage({ type: "error", text: "Cannot disconnect your only login method" });
+        return;
+      }
+
+      const { error } = await supabase.auth.unlinkIdentity(identity);
+      if (error) {
+        setMessage({ type: "error", text: error.message });
+      } else {
+        const { data: refreshedData, error: refreshedError } = await supabase.auth.getUserIdentities();
+        setIdentities(
+          refreshedError
+            ? currentIdentities.filter((item) => item.id !== identity.id)
+            : refreshedData.identities.map(toIdentity),
+        );
+        setMessage({ type: "success", text: `${provider} disconnected` });
+      }
+    } catch {
+      setMessage({ type: "error", text: UNEXPECTED_AUTH_ERROR });
+    } finally {
       setConfirmingDisconnect(null);
       setLoading(null);
-      return;
     }
-
-    if (currentIdentities.length <= 1) {
-      setMessage({ type: "error", text: "Cannot disconnect your only login method" });
-      setConfirmingDisconnect(null);
-      setLoading(null);
-      return;
-    }
-
-    const { error } = await supabase.auth.unlinkIdentity(identity);
-    if (error) {
-      setMessage({ type: "error", text: error.message });
-    } else {
-      const { data: refreshedData, error: refreshedError } = await supabase.auth.getUserIdentities();
-      setIdentities(
-        refreshedError
-          ? currentIdentities.filter((item) => item.id !== identity.id)
-          : refreshedData.identities.map(toIdentity),
-      );
-      setMessage({ type: "success", text: `${provider} disconnected` });
-    }
-    setConfirmingDisconnect(null);
-    setLoading(null);
   }
 
   return (
@@ -157,6 +171,7 @@ export function ConnectedAccountsSection({
           const connected = isConnected(provider.key);
           const available = !provider.requiresDiscordFlag || discordEnabled;
           const confirming = confirmingDisconnect === provider.key;
+          const confirmationId = `disconnect-${provider.key}-confirmation`;
           return (
             <div key={provider.key} className="space-y-3 rounded-md border border-border/60 p-3">
               <div className="flex items-center justify-between gap-3">
@@ -176,7 +191,9 @@ export function ConnectedAccountsSection({
                     size="sm"
                     aria-label={`Disconnect ${provider.label}`}
                     onClick={() => setConfirmingDisconnect(provider.key)}
-                    disabled={loading === provider.key || confirming}
+                    aria-expanded={confirming}
+                    aria-controls={confirming ? confirmationId : undefined}
+                    disabled={loading !== null || confirming}
                   >
                     Disconnect
                   </Button>
@@ -186,7 +203,7 @@ export function ConnectedAccountsSection({
                     size="sm"
                     aria-label={`${available ? "Connect" : "Unavailable"} ${provider.label}`}
                     onClick={() => handleConnect(provider.key)}
-                    disabled={loading === provider.key || !available}
+                    disabled={loading !== null || !available}
                   >
                     {!available
                       ? "Unavailable"
@@ -197,7 +214,13 @@ export function ConnectedAccountsSection({
                 )}
               </div>
               {confirming && (
-                <div className="space-y-3" role="group" aria-label={`Confirm disconnect ${provider.label}`}>
+                <div
+                  id={confirmationId}
+                  className="space-y-3"
+                  role="group"
+                  aria-label={`Confirm disconnect ${provider.label}`}
+                  aria-live="polite"
+                >
                   <p className="text-sm text-muted-foreground">
                     You will no longer be able to sign in with {provider.label}. Make sure another
                     login method works before continuing.
@@ -227,7 +250,10 @@ export function ConnectedAccountsSection({
         })}
 
         {message && (
-          <p className={`text-sm ${message.type === "error" ? "text-destructive" : "text-accent"}`}>
+          <p
+            role={message.type === "error" ? "alert" : "status"}
+            className={`text-sm ${message.type === "error" ? "text-destructive" : "text-accent"}`}
+          >
             {message.text}
           </p>
         )}

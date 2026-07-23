@@ -12,13 +12,14 @@ const mockedCreateClient = vi.mocked(createClient);
 function mockExchange(
   error: { message: string } | null,
   identities: Array<{ provider: string }> = [],
+  identitiesError: { message: string } | null = null,
 ) {
   const supabase = {
     auth: {
       exchangeCodeForSession: vi.fn().mockResolvedValue({ error }),
       getUserIdentities: vi.fn().mockResolvedValue({
         data: { identities },
-        error: null,
+        error: identitiesError,
       }),
     },
   };
@@ -69,10 +70,23 @@ describe("auth callback GET", () => {
     expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=google");
   });
 
+  it("does not report success when linked identities cannot be verified", async () => {
+    mockExchange(null, [{ provider: "google" }], { message: "Identity lookup failed" });
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=google");
+  });
+
   it("returns failed identity links to settings with an error marker", async () => {
     mockExchange({ message: "invalid grant" });
     const res = await GET(callbackRequest("code=abc&next=/settings&linked=discord"));
     expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=discord");
+  });
+
+  it("ignores unsupported linked-provider markers", async () => {
+    const supabase = mockExchange(null, [{ provider: "github" }]);
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=github"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings");
+    expect(supabase.auth.getUserIdentities).not.toHaveBeenCalled();
   });
 
   it("rejects protocol-relative callback destinations", async () => {

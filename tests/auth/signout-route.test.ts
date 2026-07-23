@@ -37,4 +37,42 @@ describe("auth sign-out POST", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("http://localhost:3000/login");
   });
+
+  it("returns to Settings with an explicit error when sign-out fails", async () => {
+    const signOut = vi.fn().mockResolvedValue({ error: { message: "Sign-out failed" } });
+    mockedCreateClient.mockResolvedValue({ auth: { signOut } } as never);
+    const request = new Request("http://localhost:3000/auth/signout", {
+      method: "POST",
+      headers: {
+        host: "localhost:3000",
+        origin: "http://localhost:3000",
+      },
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/settings?signoutError=1",
+    );
+  });
+
+  it("handles an unexpected sign-out exception without claiming success", async () => {
+    const signOut = vi.fn().mockRejectedValue(new Error("Storage unavailable"));
+    mockedCreateClient.mockResolvedValue({ auth: { signOut } } as never);
+    const request = new Request("http://localhost:3000/auth/signout", {
+      method: "POST",
+      headers: {
+        host: "localhost:3000",
+        origin: "http://localhost:3000",
+      },
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/settings?signoutError=1",
+    );
+  });
 });

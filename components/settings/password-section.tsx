@@ -12,6 +12,8 @@ interface PasswordSectionProps {
   email: string;
 }
 
+const UNEXPECTED_PASSWORD_ERROR = "Something went wrong while updating your password. Please try again.";
+
 export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionProps) {
   const [passwordEnabled, setPasswordEnabled] = useState(hasPasswordIdentity);
   const [newPassword, setNewPassword] = useState("");
@@ -19,6 +21,7 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
   const [nonce, setNonce] = useState("");
   const [requiresReauthentication, setRequiresReauthentication] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resending, setResending] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const passwordsMatch = newPassword === confirmPassword;
@@ -29,41 +32,68 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
     setSaving(true);
     setMessage(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-      ...(requiresReauthentication ? { nonce: nonce.trim() } : {}),
-    });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+        ...(requiresReauthentication ? { nonce: nonce.trim() } : {}),
+      });
 
-    if (error) {
-      if (error.code === "reauthentication_needed") {
-        const { error: reauthenticationError } = await supabase.auth.reauthenticate();
-        if (reauthenticationError) {
-          setMessage({ type: "error", text: reauthenticationError.message });
+      if (error) {
+        if (error.code === "reauthentication_needed") {
+          const { error: reauthenticationError } = await supabase.auth.reauthenticate();
+          if (reauthenticationError) {
+            setMessage({ type: "error", text: reauthenticationError.message });
+          } else {
+            setRequiresReauthentication(true);
+            setMessage({
+              type: "success",
+              text: `We sent a security code to ${email}. Enter it below to finish changing your password.`,
+            });
+          }
         } else {
-          setRequiresReauthentication(true);
-          setMessage({
-            type: "success",
-            text: `We sent a security code to ${email}. Enter it below to finish changing your password.`,
-          });
+          setMessage({ type: "error", text: error.message });
         }
       } else {
-        setMessage({ type: "error", text: error.message });
+        setPasswordEnabled(true);
+        setRequiresReauthentication(false);
+        setNonce("");
+        setMessage({
+          type: "success",
+          text: passwordEnabled
+            ? "Password updated successfully"
+            : `Email and password login enabled for ${email}`,
+        });
+        setNewPassword("");
+        setConfirmPassword("");
       }
-    } else {
-      setPasswordEnabled(true);
-      setRequiresReauthentication(false);
-      setNonce("");
-      setMessage({
-        type: "success",
-        text: passwordEnabled
-          ? "Password updated successfully"
-          : `Email and password login enabled for ${email}`,
-      });
-      setNewPassword("");
-      setConfirmPassword("");
+    } catch {
+      setMessage({ type: "error", text: UNEXPECTED_PASSWORD_ERROR });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
+  }
+
+  async function handleResendSecurityCode() {
+    setResending(true);
+    setMessage(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.reauthenticate();
+      if (error) {
+        setMessage({ type: "error", text: error.message });
+      } else {
+        setNonce("");
+        setMessage({
+          type: "success",
+          text: `We sent a new security code to ${email}.`,
+        });
+      }
+    } catch {
+      setMessage({ type: "error", text: UNEXPECTED_PASSWORD_ERROR });
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -100,6 +130,15 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
               onChange={(event) => setNonce(event.target.value)}
               placeholder="Enter the code from your email"
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResendSecurityCode}
+              disabled={saving || resending}
+            >
+              {resending ? "Sending a new code..." : "Send a new code"}
+            </Button>
           </div>
         )}
 
@@ -118,14 +157,17 @@ export function PasswordSection({ hasPasswordIdentity, email }: PasswordSectionP
         </div>
 
         {message && (
-          <p className={`text-sm ${message.type === "error" ? "text-destructive" : "text-accent"}`}>
+          <p
+            role={message.type === "error" ? "alert" : "status"}
+            className={`text-sm ${message.type === "error" ? "text-destructive" : "text-accent"}`}
+          >
             {message.text}
           </p>
         )}
 
         <Button
           onClick={handleChangePassword}
-          disabled={saving || !isValid || (requiresReauthentication && !nonce.trim())}
+          disabled={saving || resending || !isValid || (requiresReauthentication && !nonce.trim())}
         >
           {saving
             ? passwordEnabled
