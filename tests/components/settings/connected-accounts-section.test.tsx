@@ -11,6 +11,12 @@ import {
 } from "@/components/settings/connected-accounts-section";
 import { buildIdentityCallbackUrl } from "@/lib/auth/identity-providers";
 
+const routerRefresh = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: routerRefresh }),
+}));
+
 const mockedCreateClient = vi.mocked(createClient);
 const emailIdentity = {
   id: "email-id",
@@ -120,7 +126,7 @@ describe("ConnectedAccountsSection", () => {
   it("stops before linking when current identities cannot be verified", async () => {
     const auth = mockAuth();
     auth.getUserIdentities.mockResolvedValue({
-      data: { identities: [] },
+      data: null,
       error: { message: "Identity lookup failed" },
     });
 
@@ -229,6 +235,59 @@ describe("ConnectedAccountsSection", () => {
 
     expect(await screen.findByText("Cannot disconnect your only login method")).toBeVisible();
     expect(auth.unlinkIdentity).not.toHaveBeenCalled();
+  });
+
+  it("does not count disabled or unsupported identities as another usable login method", async () => {
+    const auth = mockAuth();
+    auth.getUserIdentities.mockResolvedValue({
+      data: { identities: [
+        { id: "google-id", identity_id: "google-identity-id", user_id: "user-id", provider: "google" },
+        { id: "discord-id", identity_id: "discord-identity-id", user_id: "user-id", provider: "discord" },
+        { id: "github-id", identity_id: "github-identity-id", user_id: "user-id", provider: "github" },
+      ] },
+      error: null,
+    });
+
+    render(
+      <ConnectedAccountsSection
+        identities={[
+          googleIdentity,
+          {
+            id: "discord-id",
+            identityId: "discord-identity-id",
+            userId: "user-id",
+            provider: "discord",
+          },
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect Google" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+
+    expect(await screen.findByText("Cannot disconnect your only login method")).toBeVisible();
+    expect(auth.unlinkIdentity).not.toHaveBeenCalled();
+  });
+
+  it("keeps unlink success authoritative when the identity reconciliation rejects", async () => {
+    const auth = mockAuth();
+    auth.getUserIdentities
+      .mockResolvedValueOnce({
+        data: { identities: [
+          { id: "email-id", identity_id: "email-identity-id", user_id: "user-id", provider: "email" },
+          { id: "google-id", identity_id: "google-identity-id", user_id: "user-id", provider: "google" },
+        ] },
+        error: null,
+      })
+      .mockRejectedValueOnce(new Error("Identity lookup failed"));
+    auth.unlinkIdentity.mockResolvedValue({ data: {}, error: null });
+
+    render(<ConnectedAccountsSection identities={[emailIdentity, googleIdentity]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Disconnect Google" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm disconnect" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("google disconnected");
+    expect(screen.getByRole("button", { name: "Connect Google" })).toBeVisible();
+    expect(routerRefresh).toHaveBeenCalledOnce();
   });
 
   it("keeps the provider connected when Supabase rejects the unlink", async () => {

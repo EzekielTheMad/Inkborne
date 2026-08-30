@@ -24,18 +24,21 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      if (linkedProvider) {
-        const { data, error: identitiesError } = await supabase.auth.getUserIdentities();
-        const linked = !identitiesError
-          && data.identities.some((identity) => identity.provider === linkedProvider);
-        const destination = addQuery(next, linked ? "linked" : "linkError", linkedProvider);
-        return NextResponse.redirect(`${origin}${destination}`);
-      }
+    try {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (!error) {
+        if (linkedProvider) {
+          const { data, error: identitiesError } = await supabase.auth.getUserIdentities();
+          const linked = !identitiesError
+            && data.identities.some((identity) => identity.provider === linkedProvider);
+          const destination = addQuery(next, linked ? "linked" : "linkError", linkedProvider);
+          return NextResponse.redirect(`${origin}${destination}`);
+        }
 
-      const destination = next;
-      return NextResponse.redirect(`${origin}${destination}`);
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+    } catch {
+      // Unexpected auth client failures use the same recovery redirects below.
     }
   }
 

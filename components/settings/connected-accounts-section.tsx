@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,12 +42,19 @@ function toIdentity(identity: {
   };
 }
 
+function isUsableLoginMethod(provider: string, discordEnabled: boolean): boolean {
+  return provider === "email"
+    || provider === "google"
+    || (provider === "discord" && discordEnabled);
+}
+
 export function ConnectedAccountsSection({
   identities: initialIdentities,
   linkedProvider = null,
   linkErrorProvider = null,
   discordEnabled = false,
 }: ConnectedAccountsSectionProps) {
+  const router = useRouter();
   const [identities, setIdentities] = useState(initialIdentities);
   const [loading, setLoading] = useState<string | null>(null);
   const [confirmingDisconnect, setConfirmingDisconnect] = useState<string | null>(null);
@@ -132,7 +140,8 @@ export function ConnectedAccountsSection({
         return;
       }
 
-      if (currentIdentities.length <= 1) {
+      const remainingIdentities = currentIdentities.filter((item) => item.id !== identity.id);
+      if (!remainingIdentities.some((item) => isUsableLoginMethod(item.provider, discordEnabled))) {
         setMessage({ type: "error", text: "Cannot disconnect your only login method" });
         return;
       }
@@ -141,13 +150,16 @@ export function ConnectedAccountsSection({
       if (error) {
         setMessage({ type: "error", text: error.message });
       } else {
-        const { data: refreshedData, error: refreshedError } = await supabase.auth.getUserIdentities();
-        setIdentities(
-          refreshedError
-            ? currentIdentities.filter((item) => item.id !== identity.id)
-            : refreshedData.identities.map(toIdentity),
-        );
+        let reconciledIdentities = remainingIdentities;
+        try {
+          const { data: refreshedData, error: refreshedError } = await supabase.auth.getUserIdentities();
+          if (!refreshedError) reconciledIdentities = refreshedData.identities.map(toIdentity);
+        } catch {
+          // The successful unlink remains authoritative when follow-up reconciliation rejects.
+        }
+        setIdentities(reconciledIdentities);
         setMessage({ type: "success", text: `${provider} disconnected` });
+        router.refresh();
       }
     } catch {
       setMessage({ type: "error", text: UNEXPECTED_AUTH_ERROR });

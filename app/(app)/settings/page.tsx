@@ -35,8 +35,13 @@ export default async function SettingsPage({
     console.error("[SettingsPage] Error fetching profile:", profileError.message, profileError.details, profileError.hint);
   }
 
-  const { data: identitiesData, error: identitiesError } = await supabase.auth.getUserIdentities();
-  const currentIdentities = identitiesError ? (user.identities ?? []) : identitiesData.identities;
+  let currentIdentities = user.identities ?? [];
+  try {
+    const { data: identitiesData, error: identitiesError } = await supabase.auth.getUserIdentities();
+    if (!identitiesError) currentIdentities = identitiesData.identities;
+  } catch {
+    // Keep the authenticated user snapshot when the dedicated identity lookup rejects.
+  }
   const { linkedProvider, linkErrorProvider } = resolveIdentityLinkStatus({
     requestedLinkedProvider,
     requestedLinkErrorProvider,
