@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 const { createClientMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
@@ -325,5 +327,21 @@ describe("E2E character fixture backgrounds", () => {
       operation: "delete",
       filters: [{ column: "id", value: characterId }],
     }));
+  });
+
+  it("preserves the canonical background when the MPMB fixture advances to level four", () => {
+    const spec = readFileSync(
+      path.resolve(process.cwd(), "e2e/mpmb-import-character.spec.ts"),
+      "utf8",
+    );
+    const helper = spec.match(
+      /async function makeWizardLevelFour\(\): Promise<string> \{[\s\S]*?\n\}/,
+    )?.[0];
+
+    expect(helper).toBeDefined();
+    expect(helper).toContain('.select("choices")');
+    expect(helper).toMatch(/choices:\s*\{\s*\.\.\.currentChoices,\s*classes:/);
+    expect(helper).not.toMatch(/\bbackground\s*:/);
+    expect(helper).not.toContain('"sage"');
   });
 });
