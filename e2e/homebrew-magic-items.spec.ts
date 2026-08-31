@@ -12,10 +12,26 @@ const runId = Date.now();
 const originalName = `${E2E_HOMEBREW_PREFIX} Oathbound Compass ${runId}`;
 const revisedName = `${originalName} Revised`;
 let definitionId: string | null = null;
+let systemId = "";
 
 function libraryEntry(page: Page, name: string) {
   return page.getByRole("link").filter({ hasText: name });
 }
+
+test.beforeAll(async () => {
+  const { data, error } = await createServiceClient()
+    .from("game_systems")
+    .select("id")
+    .eq("slug", "dnd-5e-2014")
+    .eq("status", "published")
+    .single();
+  if (error || !data) {
+    throw new Error(
+      `Could not resolve the published D&D 5e (2014) system: ${error?.message ?? "no row"}`,
+    );
+  }
+  systemId = data.id;
+});
 
 test.afterAll(async () => {
   const service = createServiceClient();
@@ -92,7 +108,7 @@ test("creates a private magic item, saves v2, and discovers it in Library", asyn
   await expect(revisedLink).toContainText("Very Rare · No attunement required");
   await expect(revisedLink).toContainText("v2");
 
-  await page.goto("/library");
+  await page.goto(`/library?system=${encodeURIComponent(systemId)}`);
   await page
     .getByRole("navigation", { name: "Library categories" })
     .getByRole("link", { name: "Items", exact: true })
