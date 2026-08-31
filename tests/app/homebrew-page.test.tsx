@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedSpells: vi.fn(),
   listOwnedFeats: vi.fn(),
   listOwnedBackgrounds: vi.fn(),
+  listOwnedMagicItems: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -16,6 +17,9 @@ vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
 }));
 vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
   listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
+}));
+vi.mock("@/lib/supabase/homebrew-magic-items-server", () => ({
+  listOwnedHomebrewMagicItems: mocks.listOwnedMagicItems,
 }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: { getUser: mocks.getUser } }),
@@ -38,9 +42,10 @@ describe("HomebrewPage", () => {
     mocks.listOwnedSpells.mockResolvedValue([]);
     mocks.listOwnedFeats.mockResolvedValue([]);
     mocks.listOwnedBackgrounds.mockResolvedValue([]);
+    mocks.listOwnedMagicItems.mockResolvedValue([]);
   });
 
-  it("shows spell, feat, and background sections with their versioned homebrew links", async () => {
+  it("shows each authoring section with its versioned homebrew links", async () => {
     mocks.listOwnedSpells.mockResolvedValue([
       {
         id: "11111111-1111-4111-8111-111111111111",
@@ -81,14 +86,30 @@ describe("HomebrewPage", () => {
         },
       },
     ]);
+    mocks.listOwnedMagicItems.mockResolvedValue([
+      {
+        id: "55555555-5555-4555-8555-555555555555",
+        name: "Oathbound Compass",
+        scope: "personal",
+        version: 2,
+        data: {
+          rarity: "Rare",
+          description: "It points toward your last promise.",
+          equipment_category: "Wondrous item",
+          requires_attunement: true,
+        },
+      },
+    ]);
 
     render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getAllByText("Private")).toHaveLength(2);
+    expect(screen.getAllByText("Private")).toHaveLength(3);
     expect(screen.getByText("Shared · 2 campaigns")).toBeVisible();
     expect(screen.getByText("My spells")).toBeVisible();
     expect(screen.getByText("My feats")).toBeVisible();
     expect(screen.getByText("My backgrounds")).toBeVisible();
+    expect(screen.getByText("My magic items")).toBeVisible();
+    expect(screen.getByText("Rare · Requires attunement")).toBeVisible();
     expect(screen.getByRole("link", { name: /Fleet Adept/ })).toHaveAttribute(
       "href",
       "/homebrew/feats/33333333-3333-4333-8333-333333333333/edit",
@@ -101,6 +122,15 @@ describe("HomebrewPage", () => {
       "href",
       "/homebrew/backgrounds/new",
     );
+    expect(screen.getByRole("link", { name: "Create magic item" })).toHaveAttribute(
+      "href",
+      "/homebrew/magic-items/new",
+    );
+    expect(screen.getByRole("link", { name: /Oathbound Compass/ })).toHaveAttribute(
+      "href",
+      "/homebrew/magic-items/55555555-5555-4555-8555-555555555555/edit",
+    );
+    expect(screen.getByRole("link", { name: /Oathbound Compass/ })).toHaveTextContent("v2");
     expect(screen.getByRole("link", { name: /Lantern Courier/ })).toHaveAttribute(
       "href",
       "/homebrew/backgrounds/44444444-4444-4444-8444-444444444444/edit",
@@ -118,6 +148,7 @@ describe("HomebrewPage", () => {
     expect(screen.getAllByRole("link", { name: "Create spell" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create feat" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create background" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Create magic item" })).toHaveLength(2);
   });
 
   it("keeps available content visible when one content type fails to load", async () => {
