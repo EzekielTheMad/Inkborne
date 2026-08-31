@@ -104,14 +104,15 @@ export async function seedHomebrewSharingCampaign(input: {
     getTestUserId(),
     getUserIdForCredentials(input.playerEmail, input.playerPassword),
   ]);
-  const { data: systems, error: systemsError } = await service
+  const { data: system, error: systemError } = await service
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .eq("slug", E2E_GAME_SYSTEM_SLUG);
-  if (systemsError || !systems?.length) {
+    .eq("slug", E2E_GAME_SYSTEM_SLUG)
+    .single();
+  if (systemError || !system) {
     throw new Error(
-      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+      `Could not find a published game system: ${systemError?.message ?? "no row"}`,
     );
   }
 
@@ -121,7 +122,7 @@ export async function seedHomebrewSharingCampaign(input: {
       name: input.name,
       description: "Disposable campaign-scoped homebrew acceptance fixture.",
       owner_id: ownerId,
-      system_id: systems[0].id,
+      system_id: system.id,
     })
     .select("id")
     .single();
@@ -144,7 +145,7 @@ export async function seedHomebrewSharingCampaign(input: {
         + (cleanupError ? `; cleanup also failed: ${cleanupError.message}` : ""),
     );
   }
-  return { id: campaign.id, systemId: systems[0].id };
+  return { id: campaign.id, systemId: system.id };
 }
 
 export async function assignCharactersToCampaign(
@@ -380,21 +381,22 @@ export async function seedSheetCharacter(name: string): Promise<string> {
     env("E2E_TEST_PASSWORD"),
   );
 
-  const { data: systems, error: systemsError } = await service
+  const { data: system, error: systemError } = await service
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .eq("slug", E2E_GAME_SYSTEM_SLUG);
-  if (systemsError || !systems?.length) {
+    .eq("slug", E2E_GAME_SYSTEM_SLUG)
+    .single();
+  if (systemError || !system) {
     throw new Error(
-      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+      `Could not find a published game system: ${systemError?.message ?? "no row"}`,
     );
   }
 
   return seedCharacterWithBackground({
     service,
     authenticatedUser,
-    systemId: systems[0].id,
+    systemId: system.id,
     backgroundSlug: E2E_PLATFORM_BACKGROUND_SLUG,
     fixtureLabel: "sheet character",
     character: {
@@ -417,7 +419,7 @@ export async function seedSheetCharacter(name: string): Promise<string> {
     seedRelated: (characterId) => seedClassContentRef(
       service,
       characterId,
-      systems[0].id,
+      system.id,
       "fighter",
       1,
     ),
@@ -464,17 +466,18 @@ async function seedWizardCharacterForUser(
 ): Promise<string> {
   const service = createServiceClient();
 
-  const { data: systems, error: systemsError } = await service
+  const { data: system, error: systemError } = await service
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .eq("slug", E2E_GAME_SYSTEM_SLUG);
-  if (systemsError || !systems?.length) {
+    .eq("slug", E2E_GAME_SYSTEM_SLUG)
+    .single();
+  if (systemError || !system) {
     throw new Error(
-      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+      `Could not find a published game system: ${systemError?.message ?? "no row"}`,
     );
   }
-  const systemId = systems[0].id;
+  const systemId = system.id;
 
   return seedCharacterWithBackground({
     service,

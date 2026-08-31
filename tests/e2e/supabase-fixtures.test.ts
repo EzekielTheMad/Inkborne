@@ -41,16 +41,40 @@ interface RecordedRpc {
   args: Record<string, unknown>;
 }
 
+interface FakeGameSystem {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+}
+
 interface HarnessState {
   queries: RecordedQuery[];
   rpcs: RecordedRpc[];
   rpcError: { message: string } | null;
+  gameSystems: FakeGameSystem[];
 }
+
+const CANONICAL_SYSTEM_ID = "system-1";
+const DECOY_SYSTEM_ID = "system-decoy";
+const canonicalSystem: FakeGameSystem = {
+  id: CANONICAL_SYSTEM_ID,
+  name: "Dungeons & Dragons 5e (2014)",
+  slug: "dnd-5e-2014",
+  status: "published",
+};
+const earlierDecoySystem: FakeGameSystem = {
+  id: DECOY_SYSTEM_ID,
+  name: "A Decoy System",
+  slug: "a-decoy-system",
+  status: "published",
+};
 
 const state: HarnessState = {
   queries: [],
   rpcs: [],
   rpcError: null,
+  gameSystems: [earlierDecoySystem, canonicalSystem],
 };
 
 function filterValue(query: RecordedQuery, column: string): unknown {
@@ -110,7 +134,23 @@ class FakeQuery implements PromiseLike<QueryResult> {
   }
 
   single(): Promise<QueryResult> {
-    return Promise.resolve(this.resolve());
+    const result = this.resolve();
+    if (this.record.table !== "game_systems") {
+      return Promise.resolve(result);
+    }
+
+    const rows = result.data as FakeGameSystem[];
+    if (rows.length !== 1) {
+      return Promise.resolve({
+        data: null,
+        error: {
+          message: rows.length === 0
+            ? "JSON object requested, no rows returned"
+            : "JSON object requested, multiple rows returned",
+        },
+      });
+    }
+    return Promise.resolve({ data: rows[0], error: null });
   }
 
   then<TResult1 = QueryResult, TResult2 = never>(
@@ -122,7 +162,15 @@ class FakeQuery implements PromiseLike<QueryResult> {
 
   private resolve(): QueryResult {
     if (this.record.table === "game_systems") {
-      return { data: [{ id: "system-1" }], error: null };
+      const slug = filterValue(this.record, "slug");
+      const status = filterValue(this.record, "status");
+      return {
+        data: state.gameSystems.filter((system) => (
+          (slug === undefined || system.slug === slug)
+          && (status === undefined || system.status === status)
+        )),
+        error: null,
+      };
     }
 
     if (this.record.table === "characters") {
@@ -252,6 +300,7 @@ describe("E2E character fixture backgrounds", () => {
     state.queries = [];
     state.rpcs = [];
     state.rpcError = null;
+    state.gameSystems = [earlierDecoySystem, canonicalSystem];
 
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.test";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
@@ -340,7 +389,7 @@ describe("E2E character fixture backgrounds", () => {
           playerEmail: "player@example.test",
           playerPassword: "player-password",
         });
-        expect(fixture).toEqual({ id: "campaign-1", systemId: "system-1" });
+        expect(fixture).toEqual({ id: "campaign-1", systemId: CANONICAL_SYSTEM_ID });
       },
     },
     {
@@ -360,6 +409,77 @@ describe("E2E character fixture backgrounds", () => {
       { column: "slug", value: "dnd-5e-2014" },
       { column: "status", value: "published" },
     ]));
+
+    const fixtureSystemIds = state.queries
+      .filter((query) => (
+        query.operation === "insert"
+        && ["campaigns", "characters"].includes(query.table)
+      ))
+      .map((query) => (query.payload as { system_id?: string }).system_id)
+      .filter((systemId): systemId is string => Boolean(systemId));
+    expect(fixtureSystemIds).toEqual([CANONICAL_SYSTEM_ID]);
+    expect(fixtureSystemIds).not.toContain(DECOY_SYSTEM_ID);
+  });
+
+  it.each([
+    {
+      label: "homebrew-sharing campaign with no canonical system",
+      systems: [earlierDecoySystem],
+      seed: () => seedHomebrewSharingCampaign({
+        name: "Missing System Campaign Fixture",
+        playerEmail: "player@example.test",
+        playerPassword: "player-password",
+      }),
+    },
+    {
+      label: "homebrew-sharing campaign with duplicate canonical systems",
+      systems: [
+        earlierDecoySystem,
+        canonicalSystem,
+        { ...canonicalSystem, id: "system-duplicate" },
+      ],
+      seed: () => seedHomebrewSharingCampaign({
+        name: "Duplicate System Campaign Fixture",
+        playerEmail: "player@example.test",
+        playerPassword: "player-password",
+      }),
+    },
+    {
+      label: "sheet with no canonical system",
+      systems: [earlierDecoySystem],
+      seed: () => seedSheetCharacter("Missing System Sheet Fixture"),
+    },
+    {
+      label: "sheet with duplicate canonical systems",
+      systems: [
+        earlierDecoySystem,
+        canonicalSystem,
+        { ...canonicalSystem, id: "system-duplicate" },
+      ],
+      seed: () => seedSheetCharacter("Duplicate System Sheet Fixture"),
+    },
+    {
+      label: "gameplay with no canonical system",
+      systems: [earlierDecoySystem],
+      seed: () => seedWizardCharacter("Missing System Gameplay Fixture"),
+    },
+    {
+      label: "gameplay with duplicate canonical systems",
+      systems: [
+        earlierDecoySystem,
+        canonicalSystem,
+        { ...canonicalSystem, id: "system-duplicate" },
+      ],
+      seed: () => seedWizardCharacter("Duplicate System Gameplay Fixture"),
+    },
+  ])("rejects $label", async ({ systems, seed }) => {
+    state.gameSystems = systems;
+
+    await expect(seed()).rejects.toThrow("Could not find a published game system:");
+    expect(state.queries).not.toContainEqual(expect.objectContaining({
+      operation: "insert",
+      table: expect.stringMatching(/^(campaigns|characters)$/),
+    }));
   });
 
   it("deletes a partially seeded character when background application fails", async () => {
