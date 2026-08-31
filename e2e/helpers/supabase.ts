@@ -16,6 +16,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export const E2E_CHARACTER_PREFIX = "E2E Smoke";
 export const E2E_CAMPAIGN_PREFIX = "E2E Campaign";
 export const E2E_HOMEBREW_PREFIX = "E2E Homebrew";
+const E2E_GAME_SYSTEM_SLUG = "dnd-5e-2014";
 /** The 2014 SRD exposes Acolyte as its canonical platform background. */
 const E2E_PLATFORM_BACKGROUND_SLUG = "acolyte";
 
@@ -107,8 +108,7 @@ export async function seedHomebrewSharingCampaign(input: {
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .order("name")
-    .limit(1);
+    .eq("slug", E2E_GAME_SYSTEM_SLUG);
   if (systemsError || !systems?.length) {
     throw new Error(
       `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
@@ -384,8 +384,7 @@ export async function seedSheetCharacter(name: string): Promise<string> {
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .order("name")
-    .limit(1);
+    .eq("slug", E2E_GAME_SYSTEM_SLUG);
   if (systemsError || !systems?.length) {
     throw new Error(
       `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
@@ -469,8 +468,7 @@ async function seedWizardCharacterForUser(
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .order("name")
-    .limit(1);
+    .eq("slug", E2E_GAME_SYSTEM_SLUG);
   if (systemsError || !systems?.length) {
     throw new Error(
       `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,

@@ -12,6 +12,7 @@ vi.mock("@supabase/supabase-js", () => ({
 
 import {
   seedCampaignCharacter,
+  seedHomebrewSharingCampaign,
   seedSheetCharacter,
   seedWizardCharacter,
 } from "@/e2e/helpers/supabase";
@@ -28,7 +29,7 @@ interface QueryFilter {
 
 interface RecordedQuery {
   table: string;
-  operation: "read" | "insert" | "delete";
+  operation: "read" | "insert" | "upsert" | "delete";
   payload?: unknown;
   filters: QueryFilter[];
 }
@@ -75,6 +76,12 @@ class FakeQuery implements PromiseLike<QueryResult> {
 
   insert(payload: unknown): this {
     this.record.operation = "insert";
+    this.record.payload = payload;
+    return this;
+  }
+
+  upsert(payload: unknown): this {
+    this.record.operation = "upsert";
     this.record.payload = payload;
     return this;
   }
@@ -126,6 +133,10 @@ class FakeQuery implements PromiseLike<QueryResult> {
         };
       }
       return { data: null, error: null };
+    }
+
+    if (this.record.table === "campaigns" && this.record.operation === "insert") {
+      return { data: { id: "campaign-1" }, error: null };
     }
 
     if (this.record.table === "content_definitions") {
@@ -227,6 +238,14 @@ function findBackgroundQuery(slug: string): RecordedQuery {
   return query;
 }
 
+function findGameSystemQuery(): RecordedQuery {
+  const queries = state.queries.filter((candidate) => (
+    candidate.table === "game_systems" && candidate.operation === "read"
+  ));
+  expect(queries).toHaveLength(1);
+  return queries[0];
+}
+
 describe("E2E character fixture backgrounds", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -310,6 +329,37 @@ describe("E2E character fixture backgrounds", () => {
         target_content_version: expectedVersion,
       },
     }]);
+  });
+
+  it.each([
+    {
+      label: "homebrew-sharing campaign",
+      seed: async () => {
+        const fixture = await seedHomebrewSharingCampaign({
+          name: "Homebrew Campaign Fixture",
+          playerEmail: "player@example.test",
+          playerPassword: "player-password",
+        });
+        expect(fixture).toEqual({ id: "campaign-1", systemId: "system-1" });
+      },
+    },
+    {
+      label: "sheet",
+      seed: () => seedSheetCharacter("System Sheet Fixture"),
+    },
+    {
+      label: "gameplay",
+      seed: () => seedWizardCharacter("System Gameplay Fixture"),
+    },
+  ])("selects the canonical published D&D 5e 2014 system for the $label fixture", async ({
+    seed,
+  }) => {
+    await seed();
+
+    expect(findGameSystemQuery().filters).toEqual(expect.arrayContaining([
+      { column: "slug", value: "dnd-5e-2014" },
+      { column: "status", value: "published" },
+    ]));
   });
 
   it("deletes a partially seeded character when background application fails", async () => {
