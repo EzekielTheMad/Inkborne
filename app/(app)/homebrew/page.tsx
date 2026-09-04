@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { listOwnedHomebrewBackgrounds } from "@/lib/supabase/homebrew-backgrounds-server";
 import { listOwnedHomebrewFeats } from "@/lib/supabase/homebrew-feats-server";
+import { listOwnedHomebrewMagicItems } from "@/lib/supabase/homebrew-magic-items-server";
 import { listOwnedHomebrewSpells } from "@/lib/supabase/homebrew-spells-server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,14 +20,16 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult, backgroundsResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult, magicItemsResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
     listOwnedHomebrewBackgrounds(),
+    listOwnedHomebrewMagicItems(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
   const backgrounds = backgroundsResult.status === "fulfilled" ? backgroundsResult.value : [];
+  const magicItems = magicItemsResult.status === "fulfilled" ? magicItemsResult.value : [];
 
   if (spellsResult.status === "rejected") {
     console.error("[HomebrewPage] Failed to load owned homebrew spells", spellsResult.reason);
@@ -40,6 +43,12 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
       backgroundsResult.reason,
     );
   }
+  if (magicItemsResult.status === "rejected") {
+    console.error(
+      "[HomebrewPage] Failed to load owned homebrew magic items",
+      magicItemsResult.reason,
+    );
+  }
 
   const notice = typeof query.created === "string"
     ? "Private homebrew created."
@@ -49,9 +58,11 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   const completelyEmpty = spells.length === 0
     && feats.length === 0
     && backgrounds.length === 0
+    && magicItems.length === 0
     && spellsResult.status === "fulfilled"
     && featsResult.status === "fulfilled"
-    && backgroundsResult.status === "fulfilled";
+    && backgroundsResult.status === "fulfilled"
+    && magicItemsResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -77,6 +88,10 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
             <Plus className="size-4" />
             Create background
           </Link>
+          <Link href="/homebrew/magic-items/new" className={buttonVariants({ variant: "outline" })}>
+            <Plus className="size-4" />
+            Create magic item
+          </Link>
           <Link href="/homebrew/spells/new" className={buttonVariants({ variant: "gold" })}>
             <Plus className="size-4" />
             Create spell
@@ -97,12 +112,13 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
           </div>
           <h2 className="j-display mt-4 text-xl text-foreground">Write your first private rule</h2>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-            Start with a spell, feat, or background. Every change is versioned so character sheets can remain pinned to exactly what they chose.
+            Start with a spell, feat, background, or magic item. Every change is versioned so character sheets can remain pinned to exactly what they chose.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link href="/homebrew/spells/new" className={buttonVariants({ variant: "outline" })}>Create spell</Link>
             <Link href="/homebrew/feats/new" className={buttonVariants({ variant: "outline" })}>Create feat</Link>
             <Link href="/homebrew/backgrounds/new" className={buttonVariants({ variant: "outline" })}>Create background</Link>
+            <Link href="/homebrew/magic-items/new" className={buttonVariants({ variant: "outline" })}>Create magic item</Link>
           </div>
         </div>
       )}
@@ -230,6 +246,46 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
                       {skill.replaceAll("-", " ")}
                     </span>
                   ))}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {magicItemsResult.status === "rejected" ? (
+        <HomebrewLoadError label="magic items" />
+      ) : magicItems.length > 0 ? (
+        <section aria-labelledby="owned-magic-items-heading" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-accent" />
+            <h2 id="owned-magic-items-heading" className="j-folio">My magic items</h2>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {magicItems.map((item) => (
+              <Link
+                key={item.id}
+                href={`/homebrew/magic-items/${item.id}/edit`}
+                className="j-card-paper group p-5 transition-colors hover:border-accent/50"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="j-display truncate text-lg text-foreground group-hover:text-accent">
+                      {item.name}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {item.data.rarity} · {item.data.requires_attunement
+                        ? "Requires attunement"
+                        : "No attunement required"}
+                    </p>
+                    <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                      {item.data.description}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="secondary">v{item.version}</Badge>
+                  </div>
                 </div>
               </Link>
             ))}
