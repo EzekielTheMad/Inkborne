@@ -9,10 +9,23 @@ import { GET } from "@/app/(auth)/auth/callback/route";
 
 const mockedCreateClient = vi.mocked(createClient);
 
-function mockExchange(error: { message: string } | null) {
+function mockExchange(
+  error: { message: string } | null,
+  identities: Array<{ provider: string }> = [],
+  identitiesError: { message: string } | null = null,
+) {
   const supabase = {
     auth: {
-      exchangeCodeForSession: vi.fn().mockResolvedValue({ error }),
+      exchangeCodeForSession: vi.fn().mockResolvedValue(
+        error
+          ? { data: { session: null, user: null, redirectType: null }, error }
+          : { data: { session: {}, user: {}, redirectType: null }, error: null },
+      ),
+      getUserIdentities: vi.fn().mockResolvedValue(
+        identitiesError
+          ? { data: null, error: identitiesError }
+          : { data: { identities }, error: null },
+      ),
     },
   };
   mockedCreateClient.mockResolvedValue(supabase as never);
@@ -51,15 +64,56 @@ describe("auth callback GET", () => {
   });
 
   it("returns linked OAuth identities to settings with a success marker", async () => {
-    mockExchange(null);
+    mockExchange(null, [{ provider: "google" }]);
     const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
     expect(locationOf(res)).toBe("http://localhost:3000/settings?linked=google");
+  });
+
+  it("does not report success unless the requested identity is attached", async () => {
+    mockExchange(null, [{ provider: "email" }]);
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=google");
+  });
+
+  it("does not report success when linked identities cannot be verified", async () => {
+    mockExchange(null, [], { message: "Identity lookup failed" });
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=google");
+  });
+
+  it("recovers a supported link callback when the code exchange rejects", async () => {
+    const supabase = mockExchange(null);
+    supabase.auth.exchangeCodeForSession.mockRejectedValue(new Error("Auth service unavailable"));
+
+    const res = await GET(callbackRequest(
+      "code=abc&next=%2Fsettings%3Ftab%3Daccounts&linked=google",
+    ));
+
+    expect(locationOf(res)).toBe(
+      "http://localhost:3000/settings?tab=accounts&linkError=google",
+    );
+  });
+
+  it("recovers a supported link callback when identity verification rejects", async () => {
+    const supabase = mockExchange(null, [{ provider: "google" }]);
+    supabase.auth.getUserIdentities.mockRejectedValue(new Error("Auth service unavailable"));
+
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=google"));
+
+    expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=google");
   });
 
   it("returns failed identity links to settings with an error marker", async () => {
     mockExchange({ message: "invalid grant" });
     const res = await GET(callbackRequest("code=abc&next=/settings&linked=discord"));
     expect(locationOf(res)).toBe("http://localhost:3000/settings?linkError=discord");
+  });
+
+  it("ignores unsupported linked-provider markers", async () => {
+    const supabase = mockExchange(null, [{ provider: "github" }]);
+    const res = await GET(callbackRequest("code=abc&next=/settings&linked=github"));
+    expect(locationOf(res)).toBe("http://localhost:3000/settings");
+    expect(supabase.auth.getUserIdentities).not.toHaveBeenCalled();
   });
 
   it("rejects protocol-relative callback destinations", async () => {
@@ -79,6 +133,15 @@ describe("auth callback GET", () => {
   it("redirects to /login?error=auth when exchange fails", async () => {
     mockExchange({ message: "invalid grant" });
     const res = await GET(callbackRequest("code=abc"));
+    expect(locationOf(res)).toBe("http://localhost:3000/login?error=auth");
+  });
+
+  it("redirects ordinary auth callbacks to login when the code exchange rejects", async () => {
+    const supabase = mockExchange(null);
+    supabase.auth.exchangeCodeForSession.mockRejectedValue(new Error("Auth service unavailable"));
+
+    const res = await GET(callbackRequest("code=abc&next=/characters/123"));
+
     expect(locationOf(res)).toBe("http://localhost:3000/login?error=auth");
   });
 });
