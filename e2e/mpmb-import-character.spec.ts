@@ -55,15 +55,28 @@ function mpmbSource(): string {
 async function makeWizardLevelFour(): Promise<string> {
   const id = await seedWizardCharacter(characterName);
   const service = createServiceClient();
+  const { data: seededCharacter, error: loadError } = await service
+    .from("characters")
+    .select("choices")
+    .eq("id", id)
+    .single();
+  if (loadError || !seededCharacter) {
+    throw new Error(
+      `Could not load seeded E2E Wizard: ${loadError?.message ?? "no row"}`,
+    );
+  }
+  const currentChoices = seededCharacter.choices;
+  if (!currentChoices || typeof currentChoices !== "object" || Array.isArray(currentChoices)) {
+    throw new Error("Seeded E2E Wizard choices were invalid.");
+  }
+
   const { error } = await service
     .from("characters")
     .update({
       level: 4,
       choices: {
+        ...currentChoices,
         classes: [{ slug: "wizard", level: 4 }],
-        race: "human",
-        background: "sage",
-        ability_method: "standard_array",
       },
     })
     .eq("id", id);

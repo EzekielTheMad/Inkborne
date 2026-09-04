@@ -16,6 +16,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export const E2E_CHARACTER_PREFIX = "E2E Smoke";
 export const E2E_CAMPAIGN_PREFIX = "E2E Campaign";
 export const E2E_HOMEBREW_PREFIX = "E2E Homebrew";
+const E2E_GAME_SYSTEM_SLUG = "dnd-5e-2014";
+/** The 2014 SRD exposes Acolyte as its canonical platform background. */
+const E2E_PLATFORM_BACKGROUND_SLUG = "acolyte";
 
 function env(name: string): string {
   const value = process.env[name];
@@ -38,16 +41,28 @@ export function createServiceClient(): SupabaseClient {
 /** Signs in with the test credentials (anon key) and returns the user id.
  *  Doubles as an early validation that the credentials are correct. */
 export async function getTestUserId(): Promise<string> {
-  return getUserIdForCredentials(
+  return (await getAuthenticatedUserForCredentials(
     env("E2E_TEST_EMAIL"),
     env("E2E_TEST_PASSWORD"),
-  );
+  )).userId;
 }
 
 export async function getUserIdForCredentials(
   email: string,
   password: string,
 ): Promise<string> {
+  return (await getAuthenticatedUserForCredentials(email, password)).userId;
+}
+
+interface AuthenticatedE2EUser {
+  client: SupabaseClient;
+  userId: string;
+}
+
+async function getAuthenticatedUserForCredentials(
+  email: string,
+  password: string,
+): Promise<AuthenticatedE2EUser> {
   const client = createClient(
     env("NEXT_PUBLIC_SUPABASE_URL"),
     env("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
@@ -60,7 +75,7 @@ export async function getUserIdForCredentials(
   if (error || !data.user) {
     throw new Error(`Could not sign in as E2E test user: ${error?.message}`);
   }
-  return data.user.id;
+  return { client, userId: data.user.id };
 }
 
 export async function getCampaignFixture(campaignId: string): Promise<{
@@ -89,15 +104,15 @@ export async function seedHomebrewSharingCampaign(input: {
     getTestUserId(),
     getUserIdForCredentials(input.playerEmail, input.playerPassword),
   ]);
-  const { data: systems, error: systemsError } = await service
+  const { data: system, error: systemError } = await service
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .order("name")
-    .limit(1);
-  if (systemsError || !systems?.length) {
+    .eq("slug", E2E_GAME_SYSTEM_SLUG)
+    .single();
+  if (systemError || !system) {
     throw new Error(
-      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+      `Could not find a published game system: ${systemError?.message ?? "no row"}`,
     );
   }
 
@@ -107,7 +122,7 @@ export async function seedHomebrewSharingCampaign(input: {
       name: input.name,
       description: "Disposable campaign-scoped homebrew acceptance fixture.",
       owner_id: ownerId,
-      system_id: systems[0].id,
+      system_id: system.id,
     })
     .select("id")
     .single();
@@ -130,7 +145,7 @@ export async function seedHomebrewSharingCampaign(input: {
         + (cleanupError ? `; cleanup also failed: ${cleanupError.message}` : ""),
     );
   }
-  return { id: campaign.id, systemId: systems[0].id };
+  return { id: campaign.id, systemId: system.id };
 }
 
 export async function assignCharactersToCampaign(
@@ -179,6 +194,79 @@ async function seedClassContentRef(
   }
 }
 
+async function seedCharacterWithBackground(input: {
+  service: SupabaseClient;
+  authenticatedUser: AuthenticatedE2EUser;
+  systemId: string;
+  backgroundSlug: string;
+  character: Record<string, unknown>;
+  fixtureLabel: string;
+  seedRelated: (characterId: string) => Promise<void>;
+}): Promise<string> {
+  const { data: background, error: backgroundLookupError } = await input.service
+    .from("content_definitions")
+    .select("id, version")
+    .eq("system_id", input.systemId)
+    .eq("content_type", "background")
+    .eq("slug", input.backgroundSlug)
+    .eq("source", "srd")
+    .eq("scope", "platform")
+    .eq("is_retired", false)
+    .single();
+  if (backgroundLookupError || !background) {
+    throw new Error(
+      `Could not resolve ${input.backgroundSlug} background content: `
+        + `${backgroundLookupError?.message ?? "no row"}`,
+    );
+  }
+
+  const { data: character, error: characterError } = await input.service
+    .from("characters")
+    .insert({
+      ...input.character,
+      user_id: input.authenticatedUser.userId,
+      system_id: input.systemId,
+    })
+    .select("id")
+    .single();
+  if (characterError || !character) {
+    throw new Error(
+      `Could not seed ${input.fixtureLabel}: ${characterError?.message}`,
+    );
+  }
+
+  try {
+    const { error: backgroundError } = await input.authenticatedUser.client.rpc(
+      "set_character_background",
+      {
+        target_character_id: character.id,
+        target_content_id: background.id,
+        target_content_version: background.version,
+      },
+    );
+    if (backgroundError) {
+      throw new Error(
+        `Could not apply ${input.backgroundSlug} background: ${backgroundError.message}`,
+      );
+    }
+
+    await input.seedRelated(character.id);
+  } catch (error) {
+    const { error: cleanupError } = await input.service
+      .from("characters")
+      .delete()
+      .eq("id", character.id);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      message + (cleanupError
+        ? `; cleanup also failed: ${cleanupError.message}`
+        : ""),
+    );
+  }
+
+  return character.id;
+}
+
 export async function seedCampaignCharacter(input: {
   name: string;
   systemId: string;
@@ -186,13 +274,18 @@ export async function seedCampaignCharacter(input: {
   password: string;
 }): Promise<string> {
   const service = createServiceClient();
-  const userId = await getUserIdForCredentials(input.email, input.password);
-  const { data, error } = await service
-    .from("characters")
-    .insert({
+  const authenticatedUser = await getAuthenticatedUserForCredentials(
+    input.email,
+    input.password,
+  );
+  return seedCharacterWithBackground({
+    service,
+    authenticatedUser,
+    systemId: input.systemId,
+    backgroundSlug: E2E_PLATFORM_BACKGROUND_SLUG,
+    fixtureLabel: "campaign character",
+    character: {
       name: input.name,
-      user_id: userId,
-      system_id: input.systemId,
       level: 1,
       base_stats: {
         strength: 15,
@@ -205,17 +298,17 @@ export async function seedCampaignCharacter(input: {
       choices: {
         classes: [{ slug: "fighter", level: 1 }],
         race: "human",
-        background: "soldier",
         ability_method: "standard_array",
       },
-    })
-    .select("id")
-    .single();
-  if (error || !data) {
-    throw new Error(`Could not seed campaign character: ${error?.message}`);
-  }
-  await seedClassContentRef(service, data.id, input.systemId, "fighter", 1);
-  return data.id;
+    },
+    seedRelated: (characterId) => seedClassContentRef(
+      service,
+      characterId,
+      input.systemId,
+      "fighter",
+      1,
+    ),
+  });
 }
 
 export async function setCampaignPageContent(pageId: string, content: unknown): Promise<void> {
@@ -283,26 +376,31 @@ export async function sweepE2ECampaigns(): Promise<number> {
  */
 export async function seedSheetCharacter(name: string): Promise<string> {
   const service = createServiceClient();
-  const userId = await getTestUserId();
+  const authenticatedUser = await getAuthenticatedUserForCredentials(
+    env("E2E_TEST_EMAIL"),
+    env("E2E_TEST_PASSWORD"),
+  );
 
-  const { data: systems, error: systemsError } = await service
+  const { data: system, error: systemError } = await service
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .order("name")
-    .limit(1);
-  if (systemsError || !systems?.length) {
+    .eq("slug", E2E_GAME_SYSTEM_SLUG)
+    .single();
+  if (systemError || !system) {
     throw new Error(
-      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+      `Could not find a published game system: ${systemError?.message ?? "no row"}`,
     );
   }
 
-  const { data, error } = await service
-    .from("characters")
-    .insert({
+  return seedCharacterWithBackground({
+    service,
+    authenticatedUser,
+    systemId: system.id,
+    backgroundSlug: E2E_PLATFORM_BACKGROUND_SLUG,
+    fixtureLabel: "sheet character",
+    character: {
       name,
-      user_id: userId,
-      system_id: systems[0].id,
       level: 1,
       base_stats: {
         strength: 15,
@@ -315,17 +413,17 @@ export async function seedSheetCharacter(name: string): Promise<string> {
       choices: {
         classes: [{ slug: "fighter", level: 1 }],
         race: "human",
-        background: "soldier",
         ability_method: "standard_array",
       },
-    })
-    .select("id")
-    .single();
-  if (error || !data) {
-    throw new Error(`Could not seed sheet character: ${error?.message}`);
-  }
-  await seedClassContentRef(service, data.id, systems[0].id, "fighter", 1);
-  return data.id;
+    },
+    seedRelated: (characterId) => seedClassContentRef(
+      service,
+      characterId,
+      system.id,
+      "fighter",
+      1,
+    ),
+  });
 }
 
 /**
@@ -342,7 +440,13 @@ export async function seedSheetCharacter(name: string): Promise<string> {
  * Expected slots (wizard 3): 4× 1st, 2× 2nd.
  */
 export async function seedWizardCharacter(name: string): Promise<string> {
-  return seedWizardCharacterForUser(name, await getTestUserId());
+  return seedWizardCharacterForUser(
+    name,
+    await getAuthenticatedUserForCredentials(
+      env("E2E_TEST_EMAIL"),
+      env("E2E_TEST_PASSWORD"),
+    ),
+  );
 }
 
 export async function seedWizardCharacterForCredentials(
@@ -352,35 +456,37 @@ export async function seedWizardCharacterForCredentials(
 ): Promise<string> {
   return seedWizardCharacterForUser(
     name,
-    await getUserIdForCredentials(email, password),
+    await getAuthenticatedUserForCredentials(email, password),
   );
 }
 
 async function seedWizardCharacterForUser(
   name: string,
-  userId: string,
+  authenticatedUser: AuthenticatedE2EUser,
 ): Promise<string> {
   const service = createServiceClient();
 
-  const { data: systems, error: systemsError } = await service
+  const { data: system, error: systemError } = await service
     .from("game_systems")
     .select("id")
     .eq("status", "published")
-    .order("name")
-    .limit(1);
-  if (systemsError || !systems?.length) {
+    .eq("slug", E2E_GAME_SYSTEM_SLUG)
+    .single();
+  if (systemError || !system) {
     throw new Error(
-      `Could not find a published game system: ${systemsError?.message ?? "no rows"}`,
+      `Could not find a published game system: ${systemError?.message ?? "no row"}`,
     );
   }
-  const systemId = systems[0].id;
+  const systemId = system.id;
 
-  const { data: character, error: characterError } = await service
-    .from("characters")
-    .insert({
+  return seedCharacterWithBackground({
+    service,
+    authenticatedUser,
+    systemId,
+    backgroundSlug: E2E_PLATFORM_BACKGROUND_SLUG,
+    fixtureLabel: "wizard character",
+    character: {
       name,
-      user_id: userId,
-      system_id: systemId,
       level: 3,
       base_stats: {
         strength: 8,
@@ -393,51 +499,46 @@ async function seedWizardCharacterForUser(
       choices: {
         classes: [{ slug: "wizard", level: 3 }],
         race: "human",
-        background: "sage",
         ability_method: "standard_array",
       },
-    })
-    .select("id")
-    .single();
-  if (characterError || !character) {
-    throw new Error(`Could not seed wizard character: ${characterError?.message}`);
-  }
-  await seedClassContentRef(service, character.id, systemId, "wizard", 3);
+    },
+    seedRelated: async (characterId) => {
+      await seedClassContentRef(service, characterId, systemId, "wizard", 3);
 
-  // Known spells — content ids resolved from the platform SRD content.
-  const spellSlugs = ["magic-missile", "mage-armor"];
-  const { data: spellDefs, error: spellsError } = await service
-    .from("content_definitions")
-    .select("id, name, slug, version")
-    .eq("system_id", systemId)
-    .eq("content_type", "spell")
-    .eq("scope", "platform")
-    .in("slug", spellSlugs);
-  if (spellsError || (spellDefs?.length ?? 0) !== spellSlugs.length) {
-    throw new Error(
-      `Could not resolve spell content for [${spellSlugs.join(", ")}]: ` +
-        `${spellsError?.message ?? `found ${spellDefs?.length ?? 0} of ${spellSlugs.length}`}`,
-    );
-  }
+      // Known spells — content ids resolved from the platform SRD content.
+      const spellSlugs = ["magic-missile", "mage-armor"];
+      const { data: spellDefs, error: spellsError } = await service
+        .from("content_definitions")
+        .select("id, name, slug, version")
+        .eq("system_id", systemId)
+        .eq("content_type", "spell")
+        .eq("scope", "platform")
+        .in("slug", spellSlugs);
+      if (spellsError || (spellDefs?.length ?? 0) !== spellSlugs.length) {
+        throw new Error(
+          `Could not resolve spell content for [${spellSlugs.join(", ")}]: ` +
+            `${spellsError?.message ?? `found ${spellDefs?.length ?? 0} of ${spellSlugs.length}`}`,
+        );
+      }
 
-  const { error: spellInsertError } = await service.from("character_spells").insert(
-    spellDefs!.map((def) => ({
-      character_id: character.id,
-      content_id: def.id,
-      content_version: def.version,
-      name: def.name,
-      class_slug: "wizard",
-      is_known: true,
-      is_prepared: true,
-      in_spellbook: true,
-      source: "selection",
-    })),
-  );
-  if (spellInsertError) {
-    throw new Error(`Could not seed character spells: ${spellInsertError.message}`);
-  }
-
-  return character.id;
+      const { error: spellInsertError } = await service
+        .from("character_spells")
+        .insert(spellDefs!.map((def) => ({
+          character_id: characterId,
+          content_id: def.id,
+          content_version: def.version,
+          name: def.name,
+          class_slug: "wizard",
+          is_known: true,
+          is_prepared: true,
+          in_spellbook: true,
+          source: "selection",
+        })));
+      if (spellInsertError) {
+        throw new Error(`Could not seed character spells: ${spellInsertError.message}`);
+      }
+    },
+  });
 }
 
 /** Deletes only explicitly tracked E2E spell definitions owned by the
