@@ -27,7 +27,7 @@ interface ContentTabsProps {
   evalResult: EvaluationResult;
   contentRefs: ContentRefWithContent[];
   state: CharacterState;
-  patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
   initialTab?: TabId;
 }
 

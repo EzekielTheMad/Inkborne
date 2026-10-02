@@ -11,36 +11,30 @@ export async function createCharacter(formData: FormData) {
 
   if (!user) redirect("/login");
 
-  const name = formData.get("name") as string | null;
-  const systemId = formData.get("system_id") as string | null;
+  const nameField = formData.get("name");
+  const systemField = formData.get("system_id");
+  const name = typeof nameField === "string" ? nameField.trim() : "";
+  const systemId = typeof systemField === "string" ? systemField.trim() : "";
 
-  if (!name?.trim() || !systemId) {
-    console.error("[createCharacter] Missing fields:", { name, systemId });
+  if (!name || !systemId) {
     redirect("/characters/new?error=missing_fields");
   }
 
-  console.log("[createCharacter] Inserting character:", {
-    name: name.trim(),
-    user_id: user.id,
-    system_id: systemId,
-  });
-
-  const { data, error } = await supabase
-    .from("characters")
-    .insert([
-      {
-        name: name.trim(),
-        user_id: user.id,
-        system_id: systemId,
-      },
-    ])
-    .select("id")
-    .single();
-
-  if (error) {
-    console.error("[createCharacter] Insert failed:", error.message, error.details, error.hint);
-    redirect(`/characters/new?error=${encodeURIComponent(error.message)}`);
+  let createdId: string | undefined;
+  try {
+    const { data, error } = await supabase
+      .from("characters")
+      .insert([{ name, user_id: user.id, system_id: systemId }])
+      .select("id")
+      .single();
+    if (!error) createdId = data?.id;
+  } catch {
+    // A network failure uses the same recovery path as a rejected insert.
   }
 
-  redirect(`/characters/${data.id}/builder`);
+  if (!createdId) {
+    redirect("/characters/new?error=creation_failed");
+  }
+
+  redirect(`/characters/${createdId}/builder`);
 }

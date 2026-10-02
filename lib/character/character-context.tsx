@@ -20,6 +20,7 @@ import type { Effect } from "@/lib/types/effects";
 import type { InventoryItem, Currency } from "@/lib/types/inventory";
 import { DEFAULT_CURRENCY } from "@/lib/types/inventory";
 import type { CropArea } from "@/components/narrative/character-portrait";
+import { createStateWriter } from "@/lib/character/state-writer";
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import {
   addInventoryItem,
@@ -154,7 +155,7 @@ export interface CharacterContextValue {
 
   // Play state
   state: CharacterState;
-  patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  patchState: (patch: Partial<CharacterState>) => Promise<boolean>;
 
   // Evaluation
   evalResult: EvaluationResult;
@@ -272,17 +273,14 @@ export function CharacterProvider({
     crop: (character.narrative?.portrait_crop as CropArea | undefined) ?? null,
   });
 
-  // Patch character.state (immediate server write)
-  const patchState = useCallback(
-    async (patch: Partial<CharacterState>) => {
-      setState((prev) => ({ ...prev, ...patch }));
-      try {
-        await updateCharacterState(character.id, patch);
-      } catch (err) {
-        console.error("Failed to save state:", err);
-      }
-    },
-    [character.id],
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [patchState] = useState(() =>
+    createStateWriter(
+      initialState,
+      (patch) => updateCharacterState(character.id, patch),
+      setState,
+      () => setSaveError("A character change could not be saved. Check your connection and try that action again."),
+    ),
   );
 
   // Inventory handlers
@@ -467,10 +465,10 @@ export function CharacterProvider({
 
   const resolveConcentrationCheck = useCallback(
     async (outcome: "keep" | "drop") => {
-      setPendingConcentrationCheck(null);
       if (outcome === "drop") {
-        await patchState(computeConcentrationDropPatch(state));
+        if (!(await patchState(computeConcentrationDropPatch(state)))) return;
       }
+      setPendingConcentrationCheck(null);
     },
     [patchState, state],
   );
@@ -610,7 +608,9 @@ export function CharacterProvider({
         classSlug: spell.class_slug,
       });
       if (Object.keys(outcome.statePatch).length > 0) {
-        await patchState(outcome.statePatch);
+        if (!(await patchState(outcome.statePatch))) {
+          throw new Error("The spell could not be saved. Please try casting again.");
+        }
       }
       return outcome;
     },
@@ -687,7 +687,7 @@ export function CharacterProvider({
       const conMod = Math.floor((conScore - 10) / 2);
 
       const result = roll(buildHitDieRollRequest(pool, conMod));
-      await patchState(spendHitDiePatch(state, classSlug, result.total, maxHp));
+      if (!(await patchState(spendHitDiePatch(state, classSlug, result.total, maxHp)))) return null;
       return result;
     },
     [hitDicePools, state, maxHp, evalResult.stats.constitution, roll, patchState],
@@ -742,6 +742,12 @@ export function CharacterProvider({
 
   return (
     <CharacterContext.Provider value={value}>
+      {saveError && (
+        <div role="alert" className="flex items-center justify-between gap-3 border-b border-destructive bg-background px-4 py-3 text-sm text-destructive">
+          <p>{saveError}</p>
+          <button type="button" className="underline" onClick={() => setSaveError(null)}>Dismiss</button>
+        </div>
+      )}
       {children}
     </CharacterContext.Provider>
   );
@@ -930,8 +936,8 @@ export function useRest(): {
   /** Execute a short rest. Optional Arcane Recovery picks (slot level →
    *  count) are validated and folded into the same atomic patch; invalid or
    *  unavailable picks are ignored with a console warning. */
-  shortRest: (arcaneRecoveryPicks?: ArcaneRecoveryPicks) => void;
-  longRest: () => void;
+  shortRest: (arcaneRecoveryPicks?: ArcaneRecoveryPicks) => Promise<boolean>;
+  longRest: () => Promise<boolean>;
   setExhaustion: (level: number) => void;
   canShortRest: boolean;
   canLongRest: boolean;
@@ -995,16 +1001,16 @@ export function useRest(): {
       }
     }
 
-    if (!shortEffects.canApply && !picks) return;
+    if (!shortEffects.canApply && !picks) return Promise.resolve(false);
     const patch = picks
       ? mergeShortRestWithRecovery(state, shortEffects.statePatch, picks)
       : shortEffects.statePatch;
-    patchState(patch);
+    return patchState(patch);
   };
 
   const longRest = () => {
-    if (!longEffects.canApply) return;
-    patchState(longEffects.statePatch);
+    if (!longEffects.canApply) return Promise.resolve(false);
+    return patchState(longEffects.statePatch);
   };
 
   const setExhaustion = (level: number) => {

@@ -159,7 +159,16 @@ beforeEach(() => {
 // Configure pane
 // ---------------------------------------------------------------------------
 
-describe("CastDialog — configure pane", () => {
+describe("CastDialog - configure pane", () => {
+  it("keeps failed casts in the configure pane and supports another attempt", async () => {
+    castSpell.mockRejectedValueOnce(new Error("save denied"));
+    renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
+    expect(screen.queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument());
+  });
   it("renders slot options and defaults to the lowest available", () => {
     renderDialog();
     const first = screen.getByRole("radio", { name: /1st/ });

@@ -123,6 +123,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
   );
   const [ritual, setRitual] = useState(castability === "ritual-only");
   const [casting, setCasting] = useState(false);
+  const [castError, setCastError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<CastOutcome | null>(null);
   const [results, setResults] = useState<Record<number, RollResult>>({});
   const [critArmed, setCritArmed] = useState(false);
@@ -170,9 +171,12 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
           ? { type: "pact", level: selectedOption!.castLevel }
           : { type: "slot", level: selectedOption!.castLevel };
     setCasting(true);
+    setCastError(null);
     try {
       const result = await castSpell(spell, choice);
       setOutcome(result);
+    } catch {
+      setCastError("The spell could not be saved. Please try casting again.");
     } finally {
       setCasting(false);
     }
@@ -195,6 +199,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
   const body: ReactNode = outcome === null ? (
     /* ---------------- Configure pane ---------------- */
     <div className="space-y-4 text-sm">
+      {castError && <p role="alert" className="text-destructive">{castError}</p>}
       <p className="text-xs text-muted-foreground">{metaLine}</p>
 
       {isCantrip ? (

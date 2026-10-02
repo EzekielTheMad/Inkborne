@@ -210,9 +210,8 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(screen.getByTestId("apply").textContent).toBe("7");
   });
 
-  it("useCharacterState().patchState swallows server errors after applying local state (matches current behavior)", async () => {
+  it("useCharacterState restores failed changes and shows a recoverable save error", async () => {
     mockedUpdateState.mockRejectedValueOnce(new Error("RLS denied"));
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     function Probe() {
       const { state, patchState } = useCharacterState();
       return (
@@ -230,11 +229,8 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => {
       screen.getByTestId("apply").click();
     });
-    // The provider currently logs but does not revert local state (atomic-merge
-    // RPC path; revert is a separate scope). This test pins that disposition.
-    expect(errorSpy).toHaveBeenCalled();
-    expect(screen.getByTestId("apply").textContent).toBe("7");
-    errorSpy.mockRestore();
+    expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
+    expect(screen.getByTestId("apply").textContent).toBe("null");
   });
 
   it("useInventory().addItem appends the returned row to local inventory", async () => {
@@ -475,6 +471,41 @@ describe("<CharacterProvider> public hook surface", () => {
     },
   } as unknown as ClassContentData;
 
+  it("rejects a failed cast instead of returning success and restores its slot", async () => {
+    mockedUpdateState.mockRejectedValueOnce(new Error("offline"));
+    let cast!: ReturnType<typeof useSpells>["castSpell"];
+    function Probe() {
+      cast = useSpells().castSpell;
+      const { state } = useCharacterState();
+      return <span data-testid="slots">{state.spell_slots_used?.["1"] ?? 0}</span>;
+    }
+    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData });
+    await act(async () => {
+      await expect(cast({
+        name: "Magic Missile", class_slug: "wizard",
+        content_definitions: { id: "magic-missile", name: "Magic Missile", slug: "magic-missile", data: { level: 1, duration: "Instantaneous" }, effects: [] },
+      } as never, { type: "slot", level: 1 })).rejects.toThrow("could not be saved");
+    });
+    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", { spell_slots_used: { "1": 1 } });
+    expect(screen.getByTestId("slots")).toHaveTextContent("0");
+    expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
+  });
+
+  it("returns failure for an unsaved rest and restores HP before retry", async () => {
+    mockedUpdateState.mockRejectedValueOnce(new Error("offline"));
+    let rest!: ReturnType<typeof useRest>["longRest"];
+    function Probe() {
+      rest = useRest().longRest;
+      const { state } = useCharacterState();
+      return <span data-testid="hp">{state.current_hp}</span>;
+    }
+    renderWithProvider(Probe, { initialState: { current_hp: 4 } as CharacterState });
+    await act(async () => { expect(await rest()).toBe(false); });
+    expect(screen.getByTestId("hp")).toHaveTextContent("4");
+    await act(async () => { expect(await rest()).toBe(true); });
+    expect(screen.getByTestId("hp")).toHaveTextContent("10");
+  });
+
   const arcaneRecoveryRef = {
     content_definitions: {
       id: "content-ar",
@@ -554,10 +585,8 @@ describe("<CharacterProvider> public hook surface", () => {
       return null;
     }
     // Suppress React's error logging for the expected throw.
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(() => render(<Probe />)).toThrow(
       /Character hook used outside CharacterProvider/,
     );
-    errorSpy.mockRestore();
   });
 });

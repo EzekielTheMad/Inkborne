@@ -61,10 +61,15 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
   // Picks reset on every open transition (render-phase state adjustment —
   // the dialog stays mounted between opens).
   const [recoveryPicks, setRecoveryPicks] = useState<ArcaneRecoveryPicks>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) setRecoveryPicks({});
+    if (open) {
+      setRecoveryPicks({});
+      setSaveError(null);
+    }
   }
 
   const pickedTotal = totalPickedLevels(recoveryPicks);
@@ -85,13 +90,18 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
     });
   };
 
-  const onShortRest = () => {
-    shortRest(recoveryPicks);
-    onClose();
-  };
-  const onLongRest = () => {
-    longRest();
-    onClose();
+  const saveRest = async (save: () => Promise<boolean>) => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (await save()) onClose();
+      else setSaveError("The rest could not be saved. Please try again.");
+    } catch {
+      setSaveError("The rest could not be saved. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -100,6 +110,7 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
         <DialogHeader>
           <DialogTitle>Rest</DialogTitle>
         </DialogHeader>
+        {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
 
         <div className="grid md:grid-cols-2 gap-4">
           {/* Short Rest pane */}
@@ -236,7 +247,7 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        disabled={disabledReason !== undefined}
+                        disabled={saving || disabledReason !== undefined}
                         title={disabledReason}
                         onClick={() => void spendHitDie(pool.classSlug)}
                       >
@@ -250,8 +261,8 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
 
             <Button
               className="w-full"
-              onClick={onShortRest}
-              disabled={!canShortRest && pickedTotal === 0}
+              onClick={() => void saveRest(() => shortRest(recoveryPicks))}
+              disabled={saving || (!canShortRest && pickedTotal === 0)}
               title={
                 !canShortRest && pickedTotal === 0
                   ? "No short-rest recovery available for this character"
@@ -288,8 +299,8 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
             </ul>
             <Button
               className="w-full"
-              onClick={onLongRest}
-              disabled={!canLongRest}
+              onClick={() => void saveRest(longRest)}
+              disabled={saving || !canLongRest}
               title={!canLongRest ? "Fully rested" : undefined}
             >
               Take Long Rest

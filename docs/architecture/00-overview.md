@@ -1,5 +1,7 @@
 # Inkborne · Architecture Overview
 
+> **Historical snapshot:** The May metrics, test gaps and process statements below are not current facts. Start with [CURRENT-STATE.md](../CURRENT-STATE.md) for current work and validation; Playwright now exists, and the canonical character provider has regression coverage.
+
 > **Purpose:** Read-cold orientation for future sessions. Pre-refactor inventory, not a spec or recommendation. Pure factual map of the Inkborne codebase as of M2 close (PR-A through PR-E shipped, May 2026).
 >
 > **Companion docs in this folder:**

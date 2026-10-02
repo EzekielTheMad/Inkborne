@@ -112,7 +112,7 @@ describe("createCharacter", () => {
     expect(to).toBe("/characters/char-new/builder");
   });
 
-  it("redirects to /characters/new with the encoded error message when insert fails", async () => {
+  it("offers a readable retry path without exposing a database error", async () => {
     mockSupabase({
       insertResult: {
         data: null,
@@ -121,6 +121,29 @@ describe("createCharacter", () => {
     });
     const fd = makeFormData({ name: "Elara", system_id: "sys-1" });
     const to = await captureRedirect(() => createCharacter(fd));
-    expect(to).toBe(`/characters/new?error=${encodeURIComponent("duplicate key value")}`);
+    expect(to).toBe("/characters/new?error=creation_failed");
+  });
+
+  it.each(["name", "system_id"])("rejects a file in the %s field before inserting", async (field) => {
+    const { chain } = mockSupabase();
+    const fd = makeFormData({ name: "Elara", system_id: "sys-1" });
+    fd.set(field, new File(["unexpected"], "value.txt"));
+    expect(await captureRedirect(() => createCharacter(fd))).toBe("/characters/new?error=missing_fields");
+    expect(chain.insert).not.toHaveBeenCalled();
+  });
+
+  it("rejects whitespace-only game systems before inserting", async () => {
+    const { chain } = mockSupabase();
+    expect(await captureRedirect(() => createCharacter(makeFormData({ name: "Elara", system_id: "  " })))).toBe("/characters/new?error=missing_fields");
+    expect(chain.insert).not.toHaveBeenCalled();
+  });
+
+  it("offers retry when the insert rejects or returns no row", async () => {
+    const { chain } = mockSupabase();
+    chain.single.mockRejectedValueOnce(new Error("network interrupted"));
+    const fd = makeFormData({ name: "Elara", system_id: "sys-1" });
+    expect(await captureRedirect(() => createCharacter(fd))).toBe("/characters/new?error=creation_failed");
+    mockSupabase({ insertResult: { data: null, error: null } });
+    expect(await captureRedirect(() => createCharacter(fd))).toBe("/characters/new?error=creation_failed");
   });
 });

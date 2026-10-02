@@ -29,7 +29,7 @@ interface HPTrackerProps {
   currentHp: number;
   maxHp: number;
   tempHp: number;
-  patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
   /** Optional read-only hit-dice pools shown in the popover ("d10 3/5 · d6 1/1")
    *  so remaining HD are visible without opening the Rest dialog. */
   hitDicePools?: HitDicePool[];
@@ -65,7 +65,7 @@ export function HPTracker({
     return isNaN(n) || n < 0 ? 0 : n;
   }
 
-  function applyDamage() {
+  async function applyDamage() {
     const amount = getAmount();
     if (amount === 0) return;
 
@@ -92,7 +92,7 @@ export function HPTracker({
     if (concentration && newCurrent === 0) {
       Object.assign(patch, concentration.dropPatch);
     }
-    patchState(patch);
+    if ((await patchState(patch)) === false) return;
     if (concentration && newCurrent > 0) {
       concentration.onDamage(amount);
     }

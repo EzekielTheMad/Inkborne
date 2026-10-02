@@ -44,7 +44,7 @@ interface MobileSheetProps {
   evalResult: EvaluationResult;
   contentRefs: ContentRefWithContent[];
   state: CharacterState;
-  patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
   maxHp: number;
   /** Read-only hit-dice pools threaded into the HP tracker popover. */
   hitDicePools?: HitDicePool[];

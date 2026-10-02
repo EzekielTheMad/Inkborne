@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RestDialog } from "@/components/sheet/rest-dialog";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
 import type { ArcaneRecoveryInfo } from "@/lib/rest/arcane-recovery";
@@ -21,8 +21,8 @@ let mockState: Record<string, unknown> = { current_hp: 30 };
 
 function buildMock(overrides: Partial<RestHookMock> = {}): RestHookMock {
   return {
-    shortRest: vi.fn(),
-    longRest: vi.fn(),
+    shortRest: vi.fn().mockResolvedValue(true),
+    longRest: vi.fn().mockResolvedValue(true),
     canShortRest: true,
     canLongRest: true,
     exhaustion: 0,
@@ -57,6 +57,26 @@ function setup(
 }
 
 describe("RestDialog", () => {
+  it("keeps a failed rest open and lets the player retry", async () => {
+    const longRest = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const { onClose } = setup({ longRest });
+    fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
+
+  it("keeps both rest actions disabled until the save finishes", async () => {
+    let resolve!: (saved: boolean) => void;
+    const longRest = vi.fn().mockReturnValue(new Promise<boolean>((yes) => { resolve = yes; }));
+    const { onClose } = setup({ longRest });
+    fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
+    expect(screen.getByRole("button", { name: /take short rest/i })).toBeDisabled();
+    expect(onClose).not.toHaveBeenCalled();
+    resolve(true);
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+  });
   it("renders two panes with Short Rest and Long Rest buttons", () => {
     setup();
     expect(screen.getByRole("button", { name: /take short rest/i })).toBeInTheDocument();
@@ -73,18 +93,18 @@ describe("RestDialog", () => {
     expect(screen.getByRole("button", { name: /take long rest/i })).toBeDisabled();
   });
 
-  it("calls shortRest() and onClose when short rest button clicked", () => {
+  it("calls shortRest() and onClose when short rest button clicked", async () => {
     const { shortRest, onClose } = setup();
     fireEvent.click(screen.getByRole("button", { name: /take short rest/i }));
     expect(shortRest).toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
-  it("calls longRest() and onClose when long rest button clicked", () => {
+  it("calls longRest() and onClose when long rest button clicked", async () => {
     const { longRest, onClose } = setup();
     fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
     expect(longRest).toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
   it("shows 'No short-rest recovery available' when no pact slots used and no short-rest resources", () => {
@@ -255,13 +275,13 @@ describe("RestDialog — Arcane Recovery section", () => {
     expect(minusButton("1st")).toBeDisabled();
   });
 
-  it("passes the picks to shortRest and closes", () => {
+  it("passes the picks to shortRest and closes", async () => {
     const { shortRest, onClose } = setup({ arcaneRecovery: availableRecovery });
     fireEvent.click(plusButton("1st"));
     fireEvent.click(plusButton("2nd"));
     fireEvent.click(screen.getByRole("button", { name: /take short rest/i }));
     expect(shortRest).toHaveBeenCalledWith({ "1": 1, "2": 1 });
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
   it("passes empty picks when nothing was selected", () => {

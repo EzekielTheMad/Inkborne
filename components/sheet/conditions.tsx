@@ -29,7 +29,7 @@ const EXHAUSTION_TOOLTIP =
 interface ConditionsProps {
   conditions: string[];
   exhaustion: number;
-  patchState: (patch: Partial<CharacterState>) => Promise<void> | void;
+  patchState: (patch: Partial<CharacterState>) => Promise<boolean | void> | void;
 }
 
 /**

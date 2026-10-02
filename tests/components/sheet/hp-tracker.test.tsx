@@ -46,7 +46,15 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("HPTracker — death-save auto-reset on 0→>0 (PR #17)", () => {
+describe("HPTracker - death-save auto-reset on 0→>0 (PR #17)", () => {
+  it("keeps failed damage open without raising a concentration check", async () => {
+    const concentration = { spellName: "Bless", dropPatch: {}, onDamage: vi.fn() };
+    const { patchState } = setup({ currentHp: 20, maxHp: 20, concentration });
+    patchState.mockResolvedValueOnce(false);
+    await openAndApply(/^damage$/i, "4");
+    expect(concentration.onDamage).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText("Amount")).toHaveValue(4);
+  });
   it("clears death saves when healing from 0 to >0", async () => {
     const { patchState } = setup({ currentHp: 0, maxHp: 10 });
     await openAndApply(/^heal$/i, "1");

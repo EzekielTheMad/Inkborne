@@ -2,7 +2,7 @@
 
 **Status:** Living draft. Update freely.
 **Owner:** Victor
-**Last updated:** 2026-07-22
+**Last updated:** 2026-10-02 (priority update; historical milestone records retained)
 
 > **Working on this project?** Start with [`docs/GAME-PLAN.md`](GAME-PLAN.md) — the agent-agnostic entry point with the current task backlog, workflow conventions, and repo orientation. This file is the milestone-level source of truth; the game plan is the working-level one.
 
@@ -10,6 +10,13 @@ This document layers the new vision items (homebrew authoring, content importer,
 
 ---
 
+## Immediate priority
+
+Stabilize character creation, builder completion and the playable sheet before
+adding content families or expanding worldbuilding. Keep existing narrative and
+campaign integration intact; the group currently uses LegendKeeper. Follow
+[CURRENT-STATE.md](CURRENT-STATE.md) for the current local baseline, evidence,
+deferred equipment transaction work and release boundaries.
 ## Vision
 
 A **community-driven, multi-system TTRPG character + campaign management platform** where:

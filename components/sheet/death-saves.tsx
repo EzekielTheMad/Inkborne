@@ -9,7 +9,7 @@ import type { CharacterState, CharacterDeathSaves } from "@/lib/types/character"
 interface DeathSavesProps {
   currentHp: number;
   deathSaves: CharacterDeathSaves;
-  patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
 }
 
 export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProps) {

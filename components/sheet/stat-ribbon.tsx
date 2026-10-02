@@ -14,7 +14,7 @@ interface StatRibbonProps {
   evalResult: EvaluationResult;
   state: CharacterState;
   maxHp: number;
-  patchState: (patch: Partial<CharacterState>) => Promise<void>;
+  patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
   /** Read-only hit-dice pools threaded into the HP tracker popover. */
   hitDicePools?: HitDicePool[];
   /** Concentration wiring threaded into the HP tracker damage path (T7). */

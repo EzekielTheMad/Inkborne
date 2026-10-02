@@ -70,6 +70,7 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
   return (
     <div style={characterColorStyle(primaryColor)}>
       <CharacterProvider
+        key={character.id}
         character={character}
         schema={schema}
         contentRefs={contentRefs}

@@ -18,13 +18,22 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
 
   if (!user) redirect("/login");
 
-  const { data: systems } = await supabase
-    .from("game_systems")
-    .select("id, name, slug")
-    .eq("status", "published")
-    .order("name");
+  let systems: Array<{ id: string; name: string; slug: string }> | null = null;
+  let systemsError = false;
+  try {
+    const result = await supabase
+      .from("game_systems")
+      .select("id, name, slug")
+      .eq("status", "published")
+      .order("name");
+    systems = result.data;
+    systemsError = !!result.error;
+  } catch {
+    systemsError = true;
+  }
 
-  const onlySystem = systems && systems.length === 1 ? systems[0] : null;
+  const onlySystem = !systemsError && systems && systems.length === 1 ? systems[0] : null;
+  const systemsAvailable = !systemsError && !!systems?.length;
 
   return (
     <div className="mx-auto max-w-lg py-4 sm:py-8">
@@ -46,7 +55,17 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
             role="alert"
             className="mb-4 rounded-md border border-destructive/35 bg-destructive/[0.06] px-3.5 py-3 text-[12.5px] text-[#f4a3a3]"
           >
-            Error: {decodeURIComponent(pageError)}
+            {pageError === "missing_fields"
+              ? "Enter a character name and choose a game system."
+              : "Your character could not be created. Please try again."}
+          </p>
+        )}
+
+        {!systemsAvailable && (
+          <p role="alert" className="mb-4 text-sm text-destructive">
+            {systemsError
+              ? "Game systems could not be loaded. Refresh the page and try again."
+              : "No game systems are available yet. Please try again later."}
           </p>
         )}
 
@@ -81,6 +100,7 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
                 id="system_id"
                 name="system_id"
                 required
+                disabled={!systemsAvailable}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">Select a game system</option>
@@ -93,7 +113,7 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
             </div>
           )}
 
-          <Button type="submit" variant="gold" className="w-full">
+          <Button type="submit" variant="gold" className="w-full" disabled={!systemsAvailable}>
             Begin →
           </Button>
         </form>
