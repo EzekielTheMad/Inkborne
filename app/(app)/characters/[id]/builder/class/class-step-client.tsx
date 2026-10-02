@@ -56,9 +56,34 @@ interface ClassStepClientProps {
       content_type: string;
       data: Record<string, unknown>;
       effects: Effect[];
+      version: number;
+      source: string;
     };
   }>;
   schema: SystemSchemaDefinition | undefined;
+}
+
+/** Resolve only saved selections/referenced features. New picks stay catalog-based;
+ * duplicate pins are a conflict, never an arbitrary snapshot upgrade. */
+function pinnedEntries(
+  catalog: ContentEntry[],
+  refs: ClassStepClientProps["contentRefs"],
+  type: "class" | "subclass" | "feature",
+  slugs: string[],
+) {
+  const selected = new Set(slugs);
+  const entries = catalog.filter(entry => !selected.has(entry.slug));
+  const conflicts: string[] = [];
+  for (const slug of selected) {
+    const pins = refs.filter(ref => ref.content_id === ref.content_definitions.id &&
+      ref.content_definitions.content_type === type && ref.content_definitions.slug === slug);
+    if (pins.length > 1) conflicts.push(slug);
+    else {
+      const entry = pins[0]?.content_definitions ?? catalog.find(item => item.slug === slug);
+      if (entry) entries.push(entry);
+    }
+  }
+  return { entries, conflicts };
 }
 
 export function ClassStepClient({
@@ -83,6 +108,19 @@ export function ClassStepClient({
 
   const selectedClasses = localChoices.classes ?? [];
   const hasClass = selectedClasses.length > 0;
+
+  const savedClasses = pinnedEntries(classes, contentRefs, "class", selectedClasses.map(cls => cls.slug));
+  const savedSubclasses = pinnedEntries(subclasses, contentRefs, "subclass",
+    selectedClasses.flatMap(cls => cls.subclass ? [cls.subclass] : []));
+  const mismatchedSubclass = selectedClasses.some(cls => cls.subclass &&
+    savedSubclasses.entries.find(entry => entry.slug === cls.subclass)?.data.parent_class !== cls.slug);
+  const referencedFeatures = [...savedClasses.entries.filter(entry => selectedClasses.some(cls => cls.slug === entry.slug)),
+    ...savedSubclasses.entries.filter(entry => selectedClasses.some(cls => cls.subclass === entry.slug))]
+    .flatMap(entry => (entry.data.levels as Array<{ features?: string[] }> | undefined) ?? [])
+    .flatMap(level => level.features ?? []);
+  const savedFeatures = pinnedEntries(features, contentRefs, "feature", referencedFeatures);
+  const conflictingPins = [...savedClasses.conflicts, ...savedSubclasses.conflicts, ...savedFeatures.conflicts];
+  const snapshotConflict = conflictingPins.length > 0 || mismatchedSubclass;
 
   const hpRule = resolveHpRule(
     (character as unknown as { campaigns?: { hp_rule?: HpRule | null } | null }).campaigns?.hp_rule,
@@ -447,12 +485,14 @@ export function ClassStepClient({
         <h2 className="text-xl font-semibold">Class</h2>
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
 
-        {hasClass ? (
+        {conflictingPins.length > 0 && <p role="alert" className="text-sm text-destructive">Multiple saved snapshots match this class build. Reload the character and resolve its references before editing.</p>}
+        {mismatchedSubclass && <p role="alert" className="text-sm text-destructive">The selected subclass is missing or does not belong to its class. Reload the character and check its references before editing.</p>}
+        {snapshotConflict ? null : hasClass ? (
           <ClassStepRail
             characterName={character.name}
-            classes={classes}
-            subclasses={subclasses}
-            features={features}
+            classes={savedClasses.entries}
+            subclasses={savedSubclasses.entries}
+            features={savedFeatures.entries}
             feats={feats}
             onFeatSearch={handleFeatSearch}
             selectedClasses={selectedClasses}
@@ -480,14 +520,14 @@ export function ClassStepClient({
         )}
 
         <ClassPreviewModal
-          open={previewContent !== null}
+          open={previewContent !== null && !snapshotConflict}
           classContent={previewContent}
           features={features}
           subclasses={subclasses}
           spells={spells}
           onCancel={() => setPreviewContent(null)}
           onPick={({ subclassSlug }) => {
-            if (!previewContent) return;
+            if (!previewContent || snapshotConflict) return;
             // classSlug from the modal == previewContent.slug. We pass the
             // full ContentEntry to keep the existing handler signature.
             handleSelectClass(previewContent, { subclassSlug });
@@ -516,7 +556,7 @@ export function ClassStepClient({
       </div>
 
       {/* Sidebar: StatPreview */}
-      {schema && (
+      {schema && !snapshotConflict && (
         <div className="hidden lg:block">
           <StatPreview
             baseStats={character.base_stats ?? {}}

@@ -117,4 +117,51 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
+  it("uses pinned class and referenced feature snapshots in the actual level rail", () => {
+    const pinnedFeature: ContentEntry = { ...human, id: "second-wind", slug: "second-wind", name: "Pinned Second Wind", content_type: "feature", data: { description: "Pinned recovery." } };
+    const pinnedClass: ContentEntry = { ...human, id: "fighter", slug: "fighter", name: "Pinned Fighter", content_type: "class", data: { hit_die: 10, levels: [{ level: 1, features: ["second-wind"] }] } };
+    const pins = [pinnedClass, pinnedFeature].map(content => ({ id: "pin-" + content.id, content_id: content.id, context: {}, choice_source: null, content_definitions: content }));
+    render(<ClassStepClient characterId="char-1" character={{ ...character, choices: { classes: [{ slug: "fighter", level: 1 }] } }} classes={[{ ...pinnedClass, name: "Catalog Fighter", version: 2, data: { hit_die: 12, levels: [] } }]} subclasses={[]} features={[{ ...pinnedFeature, name: "Catalog Second Wind", version: 2 }]} feats={[]} spells={[]} contentRefs={pins} schema={undefined} />);
+    expect(screen.getAllByText("Pinned Fighter").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Pinned Second Wind").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Catalog Fighter")).not.toBeInTheDocument();
+    expect(screen.queryByText("Catalog Second Wind")).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled(); expect(mocks.insert).not.toHaveBeenCalled();
+  });
+
+  it("keeps a pinned class absent from the catalog visible in its level rail", () => {
+    const pinnedClass: ContentEntry = { ...human, id: "fighter", slug: "fighter", name: "Pinned Fighter", content_type: "class", data: { hit_die: 10, levels: [] } };
+    render(<ClassStepClient characterId="char-1" character={{ ...character, choices: { classes: [{ slug: "fighter", level: 1 }] } }} classes={[]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[{ id: "pin", content_id: "fighter", context: {}, choice_source: null, content_definitions: pinnedClass }]} schema={undefined} />);
+    expect(screen.getAllByText("Pinned Fighter").length).toBeGreaterThan(0);
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("does not pick between conflicting pinned class definitions", () => {
+    const pinnedClass: ContentEntry = { ...human, id: "fighter", slug: "fighter", name: "Pinned Fighter", content_type: "class", data: { hit_die: 10, levels: [] } };
+    const pins = [pinnedClass, { ...pinnedClass, version: 2 }].map((content, i) => ({ id: "pin-" + i, content_id: content.id, context: {}, choice_source: null, content_definitions: content }));
+    render(<ClassStepClient characterId="char-1" character={{ ...character, choices: { classes: [{ slug: "fighter", level: 1 }] } }} classes={[pinnedClass]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={pins} schema={undefined} />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Multiple saved snapshots");
+    expect(screen.queryByText("Pinned Fighter")).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("shows the pinned subclass even when the catalog changes its parent and level features", () => {
+    const cls: ContentEntry = { ...human, id: "fighter", slug: "fighter", name: "Fighter", content_type: "class", data: { hit_die: 10, levels: [] } };
+    const sub: ContentEntry = { ...human, id: "champion", slug: "champion", name: "Pinned Champion", content_type: "subclass", data: { parent_class: "fighter", levels: [] } };
+    render(<ClassStepClient characterId="char-1" character={{ ...character, choices: { classes: [{ slug: "fighter", level: 3, subclass: "champion" }] } }} classes={[cls]} subclasses={[{ ...sub, name: "Catalog Champion", version: 2, data: { parent_class: "wizard", levels: [] } }]} features={[]} feats={[]} spells={[]} contentRefs={[{ id: "pin", content_id: sub.id, context: { source: "subclass", class: "fighter" }, choice_source: null, content_definitions: sub }]} schema={undefined} />);
+    expect(screen.getAllByText("Pinned Champion").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Catalog Champion")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses editing a selected subclass belonging to another class", () => {
+    const cls: ContentEntry = { ...human, id: "fighter", slug: "fighter", name: "Fighter", content_type: "class", data: { hit_die: 10, levels: [] } };
+    const sub: ContentEntry = { ...human, id: "champion", slug: "champion", name: "Wrong Champion", content_type: "subclass", data: { parent_class: "wizard", levels: [] } };
+    render(<ClassStepClient characterId="char-1" character={{ ...character, choices: { classes: [{ slug: "fighter", level: 3, subclass: "champion" }] } }} classes={[cls]} subclasses={[sub]} features={[]} feats={[]} spells={[]} contentRefs={[{ id: "pin", content_id: sub.id, context: {}, choice_source: null, content_definitions: sub }]} schema={undefined} />);
+    expect(screen.getByRole("alert")).toHaveTextContent("does not belong");
+    expect(screen.queryByRole("button", { name: /Remove Fighter/i })).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
 });

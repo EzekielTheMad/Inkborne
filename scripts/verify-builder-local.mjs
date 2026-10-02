@@ -25,9 +25,11 @@ const stubs = {
         signal.addEventListener('abort',()=>reject(new DOMException('Interrupted','AbortError')),{once:true});
       });
     }
+    export async function updateCharacterAndReturn(){throw new Error('Simulated private database failure')}
     export async function updateCharacter(){throw new Error('Simulated private database failure')}
   `,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(){} export async function removeContentRefById(){}`,
+  "class-actions": `export async function searchUsableFeatsAction(){return {status:"success",feats:[]}} export async function setCharacterAsiChoiceAction(){throw new Error("Fixture does not save class choices")}`,
   "@/components/builder/stat-preview": `export function StatPreview(){return null}`,
 };
 await build({
@@ -38,21 +40,25 @@ await build({
       import {createRoot} from 'react-dom/client';
       import {AbilitiesStepClient} from '@/app/(app)/characters/[id]/builder/abilities/abilities-step-client';
       import {RaceStepClient} from '@/app/(app)/characters/[id]/builder/race/race-step-client';
+      import {ClassStepClient} from '@/app/(app)/characters/[id]/builder/class/class-step-client';
       window.fixture={mode:'pending',calls:[],resolve:null};
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
       const pinnedHuman={...human,name:'Pinned Human',data:{description:'Authorized pinned race description.'},effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'pinned-skill'}]};
       const newerHuman={...human,version:2,data:{description:'New catalog race description.'},effects:[{type:'choice',choose:1,from:['skill-stealth'],grant_type:'proficiency',choice_id:'new-skill'}]};
+      const pinnedFighter={...human,id:'fighter',slug:'fighter',name:'Pinned Fighter',content_type:'class',data:{hit_die:10,levels:[{level:1,features:['second-wind']}]}};
+      const pinnedWind={...human,id:'second-wind',slug:'second-wind',name:'Pinned Second Wind',content_type:'feature',data:{description:'Authorized pinned recovery.'}};
       function App(){
         const [route,setRoute]=useState(location.pathname);
         function navigate(to){history.pushState({fixture:true},'',to);setRoute(to)}
         useEffect(()=>{const pop=()=>setRoute(location.pathname);const go=e=>navigate(e.detail);window.addEventListener('popstate',pop);window.addEventListener('fixture-navigation',go);return()=>{window.removeEventListener('popstate',pop);window.removeEventListener('fixture-navigation',go)}},[]);
         return <><h1>Isolated builder fixture</h1><p>Simulated history and persistence; real editor and selection components.</p>
-          <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
+          <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/pinned-class' onClick={e=>{e.preventDefault();navigate('/pinned-class')}}>Pinned Class</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
           {route==='/overview'&&<h2>Overview fixture</h2>}
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
           <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[]} contentRefs={[{id:'pin',content_id:'human',context:{},choice_source:null,content_definitions:pinnedHuman}]} schema={undefined}/></Activity>
+          <Activity mode={route==='/pinned-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Fixture fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...pinnedFighter,name:'Catalog Fighter',version:2,data:{hit_die:12,levels:[]}}]} subclasses={[]} features={[{...pinnedWind,name:'Catalog Second Wind',version:2}]} feats={[]} spells={[]} contentRefs={[pinnedFighter,pinnedWind].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
           <Activity mode={route==='/race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{}}} races={[human]} subraces={[]} traits={[]} contentRefs={[]} schema={undefined}/></Activity>
         </>
       }
@@ -65,6 +71,7 @@ await build({
     name: "isolated-boundaries",
     setup(builder) {
       builder.onResolve({ filter: /^(next\/navigation|@\/lib\/supabase\/(character-client|content-refs-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
+      builder.onResolve({filter: /^\.\/actions$/}, args => args.importer.endsWith("class-step-client.tsx") ? {path:"class-actions",namespace:"fixture"} : undefined);
       builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: stubs[args.path], loader: "js" }));
     },
   }],
@@ -135,6 +142,14 @@ try {
   assert.equal(unloadPrompt, true);
   assert.equal(await page.getByRole("spinbutton", { name: "Strength score" }).inputValue(), "10");
   evidence.push("Chrome refresh presents a beforeunload prompt after user input; accepting refresh discards the fixture draft.");
+  await page.setViewportSize({width:1280,height:900});
+  await page.goto(origin + "/pinned-class");
+  await page.getByRole("button", { name: "Remove Pinned Fighter", exact: true }).waitFor();
+  assert.equal(await page.getByText("Catalog Fighter", { exact: true }).count(), 0);
+  assert.equal(await page.getByText("Pinned Second Wind", { exact: true }).count() > 0, true);
+  assert.equal(await page.getByText("Catalog Second Wind", { exact: true }).count(), 0);
+  await page.screenshot({path:path.join(output,"pinned-class-desktop.png"),fullPage:true,animations:"disabled"});
+  evidence.push({check:"pinned class/feature rail survives newer catalog content",passed:true});
   assert.deepEqual(errors, []);
   assert.deepEqual(blockedRequests, []);
   await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));
