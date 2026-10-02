@@ -1,5 +1,7 @@
 # Failed-cast conflict release gate
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Milestone base: `db7bdab2cede1898785e600e3056e574425a834c` on
 `codex/playable-core-stability`, in the isolated workspace checkout.
 

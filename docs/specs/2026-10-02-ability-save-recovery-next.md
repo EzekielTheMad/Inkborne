@@ -1,5 +1,7 @@
 # Next bounded task: ability-score save recovery
 
+> Historical proposal/task plan; may include unimplemented work. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current priorities.
+
 ## Observed evidence
 
 `app/(app)/characters/[id]/builder/abilities/abilities-step-client.tsx`

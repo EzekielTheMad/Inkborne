@@ -1,5 +1,7 @@
 # Fast continuation checkpoint
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Resume branch `codex/playable-core-stability` at:
 
 `C:\Users\kaios\Documents\Codex\2026-10-02\task\inkborne-core`

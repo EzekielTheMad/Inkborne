@@ -1,4 +1,6 @@
-# Background save recovery — October 2, 2026
+# Background save recovery â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 Local checkpoint, following equipment save controls. No hosted writes or schema changes.
 

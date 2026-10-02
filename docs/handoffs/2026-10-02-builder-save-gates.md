@@ -1,5 +1,7 @@
 # Class save conflicts and background pin identity
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 ## Reproductions and repairs
 
 A deferred canonical class-level save left competing ASI buttons enabled. Those actions can write overlapping complete choices snapshots. ClassStepClient now owns a synchronous save ref for all nine mutation handlers, with an accessible saving message and disabled fieldset for ordinary controls. The gate stays busy through the entire choice/reference sequence, not just the first character write. Portal callbacks also check the ref: a busy ASI rejects with a readable error; other blocked handlers leave a visible retry instruction. Finally clears pending on both success and failure. Existing canonical choices and error rollback behavior are retained; this is same-session conflict rejection, not concurrency control across clients.

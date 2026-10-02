@@ -1,5 +1,7 @@
 # Saved class display against pinned snapshots
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 The class builder previously read catalog classes, subclasses and features even when existing authorized snapshots were pinned. The actual level rail therefore changed names, hit dice, level features and choice definitions when the catalog changed; removing a catalog class could hide its saved rail.
 
 ClassStepClient now overlays selected class/subclass definitions and their referenced feature slugs with unique matching pinned snapshots. New selection previews remain catalog-based. A missing catalog entry does not hide a valid pin. Multiple matching pins are not arbitrarily chosen; editing and stat preview are withheld with a visible error. Missing/incompatible selected subclasses are also identified. No pin is inserted, upgraded, repaired or removed by display resolution.

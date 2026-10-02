@@ -1,5 +1,7 @@
 # Respect the rolled-only picker boundary - October 2, 2026
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 A real ClassStepClient regression with a stored Manual record and rolled-only campaign reproduced an editable Manual field even though the method controls offered only Roll. The regression failed before repair.
 
 The Manual field is hidden under rolled-only and its commit handler refuses that method. A preexisting open Manual draft is also hidden if the campaign rule changes. Existing stored values remain visible as the current total gain and are not rewritten or rerolled. Rule resolution, sheet math and the existing confirmation rule are unchanged. Whether old Manual/Average records should satisfy confirmation is still a separate unanswered product-policy question.

@@ -1,5 +1,7 @@
 # Saved core reference progress
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Overview/navigation previously marked race/class/background Complete from selected names alone, including after a choice write saved but its matching pin failed. Four new regressions failed against that behavior (three rendered mismatch cases and the helper's no-reference case).
 
 Both server surfaces now reuse the existing parsed content-reference read and pass it to the shared status helper. Selected core identities require unique matching content IDs/versions; extra stale pins, incompatible selected subrace/subclass parents and invalid non-positive/non-integer class levels remain In progress. Missing reference data does not earn Complete. Fresh choices remain Not started. The existing schema-aware ability validation and equipment confirmation markers are preserved. Navigation stays available; there is no new hard gate or automatic pin repair.

@@ -1,5 +1,7 @@
 # Ability-score recovery checkpoint
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Milestone base: `c0671ff5c4ba254a45c25d69968a302cc8a12971` on
 `codex/playable-core-stability`; isolated checkout
 `C:\Users\kaios\Documents\Codex\2026-10-02\task\inkborne-core`.

@@ -1,5 +1,7 @@
 # Cutoff critical review - October 2, 2026
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Self-review of the isolated continuation, not a new independent-agent review. The parent's
 independent P1/P2 findings were reproduced and repaired earlier. Source is frozen at
 `1f4967f96c8d01447256280d98b65352f481a85d`. No new feature/refactor began after the parent's 17:20

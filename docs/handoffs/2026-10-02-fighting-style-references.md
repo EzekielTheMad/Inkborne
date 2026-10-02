@@ -1,5 +1,7 @@
 # Fighting-style selection and reference ownership - October 2, 2026
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Reproduced with actual ClassStepClient controls: a selected saved style was lost from the rail when newer catalog content changed its class or the catalog removed it; clicking a selected style rewrote choices and references; selecting a second fighting-style feature removed the first feature's pin. Independent per-level tests also showed unknown, duplicate, foreign-class and ordinary passive-feature slugs incorrectly counted as completed styles. The respective regressions failed before repair.
 
 Completion now requires exactly one compatible fighting-style definition. The rail resolves selected child styles from unique saved pins, including retired definitions; duplicate child pins block editing with a readable conflict. Clicking a selected style performs no write. New references carry their owning feature in the existing JSON context. Replacement removes only that feature's reference; legacy pins without an owner are retired only when the previous slug identifies a selection not shared by another choice. Choosing a new feature preserves the first pin. Insertions use the same effective pinned definition displayed by the rail.

@@ -1,4 +1,6 @@
-# Explicit pinned-choice progress — October 2, 2026
+# Explicit pinned-choice progress â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 The actual builder overview/navigation previously marked a background Complete despite an unselected required proficiency, duplicate picks or a pick outside the saved definition's explicit options. Three journey regressions reproduced that behavior before repair.
 

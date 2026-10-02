@@ -1,5 +1,7 @@
 # Character creation recovery
 
+> Historical proposal/task plan; may include unimplemented work. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current priorities.
+
 The builder-first priority starts before the race/class steps: a failed or malformed
 new-character submission must offer a readable path back instead of a runtime
 exception or database internals.

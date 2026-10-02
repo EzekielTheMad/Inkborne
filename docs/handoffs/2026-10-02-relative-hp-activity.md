@@ -1,5 +1,7 @@
 # Relative HP and retained dialog recovery
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Local continuation from `29c92f1`, 2026-10-02. No hosted operations or schema changes.
 
 ## Reproduced and repaired

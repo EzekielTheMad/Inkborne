@@ -1,5 +1,7 @@
 # Explicit custom-note clearing - October 2, 2026
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Real BackgroundStepClient controls reproduced saving an empty or whitespace-only custom note as a one-entry array and displaying a selected entry after clearing. Both regressions failed before repair.
 
 An explicitly submitted narrative edit filters blank entries to an empty selection. Nonblank text, including its whitespace, remains exact. Displayed selection counts and limits use nonblank entries. Raw failed drafts remain available for retry rather than reverting the input to the old saved note. The tests hide the editor with React Activity, reject the save, reveal it and explicitly retry; successful retry removes the unsaved notice and confirms an empty selection. No existing records are automatically rewritten.

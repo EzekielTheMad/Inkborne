@@ -1,5 +1,7 @@
 # Next bounded builder entry task: pending creation submission
 
+> Historical proposal/task plan; may include unimplemented work. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current priorities.
+
 `app/(app)/characters/new/page.tsx` renders a normal server-action form. Its
 Begin button is disabled only when game systems cannot be loaded/are absent.
 There is no pending submission indicator or per-form duplicate-click guard.

@@ -1,5 +1,7 @@
 # Inkborne cutoff checkpoint - October 2, 2026
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Prepared after restored-source verification around 17:27 UTC for the requested 18:00 UTC cutoff
 (literal 10 a.m. PST). Source development stopped at 17:25 UTC. Branch:
 `codex/playable-core-stability`; verified source: `1f4967f96c8d01447256280d98b65352f481a85d`. Later

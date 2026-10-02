@@ -1,5 +1,7 @@
 # Pending dialog session checkpoint
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Base: `c1a46bcb8c7e2f4fa538a2177e65d1ef0f21297b`, isolated branch
 `codex/playable-core-stability`.
 

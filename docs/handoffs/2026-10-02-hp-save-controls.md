@@ -1,5 +1,7 @@
 # HP save-control regression repair
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Base: `829bc4f9f09760daa33509ac7eb8ef6b39d05871`; branch
 `codex/playable-core-stability`, isolated workspace checkout.
 

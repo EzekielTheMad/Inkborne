@@ -1,5 +1,7 @@
 # Character save recovery
 
+> Historical proposal/task plan; may include unimplemented work. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current priorities.
+
 ## Product decision
 
 Prioritize a fresh character's builder-to-play-sheet journey. Preserve the

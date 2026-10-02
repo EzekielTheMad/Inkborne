@@ -1,4 +1,6 @@
-# Class level-up HP draft recovery — October 2, 2026
+# Class level-up HP draft recovery â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 Actual ClassStepClient controls reproduced a failed manual HP save still appearing selected and enabling Confirm. The rail's separate draftHpRolls overlay masked rollback from the parent save state. Visible and Activity hide/fail/reveal regressions failed before repair.
 

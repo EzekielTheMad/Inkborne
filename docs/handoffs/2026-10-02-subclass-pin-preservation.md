@@ -1,5 +1,7 @@
 # Preserve a selected subclass pin - October 2, 2026
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 A real ClassStepClient regression clicked the already-selected pinned Champion after the mutable catalog changed Champion to another parent/version. The existing card unnecessarily sent the same class choices again and could replace the pinned reference using mutable catalog content. The regression failed before repair.
 
 The selected subclass card is now inert, matching ordinary selection behavior and the fighting-style repair. Selecting a different subclass remains unchanged. The actual-client test verifies no choice, insert or removal call on re-click.

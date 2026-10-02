@@ -1,4 +1,6 @@
-# Mobile class save feedback — October 2, 2026
+# Mobile class save feedback â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 The actual mobile ClassStepClient level-up drawer had no accessible pending or failed-save message in its own dialog. Parent feedback was behind the modal, and portal controls did not inherit the parent's disabled fieldset. A real-drawer regression failed before repair.
 

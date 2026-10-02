@@ -1,5 +1,7 @@
 # Equipment save controls (local mitigation, not atomic grants)
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 The existing equipment UI allowed confirmation while a selection write was pending. Failed selection saves only logged to console. A partially failed grant exposed raw backend messages and offered another confirmation in the same session, potentially repeating earlier inserts.
 
 EquipmentStepClient now shares a synchronous local save gate between selections and confirmation. Options and confirmation stay disabled while a selection saves. Failed selections restore their prior visible selection, announce readable recovery and require an explicit successful selection retry before confirmation. Absolute choices still use the existing persistence path; no new transaction or source model is introduced.

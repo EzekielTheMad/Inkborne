@@ -1,5 +1,7 @@
 # History navigation and fresh builder recovery
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 This is a verified local milestone on `codex/playable-core-stability`, not a hosted acceptance result. All original worktrees and the separate alpha candidate remain preserved. No migration, dependency installation, hosted write, push, merge or deployment occurred.
 
 ## History behavior and implemented recovery

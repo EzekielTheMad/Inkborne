@@ -1,4 +1,6 @@
-# Manual HP validation — October 2, 2026
+# Manual HP validation â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 An actual ClassStepClient regression entered 3.5 and observed a persisted value of 3 through parseInt truncation. Blank, zero and above-die input were refused silently with no accessible correction. Four real-control regressions failed before repair.
 

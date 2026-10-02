@@ -1,4 +1,6 @@
-# Locked HP rule confirmation — October 2, 2026
+# Locked HP rule confirmation â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 Actual ClassStepClient tests under campaign average_only and max_for_all reproduced a level-up dead end: HP controls were read-only, but confirmation required a stored per-level record that those controls could not create. Both regressions failed before repair.
 

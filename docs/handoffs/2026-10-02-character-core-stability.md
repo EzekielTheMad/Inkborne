@@ -1,5 +1,7 @@
 # Character core stability handoff
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 ## Outcome
 
 Local branch `codex/playable-core-stability`, based on verified GitHub main

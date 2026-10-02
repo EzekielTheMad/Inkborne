@@ -1,4 +1,6 @@
-# Invalid saved-choice recovery — October 2, 2026
+# Invalid saved-choice recovery â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 An actual background ChoiceSelector reproduction began with an unavailable saved pick filling its limit. Every visible replacement was disabled and there was no control to remove the unavailable pick. The new regression failed before repair.
 

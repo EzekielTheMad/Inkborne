@@ -1,5 +1,7 @@
 # Align displayed HP gain with the sheet - October 2, 2026
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Actual ClassStepClient level-up controls reproduced zero/negative HP gain labels for a low-Constitution wizard, while the existing computeMaxHp calculation already applies a minimum of one per level. Free-choice Average and locked Average regressions failed before repair.
 
 All HP picker gain labels now apply that existing minimum: deterministic Average/Max, the Average button, stored Manual/Rolled labels and total gain. This is display alignment only. Raw die contributions, roll generation, persisted records, campaign rules and sheet math are unchanged. Real-client tests verify Average displays +1 but saves raw value 4; additional picker cases cover stored Manual/Rolled and locked Max. Existing max-HP tests were included in targeted verification.

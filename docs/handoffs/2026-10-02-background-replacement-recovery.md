@@ -1,5 +1,7 @@
 # Background replacement recovery milestone
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 October 2, 2026, approximately 18:40 UTC. Source checkpoint:
 `bd74cda343f31e3480a82ab3bfe063918d419c1a`, branch `codex/playable-core-stability`.
 Continued from clean `dfd00d4fa2172493a6cad9cc269016fd729a322f` after the parent

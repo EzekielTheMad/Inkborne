@@ -1,5 +1,7 @@
 # Builder overview and navigation checkpoint
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Base for this milestone: local save/creation commit
 `8e52fc99a7154a58eb522f4e6f1f8799569b0985`, built on verified remote main
 `0a4acb93ab5fcda94d8efa13a87568c3315da108`.

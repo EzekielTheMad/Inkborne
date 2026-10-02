@@ -1,4 +1,6 @@
-# First-level class choice display — October 2, 2026
+# First-level class choice display â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 Two actual ClassStepClient regressions failed before repair: an explicit first-level proficiency choice disappeared when the class level had no feature rows, and an unavailable saved pick still showed Chosen.
 

@@ -64,3 +64,32 @@ each write, response loss, simultaneous different request IDs, stale choices,
 guessed character IDs, foreign content/version denial, ledger replay after item
 deletion and character copy. No SQL migration or hosted operation accompanies
 this document. Equipment remains an unresolved release item.
+
+## Exact approval scope
+
+Minimum proposed DDL (names are proposals, not existing relations):
+
+- `character_starting_grants`: UUID grant ID/PK, character FK, grant kind with UNIQUE
+  `(character_id, grant_kind)`, canonical plan fingerprint/source snapshot, committed receipt
+  (inventory IDs and currency delta), timestamp. One initial grant per character remains the natural key.
+- Nullable `character_inventory.starting_grant_id` FK for provenance; existing inventory/version
+  constraints remain. Receipt survives item consumption/deletion; no automatic legacy backfill.
+- Reuse `characters.action_revision` from the action proposal when implemented together; no second
+  equipment-only revision. Relevant choices/pins/inventory writers must take the same character lock.
+- Trusted transaction function plus authenticated server entry: load/validate accessible pinned
+  sources and selections, compare the locked revision/snapshot, replay an equivalent existing grant,
+  or atomically insert ledger/items, add current currency, merge confirmation fields and store receipt.
+  Review explicit owner checks, receipt-read RLS, restricted function grants and generated types/callers.
+  Existing secure trusted-server capability must be established; credential changes are separate.
+
+Hosted approval must name a disposable staging project/DB, migration order/replay and fixture/cleanup
+IDs. Allow only the approved new schema/functions/permissions and disposable owner/nonowner characters,
+versioned content, inventory and grant rows. Use two browser sessions. Required cases: rejection after
+ledger/item/currency/choice/receipt stages rolls all writes back; commit then lost response returns the
+same receipt after reload; simultaneous different request IDs grant once; differing/stale plans reject;
+foreign character/private content/version and anonymous callers cannot grant/read foreign receipts;
+unrelated choices are preserved and current currency increments exactly once; replay after item deletion
+does not regrant; approved copy semantics and preexisting confirmed/partial legacy fixtures do not reaward.
+Commit-loss/concurrency cases require committed disposable rows, not only rollback smoke. Cleanup must
+track created IDs and prove zero residual fixtures without sweeping user data. Existing migration history,
+legacy reconciliation and copy policy must be reviewed before approving DDL. No SQL/hosted execution here.

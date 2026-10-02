@@ -1,4 +1,6 @@
-# Pinned race-trait display — October 2, 2026
+# Pinned race-trait display â€” October 2, 2026
+
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 The actual race selector displayed a newer catalog trait's tool options despite an authorized older trait snapshot already being pinned to the character. The new real-control regression failed before repair.
 

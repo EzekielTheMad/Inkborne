@@ -21,3 +21,41 @@ This design is independent from starting-equipment grant uniqueness. Distinct op
 Before implementation, reconcile migration history, review command receipt/revision schema, existing writers and permissions, decide roll authority and receipt retention, and obtain explicit schema/hosted authorization. Verification must include guaranteed rejection before commit, lost response after commit, same-ID replay, changed-payload ID reuse, simultaneous different IDs from two tabs, stale pinned sources, unauthorized character/content, navigation while ambiguous, and roll-history uniqueness. Local mocked failure tests cannot substitute for these durable cases.
 
 No SQL migration, schema change, hosted test, credential change or new persistence framework accompanies this document. Existing local action gating and explicit errors remain useful but are not release proof for ambiguous or cross-client writes.
+
+## Exact approval scope
+
+Minimum proposed DDL (no migration accompanies this proposal):
+
+- `characters.action_revision`: nonnegative bigint, default 0, not null. Relevant state/base-stat/
+  choice changes and content-ref/mechanical-inventory mutations participate in the same character lock
+  and increment protocol. Review/update every applicable direct writer and child-table mutation path;
+  a new command endpoint alone is insufficient.
+- `character_action_receipts`: PK `(character_id, operation_id)` with character FK, command kind,
+  canonical request fingerprint, accepted result JSON, resulting revision and timestamp. Owner is
+  auth-derived; owner-only receipt reads and trusted-server-only writes/execute grants are reviewed.
+- For supported hit-die commands, nullable `character_rolls.action_operation_id` linked by
+  `(character_id, action_operation_id)` to the receipt, unique when nonnull: one accepted history entry
+  per supported command. Keep ordinary manual rolls distinct; multi-roll commands need separate review.
+- Authenticated command/receipt entry plus one internal compare-and-apply transaction: row lock,
+  revision/source/access validation, state mutation, accepted roll history and receipt in one commit.
+  Existing unrestricted mutation paths must join this protocol, not silently bypass it. Review generated
+  types/callers/grants and the state RPC no-match/search-path questions from the release checklist.
+
+Before implementation Victor must approve roll authority/audit, supported command kinds, retention and
+client operation-ID storage/recovery policy. Receipt lookup is not a current-HP inference; offline or
+missing receipt under unresolved connectivity is not confirmed failure. Creation deduplication requires
+a separate pre-character receipt boundary and is not claimed by this character-scoped design.
+
+Hosted approval must name a disposable staging project/DB, migration replay and exact fixtures: at least
+two owners plus nonowner/anonymous access, accessible/foreign pinned definitions, tracked character,
+inventory/ref, receipt and roll IDs, and two browser sessions. Required cases: reject before commit;
+commit then lose HTTP response and reload/read receipt; same-ID replay returns identical result and one
+roll; same ID/different fingerprint rejects; simultaneous identical IDs commit once; different IDs with
+one expected revision reject stale intent (legitimate subsequent actions remain possible); state, choices,
+pins or mechanical inventory changed between planning/commit invalidate the command; foreign/missing
+character and inaccessible content cannot yield success; navigation while unresolved keeps recovery ID;
+failed transaction leaves no state/receipt/roll residue. Replay the reconciled migration chain in a fresh
+approved DB and verify effective qualified function bodies, grants/RLS and no-match rejection. Commit-loss
+tests use committed disposable rows; final cleanup is by tracked IDs with zero residual fixtures. No
+production data, existing worktree, credential/security change, schema or hosted operation is authorized
+by this design document alone.

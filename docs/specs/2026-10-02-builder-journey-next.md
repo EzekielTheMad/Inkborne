@@ -1,5 +1,7 @@
 # Next bounded task: builder overview and navigation
 
+> Historical proposal/task plan; may include unimplemented work. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current priorities.
+
 ## Evidence
 
 `app/(app)/characters/[id]/builder/page.tsx` has `getStepStatus`, while its

@@ -1,5 +1,7 @@
 # Creation pending-state checkpoint
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Base: local cast-conflict gate `c26ba1819d1e704d025d26a828b78fc669abb90e`.
 Branch and isolated checkout remain `codex/playable-core-stability` at
 `C:\Users\kaios\Documents\Codex\2026-10-02\task\inkborne-core`.

@@ -1,5 +1,7 @@
 # Critical review of the accumulated local changes
 
+> Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
+
 Reviewed source from remote-main base `0a4acb93ab5fcda94d8efa13a87568c3315da108`
 through the local save/creation, builder-status and ability-recovery milestones.
 Review checks control flow, request lifetimes, shallow state and navigation;
