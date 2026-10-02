@@ -112,10 +112,14 @@ with blank drafts retained after failure for retry, including hidden Activity
 completion. Nonblank text is preserved exactly. See the
 [note-clearing checkpoint](handoffs/2026-10-02-background-note-clearing.md).
 
+Builder HP gain labels now match the existing sheet minimum of one per level,
+including negative Constitution modifiers. Stored raw contributions and HP
+rules are unchanged; see the [display checkpoint](handoffs/2026-10-02-hp-gain-display.md).
+
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,961 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,966 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -123,7 +127,7 @@ completion. Nonblank text is preserved exactly. See the
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Installed Chrome ran seventeen builder checks and five play-save checks with real editors and mocked
+- Installed Chrome ran eighteen builder checks and five play-save checks with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
   selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing

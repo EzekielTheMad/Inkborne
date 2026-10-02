@@ -20,6 +20,10 @@ function averageHitDie(die: number): number {
   return Math.floor(die / 2) + 1;
 }
 
+function hpGain(contribution: number, conMod: number): number {
+  return Math.max(1, contribution + conMod);
+}
+
 function rollDie(die: number): number {
   const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);
@@ -42,7 +46,7 @@ export function HpPicker(props: HpPickerProps) {
   const isRolledOnly = hpRule === "rolled_only";
 
   if (isAverageLocked) {
-    const display = avg + conMod;
+    const display = hpGain(avg, conMod);
     return (
       <div className="rounded-md border border-border bg-card/40 p-4">
         <p id={labelId} className="text-xs font-medium uppercase text-muted-foreground tracking-wider">
@@ -57,7 +61,7 @@ export function HpPicker(props: HpPickerProps) {
   }
 
   if (isMaxLocked) {
-    const display = hitDie + conMod;
+    const display = hpGain(hitDie, conMod);
     const ruleLabel =
       hpRule === "max_for_all"
         ? "Campaign rule: Max"
@@ -136,7 +140,7 @@ function HpPickerInteractive(props: InteractiveProps) {
     onChange({ method: "manual", value: n });
   }
 
-  const displayValue = storedRoll ? storedRoll.value + conMod : null;
+  const displayValue = storedRoll ? hpGain(storedRoll.value, conMod) : null;
 
   return (
     <div className="rounded-md border border-border bg-card/40 p-4">
@@ -155,7 +159,7 @@ function HpPickerInteractive(props: InteractiveProps) {
               isChecked("average") ? "border-accent bg-accent/10 text-accent-foreground" : "border-border hover:bg-accent/5",
             )}
           >
-            Average (+{avg + conMod})
+            Average (+{hpGain(avg, conMod)})
           </button>
         )}
         <button
@@ -170,7 +174,7 @@ function HpPickerInteractive(props: InteractiveProps) {
         >
           Roll d{hitDie}
           {isChecked("rolled") && storedRoll && (
-            <span className="ml-1 text-muted-foreground">(+{storedRoll.value + conMod})</span>
+            <span className="ml-1 text-muted-foreground">(+{hpGain(storedRoll.value, conMod)})</span>
           )}
         </button>
         {!onlyRoll && (
@@ -186,7 +190,7 @@ function HpPickerInteractive(props: InteractiveProps) {
           >
             Manual
             {isChecked("manual") && storedRoll && (
-              <span className="ml-1 text-muted-foreground">(+{storedRoll.value + conMod})</span>
+              <span className="ml-1 text-muted-foreground">(+{hpGain(storedRoll.value, conMod)})</span>
             )}
           </button>
         )}

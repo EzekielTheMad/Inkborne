@@ -329,6 +329,22 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update.mock.calls[0][1].choices.hp_rolls).toEqual({"fighter-2":{method:"manual",value:4}});
   });
 
+  it.each(["free_choice", "average_only"] as const)("shows the sheet minimum HP gain under %s without changing raw values", async (hp_rule) => {
+    const cls:ContentEntry={...human,id:"wizard",slug:"wizard",name:"Wizard",content_type:"class",data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}};
+    const hero={...character,base_stats:{constitution:3},choices:{classes:[{slug:"wizard",level:1}]},campaigns:{hp_rule}};
+    render(<ClassStepClient characterId="char-1" character={hero} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Level up Wizard to level 2/i}));
+    if(hp_rule==="free_choice") {
+      fireEvent.click(screen.getByRole("radio",{name:"Average (+1)"}));
+      await waitFor(()=>expect(mocks.update).toHaveBeenCalledOnce());
+      expect(mocks.update.mock.calls[0][1].choices.hp_rolls).toEqual({"wizard-2":{method:"average",value:4}});
+      expect(screen.getByText(/Total HP gain this level:/)).toHaveTextContent("+1");
+    } else {
+      expect(screen.getByText("+1",{exact:true})).toBeVisible();
+      expect(mocks.update).not.toHaveBeenCalled();
+    }
+  });
+
   it.each(["average_only","max_for_all"] as const)("allows deterministic %s HP without inventing a per-level record", async (hp_rule) => {
     const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}};
     const hero={...character,choices:{classes:[{slug:"fighter",level:1}]},campaigns:{hp_rule}};

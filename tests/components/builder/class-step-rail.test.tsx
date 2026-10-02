@@ -1366,6 +1366,19 @@ describe("HpPicker", () => {
     expect(rollBtn).toHaveAttribute("aria-checked", "true");
   });
 
+  it.each(["manual", "rolled"] as const)("shows minimum +1 for a low %s HP gain without rewriting the record", (method) => {
+    const onChange=vi.fn();
+    render(<HpPicker {...defaults({conMod:-4,storedRoll:{method,value:1},onChange})}/>);
+    expect(screen.getByRole("radio",{name:method==="manual"?/^Manual\s*\(\+1\)$/:/^Roll d10\s*\(\+1\)$/})).toHaveAttribute("aria-checked","true");
+    expect(screen.getByText(/Total HP gain this level:/)).toHaveTextContent("+1");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("shows minimum +1 under locked Max when Constitution offsets the die", () => {
+    render(<HpPicker {...defaults({hitDie:4,conMod:-4,hpRule:"max_for_all"})}/>);
+    expect(screen.getByText("+1",{exact:true})).toBeVisible();
+  });
+
   it("rolled_only rule renders only the Roll button + read-only display when no roll yet", () => {
     render(<HpPicker {...defaults({ hpRule: "rolled_only" })} />);
     expect(screen.queryByRole("radio", { name: /Average/i })).not.toBeInTheDocument();
