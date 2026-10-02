@@ -226,12 +226,12 @@ export function AbilitiesStepClient({
         {navigationGuard.notice && <p role="alert" className="text-sm text-destructive">{navigationGuard.notice}</p>}
         {saveStatus === "error" && (
           <div role="alert" className="space-y-2 text-sm text-destructive">
-            <p>Your latest ability scores could not be saved. Keep this page open and retry. If the character changed elsewhere, reload before editing again.</p>
+            <p>Your latest ability scores are not confirmed saved. Keep this page open and retry, or reload to check the saved character first. Reloading discards this draft. If the character changed elsewhere, reload before editing again.</p>
             <Button variant="outline" size="sm" onClick={() => writer.retry()}>Retry save</Button>
           </div>
         )}
         <p role="status" className="text-sm text-muted-foreground">
-          {saveStatus === "saving" ? "Saving ability scores. Keep this page open." : saveStatus === "saved" ? "Ability scores saved." : saveStatus === "error" ? "Unsaved ability scores." : "Changes save automatically."}
+          {saveStatus === "saving" ? "Saving ability scores. Wait before using Back, Forward, or refresh; leaving may interrupt your save." : saveStatus === "saved" ? "Ability scores saved." : saveStatus === "error" ? "Unsaved ability scores." : "Changes save automatically."}
         </p>
 
         {/* Method selector */}

@@ -47,6 +47,7 @@ export function ContentBrowser({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Input
+          aria-label={`Search ${contentTypeLabel}`}
           placeholder={`Search ${contentTypeLabel}...`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -68,8 +69,8 @@ export function ContentBrowser({
             <Card
               key={entry.id}
               className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => onSelect(entry)}
             >
+              <button type="button" aria-label={`Preview ${entry.name}`} onClick={() => onSelect(entry)} className="w-full text-left outline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle className="text-sm font-medium">
@@ -137,6 +138,7 @@ export function ContentBrowser({
                   </div>
                 )}
               </CardContent>
+              </button>
             </Card>
           ))}
         </div>

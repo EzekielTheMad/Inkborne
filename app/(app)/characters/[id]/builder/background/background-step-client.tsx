@@ -175,6 +175,7 @@ export function BackgroundStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save narrative trait:", err);
+      setSelectionError("These background choices could not be confirmed. Reload the character before trying again.");
     }
   }
 
@@ -195,6 +196,7 @@ export function BackgroundStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save choice selection:", err);
+      setSelectionError("These background choices could not be confirmed. Reload the character before trying again.");
     }
   }
 

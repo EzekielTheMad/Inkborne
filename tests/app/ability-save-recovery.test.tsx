@@ -1,3 +1,4 @@
+import { Activity } from "react";
 import Link from "next/link";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -165,6 +166,38 @@ describe("ability-score save recovery", () => {
     expect(persist).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("spinbutton", { name: "Strength score" })).toHaveValue(20);
     expect(screen.getByRole("status")).toHaveTextContent("Ability scores saved.");
+  });
+
+  it("recovers a draft after a cached route hides the editor during a save", async () => {
+    const first = deferred(); persist.mockReturnValueOnce(first.promise);
+    const editor = <AbilitiesStepClient characterId="char-1" character={{ id: "char-1", level: 1, choices: { ability_method: "manual" }, base_stats: { strength: 10 } }} contentRefs={[]} schema={schema as never} />;
+    const view = render(<Activity mode="visible">{editor}</Activity>);
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Strength score" }), { target: { value: "18" } });
+    await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+    view.rerender(<Activity mode="hidden">{editor}</Activity>);
+    expect(persist.mock.calls[0][3]?.aborted).toBe(true);
+    await act(async () => first.resolve());
+    view.rerender(<Activity mode="visible">{editor}</Activity>);
+    await screen.findByRole("alert");
+    expect(screen.getByRole("spinbutton", { name: "Strength score" })).toHaveValue(18);
+    fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Ability scores saved."));
+    expect(persist).toHaveBeenCalledTimes(2);
+    expect(persist.mock.calls[1][3]?.aborted).toBe(false);
+  });
+
+  it("ignores the previous session response after the cached editor has resumed", async () => {
+    const first = deferred(); persist.mockReturnValueOnce(first.promise);
+    const editor = <AbilitiesStepClient characterId="char-1" character={{ id: "char-1", level: 1, choices: { ability_method: "manual" }, base_stats: { strength: 10 } }} contentRefs={[]} schema={schema as never} />;
+    const view = render(<Activity mode="visible">{editor}</Activity>);
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Strength score" }), { target: { value: "18" } });
+    await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+    view.rerender(<Activity mode="hidden">{editor}</Activity>);
+    view.rerender(<Activity mode="visible">{editor}</Activity>);
+    await screen.findByRole("alert");
+    await act(async () => first.resolve());
+    expect(screen.getByRole("status")).toHaveTextContent("Unsaved ability scores.");
+    expect(persist).toHaveBeenCalledTimes(1);
   });
 
 });

@@ -38,13 +38,17 @@ and compatibility, but defer expanding those surfaces.
 - Ability-score edits now save in order and retain failed drafts for explicit
   retry, with visible saving/error status. Current unrelated choices are merged
   at dispatch and guarded against changes in the read/write window.
+  Cached editors now recover interrupted ability drafts instead of remaining
+  stuck saving; old-session responses are ignored. Race/class/background errors
+  are visible, content selection is keyboard accessible, general updates require
+  a returned row, and stale/wrong-category equipment picks cannot confirm.
 - The separate alpha-readiness candidate remains unmerged and preserved. It
   contains dependency/auth/E2E/security work; this branch does not absorb it.
 
 ## Verification
 
-- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 201 files /
-  1,860 tests passed including real desktop/mobile dialog lifetime interactions.
+- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 202 files /
+  1,870 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -52,8 +56,12 @@ and compatibility, but defer expanding those surfaces.
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Hosted/browser tests were not run: existing Playwright fixtures write to
-  Supabase. Production availability and privacy/release gates remain unverified.
+- Installed Chrome ran an isolated fixture with real editors and mocked
+  routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
+  selection, mobile error display and native refresh warning passed. This is
+  simulated local coverage, not live Next/auth/Supabase acceptance. The existing
+  hosted Playwright fixtures were not run because they write to Supabase.
+  Production availability and privacy/release gates remain unverified.
 
 ## Next bounded work
 
@@ -80,7 +88,10 @@ and compatibility, but defer expanding those surfaces.
    [Dialog lifetime interactions](handoffs/2026-10-02-dialog-save-lifetimes.md)
    are now verified locally. Ability-editor link/unload and closed-session
    recovery is covered in the [navigation handoff](handoffs/2026-10-02-ability-navigation-recovery.md).
-   History navigation, ambiguous writes and equipment atomicity remain open.
+   [History and fresh builder review](handoffs/2026-10-02-history-builder-review.md)
+   verifies cached draft recovery without trapping Back/Forward. Remaining
+   priorities: equipment atomicity, choice/reference synchronization, concurrent
+   full-choice writes and system-aware readiness validation.
 
 ## Authority
 

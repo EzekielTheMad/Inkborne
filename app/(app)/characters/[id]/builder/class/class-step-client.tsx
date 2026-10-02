@@ -72,6 +72,7 @@ export function ClassStepClient({
   contentRefs,
   schema,
 }: ClassStepClientProps) {
+  const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
@@ -118,6 +119,7 @@ export function ClassStepClient({
     setLocalChoices(newChoices);
     setLocalLevel(totalLevel);
 
+    setSaveError(null);
     try {
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
@@ -147,6 +149,7 @@ export function ClassStepClient({
       setLocalChoices(prev.choices);
       setLocalLevel(prev.level);
       console.error("Failed to add class:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -163,6 +166,7 @@ export function ClassStepClient({
     setLocalChoices(newChoices);
     setLocalLevel(totalLevel);
 
+    setSaveError(null);
     try {
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
@@ -175,6 +179,7 @@ export function ClassStepClient({
       setLocalChoices(prev.choices);
       setLocalLevel(prev.level);
       console.error("Failed to change class level:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -195,6 +200,7 @@ export function ClassStepClient({
     setLocalChoices(newChoices);
     setLocalLevel(totalLevel);
 
+    setSaveError(null);
     try {
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
@@ -207,6 +213,7 @@ export function ClassStepClient({
       setLocalChoices(prev.choices);
       setLocalLevel(prev.level);
       console.error("Failed to confirm level up:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -222,11 +229,13 @@ export function ClassStepClient({
     const prev = localChoices;
     setLocalChoices(newChoices);
 
+    setSaveError(null);
     try {
       await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save HP roll:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -241,6 +250,7 @@ export function ClassStepClient({
     setLocalChoices(newChoices);
     setLocalLevel(newLevel);
 
+    setSaveError(null);
     try {
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
@@ -261,6 +271,7 @@ export function ClassStepClient({
       setLocalChoices(prev.choices);
       setLocalLevel(prev.level);
       console.error("Failed to remove class:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -274,11 +285,13 @@ export function ClassStepClient({
     const prev = localChoices;
     setLocalChoices(newChoices);
 
+    setSaveError(null);
     try {
       await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save choice selection:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -296,6 +309,7 @@ export function ClassStepClient({
     const prev = localChoices;
     setLocalChoices(newChoices);
 
+    setSaveError(null);
     try {
       await updateCharacter(characterId, { choices: newChoices });
 
@@ -324,6 +338,7 @@ export function ClassStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save fighting style:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -342,6 +357,7 @@ export function ClassStepClient({
     const prev = localChoices;
     setLocalChoices(newChoices);
 
+    setSaveError(null);
     try {
       await updateCharacter(characterId, { choices: newChoices });
 
@@ -373,6 +389,7 @@ export function ClassStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save subclass:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     }
   }
 
@@ -386,6 +403,7 @@ export function ClassStepClient({
     const prev = localChoices;
     setLocalChoices(newChoices);
 
+    setSaveError(null);
     try {
       const result = await setCharacterAsiChoiceAction({
         characterId,
@@ -406,6 +424,7 @@ export function ClassStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save ASI selection:", err);
+      setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
       throw err;
     }
   }
@@ -426,6 +445,7 @@ export function ClassStepClient({
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6 min-w-0">
         <h2 className="text-xl font-semibold">Class</h2>
+        {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
 
         {hasClass ? (
           <ClassStepRail

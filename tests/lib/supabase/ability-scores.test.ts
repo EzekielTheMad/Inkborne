@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { saveCharacterAbilityScores } from "@/lib/supabase/character-client";
+import { saveCharacterAbilityScores, updateCharacter } from "@/lib/supabase/character-client";
 
 const transport = vi.hoisted(() => ({ fetch: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({
@@ -70,6 +70,16 @@ describe("guarded ability-score transport", () => {
     await expect(saveCharacterAbilityScores("char-1", "manual", { strength: 18 }, controller.signal)).rejects.toThrow("session has closed");
     expect(transport.fetch).toHaveBeenCalledTimes(1);
     expect(transport.fetch.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+
+  it("requires a returned row for general builder updates too", async () => {
+    transport.fetch.mockResolvedValueOnce(response({ id: "char-1" }));
+    await updateCharacter("char-1", { choices: { race: "human" } });
+    const [address, options] = transport.fetch.mock.calls[0];
+    expect(new URL(address).searchParams.get("select")).toBe("id");
+    expect(options.headers.get("Prefer")).toContain("return=representation");
+    transport.fetch.mockResolvedValueOnce(response(null));
+    await expect(updateCharacter("char-1", { choices: { race: "elf" } })).rejects.toThrow("could not be confirmed");
   });
 
 });

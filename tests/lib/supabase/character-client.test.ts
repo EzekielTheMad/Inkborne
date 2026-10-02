@@ -21,12 +21,14 @@ import {
 describe("updateCharacterColor", () => {
   beforeEach(() => {
     mockEq.mockReset();
+    mockEq.mockReturnValue({ select: mockSelect });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     mockUpdate.mockClear();
     mockFrom.mockClear();
   });
 
   it("writes the hex to the characters row", async () => {
-    mockEq.mockResolvedValue({ error: null });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     await updateCharacterColor("char-123", "#7c3aed");
     expect(mockFrom).toHaveBeenCalledWith("characters");
     expect(mockUpdate).toHaveBeenCalledWith({ primary_color: "#7c3aed" });
@@ -34,13 +36,13 @@ describe("updateCharacterColor", () => {
   });
 
   it("writes null to clear the color", async () => {
-    mockEq.mockResolvedValue({ error: null });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     await updateCharacterColor("char-123", null);
     expect(mockUpdate).toHaveBeenCalledWith({ primary_color: null });
   });
 
   it("throws when the supabase write errors", async () => {
-    mockEq.mockResolvedValue({ error: { message: "RLS violation" } });
+    mockSingle.mockResolvedValue({ error: { message: "RLS violation" } });
     await expect(updateCharacterColor("char-123", "#7c3aed")).rejects.toThrow("RLS violation");
   });
 });
@@ -48,12 +50,14 @@ describe("updateCharacterColor", () => {
 describe("updateCharacter", () => {
   beforeEach(() => {
     mockEq.mockReset();
+    mockEq.mockReturnValue({ select: mockSelect });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     mockUpdate.mockClear();
     mockFrom.mockClear();
   });
 
   it("writes a partial patch to the characters row", async () => {
-    mockEq.mockResolvedValue({ error: null });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     await updateCharacter("char-1", { level: 5 });
     expect(mockFrom).toHaveBeenCalledWith("characters");
     expect(mockUpdate).toHaveBeenCalledWith({ level: 5 });
@@ -61,7 +65,7 @@ describe("updateCharacter", () => {
   });
 
   it("writes multi-field patches in a single update", async () => {
-    mockEq.mockResolvedValue({ error: null });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     await updateCharacter("char-1", {
       choices: { classes: [{ slug: "wizard", level: 3 }] },
       level: 3,
@@ -73,7 +77,7 @@ describe("updateCharacter", () => {
   });
 
   it("throws when supabase returns an error", async () => {
-    mockEq.mockResolvedValue({ error: { message: "RLS denied" } });
+    mockSingle.mockResolvedValue({ error: { message: "RLS denied" } });
     await expect(
       updateCharacter("char-1", { level: 5 }),
     ).rejects.toThrow("RLS denied");
@@ -88,6 +92,8 @@ describe("updateCharacter", () => {
 describe("updateCharacterAndReturn", () => {
   beforeEach(() => {
     mockEq.mockReset();
+    mockEq.mockReturnValue({ select: mockSelect });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     mockSelect.mockClear();
     mockSingle.mockReset();
     mockUpdate.mockClear();
@@ -136,12 +142,14 @@ describe("updateCharacterAndReturn", () => {
 describe("updateCharacterColor (post-refactor delegation)", () => {
   beforeEach(() => {
     mockEq.mockReset();
+    mockEq.mockReturnValue({ select: mockSelect });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     mockUpdate.mockClear();
     mockFrom.mockClear();
   });
 
   it("delegates to updateCharacter with { primary_color }", async () => {
-    mockEq.mockResolvedValue({ error: null });
+    mockSingle.mockResolvedValue({ data: { id: "char-1" }, error: null });
     await updateCharacterColor("char-1", "#7c3aed");
     expect(mockFrom).toHaveBeenCalledWith("characters");
     expect(mockUpdate).toHaveBeenCalledWith({ primary_color: "#7c3aed" });

@@ -18,12 +18,14 @@ export function createAbilityScoreWriter(
   let tail = Promise.resolve();
   let status: AbilitySaveStatus = "idle";
   let active = true;
+  let generation = 0;
   let controller = new AbortController();
   const report = (next: AbilitySaveStatus) => { status = next; onStatus(next); };
   const enqueue = (draft: AbilityDraft) => {
     report("saving");
+    const enqueuedGeneration = generation;
     const operation = tail.then(async () => {
-      if (!active) return;
+      if (!active || generation !== enqueuedGeneration) return;
       let saved = false;
       try {
         await persist(draft, controller.signal);
@@ -31,7 +33,7 @@ export function createAbilityScoreWriter(
       } catch {
         // The visible draft remains available even if the response was lost.
       }
-      if (active && latest === draft) report(saved ? "saved" : "error");
+      if (active && generation === enqueuedGeneration && latest === draft) report(saved ? "saved" : "error");
     });
     tail = operation;
   };
@@ -45,7 +47,16 @@ export function createAbilityScoreWriter(
       enqueue(latest);
     },
     retry() { if (active && status === "error") enqueue(latest); },
-    activate() { if (controller.signal.aborted) controller = new AbortController(); active = true; },
-    deactivate() { active = false; controller.abort(); },
+    activate() {
+      if (controller.signal.aborted) controller = new AbortController();
+      active = true;
+      const resumedGeneration = generation;
+      // Cached routes resume effects without recreating their draft. Reconcile
+      // an interrupted save after setup, before accepting a retry.
+      if (status === "saving" || status === "error") queueMicrotask(() => {
+        if (active && generation === resumedGeneration && (status === "saving" || status === "error")) report("error");
+      });
+    },
+    deactivate() { active = false; generation += 1; controller.abort(); },
   };
 }

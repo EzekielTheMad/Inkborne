@@ -307,4 +307,18 @@ describe("EquipmentStepClient", () => {
       screen.getByText(/select a class first/i),
     ).toBeInTheDocument();
   });
+  it("blocks a stale saved category pick instead of confirming incomplete grants", () => {
+    renderStep({ startingEquipment: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "deleted-catalog-slug" } } });
+    expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("no longer available");
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
+    expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+  });
+
+  it("blocks catalog items that do not belong to a saved pick's category", () => {
+    renderStep({ startingEquipment: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "warhammer" } } });
+    expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("current options");
+  });
+
 });

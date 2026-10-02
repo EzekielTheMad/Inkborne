@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { updateCharacter } from "@/lib/supabase/character-client";
 import {
@@ -76,6 +76,9 @@ export function RaceStepClient({
   contentRefs,
   schema,
 }: RaceStepClientProps) {
+  const saveBusy = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
@@ -126,6 +129,8 @@ export function RaceStepClient({
   );
 
   async function handleSelectRace(content: ContentEntry) {
+    if (saveBusy.current) return;
+    saveBusy.current = true; setIsSaving(true); setSaveError(null);
     setPreviewContent(null);
 
     const newChoices = {
@@ -164,10 +169,15 @@ export function RaceStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to select race:", err);
+      setSaveError("This race change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false; setIsSaving(false);
     }
   }
 
   async function handleSelectSubrace(subrace: ContentEntry) {
+    if (saveBusy.current) return;
+    saveBusy.current = true; setIsSaving(true); setSaveError(null);
     const newChoices = { ...localChoices, subrace: subrace.slug };
 
     const prev = localChoices;
@@ -194,10 +204,15 @@ export function RaceStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to select subrace:", err);
+      setSaveError("This race change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false; setIsSaving(false);
     }
   }
 
   async function handleChangeRace() {
+    if (saveBusy.current) return;
+    saveBusy.current = true; setIsSaving(true); setSaveError(null);
     const newChoices = {
       ...localChoices,
       race: undefined,
@@ -223,10 +238,15 @@ export function RaceStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to clear race:", err);
+      setSaveError("This race change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false; setIsSaving(false);
     }
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
+    if (saveBusy.current) return;
+    saveBusy.current = true; setIsSaving(true); setSaveError(null);
     const newResolved = {
       ...localChoices.resolved_choices,
       [choiceId]: selections,
@@ -241,10 +261,15 @@ export function RaceStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save choice selection:", err);
+      setSaveError("This race change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false; setIsSaving(false);
     }
   }
 
   async function handleChangeSubrace() {
+    if (saveBusy.current) return;
+    saveBusy.current = true; setIsSaving(true); setSaveError(null);
     const newChoices = { ...localChoices, subrace: undefined };
 
     const prev = localChoices;
@@ -264,13 +289,18 @@ export function RaceStepClient({
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to clear subrace:", err);
+      setSaveError("This race change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false; setIsSaving(false);
     }
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <div className="space-y-6">
+      <fieldset disabled={isSaving} aria-busy={isSaving} className="min-w-0 space-y-6 border-0 p-0">
         <h2 className="text-xl font-semibold">{raceTypeLabel}</h2>
+        {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+        {isSaving && <p role="status">Saving race choices. Keep this page open.</p>}
 
         {hasRace && selectedRaceContent ? (
           <div className="space-y-4">
@@ -483,8 +513,8 @@ export function RaceStepClient({
                         <Card
                           key={sr.id}
                           className="cursor-pointer hover:bg-accent/50 transition-colors"
-                          onClick={() => handleSelectSubrace(sr)}
                         >
+                          <button type="button" aria-label={`Select ${sr.name}`} onClick={() => handleSelectSubrace(sr)} className="w-full text-left outline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">
                           <CardContent className="p-3">
                             <p className="font-medium text-sm">{sr.name}</p>
                             {typeof sr.data.description === "string" && (
@@ -493,6 +523,7 @@ export function RaceStepClient({
                               </p>
                             )}
                           </CardContent>
+                          </button>
                         </Card>
                       ))}
                     </div>
@@ -535,7 +566,7 @@ export function RaceStepClient({
             Next: Class
           </Button>
         </div>
-      </div>
+      </fieldset>
 
       {schema && (
         <div className="hidden lg:block">

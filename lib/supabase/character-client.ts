@@ -39,7 +39,8 @@ export async function saveCharacterAbilityScores(
 /**
  * Browser-side helper to write a partial patch to a characters row.
  * Throws on supabase `{ error }` (RLS denial, check-constraint violation,
- * network). Caller is responsible for optimistic state + revert on failure.
+ * network) or missing returned-row confirmation. Caller owns recovery; multi-write
+ * actions may have partially persisted even when this helper rejects.
  *
  * Empty patches are a no-op (defensive — protects against accidental
  * `.update({})` writes that supabase treats as a row-touch).
@@ -50,11 +51,14 @@ export async function updateCharacter(
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const supabase = createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("characters")
     .update(patch)
-    .eq("id", characterId);
+    .eq("id", characterId)
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("The character update could not be confirmed.");
 }
 
 /**

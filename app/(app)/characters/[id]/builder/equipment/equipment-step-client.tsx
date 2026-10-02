@@ -86,7 +86,8 @@ export function EquipmentStepClient({
   );
 
   const confirmed = !!equipmentState.confirmed;
-  const complete = isSelectionComplete(groups, equipmentState);
+  const complete = isSelectionComplete(groups, equipmentState, catalog);
+  const hasUnavailablePicks = !complete && isSelectionComplete(groups, equipmentState);
 
   const grantPreview = useMemo(
     () =>
@@ -228,6 +229,7 @@ export function EquipmentStepClient({
               >
                 {isConfirming ? "Adding to inventory…" : "Confirm Equipment"}
               </Button>
+              {hasUnavailablePicks && <p role="alert" className="text-sm text-destructive">Some saved equipment picks are no longer available for their category. Choose from the current options before confirming.</p>}
               {!complete && (
                 <p className="text-xs text-muted-foreground">
                   Make a selection in every group to confirm.

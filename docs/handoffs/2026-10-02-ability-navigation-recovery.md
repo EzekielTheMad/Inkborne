@@ -9,3 +9,5 @@ Interaction tests use the actual editor and Next Link, with only persistence moc
 Limits: SPA history back/forward and direct router commands require separate integration. Browser unload warnings depend on browser behavior. New-tab/modifier, download and same-page hash links are allowed. Multi-client concurrency and ambiguous server completion remain release/UAT prerequisites. No schema, hosted writes, dependency install, push or deploy.
 
 Validation: npm run check passed (TypeScript, zero-warning lint, 1,860 tests across 201 files). Production build passed with local placeholder service configuration and reused matching dependencies. This is not hosted acceptance or a fresh dependency installation.
+
+Follow-up: [history and fresh builder review](2026-10-02-history-builder-review.md) repairs retained Activity drafts and documents supported history behavior and simulated Chrome coverage.

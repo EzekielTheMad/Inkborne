@@ -53,6 +53,7 @@ export function ChoiceSelector({
               key={option}
               type="button"
               onClick={() => handleToggle(option)}
+              aria-pressed={isSelected}
               disabled={isDisabled}
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm border transition-colors",

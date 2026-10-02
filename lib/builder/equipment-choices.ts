@@ -455,17 +455,21 @@ export function getActiveOption(
 }
 
 /** True when every choice group has a selection and every category slot
- *  (including those inside fixed groups) has a pick. Gates Confirm. */
+ *  (including those inside fixed groups) has a pick. With a catalog, each pick
+ *  must also be currently offered for that category. Confirmation supplies it. */
 export function isSelectionComplete(
   groups: EquipmentGroup[],
   state: StartingEquipmentSelections,
+  catalog?: EquipmentCatalogItem[],
 ): boolean {
   return groups.every((group) => {
     const option = getActiveOption(group, state.selections);
     if (!option) return false;
-    return getOptionCategorySlots(group, option).every(
-      (slot) => !!state.picks[slot.key],
-    );
+    return getOptionCategorySlots(group, option).every((slot) => {
+      const value = state.picks[slot.key];
+      if (!value) return false;
+      return !catalog || getCategoryChoices(slot.category, catalog).some((choice) => choice.value === value);
+    });
   });
 }
 
