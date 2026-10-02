@@ -182,6 +182,20 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
+  it("does not rewrite a selected pinned subclass when its card is clicked again", () => {
+    const gate:ContentEntry={...human,id:"archetype",slug:"archetype",name:"Martial Archetype",content_type:"feature",data:{class:"fighter",feature_type:"subclass"}};
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:3,features:[gate.slug]}]}};
+    const sub:ContentEntry={...human,id:"champion",slug:"champion",name:"Pinned Champion",content_type:"subclass",data:{parent_class:"fighter",levels:[]}};
+    render(<ClassStepClient characterId="char-1" character={{...character,level:3,choices:{classes:[{slug:"fighter",level:3,subclass:sub.slug}]}}} classes={[cls]} subclasses={[{...sub,name:"Catalog Champion",version:2,data:{parent_class:"wizard",levels:[]}}]} features={[gate]} feats={[]} spells={[]} contentRefs={[cls,gate,sub].map(content=>({id:"pin-"+content.id,content_id:content.id,context:content===sub?{source:"subclass",class:"fighter"}:{},choice_source:null,content_definitions:content}))} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Level 3/}));
+    const selected=screen.getByRole("button",{name:/Pinned Champion/});
+    expect(selected).toHaveAttribute("aria-pressed","true");
+    fireEvent.click(selected);
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
   it("refuses editing a selected subclass belonging to another class", () => {
     const cls: ContentEntry = { ...human, id: "fighter", slug: "fighter", name: "Fighter", content_type: "class", data: { hit_die: 10, levels: [] } };
     const sub: ContentEntry = { ...human, id: "champion", slug: "champion", name: "Wrong Champion", content_type: "subclass", data: { parent_class: "wizard", levels: [] } };

@@ -52,7 +52,7 @@ export function ChoiceCardSubclass({
                 key={sc.id}
                 type="button"
                 aria-pressed={selected}
-                onClick={() => onSelect(sc.slug)}
+                onClick={() => { if (!selected) onSelect(sc.slug); }}
                 className={cn(
                   "text-left rounded-md border bg-card/30 px-3 py-3 transition-colors",
                   "border-border hover:border-accent/50",

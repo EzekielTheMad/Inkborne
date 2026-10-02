@@ -58,7 +58,9 @@ await build({
       const emptyFighter={...pinnedFighter,name:'Choice Fighter',data:{hit_die:10,levels:[{level:1,features:[]}]},effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'fighter-skill'}]};
       const styleGate={...human,id:'fighting-style',slug:'fighting-style',name:'Fighting Style',content_type:'feature',data:{class:'fighter',feature_type:'fighting_style'}};
       const pinnedDefense={...styleGate,id:'defense',slug:'defense',name:'Pinned Defense',data:{class:'fighter',feature_type:'fighting_style',description:'Authorized defense.'}};
-      const styleFighter={...pinnedFighter,data:{hit_die:10,levels:[{level:1,features:[styleGate.slug]}]}};
+      const archetype={...styleGate,id:'archetype',slug:'archetype',name:'Martial Archetype',data:{class:'fighter',feature_type:'subclass'}};
+      const pinnedChampion={...human,id:'champion',slug:'champion',name:'Pinned Champion',content_type:'subclass',data:{parent_class:'fighter',levels:[]}};
+      const styleFighter={...pinnedFighter,data:{hit_die:10,levels:[{level:1,features:[styleGate.slug,archetype.slug]}]}};
       const pinnedWind={...human,id:'second-wind',slug:'second-wind',name:'Pinned Second Wind',content_type:'feature',data:{description:'Authorized pinned recovery.'}};
       const courier={...human,id:'courier',slug:'courier',name:'Courier',content_type:'background',data:{ideals:[],bonds:[],flaws:[],personality_traits:[]}};
       const choiceCourier={...courier,effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'courier-skill'}]};
@@ -77,7 +79,7 @@ await build({
           {(route==='/locked-average'||route==='/locked-max')&&<ClassStepClient characterId='local-character' character={{...character,name:'Locked HP fighter',choices:{classes:[{slug:'fighter',level:1}]},campaigns:{hp_rule:route==='/locked-average'?'average_only':'max_for_all'}}} classes={[{...emptyFighter,effects:[],data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
           <Activity mode={route==='/hp-recovery'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Recovery fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...emptyFighter,effects:[],data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/></Activity>
           <Activity mode={route==='/empty-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Choice fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[emptyFighter]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[{id:'empty-class-pin',content_id:'fighter',context:{},choice_source:null,content_definitions:emptyFighter}]} schema={undefined}/></Activity>
-          <Activity mode={route==='/pinned-style'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,choices:{classes:[{slug:'fighter',level:1}],resolved_choices:{'fighting-style':['defense']}}}} classes={[styleFighter]} subclasses={[]} features={[styleGate,{...pinnedDefense,name:'Catalog Defense',version:2,data:{class:'wizard',feature_type:'fighting_style'}}]} feats={[]} spells={[]} contentRefs={[styleFighter,styleGate,pinnedDefense].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
+          <Activity mode={route==='/pinned-style'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,choices:{classes:[{slug:'fighter',level:1,subclass:'champion'}],resolved_choices:{'fighting-style':['defense']}}}} classes={[styleFighter]} subclasses={[{...pinnedChampion,name:'Catalog Champion',version:2,data:{parent_class:'wizard',levels:[]}}]} features={[styleGate,archetype,{...pinnedDefense,name:'Catalog Defense',version:2,data:{class:'wizard',feature_type:'fighting_style'}}]} feats={[]} spells={[]} contentRefs={[styleFighter,styleGate,pinnedDefense,archetype,pinnedChampion].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
           <Activity mode={route==='/pinned-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Fixture fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...pinnedFighter,name:'Catalog Fighter',version:2,data:{hit_die:12,levels:[]}}]} subclasses={[]} features={[{...pinnedWind,name:'Catalog Second Wind',version:2}]} feats={[]} spells={[]} contentRefs={[pinnedFighter,pinnedWind].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
           <Activity mode={route==='/race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{}}} races={[human]} subraces={[]} traits={[]} contentRefs={[]} schema={undefined}/></Activity>
         </>
@@ -255,6 +257,14 @@ try {
   assert.equal(await page.evaluate(()=>window.fixture.classCalls.length),0);
   assert.equal(await selectedStyle.getAttribute("aria-pressed"),"true");
   evidence.push({check:"selected fighting style preserves its compatible pinned snapshot and does not resave",passed:true});
+  const selectedSubclass=page.getByRole("button",{name:/Pinned Champion/});
+  assert.equal(await selectedSubclass.getAttribute("aria-pressed"),"true");
+  assert.equal(await page.getByText("Catalog Champion",{exact:true}).count(),0);
+  await selectedSubclass.click();
+  assert.equal(await page.getByRole("alert").count(),0);
+  assert.equal(await page.evaluate(()=>window.fixture.classCalls.length),0);
+  assert.equal(await selectedSubclass.getAttribute("aria-pressed"),"true");
+  evidence.push({check:"selected subclass preserves its pinned definition and does not resave",passed:true});
   await page.goto(origin + "/pinned-class");
   await page.getByRole("button", { name: "Remove Pinned Fighter", exact: true }).waitFor();
   assert.equal(await page.getByText("Catalog Fighter", { exact: true }).count(), 0);
