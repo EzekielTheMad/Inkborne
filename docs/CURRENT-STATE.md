@@ -49,20 +49,20 @@ and compatibility, but defer expanding those surfaces.
 
 ## Independent review blockers
 
-The read-only review of committed snapshot `12db70b` found unresolved P1 and P2
-issues. P1: starting at 10/20 HP, pending damage 5 followed by a hit-die heal 3
-can persist HP 8 after damage fails and healing succeeds, retaining failed damage
-and spending the die. Numeric relative HP intent is not covered by nested-map
-invalidation. P2: cast/rest completion while a route Activity is hidden can leave
-the retained dialog pending after Back, because its action hook has no resume
-reconciliation. Existing passing tests miss these paths. **Not release-ready.**
-Exact reproduction and next acceptance cases are in the
-[Fast continuation handoff](handoffs/2026-10-02-fast-continuation.md).
+The independent P1 relative-HP and P2 retained-dialog findings have now been
+reproduced with real provider/dialog action dependencies and repaired locally.
+Hit-die/rest/HP actions reject pending or stale state before dependent work;
+independent absolute patches remain supported. React Activity sessions retain
+settled cast/rest/hit-die outcomes and deliver them on reveal without retrying
+persistence. The [recovery checkpoint](handoffs/2026-10-02-relative-hp-activity.md)
+records tests, five isolated Chrome checks and limitations. **Not release-ready:**
+equipment grant atomicity, cross-client/ambiguous writes and builder
+choice/reference synchronization remain separate risks.
 
 ## Verification
 
-- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,887 tests passed including real desktop/mobile dialog lifetime interactions.
+- Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
+  1,897 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -104,8 +104,7 @@ Exact reproduction and next acceptance cases are in the
    recovery is covered in the [navigation handoff](handoffs/2026-10-02-ability-navigation-recovery.md).
    [History and fresh builder review](handoffs/2026-10-02-history-builder-review.md)
    verifies cached draft recovery without trapping Back/Forward. Remaining
-   priorities: independent P1 relative-HP and P2 retained-dialog fixes first;
-   then equipment atomicity, choice/reference synchronization, concurrent
+   priorities: P1/P2 now repaired locally; continue with equipment atomicity, choice/reference synchronization, concurrent
    full-choice writes and remaining system-aware readiness validation.
    This worker stops at the committed checkpoint for the Fast-requested task.
    See the [continuation handoff](handoffs/2026-10-02-fast-continuation.md).
