@@ -42,14 +42,17 @@ await build({
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
+      const pinnedHuman={...human,name:'Pinned Human',data:{description:'Authorized pinned race description.'},effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'pinned-skill'}]};
+      const newerHuman={...human,version:2,data:{description:'New catalog race description.'},effects:[{type:'choice',choose:1,from:['skill-stealth'],grant_type:'proficiency',choice_id:'new-skill'}]};
       function App(){
         const [route,setRoute]=useState(location.pathname);
         function navigate(to){history.pushState({fixture:true},'',to);setRoute(to)}
         useEffect(()=>{const pop=()=>setRoute(location.pathname);const go=e=>navigate(e.detail);window.addEventListener('popstate',pop);window.addEventListener('fixture-navigation',go);return()=>{window.removeEventListener('popstate',pop);window.removeEventListener('fixture-navigation',go)}},[]);
         return <><h1>Isolated builder fixture</h1><p>Simulated history and persistence; real editor and selection components.</p>
-          <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a></nav>
+          <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
           {route==='/overview'&&<h2>Overview fixture</h2>}
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
+          <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[]} contentRefs={[{id:'pin',content_id:'human',context:{},choice_source:null,content_definitions:pinnedHuman}]} schema={undefined}/></Activity>
           <Activity mode={route==='/race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{}}} races={[human]} subraces={[]} traits={[]} contentRefs={[]} schema={undefined}/></Activity>
         </>
       }
@@ -114,6 +117,13 @@ try {
   await page.getByRole("alert").filter({ hasText: "race change could not be confirmed" }).waitFor();
   await page.screenshot({ path: path.join(output, "race-failure-mobile.png"), fullPage: true });
   evidence.push("Keyboard Enter opens the real preview dialog; simulated race failure renders a readable mobile alert.");
+  await page.getByRole("link", { name: "Pinned Race", exact: true }).click();
+  await page.getByText("Authorized pinned race description.", { exact: true }).waitFor();
+  assert.equal(await page.getByText("New catalog race description.", { exact: true }).isVisible(), false);
+  assert.equal(await page.getByRole("button", { name: "Athletics", exact: true }).isVisible(), true);
+  assert.equal(await page.getByRole("button", { name: "Stealth", exact: true }).isVisible(), false);
+  await page.screenshot({ path: path.join(output, "pinned-race-mobile.png"), fullPage: true });
+  evidence.push("Saved race UI displays pinned data and choices, preserving an older authorized snapshot against a newer catalog entry.");
   await page.getByRole("link", { name: "Abilities", exact: true }).click();
   await page.evaluate(() => { window.fixture.mode = "pending"; });
   await page.getByRole("spinbutton", { name: "Strength score" }).fill("20");

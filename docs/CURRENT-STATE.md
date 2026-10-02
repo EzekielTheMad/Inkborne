@@ -42,13 +42,27 @@ and compatibility, but defer expanding those surfaces.
   stuck saving; old-session responses are ignored. Race/class/background errors
   are visible, content selection is keyboard accessible, general updates require
   a returned row, and stale/wrong-category equipment picks cannot confirm.
+  Ability progress now validates every schema ability against shared editor rules.
+  Race/subrace display respects existing pins instead of newer catalog data.
 - The separate alpha-readiness candidate remains unmerged and preserved. It
   contains dependency/auth/E2E/security work; this branch does not absorb it.
 
+## Independent review blockers
+
+The read-only review of committed snapshot `12db70b` found unresolved P1 and P2
+issues. P1: starting at 10/20 HP, pending damage 5 followed by a hit-die heal 3
+can persist HP 8 after damage fails and healing succeeds, retaining failed damage
+and spending the die. Numeric relative HP intent is not covered by nested-map
+invalidation. P2: cast/rest completion while a route Activity is hidden can leave
+the retained dialog pending after Back, because its action hook has no resume
+reconciliation. Existing passing tests miss these paths. **Not release-ready.**
+Exact reproduction and next acceptance cases are in the
+[Fast continuation handoff](handoffs/2026-10-02-fast-continuation.md).
+
 ## Verification
 
-- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 202 files /
-  1,870 tests passed including real desktop/mobile dialog lifetime interactions.
+- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
+  1,887 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -58,7 +72,7 @@ and compatibility, but defer expanding those surfaces.
   validation with reused dependencies, not proof of a fresh lockfile installation.
 - Installed Chrome ran an isolated fixture with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
-  selection, mobile error display and native refresh warning passed. This is
+  selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing
   hosted Playwright fixtures were not run because they write to Supabase.
   Production availability and privacy/release gates remain unverified.
@@ -90,8 +104,11 @@ and compatibility, but defer expanding those surfaces.
    recovery is covered in the [navigation handoff](handoffs/2026-10-02-ability-navigation-recovery.md).
    [History and fresh builder review](handoffs/2026-10-02-history-builder-review.md)
    verifies cached draft recovery without trapping Back/Forward. Remaining
-   priorities: equipment atomicity, choice/reference synchronization, concurrent
-   full-choice writes and system-aware readiness validation.
+   priorities: independent P1 relative-HP and P2 retained-dialog fixes first;
+   then equipment atomicity, choice/reference synchronization, concurrent
+   full-choice writes and remaining system-aware readiness validation.
+   This worker stops at the committed checkpoint for the Fast-requested task.
+   See the [continuation handoff](handoffs/2026-10-02-fast-continuation.md).
 
 ## Authority
 

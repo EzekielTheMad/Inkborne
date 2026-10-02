@@ -76,4 +76,45 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("background choices could not be confirmed");
     expect(screen.getByRole("button", { name: "Athletics" })).toHaveAttribute("aria-pressed", "false");
   });
+  it("shows the pinned race's data and choices instead of a newer catalog revision", () => {
+    const pin = { ...human, name: "Pinned Human", data: { description: "Authorized old description." }, effects: [{ type: "choice" as const, choose: 1, from: ["skill-athletics"], grant_type: "proficiency", choice_id: "old-human-skill" }] };
+    const latest = { ...human, version: 2, data: { description: "New catalog description." }, effects: [{ type: "choice" as const, choose: 1, from: ["skill-stealth"], grant_type: "proficiency", choice_id: "new-human-skill" }] };
+    render(<RaceStepClient characterId="char-1" character={{ ...character, choices: { race: "human" } }} races={[latest]} subraces={[]} traits={[]} contentRefs={[{ id: "pin", content_id: "human", context: {}, choice_source: null, content_definitions: pin }]} schema={undefined} />);
+    expect(screen.getByText("Authorized old description.")).toBeInTheDocument();
+    expect(screen.queryByText("New catalog description.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Athletics" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Stealth" })).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled(); expect(mocks.insert).not.toHaveBeenCalled();
+  });
+
+  it("keeps an authorized pinned race visible when it is absent from the current catalog", () => {
+    render(<RaceStepClient characterId="char-1" character={{ ...character, choices: { race: "human" } }} races={[]} subraces={[]} traits={[]} contentRefs={[{ id: "pin", content_id: "human", context: {}, choice_source: null, content_definitions: human }]} schema={undefined} />);
+    expect(screen.getByText("Human")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change Race" })).toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("does not display a subrace belonging to a different selected race as compatible", () => {
+    race({ race: "human", subrace: "wood-elf" });
+    expect(screen.getByRole("alert")).toHaveTextContent("does not belong");
+    expect(screen.queryByRole("button", { name: "Change Subrace" })).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("shows an existing pinned subrace even when no current catalog subraces remain", () => {
+    const pin = { ...woodElf, data: { ...woodElf.data, description: "Pinned woodland heritage." } };
+    render(<RaceStepClient characterId="char-1" character={{ ...character, choices: { race: "elf", subrace: "wood-elf" } }} races={[elf]} subraces={[]} traits={[]} contentRefs={[{ id: "pin", content_id: "wood-elf", context: {}, choice_source: null, content_definitions: pin }]} schema={undefined} />);
+    expect(screen.getByText("Pinned woodland heritage.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change Subrace" })).toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("does not arbitrarily choose between conflicting saved snapshots", () => {
+    const pins = [human, { ...human, name: "Other Human snapshot" }].map((content, index) => ({ id: "pin-" + index, content_id: "human", context: {}, choice_source: null, content_definitions: content }));
+    render(<RaceStepClient characterId="char-1" character={{ ...character, choices: { race: "human" } }} races={[human]} subraces={[]} traits={[]} contentRefs={pins} schema={undefined} />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Multiple snapshots");
+    expect(screen.getByRole("button", { name: "Preview Human" })).toBeDisabled();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
 });

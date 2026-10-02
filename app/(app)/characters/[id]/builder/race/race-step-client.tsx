@@ -94,14 +94,22 @@ export function RaceStepClient({
   const raceTypeLabel =
     schema?.content_types?.find((ct) => ct.slug === "race")?.name ?? "Race";
 
-  // Get the selected race's content entry
-  const selectedRaceContent = races.find((r) => r.slug === selectedRace);
+  // Saved selections display the exact snapshot already authorized and pinned
+  // for this character. Catalog entries are only a fallback for new local picks.
+  const racePins = contentRefs.filter(ref => ref.content_definitions.content_type === "race" &&
+    ref.content_definitions.slug === selectedRace && ref.content_id === ref.content_definitions.id);
+  const pinnedRace = racePins.length === 1 ? racePins[0].content_definitions : undefined;
+  const selectedRaceContent = racePins.length > 1 ? undefined : pinnedRace ?? races.find((r) => r.slug === selectedRace);
   const availableSubraces = subraces.filter(
     (sr) => (sr.data as Record<string, unknown>).parent_race === selectedRace,
   );
-  const selectedSubraceContent = subraces.find(
-    (sr) => sr.slug === selectedSubrace,
-  );
+  const subracePins = contentRefs.filter(ref => ref.content_definitions.content_type === "subrace" &&
+    ref.content_definitions.slug === selectedSubrace && ref.content_id === ref.content_definitions.id);
+  const pinnedSubrace = subracePins.length === 1 ? subracePins[0].content_definitions : undefined;
+  const conflictingPins = racePins.length > 1 || subracePins.length > 1;
+  const subraceCandidate = subracePins.length > 1 ? undefined : pinnedSubrace ?? subraces.find(sr => sr.slug === selectedSubrace);
+  const selectedSubraceContent = subraceCandidate?.data.parent_race === selectedRace ? subraceCandidate : undefined;
+  const mismatchedSubrace = !!selectedSubrace && !!subraceCandidate && !selectedSubraceContent;
 
   // Collect all effects for stat preview
   const allEffects: Effect[] = contentRefs.flatMap(
@@ -297,8 +305,10 @@ export function RaceStepClient({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <fieldset disabled={isSaving} aria-busy={isSaving} className="min-w-0 space-y-6 border-0 p-0">
+      <fieldset disabled={isSaving || conflictingPins} aria-busy={isSaving} className="min-w-0 space-y-6 border-0 p-0">
         <h2 className="text-xl font-semibold">{raceTypeLabel}</h2>
+        {conflictingPins && <p role="alert" className="text-sm text-destructive">Multiple snapshots are saved for this race or subrace. Reload and check the saved references before making changes.</p>}
+        {mismatchedSubrace && <p role="alert" className="text-sm text-destructive">Your saved subrace does not belong to the selected race. Reload and check the saved choices before making changes.</p>}
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
         {isSaving && <p role="status">Saving race choices. Keep this page open.</p>}
 
@@ -467,7 +477,7 @@ export function RaceStepClient({
             </Card>
 
             {/* Subrace selector */}
-            {availableSubraces.length > 0 && (
+            {(availableSubraces.length > 0 || !!selectedSubraceContent) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Subrace</CardTitle>

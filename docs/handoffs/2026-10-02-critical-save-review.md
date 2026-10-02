@@ -65,3 +65,7 @@ This does not coordinate actions originating in other sheet components.
 Character/campaign narrative paths, schema, dependencies and existing worktrees
 remain untouched by these reliability milestones. Real authenticated browser,
 RLS and release checks remain unrun under the no-hosted-writes boundary.
+
+## Independent review of 12db70b: unresolved P1/P2
+
+The independent read-only reviewer reproduced dependent numeric HP retaining failed damage (10 HP, pending damage 5, hit-die heal 3; damage fails/heal succeeds => HP 8 rather than recomputed 13, die spent). It also identified cast/rest dialogs remaining pending after completion while Activity-hidden and subsequent Back. These are not repaired by this branch checkpoint. See the exact scenarios and next acceptance requirements in [Fast continuation](2026-10-02-fast-continuation.md). Existing passing tests do not establish release readiness.
