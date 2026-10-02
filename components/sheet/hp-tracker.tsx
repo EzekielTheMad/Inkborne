@@ -57,12 +57,37 @@ export function HPTracker({
   const [inputValue, setInputValue] = useState("");
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const hpColor = getHpColor(currentHp, maxHp);
 
   function getAmount(): number {
     const n = parseInt(inputValue, 10);
     return isNaN(n) || n < 0 ? 0 : n;
+  }
+
+  async function savePatch(patch: Partial<CharacterState>): Promise<boolean> {
+    if (savingRef.current) return false;
+    savingRef.current = true;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if ((await patchState(patch)) === false) {
+        setSaveError("The HP change could not be saved. Please try again.");
+        return false;
+      }
+      setInputValue("");
+      setOpen(false);
+      return true;
+    } catch {
+      setSaveError("The HP change could not be saved. Please try again.");
+      return false;
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }
 
   async function applyDamage() {
@@ -92,12 +117,10 @@ export function HPTracker({
     if (concentration && newCurrent === 0) {
       Object.assign(patch, concentration.dropPatch);
     }
-    if ((await patchState(patch)) === false) return;
+    if (!(await savePatch(patch))) return;
     if (concentration && newCurrent > 0) {
       concentration.onDamage(amount);
     }
-    setInputValue("");
-    setOpen(false);
   }
 
   function applyHpChange(newHp: number) {
@@ -108,7 +131,7 @@ export function HPTracker({
     if (wasAtZero && newHp > 0) {
       patch.death_saves = { successes: 0, failures: 0 };
     }
-    patchState(patch);
+    void savePatch(patch);
   }
 
   function applyHeal() {
@@ -117,15 +140,11 @@ export function HPTracker({
 
     const newCurrent = Math.min(maxHp, currentHp + amount);
     applyHpChange(newCurrent);
-    setInputValue("");
-    setOpen(false);
   }
 
   function setTemp() {
     const amount = getAmount();
-    patchState({ temp_hp: amount });
-    setInputValue("");
-    setOpen(false);
+    void savePatch({ temp_hp: amount });
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -138,7 +157,9 @@ export function HPTracker({
     <PopoverPrimitive.Root
       open={open}
       onOpenChange={(isOpen) => {
+        if (savingRef.current) return;
         setOpen(isOpen);
+        if (isOpen) setSaveError(null);
         if (isOpen) {
           // Auto-focus the input after popover opens
           setTimeout(() => inputRef.current?.focus(), 50);
@@ -146,6 +167,7 @@ export function HPTracker({
       }}
     >
       <PopoverPrimitive.Trigger
+        disabled={saving}
         className={cn(
           "rounded-lg border border-border bg-card p-3 text-center min-w-[90px] cursor-pointer hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
@@ -170,6 +192,7 @@ export function HPTracker({
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Positioner side="bottom" align="center" sideOffset={8}>
           <PopoverPrimitive.Popup
+            aria-busy={saving}
             className={cn(
               "z-50 w-52 rounded-xl bg-popover p-4 text-popover-foreground shadow-md ring-1 ring-foreground/10",
               "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
@@ -190,7 +213,10 @@ export function HPTracker({
               </p>
             )}
 
+            {saveError && <p role="alert" className="mb-3 text-sm text-destructive">{saveError}</p>}
+            {saving && <p role="status" className="mb-3 text-sm text-muted-foreground">Saving HP change.</p>}
             <Input
+              disabled={saving}
               ref={inputRef}
               type="number"
               min={0}
@@ -207,6 +233,7 @@ export function HPTracker({
                 size="sm"
                 className="w-full"
                 onClick={applyDamage}
+                disabled={saving}
               >
                 Damage
               </Button>
@@ -214,6 +241,7 @@ export function HPTracker({
                 size="sm"
                 className="w-full bg-character-fg text-background hover:opacity-90"
                 onClick={applyHeal}
+                disabled={saving}
               >
                 Heal
               </Button>
@@ -222,6 +250,7 @@ export function HPTracker({
                 size="sm"
                 className="w-full"
                 onClick={setTemp}
+                disabled={saving}
               >
                 Set Temp HP
               </Button>

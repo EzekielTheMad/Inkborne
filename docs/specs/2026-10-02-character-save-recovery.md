@@ -26,6 +26,16 @@ configuration, hosted test or deployment is part of this milestone. A failed
 network response can be ambiguous about remote completion; the existing RPC
 uses absolute patches, but this change is not a cross-client consistency model.
 
+## Critical-review limitation
+
+The confirmed-plus-pending model protects top-level patches; it cannot infer
+gameplay intent embedded in later full nested maps. A reproduced failed-first,
+queued-second slot spend ended with two slots spent after only the second save
+succeeded. The original acceptance below does not prove dependent-action rebasing.
+See [critical review](../handoffs/2026-10-02-critical-save-review.md) for the
+evidence and the separate command/delta design required. Pending HP controls
+were repaired locally after the review, without claiming sheet-wide isolation.
+
 ## Equipment follow-up boundary
 
 Starting-equipment confirmation performs separate inventory inserts, currency

@@ -20,6 +20,8 @@ and compatibility, but defer expanding those surfaces.
   to retry the action. Cast results and rest completion wait for confirmed saves.
   Failed damage does not raise a concentration check. Character navigation resets
   the writer via the provider's character-ID key.
+  The HP popover now also locks pending controls and retains failed heal/temp
+  inputs for explicit retry, repairing the review's asynchronous control window.
 - Scope/acceptance: [save recovery design](specs/2026-10-02-character-save-recovery.md)
   and [character creation recovery](specs/2026-10-02-character-creation-recovery.md).
 - Character creation now validates string fields, handles failed/empty inserts,
@@ -37,7 +39,7 @@ and compatibility, but defer expanding those surfaces.
 ## Verification
 
 - Final `npm.cmd run check`: strict typecheck, zero-warning lint, 200 files /
-  1,840 tests passed including ability-save recovery and initialization review.
+  1,844 tests passed including ability recovery and reviewed HP-control repair.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -62,7 +64,9 @@ and compatibility, but defer expanding those surfaces.
    is authorized; migration-history reconciliation remains a prerequisite.
 4. [Critical save review](handoffs/2026-10-02-critical-save-review.md) reproduced
    dependent nested-map spending after a failed earlier save. Domain-level
-   action rebasing remains unresolved; next small repair is pending HP controls.
+   action rebasing remains unresolved; the pending HP-control repair is now
+   [verified locally](handoffs/2026-10-02-hp-save-controls.md). Next small builder
+   task: [pending creation submission](specs/2026-10-02-character-submit-pending-next.md).
 
 ## Authority
 

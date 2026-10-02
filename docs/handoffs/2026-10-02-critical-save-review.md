@@ -26,13 +26,15 @@ generic numeric subtraction onto unrelated state keys. Release/UAT must include
 failed-first/queued-second casts and related resource actions. Equipment atomicity
 is a separate unresolved problem.
 
-## Small regression to fix next: pending HP controls
+## Small regression repaired: pending HP controls
 
 The changed damage path awaits its save while leaving all HP controls enabled.
 The old path closed immediately, so this newly lengthened window permits repeated
-damage actions and competing heal/temp actions. Block concurrent actions in that
-popover, retain the amount on failure, and apply the same confirmed-save handling
-to heal/temp HP. Verify delayed saves and both returned-false/rejected failures.
+damage actions and competing heal/temp actions. The follow-up
+[HP-control repair](2026-10-02-hp-save-controls.md) blocks concurrent actions in
+that popover, retains the amount on failure and applies the same confirmed-save
+handling to heal/temp HP. Delayed and false/rejected failure cases are covered.
+This does not coordinate actions originating in other sheet components.
 
 ## Other practical limitations
 

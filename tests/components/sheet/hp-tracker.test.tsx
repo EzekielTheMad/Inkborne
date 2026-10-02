@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import {
   HPTracker,
   type HPConcentrationProps,
@@ -39,8 +39,50 @@ async function openAndApply(buttonName: RegExp, amount: string) {
   fireEvent.click(screen.getByRole("button", { name: /hp tracker/i }));
   const input = await screen.findByPlaceholderText("Amount");
   fireEvent.change(input, { target: { value: amount } });
-  fireEvent.click(screen.getByRole("button", { name: buttonName }));
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: buttonName })); });
 }
+
+describe("HPTracker pending saves", () => {
+  it("blocks repeated damage and competing actions until confirmation", async () => {
+    let resolve!: (saved: boolean) => void;
+    const { patchState } = setup({ currentHp: 20, maxHp: 20 });
+    patchState.mockReturnValueOnce(new Promise<boolean>((yes) => { resolve = yes; }));
+    await openAndApply(/^damage$/i, "4");
+    expect(screen.getByRole("button", { name: "Damage" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Heal" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Set Temp HP" })).toBeDisabled();
+    expect(screen.getByPlaceholderText("Amount")).toBeDisabled();
+    fireEvent.keyDown(screen.getByPlaceholderText("Amount"), { key: "Escape" });
+    expect(screen.getByPlaceholderText("Amount")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Damage" }));
+    expect(patchState).toHaveBeenCalledOnce();
+    await act(async () => resolve(true));
+    await waitFor(() => expect(screen.queryByPlaceholderText("Amount")).not.toBeInTheDocument());
+  });
+
+  it.each(["Heal", "Set Temp HP"])("keeps failed %s open for retry", async (action) => {
+    const { patchState } = setup({ currentHp: 5, maxHp: 20 });
+    patchState.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    await openAndApply(new RegExp(`^${action}$`), "4");
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
+    expect(screen.getByPlaceholderText("Amount")).toHaveValue(4);
+    fireEvent.click(screen.getByRole("button", { name: action }));
+    await waitFor(() => expect(screen.queryByPlaceholderText("Amount")).not.toBeInTheDocument());
+    expect(patchState).toHaveBeenCalledTimes(2);
+    expect(patchState.mock.calls[1][0]).toEqual(patchState.mock.calls[0][0]);
+  });
+
+  it("handles a rejected damage save without losing the amount or concentration", async () => {
+    const concentration = { spellName: "Bless", dropPatch: {}, onDamage: vi.fn() };
+    const { patchState } = setup({ currentHp: 20, maxHp: 20, concentration });
+    patchState.mockRejectedValueOnce(new Error("private database details"));
+    await openAndApply(/^damage$/i, "4");
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("private database details");
+    expect(screen.getByPlaceholderText("Amount")).toHaveValue(4);
+    expect(concentration.onDamage).not.toHaveBeenCalled();
+  });
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
