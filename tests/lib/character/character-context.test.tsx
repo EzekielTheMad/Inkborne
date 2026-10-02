@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act, fireEvent } from "@testing-library/react";
+import { render, screen, act, fireEvent, waitFor } from "@testing-library/react";
 import {
   CharacterProvider,
   useCharacter,
@@ -20,6 +20,7 @@ import type { ActiveEffect } from "@/lib/types/active-effects";
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { initializeState } from "@/lib/sheet/helpers";
 
+import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
 import { HPTracker } from "@/components/sheet/hp-tracker";
 import { RestDialog } from "@/components/sheet/rest-dialog";
 import { executeRoll } from "@/lib/dice/roller";
@@ -152,6 +153,39 @@ function renderWithProvider(
 describe("<CharacterProvider> public hook surface", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("keeps the actual effect editor draft through a rejected provider save and confirms retry once", async () => {
+    let rejectSave!: (error: Error) => void;
+    mockedUpdateState.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));
+    const existing: ActiveEffect = {
+      id: "existing", name: "Guarded", slug: "guarded", source: "custom", content_id: null,
+      effects: [], duration: { type: "special" }, concentration: false,
+      applied_at: "2026-10-02T18:00:00.000Z", expires_at: null,
+    };
+    renderWithProvider(ActiveEffectsWidget, { initialState: { active_effects: [existing] } });
+    fireEvent.click(screen.getByRole("button", { name: /^Add effect$/ }));
+    fireEvent.change(screen.getByLabelText("Custom effect name"), { target: { value: "Half cover" } });
+    fireEvent.change(screen.getByLabelText("Modified stat"), { target: { value: "armor_class" } });
+    fireEvent.change(screen.getByLabelText("Modifier value"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Duration type"), { target: { value: "minutes" } });
+    fireEvent.change(screen.getByLabelText("Duration value"), { target: { value: "30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add custom effect" }));
+    expect(screen.getByLabelText("Custom effect name")).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Add effect$/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Add custom effect" }));
+    await waitFor(() => expect(mockedUpdateState).toHaveBeenCalledOnce());
+    await act(async () => rejectSave(new Error("private persistence detail")));
+    expect(await screen.findByText(/This effect could not be confirmed/)).toBeVisible();
+    expect(screen.getByLabelText("Custom effect name")).toHaveValue("Half cover");
+    expect(screen.getByLabelText("Modifier value")).toHaveValue(2);
+    expect(screen.getByLabelText("Duration value")).toHaveValue(30);
+    expect(screen.queryByText("private persistence detail")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add custom effect" }));
+    await waitFor(() => expect(screen.queryByLabelText("Custom effect name")).not.toBeInTheDocument());
+    expect(mockedUpdateState).toHaveBeenCalledTimes(2);
+    const effects = mockedUpdateState.mock.calls[1][1].active_effects;
+    expect(effects?.map(effect => effect.name)).toEqual(["Guarded", "Half cover"]);
   });
 
   it("opens a newly built fighter's sheet and recovers a failed first play save", async () => {

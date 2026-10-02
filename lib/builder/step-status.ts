@@ -7,7 +7,7 @@ import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choice
 export type BuilderStepStatus = "complete" | "in_progress" | "untouched";
 
 export const builderStepStatusLabels: Record<BuilderStepStatus, string> = {
-  complete: "Complete",
+  complete: "Saved",
   in_progress: "In progress",
   untouched: "Not started",
 };
@@ -62,7 +62,7 @@ export function getBuilderStepStatus(
   switch (stepType) {
     case "class": {
       const classes = choices.classes;
-      if (!classes?.length) return "untouched";
+      if (!classes?.length) return countPins("class") || countPins("subclass") ? "in_progress" : "untouched";
       if (!Array.isArray(classes) || new Set(classes.map(cls => cls?.slug)).size !== classes.length ||
         countPins("class") !== classes.length || countPins("subclass") !== classes.filter(cls => cls?.subclass).length) return "in_progress";
       return classes.every(cls => {
@@ -75,7 +75,7 @@ export function getBuilderStepStatus(
       }) ? "complete" : "in_progress";
     }
     case "race": {
-      if (!choices.race) return "untouched";
+      if (!choices.race) return choices.subrace || countPins("race") || countPins("subrace") ? "in_progress" : "untouched";
       const race = exactSavedPin("race", choices.race, refs);
       const subrace = choices.subrace ? exactSavedPin("subrace", choices.subrace, refs) : undefined;
       return race && countPins("race") === 1 && countPins("subrace") === (choices.subrace ? 1 : 0) &&
@@ -83,7 +83,7 @@ export function getBuilderStepStatus(
         (!choices.subrace || (subrace?.data.parent_race === choices.race && hasSavedExplicitChoices(subrace, choices))) ? "complete" : "in_progress";
     }
     case "background": {
-      if (!choices.background) return "untouched";
+      if (!choices.background) return countPins("background") ? "in_progress" : "untouched";
       const definition = exactSavedPin("background", choices.background, refs);
       return countPins("background") === 1 && definition && hasSavedExplicitChoices(definition, choices) ? "complete" : "in_progress";
     }

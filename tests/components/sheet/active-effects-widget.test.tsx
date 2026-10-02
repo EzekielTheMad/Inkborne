@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
 import type { ActiveEffect, CustomEffectInput } from "@/lib/types/active-effects";
 import type { CharacterSpell } from "@/lib/types/spells";
 
-const applyEffect = vi.fn().mockResolvedValue(undefined);
-const removeEffect = vi.fn().mockResolvedValue(undefined);
-const addCustomEffect = vi.fn().mockResolvedValue(undefined);
+const applyEffect = vi.fn().mockResolvedValue(true);
+const removeEffect = vi.fn().mockResolvedValue(true);
+const addCustomEffect = vi.fn().mockResolvedValue(true);
 
 let mockActiveEffects: ActiveEffect[] = [];
 let mockSpells: CharacterSpell[] = [];
@@ -67,7 +67,10 @@ const mkSpell = (overrides: Partial<CharacterSpell> = {}): CharacterSpell =>
 
 describe("ActiveEffectsWidget", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    applyEffect.mockResolvedValue(true);
+    removeEffect.mockResolvedValue(true);
+    addCustomEffect.mockResolvedValue(true);
     mockActiveEffects = [];
     mockSpells = [];
   });
@@ -198,6 +201,24 @@ describe("ActiveEffectsWidget", () => {
       value: 2,
       duration: { type: "special" },
     } satisfies CustomEffectInput);
+  });
+
+  it("retains the known-spell editor after an unconfirmed result and closes only after retry confirms", async () => {
+    let finish!: (saved: boolean) => void;
+    applyEffect.mockReturnValueOnce(new Promise<boolean>(resolve => { finish = resolve; }));
+    mockActiveEffects = [mkEffect()]; mockSpells = [mkSpell()];
+    render(<ActiveEffectsWidget />);
+    fireEvent.click(screen.getByRole("button", { name: /^Add effect$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Bless" }));
+    expect(screen.getByRole("button", { name: "Bless" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Bless" }));
+    expect(applyEffect).toHaveBeenCalledOnce();
+    await act(async () => finish(false));
+    expect(screen.getByRole("alert")).toHaveTextContent("This effect could not be confirmed");
+    expect(screen.getByRole("button", { name: "Bless" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Bless" }));
+    await waitFor(() => expect(screen.queryByLabelText("Custom effect name")).not.toBeInTheDocument());
+    expect(applyEffect).toHaveBeenCalledTimes(2);
   });
 
   it("disables the custom add button until a name is entered", () => {

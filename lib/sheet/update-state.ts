@@ -7,9 +7,9 @@ import type { CharacterState } from "@/lib/types/character";
  * Patches the character.state JSONB column with partial updates.
  *
  * Uses the `patch_character_state` Postgres RPC (migration 00031) for an
- * atomic shallow-merge. This eliminates the read-merge-write race that
- * would occur if two state patches interleaved (e.g., spending Rage and
- * spending Ki in quick succession).
+ * atomic shallow-merge, preserving unrelated top-level state keys. It does
+ * not serialize gameplay intent or concurrent replacements of nested maps
+ * across clients (e.g., two feature_uses patches can still overwrite uses).
  *
  * Shallow merge semantics: top-level keys in `patch` replace existing keys
  * wholesale. Callers that want to update a nested field (e.g., one entry

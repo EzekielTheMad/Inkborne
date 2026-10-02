@@ -209,9 +209,9 @@ export interface CharacterContextValue {
 
   // Active effects
   activeEffects: ActiveEffect[];
-  applyEffect: (entry: ActiveEffect) => Promise<void>;
-  removeEffect: (id: string) => Promise<void>;
-  addCustomEffect: (input: CustomEffectInput) => Promise<void>;
+  applyEffect: (entry: ActiveEffect) => Promise<boolean>;
+  removeEffect: (id: string) => Promise<boolean>;
+  addCustomEffect: (input: CustomEffectInput) => Promise<boolean>;
 
   // Primary color (sheet header theming)
   primaryColor: string | null;
@@ -481,21 +481,21 @@ export function CharacterProvider({
   // --- Active-effect mutations (each is one atomic patchState) ---
   const applyEffect = useCallback(
     async (entry: ActiveEffect) => {
-      await patchState(applyActiveEffectPatch(state, entry));
+      return patchState(applyActiveEffectPatch(state, entry));
     },
     [state, patchState],
   );
 
   const removeEffect = useCallback(
     async (id: string) => {
-      await patchState(removeActiveEffectPatch(state, id));
+      return patchState(removeActiveEffectPatch(state, id));
     },
     [state, patchState],
   );
 
   const addCustomEffect = useCallback(
     async (input: CustomEffectInput) => {
-      await patchState(
+      return patchState(
         applyActiveEffectPatch(state, buildCustomActiveEffect(input)),
       );
     },
@@ -852,9 +852,9 @@ export function useConcentration(): {
  */
 export function useActiveEffects(): {
   activeEffects: ActiveEffect[];
-  applyEffect: (entry: ActiveEffect) => Promise<void>;
-  removeEffect: (id: string) => Promise<void>;
-  addCustomEffect: (input: CustomEffectInput) => Promise<void>;
+  applyEffect: (entry: ActiveEffect) => Promise<boolean>;
+  removeEffect: (id: string) => Promise<boolean>;
+  addCustomEffect: (input: CustomEffectInput) => Promise<boolean>;
 } {
   const ctx = useCharacterContext();
   return {

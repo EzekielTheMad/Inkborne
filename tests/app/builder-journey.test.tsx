@@ -48,20 +48,21 @@ describe("local builder journey", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(getContentRefsByCharacter).mockResolvedValue(pins as never); navigation.pathname = "/characters/char-1/builder"; });
 
   it.each([
-    { name: "fresh character", choices: {}, stats: {}, labels: ["Not started", "Not started", "Not started", "Not started", "Not started"] },
-    { name: "ability method selected", choices: { ability_method: "standard_array" }, stats: {}, labels: ["Not started", "Not started", "Not started", "In progress", "Not started"] },
-    { name: "saved core choices", choices: selected, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "Not started"] },
-    { name: "partial abilities", choices: selected, stats: { strength: 15 }, labels: ["Complete", "Complete", "Complete", "In progress", "Not started"] },
-    { name: "equipment draft", choices: { ...selected, starting_equipment: { selections: {}, picks: {} } }, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "In progress"] },
-    { name: "missing saved pins", choices: selected, stats: scores, refs: [], labels: ["In progress", "In progress", "In progress", "Complete", "Not started"] },
-    { name: "duplicate race pin", choices: selected, stats: scores, refs: [...pins, pins[1]], labels: ["Complete", "In progress", "Complete", "Complete", "Not started"] },
-    { name: "wrong background identity", choices: selected, stats: scores, refs: pins.map(pin => pin.content_id === "soldier" ? { ...pin, content_id: "wrong-id" } : pin), labels: ["Complete", "Complete", "In progress", "Complete", "Not started"] },
-    { name: "mismatched race version", choices: selected, stats: scores, refs: pins.map(pin => pin.content_id === "human" ? { ...pin, content_version: 2 } : pin), labels: ["Complete", "In progress", "Complete", "Complete", "Not started"] },
-    { name: "extra stale class pin", choices: selected, stats: scores, refs: [...pins, { ...pins[0], content_id: "bard", content_definitions: { ...pins[0].content_definitions, id: "bard", slug: "bard" } }], labels: ["In progress", "Complete", "Complete", "Complete", "Not started"] },
-    { name: "incompatible selected subrace", choices: { ...selected, subrace: "wood-elf" }, stats: scores, refs: [...pins, { content_id: "wood-elf", content_version: 1, content_definitions: { ...pins[1].content_definitions, id: "wood-elf", slug: "wood-elf", content_type: "subrace", data: { parent_race: "elf" } } }], labels: ["Complete", "In progress", "Complete", "Complete", "Not started"] },
-    { name: "missing selected subclass pin", choices: { ...selected, classes: [{ slug: "fighter", level: 3, subclass: "champion" }] }, stats: scores, labels: ["In progress", "Complete", "Complete", "Complete", "Not started"] },
-    { name: "invalid saved class level", choices: { ...selected, classes: [{ slug: "fighter", level: 0 }] }, stats: scores, labels: ["In progress", "Complete", "Complete", "Complete", "Not started"] },
-    { name: "equipment confirmed", choices: { ...selected, starting_equipment: { selections: {}, picks: {}, confirmed: true } }, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "Complete"] },
+    { name: "fresh character", choices: {}, stats: {}, refs: [], labels: ["Not started", "Not started", "Not started", "Not started", "Not started"] },
+    { name: "ability method selected", choices: { ability_method: "standard_array" }, stats: {}, refs: [], labels: ["Not started", "Not started", "Not started", "In progress", "Not started"] },
+    { name: "orphaned core pins", choices: {}, stats: {}, labels: ["In progress", "In progress", "In progress", "Not started", "Not started"] },
+    { name: "saved core choices", choices: selected, stats: scores, labels: ["Saved", "Saved", "Saved", "Saved", "Not started"] },
+    { name: "partial abilities", choices: selected, stats: { strength: 15 }, labels: ["Saved", "Saved", "Saved", "In progress", "Not started"] },
+    { name: "equipment draft", choices: { ...selected, starting_equipment: { selections: {}, picks: {} } }, stats: scores, labels: ["Saved", "Saved", "Saved", "Saved", "In progress"] },
+    { name: "missing saved pins", choices: selected, stats: scores, refs: [], labels: ["In progress", "In progress", "In progress", "Saved", "Not started"] },
+    { name: "duplicate race pin", choices: selected, stats: scores, refs: [...pins, pins[1]], labels: ["Saved", "In progress", "Saved", "Saved", "Not started"] },
+    { name: "wrong background identity", choices: selected, stats: scores, refs: pins.map(pin => pin.content_id === "soldier" ? { ...pin, content_id: "wrong-id" } : pin), labels: ["Saved", "Saved", "In progress", "Saved", "Not started"] },
+    { name: "mismatched race version", choices: selected, stats: scores, refs: pins.map(pin => pin.content_id === "human" ? { ...pin, content_version: 2 } : pin), labels: ["Saved", "In progress", "Saved", "Saved", "Not started"] },
+    { name: "extra stale class pin", choices: selected, stats: scores, refs: [...pins, { ...pins[0], content_id: "bard", content_definitions: { ...pins[0].content_definitions, id: "bard", slug: "bard" } }], labels: ["In progress", "Saved", "Saved", "Saved", "Not started"] },
+    { name: "incompatible selected subrace", choices: { ...selected, subrace: "wood-elf" }, stats: scores, refs: [...pins, { content_id: "wood-elf", content_version: 1, content_definitions: { ...pins[1].content_definitions, id: "wood-elf", slug: "wood-elf", content_type: "subrace", data: { parent_race: "elf" } } }], labels: ["Saved", "In progress", "Saved", "Saved", "Not started"] },
+    { name: "missing selected subclass pin", choices: { ...selected, classes: [{ slug: "fighter", level: 3, subclass: "champion" }] }, stats: scores, labels: ["In progress", "Saved", "Saved", "Saved", "Not started"] },
+    { name: "invalid saved class level", choices: { ...selected, classes: [{ slug: "fighter", level: 0 }] }, stats: scores, labels: ["In progress", "Saved", "Saved", "Saved", "Not started"] },
+    { name: "equipment confirmed", choices: { ...selected, starting_equipment: { selections: {}, picks: {}, confirmed: true } }, stats: scores, labels: ["Saved", "Saved", "Saved", "Saved", "Saved"] },
   ])("keeps overview and navigation aligned for $name", async ({ choices, stats, labels, refs }) => {
     if (refs) vi.mocked(getContentRefsByCharacter).mockResolvedValue(refs as never);
     mockCharacter(choices as CharacterChoices, stats as Record<string, number>);
@@ -82,7 +83,7 @@ describe("local builder journey", () => {
     { name: "missing required choice", resolved: {} as Record<string, string[]>, status: "In progress" },
     { name: "duplicate selections", resolved: { "soldier-skills": ["skill-athletics", "skill-athletics"] }, status: "In progress" },
     { name: "out-of-snapshot selection", resolved: { "soldier-skills": ["skill-athletics", "skill-stealth"] }, status: "In progress" },
-    { name: "saved explicit choices", resolved: { "soldier-skills": ["skill-athletics", "skill-intimidation"] }, status: "Complete" },
+    { name: "saved explicit choices", resolved: { "soldier-skills": ["skill-athletics", "skill-intimidation"] }, status: "Saved" },
   ])("validates pinned background choice in overview/navigation: $name", async ({resolved,status}) => {
     const refs = pins.map(pin => pin.content_id === "soldier" ? { ...pin, content_definitions: { ...pin.content_definitions, effects: [{ type: "choice", choose: 2, from: ["skill-athletics", "skill-intimidation"], grant_type: "proficiency", choice_id: "soldier-skills" }] } } : pin);
     vi.mocked(getContentRefsByCharacter).mockResolvedValue(refs as never);
@@ -110,14 +111,14 @@ describe("local builder journey", () => {
     mockCharacter({...choices,resolved_choices:{"required-skill":["skill-athletics"]}},scores);
     const completed=await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})});
     render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:completed}));
-    expect(screen.getAllByRole("link",{name:new RegExp(`${step}.*Complete`)})).toHaveLength(2);
+    expect(screen.getAllByRole("link",{name:new RegExp(`${step}.*Saved`)})).toHaveLength(2);
   });
 
   it("identifies the active step accessibly", async () => {
     navigation.pathname = "/characters/char-1/builder/abilities";
     mockCharacter(selected, scores);
     render(await BuilderLayout({ params: Promise.resolve({ id: "char-1" }), children: null }));
-    expect(screen.getByRole("link", { name: /Abilities: Complete/ })).toHaveAttribute("aria-current", "step");
+    expect(screen.getByRole("link", { name: /Abilities: Saved/ })).toHaveAttribute("aria-current", "step");
     expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute("aria-current");
   });
 

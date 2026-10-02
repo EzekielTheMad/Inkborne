@@ -22,14 +22,15 @@ await build({
     import {createRoot} from 'react-dom/client';
     import {CharacterProvider,useCharacterState} from '@/lib/character/character-context';
     import {HPTracker} from '@/components/sheet/hp-tracker';
+    import {ActiveEffectsWidget} from '@/components/sheet/active-effects-widget';
     import {RestDialog} from '@/components/sheet/rest-dialog';
     import {CastDialog} from '@/components/sheet/spells/cast-dialog';
     window.fixture={defer:true,calls:[],rolls:0,resolve:null,reject:null};
     const character={id:'local-character',user_id:'local-user',level:1,choices:{classes:[{slug:'fighter',level:1},{slug:'wizard',level:1}]},base_stats:{constitution:10,intelligence:10},narrative:{}};
     const schema={ability_scores:[],proficiency_levels:[],derived_stats:[],skills:[],resources:[],content_types:[],currencies:[],creation_steps:[],sheet_sections:[]};
     const spell={id:'local-spell',name:'Magic Missile',class_slug:'wizard',content_definitions:{id:'magic-missile',slug:'magic-missile',name:'Magic Missile',data:{level:1,duration:'Instantaneous'},effects:[]}};
-    function Sheet(){const {state,patchState,patchActionState}=useCharacterState();const [rest,setRest]=useState(false);const [cast,setCast]=useState(false);return <><button onClick={()=>setRest(true)}>Open rest</button><button onClick={()=>setCast(true)}>Open cast</button><HPTracker currentHp={state.current_hp??20} tempHp={state.temp_hp??0} maxHp={20} patchState={patchState} patchActionState={patchActionState}/><output aria-label='Current HP'>{state.current_hp}</output><output aria-label='Spent dice'>{state.hit_dice_spent?.fighter??0}</output><RestDialog open={rest} onClose={()=>setRest(false)}/><CastDialog spell={spell} castability='full' open={cast} onClose={()=>setCast(false)}/></>}
-    function App(){const [route,setRoute]=useState(location.pathname);useEffect(()=>{const pop=()=>setRoute(location.pathname);window.addEventListener('popstate',pop);window.fixture.away=()=>{history.pushState({},'','/away');setRoute('/away')};return()=>window.removeEventListener('popstate',pop)},[]);return <><h1>Local save recovery fixture</h1><p>Simulated history and persistence; actual provider and dialogs.</p>{route==='/away'&&<h2>Away fixture</h2>}<Activity mode={route==='/sheet'?'visible':'hidden'}><CharacterProvider character={character} schema={schema} contentRefs={[]} initialState={{current_hp:10}} initialInventory={[]} initialSpells={[]} classData={{fighter:{slug:'fighter',data:{hit_die:10}},wizard:{slug:'wizard',data:{hit_die:6,spellcasting:{type:'full',ability:'intelligence'}}}}} allEffects={[]} baseStatsWithLevel={{constitution:10,intelligence:10,level:1}} structuredSources={{}} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={()=>{}}><Sheet/></CharacterProvider></Activity></>}
+    function Sheet(){const {state,patchState,patchActionState}=useCharacterState();const [rest,setRest]=useState(false);const [cast,setCast]=useState(false);return <><button onClick={()=>setRest(true)}>Open rest</button><button onClick={()=>setCast(true)}>Open cast</button><HPTracker currentHp={state.current_hp??20} tempHp={state.temp_hp??0} maxHp={20} patchState={patchState} patchActionState={patchActionState}/><output aria-label='Current HP'>{state.current_hp}</output><output aria-label='Spent dice'>{state.hit_dice_spent?.fighter??0}</output><RestDialog open={rest} onClose={()=>setRest(false)}/><CastDialog spell={spell} castability='full' open={cast} onClose={()=>setCast(false)}/><ActiveEffectsWidget/></>}
+    function App(){const [route,setRoute]=useState(location.pathname);useEffect(()=>{const pop=()=>setRoute(location.pathname);window.addEventListener('popstate',pop);window.fixture.away=()=>{history.pushState({},'','/away');setRoute('/away')};return()=>window.removeEventListener('popstate',pop)},[]);return <><h1>Local save recovery fixture</h1><p>Simulated history and persistence; actual provider and dialogs.</p>{route==='/away'&&<h2>Away fixture</h2>}<Activity mode={route==='/sheet'?'visible':'hidden'}><CharacterProvider character={character} schema={schema} contentRefs={[]} initialState={{current_hp:10,active_effects:[{id:'existing',name:'Guarded',slug:'guarded',source:'custom',content_id:null,effects:[],duration:{type:'special'},concentration:false,applied_at:'2026-10-02T18:00:00.000Z',expires_at:null}]}} initialInventory={[]} initialSpells={[]} classData={{fighter:{slug:'fighter',data:{hit_die:10}},wizard:{slug:'wizard',data:{hit_die:6,spellcasting:{type:'full',ability:'intelligence'}}}}} allEffects={[]} baseStatsWithLevel={{constitution:10,intelligence:10,level:1}} structuredSources={{}} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={()=>{}}><Sheet/></CharacterProvider></Activity></>}
     createRoot(document.getElementById('root')).render(<App/>);
   ` },
   outfile: path.join(output, "fixture.js"), bundle: true, platform: "browser", jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' },
@@ -114,6 +115,29 @@ try {
   assert.equal(await page.getByRole("button", { name: /spend & roll/i }).first().isEnabled(), true);
   await page.screenshot({ path: path.join(output, "hit-die-back-mobile.png"), fullPage: true, animations: "disabled" });
   evidence.push({ check: "mobile hit-die failure / Activity Back / explicit recovery", passed: true });
+  await page.goto(origin + "/sheet");
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole("button",{name:"Add effect",exact:true}).click();
+  await page.getByLabel("Custom effect name").fill("Half cover");
+  await page.getByLabel("Modified stat").selectOption("armor_class");
+  await page.getByLabel("Modifier value").fill("2");
+  await page.getByRole("button",{name:"Add custom effect",exact:true}).click();
+  await page.waitForFunction(()=>window.fixture.calls.length===1);
+  assert.equal(await page.getByRole("button",{name:"Add effect",exact:true}).isDisabled(),true);
+  assert.equal(await page.getByLabel("Custom effect name").isDisabled(),true);
+  await page.evaluate(()=>window.fixture.away());
+  await page.getByRole("heading",{name:"Away fixture"}).waitFor();
+  await page.evaluate(()=>window.fixture.reject());
+  await page.goBack();
+  await page.getByRole("alert").filter({hasText:"This effect could not be confirmed"}).waitFor();
+  assert.equal(await page.getByLabel("Custom effect name").inputValue(),"Half cover");
+  assert.equal(await page.getByLabel("Modifier value").inputValue(),"2");
+  await page.screenshot({path:path.join(output,"effect-recovery-mobile.png"),fullPage:true});
+  await page.getByRole("button",{name:"Add custom effect",exact:true}).click();
+  await page.getByLabel("Custom effect name").waitFor({state:"hidden"});
+  assert.equal(await page.evaluate(()=>window.fixture.calls.length),2);
+  assert.deepEqual(await page.evaluate(()=>window.fixture.calls[1].active_effects.map(effect=>effect.name)),["Guarded","Half cover"]);
+  evidence.push({check:"actual effect editor preserves hidden failed save draft and confirms retry once",passed:true});
   assert.deepEqual(errors, []); assert.deepEqual(remoteRequests, []);
   await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, evidence, errors, remoteRequests }, null, 2));
   console.log(JSON.stringify(evidence, null, 2));

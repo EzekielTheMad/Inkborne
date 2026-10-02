@@ -73,7 +73,8 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
     <div className="space-y-4">
       <p className="text-muted-foreground">
         Complete each step to build your character. Steps can be done in any
-        order.
+        order. Saved selections can still have class-level choices to finish.
+        Review those choices and equipment before playing.
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -103,7 +104,7 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
                       {status === "complete" ? "\u2713" : index + 1}
                     </span>
                     <CardTitle className="text-base">{step.label}</CardTitle>
-                    <span className="sr-only">{builderStepStatusLabels[status]}</span>
+                    <span className="text-xs text-muted-foreground">{builderStepStatusLabels[status]}</span>
                   </div>
                 </CardHeader>
                 <CardContent>

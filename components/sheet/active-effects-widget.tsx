@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Brain, Plus, Sparkle, X } from "lucide-react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
 import { cn } from "@/lib/utils";
 import { useActiveEffects, useSpells } from "@/lib/character/character-context";
 import type { EffectDuration } from "@/lib/types/active-effects";
@@ -66,8 +67,19 @@ export function ActiveEffectsWidget() {
   }, [hasRealTime]);
 
   const [adderOpen, setAdderOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const { pending, run, canDismiss } = useDialogAction();
 
-  if (activeEffects.length === 0) return null;
+  async function saveEffect(save: () => Promise<boolean>) {
+    if (!canDismiss()) return;
+    setSaveError(null);
+    await run(save, saved => {
+      if (saved) setAdderOpen(false);
+      else setSaveError("This effect could not be confirmed. Check your connection, then try again.");
+    }, () => setSaveError("This effect could not be confirmed. Check your connection, then try again."));
+  }
+
+  if (activeEffects.length === 0 && !adderOpen) return null;
 
   const now = new Date();
 
@@ -124,7 +136,8 @@ export function ActiveEffectsWidget() {
       <div className="relative">
         <button
           type="button"
-          onClick={() => setAdderOpen((v) => !v)}
+          disabled={pending}
+          onClick={() => { if (canDismiss()) { setSaveError(null); setAdderOpen((v) => !v); } }}
           className="text-xs px-2 py-1 rounded-md border border-dashed border-muted-foreground/40 text-muted-foreground hover:text-foreground hover:border-muted-foreground flex items-center gap-1"
         >
           <Plus className="size-3" />
@@ -133,19 +146,15 @@ export function ActiveEffectsWidget() {
 
         {adderOpen && (
           <EffectAdder
-            onApplySpell={async (source) => {
-              setAdderOpen(false);
-              await applyEffect(
+            savePending={pending}
+            saveError={saveError}
+            onApplySpell={(source) => saveEffect(() => applyEffect(
                 buildActiveEffectFromSpell(
                   source,
                   (source.data as { level?: number }).level,
                 ),
-              );
-            }}
-            onAddCustom={async (input) => {
-              setAdderOpen(false);
-              await addCustomEffect(input);
-            }}
+              ))}
+            onAddCustom={(input) => saveEffect(() => addCustomEffect(input))}
           />
         )}
       </div>
@@ -154,6 +163,8 @@ export function ActiveEffectsWidget() {
 }
 
 interface EffectAdderProps {
+  savePending: boolean;
+  saveError: string | null;
   onApplySpell: (source: SpellEffectSource) => Promise<void>;
   onAddCustom: (input: {
     name: string;
@@ -163,7 +174,7 @@ interface EffectAdderProps {
   }) => Promise<void>;
 }
 
-function EffectAdder({ onApplySpell, onAddCustom }: EffectAdderProps) {
+function EffectAdder({ onApplySpell, onAddCustom, savePending, saveError }: EffectAdderProps) {
   const { spells } = useSpells();
 
   // Known spells that produce an ongoing effect (non-instantaneous duration).
@@ -210,102 +221,106 @@ function EffectAdder({ onApplySpell, onAddCustom }: EffectAdderProps) {
 
   return (
     <div className="absolute z-20 mt-1 w-60 rounded-md border border-border bg-popover p-2 shadow-md space-y-2">
-      {applicableSpells.length > 0 && (
-        <div>
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
-            From known spells
-          </p>
-          <div className="max-h-36 overflow-y-auto">
-            {applicableSpells.map((source) => (
-              <button
-                key={source.slug}
-                type="button"
-                onClick={() => void onApplySpell(source)}
-                className="w-full text-left text-xs px-2 py-1 rounded hover:bg-accent"
-              >
-                {source.name}
-              </button>
-            ))}
+      {savePending && <p role="status" className="text-xs text-muted-foreground">Saving this effect. Please wait.</p>}
+      {saveError && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
+      <fieldset disabled={savePending} aria-busy={savePending} className="min-w-0 border-0 p-0 space-y-2">
+        {applicableSpells.length > 0 && (
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
+              From known spells
+            </p>
+            <div className="max-h-36 overflow-y-auto">
+              {applicableSpells.map((source) => (
+                <button
+                  key={source.slug}
+                  type="button"
+                  onClick={() => void onApplySpell(source)}
+                  className="w-full text-left text-xs px-2 py-1 rounded hover:bg-accent"
+                >
+                  {source.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="space-y-1.5">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-          Custom effect
-        </p>
-        <input
-          type="text"
-          value={customName}
-          onChange={(e) => setCustomName(e.target.value)}
-          placeholder="Name (e.g. Half cover)"
-          aria-label="Custom effect name"
-          className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
-        />
-        <div className="flex gap-1.5">
-          <select
-            value={customStat}
-            onChange={(e) => setCustomStat(e.target.value)}
-            aria-label="Modified stat"
-            className="flex-1 min-w-0 rounded border border-border bg-background px-1 py-1 text-xs"
-          >
-            {CUSTOM_STAT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {customStat && (
-            <input
-              type="number"
-              value={customValue}
-              onChange={(e) => setCustomValue(Number(e.target.value))}
-              aria-label="Modifier value"
-              className="w-14 rounded border border-border bg-background px-1 py-1 text-xs"
-            />
-          )}
-        </div>
-        <div className="flex gap-1.5">
-          <select
-            value={durationType}
-            onChange={(e) =>
-              setDurationType(e.target.value as CustomDurationType)
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Custom effect
+          </p>
+          <input
+            type="text"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+            placeholder="Name (e.g. Half cover)"
+            aria-label="Custom effect name"
+            className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
+          />
+          <div className="flex gap-1.5">
+            <select
+              value={customStat}
+              onChange={(e) => setCustomStat(e.target.value)}
+              aria-label="Modified stat"
+              className="flex-1 min-w-0 rounded border border-border bg-background px-1 py-1 text-xs"
+            >
+              {CUSTOM_STAT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {customStat && (
+              <input
+                type="number"
+                value={customValue}
+                onChange={(e) => setCustomValue(Number(e.target.value))}
+                aria-label="Modifier value"
+                className="w-14 rounded border border-border bg-background px-1 py-1 text-xs"
+              />
+            )}
+          </div>
+          <div className="flex gap-1.5">
+            <select
+              value={durationType}
+              onChange={(e) =>
+                setDurationType(e.target.value as CustomDurationType)
+              }
+              aria-label="Duration type"
+              className="flex-1 min-w-0 rounded border border-border bg-background px-1 py-1 text-xs"
+            >
+              {CUSTOM_DURATION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {durationNeedsValue && (
+              <input
+                type="number"
+                min={1}
+                value={durationValue}
+                onChange={(e) => setDurationValue(Number(e.target.value))}
+                aria-label="Duration value"
+                className="w-14 rounded border border-border bg-background px-1 py-1 text-xs"
+              />
+            )}
+          </div>
+          <button
+            type="button"
+            disabled={customName.trim().length === 0}
+            onClick={() =>
+              void onAddCustom({
+                name: customName.trim(),
+                ...(customStat ? { stat: customStat, value: customValue } : {}),
+                duration: buildDuration(durationType, durationValue),
+              })
             }
-            aria-label="Duration type"
-            className="flex-1 min-w-0 rounded border border-border bg-background px-1 py-1 text-xs"
+            className="w-full text-xs px-2 py-1 rounded-md border border-border hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {CUSTOM_DURATION_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {durationNeedsValue && (
-            <input
-              type="number"
-              min={1}
-              value={durationValue}
-              onChange={(e) => setDurationValue(Number(e.target.value))}
-              aria-label="Duration value"
-              className="w-14 rounded border border-border bg-background px-1 py-1 text-xs"
-            />
-          )}
+            Add custom effect
+          </button>
         </div>
-        <button
-          type="button"
-          disabled={customName.trim().length === 0}
-          onClick={() =>
-            void onAddCustom({
-              name: customName.trim(),
-              ...(customStat ? { stat: customStat, value: customValue } : {}),
-              duration: buildDuration(durationType, durationValue),
-            })
-          }
-          className="w-full text-xs px-2 py-1 rounded-md border border-border hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Add custom effect
-        </button>
-      </div>
+      </fieldset>
     </div>
   );
 }
