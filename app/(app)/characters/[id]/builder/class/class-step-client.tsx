@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateCharacter,
@@ -97,6 +97,8 @@ export function ClassStepClient({
   contentRefs,
   schema,
 }: ClassStepClientProps) {
+  const saveBusy = useRef(false);
+  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -139,10 +141,22 @@ export function ClassStepClient({
     return evaluate(baseWithLevel, allEffects, schema).stats;
   }, [character.base_stats, localLevel, allEffects, schema]);
 
+  function beginSave() {
+    if (saveBusy.current) {
+      setSaveError("The class build is still saving. Wait for it to finish, then retry this change.");
+      return false;
+    }
+    if (snapshotConflict) return false;
+    saveBusy.current = true;
+    setSaving(true);
+    return true;
+  }
+
   async function handleSelectClass(
     content: ContentEntry,
     opts?: { subclassSlug?: string | null },
   ) {
+    if (!beginSave()) return;
     setPreviewContent(null);
 
     const subclassSlug = opts?.subclassSlug ?? undefined;
@@ -188,10 +202,14 @@ export function ClassStepClient({
       setLocalLevel(prev.level);
       console.error("Failed to add class:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
   async function handleLevelChange(classIndex: number, newLevel: number) {
+    if (!beginSave()) return;
     const updatedClasses = [...selectedClasses];
     updatedClasses[classIndex] = {
       ...updatedClasses[classIndex],
@@ -218,6 +236,9 @@ export function ClassStepClient({
       setLocalLevel(prev.level);
       console.error("Failed to change class level:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
@@ -225,6 +246,7 @@ export function ClassStepClient({
     classIndex: number;
     draftLevel: number;
   }) {
+    if (!beginSave()) return;
     const { classIndex, draftLevel } = payload;
     const updatedClasses = [...selectedClasses];
     updatedClasses[classIndex] = {
@@ -252,6 +274,9 @@ export function ClassStepClient({
       setLocalLevel(prev.level);
       console.error("Failed to confirm level up:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
@@ -261,6 +286,7 @@ export function ClassStepClient({
   }
 
   async function handleHpRollChange(key: string, record: HpRollRecord) {
+    if (!beginSave()) return;
     const newHpRolls = { ...(localChoices.hp_rolls ?? {}), [key]: record };
     const newChoices = { ...localChoices, hp_rolls: newHpRolls };
 
@@ -274,10 +300,14 @@ export function ClassStepClient({
       setLocalChoices(prev);
       console.error("Failed to save HP roll:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
   async function handleRemoveClass(classIndex: number) {
+    if (!beginSave()) return;
     const removedClass = selectedClasses[classIndex];
     const updatedClasses = selectedClasses.filter((_, i) => i !== classIndex);
     const totalLevel = updatedClasses.reduce((sum, c) => sum + c.level, 0);
@@ -310,10 +340,14 @@ export function ClassStepClient({
       setLocalLevel(prev.level);
       console.error("Failed to remove class:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
+    if (!beginSave()) return;
     const newResolved = {
       ...localChoices.resolved_choices,
       [choiceId]: selections,
@@ -330,6 +364,9 @@ export function ClassStepClient({
       setLocalChoices(prev);
       console.error("Failed to save choice selection:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
@@ -338,6 +375,7 @@ export function ClassStepClient({
     classSlug: string,
     styleSlug: string | undefined,
   ) {
+    if (!beginSave()) return;
     const newResolved = {
       ...localChoices.resolved_choices,
       [featureSlug]: styleSlug ? [styleSlug] : [],
@@ -377,6 +415,9 @@ export function ClassStepClient({
       setLocalChoices(prev);
       console.error("Failed to save fighting style:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
@@ -385,6 +426,7 @@ export function ClassStepClient({
     classIndex: number,
     subclassSlug: string | undefined,
   ) {
+    if (!beginSave()) return;
     const updatedClasses = [...selectedClasses];
     updatedClasses[classIndex] = {
       ...updatedClasses[classIndex],
@@ -428,10 +470,14 @@ export function ClassStepClient({
       setLocalChoices(prev);
       console.error("Failed to save subclass:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
   async function handleAsiSelect(featureSlug: string, choice: AsiChoice) {
+    if (!beginSave()) throw new Error("The class build is still saving or has conflicting references. Please try again after it settles.");
     const newAsiChoices = {
       ...localChoices.asi_choices,
       [featureSlug]: choice,
@@ -464,6 +510,9 @@ export function ClassStepClient({
       console.error("Failed to save ASI selection:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
       throw err;
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
     }
   }
 
@@ -481,8 +530,9 @@ export function ClassStepClient({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <div className="space-y-6 min-w-0">
+      <fieldset disabled={saving} aria-busy={saving} className="space-y-6 min-w-0 border-0 p-0">
         <h2 className="text-xl font-semibold">Class</h2>
+        {saving && <p role="status" className="text-sm text-muted-foreground">Saving this class change. Please wait.</p>}
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
 
         {conflictingPins.length > 0 && <p role="alert" className="text-sm text-destructive">Multiple saved snapshots match this class build. Reload the character and resolve its references before editing.</p>}
@@ -553,7 +603,7 @@ export function ClassStepClient({
             Next: Abilities
           </Button>
         </div>
-      </div>
+      </fieldset>
 
       {/* Sidebar: StatPreview */}
       {schema && !snapshotConflict && (

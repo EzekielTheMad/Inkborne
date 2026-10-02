@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ClassStepRail } from "@/components/builder/class-step-rail";
@@ -47,9 +47,11 @@ vi.mock("@/components/builder/stat-preview", () => ({
 }));
 
 type RailProps = ComponentProps<typeof ClassStepRail>;
+let currentRail!: RailProps;
 
 vi.mock("@/components/builder/class-step-rail", () => ({
   ClassStepRail: (props: RailProps) => {
+    currentRail = props;
     const fighter = props.selectedClasses[0];
     const feat = props.localChoices.asi_choices?.["fighter-asi-4"];
 
@@ -224,4 +226,21 @@ describe("ClassStepClient feat regressions", () => {
     });
     await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
   });
+  it("blocks competing class and ASI writes while a canonical level save is pending", async () => {
+    const mutation = deferred<{ choices: CharacterChoices; level: number }>();
+    mocks.updateCharacterAndReturn.mockReturnValueOnce(mutation.promise);
+    renderClient({ classes: [{ slug: "fighter", level: 4 }] });
+    fireEvent.click(screen.getByRole("button", { name: "Level down" }));
+    expect(screen.getByRole("button", { name: "Choose Ember Sentinel" })).toBeDisabled();
+    // Portal callbacks are outside the fieldset: the handler gate also protects them.
+    await act(async () => {
+      await expect(currentRail.onAsiSelect("fighter-asi-4", { mode: "asi", allocations: [{ ability: "strength", amount: 2 }] })).rejects.toThrow(/saving/i);
+    });
+    expect(mocks.setCharacterAsiChoiceAction).not.toHaveBeenCalled();
+    expect(mocks.updateCharacterAndReturn).toHaveBeenCalledOnce();
+    await act(async () => mutation.resolve({ choices: { classes: [{ slug: "fighter", level: 3 }] }, level: 3 }));
+    expect(screen.getByRole("button", { name: "Level up" })).toBeEnabled();
+    expect(screen.getByLabelText("class level")).toHaveTextContent("3");
+  });
+
 });
