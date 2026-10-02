@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { CharacterSubmitButton } from "./submit-button";
 import { Input } from "@/components/ui/input";
 import { createCharacter } from "@/app/(app)/characters/new/actions";
 import { InkRule } from "@/components/journey/ornaments";
@@ -113,9 +113,7 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
             </div>
           )}
 
-          <Button type="submit" variant="gold" className="w-full" disabled={!systemsAvailable}>
-            Begin →
-          </Button>
+          <CharacterSubmitButton disabled={!systemsAvailable} />
         </form>
 
         <p className="mt-5 text-center text-[11.5px] leading-relaxed text-muted-foreground">

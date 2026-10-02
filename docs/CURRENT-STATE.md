@@ -28,6 +28,8 @@ and compatibility, but defer expanding those surfaces.
 - Character creation now validates string fields, handles failed/empty inserts,
   maps stable error codes to readable copy, and blocks submission while game
   systems are unavailable. Existing single-system entry is preserved.
+  Its submit button now announces pending creation and disables repeat clicks
+  while that form action runs; this is UI protection, not insert idempotency.
 - Builder overview/navigation now share saved-choice status rules and expose
   accessible status/active-step text. The character-return label is corrected.
   Local journey cases include new-fighter sheet initialization and save retry.
@@ -39,8 +41,8 @@ and compatibility, but defer expanding those surfaces.
 
 ## Verification
 
-- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 200 files /
-  1,849 tests passed including the failed-cast conflict release gate.
+- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 201 files /
+  1,851 tests passed including the cast gate and pending creation submission.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -69,7 +71,9 @@ and compatibility, but defer expanding those surfaces.
    reproduced unsafe path; generalized raw scalar/domain actions, cross-client
    consistency and remote release/UAT remain open. The HP-control repair is
    [verified locally](handoffs/2026-10-02-hp-save-controls.md). Next small builder
-   task: [pending creation submission](specs/2026-10-02-character-submit-pending-next.md).
+   task is now [complete locally](handoffs/2026-10-02-creation-submit-pending.md).
+   Next release review should reproduce pending cast/rest dismissal and reopen
+   lifetimes before further general saving claims.
 
 ## Authority
 

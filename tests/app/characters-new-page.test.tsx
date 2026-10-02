@@ -42,6 +42,7 @@ describe("new character entry", () => {
     render(await NewCharacterPage({ searchParams: Promise.resolve({ error }) }));
     expect(screen.getByRole("alert")).toHaveTextContent("Your character could not be created. Please try again.");
     expect(screen.getByRole("alert")).not.toHaveTextContent(error);
+    expect(screen.getByRole("button", { name: /begin/i })).toBeEnabled();
   });
 
   it("explains required fields instead of displaying an internal error code", async () => {
