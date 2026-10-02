@@ -59,6 +59,11 @@ and compatibility, but defer expanding those surfaces.
   Missing/extra/conflicting pins remain In progress. Ability rules stay schema-aware.
   See [saved reference progress](handoffs/2026-10-02-saved-reference-progress.md).
   This is still not full feature/subchoice or playable-system validation.
+- Equipment selections/confirmation now share a local pending gate; selection
+  failures are visible and require explicit retry. A failed/partial confirmation
+  blocks blind same-session re-grants and gives readable inventory-review copy.
+  See [equipment save controls](handoffs/2026-10-02-equipment-save-controls.md).
+  This is not atomicity, durable idempotency or reload/multi-tab safety.
 - The separate alpha-readiness candidate remains unmerged and preserved. It
   contains dependency/auth/E2E/security work; this branch does not absorb it.
 
@@ -77,7 +82,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,918 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,920 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network

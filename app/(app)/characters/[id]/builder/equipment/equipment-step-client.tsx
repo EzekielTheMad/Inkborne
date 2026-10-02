@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateCharacter } from "@/lib/supabase/character-client";
 import { updateCharacterState } from "@/lib/sheet/update-state";
@@ -69,6 +69,11 @@ export function EquipmentStepClient({
     useState<StartingEquipmentSelections>(
       isStructuredSelections(stored) ? stored : emptySelections(),
     );
+  const saveBusy = useRef(false);
+  const confirmationLocked = useRef(false);
+  const selectionUnresolved = useRef(false);
+  const [isSavingSelection, setIsSavingSelection] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
@@ -96,6 +101,11 @@ export function EquipmentStepClient({
   );
 
   async function persistEquipmentState(next: StartingEquipmentSelections) {
+    if (saveBusy.current || confirmationLocked.current) return;
+    saveBusy.current = true;
+    setIsSavingSelection(true);
+    selectionUnresolved.current = false;
+    setSelectionError(null);
     const prev = equipmentState;
     setEquipmentState(next);
     try {
@@ -105,6 +115,11 @@ export function EquipmentStepClient({
     } catch (err) {
       setEquipmentState(prev);
       console.error("Failed to save equipment selection:", err);
+      selectionUnresolved.current = true;
+      setSelectionError("The equipment selection could not be confirmed. Check your connection and choose that option again before confirming.");
+    } finally {
+      saveBusy.current = false;
+      setIsSavingSelection(false);
     }
   }
 
@@ -125,7 +140,9 @@ export function EquipmentStepClient({
   }
 
   async function handleConfirm() {
-    if (!complete || confirmed || isConfirming) return;
+    if (!complete || confirmed || saveBusy.current || confirmationLocked.current || selectionUnresolved.current) return;
+    saveBusy.current = true;
+    confirmationLocked.current = true;
     setIsConfirming(true);
     setConfirmError(null);
 
@@ -174,12 +191,11 @@ export function EquipmentStepClient({
       startTransition(() => router.refresh());
     } catch (err) {
       console.error("Failed to confirm equipment:", err);
-      setConfirmError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while granting equipment.",
-      );
+      // The separate writes may have partially committed. Do not offer a
+      // same-session re-grant as if local rollback could prove retry safety.
+      setConfirmError("Equipment could not be confirmed. Some items or currency may already have been added. Reload the character and review its inventory before making another confirmation.");
     } finally {
+      saveBusy.current = false;
       setIsConfirming(false);
     }
   }
@@ -189,6 +205,8 @@ export function EquipmentStepClient({
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Starting Equipment</h2>
+      {isSavingSelection && <p role="status" className="text-sm text-muted-foreground">Saving equipment selection. Please wait.</p>}
+      {selectionError && <p role="alert" className="text-sm text-destructive">{selectionError}</p>}
 
       {isLegacyConfirmed ? (
         <LegacyConfirmedNotice classText={classText} backgroundText={backgroundText} />
@@ -208,7 +226,7 @@ export function EquipmentStepClient({
             catalog={catalog}
             selections={equipmentState.selections}
             picks={equipmentState.picks}
-            disabled={confirmed || isConfirming}
+            disabled={confirmed || isConfirming || isSavingSelection || !!confirmError}
             onSelectOption={handleSelectOption}
             onPick={handlePick}
           />
@@ -225,7 +243,7 @@ export function EquipmentStepClient({
             <div className="space-y-2">
               <Button
                 onClick={handleConfirm}
-                disabled={!complete || isConfirming}
+                disabled={!complete || isConfirming || isSavingSelection || !!selectionError || !!confirmError}
               >
                 {isConfirming ? "Adding to inventory…" : "Confirm Equipment"}
               </Button>
@@ -291,6 +309,7 @@ export function EquipmentStepClient({
       <div className="flex justify-between pt-4">
         <Button
           variant="outline"
+          disabled={isSavingSelection || isConfirming}
           onClick={() =>
             router.push(`/characters/${characterId}/builder/background`)
           }
@@ -299,6 +318,7 @@ export function EquipmentStepClient({
         </Button>
         <Button
           className="bg-character-fg text-background hover:opacity-90"
+          disabled={isSavingSelection || isConfirming}
           onClick={() => {
             // Let the sheet play its one-time arrival moment (M2 B4).
             markFirstArrival(characterId);

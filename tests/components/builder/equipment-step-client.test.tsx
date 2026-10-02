@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { EquipmentStepClient } from "@/app/(app)/characters/[id]/builder/equipment/equipment-step-client";
 import type { EquipmentCatalogItem } from "@/lib/builder/equipment-choices";
 import type { StartingEquipmentSelections } from "@/lib/types/character";
@@ -116,6 +116,38 @@ beforeEach(() => {
 });
 
 describe("EquipmentStepClient", () => {
+  it("waits for a selection save, retains an explicit retry, and does not grant optimistic selections", async () => {
+    let rejectSave!: (error: Error) => void;
+    mockedUpdateCharacter.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));
+    renderStep({ startingEquipment: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "amulet" } } });
+    fireEvent.click(screen.getByRole("button", { name: /warhammer/i }));
+    expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /a mace/i })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
+    expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+    await act(async () => rejectSave(new Error("private database detail")));
+    expect(screen.getByRole("alert")).toHaveTextContent("selection could not be confirmed");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("private database detail");
+    expect(screen.getByRole("button", { name: /a mace/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /warhammer/i }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeEnabled());
+    expect(mockedUpdateCharacter).toHaveBeenCalledTimes(2);
+    expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+  });
+
+  it("blocks a second local confirmation after a partial grant failure without exposing server details", async () => {
+    mockedAddInventoryItem.mockResolvedValueOnce({ id: "first-grant" } as never).mockRejectedValueOnce(new Error("private grant detail"));
+    renderStep({ startingEquipment: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "amulet" } } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("may already have been added");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("private grant detail");
+    expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
+    expect(mockedAddInventoryItem).toHaveBeenCalledTimes(2);
+    expect(mockedUpdateCharacter).not.toHaveBeenCalled();
+  });
+
   it("disables Confirm until every choice and pick is made", async () => {
     renderStep();
 
@@ -267,7 +299,7 @@ describe("EquipmentStepClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
 
     await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent(/could not add/i),
+      expect(screen.getByRole("alert")).toHaveTextContent(/equipment could not be confirmed/i),
     );
     expect(screen.queryByText("Added to inventory")).not.toBeInTheDocument();
     // The confirmed flag was never written
