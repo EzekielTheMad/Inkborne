@@ -540,6 +540,8 @@ export function ClassStepClient({
         {snapshotConflict ? null : hasClass ? (
           <ClassStepRail
             characterName={character.name}
+            savePending={saving}
+            saveError={saveError}
             classes={savedClasses.entries}
             subclasses={savedSubclasses.entries}
             features={savedFeatures.entries}

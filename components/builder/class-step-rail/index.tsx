@@ -22,6 +22,8 @@ import type { HpRule } from "@/lib/builder/level-up-rules";
 
 export interface ClassStepRailProps {
   characterName?: string;
+  savePending?: boolean;
+  saveError?: string | null;
   classes: ContentEntry[];
   subclasses: ContentEntry[];
   features: ContentEntry[];
@@ -76,6 +78,8 @@ const MAX_TOTAL_LEVEL = 20;
 export function ClassStepRail(props: ClassStepRailProps) {
   const {
     characterName = "Character",
+    savePending = false,
+    saveError,
     classes,
     subclasses,
     features,
@@ -99,7 +103,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
   } = props;
 
   // Drives layout branch selection (mobile vs. desktop).
-  // SSR-safe: always false on server + first client render; updates post-hydration via useEffect.
+  // SSR-safe: always false on server + first client render; updates from the viewport external store after hydration.
   const isMobile = useIsMobile();
 
   const initialClassIndex = 0;
@@ -312,6 +316,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
 
         mobileLevelUpSheet = (
           <LevelUpSheet
+            savePending={savePending}
+            saveError={saveError}
             open={isMidFlow}
             onOpenChange={(next) => {
               if (!next) {
@@ -383,6 +389,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
 
         mobileDetailSheet = (
           <ClassLevelSheet
+            savePending={savePending}
+            saveError={saveError}
             open
             onOpenChange={(next) => {
               if (!next) setMobileDetail(null);

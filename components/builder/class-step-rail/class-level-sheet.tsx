@@ -12,6 +12,8 @@ import type { ComponentProps } from "react";
 
 type ClassLevelSheetProps = ComponentProps<typeof ClassLevelPane> & {
   open: boolean;
+  savePending?: boolean;
+  saveError?: string | null;
   onOpenChange: (open: boolean) => void;
   /** The level shown in the sheet header (row may be undefined for data gaps). */
   level: number;
@@ -27,7 +29,7 @@ type ClassLevelSheetProps = ComponentProps<typeof ClassLevelPane> & {
  * level pill or a pending-choice callout is tapped.
  */
 export function ClassLevelSheet(props: ClassLevelSheetProps) {
-  const { open, onOpenChange, level, ...paneProps } = props;
+  const { open, onOpenChange, level, savePending = false, saveError, ...paneProps } = props;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -39,9 +41,13 @@ export function ClassLevelSheet(props: ClassLevelSheetProps) {
           <DrawerDescription className="sr-only">
             Features and choices for {paneProps.className_} at level {level}.
           </DrawerDescription>
+          {savePending && <p role="status" className="text-sm text-muted-foreground">Saving this class change. Please wait.</p>}
+          {saveError && <p role="alert" className="text-left text-sm text-destructive">{saveError}</p>}
         </DrawerHeader>
         <div className="overflow-y-auto px-4 pb-4">
-          <ClassLevelPane {...paneProps} />
+          <fieldset disabled={savePending} aria-busy={savePending} className="min-w-0 border-0 p-0">
+            <ClassLevelPane {...paneProps} />
+          </fieldset>
         </div>
       </DrawerContent>
     </Drawer>

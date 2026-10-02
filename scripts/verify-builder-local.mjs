@@ -206,8 +206,13 @@ try {
   await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).fill("3");
   await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).press("Enter");
   await page.waitForFunction(()=>window.fixture.hpCalls.length===1);
+  const hpDrawer=page.getByRole("dialog");
+  await hpDrawer.getByRole("status",{name:"",exact:true}).filter({hasText:"Saving this class change"}).waitFor();
+  await page.screenshot({path:path.join(output,"class-hp-pending-mobile.png"),fullPage:true,animations:"disabled"});
+  assert.equal(await hpDrawer.getByRole("radio",{name:/^Manual/}).isDisabled(),true);
   await page.evaluate(()=>window.fixture.rejectHp());
-  await page.waitForFunction(()=>document.body.innerText.includes('class change could not be confirmed'));
+  await hpDrawer.getByRole("alert").filter({hasText:"class change could not be confirmed"}).waitFor();
+  await page.screenshot({path:path.join(output,"class-hp-failure-mobile.png"),fullPage:true,animations:"disabled"});
   assert.equal(await page.getByRole("button",{name:/Confirm level 2/i}).isDisabled(),true);
   assert.equal(await page.getByRole("radio",{name:"Manual",exact:true}).getAttribute("aria-checked"),"false");
   await page.evaluate(()=>{window.fixture.hpMode='success'});

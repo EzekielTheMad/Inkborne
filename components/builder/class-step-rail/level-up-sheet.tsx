@@ -17,6 +17,8 @@ import type { HpRule } from "@/lib/builder/level-up-rules";
 
 interface LevelUpSheetProps {
   open: boolean;
+  savePending?: boolean;
+  saveError?: string | null;
   onOpenChange: (open: boolean) => void;
   classContent: ContentEntry;
   classIndex: number;
@@ -45,7 +47,7 @@ interface LevelUpSheetProps {
 
 export function LevelUpSheet(props: LevelUpSheetProps) {
   const {
-    open, onOpenChange,
+    open, onOpenChange, savePending = false, saveError,
     classContent, classIndex, isPrimaryClass, draftLevel, totalLevelAfterConfirm,
     perLevelRow, subclasses, styleOptions, localChoices, feats = [], onFeatSearch, currentSubclass, classChoices,
     hpRule, conMod, hpRolls,
@@ -64,35 +66,39 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
           <DrawerDescription className="sr-only">
             Choose the new features and hit points for {classContent.name} at level {draftLevel}.
           </DrawerDescription>
+          {savePending && <p role="status" className="text-sm text-muted-foreground">Saving this class change. Please wait.</p>}
+          {saveError && <p role="alert" className="text-left text-sm text-destructive">{saveError}</p>}
         </DrawerHeader>
         <div className="overflow-y-auto px-4 pb-4">
-          <LevelUpPane
-            classContent={classContent}
-            classIndex={classIndex}
-            isPrimaryClass={isPrimaryClass}
-            draftLevel={draftLevel}
-            totalLevelAfterConfirm={totalLevelAfterConfirm}
-            perLevelRow={perLevelRow}
-            subclasses={subclasses}
-            styleOptions={styleOptions}
-            localChoices={localChoices}
-            feats={feats}
-            onFeatSearch={onFeatSearch}
-            currentSubclass={currentSubclass}
-            classChoices={classChoices}
-            hpRule={hpRule}
-            conMod={conMod}
-            hpRolls={hpRolls}
-            onAsiSelect={onAsiSelect}
-            onSubclassSelect={onSubclassSelect}
-            onFightingStyleSelect={onFightingStyleSelect}
-            onChoiceSelect={onChoiceSelect}
-            onHpRollChange={onHpRollChange}
-            onCancel={onCancel}
-            onConfirm={onConfirm}
-            chrome="embedded"
-            renderFooter={(footer) => <DrawerFooter className="mt-auto">{footer}</DrawerFooter>}
-          />
+          <fieldset disabled={savePending} aria-busy={savePending} className="min-w-0 border-0 p-0">
+            <LevelUpPane
+              classContent={classContent}
+              classIndex={classIndex}
+              isPrimaryClass={isPrimaryClass}
+              draftLevel={draftLevel}
+              totalLevelAfterConfirm={totalLevelAfterConfirm}
+              perLevelRow={perLevelRow}
+              subclasses={subclasses}
+              styleOptions={styleOptions}
+              localChoices={localChoices}
+              feats={feats}
+              onFeatSearch={onFeatSearch}
+              currentSubclass={currentSubclass}
+              classChoices={classChoices}
+              hpRule={hpRule}
+              conMod={conMod}
+              hpRolls={hpRolls}
+              onAsiSelect={onAsiSelect}
+              onSubclassSelect={onSubclassSelect}
+              onFightingStyleSelect={onFightingStyleSelect}
+              onChoiceSelect={onChoiceSelect}
+              onHpRollChange={onHpRollChange}
+              onCancel={onCancel}
+              onConfirm={onConfirm}
+              chrome="embedded"
+              renderFooter={(footer) => <DrawerFooter className="mt-auto">{footer}</DrawerFooter>}
+            />
+          </fieldset>
         </div>
       </DrawerContent>
     </Drawer>

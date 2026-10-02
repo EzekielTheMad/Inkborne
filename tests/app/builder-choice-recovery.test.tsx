@@ -1,19 +1,19 @@
 import { Activity } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RaceStepClient } from "@/app/(app)/characters/[id]/builder/race/race-step-client";
 import { ClassStepClient } from "@/app/(app)/characters/[id]/builder/class/class-step-client";
 import { BackgroundStepClient } from "@/app/(app)/characters/[id]/builder/background/background-step-client";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
-const mocks = vi.hoisted(() => ({ update: vi.fn(), canonical: vi.fn(), insert: vi.fn(), remove: vi.fn(), refresh: vi.fn(), push: vi.fn() }));
+const mocks = vi.hoisted(() => ({ mobile:false, update: vi.fn(), canonical: vi.fn(), insert: vi.fn(), remove: vi.fn(), refresh: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mocks.refresh, push: mocks.push }) }));
 vi.mock("@/lib/supabase/character-client", () => ({ updateCharacter: mocks.update, updateCharacterAndReturn: mocks.canonical }));
 vi.mock("@/lib/supabase/content-refs-client", () => ({ insertContentRef: mocks.insert, removeContentRefById: mocks.remove }));
 vi.mock("@/lib/supabase/background-selection-client", () => ({ setCharacterBackground: vi.fn() }));
 vi.mock("@/app/(app)/characters/[id]/builder/class/actions", () => ({ searchUsableFeatsAction: vi.fn(), setCharacterAsiChoiceAction: vi.fn() }));
 vi.mock("@/components/builder/stat-preview", () => ({ StatPreview: () => null }));
-vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
+vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => mocks.mobile }));
 
 const human: ContentEntry = { id: "human", name: "Human", slug: "human", content_type: "race", data: {}, effects: [], version: 1, source: "srd" };
 const elf: ContentEntry = { ...human, id: "elf", name: "Elf", slug: "elf" };
@@ -22,7 +22,7 @@ const character = { id: "char-1", name: "Fresh hero", level: 1, base_stats: {}, 
 function race(choices = {}) { return render(<RaceStepClient characterId="char-1" character={{ ...character, choices }} races={[human, elf]} subraces={[woodElf]} traits={[]} contentRefs={[]} schema={undefined} />); }
 
 describe("builder choice error recovery with real selection controls", () => {
-  beforeEach(() => { vi.resetAllMocks(); mocks.update.mockResolvedValue(undefined); mocks.insert.mockResolvedValue(undefined); mocks.remove.mockResolvedValue(undefined); vi.spyOn(console, "error").mockImplementation(() => {}); });
+  beforeEach(() => { mocks.mobile=false; vi.resetAllMocks(); mocks.update.mockResolvedValue(undefined); mocks.insert.mockResolvedValue(undefined); mocks.remove.mockResolvedValue(undefined); vi.spyOn(console, "error").mockImplementation(() => {}); });
   afterEach(() => vi.restoreAllMocks());
 
   it("reports a failed race write without exposing server details", async () => {
@@ -251,6 +251,49 @@ describe("builder choice error recovery with real selection controls", () => {
     fireEvent.click(average);
     await waitFor(()=>expect(screen.getByRole("button",{name:/Confirm level 2/i})).toBeEnabled());
     expect(mocks.update.mock.calls[1][1].choices.hp_rolls).toEqual({"fighter-2":{method:"average",value:6}});
+  });
+
+  it("shows pending controls and failed-save recovery inside the mobile level-up drawer", async () => {
+    mocks.mobile=true;
+    let rejectSave!:(error:Error)=>void;
+    mocks.update.mockReturnValueOnce(new Promise<void>((_,reject)=>{rejectSave=reject}));
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}};
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}]}}} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Level up Fighter to level 2/i}));
+    const drawer=within(screen.getByRole("dialog"));
+    fireEvent.click(drawer.getByRole("radio",{name:/Average/i}));
+    expect(drawer.getByRole("status",{name:""})).toHaveTextContent("Saving this class change");
+    expect(drawer.getByRole("radio",{name:"Manual"})).toBeDisabled();
+    expect(drawer.getByRole("button",{name:/Confirm level 2/i})).toBeDisabled();
+    await act(async()=>rejectSave(new Error("private server detail")));
+    expect(drawer.getByRole("alert")).toHaveTextContent("class change could not be confirmed");
+    expect(drawer.getByRole("alert")).not.toHaveTextContent("private server detail");
+    expect(drawer.getByRole("radio",{name:"Manual"})).toBeEnabled();
+    expect(drawer.getByRole("button",{name:/Confirm level 2/i})).toBeDisabled();
+    fireEvent.click(drawer.getByRole("radio",{name:/Average/i}));
+    await waitFor(()=>expect(drawer.queryByRole("alert")).not.toBeInTheDocument());
+    await waitFor(()=>expect(drawer.getByRole("button",{name:/Confirm level 2/i})).toBeEnabled());
+    expect(mocks.update).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps mobile first-level choices disabled until save settlement and displays their errors", async () => {
+    mocks.mobile=true;
+    let rejectSave!:(error:Error)=>void;
+    mocks.update.mockReturnValueOnce(new Promise<void>((_,reject)=>{rejectSave=reject}));
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[]}]},effects:[{type:"choice",choose:1,from:["skill-athletics","skill-stealth"],grant_type:"proficiency",choice_id:"fighter-skill"}]};
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}]}}} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/^Level 1:/}));
+    const drawer=within(screen.getByRole("dialog"));
+    fireEvent.click(drawer.getByRole("button",{name:"Athletics"}));
+    expect(drawer.getByRole("status")).toHaveTextContent("Saving this class change");
+    expect(drawer.getByRole("button",{name:"Athletics"})).toBeDisabled();
+    expect(drawer.getByRole("button",{name:"Stealth"})).toBeDisabled();
+    await act(async()=>rejectSave(new Error("offline")));
+    expect(drawer.getByRole("alert")).toHaveTextContent("class change could not be confirmed");
+    expect(drawer.getByRole("button",{name:"Athletics"})).toHaveAttribute("aria-pressed","false");
+    fireEvent.click(drawer.getByRole("button",{name:"Stealth"}));
+    await waitFor(()=>expect(drawer.getByRole("button",{name:"Stealth"})).toBeEnabled());
+    expect(mocks.update.mock.calls[1][1].choices.resolved_choices).toEqual({"fighter-skill":["skill-stealth"]});
   });
 
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {
