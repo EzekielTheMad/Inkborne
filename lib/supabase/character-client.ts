@@ -12,22 +12,27 @@ export async function saveCharacterAbilityScores(
   characterId: string,
   method: AbilityMethod,
   scores: Record<string, number>,
+  signal?: AbortSignal,
 ): Promise<void> {
+  if (signal?.aborted) throw new Error("This editor session has closed.");
   const supabase = createClient();
-  const { data: current, error: readError } = await supabase
+  let read = supabase
     .from("characters")
     .select("choices, base_stats")
-    .eq("id", characterId)
-    .single();
+    .eq("id", characterId);
+  if (signal) read = read.abortSignal(signal);
+  const { data: current, error: readError } = await read.single();
+  if (signal?.aborted) throw new Error("This editor session has closed.");
   if (readError || !current) throw new Error("The character could not be loaded.");
-  const { data: saved, error } = await supabase
+  let write = supabase
     .from("characters")
     .update({ base_stats: scores, choices: { ...current.choices, ability_method: method } })
     .eq("id", characterId)
     .eq("choices", JSON.stringify(current.choices))
     .eq("base_stats", JSON.stringify(current.base_stats))
-    .select("id")
-    .single();
+    .select("id");
+  if (signal) write = write.abortSignal(signal);
+  const { data: saved, error } = await write.single();
   if (error || !saved) throw new Error("The ability scores could not be saved. Reload if the character changed elsewhere.");
 }
 

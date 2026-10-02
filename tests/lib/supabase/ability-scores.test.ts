@@ -56,4 +56,20 @@ describe("guarded ability-score transport", () => {
       .mockResolvedValueOnce(response(null));
     await expect(saveCharacterAbilityScores("char-1", "manual", { strength: 18 })).rejects.toThrow("could not be saved");
   });
+  it("rejects an already closed editor without requesting data", async () => {
+    const controller = new AbortController(); controller.abort();
+    await expect(saveCharacterAbilityScores("char-1", "manual", { strength: 18 }, controller.signal)).rejects.toThrow("session has closed");
+    expect(transport.fetch).not.toHaveBeenCalled();
+  });
+
+  it("does not send a patch when the editor closes during its read", async () => {
+    const controller = new AbortController();
+    transport.fetch.mockImplementationOnce(async () => {
+      controller.abort(); return response({ choices, base_stats: stats });
+    });
+    await expect(saveCharacterAbilityScores("char-1", "manual", { strength: 18 }, controller.signal)).rejects.toThrow("session has closed");
+    expect(transport.fetch).toHaveBeenCalledTimes(1);
+    expect(transport.fetch.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+
 });

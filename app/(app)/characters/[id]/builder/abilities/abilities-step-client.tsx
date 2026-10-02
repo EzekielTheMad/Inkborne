@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { saveCharacterAbilityScores } from "@/lib/supabase/character-client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
 
 import { createAbilityScoreWriter, type AbilityDraft, type AbilitySaveStatus } from "@/lib/builder/ability-score-writer";
+import { useSaveNavigationGuard } from "@/lib/builder/use-save-navigation-guard";
 
 const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 const POINT_BUY_BUDGET = 27;
@@ -72,12 +73,20 @@ export function AbilitiesStepClient({
     return { method, scores };
   });
   const [saveStatus, setSaveStatus] = useState<AbilitySaveStatus>("idle");
+  const navigationGuard = useSaveNavigationGuard();
   const [writer] = useState(() => createAbilityScoreWriter(
     draft,
-    (next) => saveCharacterAbilityScores(characterId, next.method, next.scores),
+    (next, signal) => saveCharacterAbilityScores(characterId, next.method, next.scores, signal),
     setDraft,
-    setSaveStatus,
+    (status) => {
+      navigationGuard.setBlocked(status === "saving" || status === "error");
+      setSaveStatus(status);
+    },
   ));
+  useEffect(() => {
+    writer.activate();
+    return () => { writer.deactivate(); };
+  }, [writer]);
   const { method, scores } = draft;
   const arrayAssignments = scores;
   const navigationBlocked = saveStatus === "saving" || saveStatus === "error";
@@ -214,6 +223,7 @@ export function AbilitiesStepClient({
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6">
         <h2 className="text-xl font-semibold">Ability Scores</h2>
+        {navigationGuard.notice && <p role="alert" className="text-sm text-destructive">{navigationGuard.notice}</p>}
         {saveStatus === "error" && (
           <div role="alert" className="space-y-2 text-sm text-destructive">
             <p>Your latest ability scores could not be saved. Keep this page open and retry. If the character changed elsewhere, reload before editing again.</p>

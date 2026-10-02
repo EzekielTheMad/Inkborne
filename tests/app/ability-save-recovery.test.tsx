@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AbilitiesStepClient } from "@/app/(app)/characters/[id]/builder/abilities/abilities-step-client";
@@ -40,7 +41,7 @@ describe("ability-score save recovery", () => {
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
     expect(screen.getAllByRole("combobox")[0]).toHaveValue("15");
     expect(screen.getAllByRole("combobox")[1]).toHaveValue("14");
-    expect(persist).toHaveBeenLastCalledWith("char-1", "standard_array", { strength: 15, dexterity: 14 });
+    expect(persist).toHaveBeenLastCalledWith("char-1", "standard_array", { strength: 15, dexterity: 14 }, expect.any(AbortSignal));
     await act(async () => second.resolve());
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Next: Background" })).toBeEnabled();
@@ -56,7 +57,7 @@ describe("ability-score save recovery", () => {
     expect(screen.getByRole("button", { name: "Next: Background" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
-    expect(persist).toHaveBeenLastCalledWith("char-1", "manual", { strength: 18, dexterity: 10 });
+    expect(persist).toHaveBeenLastCalledWith("char-1", "manual", { strength: 18, dexterity: 10 }, expect.any(AbortSignal));
   });
 
   it("saves method changes immediately and orders them after pending edits", async () => {
@@ -68,13 +69,13 @@ describe("ability-score save recovery", () => {
     expect(persist).toHaveBeenCalledTimes(1);
     await act(async () => first.resolve());
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
-    expect(persist).toHaveBeenLastCalledWith("char-1", "point_buy", { strength: 8, dexterity: 8 });
+    expect(persist).toHaveBeenLastCalledWith("char-1", "point_buy", { strength: 8, dexterity: 8 }, expect.any(AbortSignal));
   });
 
   it("persists clearing an array assignment as a partial draft", async () => {
     mount("standard_array", { strength: 15 });
     fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "" } });
-    await waitFor(() => expect(persist).toHaveBeenCalledWith("char-1", "standard_array", {}));
+    await waitFor(() => expect(persist).toHaveBeenCalledWith("char-1", "standard_array", {}, expect.any(AbortSignal)));
     expect(screen.getAllByRole("combobox")[0]).toHaveValue("");
   });
 
@@ -93,7 +94,7 @@ describe("ability-score save recovery", () => {
     expect(strength).toHaveValue(18);
     fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Ability scores saved."));
-    expect(persist).toHaveBeenLastCalledWith("char-1", "manual", { strength: 18, dexterity: 10 });
+    expect(persist).toHaveBeenLastCalledWith("char-1", "manual", { strength: 18, dexterity: 10 }, expect.any(AbortSignal));
   });
 
   it("accumulates point-buy increments before the previous request settles", async () => {
@@ -106,7 +107,7 @@ describe("ability-score save recovery", () => {
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
     await act(async () => first.resolve());
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
-    expect(persist).toHaveBeenLastCalledWith("char-1", "point_buy", { strength: 10, dexterity: 8 });
+    expect(persist).toHaveBeenLastCalledWith("char-1", "point_buy", { strength: 10, dexterity: 8 }, expect.any(AbortSignal));
   });
 
   it("keeps manual score limits and point-buy lower bounds", () => {
@@ -127,4 +128,43 @@ describe("ability-score save recovery", () => {
     expect(screen.getByRole("button", { name: "Standard Array" })).toHaveAttribute("aria-pressed", "true");
     expect(persist).not.toHaveBeenCalled();
   });
+  it("blocks header links and unload until the pending draft is confirmed", async () => {
+    const first = deferred(); persist.mockReturnValueOnce(first.promise);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const navigate = vi.fn();
+    render(<Link href="/campaigns" onClick={(event) => { event.preventDefault(); navigate(); }}>Campaigns</Link>);
+    mount("manual", { strength: 10 });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Strength score" }), { target: { value: "18" } });
+    await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("link", { name: "Campaigns" }));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("before leaving");
+    const unload = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(unload); expect(unload.defaultPrevented).toBe(true);
+    await act(async () => first.resolve());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Campaigns" }));
+    expect(navigate).toHaveBeenCalledTimes(1);
+    confirm.mockRestore();
+  });
+
+  it("drops unsent drafts when an editor closes and ignores its stale completion", async () => {
+    const first = deferred(); persist.mockReturnValueOnce(first.promise);
+    const old = mount("manual", { strength: 10 });
+    const strength = screen.getByRole("spinbutton", { name: "Strength score" });
+    fireEvent.change(strength, { target: { value: "16" } });
+    await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+    fireEvent.change(strength, { target: { value: "18" } });
+    const oldSignal = persist.mock.calls[0][3];
+    old.unmount(); expect(oldSignal?.aborted).toBe(true);
+    mount("manual", { strength: 10 });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Strength score" }), { target: { value: "20" } });
+    await waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
+    await act(async () => first.resolve());
+    expect(persist).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("spinbutton", { name: "Strength score" })).toHaveValue(20);
+    expect(screen.getByRole("status")).toHaveTextContent("Ability scores saved.");
+  });
+
 });

@@ -44,7 +44,7 @@ and compatibility, but defer expanding those surfaces.
 ## Verification
 
 - Final `npm.cmd run check`: strict typecheck, zero-warning lint, 201 files /
-  1,856 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,860 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -78,8 +78,9 @@ and compatibility, but defer expanding those surfaces.
    [verified locally](handoffs/2026-10-02-hp-save-controls.md). Next small builder
    task is now [complete locally](handoffs/2026-10-02-creation-submit-pending.md).
    [Dialog lifetime interactions](handoffs/2026-10-02-dialog-save-lifetimes.md)
-   are now verified locally. Next bounded review: ability-editor navigation
-   through header/app links while a save is pending or a draft failed.
+   are now verified locally. Ability-editor link/unload and closed-session
+   recovery is covered in the [navigation handoff](handoffs/2026-10-02-ability-navigation-recovery.md).
+   History navigation, ambiguous writes and equipment atomicity remain open.
 
 ## Authority
 
