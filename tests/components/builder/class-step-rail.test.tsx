@@ -1854,12 +1854,14 @@ describe("ClassStepRail — level-up flow", () => {
   });
 
   it("clicking Confirm fires onConfirmLevelUp with the right payload", () => {
-    const { onConfirmLevelUp, onHpRollChange } = setupForLevelUp();
+    const { onConfirmLevelUp, onHpRollChange, props, rerender } = setupForLevelUp();
     fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
     // Pick HP first (no choices at Paladin Lv 7 — passive level)
     fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
     expect(onHpRollChange).toHaveBeenCalledWith("paladin-7", { method: "average", value: 6 });
-    // Now Confirm should be enabled
+    // Dispatch alone is not confirmation. The parent owns saved/optimistic HP.
+    expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeDisabled();
+    rerender(<ClassStepRail {...props} hpRolls={{"paladin-7":{method:"average",value:6}}} />);
     const confirmBtn = screen.getByRole("button", { name: /Confirm level 7/i });
     expect(confirmBtn).toBeEnabled();
     fireEvent.click(confirmBtn);

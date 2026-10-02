@@ -1,3 +1,4 @@
+import { Activity } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RaceStepClient } from "@/app/(app)/characters/[id]/builder/race/race-step-client";
@@ -225,6 +226,31 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(screen.queryByLabelText("Choice made")).not.toBeInTheDocument();
     expect(screen.getByRole("button",{name:"Clear saved selections"})).toBeEnabled();
     expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])("does not treat a failed level-up HP save as completed (hidden=%s)", async (hidden) => {
+    let rejectSave!:(error:Error)=>void;
+    mocks.update.mockReturnValueOnce(new Promise<void>((_,reject)=>{rejectSave=reject}));
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}};
+    const view=(mode:"visible"|"hidden")=><Activity mode={mode}><ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}]}}} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[{id:"pin",content_id:cls.id,context:{},choice_source:null,content_definitions:cls}]} schema={undefined}/></Activity>;
+    const rendered=render(view("visible"));
+    fireEvent.click(screen.getByRole("button",{name:/Level up Fighter to level 2/i}));
+    fireEvent.click(screen.getByRole("radio",{name:"Manual"}));
+    fireEvent.change(screen.getByRole("spinbutton",{name:"Manual HP value"}),{target:{value:"3"}});
+    fireEvent.keyDown(screen.getByRole("spinbutton",{name:"Manual HP value"}),{key:"Enter"});
+    expect(mocks.update).toHaveBeenCalledOnce();
+    if(hidden) rendered.rerender(view("hidden"));
+    await act(async()=>rejectSave(new Error("offline")));
+    if(hidden) rendered.rerender(view("visible"));
+    expect(screen.getByRole("alert")).toHaveTextContent("class change could not be confirmed");
+    expect(screen.getByRole("button",{name:/Confirm level 2/i})).toBeDisabled();
+    expect(screen.getByRole("radio",{name:"Manual"})).toHaveAttribute("aria-checked","false");
+    const average=screen.getByRole("radio",{name:/Average/i});
+    fireEvent.blur(screen.getByRole("spinbutton",{name:"Manual HP value"}),{relatedTarget:average});
+    expect(mocks.update).toHaveBeenCalledOnce();
+    fireEvent.click(average);
+    await waitFor(()=>expect(screen.getByRole("button",{name:/Confirm level 2/i})).toBeEnabled());
+    expect(mocks.update.mock.calls[1][1].choices.hp_rolls).toEqual({"fighter-2":{method:"average",value:6}});
   });
 
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {

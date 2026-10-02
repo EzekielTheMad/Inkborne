@@ -126,6 +126,7 @@ function HpPickerInteractive(props: InteractiveProps) {
   function commitManual() {
     const n = Number.parseInt(manualValue, 10);
     if (!Number.isInteger(n) || n < 1 || n > hitDie) return;
+    if (storedRoll?.method === "manual" && storedRoll.value === n) return;
     onChange({ method: "manual", value: n });
   }
 
@@ -197,7 +198,13 @@ function HpPickerInteractive(props: InteractiveProps) {
             onKeyDown={(e) => {
               if (e.key === "Enter") commitManual();
             }}
-            onBlur={commitManual}
+            onBlur={(event) => {
+              const next = event.relatedTarget;
+              // Selecting a different method supersedes this unsaved manual draft.
+              // Its blur must not dispatch a competing manual save first.
+              if (next instanceof Element && next.closest('[role="radiogroup"]')?.getAttribute("aria-labelledby") === labelId) return;
+              commitManual();
+            }}
             className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm"
           />
           <span className="ml-2 text-xs text-muted-foreground">

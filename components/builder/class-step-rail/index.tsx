@@ -114,8 +114,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
   // Mobile has no static main pane, so this sheet is how per-level choices are reached
   // outside the level-up flow (UAT A3).
   const [mobileDetail, setMobileDetail] = useState<SelectedKey | null>(null);
-  // Local HP rolls accumulated during the current draft flow, merged over the persisted hpRolls prop.
-  const [draftHpRolls, setDraftHpRolls] = useState<Record<string, HpRollRecord>>({});
+  // HP selections are owned by the parent save/recovery state. A second local
+  // snapshot would mask its rollback when an incremental HP save fails.
 
   // Treat parent-owned class/level changes as acknowledgements instead of
   // mirroring them into local state from an effect. This keeps the successful
@@ -240,7 +240,6 @@ export function ClassStepRail(props: ClassStepRailProps) {
       if (buttonState !== "idle") return;
       setShowPicker(false);
       setMobileDetail(null);
-      setDraftHpRolls({});
       setLevelUpDraft({ classIndex: idx, draftLevel: cls.level + 1 });
     };
 
@@ -310,7 +309,6 @@ export function ClassStepRail(props: ClassStepRailProps) {
           (e): e is ChoiceEffect => e.type === "choice",
         );
         const totalAfter = totalLevel - cls.level + draft.draftLevel;
-        const mergedHpRolls = { ...hpRolls, ...draftHpRolls };
 
         mobileLevelUpSheet = (
           <LevelUpSheet
@@ -318,7 +316,6 @@ export function ClassStepRail(props: ClassStepRailProps) {
             onOpenChange={(next) => {
               if (!next) {
                 setLevelUpDraft(null);
-                setDraftHpRolls({});
                 onCancelLevelUp();
               }
             }}
@@ -337,23 +334,18 @@ export function ClassStepRail(props: ClassStepRailProps) {
             classChoices={classChoices}
             hpRule={hpRule}
             conMod={conMod}
-            hpRolls={mergedHpRolls}
+            hpRolls={hpRolls}
             onAsiSelect={onAsiSelect}
             onSubclassSelect={onSubclassSelect}
             onFightingStyleSelect={onFightingStyleSelect}
             onChoiceSelect={onChoiceSelect}
-            onHpRollChange={(key, record) => {
-              setDraftHpRolls((prev) => ({ ...prev, [key]: record }));
-              onHpRollChange(key, record);
-            }}
+            onHpRollChange={onHpRollChange}
             onCancel={() => {
               setLevelUpDraft(null);
-              setDraftHpRolls({});
               onCancelLevelUp();
             }}
             onConfirm={() => {
               onConfirmLevelUp(draft);
-              setDraftHpRolls({});
             }}
           />
         );
@@ -539,7 +531,6 @@ export function ClassStepRail(props: ClassStepRailProps) {
         (e): e is ChoiceEffect => e.type === "choice",
       );
       const totalAfter = totalLevel - cls.level + draft.draftLevel;
-      const mergedHpRolls = { ...hpRolls, ...draftHpRolls };
 
       mainPaneContent = (
         <LevelUpPane
@@ -558,23 +549,18 @@ export function ClassStepRail(props: ClassStepRailProps) {
           classChoices={classChoices}
           hpRule={hpRule}
           conMod={conMod}
-          hpRolls={mergedHpRolls}
+          hpRolls={hpRolls}
           onAsiSelect={onAsiSelect}
           onSubclassSelect={onSubclassSelect}
           onFightingStyleSelect={onFightingStyleSelect}
           onChoiceSelect={onChoiceSelect}
-          onHpRollChange={(key, record) => {
-            setDraftHpRolls((prev) => ({ ...prev, [key]: record }));
-            onHpRollChange(key, record);
-          }}
+          onHpRollChange={onHpRollChange}
           onCancel={() => {
             setLevelUpDraft(null);
-            setDraftHpRolls({});
             onCancelLevelUp();
           }}
           onConfirm={() => {
             onConfirmLevelUp(draft);
-            setDraftHpRolls({});
           }}
         />
       );
