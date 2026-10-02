@@ -401,6 +401,30 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
+  it.each(["", "   "])("clears a custom background note without retaining a blank selection (%j)", async (value) => {
+    let rejectSave!: (error:Error)=>void;
+    mocks.update.mockReturnValueOnce(new Promise<void>((_,reject)=>{rejectSave=reject;}));
+    const background:ContentEntry={...human,id:"courier",slug:"courier",name:"Courier",content_type:"background",data:{bonds:[]}};
+    const editor=(mode:"visible"|"hidden")=><Activity mode={mode}><BackgroundStepClient characterId="char-1" character={{...character,choices:{background:background.slug,bonds:["Protect my village."]}}} backgrounds={[background]} contentRefs={[{id:"pin",content_id:background.id,context:{},choice_source:null,content_definitions:background}]} schema={undefined}/></Activity>;
+    const view=render(editor("visible"));
+    const input=screen.getByRole("textbox",{name:"Bonds"});
+    fireEvent.change(input,{target:{value}});
+    fireEvent.blur(input);
+    expect(mocks.update.mock.calls[0][1].choices.bonds).toEqual([]);
+    view.rerender(editor("hidden"));
+    await act(async()=>rejectSave(new Error("private note detail")));
+    view.rerender(editor("visible"));
+    const retry=screen.getByRole("textbox",{name:"Bonds"});
+    expect(retry).toHaveValue(value);
+    expect(screen.getByText("Bonds (0/1)")).toBeVisible();
+    expect(screen.getByRole("alert")).not.toHaveTextContent("private note detail");
+    fireEvent.blur(retry);
+    await waitFor(()=>expect(mocks.update).toHaveBeenCalledTimes(2));
+    expect(mocks.update.mock.calls[1][1].choices.bonds).toEqual([]);
+    await waitFor(()=>expect(screen.queryByText(/You have unsaved notes/)).not.toBeInTheDocument());
+    expect(screen.getByText("Bonds (0/1)")).toBeVisible();
+  });
+
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {
     let rejectSave!: (error: Error) => void;
     mocks.update.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));

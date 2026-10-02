@@ -194,7 +194,7 @@ export function BackgroundStepClient({
   ) {
     if (!beginSave()) return;
 
-    const newChoices = { ...localChoices, [field]: value };
+    const newChoices = { ...localChoices, [field]: value.filter(note => note.trim().length > 0) };
 
     const prev = localChoices;
     setLocalChoices(newChoices);
@@ -248,17 +248,18 @@ export function BackgroundStepClient({
     max: number,
   ) => {
     const current = customDrafts[field] ?? localChoices[field] ?? [];
+    const selectedCount = current.filter(note => note.trim().length > 0).length;
 
     return (
       <div className="space-y-2">
         <p className="text-sm font-medium">
-          {label} ({current.length}/{max})
+          {label} ({selectedCount}/{max})
         </p>
         {options.length > 0 ? (
           <div className="space-y-1">
             {options.map((option, i) => {
               const isSelected = current.includes(option);
-              const isDisabled = !isSelected && current.length >= max;
+              const isDisabled = !isSelected && selectedCount >= max;
 
               return (
                 <button

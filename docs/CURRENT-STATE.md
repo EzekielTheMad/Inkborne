@@ -107,10 +107,15 @@ The [subclass re-click checkpoint](handoffs/2026-10-02-subclass-pin-preservation
 Choice/reference writes still lack a durable shared transaction; this repair
 does not resolve partial or ambiguous outcomes.
 
+Explicitly clearing a custom background note now saves an empty selection,
+with blank drafts retained after failure for retry, including hidden Activity
+completion. Nonblank text is preserved exactly. See the
+[note-clearing checkpoint](handoffs/2026-10-02-background-note-clearing.md).
+
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,959 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,961 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -118,7 +123,7 @@ does not resolve partial or ambiguous outcomes.
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Installed Chrome ran sixteen builder checks and five play-save checks with real editors and mocked
+- Installed Chrome ran seventeen builder checks and five play-save checks with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
   selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing
