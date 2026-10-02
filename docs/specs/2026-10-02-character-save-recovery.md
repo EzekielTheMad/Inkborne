@@ -28,10 +28,12 @@ uses absolute patches, but this change is not a cross-client consistency model.
 
 ## Critical-review limitation
 
-The confirmed-plus-pending model protects top-level patches; it cannot infer
-gameplay intent embedded in later full nested maps. A reproduced failed-first,
-queued-second slot spend ended with two slots spent after only the second save
-succeeded. The original acceptance below does not prove dependent-action rebasing.
+The confirmed-plus-pending model cannot infer gameplay intent embedded in later
+full nested maps. A reproduced failed-first/queued-second slot spend ended with
+two slots spent after only the second save succeeded. The subsequent
+[cast conflict gate](../handoffs/2026-10-02-cast-conflict-gate.md) rejects busy/stale
+casts and invalidates queued nested snapshots instead of claiming intent rebasing.
+The original acceptance below does not prove generalized dependent-action rebasing.
 See [critical review](../handoffs/2026-10-02-critical-save-review.md) for the
 evidence and the separate command/delta design required. Pending HP controls
 were repaired locally after the review, without claiming sheet-wide isolation.

@@ -525,6 +525,60 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
   });
 
+  it("rejects a queued cast while the first save is pending, then spends only one slot after failure and retry", async () => {
+    let rejectFirst!: (reason: Error) => void;
+    mockedUpdateState.mockReturnValueOnce(new Promise<void>((_resolve, reject) => { rejectFirst = reject; }));
+    let cast!: ReturnType<typeof useSpells>["castSpell"];
+    function Probe() {
+      cast = useSpells().castSpell;
+      const { state } = useCharacterState();
+      return <span data-testid="queued-slots">{state.spell_slots_used?.["1"] ?? 0}</span>;
+    }
+    const spell = {
+      name: "Magic Missile", class_slug: "wizard",
+      content_definitions: { id: "magic-missile", name: "Magic Missile", slug: "magic-missile", data: { level: 1, duration: "Instantaneous" }, effects: [] },
+    } as never;
+    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData });
+    let first!: Promise<unknown>;
+    await act(async () => { first = cast(spell, { type: "slot", level: 1 }).catch((error: Error) => error); });
+    let second!: Promise<unknown>;
+    await act(async () => { second = cast(spell, { type: "slot", level: 1 }).catch((error: Error) => error); });
+    await act(async () => {
+      rejectFirst(new Error("offline"));
+      expect(await first).toBeInstanceOf(Error);
+      expect(await second).toBeInstanceOf(Error);
+      expect(mockedUpdateState).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByTestId("queued-slots")).toHaveTextContent("0");
+    await act(async () => { await cast(spell, { type: "slot", level: 1 }); });
+    expect(mockedUpdateState).toHaveBeenCalledTimes(2);
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 1 } });
+    expect(screen.getByTestId("queued-slots")).toHaveTextContent("1");
+  });
+
+  it("rejects simultaneous and stale cast callbacks while allowing a fresh later cast", async () => {
+    let resolveFirst!: () => void;
+    mockedUpdateState.mockReturnValueOnce(new Promise<void>((resolve) => { resolveFirst = resolve; }));
+    let cast!: ReturnType<typeof useSpells>["castSpell"];
+    function Probe() { cast = useSpells().castSpell; return null; }
+    const spell = {
+      name: "Magic Missile", class_slug: "wizard",
+      content_definitions: { id: "magic-missile", name: "Magic Missile", slug: "magic-missile", data: { level: 1, duration: "Instantaneous" }, effects: [] },
+    } as never;
+    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData });
+    const staleCast = cast;
+    let first!: Promise<unknown>;
+    await act(async () => {
+      first = staleCast(spell, { type: "slot", level: 1 });
+      await expect(staleCast(spell, { type: "slot", level: 1 })).rejects.toThrow(/saving|changed/i);
+    });
+    await act(async () => { resolveFirst(); await first; });
+    await expect(staleCast(spell, { type: "slot", level: 1 })).rejects.toThrow(/saving|changed/i);
+    await act(async () => { await cast(spell, { type: "slot", level: 1 }); });
+    expect(mockedUpdateState).toHaveBeenCalledTimes(2);
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 2 } });
+  });
+
   it("returns failure for an unsaved rest and restores HP before retry", async () => {
     mockedUpdateState.mockRejectedValueOnce(new Error("offline"));
     let rest!: ReturnType<typeof useRest>["longRest"];

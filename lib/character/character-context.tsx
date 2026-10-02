@@ -598,21 +598,18 @@ export function CharacterProvider({
       if (!source) {
         throw new Error(`Spell "${spell.name}" has no castable content data.`);
       }
-      const outcome = computeCastEffects({
-        spell: source,
-        choice,
-        state,
-        casterInfo,
-        abilityScores: (evalResult.stats ?? {}) as Record<string, number>,
-        characterLevel: character.level,
-        classSlug: spell.class_slug,
+      return patchState.runAction(state, (confirmedState) => {
+        const outcome = computeCastEffects({
+          spell: source,
+          choice,
+          state: confirmedState,
+          casterInfo,
+          abilityScores: (evalResult.stats ?? {}) as Record<string, number>,
+          characterLevel: character.level,
+          classSlug: spell.class_slug,
+        });
+        return { patch: outcome.statePatch, result: outcome };
       });
-      if (Object.keys(outcome.statePatch).length > 0) {
-        if (!(await patchState(outcome.statePatch))) {
-          throw new Error("The spell could not be saved. Please try casting again.");
-        }
-      }
-      return outcome;
     },
     [state, casterInfo, evalResult, character.level, patchState],
   );

@@ -7,6 +7,13 @@ passing test totals alone are not evidence that all gameplay races are solved.
 
 ## Confirmed architectural limitation: dependent gameplay actions
 
+Update: the reproduced cast path is now covered by the
+[cast conflict gate](2026-10-02-cast-conflict-gate.md). This section retains the
+original evidence; it no longer describes the corrected cast entry point.
+Overlapping queued nested snapshots are conservatively rejected after failure,
+and casts reject busy/stale entry before computing effects. General cross-tab
+and raw scalar/domain-command reconciliation remain open release considerations.
+
 The sheet writer removes a failed shallow patch, but cannot reconstruct domain
 intent from later absolute nested maps. A local Node execution of the actual
 `createStateWriter` with slots `{1:0}`, an optimistic first cast patch `{1:1}`,

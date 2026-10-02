@@ -176,7 +176,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
       const result = await castSpell(spell, choice);
       setOutcome(result);
     } catch {
-      setCastError("The spell could not be saved. Please try casting again.");
+      setCastError("The spell could not be saved. Wait for any pending character save to finish, then try casting again.");
     } finally {
       setCasting(false);
     }

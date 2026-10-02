@@ -13,9 +13,10 @@ and compatibility, but defer expanding those surfaces.
 
 - Verified GitHub main: `0a4acb93ab5fcda94d8efa13a87568c3315da108`.
 - Local branch: `codex/playable-core-stability`, isolated from existing worktrees.
-- Save recovery: ordered optimistic state patches; failure removes only the
-  failed top-level patch and keeps later changes. Later absolute nested maps can
-  still carry failed optimistic spends; see the critical review below.
+- Save recovery: ordered optimistic state patches; failure removes the failed
+  patch and rejects overlapping queued full nested snapshots that may carry it.
+  Casts reject busy/stale state before computing effects. This closes the
+  reproduced failed-first/second-cast slot bug by conflict rejection.
   A shared accessible alert asks the player
   to retry the action. Cast results and rest completion wait for confirmed saves.
   Failed damage does not raise a concentration check. Character navigation resets
@@ -39,7 +40,7 @@ and compatibility, but defer expanding those surfaces.
 ## Verification
 
 - Final `npm.cmd run check`: strict typecheck, zero-warning lint, 200 files /
-  1,844 tests passed including ability recovery and reviewed HP-control repair.
+  1,849 tests passed including the failed-cast conflict release gate.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -63,8 +64,10 @@ and compatibility, but defer expanding those surfaces.
    insufficient after reload or ambiguous network completion. No schema change
    is authorized; migration-history reconciliation remains a prerequisite.
 4. [Critical save review](handoffs/2026-10-02-critical-save-review.md) reproduced
-   dependent nested-map spending after a failed earlier save. Domain-level
-   action rebasing remains unresolved; the pending HP-control repair is now
+   dependent nested-map spending after a failed earlier save. The
+   [cast conflict gate](handoffs/2026-10-02-cast-conflict-gate.md) now rejects the
+   reproduced unsafe path; generalized raw scalar/domain actions, cross-client
+   consistency and remote release/UAT remain open. The HP-control repair is
    [verified locally](handoffs/2026-10-02-hp-save-controls.md). Next small builder
    task: [pending creation submission](specs/2026-10-02-character-submit-pending-next.md).
 
