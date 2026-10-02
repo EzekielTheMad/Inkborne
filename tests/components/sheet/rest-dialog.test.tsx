@@ -1,3 +1,4 @@
+import { Activity } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { RestDialog } from "@/components/sheet/rest-dialog";
@@ -57,6 +58,50 @@ function setup(
 }
 
 describe("RestDialog", () => {
+  it.each([true, false])("recovers a hidden failed hit die on Activity Back (settleHidden=%s)", async (settleHidden) => {
+    let rejectSave!: (error: Error) => void;
+    const mock = buildMock({ spendHitDie: vi.fn().mockReturnValueOnce(new Promise((_, reject) => { rejectSave = reject; })), hitDicePools: [{ classSlug: "fighter", die: 10, max: 3, spent: 0 }] });
+    mockUseRest = () => mock; mockState = { current_hp: 30 };
+    const onClose = vi.fn();
+    const dialog = <RestDialog open onClose={onClose} />;
+    const view = render(<Activity mode="visible">{dialog}</Activity>);
+    fireEvent.click(screen.getByRole("button", { name: /spend & roll/i }));
+    view.rerender(<Activity mode="hidden">{dialog}</Activity>);
+    if (settleHidden) await act(async () => rejectSave(new Error("offline")));
+    view.rerender(<Activity mode="visible">{dialog}</Activity>);
+    if (!settleHidden) {
+      expect(screen.getByRole("button", { name: /spend & roll/i })).toBeDisabled();
+      await act(async () => rejectSave(new Error("offline")));
+    }
+    expect(await screen.findByRole("alert")).toHaveTextContent("hit die could not be spent");
+    expect(screen.getByRole("button", { name: /spend & roll/i })).toBeEnabled();
+    expect(mock.spendHitDie).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it.each([true, false])("reconciles rest completion through Activity Back (settleHidden=%s)", async (settleHidden) => {
+    let resolveSave!: (saved: boolean) => void;
+    const mock = buildMock({ longRest: vi.fn().mockReturnValueOnce(new Promise<boolean>((resolve) => { resolveSave = resolve; })) });
+    mockUseRest = () => mock; mockState = { current_hp: 30 };
+    const onClose = vi.fn();
+    const dialog = <RestDialog open onClose={onClose} />;
+    const view = render(<Activity mode="visible">{dialog}</Activity>);
+    fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
+    view.rerender(<Activity mode="hidden">{dialog}</Activity>);
+    if (settleHidden) await act(async () => resolveSave(true));
+    expect(onClose).not.toHaveBeenCalled();
+    view.rerender(<Activity mode="visible">{dialog}</Activity>);
+    if (!settleHidden) {
+      expect(screen.getByRole("button", { name: /take long rest/i })).toBeDisabled();
+      await act(async () => resolveSave(true));
+    }
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(mock.longRest).toHaveBeenCalledOnce();
+  });
+
   it("prevents dismissal and competing actions while a hit die saves", async () => {
     let resolveSave!: (result: unknown) => void;
     const spendHitDie = vi.fn().mockReturnValue(new Promise((resolve) => { resolveSave = resolve; }));

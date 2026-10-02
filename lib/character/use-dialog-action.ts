@@ -2,14 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/** One action per mounted dialog session. Persistence is not cancelled when
- * the parent navigates away, but its completion cannot update a later session. */
+/** One action per mounted dialog session. Activity may retain that session
+ * while its effects are disconnected. Keep a settled outcome for its reveal;
+ * destruction (open=false or a new spell key) never delivers it elsewhere. */
 export function useDialogAction() {
   const active = useRef(true);
   const busy = useRef(false);
+  const generation = useRef(0);
+  const completion = useRef<(() => void) | null>(null);
   const [pending, setPending] = useState(false);
   useEffect(() => {
     active.current = true;
+    const deliver = completion.current;
+    completion.current = null;
+    deliver?.();
     return () => { active.current = false; };
   }, []);
 
@@ -21,18 +27,26 @@ export function useDialogAction() {
       onSuccess: (result: T) => void,
       onFailure: () => void,
     ) {
-      if (busy.current || !active.current) return;
+      if (busy.current || !active.current || completion.current) return;
+      const actionGeneration = ++generation.current;
       busy.current = true;
       setPending(true);
+      let deliver: () => void;
       try {
         const result = await action();
-        if (active.current) onSuccess(result);
+        deliver = () => onSuccess(result);
       } catch {
-        if (active.current) onFailure();
-      } finally {
-        busy.current = false;
-        if (active.current) setPending(false);
+        deliver = onFailure;
       }
+      if (generation.current !== actionGeneration) return;
+      busy.current = false;
+      const finish = () => {
+        if (generation.current !== actionGeneration) return;
+        setPending(false);
+        deliver();
+      };
+      if (active.current) finish();
+      else completion.current = finish;
     },
   };
 }

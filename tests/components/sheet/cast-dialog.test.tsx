@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { useState } from "react";
+import { Activity, useState } from "react";
 import { CastDialog } from "@/components/sheet/spells/cast-dialog";
 import type {
   CasterInfo,
@@ -161,6 +161,43 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("CastDialog - configure pane", () => {
+  it("shows a cast failure settled while Activity is hidden and allows explicit retry", async () => {
+    let rejectSave!: (error: Error) => void;
+    castSpell.mockReturnValueOnce(new Promise<CastOutcome>((_, reject) => { rejectSave = reject; }));
+    const dialog = <CastDialog spell={mkSpell()} castability="full" open onClose={vi.fn()} />;
+    const view = render(<Activity mode="visible">{dialog}</Activity>);
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    view.rerender(<Activity mode="hidden">{dialog}</Activity>);
+    await act(async () => rejectSave(new Error("offline")));
+    view.rerender(<Activity mode="visible">{dialog}</Activity>);
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
+    expect(screen.getByRole("button", { name: "Cast" })).toBeEnabled();
+    expect(castSpell).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    expect(await screen.findByRole("button", { name: "Done" })).toBeInTheDocument();
+    expect(castSpell).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([true, false])("retains the cast outcome through Activity Back (settleHidden=%s)", async (settleHidden) => {
+    let resolveSave!: (outcome: CastOutcome) => void;
+    castSpell.mockReturnValueOnce(new Promise<CastOutcome>((resolve) => { resolveSave = resolve; }));
+    const onClose = vi.fn();
+    const dialog = <CastDialog spell={mkSpell()} castability="full" open onClose={onClose} />;
+    const view = render(<Activity mode="visible">{dialog}</Activity>);
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    view.rerender(<Activity mode="hidden">{dialog}</Activity>);
+    if (settleHidden) await act(async () => resolveSave(mkOutcome()));
+    view.rerender(<Activity mode="visible">{dialog}</Activity>);
+    if (!settleHidden) {
+      expect(screen.getByRole("button", { name: "Cast" })).toBeDisabled();
+      await act(async () => resolveSave(mkOutcome()));
+    }
+    expect(await screen.findByRole("button", { name: "Done" })).toBeEnabled();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(castSpell).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it.each([false, true])("prevents pending dismissal and recovers through close/reopen (mobile=%s)", async (mobile) => {
     viewport.mobile = mobile;
     let rejectSave!: (error: Error) => void;
