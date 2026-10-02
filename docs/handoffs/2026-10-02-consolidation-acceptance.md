@@ -1,5 +1,7 @@
 # Consolidation and acceptance-readiness handoff
 
+Historical checkpoint. Current evidence: [builder validation/recovery handoff](2026-10-02-builder-validation-recovery.md).
+
 October 2, 2026, around 18:55 UTC. Source `d16f63fed30db28a1a9ddd43b9e4f5d1411331e7`.
 Branch `codex/playable-core-stability`; began this pass at clean `4e7ae96d77e2288a84cc73cdea2a7ac210c42d23`.
 **Not release-ready.** [CURRENT-STATE](../CURRENT-STATE.md) and the single
