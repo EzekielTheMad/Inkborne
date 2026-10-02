@@ -26,7 +26,7 @@ const stubs = {
       });
     }
     export async function updateCharacterAndReturn(id,patch){window.fixture.classCalls.push(patch);await new Promise(resolve=>{window.fixture.resolveClass=resolve});return {choices:patch.choices,level:patch.level}}
-    export async function updateCharacter(id,patch){if(location.pathname==='/background'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
+    export async function updateCharacter(id,patch){if(location.pathname==='/background'||location.pathname==='/invalid-choice'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
   `,
   "@/lib/supabase/background-selection-client": `export async function setCharacterBackground(){throw new Error("Fixture does not replace backgrounds")}`,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(){} export async function removeContentRefById(){}`,
@@ -55,6 +55,7 @@ await build({
       const pinnedFighter={...human,id:'fighter',slug:'fighter',name:'Pinned Fighter',content_type:'class',data:{hit_die:10,levels:[{level:1,features:['second-wind']}]}};
       const pinnedWind={...human,id:'second-wind',slug:'second-wind',name:'Pinned Second Wind',content_type:'feature',data:{description:'Authorized pinned recovery.'}};
       const courier={...human,id:'courier',slug:'courier',name:'Courier',content_type:'background',data:{ideals:[],bonds:[],flaws:[],personality_traits:[]}};
+      const choiceCourier={...courier,effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'courier-skill'}]};
       function App(){
         const [route,setRoute]=useState(location.pathname);
         function navigate(to){history.pushState({fixture:true},'',to);setRoute(to)}
@@ -64,6 +65,7 @@ await build({
           {route==='/overview'&&<h2>Overview fixture</h2>}
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
           <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[]} contentRefs={[{id:'pin',content_id:'human',context:{},choice_source:null,content_definitions:pinnedHuman}]} schema={undefined}/></Activity>
+          <Activity mode={route==='/invalid-choice'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier',resolved_choices:{'courier-skill':['skill-removed']}}}} backgrounds={[choiceCourier]} contentRefs={[{id:'choice-pin',content_id:'courier',context:{},choice_source:null,content_definitions:choiceCourier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/background'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[courier]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
           <Activity mode={route==='/pinned-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Fixture fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...pinnedFighter,name:'Catalog Fighter',version:2,data:{hit_die:12,levels:[]}}]} subclasses={[]} features={[{...pinnedWind,name:'Catalog Second Wind',version:2}]} feats={[]} spells={[]} contentRefs={[pinnedFighter,pinnedWind].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
@@ -173,6 +175,18 @@ try {
   assert.equal(await page.getByText(/You have unsaved notes/).count(),0);
   await page.screenshot({path:path.join(output,"background-note-mobile.png"),fullPage:true,animations:"disabled"});
   evidence.push({check:"background note blur save failure, explicit retry and hidden Activity completion",passed:true});
+  await page.goto(origin + "/invalid-choice");
+  await page.evaluate(()=>{window.fixture.backgroundMode='success'});
+  assert.equal(await page.getByRole("button",{name:"Athletics",exact:true}).isDisabled(),true);
+  assert.equal(await page.evaluate(()=>window.fixture.backgroundCalls.length),0);
+  await page.getByRole("button",{name:"Clear saved selections",exact:true}).click();
+  await page.getByRole("button",{name:"Clear saved selections",exact:true}).waitFor({state:"hidden"});
+  await page.getByRole("button",{name:"Athletics",exact:true}).click();
+  await page.waitForFunction(()=>window.fixture.backgroundCalls.length===2);
+  assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[0].choices.resolved_choices),{'courier-skill':[]});
+  assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[1].choices.resolved_choices),{'courier-skill':['skill-athletics']});
+  await page.screenshot({path:path.join(output,"invalid-choice-recovery-mobile.png"),fullPage:true,animations:"disabled"});
+  evidence.push({check:"unavailable pinned choice requires explicit clearing before a replacement selection",passed:true});
   await page.setViewportSize({width:1280,height:900});
   await page.goto(origin + "/pinned-class");
   await page.getByRole("button", { name: "Remove Pinned Fighter", exact: true }).waitFor();

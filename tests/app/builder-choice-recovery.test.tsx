@@ -164,6 +164,24 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
+  it("allows explicit recovery of unavailable saved choices without silently clearing them", async () => {
+    const background: ContentEntry = { ...human, id:"soldier",slug:"soldier",name:"Soldier",content_type:"background",effects:[{type:"choice",choose:1,from:["skill-athletics"],grant_type:"proficiency",choice_id:"skill"}] };
+    mocks.update.mockRejectedValueOnce(new Error("offline"));
+    render(<BackgroundStepClient characterId="char-1" character={{...character,choices:{background:"soldier",resolved_choices:{skill:["skill-removed"]}}}} backgrounds={[background]} contentRefs={[{id:"pin",content_id:background.id,context:{},choice_source:null,content_definitions:background}]} schema={undefined}/>);
+    expect(screen.getByRole("button",{name:"Athletics"})).toBeDisabled();
+    expect(mocks.update).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button",{name:"Clear saved selections"}));
+    await screen.findByText(/background choices could not be confirmed/);
+    await waitFor(()=>expect(screen.getByRole("button",{name:"Clear saved selections"})).toBeEnabled());
+    expect(screen.getByRole("button",{name:"Athletics"})).toBeDisabled();
+    fireEvent.click(screen.getByRole("button",{name:"Clear saved selections"}));
+    await waitFor(()=>expect(screen.queryByRole("button",{name:"Clear saved selections"})).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button",{name:"Athletics"}));
+    await waitFor(()=>expect(mocks.update).toHaveBeenCalledTimes(3));
+    expect(mocks.update.mock.calls[0][1].choices.resolved_choices).toEqual({skill:[]});
+    expect(mocks.update.mock.calls[2][1].choices.resolved_choices).toEqual({skill:["skill-athletics"]});
+  });
+
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {
     let rejectSave!: (error: Error) => void;
     mocks.update.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));

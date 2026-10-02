@@ -20,6 +20,11 @@ export function ChoiceSelector({
     ? choiceEffect.from
     : [];
   const maxSelections = choiceEffect.choose;
+  const invalidSelections = Array.isArray(choiceEffect.from) && (
+    currentSelections.length > maxSelections ||
+    new Set(currentSelections).size !== currentSelections.length ||
+    currentSelections.some(selection => !options.includes(selection))
+  );
 
   function handleToggle(option: string) {
     if (currentSelections.includes(option)) {
@@ -42,6 +47,14 @@ export function ChoiceSelector({
           {currentSelections.length} / {maxSelections} selected
         </span>
       </div>
+      {invalidSelections && (
+        <div className="space-y-2">
+          <p role="alert" className="text-sm text-destructive">Saved selections do not match the available choices. Clear them and choose again.</p>
+          <button type="button" onClick={() => onSelect([])} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent">
+            Clear saved selections
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isSelected = currentSelections.includes(option);
