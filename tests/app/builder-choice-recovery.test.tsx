@@ -514,17 +514,54 @@ describe("saved class feature recovery", () => {
   });
 });
 
-describe("missing race trait history",()=>{
-  beforeEach(()=>{vi.resetAllMocks();mocks.mobile=false;});
-  it("does not substitute a current trait or silently accept dependent choices",()=>{
-    const cls:ContentEntry={...human,data:{traits:["versatility"]},effects:[{type:"choice",choose:1,from:["skill-athletics"],grant_type:"proficiency",choice_id:"skill"}]};
-    const trait:ContentEntry={...human,id:"versatility",slug:"versatility",name:"Current Trait",content_type:"trait",version:2,effects:[{type:"choice",choose:1,from:["new-option"],grant_type:"proficiency",choice_id:"trait-option"}]};
-    render(<RaceStepClient characterId="char-1" character={{...character,choices:{race:"human"}}} races={[cls]} subraces={[]} traits={[trait]} contentRefs={[{id:"race-pin",content_id:cls.id,context:{},choice_source:null,content_definitions:cls}]} schema={undefined}/>);
-    expect(screen.getByRole("alert")).toHaveTextContent("Saved trait snapshots are missing");
-    expect(screen.queryByRole("button",{name:"New Option"})).not.toBeInTheDocument();
-    expect(screen.getByRole("button",{name:"Athletics"})).toBeDisabled();
+describe("race selection without a trait manifest",()=>{
+  beforeEach(()=>{vi.resetAllMocks();mocks.mobile=false;mocks.update.mockResolvedValue(undefined);mocks.insert.mockResolvedValue(undefined);});
+  const raceContent:ContentEntry={...human,data:{traits:["versatility"],languages:["common"]},effects:[{type:"choice",choose:1,from:"any",grant_type:"language",choice_id:"language"}]};
+  const currentTrait:ContentEntry={...human,id:"versatility",slug:"versatility",name:"Versatility",content_type:"trait",version:2,effects:[{type:"choice",choose:1,from:["skill-athletics"],grant_type:"proficiency",choice_id:"trait-option"}]};
+  it("selects a fresh race, reloads its actually written parent pin, and keeps core/trait choices usable",async()=>{
+    const props={characterId:"char-1",races:[raceContent],subraces:[],traits:[currentTrait],availableLanguages:["common","elvish"],schema:undefined};
+    const view=render(<RaceStepClient {...props} character={character} contentRefs={[]}/>);
+    fireEvent.click(screen.getByRole("button",{name:"Preview Human"}));
+    fireEvent.click(screen.getByRole("button",{name:"Add Race"}));
+    await waitFor(()=>expect(mocks.refresh).toHaveBeenCalledOnce());
+    expect(mocks.insert).toHaveBeenCalledExactlyOnceWith({characterId:"char-1",contentId:raceContent.id,contentVersion:raceContent.version,context:{source:"race"}});
+    const savedChoices=mocks.update.mock.calls[0][1].choices;
+    const refs=[{id:"race-pin",content_id:raceContent.id,content_version:raceContent.version,context:{source:"race"},choice_source:null,content_definitions:raceContent}];
+    view.unmount();
+    render(<RaceStepClient {...props} character={{...character,choices:savedChoices}} contentRefs={refs}/>);
+    expect(screen.getByRole("status")).toHaveTextContent("Trait versions were not recorded");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Versatility (current catalog): Choose 1")).toBeVisible();
+    fireEvent.click(screen.getByRole("button",{name:"Elvish"}));
+    await waitFor(()=>expect(mocks.update).toHaveBeenCalledTimes(2));
     fireEvent.click(screen.getByRole("button",{name:"Athletics"}));
-    expect(mocks.update).not.toHaveBeenCalled();
-    expect(screen.getByRole("button",{name:"Change Race"})).toBeEnabled();
+    await waitFor(()=>expect(mocks.update).toHaveBeenCalledTimes(3));
+    expect(mocks.update.mock.calls[2][1].choices.resolved_choices).toEqual({language:["elvish"],"trait-option":["skill-athletics"]});
+    expect(mocks.insert).toHaveBeenCalledTimes(1);
   });
+  it("keeps unavailable dependencies visible without blocking independent race choices",async()=>{
+    render(<RaceStepClient characterId="char-1" character={{...character,choices:{race:"human"}}} races={[raceContent]} subraces={[]} traits={[]} availableLanguages={["common","elvish"]} contentRefs={[{id:"race-pin",content_id:human.id,context:{},choice_source:null,content_definitions:raceContent}]} schema={undefined}/>);
+    expect(screen.getByRole("alert")).toHaveTextContent("Trait content is unavailable");
+    expect(screen.queryByRole("button",{name:"Athletics"})).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Elvish"}));
+    await waitFor(()=>expect(mocks.update).toHaveBeenCalledOnce());
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+});
+
+it("rejects a recorded trait whose envelope version differs from its snapshot",()=>{
+  const race:ContentEntry={...human,data:{traits:["versatility"]}};
+  const trait:ContentEntry={...human,id:"versatility",slug:"versatility",name:"Wrong Version Training",content_type:"trait",version:2,effects:[{type:"choice",choose:1,from:["new-option"],grant_type:"proficiency",choice_id:"trait-option"}]};
+  render(<RaceStepClient characterId="char-1" character={{...character,choices:{race:"human"}}} races={[race]} subraces={[]} traits={[trait]} contentRefs={[{id:"race-pin",content_id:race.id,content_version:1,context:{},choice_source:null,content_definitions:race},{id:"trait-pin",content_id:trait.id,content_version:1,context:{},choice_source:null,content_definitions:trait}]} schema={undefined}/>);
+  expect(screen.getByRole("alert")).toHaveTextContent("IDs/versions conflict");
+  expect(screen.queryByRole("button",{name:"New Option"})).not.toBeInTheDocument();
+  expect(screen.queryByText("Wrong Version Training")).not.toBeInTheDocument();
+});
+
+it("does not treat a catalog option as the selected snapshot during a subrace version conflict",()=>{
+  const subrace:ContentEntry={...human,id:"sub-human",slug:"sub-human",name:"Catalog Subrace",content_type:"subrace",version:2,data:{parent_race:"human"}};
+  render(<RaceStepClient characterId="char-1" character={{...character,choices:{race:"human",subrace:"sub-human"}}} races={[human]} subraces={[subrace]} traits={[]} contentRefs={[{id:"race-pin",content_id:human.id,content_version:1,context:{},choice_source:null,content_definitions:human},{id:"subrace-pin",content_id:subrace.id,content_version:1,context:{},choice_source:null,content_definitions:subrace}]} schema={undefined}/>);
+  expect(screen.getByRole("alert")).toHaveTextContent("IDs/versions conflict");
+  expect(screen.getByRole("button",{name:"Select Catalog Subrace"})).toBeDisabled();
+  expect(screen.queryByRole("button",{name:"Change Subrace"})).not.toBeInTheDocument();
 });

@@ -155,8 +155,8 @@ describe("local builder journey", () => {
 
 describe("category readiness in actual overview and navigation",()=>{
   beforeEach(()=>{vi.clearAllMocks();navigation.pathname="/characters/char-1/builder";});
-  it.each([true,false])("shares supported category vocabulary and fixed-language exclusions (valid=%s)",async(valid)=>{
-    const refs=pins.map(pin=>pin.content_id==="soldier"?{...pin,content_definitions:{...pin.content_definitions,effects:[{type:"choice",choose:1,from:"all_languages",grant_type:"proficiency",choice_id:"language"}]}}:pin.content_id==="human"?{...pin,content_definitions:{...pin.content_definitions,data:{languages:["common"]}}}:pin);
+  it.each([{valid:true,from:"all_languages"},{valid:false,from:"all_languages"},{valid:true,from:"any"},{valid:false,from:"any"}])("shares category vocabulary and fixed-language exclusions ($from, valid=$valid)",async({valid,from})=>{
+    const refs=pins.map(pin=>pin.content_id==="soldier"?{...pin,content_definitions:{...pin.content_definitions,effects:[{type:"choice",choose:1,from,grant_type:"language",choice_id:"language"}]}}:pin.content_id==="human"?{...pin,content_definitions:{...pin.content_definitions,data:{languages:["common"]}}}:pin);
     vi.mocked(getContentRefsByCharacter).mockResolvedValue(refs as never);
     vi.mocked(getContentByType).mockResolvedValue([{slug:"common"},{slug:"elvish"}] as never);
     mockCharacter({...selected,resolved_choices:{language:[valid?"elvish":"common"]}},scores);
@@ -170,4 +170,14 @@ describe("category readiness in actual overview and navigation",()=>{
     render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})})}));
     expect(screen.getAllByRole("link",{name:/Background.*In progress/})).toHaveLength(2);
   });
+});
+
+it("shows saved parent-only race evidence in overview/navigation without claiming unpinned trait validation",async()=>{
+  vi.mocked(getContentRefsByCharacter).mockResolvedValue(pins.map(pin=>pin.content_id==="human"?{...pin,context:{source:"race"},content_definitions:{...pin.content_definitions,data:{traits:["versatility"],languages:["common"]},effects:[{type:"choice",choose:1,from:"any",grant_type:"language",choice_id:"language"}]}}:pin) as never);
+  vi.mocked(getContentByType).mockResolvedValue([{slug:"common"},{slug:"elvish"}] as never);
+  mockCharacter({...selected,resolved_choices:{language:["elvish"],"trait-option":["skill-athletics"]}},scores);
+  render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})})}));
+  expect(screen.getAllByRole("link",{name:/Race.*Saved/})).toHaveLength(2);
+  expect(screen.getByText(/unpinned race trait choices still need review/)).toBeVisible();
+  expect(vi.mocked(getContentRefsByCharacter).mock.calls.every(call=>call[1]?.requireCompleteSnapshots)).toBe(true);
 });

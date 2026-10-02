@@ -57,6 +57,7 @@ export function parseContentRefWithContent(
 
 export async function getContentRefsByCharacter(
   characterId: string,
+  options: { requireCompleteSnapshots?: boolean } = {},
 ): Promise<ContentRefWithContent[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -76,6 +77,14 @@ export async function getContentRefsByCharacter(
   const refs: ContentRefWithContent[] = [];
   for (const row of data ?? []) {
     const ref = parseContentRefWithContent(row);
+    // Builder validation must distinguish never-recorded dependencies from
+    // recorded but unreadable/mismatched snapshots. Preserve the existing
+    // omission contract for other readers; opted-in builder reads fail closed.
+    if (options.requireCompleteSnapshots && (ref === null ||
+      ref.content_id !== ref.content_definitions.id ||
+      ref.content_version !== ref.content_definitions.version)) {
+      throw new Error("Saved character snapshots could not be read. Reload before editing.");
+    }
     if (ref !== null) refs.push(ref);
   }
   return refs;

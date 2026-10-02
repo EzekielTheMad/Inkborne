@@ -38,7 +38,7 @@ export default async function RaceStepPage({ params }: PageProps) {
       getContentByType(systemId, "subrace"),
       // Traits resolve race choices such as Dwarf tool proficiency.
       getContentByType(systemId, "trait"),
-      getContentRefsByCharacter(id),
+      getContentRefsByCharacter(id, { requireCompleteSnapshots: true }),
       getContentByType(systemId, "language"),
     ]);
 

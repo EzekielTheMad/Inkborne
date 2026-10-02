@@ -15,7 +15,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "test-results", "builder-local");
 await fs.mkdir(output, { recursive: true });
 const stubs = {
-  "next/navigation": `export function useRouter(){return {push:to=>window.dispatchEvent(new CustomEvent('fixture-navigation',{detail:to})),refresh:()=>{}}}`,
+  "next/navigation": `export function useRouter(){return {push:to=>window.dispatchEvent(new CustomEvent('fixture-navigation',{detail:to})),refresh:()=>{if(location.pathname==='/fresh-race')window.dispatchEvent(new Event('fixture-refresh'))}}}`,
   "@/lib/supabase/character-client": `
     export async function saveCharacterAbilityScores(id,method,scores,signal){
       window.fixture.calls.push({method,scores});
@@ -26,10 +26,10 @@ const stubs = {
       });
     }
     export async function updateCharacterAndReturn(id,patch){window.fixture.classCalls.push(patch);await new Promise(resolve=>{window.fixture.resolveClass=resolve});return {choices:patch.choices,level:patch.level}}
-    export async function updateCharacter(id,patch){if(location.pathname==='/low-con'){window.fixture.hpCalls.push(patch);return}if(location.pathname==='/hp-recovery'){window.fixture.hpCalls.push(patch);if(window.fixture.hpMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveHp=resolve;window.fixture.rejectHp=()=>reject(new Error('private HP detail'))});return}if(location.pathname==='/feature-recovery') {window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/language-category'){window.fixture.backgroundCalls.push(patch);return}if(location.pathname==='/empty-class'){window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/background'||location.pathname==='/invalid-choice'||location.pathname==='/note-replacement'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
+    export async function updateCharacter(id,patch){if(location.pathname==='/fresh-race'){window.fixture.raceCalls.push(patch);window.fixture.raceChoices=patch.choices;return}if(location.pathname==='/low-con'){window.fixture.hpCalls.push(patch);return}if(location.pathname==='/hp-recovery'){window.fixture.hpCalls.push(patch);if(window.fixture.hpMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveHp=resolve;window.fixture.rejectHp=()=>reject(new Error('private HP detail'))});return}if(location.pathname==='/feature-recovery') {window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/language-category'){window.fixture.backgroundCalls.push(patch);return}if(location.pathname==='/empty-class'){window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/background'||location.pathname==='/invalid-choice'||location.pathname==='/note-replacement'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
   `,
   "@/lib/supabase/background-selection-client": `export async function setCharacterBackground(id,contentId,version){if(location.pathname!=='/note-replacement')throw new Error('Fixture does not replace backgrounds');window.fixture.backgroundReplacements.push({contentId,version});return {savedChoices:{background:'scholar',ideals:[]},selectedContentId:contentId,selectedContentVersion:version}}`,
-  "@/lib/supabase/content-refs-client": `export async function insertContentRef(){} export async function removeContentRefById(){}`,
+  "@/lib/supabase/content-refs-client": `export async function insertContentRef(params){if(location.pathname==='/fresh-race'){window.fixture.raceRefCalls.push(params);window.fixture.raceRefs.push({id:'fresh-race-pin',content_id:params.contentId,content_version:params.contentVersion,context:params.context,choice_source:null,content_definitions:window.fixture.freshRace})}} export async function removeContentRefById(){}`,
   "@/lib/supabase/inventory": `export async function addInventoryItem(id,grant){window.fixture.grants.push(grant);if(window.fixture.grants.length===2)throw new Error("private grant detail");return {id:"local-grant"}}`,
   "@/lib/sheet/update-state": `export async function updateCharacterState(){throw new Error("Fixture does not save currency")}`,
   "class-actions": `export async function reconcileClassFeatureRefsAction(){window.fixture.recoveryCalls.push({});if(window.fixture.recoveryMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveRecovery=resolve;window.fixture.rejectRecovery=()=>reject(new Error('private recovery detail'))});return {status:'success',refs:window.fixture.recoveryRefs}}
@@ -47,7 +47,7 @@ await build({
       import {ClassStepClient} from '@/app/(app)/characters/[id]/builder/class/class-step-client';
       import {BackgroundStepClient} from '@/app/(app)/characters/[id]/builder/background/background-step-client';
       import {EquipmentStepClient} from '@/app/(app)/characters/[id]/builder/equipment/equipment-step-client';
-      window.fixture={recoveryCalls:[],recoveryMode:'pending',recoveryRefs:[],backgroundReplacements:[],mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],hpCalls:[],hpMode:'pending',resolveHp:null,rejectHp:null,classChoiceCalls:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
+      window.fixture={raceCalls:[],raceRefCalls:[],raceChoices:{},raceRefs:[],recoveryCalls:[],recoveryMode:'pending',recoveryRefs:[],backgroundReplacements:[],mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],hpCalls:[],hpMode:'pending',resolveHp:null,rejectHp:null,classChoiceCalls:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
@@ -69,15 +69,21 @@ await build({
       const recoveryPins=[pinnedFighter,recoveryWind].map(content=>({id:'pin-'+content.id,content_id:content.id,content_version:1,context:{},choice_source:null,content_definitions:content}));
       const recoveryStart=[recoveryPins[0]];
       window.fixture.recoveryRefs=recoveryPins;
-      const languageBackground={...courier,effects:[{type:'choice',choose:1,from:'all_languages',grant_type:'proficiency',choice_id:'language'}]};
+      const languageBackground={...courier,effects:[{type:'choice',choose:1,from:'any',grant_type:'language',choice_id:'language'}]};
+      const freshRace={...human,name:'Fresh Human',data:{traits:['fresh-training'],languages:['common']},effects:[{type:'choice',choose:1,from:'any',grant_type:'language',choice_id:'race-language'}]};
+      const freshTrait={...human,id:'fresh-training',slug:'fresh-training',name:'Fresh Training',content_type:'trait',effects:[{type:'choice',choose:1,from:['tool-dice'],grant_type:'proficiency',choice_id:'race-tool'}]};
+      window.fixture.freshRace=freshRace;
       function App(){
         const [route,setRoute]=useState(location.pathname);
+        const [,forceRefresh]=useState(0);
+        useEffect(()=>{const refresh=()=>forceRefresh(value=>value+1);window.addEventListener('fixture-refresh',refresh);return()=>window.removeEventListener('fixture-refresh',refresh)},[]);
         function navigate(to){history.pushState({fixture:true},'',to);setRoute(to)}
         useEffect(()=>{const pop=()=>setRoute(location.pathname);const go=e=>navigate(e.detail);window.addEventListener('popstate',pop);window.addEventListener('fixture-navigation',go);return()=>{window.removeEventListener('popstate',pop);window.removeEventListener('fixture-navigation',go)}},[]);
         return <><h1>Isolated builder fixture</h1><p>Simulated history and persistence; real editor and selection components.</p>
           <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/background' onClick={e=>{e.preventDefault();navigate('/background')}}>Background</a> | <a href='/equipment' onClick={e=>{e.preventDefault();navigate('/equipment')}}>Equipment</a> | <a href='/pinned-class' onClick={e=>{e.preventDefault();navigate('/pinned-class')}}>Pinned Class</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
           <Activity mode={route==='/feature-recovery'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...pinnedFighter,name:'Current Fighter',version:2}]} subclasses={[]} features={[{...recoveryWind,name:'Current Feature',version:2,effects:[]}]} feats={[]} spells={[]} contentRefs={recoveryStart} schema={undefined}/></Activity>
           <Activity mode={route==='/language-category'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[languageBackground]} contentRefs={[languageBackground,{...human,data:{languages:['common']}}].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} availableLanguages={['common','elvish']} schema={undefined}/></Activity>
+          {route==='/fresh-race'&&<RaceStepClient characterId='local-character' character={{...character,choices:window.fixture.raceChoices}} races={[freshRace]} subraces={[]} traits={[freshTrait]} contentRefs={window.fixture.raceRefs} availableLanguages={['common','elvish']} schema={undefined}/>}
           {route==='/overview'&&<h2>Overview fixture</h2>}
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
           <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[newerTrait]} contentRefs={[pinnedHuman,pinnedTrait].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
@@ -403,7 +409,25 @@ try {
   await page.getByRole('button',{name:'Elvish',exact:true}).click();
   await page.waitForFunction(()=>window.fixture.backgroundCalls.length===1);
   assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[0].choices.resolved_choices),{language:['elvish']});
-  evidence.push({check:'language category options exclude fixed grants and persist the selected accessible language',passed:true});
+  evidence.push({check:'authoring-defined any-language category excludes fixed grants and persists an accessible language',passed:true});
+  await page.goto(origin+'/fresh-race');
+  await page.getByRole('button',{name:'Preview Fresh Human',exact:true}).click();
+  await page.getByRole('button',{name:'Add Race',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'Trait versions were not recorded'}).waitFor();
+  assert.equal(await page.evaluate(()=>window.fixture.raceRefCalls.length),1);
+  assert.equal(await page.evaluate(()=>window.fixture.raceRefs.length),1);
+  assert.equal(await page.getByRole('alert').count(),0);
+  await page.getByRole('link',{name:'Overview',exact:true}).click();
+  await page.goBack();
+  await page.getByText('Fresh Training (current catalog): Choose 1',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Elvish',exact:true}).click();
+  await page.waitForFunction(()=>window.fixture.raceCalls.length===2&&!document.querySelector('[aria-busy="true"]'));
+  await page.getByRole('button',{name:'Tool Dice',exact:true}).click();
+  await page.waitForFunction(()=>window.fixture.raceCalls.length===3&&!document.querySelector('[aria-busy="true"]'));
+  assert.deepEqual(await page.evaluate(()=>window.fixture.raceChoices.resolved_choices),{'race-language':['elvish'],'race-tool':['tool-dice']});
+  assert.equal(await page.evaluate(()=>window.fixture.raceRefCalls.length),1);
+  await page.screenshot({path:path.join(output,'fresh-race-traits-mobile.png'),fullPage:true,animations:'disabled'});
+  evidence.push({check:'fresh race selection persists only the parent pin, refresh/Back keeps unpinned trait choices usable with current-catalog disclosure',passed:true});
   assert.deepEqual(errors, []);
   assert.deepEqual(blockedRequests, []);
   await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));

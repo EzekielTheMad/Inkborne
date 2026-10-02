@@ -1,3 +1,4 @@
+import { isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
 import { getContentByType } from "@/lib/supabase/content-definitions";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
@@ -37,8 +38,8 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
   if (!character) notFound();
   if (character.user_id !== user.id) notFound();
 
-  const contentRefs = await getContentRefsByCharacter(id);
-  const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && effect.from === "all_languages"));
+  const contentRefs = await getContentRefsByCharacter(id, { requireCompleteSnapshots: true });
+  const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && isLanguageChoiceCategory(effect)));
   // A failed catalog read leaves category choices incomplete; it never upgrades a pin.
   const languages = hasLanguageCategory
     ? await getContentByType(character.system_id, "language").then(rows => rows.map(row => row.slug)).catch(() => undefined)

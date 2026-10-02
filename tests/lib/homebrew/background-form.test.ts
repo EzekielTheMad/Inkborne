@@ -1,3 +1,4 @@
+import { isChoiceComplete, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 import { describe, expect, it } from "vitest";
 
 import { mapHomebrewBackgroundFormData } from "@/lib/homebrew/background-form";
@@ -194,4 +195,13 @@ describe("mapHomebrewBackgroundFormData", () => {
     expect(result.data.data.gold).toBe(15);
     expect(result.data.effects).not.toContainEqual(expect.objectContaining({ value: 99 }));
   });
+});
+
+it("makes the actual authored any-language effect selectable by builder validation",()=>{
+  const result=mapHomebrewBackgroundFormData(validForm({fixed_languages:["elvish"],language_choice_count:"1"}));
+  expect(result.success).toBe(true);if(!result.success)return;
+  const resolved=resolveDefinitionChoices({effects:result.data.effects},["elvish","dwarvish"],["elvish"]);
+  const effect=resolved.effects.find(effect=>effect.type==="choice");
+  expect(effect).toMatchObject({from:["dwarvish"],grant_type:"language"});
+  if(effect?.type==="choice")expect(isChoiceComplete(effect,["dwarvish"])).toBe(true);
 });

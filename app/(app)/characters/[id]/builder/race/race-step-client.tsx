@@ -55,6 +55,7 @@ interface RaceStepClientProps {
   contentRefs: Array<{
     id: string;
     content_id: string;
+    content_version?: number;
     context: Record<string, unknown>;
     choice_source: string | null;
     content_definitions: {
@@ -100,19 +101,23 @@ export function RaceStepClient({
   const raceTypeLabel =
     schema?.content_types?.find((ct) => ct.slug === "race")?.name ?? "Race";
 
+  const invalidSnapshot = (ref: RaceStepClientProps["contentRefs"][number]) =>
+    ref.content_id !== ref.content_definitions.id || (ref.content_version !== undefined && ref.content_version !== ref.content_definitions.version);
+
   // Saved selections display the exact snapshot already authorized and pinned
-  // for this character. Catalog entries are only a fallback for new local picks.
+  // for this character. Unpinned trait choices retain the existing catalog-based
+  // selection contract, with visible disclosure; no original version is inferred.
   const racePins = contentRefs.filter(ref => ref.content_definitions.content_type === "race" &&
-    ref.content_definitions.slug === selectedRace && ref.content_id === ref.content_definitions.id);
-  const pinnedRace = racePins.length === 1 ? racePins[0].content_definitions : undefined;
-  const selectedRaceContent = racePins.length > 1 ? undefined : pinnedRace ?? races.find((r) => r.slug === selectedRace);
+    ref.content_definitions.slug === selectedRace);
+  const pinnedRace = racePins.length === 1 && !invalidSnapshot(racePins[0]) ? racePins[0].content_definitions : undefined;
+  const selectedRaceContent = racePins.length > 1 || racePins.some(invalidSnapshot) ? undefined : pinnedRace ?? races.find((r) => r.slug === selectedRace);
   const availableSubraces = subraces.filter(
     (sr) => (sr.data as Record<string, unknown>).parent_race === selectedRace,
   );
   const subracePins = contentRefs.filter(ref => ref.content_definitions.content_type === "subrace" &&
-    ref.content_definitions.slug === selectedSubrace && ref.content_id === ref.content_definitions.id);
-  const pinnedSubrace = subracePins.length === 1 ? subracePins[0].content_definitions : undefined;
-  const subraceCandidate = subracePins.length > 1 ? undefined : pinnedSubrace ?? subraces.find(sr => sr.slug === selectedSubrace);
+    ref.content_definitions.slug === selectedSubrace);
+  const pinnedSubrace = subracePins.length === 1 && !invalidSnapshot(subracePins[0]) ? subracePins[0].content_definitions : undefined;
+  const subraceCandidate = subracePins.length > 1 || subracePins.some(invalidSnapshot) ? undefined : pinnedSubrace ?? subraces.find(sr => sr.slug === selectedSubrace);
   const selectedSubraceContent = subraceCandidate?.data.parent_race === selectedRace ? subraceCandidate : undefined;
   const mismatchedSubrace = !!selectedSubrace && !!subraceCandidate && !selectedSubraceContent;
 
@@ -138,18 +143,21 @@ export function RaceStepClient({
     ...((selectedSubraceContent?.data?.traits as string[] | undefined) ?? []),
   ])];
   const referencedTraitPins = raceTraitSlugs.map(slug => contentRefs.filter(ref =>
-    ref.content_definitions.content_type === "trait" && ref.content_definitions.slug === slug &&
-    ref.content_id === ref.content_definitions.id));
+    ref.content_definitions.content_type === "trait" && ref.content_definitions.slug === slug));
   const conflictingPins = racePins.length > 1 || subracePins.length > 1 ||
-    referencedTraitPins.some(pins => pins.length > 1);
-  const missingTraits = raceTraitSlugs.filter((_, index) => !!pinnedRace && referencedTraitPins[index].length === 0);
+    [...racePins, ...subracePins].some(invalidSnapshot) ||
+    referencedTraitPins.some(pins => pins.length > 1 || pins.some(invalidSnapshot));
+  const unpinnedTraits = raceTraitSlugs.filter((_, index) => referencedTraitPins[index].length === 0);
   const resolvedTraits = raceTraitSlugs
     .map((slug, index) => {
       const pins = referencedTraitPins[index];
-      if (pins.length > 1 || (pinnedRace && pins.length === 0)) return undefined;
-      return pins[0]?.content_definitions ?? traits.find(trait => trait.slug === slug);
+      if (pins.length > 1 || pins.some(invalidSnapshot)) return undefined;
+      if (pins.length === 1) return pins[0].content_definitions;
+      const current = traits.filter(trait => trait.slug === slug);
+      return current.length === 1 ? current[0] : undefined;
     })
     .filter((trait): trait is ContentEntry => !!trait);
+  const unavailableTraits = raceTraitSlugs.filter(slug => !resolvedTraits.some(trait => trait.slug === slug));
   const traitChoices: Array<{ trait: ContentEntry; choice: ChoiceEffect }> = resolvedTraits.flatMap(
     (trait) =>
       resolveChoices(trait)
@@ -274,7 +282,7 @@ export function RaceStepClient({
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
-    if (saveBusy.current || missingTraits.length > 0) return;
+    if (saveBusy.current) return;
     saveBusy.current = true; setIsSaving(true); setSaveError(null);
     const newResolved = {
       ...localChoices.resolved_choices,
@@ -328,8 +336,9 @@ export function RaceStepClient({
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <fieldset disabled={isSaving || conflictingPins} aria-busy={isSaving} className="min-w-0 space-y-6 border-0 p-0">
         <h2 className="text-xl font-semibold">{raceTypeLabel}</h2>
-        {conflictingPins && <p role="alert" className="text-sm text-destructive">Multiple snapshots are saved for this race, subrace or trait. Reload and check the saved references before making changes.</p>}
-        {missingTraits.length > 0 && <p role="alert" className="text-sm text-destructive">Saved trait snapshots are missing: {missingTraits.join(", ")}. Reload and check the saved references; their original versions cannot be inferred from today’s catalog.</p>}
+        {conflictingPins && <p role="alert" className="text-sm text-destructive">Multiple snapshots are saved or their IDs/versions conflict for this race, subrace or trait. Reload and check the saved references before making changes.</p>}
+        {unpinnedTraits.length > 0 && <p role="status" className="text-sm text-muted-foreground">Trait versions were not recorded by race selection. Unpinned trait choices use current catalog content; existing saved trait snapshots stay unchanged.</p>}
+        {unavailableTraits.length > 0 && !conflictingPins && <p role="alert" className="text-sm text-destructive">Trait content is unavailable or has conflicting references: {unavailableTraits.join(", ")}. Reload and check the content before choosing those traits.</p>}
         {mismatchedSubrace && <p role="alert" className="text-sm text-destructive">Your saved subrace does not belong to the selected race. Reload and check the saved choices before making changes.</p>}
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
         {isSaving && <p role="status">Saving race choices. Keep this page open.</p>}
@@ -470,7 +479,6 @@ export function RaceStepClient({
                 {/* Race-level choices */}
                 {raceChoices.map((choice) => (
                   <ChoiceSelector
-                      disabled={missingTraits.length > 0}
                     key={choice.choice_id}
                     choiceEffect={choice}
                     currentSelections={
@@ -485,7 +493,6 @@ export function RaceStepClient({
                 {/* Trait-level choices (e.g., Dwarf Tool Proficiency, Half-Elf Skill Versatility) */}
                 {traitChoices.map(({ trait, choice }) => (
                   <ChoiceSelector
-                      disabled={missingTraits.length > 0}
                     key={choice.choice_id}
                     choiceEffect={choice}
                     currentSelections={
@@ -494,7 +501,7 @@ export function RaceStepClient({
                     onSelect={(selections) =>
                       handleChoiceSelect(choice.choice_id, selections)
                     }
-                    label={`${trait.name}: Choose ${choice.choose}`}
+                    label={`${trait.name}${unpinnedTraits.includes(trait.slug) ? " (current catalog)" : ""}: Choose ${choice.choose}`}
                   />
                 ))}
               </CardContent>
@@ -528,7 +535,6 @@ export function RaceStepClient({
                       )}
                       {subraceChoices.map((choice) => (
                         <ChoiceSelector
-                      disabled={missingTraits.length > 0}
                           key={choice.choice_id}
                           choiceEffect={choice}
                           currentSelections={

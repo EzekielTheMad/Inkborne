@@ -13,6 +13,8 @@ describe("saved category and level validation", () => {
     expect(isChoiceComplete(choice, ["common"], ["common", "elvish"], ["common"])).toBe(false);
     expect(isChoiceComplete(choice, ["removed"], ["common", "elvish"])).toBe(false);
     expect(isChoiceComplete(choice, ["elvish"])).toBe(false);
+    expect(isChoiceComplete({...choice,from:"any",grant_type:"language"}, ["elvish"], ["common","elvish"], ["common"])).toBe(true);
+    expect(isChoiceComplete({...choice,from:"any",grant_type:"skill"}, ["elvish"], ["elvish"])).toBe(false);
     expect(isChoiceComplete({ ...choice, from: "unknown_category" }, ["elvish"], ["elvish"])).toBe(false);
     expect(resolveDefinitionChoices({ effects: [choice] }, ["common", "elvish"], ["common"]).effects[0].from).toEqual(["elvish"]);
   });
@@ -50,11 +52,11 @@ describe("saved category and level validation", () => {
     style.content_definitions.name="Fighting Style";
     expect(getBuilderStepStatus("class",{classes:[{slug:"fighter",level:1}],resolved_choices:{style:["style"]}}, {},undefined,[cls,style])).toBe("in_progress");
   });
-  it("requires race and subrace trait pins, including their choices", () => {
+  it("validates recorded trait pins without inventing a missing manifest", () => {
     const race=pin("race","human",{traits:["versatility"],languages:["common"]});
     const trait=pin("trait","versatility",{},[choice]);
     const choices={race:"human",resolved_choices:{"extra-language":["elvish"]}};
-    expect(getBuilderStepStatus("race",choices,{},undefined,[race], ["common","elvish"])).toBe("in_progress");
+    expect(getBuilderStepStatus("race",choices,{},undefined,[race], ["common","elvish"])).toBe("complete");
     expect(getBuilderStepStatus("race",choices,{},undefined,[race,trait], ["common","elvish"])).toBe("complete");
     expect(getBuilderStepStatus("race",{...choices,resolved_choices:{"extra-language":["common"]}}, {},undefined,[race,trait], ["common","elvish"])).toBe("in_progress");
   });

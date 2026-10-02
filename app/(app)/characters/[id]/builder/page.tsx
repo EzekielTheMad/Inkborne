@@ -1,3 +1,4 @@
+import { isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
 import { getContentByType } from "@/lib/supabase/content-definitions";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
@@ -64,8 +65,8 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
 
   if (!character) notFound();
 
-  const contentRefs = await getContentRefsByCharacter(id);
-  const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && effect.from === "all_languages"));
+  const contentRefs = await getContentRefsByCharacter(id, { requireCompleteSnapshots: true });
+  const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && isLanguageChoiceCategory(effect)));
   // A failed catalog read leaves category choices incomplete; it never upgrades a pin.
   const languages = hasLanguageCategory
     ? await getContentByType(character.system_id, "language").then(rows => rows.map(row => row.slug)).catch(() => undefined)
@@ -80,7 +81,8 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
       <p className="text-muted-foreground">
         Complete each step to build your character. Steps can be done in any
         order. Saved selections can still have class-level choices to finish.
-        Review those choices and equipment before playing.
+        Review those choices and equipment before playing. Saved status validates
+        recorded snapshots; unpinned race trait choices still need review.
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

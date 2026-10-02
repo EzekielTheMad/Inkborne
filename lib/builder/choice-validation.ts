@@ -3,9 +3,13 @@ import type { AsiChoice } from "@/lib/types/character";
 
 /** Only resolve category vocabulary backed by existing content. Unknown sources
  * stay unavailable; saved strings alone never prove that a choice is valid. */
+export function isLanguageChoiceCategory(choice: ChoiceEffect): boolean {
+  return choice.from === "all_languages" || (choice.from === "any" && choice.grant_type === "language");
+}
+
 export function resolveChoiceOptions(choice: ChoiceEffect, languages?: readonly string[], fixedLanguages: readonly string[] = []): readonly string[] | undefined {
   if (Array.isArray(choice.from)) return [...new Set(choice.from)];
-  if (choice.from !== "all_languages" || languages === undefined) return undefined;
+  if (!isLanguageChoiceCategory(choice) || languages === undefined) return undefined;
   return [...new Set(languages)].filter(language => !fixedLanguages.includes(language));
 }
 

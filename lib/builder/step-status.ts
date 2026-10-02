@@ -73,6 +73,10 @@ function hasSavedTraits(definition: BuilderStatusRef["content_definitions"], cho
   const traits = definition.data.traits;
   return !Array.isArray(traits) || traits.every(slug => {
     if (typeof slug !== "string") return false;
+    // Race/subrace selection currently persists only its own pin. Unlike class
+    // features, trait slugs have no immutable grant manifest. Validate recorded
+    // trait pins, but never infer that an absent child pin was lost.
+    if (!refs.some(ref => ref.content_definitions.content_type === "trait" && ref.content_definitions.slug === slug)) return true;
     const trait = exactSavedPin("trait", slug, refs);
     return !!trait && hasSavedChoices(trait, choices, languages, granted);
   });
@@ -80,6 +84,7 @@ function hasSavedTraits(definition: BuilderStatusRef["content_definitions"], cho
 
 /** Saved core identity/reference consistency and schema-aware abilities.
  * Validates supported core/per-level/category choices from exact saved pins.
+ * Unpinned trait choices are outside this saved-evidence verdict.
  * Still not a whole-character playability or backend authorization verdict. */
 export function getBuilderStepStatus(
   stepType: string,

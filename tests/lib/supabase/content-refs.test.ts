@@ -180,3 +180,18 @@ describe("removeContentRefsByChoiceSource", () => {
     expect(chain.delete).toHaveBeenCalled();
   });
 });
+
+describe("complete builder snapshot reads",()=>{
+  it.each([null,{...validRef.content_versions,version:2},{...validRef.content_versions,content_id:"55555555-5555-4555-8555-555555555555"}])("rejects unreadable or mismatched recorded snapshots instead of treating them as absent",async(snapshot)=>{
+    const chain={select:vi.fn().mockReturnThis(),eq:vi.fn().mockResolvedValue({data:[validRef,{...validRef,id:"66666666-6666-4666-8666-666666666666",content_versions:snapshot}],error:null})};
+    mockedCreateClient.mockResolvedValue({from:vi.fn().mockReturnValue(chain)} as never);
+    await expect(getContentRefsByCharacter(validRef.character_id,{requireCompleteSnapshots:true})).rejects.toThrow("Saved character snapshots could not be read");
+  });
+  it("accepts the actual fresh-race contract with only a complete parent pin",async()=>{
+    const race={...validRef,content_versions:{...validRef.content_versions,content_type_snapshot:"race",slug_snapshot:"human",name_snapshot:"Human",data_snapshot:{size:"Medium",speed:30,ability_bonuses:[],traits:["versatility"],subraces:[],languages:["common"],source_refs:[]}}};
+    const chain={select:vi.fn().mockReturnThis(),eq:vi.fn().mockResolvedValue({data:[race],error:null})};
+    mockedCreateClient.mockResolvedValue({from:vi.fn().mockReturnValue(chain)} as never);
+    const refs=await getContentRefsByCharacter(validRef.character_id,{requireCompleteSnapshots:true});
+    expect(refs).toHaveLength(1);expect(refs[0].content_definitions.content_type).toBe("race");
+  });
+});
