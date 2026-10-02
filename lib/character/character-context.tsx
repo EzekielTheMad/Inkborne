@@ -155,7 +155,7 @@ export interface CharacterContextValue {
 
   // Play state
   state: CharacterState;
-  patchState: (patch: Partial<CharacterState>) => Promise<boolean>;
+  patchState: ReturnType<typeof createStateWriter>;
 
   // Evaluation
   evalResult: EvaluationResult;
@@ -683,9 +683,11 @@ export function CharacterProvider({
         (evalResult.stats.constitution as number | undefined) ?? 10;
       const conMod = Math.floor((conScore - 10) / 2);
 
-      const result = roll(buildHitDieRollRequest(pool, conMod));
-      if (!(await patchState(spendHitDiePatch(state, classSlug, result.total, maxHp)))) return null;
-      return result;
+      return patchState.runAction(state, (confirmedState) => {
+        // Refuse dependent work before rolling or logging a resource spend.
+        const result = roll(buildHitDieRollRequest(pool, conMod));
+        return { patch: spendHitDiePatch(confirmedState, classSlug, result.total, maxHp), result };
+      });
     },
     [hitDicePools, state, maxHp, evalResult.stats.constitution, roll, patchState],
   );
@@ -785,6 +787,10 @@ export function useCharacterState() {
   return {
     state: ctx.state,
     patchState: ctx.patchState,
+    // Relative HP callers computed their patch from this render. Keep raw
+    // absolute edits on patchState; only this action path requires settled state.
+    patchActionState: (patch: Partial<CharacterState>) =>
+      ctx.patchState.runAction(ctx.state, () => ({ patch, result: true })),
   };
 }
 
@@ -1002,12 +1008,12 @@ export function useRest(): {
     const patch = picks
       ? mergeShortRestWithRecovery(state, shortEffects.statePatch, picks)
       : shortEffects.statePatch;
-    return patchState(patch);
+    return patchState.runAction(state, () => ({ patch, result: true })).catch(() => false);
   };
 
   const longRest = () => {
     if (!longEffects.canApply) return Promise.resolve(false);
-    return patchState(longEffects.statePatch);
+    return patchState.runAction(state, () => ({ patch: longEffects.statePatch, result: true })).catch(() => false);
   };
 
   const setExhaustion = (level: number) => {

@@ -15,6 +15,7 @@ interface StatRibbonProps {
   state: CharacterState;
   maxHp: number;
   patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
+  hpPatchState?: (patch: Partial<CharacterState>) => Promise<boolean>;
   /** Read-only hit-dice pools threaded into the HP tracker popover. */
   hitDicePools?: HitDicePool[];
   /** Concentration wiring threaded into the HP tracker damage path (T7). */
@@ -27,6 +28,7 @@ export function StatRibbon({
   state,
   maxHp,
   patchState,
+  hpPatchState,
   hitDicePools,
   concentration,
 }: StatRibbonProps) {
@@ -78,7 +80,7 @@ export function StatRibbon({
           currentHp={state.current_hp ?? maxHp}
           maxHp={maxHp}
           tempHp={state.temp_hp ?? 0}
-          patchState={patchState}
+          patchState={hpPatchState ?? patchState}
           hitDicePools={hitDicePools}
           concentration={concentration}
         />

@@ -28,7 +28,7 @@ import {
 export function SheetPanel() {
   const { character, schema, contentRefs, hasSheet, evalResult, maxHp } =
     useCharacter();
-  const { state, patchState } = useCharacterState();
+  const { state, patchState, patchActionState } = useCharacterState();
   const { hitDicePools } = useRest();
   const { concentration, dropPatch, requestCheck } = useConcentration();
 
@@ -91,6 +91,7 @@ export function SheetPanel() {
           evalResult={evalResult}
           state={state}
           patchState={patchState}
+          hpPatchState={patchActionState}
           maxHp={maxHp}
           hitDicePools={hitDicePools}
           concentration={hpConcentration}
@@ -138,6 +139,7 @@ export function SheetPanel() {
         contentRefs={contentRefs}
         state={state}
         patchState={patchState}
+        hpPatchState={patchActionState}
         maxHp={maxHp}
         hitDicePools={hitDicePools}
         concentration={hpConcentration}

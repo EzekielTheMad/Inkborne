@@ -46,6 +46,7 @@ interface MobileSheetProps {
   state: CharacterState;
   patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
   maxHp: number;
+  hpPatchState?: (patch: Partial<CharacterState>) => Promise<boolean>;
   /** Read-only hit-dice pools threaded into the HP tracker popover. */
   hitDicePools?: HitDicePool[];
   /** Concentration wiring threaded into the HP tracker damage path (T7). */
@@ -60,6 +61,7 @@ export function MobileSheet({
   state,
   patchState,
   maxHp,
+  hpPatchState,
   hitDicePools,
   concentration,
 }: MobileSheetProps) {
@@ -187,7 +189,7 @@ export function MobileSheet({
                 currentHp={state.current_hp ?? maxHp}
                 maxHp={maxHp}
                 tempHp={state.temp_hp ?? 0}
-                patchState={patchState}
+                patchState={hpPatchState ?? patchState}
                 hitDicePools={hitDicePools}
                 concentration={concentration}
               />

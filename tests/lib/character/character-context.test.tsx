@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 import {
   CharacterProvider,
   useCharacter,
@@ -18,6 +19,12 @@ import type {
 import type { ActiveEffect } from "@/lib/types/active-effects";
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { initializeState } from "@/lib/sheet/helpers";
+
+import { HPTracker } from "@/components/sheet/hp-tracker";
+import { RestDialog } from "@/components/sheet/rest-dialog";
+import { executeRoll } from "@/lib/dice/roller";
+vi.mock("@/lib/dice/roller", () => ({ executeRoll: vi.fn() }));
+vi.mock("@/lib/supabase/rolls", () => ({ insertRoll: vi.fn().mockResolvedValue(undefined) }));
 
 // Mock the supabase paths the provider invokes.
 vi.mock("@/lib/sheet/update-state", () => ({
@@ -176,6 +183,56 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => { expect(await save!({ current_hp: maxHp - 3 })).toBe(true); });
     expect(screen.getByTestId("new-fighter-hp")).toHaveTextContent("9");
     expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { current_hp: 9 });
+  });
+
+  it("rejects a hit-die heal during pending UI damage before rolling, then heals confirmed HP on retry", async () => {
+    let rejectDamage!: (error: Error) => void;
+    mockedUpdateState.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectDamage = reject; }));
+    vi.mocked(executeRoll).mockReturnValue({ total: 3, rolled_at: "2026-10-02T15:00:00Z" } as never);
+    function Probe() {
+      const { state, patchActionState } = useCharacterState();
+      const [restOpen, setRestOpen] = useState(false);
+      return <><button onClick={() => setRestOpen(true)}>Open rest</button><HPTracker currentHp={state.current_hp ?? 20} tempHp={state.temp_hp ?? 0} maxHp={20} patchState={patchActionState} /><RestDialog open={restOpen} onClose={() => setRestOpen(false)} /><span data-testid="hp">{state.current_hp}</span><span data-testid="spent">{state.hit_dice_spent?.fighter ?? 0}</span></>;
+    }
+    renderWithProvider(Probe, { maxHp: 20, initialState: { current_hp: 10 }, character: { ...mockCharacter, choices: { classes: [{ slug: "fighter", level: 1 }] } }, classData: { fighter: { slug: "fighter", data: { hit_die: 10 } } } });
+    fireEvent.click(screen.getByRole("button", { name: /HP tracker/i }));
+    fireEvent.change(screen.getByPlaceholderText("Amount"), { target: { value: "5" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Damage" })); });
+    expect(screen.getByTestId("hp")).toHaveTextContent("5");
+    fireEvent.click(screen.getByRole("button", { name: "Open rest" }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /spend & roll/i })); });
+    expect(executeRoll).not.toHaveBeenCalled();
+    expect(mockedUpdateState).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/hit die could not be spent/i)).toBeInTheDocument();
+    await act(async () => { rejectDamage(new Error("offline")); });
+    expect(screen.getByTestId("hp")).toHaveTextContent("10");
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /spend & roll/i })); });
+    expect(screen.getByTestId("hp")).toHaveTextContent("13");
+    expect(screen.getByTestId("spent")).toHaveTextContent("1");
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", expect.objectContaining({ current_hp: 13, hit_dice_spent: { fighter: 1 } }));
+  });
+
+  it.each(["shortRest", "longRest"] as const)("refuses %s computed from pending HP/resource edits and preserves an independent absolute edit", async (action) => {
+    let rejectSave!: (error: Error) => void;
+    mockedUpdateState.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));
+    let hooks!: ReturnType<typeof useRest>;
+    let saves!: ReturnType<typeof useCharacterState>;
+    function Probe() {
+      hooks = useRest(); saves = useCharacterState();
+      return <span data-testid="rest-hp">{saves.state.current_hp}</span>;
+    }
+    renderWithProvider(Probe, { maxHp: 20, initialState: { current_hp: 10, spell_slots_used: { pact: 1 } } });
+    let first!: Promise<boolean>;
+    await act(async () => { first = saves.patchState({ current_hp: 5, spell_slots_used: { pact: 2 } }); });
+    await act(async () => { expect(await hooks[action]()).toBe(false); });
+    expect(mockedUpdateState).toHaveBeenCalledTimes(1);
+    let absolute!: Promise<boolean>;
+    await act(async () => { absolute = saves.patchState({ current_hp: 16, inspiration: true }); });
+    await act(async () => { rejectSave(new Error("offline")); expect(await first).toBe(false); expect(await absolute).toBe(true); });
+    expect(screen.getByTestId("rest-hp")).toHaveTextContent("16");
+    expect(saves.state).toMatchObject({ spell_slots_used: { pact: 1 }, inspiration: true });
+    await act(async () => { expect(await hooks[action]()).toBe(true); });
+    expect(mockedUpdateState).toHaveBeenCalledTimes(3);
   });
 
   it("useCharacter() exposes character, schema, contentRefs, isOwner, isDm, hasSheet", () => {
