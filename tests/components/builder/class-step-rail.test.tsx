@@ -1386,6 +1386,17 @@ describe("HpPicker", () => {
     expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
   });
 
+  it("hides an open Manual draft when the campaign becomes rolled-only without writing it", () => {
+    const onChange=vi.fn();
+    const storedRoll:HpRollRecord={method:"manual",value:3};
+    const view=render(<HpPicker {...defaults({storedRoll,onChange})}/>);
+    fireEvent.change(screen.getByRole("spinbutton",{name:"Manual HP value"}),{target:{value:"4"}});
+    view.rerender(<HpPicker {...defaults({storedRoll,onChange,hpRule:"rolled_only"})}/>);
+    expect(screen.queryByRole("spinbutton",{name:"Manual HP value"})).not.toBeInTheDocument();
+    expect(screen.getByText(/Total HP gain this level:/)).toHaveTextContent("+5");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("average_only rule renders read-only display, no interactive radios", () => {
     const { container } = render(<HpPicker {...defaults({ hpRule: "average_only" })} />);
     expect(screen.queryAllByRole("radio")).toHaveLength(0);

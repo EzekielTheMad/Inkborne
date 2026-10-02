@@ -130,6 +130,7 @@ function HpPickerInteractive(props: InteractiveProps) {
   }
 
   function commitManual() {
+    if (onlyRoll) return;
     const n = Number(manualValue);
     if (!manualValue.trim() || !Number.isInteger(n) || n < 1 || n > hitDie) {
       setManualError(true);
@@ -195,7 +196,7 @@ function HpPickerInteractive(props: InteractiveProps) {
           </button>
         )}
       </div>
-      {showManualInput && (
+      {showManualInput && !onlyRoll && (
         <div className="mt-3">
           <input
             type="number"

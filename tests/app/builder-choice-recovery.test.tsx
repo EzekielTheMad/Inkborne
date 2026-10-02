@@ -329,6 +329,18 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update.mock.calls[0][1].choices.hp_rolls).toEqual({"fighter-2":{method:"manual",value:4}});
   });
 
+  it("keeps an existing manual value read-only under a rolled-only campaign", () => {
+    const cls:ContentEntry={...human,id:"wizard",slug:"wizard",name:"Wizard",content_type:"class",data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}};
+    const hero={...character,level:2,choices:{classes:[{slug:"wizard",level:2}],hp_rolls:{"wizard-2":{method:"manual" as const,value:3}}},campaigns:{hp_rule:"rolled_only" as const}};
+    render(<ClassStepClient characterId="char-1" character={hero} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Level 2/}));
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    expect(screen.getByRole("radio",{name:"Roll d6"})).toBeVisible();
+    expect(screen.queryByRole("spinbutton",{name:"Manual HP value"})).not.toBeInTheDocument();
+    expect(screen.getByText(/Total HP gain this level:/)).toHaveTextContent("+3");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
   it.each(["free_choice", "average_only"] as const)("shows the sheet minimum HP gain under %s without changing raw values", async (hp_rule) => {
     const cls:ContentEntry={...human,id:"wizard",slug:"wizard",name:"Wizard",content_type:"class",data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}};
     const hero={...character,base_stats:{constitution:3},choices:{classes:[{slug:"wizard",level:1}]},campaigns:{hp_rule}};

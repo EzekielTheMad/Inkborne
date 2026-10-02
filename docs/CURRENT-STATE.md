@@ -116,10 +116,15 @@ Builder HP gain labels now match the existing sheet minimum of one per level,
 including negative Constitution modifiers. Stored raw contributions and HP
 rules are unchanged; see the [display checkpoint](handoffs/2026-10-02-hp-gain-display.md).
 
+The rolled-only picker now keeps an existing Manual record read-only and guards
+its hidden Manual commit path. Existing values, rule resolution and confirmation
+handling are unchanged; the grandfathering policy remains open. See the
+[UI boundary checkpoint](handoffs/2026-10-02-rolled-only-field-guard.md).
+
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,966 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,968 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -127,7 +132,7 @@ rules are unchanged; see the [display checkpoint](handoffs/2026-10-02-hp-gain-di
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Installed Chrome ran eighteen builder checks and five play-save checks with real editors and mocked
+- Installed Chrome ran nineteen builder checks and five play-save checks with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
   selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing
