@@ -78,6 +78,41 @@ describe("local builder journey", () => {
     expect(screen.queryByText("Back to Dashboard")).not.toBeInTheDocument();
   });
 
+  it.each([
+    { name: "missing required choice", resolved: {} as Record<string, string[]>, status: "In progress" },
+    { name: "duplicate selections", resolved: { "soldier-skills": ["skill-athletics", "skill-athletics"] }, status: "In progress" },
+    { name: "out-of-snapshot selection", resolved: { "soldier-skills": ["skill-athletics", "skill-stealth"] }, status: "In progress" },
+    { name: "saved explicit choices", resolved: { "soldier-skills": ["skill-athletics", "skill-intimidation"] }, status: "Complete" },
+  ])("validates pinned background choice in overview/navigation: $name", async ({resolved,status}) => {
+    const refs = pins.map(pin => pin.content_id === "soldier" ? { ...pin, content_definitions: { ...pin.content_definitions, effects: [{ type: "choice", choose: 2, from: ["skill-athletics", "skill-intimidation"], grant_type: "proficiency", choice_id: "soldier-skills" }] } } : pin);
+    vi.mocked(getContentRefsByCharacter).mockResolvedValue(refs as never);
+    mockCharacter({...selected,resolved_choices:resolved},scores);
+    const overview = await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})});
+    render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:overview}));
+    expect(screen.getAllByRole("link",{name:new RegExp(`Background.*${status}`)})).toHaveLength(2);
+  });
+
+  it.each([
+    {type:"race",slug:"human",step:"Race",choices:selected},
+    {type:"class",slug:"fighter",step:"Class",choices:selected},
+    {type:"subrace",slug:"wood-elf",step:"Race",choices:{...selected,subrace:"wood-elf"},parent:{parent_race:"human"}},
+    {type:"subclass",slug:"champion",step:"Class",choices:{...selected,classes:[{slug:"fighter",level:3,subclass:"champion"}]},parent:{parent_class:"fighter"}},
+  ])("checks explicit choices on pinned $type", async ({type,slug,step,choices,parent}) => {
+    const choice = {type:"choice" as const,choose:1,from:["skill-athletics"],grant_type:"proficiency",choice_id:"required-skill"};
+    const definition = {id:slug,slug,content_type:type,name:slug,version:1,source:"srd" as const,data:parent??{},effects:[choice]};
+    const refs = [...pins.filter(pin=>pin.content_definitions.content_type!==type),{content_id:slug,content_version:1,content_definitions:definition}];
+    vi.mocked(getContentRefsByCharacter).mockResolvedValue(refs as never);
+    mockCharacter(choices,scores);
+    const overview = await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})});
+    const rendered=render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:overview}));
+    expect(screen.getAllByRole("link",{name:new RegExp(`${step}.*In progress`)})).toHaveLength(2);
+    rendered.unmount();
+    mockCharacter({...choices,resolved_choices:{"required-skill":["skill-athletics"]}},scores);
+    const completed=await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})});
+    render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:completed}));
+    expect(screen.getAllByRole("link",{name:new RegExp(`${step}.*Complete`)})).toHaveLength(2);
+  });
+
   it("identifies the active step accessibly", async () => {
     navigation.pathname = "/characters/char-1/builder/abilities";
     mockCharacter(selected, scores);

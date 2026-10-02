@@ -60,7 +60,9 @@ and compatibility, but defer expanding those surfaces.
   content identity/version and child-parent compatibility) before Complete.
   Missing/extra/conflicting pins remain In progress. Ability rules stay schema-aware.
   See [saved reference progress](handoffs/2026-10-02-saved-reference-progress.md).
-  This is still not full feature/subchoice or playable-system validation.
+  Direct explicit-array required choices on selected core pins now also require valid
+  count, unique picks and membership; see [explicit-choice progress](handoffs/2026-10-02-explicit-choice-progress.md).
+  This is still not full per-level/category-choice or playable-system validation.
 - Equipment selections/confirmation now share a local pending gate; selection
   failures are visible and require explicit retry. A failed/partial confirmation
   blocks blind same-session re-grants and gives readable inventory-review copy.
@@ -84,7 +86,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,923 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,931 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
