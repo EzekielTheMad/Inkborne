@@ -49,6 +49,11 @@ and compatibility, but defer expanding those surfaces.
   duplicate/incompatible snapshots show errors before editing. See the
   [class display handoff](handoffs/2026-10-02-pinned-class-display.md). Missing
   pins and separate choice/ref writes remain unresolved.
+- Class mutation controls now share a local save gate, including portal callback
+  refusal, to prevent overlapping full-choice writes within that editor.
+  Background display matches the selected pin identity and identifies missing
+  or duplicate snapshots. See the [builder gates handoff](handoffs/2026-10-02-builder-save-gates.md).
+  Background subchoice concurrency and cross-client/ambiguous outcomes remain open.
 - The separate alpha-readiness candidate remains unmerged and preserved. It
   contains dependency/auth/E2E/security work; this branch does not absorb it.
 
@@ -67,7 +72,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,902 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,906 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
