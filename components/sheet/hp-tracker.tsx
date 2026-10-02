@@ -30,6 +30,8 @@ interface HPTrackerProps {
   maxHp: number;
   tempHp: number;
   patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
+  /** Damage/heal depend on this render; absolute temp HP uses patchState. */
+  patchActionState?: (patch: Partial<CharacterState>) => Promise<boolean>;
   /** Optional read-only hit-dice pools shown in the popover ("d10 3/5 · d6 1/1")
    *  so remaining HD are visible without opening the Rest dialog. */
   hitDicePools?: HitDicePool[];
@@ -51,6 +53,7 @@ export function HPTracker({
   maxHp,
   tempHp,
   patchState,
+  patchActionState,
   hitDicePools,
   concentration,
 }: HPTrackerProps) {
@@ -68,13 +71,14 @@ export function HPTracker({
     return isNaN(n) || n < 0 ? 0 : n;
   }
 
-  async function savePatch(patch: Partial<CharacterState>): Promise<boolean> {
+  async function savePatch(patch: Partial<CharacterState>, relative = false): Promise<boolean> {
     if (savingRef.current) return false;
     savingRef.current = true;
     setSaving(true);
     setSaveError(null);
     try {
-      if ((await patchState(patch)) === false) {
+      const save = relative ? patchActionState ?? patchState : patchState;
+      if ((await save(patch)) === false) {
         setSaveError("The HP change could not be saved. Please try again.");
         return false;
       }
@@ -117,7 +121,7 @@ export function HPTracker({
     if (concentration && newCurrent === 0) {
       Object.assign(patch, concentration.dropPatch);
     }
-    if (!(await savePatch(patch))) return;
+    if (!(await savePatch(patch, true))) return;
     if (concentration && newCurrent > 0) {
       concentration.onDamage(amount);
     }
@@ -131,7 +135,7 @@ export function HPTracker({
     if (wasAtZero && newHp > 0) {
       patch.death_saves = { successes: 0, failures: 0 };
     }
-    void savePatch(patch);
+    void savePatch(patch, true);
   }
 
   function applyHeal() {

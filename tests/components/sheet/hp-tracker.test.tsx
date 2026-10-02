@@ -43,6 +43,22 @@ async function openAndApply(buttonName: RegExp, amount: string) {
 }
 
 describe("HPTracker pending saves", () => {
+  it.each(["Damage", "Heal", "Set Temp HP"])("routes %s through its relative or absolute save contract", async (action) => {
+    const absolute = vi.fn().mockResolvedValue(true);
+    const relative = vi.fn().mockRejectedValue(new Error("Still saving"));
+    render(<HPTracker currentHp={10} maxHp={20} tempHp={0} patchState={absolute} patchActionState={relative} />);
+    await openAndApply(new RegExp(`^${action}$`), "3");
+    if (action === "Set Temp HP") {
+      expect(absolute).toHaveBeenCalledWith({ temp_hp: 3 });
+      expect(relative).not.toHaveBeenCalled();
+    } else {
+      expect(relative).toHaveBeenCalledOnce();
+      expect(absolute).not.toHaveBeenCalled();
+      expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
+      expect(screen.getByPlaceholderText("Amount")).toHaveValue(3);
+    }
+  });
+
   it("blocks repeated damage and competing actions until confirmation", async () => {
     let resolve!: (saved: boolean) => void;
     const { patchState } = setup({ currentHp: 20, maxHp: 20 });

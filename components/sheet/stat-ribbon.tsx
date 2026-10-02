@@ -80,7 +80,8 @@ export function StatRibbon({
           currentHp={state.current_hp ?? maxHp}
           maxHp={maxHp}
           tempHp={state.temp_hp ?? 0}
-          patchState={hpPatchState ?? patchState}
+          patchState={patchState}
+          patchActionState={hpPatchState}
           hitDicePools={hitDicePools}
           concentration={concentration}
         />

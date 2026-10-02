@@ -190,9 +190,9 @@ describe("<CharacterProvider> public hook surface", () => {
     mockedUpdateState.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectDamage = reject; }));
     vi.mocked(executeRoll).mockReturnValue({ total: 3, rolled_at: "2026-10-02T15:00:00Z" } as never);
     function Probe() {
-      const { state, patchActionState } = useCharacterState();
+      const { state, patchState, patchActionState } = useCharacterState();
       const [restOpen, setRestOpen] = useState(false);
-      return <><button onClick={() => setRestOpen(true)}>Open rest</button><HPTracker currentHp={state.current_hp ?? 20} tempHp={state.temp_hp ?? 0} maxHp={20} patchState={patchActionState} /><RestDialog open={restOpen} onClose={() => setRestOpen(false)} /><span data-testid="hp">{state.current_hp}</span><span data-testid="spent">{state.hit_dice_spent?.fighter ?? 0}</span></>;
+      return <><button onClick={() => setRestOpen(true)}>Open rest</button><HPTracker currentHp={state.current_hp ?? 20} tempHp={state.temp_hp ?? 0} maxHp={20} patchState={patchState} patchActionState={patchActionState} /><RestDialog open={restOpen} onClose={() => setRestOpen(false)} /><span data-testid="hp">{state.current_hp}</span><span data-testid="spent">{state.hit_dice_spent?.fighter ?? 0}</span></>;
     }
     renderWithProvider(Probe, { maxHp: 20, initialState: { current_hp: 10 }, character: { ...mockCharacter, choices: { classes: [{ slug: "fighter", level: 1 }] } }, classData: { fighter: { slug: "fighter", data: { hit_die: 10 } } } });
     fireEvent.click(screen.getByRole("button", { name: /HP tracker/i }));
