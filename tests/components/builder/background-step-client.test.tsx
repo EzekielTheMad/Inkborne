@@ -122,6 +122,27 @@ describe("BackgroundStepClient", () => {
     });
   });
 
+  it("ignores a different saved background before the matching pin", () => {
+    const unrelated = { ...pinnedRef, id: "other-pin", content_id: "other-background", content_definitions: { ...pinnedRef.content_definitions, id: "other-background", slug: "other-background", name: "Wrong Background" } };
+    renderStep({ contentRefs: [unrelated, pinnedRef] });
+    expect(screen.getByText("Pinned Courier")).toBeVisible();
+    expect(screen.queryByText("Wrong Background")).not.toBeInTheDocument();
+  });
+
+  it("does not show another background's data when the selected pin is missing", () => {
+    renderStep({ choices: { background: "missing-background" } });
+    expect(screen.queryByText("Pinned Courier")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("no matching saved snapshot");
+  });
+
+  it("blocks editing when matching background snapshots conflict", () => {
+    renderStep({ contentRefs: [pinnedRef, { ...pinnedRef, id: "duplicate-pin", content_definitions: { ...pinnedRef.content_definitions, version: 2, name: "Other Courier" } }] });
+    expect(screen.getByRole("alert")).toHaveTextContent("Multiple saved snapshots");
+    expect(screen.queryByText("Pinned Courier")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Choose first background" })).toBeDisabled();
+    expect(setBackgroundMock).not.toHaveBeenCalled();
+  });
+
   it("renders the exact pinned snapshot instead of the mutable catalog row", () => {
     renderStep();
 

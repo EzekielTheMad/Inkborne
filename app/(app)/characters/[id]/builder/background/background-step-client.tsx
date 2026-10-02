@@ -86,11 +86,15 @@ export function BackgroundStepClient({
 
   const selectedBackground = localChoices.background;
   const hasBackground = !!selectedBackground;
-  const pinnedBackground = contentRefs.find(
-    (ref) => ref.content_definitions?.content_type === "background",
-  )?.content_definitions;
-  const selectedBgContent = selectedOverride
-    ?? (selectedBackground && pinnedBackground ? pinnedBackground : undefined);
+  const backgroundPins = contentRefs.filter(ref =>
+    ref.content_id === ref.content_definitions.id &&
+    ref.content_definitions.content_type === "background" &&
+    ref.content_definitions.slug === selectedBackground);
+  const conflictingPins = backgroundPins.length > 1;
+  const pinnedBackground = backgroundPins.length === 1 ? backgroundPins[0].content_definitions : undefined;
+  const selectedBgContent = conflictingPins ? undefined :
+    (selectedOverride?.slug === selectedBackground ? selectedOverride : pinnedBackground);
+  const missingSnapshot = !!selectedBackground && !selectedBgContent && !conflictingPins;
 
   const allEffects: Effect[] = [
     ...contentRefs
@@ -116,7 +120,7 @@ export function BackgroundStepClient({
     (selectedBgContent?.data.flaws as string[] | undefined) ?? [];
 
   async function handleSelectBackground(content: ContentEntry) {
-    if (isSavingBackground) return;
+    if (isSavingBackground || conflictingPins) return;
 
     setPreviewContent(null);
     setSelectionError(null);
@@ -144,7 +148,7 @@ export function BackgroundStepClient({
   }
 
   function handleStartChangingBackground() {
-    if (isSavingBackground) return;
+    if (isSavingBackground || conflictingPins) return;
 
     setPreviewContent(null);
     setSelectionError(null);
@@ -152,7 +156,7 @@ export function BackgroundStepClient({
   }
 
   function handleKeepCurrentBackground() {
-    if (isSavingBackground) return;
+    if (isSavingBackground || conflictingPins) return;
 
     setPreviewContent(null);
     setSelectionError(null);
@@ -163,7 +167,7 @@ export function BackgroundStepClient({
     field: "personality_traits" | "ideals" | "bonds" | "flaws",
     value: string[],
   ) {
-    if (isSavingBackground) return;
+    if (isSavingBackground || conflictingPins) return;
 
     const newChoices = { ...localChoices, [field]: value };
 
@@ -180,7 +184,7 @@ export function BackgroundStepClient({
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
-    if (isSavingBackground) return;
+    if (isSavingBackground || conflictingPins) return;
 
     const newResolved = {
       ...localChoices.resolved_choices,
@@ -261,11 +265,13 @@ export function BackgroundStepClient({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <fieldset
-        disabled={isSavingBackground}
+        disabled={isSavingBackground || conflictingPins}
         aria-busy={isSavingBackground}
         className="min-w-0 space-y-6 border-0 p-0"
       >
         <h2 className="text-xl font-semibold">Background</h2>
+        {conflictingPins && <p role="alert" className="text-sm text-destructive">Multiple saved snapshots match this background. Reload the character and resolve its references before editing.</p>}
+        {missingSnapshot && <p role="alert" className="text-sm text-destructive">The selected background has no matching saved snapshot. Reload the character and check its references before making further choices.</p>}
 
         {hasBackground && selectedBgContent && !isChangingBackground ? (
           <div className="space-y-4">
@@ -449,7 +455,7 @@ export function BackgroundStepClient({
         )}
 
         <ContentPreview
-          content={previewContent}
+          content={conflictingPins ? null : previewContent}
           contentTypeLabel="Background"
           onConfirm={handleSelectBackground}
           onCancel={() => setPreviewContent(null)}
