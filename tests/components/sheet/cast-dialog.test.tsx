@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { useState } from "react";
 import { CastDialog } from "@/components/sheet/spells/cast-dialog";
 import type {
   CasterInfo,
@@ -24,9 +25,8 @@ let mockPactSlotLevel: number | null = null;
 let mockConcentration: ConcentrationState | null = null;
 let mockCasterInfo: CasterInfo;
 
-vi.mock("@/lib/builder/use-is-mobile", () => ({
-  useIsMobile: () => false,
-}));
+const viewport = vi.hoisted(() => ({ mobile: false }));
+vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => viewport.mobile }));
 
 vi.mock("@/lib/character/character-context", () => ({
   useCharacter: () => ({ character: { id: "char-1", level: 3 } }),
@@ -146,6 +146,7 @@ function renderDialog(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  viewport.mobile = false;
   mockMaxSlots = { "1": 4, "2": 2 };
   mockSlotState = {};
   mockPactSlotLevel = null;
@@ -160,6 +161,49 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("CastDialog - configure pane", () => {
+  it.each([false, true])("prevents pending dismissal and recovers through close/reopen (mobile=%s)", async (mobile) => {
+    viewport.mobile = mobile;
+    let rejectSave!: (error: Error) => void;
+    castSpell.mockReturnValueOnce(new Promise<CastOutcome>((_resolve, reject) => { rejectSave = reject; }));
+    const onClose = vi.fn();
+    const spell = mkSpell();
+    function Harness() {
+      const [open, setOpen] = useState(true);
+      return <>
+        <button onClick={() => setOpen(true)}>Open cast</button>
+        <CastDialog spell={spell} castability="full" open={open} onClose={() => { onClose(); setOpen(false); }} />
+      </>;
+    }
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Please wait");
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => rejectSave(new Error("offline")));
+    expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Open cast" }));
+    expect(screen.getByRole("button", { name: "Cast" })).toBeEnabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("does not display an old cast outcome after an external close and reopen", async () => {
+    let resolveSave!: (outcome: CastOutcome) => void;
+    castSpell.mockReturnValueOnce(new Promise<CastOutcome>((resolve) => { resolveSave = resolve; }));
+    const spell = mkSpell(); const onClose = vi.fn();
+    const mounted = render(<CastDialog spell={spell} castability="full" open onClose={onClose} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    mounted.rerender(<CastDialog spell={spell} castability="full" open={false} onClose={onClose} />);
+    mounted.rerender(<CastDialog spell={spell} castability="full" open onClose={onClose} />);
+    await act(async () => resolveSave(mkOutcome()));
+    expect(screen.queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cast" })).toBeEnabled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
   it("keeps failed casts in the configure pane and supports another attempt", async () => {
     castSpell.mockRejectedValueOnce(new Error("save denied"));
     renderDialog();

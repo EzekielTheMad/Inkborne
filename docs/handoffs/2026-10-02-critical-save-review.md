@@ -48,8 +48,10 @@ This does not coordinate actions originating in other sheet components.
 - Pending sheet saves may outlive a keyed provider; cross-tab/same-character
   remounts are not coordinated. A later command-layer review needs cancellation
   and reconciliation semantics, rather than arbitrary dropped requests.
-- Rest/cast completion can arrive after dialog dismissal/reopen. Their busy UI
-  controls protect normal clicks but do not prove every dismissal path is safe.
+- [Dialog lifetime repair](2026-10-02-dialog-save-lifetimes.md) now isolates
+  completion by mounted open session and blocks pending dismissal/competing
+  actions. Desktop/mobile DOM interactions pass; physical mobile swipes and
+  external route persistence still require browser/UAT review.
 - Shared sheet errors remain visible until dismissal; a successful retry does
   not automatically clear a previous error. Copy asks to retry the action,
   which is not always sufficient for nested-map ambiguity above.

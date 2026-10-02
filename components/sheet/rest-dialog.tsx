@@ -8,6 +8,7 @@ import { useRest, useCharacter, useCharacterState, useResources } from "@/lib/ch
 import { computeLongRestHdRecovery, formatClassSlug } from "@/lib/hit-dice/helpers";
 import { totalPickedLevels, type ArcaneRecoveryPicks } from "@/lib/rest/arcane-recovery";
 import type { ConcentrationState } from "@/lib/types/spells";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
 
 interface RestDialogProps {
   open: boolean;
@@ -31,6 +32,10 @@ function ordinal(level: number): string {
  * Executing a rest closes the dialog.
  */
 export function RestDialog({ open, onClose }: RestDialogProps) {
+  return open ? <RestDialogSession onClose={onClose} /> : null;
+}
+
+function RestDialogSession({ onClose }: Pick<RestDialogProps, "onClose">) {
   const {
     shortRest,
     longRest,
@@ -58,19 +63,10 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
 
   // Arcane Recovery slot picks (slot level → count). Dialog-local: they only
   // become state when the short rest executes, folded into its atomic patch.
-  // Picks reset on every open transition (render-phase state adjustment —
-  // the dialog stays mounted between opens).
+  // A fresh mounted session resets picks on every opening.
   const [recoveryPicks, setRecoveryPicks] = useState<ArcaneRecoveryPicks>({});
-  const [saving, setSaving] = useState(false);
+  const { pending: saving, run, canDismiss } = useDialogAction();
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
-    if (open) {
-      setRecoveryPicks({});
-      setSaveError(null);
-    }
-  }
 
   const pickedTotal = totalPickedLevels(recoveryPicks);
   const recoveryRemaining = arcaneRecovery.budget - pickedTotal;
@@ -91,26 +87,34 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
   };
 
   const saveRest = async (save: () => Promise<boolean>) => {
-    if (saving) return;
-    setSaving(true);
+    if (!canDismiss()) return;
     setSaveError(null);
-    try {
-      if (await save()) onClose();
+    await run(save, (saved) => {
+      if (saved) onClose();
       else setSaveError("The rest could not be saved. Please try again.");
-    } catch {
+    }, () => {
       setSaveError("The rest could not be saved. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+    });
+  };
+
+  const saveHitDie = async (classSlug: string) => {
+    if (!canDismiss()) return;
+    setSaveError(null);
+    await run(() => spendHitDie(classSlug), (result) => {
+      if (!result) setSaveError("The hit die could not be spent. Check your HP and remaining dice, then try again.");
+    }, () => {
+      setSaveError("The hit die could not be spent. Please try again.");
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open onOpenChange={(o) => !o && canDismiss() && onClose()}>
+      <DialogContent className="max-w-2xl" showCloseButton={!saving} aria-busy={saving}>
         <DialogHeader>
           <DialogTitle>Rest</DialogTitle>
         </DialogHeader>
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+        {saving && <p role="status" className="text-sm text-muted-foreground">Saving this rest action. Please wait.</p>}
 
         <div className="grid md:grid-cols-2 gap-4">
           {/* Short Rest pane */}
@@ -183,7 +187,7 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
                           size="icon-xs"
                           variant="outline"
                           aria-label={`Recover one fewer ${ordinal(level)}-level slot`}
-                          disabled={count === 0}
+                          disabled={saving || count === 0}
                           onClick={() => adjustPick(level, -1)}
                         >
                           <Minus />
@@ -198,7 +202,7 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
                           size="icon-xs"
                           variant="outline"
                           aria-label={`Recover one more ${ordinal(level)}-level slot`}
-                          disabled={addDisabledReason !== undefined}
+                          disabled={saving || addDisabledReason !== undefined}
                           title={addDisabledReason}
                           onClick={() => adjustPick(level, +1)}
                         >
@@ -249,7 +253,7 @@ export function RestDialog({ open, onClose }: RestDialogProps) {
                         variant="outline"
                         disabled={saving || disabledReason !== undefined}
                         title={disabledReason}
-                        onClick={() => void spendHitDie(pool.classSlug)}
+                          onClick={() => void saveHitDie(pool.classSlug)}
                       >
                         Spend &amp; Roll
                       </Button>

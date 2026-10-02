@@ -23,6 +23,8 @@ and compatibility, but defer expanding those surfaces.
   the writer via the provider's character-ID key.
   The HP popover now also locks pending controls and retains failed heal/temp
   inputs for explicit retry, repairing the review's asynchronous control window.
+  Cast/rest dialog sessions now isolate delayed completions after external close
+  or navigation and block pending dismissal/competing rest or hit-die actions.
 - Scope/acceptance: [save recovery design](specs/2026-10-02-character-save-recovery.md)
   and [character creation recovery](specs/2026-10-02-character-creation-recovery.md).
 - Character creation now validates string fields, handles failed/empty inserts,
@@ -42,7 +44,7 @@ and compatibility, but defer expanding those surfaces.
 ## Verification
 
 - Final `npm.cmd run check`: strict typecheck, zero-warning lint, 201 files /
-  1,851 tests passed including the cast gate and pending creation submission.
+  1,856 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -65,6 +67,9 @@ and compatibility, but defer expanding those surfaces.
    writes need durable atomic/idempotent provenance. Session-only tracking is
    insufficient after reload or ambiguous network completion. No schema change
    is authorized; migration-history reconciliation remains a prerequisite.
+   A separate [atomicity proposal](specs/2026-10-02-equipment-atomicity-proposal.md)
+   describes a server-only transaction and durable grant provenance; no schema
+   or hosted changes implement it.
 4. [Critical save review](handoffs/2026-10-02-critical-save-review.md) reproduced
    dependent nested-map spending after a failed earlier save. The
    [cast conflict gate](handoffs/2026-10-02-cast-conflict-gate.md) now rejects the
@@ -72,8 +77,9 @@ and compatibility, but defer expanding those surfaces.
    consistency and remote release/UAT remain open. The HP-control repair is
    [verified locally](handoffs/2026-10-02-hp-save-controls.md). Next small builder
    task is now [complete locally](handoffs/2026-10-02-creation-submit-pending.md).
-   Next release review should reproduce pending cast/rest dismissal and reopen
-   lifetimes before further general saving claims.
+   [Dialog lifetime interactions](handoffs/2026-10-02-dialog-save-lifetimes.md)
+   are now verified locally. Next bounded review: ability-editor navigation
+   through header/app links while a save is pending or a draft failed.
 
 ## Authority
 

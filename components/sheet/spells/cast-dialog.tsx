@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/lib/builder/use-is-mobile";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
 import {
   useCharacter,
   useRolls,
@@ -91,6 +92,10 @@ function SlotDots({ total, free }: { total: number; free: number }) {
  * from the spell's schema-validated `data` — no per-spell logic.
  */
 export function CastDialog({ spell, castability, open, onClose }: CastDialogProps) {
+  return open ? <CastDialogSession key={spell.id} spell={spell} castability={castability} open onClose={onClose} /> : null;
+}
+
+function CastDialogSession({ spell, castability, open, onClose }: CastDialogProps) {
   const isMobile = useIsMobile();
   const { character } = useCharacter();
   const {
@@ -122,7 +127,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
     () => getDefaultSlotOption(slotOptions)?.key ?? null,
   );
   const [ritual, setRitual] = useState(castability === "ritual-only");
-  const [casting, setCasting] = useState(false);
+  const { pending: casting, run, canDismiss } = useDialogAction();
   const [castError, setCastError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<CastOutcome | null>(null);
   const [results, setResults] = useState<Record<number, RollResult>>({});
@@ -162,7 +167,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
     .join(" · ");
 
   const onCast = async () => {
-    if (!canCast || casting) return;
+    if (!canCast || !canDismiss()) return;
     const choice: CastChoice = isCantrip
       ? { type: "cantrip" }
       : ritual
@@ -170,16 +175,10 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
         : selectedOption!.isPact
           ? { type: "pact", level: selectedOption!.castLevel }
           : { type: "slot", level: selectedOption!.castLevel };
-    setCasting(true);
     setCastError(null);
-    try {
-      const result = await castSpell(spell, choice);
-      setOutcome(result);
-    } catch {
+    await run(() => castSpell(spell, choice), setOutcome, () => {
       setCastError("The spell could not be saved. Wait for any pending character save to finish, then try casting again.");
-    } finally {
-      setCasting(false);
-    }
+    });
   };
 
   const executeRoll = (index: number, request: RollRequest, mode?: RollRequest["mode"]) => {
@@ -223,7 +222,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  disabled={option.free === 0 || ritual}
+                  disabled={casting || option.free === 0 || ritual}
                   onClick={() => setSelectedKey(option.key)}
                   className={cn(
                     "flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors",
@@ -258,7 +257,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
           <input
             type="checkbox"
             checked={ritual}
-            disabled={castability === "ritual-only"}
+            disabled={casting || castability === "ritual-only"}
             onChange={(e) => setRitual(e.target.checked)}
             className="size-4 accent-character-fg"
           />
@@ -317,7 +316,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
       )}
 
       <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" size="sm" onClick={onClose}>
+        <Button variant="outline" size="sm" disabled={casting} onClick={() => canDismiss() && onClose()}>
           Cancel
         </Button>
         <Button size="sm" onClick={onCast} disabled={!canCast || casting}>
@@ -431,23 +430,27 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-        <DrawerContent>
+      <Drawer open={open} dismissible={!casting} onOpenChange={(o) => !o && canDismiss() && onClose()}>
+        <DrawerContent aria-busy={casting}>
           <DrawerHeader className="pb-2">
             <DrawerTitle>{title}</DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 pb-6 overflow-y-auto">{body}</div>
+          <div className="px-4 pb-6 overflow-y-auto">
+            {casting && <p role="status" className="mb-3 text-sm text-muted-foreground">Saving this cast. Please wait.</p>}
+            {body}
+          </div>
         </DrawerContent>
       </Drawer>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(o) => !o && canDismiss() && onClose()}>
+      <DialogContent className="sm:max-w-md" showCloseButton={!casting} aria-busy={casting}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
+        {casting && <p role="status" className="text-sm text-muted-foreground">Saving this cast. Please wait.</p>}
         {body}
       </DialogContent>
     </Dialog>

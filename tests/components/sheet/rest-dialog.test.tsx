@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { RestDialog } from "@/components/sheet/rest-dialog";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
 import type { ArcaneRecoveryInfo } from "@/lib/rest/arcane-recovery";
@@ -57,6 +57,37 @@ function setup(
 }
 
 describe("RestDialog", () => {
+  it("prevents dismissal and competing actions while a hit die saves", async () => {
+    let resolveSave!: (result: unknown) => void;
+    const spendHitDie = vi.fn().mockReturnValue(new Promise((resolve) => { resolveSave = resolve; }));
+    const { onClose, longRest } = setup({ spendHitDie, hitDicePools: [{ classSlug: "fighter", die: 10, max: 3, spent: 0 }] });
+    fireEvent.click(screen.getByRole("button", { name: /spend & roll/i }));
+    expect(screen.getByRole("button", { name: /take long rest/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /spend & roll/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
+    expect(onClose).not.toHaveBeenCalled(); expect(longRest).not.toHaveBeenCalled();
+    await act(async () => resolveSave(null));
+    expect(screen.getByRole("alert")).toHaveTextContent("hit die could not be spent");
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("does not close a reopened session when an old rest completes", async () => {
+    let resolveSave!: (saved: boolean) => void;
+    const mock = buildMock({ longRest: vi.fn().mockReturnValueOnce(new Promise<boolean>((resolve) => { resolveSave = resolve; })) });
+    mockUseRest = () => mock; mockState = { current_hp: 30 };
+    const onClose = vi.fn();
+    const mounted = render(<RestDialog open onClose={onClose} />);
+    fireEvent.click(screen.getByRole("button", { name: /take long rest/i }));
+    mounted.rerender(<RestDialog open={false} onClose={onClose} />);
+    mounted.rerender(<RestDialog open onClose={onClose} />);
+    await act(async () => resolveSave(true));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /take long rest/i })).toBeEnabled();
+  });
   it("keeps a failed rest open and lets the player retry", async () => {
     const longRest = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     const { onClose } = setup({ longRest });
@@ -133,12 +164,12 @@ describe("RestDialog — hit dice section", () => {
     expect(screen.getByText("2/2")).toBeInTheDocument();
   });
 
-  it("Spend & Roll calls spendHitDie with the class slug and does NOT close the dialog", () => {
+  it("Spend & Roll calls spendHitDie with the class slug and does NOT close the dialog", async () => {
     const { spendHitDie, onClose } = setup({ hitDicePools: pools });
     const buttons = screen.getAllByRole("button", { name: /spend & roll/i });
-    fireEvent.click(buttons[0]);
+    await act(async () => { fireEvent.click(buttons[0]); });
     expect(spendHitDie).toHaveBeenCalledWith("fighter");
-    fireEvent.click(buttons[1]);
+    await act(async () => { fireEvent.click(buttons[1]); });
     expect(spendHitDie).toHaveBeenCalledWith("wizard");
     expect(onClose).not.toHaveBeenCalled();
   });
