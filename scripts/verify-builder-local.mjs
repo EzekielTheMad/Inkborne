@@ -26,9 +26,9 @@ const stubs = {
       });
     }
     export async function updateCharacterAndReturn(id,patch){window.fixture.classCalls.push(patch);await new Promise(resolve=>{window.fixture.resolveClass=resolve});return {choices:patch.choices,level:patch.level}}
-    export async function updateCharacter(id,patch){if(location.pathname==='/low-con'){window.fixture.hpCalls.push(patch);return}if(location.pathname==='/hp-recovery'){window.fixture.hpCalls.push(patch);if(window.fixture.hpMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveHp=resolve;window.fixture.rejectHp=()=>reject(new Error('private HP detail'))});return}if(location.pathname==='/empty-class'){window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/background'||location.pathname==='/invalid-choice'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
+    export async function updateCharacter(id,patch){if(location.pathname==='/low-con'){window.fixture.hpCalls.push(patch);return}if(location.pathname==='/hp-recovery'){window.fixture.hpCalls.push(patch);if(window.fixture.hpMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveHp=resolve;window.fixture.rejectHp=()=>reject(new Error('private HP detail'))});return}if(location.pathname==='/empty-class'){window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/background'||location.pathname==='/invalid-choice'||location.pathname==='/note-replacement'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
   `,
-  "@/lib/supabase/background-selection-client": `export async function setCharacterBackground(){throw new Error("Fixture does not replace backgrounds")}`,
+  "@/lib/supabase/background-selection-client": `export async function setCharacterBackground(id,contentId,version){if(location.pathname!=='/note-replacement')throw new Error('Fixture does not replace backgrounds');window.fixture.backgroundReplacements.push({contentId,version});return {savedChoices:{background:'scholar',ideals:[]},selectedContentId:contentId,selectedContentVersion:version}}`,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(){} export async function removeContentRefById(){}`,
   "@/lib/supabase/inventory": `export async function addInventoryItem(id,grant){window.fixture.grants.push(grant);if(window.fixture.grants.length===2)throw new Error("private grant detail");return {id:"local-grant"}}`,
   "@/lib/sheet/update-state": `export async function updateCharacterState(){throw new Error("Fixture does not save currency")}`,
@@ -46,7 +46,7 @@ await build({
       import {ClassStepClient} from '@/app/(app)/characters/[id]/builder/class/class-step-client';
       import {BackgroundStepClient} from '@/app/(app)/characters/[id]/builder/background/background-step-client';
       import {EquipmentStepClient} from '@/app/(app)/characters/[id]/builder/equipment/equipment-step-client';
-      window.fixture={mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],hpCalls:[],hpMode:'pending',resolveHp:null,rejectHp:null,classChoiceCalls:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
+      window.fixture={backgroundReplacements:[],mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],hpCalls:[],hpMode:'pending',resolveHp:null,rejectHp:null,classChoiceCalls:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
@@ -74,6 +74,7 @@ await build({
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
           <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[newerTrait]} contentRefs={[pinnedHuman,pinnedTrait].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
           <Activity mode={route==='/invalid-choice'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier',resolved_choices:{'courier-skill':['skill-removed']}}}} backgrounds={[choiceCourier]} contentRefs={[{id:'choice-pin',content_id:'courier',context:{},choice_source:null,content_definitions:choiceCourier}]} schema={undefined}/></Activity>
+          <Activity mode={route==='/note-replacement'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[{...courier,id:'scholar',slug:'scholar',name:'Scholar',data:{ideals:['Study old maps']}}]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/background'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[courier]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
           {route==='/rolled-legacy'&&<ClassStepClient characterId='local-character' character={{...character,level:2,choices:{classes:[{slug:'wizard',level:2}],hp_rolls:{'wizard-2':{method:'manual',value:3}}},campaigns:{hp_rule:'rolled_only'}}} classes={[{...emptyFighter,id:'wizard',slug:'wizard',name:'Legacy Wizard',effects:[],data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
@@ -210,6 +211,35 @@ try {
   await page.getByText(/You have unsaved notes/).waitFor({state:"hidden"});
   assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[3].choices.ideals),[]);
   evidence.push({check:"explicit custom note clearing survives hidden failure and confirms an empty selection on retry",passed:true});
+  await page.goto(origin + "/note-replacement");
+  await page.getByRole("textbox",{name:"Ideals",exact:true}).fill("Protect my village");
+  await page.getByRole("textbox",{name:"Ideals",exact:true}).press("Tab");
+  await page.waitForFunction(()=>window.fixture.backgroundCalls.length===1);
+  page.once("dialog",dialog=>dialog.accept());
+  await page.getByRole("link",{name:"Overview",exact:true}).click();
+  await page.getByRole("heading",{name:"Overview fixture"}).waitFor();
+  await page.evaluate(()=>window.fixture.rejectBackground());
+  await page.goBack();
+  await page.getByRole("alert").filter({hasText:"background choices could not be confirmed"}).waitFor();
+  await page.getByRole("button",{name:"Change Background",exact:true}).focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await page.getByRole("textbox",{name:"Ideals",exact:true}).inputValue(),"Protect my village");
+  assert.equal(await page.getByRole("button",{name:"Preview Scholar",exact:true}).count(),0);
+  assert.equal(await page.evaluate(()=>window.fixture.backgroundReplacements.length),0);
+  await page.getByRole("alert").filter({hasText:"Save your unconfirmed notes"}).waitFor();
+  await page.screenshot({path:path.join(output,"background-replacement-recovery-mobile.png"),fullPage:true});
+  await page.getByRole("textbox",{name:"Ideals",exact:true}).focus();
+  await page.getByRole("textbox",{name:"Ideals",exact:true}).press("Tab");
+  await page.waitForFunction(()=>window.fixture.backgroundCalls.length===2);
+  await page.evaluate(()=>window.fixture.resolveBackground());
+  await page.getByRole("button",{name:"Change Background",exact:true}).click();
+  await page.getByRole("button",{name:"Preview Scholar",exact:true}).click();
+  await page.getByRole("button",{name:"Add Background",exact:true}).click();
+  await page.getByRole("button",{name:"Study old maps",exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[1].choices.ideals),["Protect my village"]);
+  assert.equal(await page.evaluate(()=>window.fixture.backgroundReplacements.length),1);
+  assert.equal(await page.getByText(/You have unsaved notes/).count(),0);
+  evidence.push({check:"failed custom note remains accessible until saved before replacing with preset background",passed:true});
   await page.goto(origin + "/invalid-choice");
   await page.evaluate(()=>{window.fixture.backgroundMode='success'});
   assert.equal(await page.getByRole("button",{name:"Athletics",exact:true}).isDisabled(),true);

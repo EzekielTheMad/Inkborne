@@ -145,8 +145,14 @@ export function BackgroundStepClient({
   const flaws =
     (selectedBgContent?.data.flaws as string[] | undefined) ?? [];
 
+  function hasUnconfirmedNotes() {
+    if (!hasDrafts) return false;
+    setSelectionError("Save your unconfirmed notes before changing the background. Leave the text field or press Enter to retry.");
+    return true;
+  }
+
   async function handleSelectBackground(content: ContentEntry) {
-    if (!beginSave()) return;
+    if (hasUnconfirmedNotes() || !beginSave()) return;
 
     setPreviewContent(null);
 
@@ -173,7 +179,7 @@ export function BackgroundStepClient({
   }
 
   function handleStartChangingBackground() {
-    if (saveBusy.current || conflictingPins) return;
+    if (saveBusy.current || conflictingPins || hasUnconfirmedNotes()) return;
 
     setPreviewContent(null);
     setSelectionError(null);
@@ -328,9 +334,13 @@ export function BackgroundStepClient({
         {hasBackground && selectedBgContent && !isChangingBackground ? (
           <div className="space-y-4">
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{selectedBgContent.name}</CardTitle>
+              {/* Chrome can collapse this inline-size container after retained Activity updates.
+                  This header has no container queries; keep its recovery controls visible. */}
+              <CardHeader
+                style={{ containerType: "normal" }}
+                className="flex flex-row items-center justify-between"
+              >
+                <CardTitle>{selectedBgContent.name}</CardTitle>
                   <Button
                     variant="outline"
                     size="sm"
@@ -339,7 +349,6 @@ export function BackgroundStepClient({
                   >
                     {isSavingBackground ? "Saving..." : "Change Background"}
                   </Button>
-                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {typeof selectedBgContent.data.description === "string" && (

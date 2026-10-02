@@ -166,6 +166,27 @@ describe("BackgroundStepClient", () => {
     await waitFor(() => expect(screen.queryByText(/unsaved notes/i)).not.toBeInTheDocument());
   });
 
+  it("keeps a failed custom note accessible when replacement is requested, then permits replacement after retry", async () => {
+    vi.mocked(updateCharacter).mockRejectedValueOnce(new Error("private note detail"));
+    renderStep();
+    const input=screen.getByRole("textbox",{name:"Ideals"});
+    fireEvent.change(input,{target:{value:"Protect my village"}});
+    fireEvent.blur(input);
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button",{name:"Change Background"}));
+    expect(screen.getByRole("alert")).toHaveTextContent("Save your unconfirmed notes");
+    expect(screen.getByRole("textbox",{name:"Ideals"})).toHaveValue("Protect my village");
+    expect(screen.queryByRole("button",{name:"Choose first background"})).not.toBeInTheDocument();
+    expect(setBackgroundMock).not.toHaveBeenCalled();
+    fireEvent.focus(input);fireEvent.blur(input);
+    await waitFor(()=>expect(screen.queryByText(/unsaved notes/i)).not.toBeInTheDocument());
+    expect(vi.mocked(updateCharacter).mock.calls[1][1].choices?.ideals).toEqual(["Protect my village"]);
+    fireEvent.click(screen.getByRole("button",{name:"Change Background"}));
+    fireEvent.click(screen.getByRole("button",{name:"Choose first background"}));
+    fireEvent.click(screen.getByRole("button",{name:"Confirm background preview"}));
+    await waitFor(()=>expect(setBackgroundMock).toHaveBeenCalledOnce());
+  });
+
   it("reconciles a background note saved while Activity is hidden", async () => {
     let resolveSave!: () => void;
     vi.mocked(updateCharacter).mockReturnValueOnce(new Promise<void>(resolve => { resolveSave = resolve; }));
