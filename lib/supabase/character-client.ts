@@ -3,6 +3,33 @@ import type {
   CharacterChoices,
   CharacterUpdatePatch,
 } from "@/lib/types/character";
+import type { AbilityMethod } from "@/lib/builder/ability-score-writer";
+
+/** Preserve current unrelated choices, and reject a race between read and write.
+ * Requires a returned row so an RLS/no-match update cannot appear successful.
+ * This guards the write window, not cross-tab ability draft reconciliation. */
+export async function saveCharacterAbilityScores(
+  characterId: string,
+  method: AbilityMethod,
+  scores: Record<string, number>,
+): Promise<void> {
+  const supabase = createClient();
+  const { data: current, error: readError } = await supabase
+    .from("characters")
+    .select("choices, base_stats")
+    .eq("id", characterId)
+    .single();
+  if (readError || !current) throw new Error("The character could not be loaded.");
+  const { data: saved, error } = await supabase
+    .from("characters")
+    .update({ base_stats: scores, choices: { ...current.choices, ability_method: method } })
+    .eq("id", characterId)
+    .eq("choices", JSON.stringify(current.choices))
+    .eq("base_stats", JSON.stringify(current.base_stats))
+    .select("id")
+    .single();
+  if (error || !saved) throw new Error("The ability scores could not be saved. Reload if the character changed elsewhere.");
+}
 
 /**
  * Browser-side helper to write a partial patch to a characters row.

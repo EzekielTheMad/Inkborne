@@ -14,7 +14,9 @@ and compatibility, but defer expanding those surfaces.
 - Verified GitHub main: `0a4acb93ab5fcda94d8efa13a87568c3315da108`.
 - Local branch: `codex/playable-core-stability`, isolated from existing worktrees.
 - Save recovery: ordered optimistic state patches; failure removes only the
-  failed patch and keeps later changes. A shared accessible alert asks the player
+  failed top-level patch and keeps later changes. Later absolute nested maps can
+  still carry failed optimistic spends; see the critical review below.
+  A shared accessible alert asks the player
   to retry the action. Cast results and rest completion wait for confirmed saves.
   Failed damage does not raise a concentration check. Character navigation resets
   the writer via the provider's character-ID key.
@@ -26,13 +28,16 @@ and compatibility, but defer expanding those surfaces.
 - Builder overview/navigation now share saved-choice status rules and expose
   accessible status/active-step text. The character-return label is corrected.
   Local journey cases include new-fighter sheet initialization and save retry.
+- Ability-score edits now save in order and retain failed drafts for explicit
+  retry, with visible saving/error status. Current unrelated choices are merged
+  at dispatch and guarded against changes in the read/write window.
 - The separate alpha-readiness candidate remains unmerged and preserved. It
   contains dependency/auth/E2E/security work; this branch does not absorb it.
 
 ## Verification
 
-- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 198 files /
-  1,827 tests passed including the builder milestone.
+- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 200 files /
+  1,840 tests passed including ability-save recovery and initialization review.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -48,13 +53,16 @@ and compatibility, but defer expanding those surfaces.
 1. Character creation validation/recovery is complete locally: malformed values,
    rejected/empty inserts, readable errors and unavailable game systems are covered.
 2. Builder overview/navigation consolidation is complete locally; see the
-   [milestone handoff](handoffs/2026-10-02-builder-journey.md). Next:
-   [ability-score save recovery](specs/2026-10-02-ability-save-recovery-next.md),
-   based on concurrent full-object saves and console-only rollback.
+   [milestone handoff](handoffs/2026-10-02-builder-journey.md). Ability-score
+   recovery is also complete locally; see its
+   [handoff](handoffs/2026-10-02-ability-save-recovery.md).
 3. Equipment grant retry safety is deferred: separate inserts/currency/confirmed
    writes need durable atomic/idempotent provenance. Session-only tracking is
    insufficient after reload or ambiguous network completion. No schema change
    is authorized; migration-history reconciliation remains a prerequisite.
+4. [Critical save review](handoffs/2026-10-02-critical-save-review.md) reproduced
+   dependent nested-map spending after a failed earlier save. Domain-level
+   action rebasing remains unresolved; next small repair is pending HP controls.
 
 ## Authority
 
