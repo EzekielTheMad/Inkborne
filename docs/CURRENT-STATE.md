@@ -1,9 +1,9 @@
 # Inkborne current work
 
-Updated October 2, 2026. Verified source: `1f4967f96c8d01447256280d98b65352f481a85d`, branch
-`codex/playable-core-stability`. Later commits consolidate documentation only. **Not
-release-ready.** See the [cutoff handoff](handoffs/2026-10-02-cutoff-checkpoint.md) for final
-evidence and the next task.
+Updated October 2, 2026, around 18:40 UTC. Verified source:
+`bd74cda343f31e3480a82ab3bfe063918d419c1a`, branch `codex/playable-core-stability`.
+**Not release-ready.** See the [replacement recovery milestone](handoffs/2026-10-02-background-replacement-recovery.md)
+for current evidence and the [cutoff handoff](handoffs/2026-10-02-cutoff-checkpoint.md) for prior history.
 
 ## Direction and authority
 
@@ -18,8 +18,9 @@ candidate remain untouched. No remote main verification occurred.
 
 Only local scoped edits, safe tests/builds and local commits were authorized. No installs, hosted
 Supabase tests/writes, schema/migrations, credentials/security changes, worktree deletion, push,
-merge or deployment. Source stopped at 17:25 UTC for final checks/handoff before the 18:00 UTC
-cutoff. Product-goal changes require the parent; durable database work requires separate approval.
+merge or deployment. The original source cutoff was 17:25 UTC. The parent reauthorized continuation
+at 18:25 UTC without a new deadline; this continuation ends at a coherent verified background-recovery
+milestone. Product-goal changes require the parent; durable database work requires separate approval.
 
 ## Verified local behavior
 
@@ -30,7 +31,10 @@ cutoff. Product-goal changes require the parent; durable database work requires 
   preserved. See [HP and Activity recovery](handoffs/2026-10-02-relative-hp-activity.md).
 - **Builder saves:** class/background controls share local synchronous gates. Mobile drawers show
   pending/errors and disable portal controls. Custom notes save on blur/Enter, retain failed drafts
-  and reconcile hidden completion; explicit clearing saves an empty selection. Equipment selection
+  and reconcile hidden completion; explicit clearing saves an empty selection. Replacement keeps
+  unconfirmed notes in their editor with retry instructions; its header recovery controls remain
+  visible after retained Activity updates. See [replacement recovery](handoffs/2026-10-02-background-replacement-recovery.md).
+  Equipment selection
   errors require retry; failed confirmation prevents blind same-session re-grants. These are not
   durable transactions. See [builder gates](handoffs/2026-10-02-builder-save-gates.md), [background
   recovery](handoffs/2026-10-02-background-save-recovery.md), [note
@@ -72,13 +76,13 @@ cutoff. Product-goal changes require the parent; durable database work requires 
 
 ## Final verification
 
-Restored-source checks completed around 17:27 UTC:
+Milestone checks completed around 18:40 UTC:
 
 | Command | Result |
 | --- | --- |
-| `npm.cmd run check` | Strict types, zero-warning lint; 203 files / 1,968 tests passed |
+| `npm.cmd test`, `npm.cmd run typecheck`, `npm.cmd run lint` | Strict types, zero-warning lint; 203 files / 1,969 tests passed |
 | `npm.cmd run build` | Next 16.2.10 compile, TypeScript and 24 static pages passed |
-| `node scripts/verify-builder-local.mjs` | 19 installed-Chrome checks passed |
+| `node scripts/verify-builder-local.mjs` | 20 installed-Chrome checks passed with fresh build CSS |
 | `node scripts/verify-play-save-local.mjs` | 5 installed-Chrome critical play checks passed |
 | `git diff --check` / source status | Passed / clean before documentation consolidation |
 
@@ -96,20 +100,16 @@ remain unverified.
 
 ## Prioritized next work
 
-1. **Next local task:** failed-custom-note recovery across background replacement. Replacement can
-   leave a retained draft outside the visible editor. An uncommitted guard passed unit/check/build
-   but failed clean Chrome visibility checks and was reverted. Reproduce the complete lifecycle and
-   preserve the note; see the [cutoff review](handoffs/2026-10-02-cutoff-review.md).
-2. Extend readiness to required per-level/ASI/category-backed choices; reconcile
+1. Extend readiness to required per-level/ASI/category-backed choices; reconcile
    missing/retired/orphan pins. Do not infer new mechanics from prose or automatically repair
    references.
-3. Equipment grants need durable inventory/currency/confirmation atomicity and provenance across
+2. Equipment grants need durable inventory/currency/confirmation atomicity and provenance across
    reload, tabs and lost responses. The [equipment
    proposal](specs/2026-10-02-equipment-atomicity-proposal.md) is design only. Migration history,
    historical partial grants and copy semantics require review before approved schema/hosted work.
-4. Cross-client state, concurrent choices/pins and ambiguous completion need a shared durable
+3. Cross-client state, concurrent choices/pins and ambiguous completion need a shared durable
    boundary. The [action proposal](specs/2026-10-02-durable-character-actions-proposal.md) covers
    receipts/revisions/locking and all relevant writers; no schema implements it. Guaranteed injected
    failure is not proof of safe replay after a committed response is lost.
-5. Clarify whether legacy Manual/Average HP satisfies a later rolled-only rule. Stored values/math
+4. Clarify whether legacy Manual/Average HP satisfies a later rolled-only rule. Stored values/math
    and confirmation handling were preserved; only the leaking Manual edit field changed.
