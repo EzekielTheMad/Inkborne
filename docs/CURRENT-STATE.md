@@ -53,7 +53,9 @@ and compatibility, but defer expanding those surfaces.
   refusal, to prevent overlapping full-choice writes within that editor.
   Background display matches the selected pin identity and identifies missing
   or duplicate snapshots. See the [builder gates handoff](handoffs/2026-10-02-builder-save-gates.md).
-  Background subchoice concurrency and cross-client/ambiguous outcomes remain open.
+  Background subchoice concurrency is now gated locally; custom notes retain failed drafts
+  and save on blur/Enter. See [background recovery](handoffs/2026-10-02-background-save-recovery.md).
+  Cross-client/ambiguous outcomes remain open.
 - Overview and navigation now require matching unique saved core pins (including
   content identity/version and child-parent compatibility) before Complete.
   Missing/extra/conflicting pins remain In progress. Ability rules stay schema-aware.
@@ -82,7 +84,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,920 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,923 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -90,7 +92,7 @@ choice/reference synchronization remain separate risks.
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Installed Chrome ran an isolated fixture with real editors and mocked
+- Installed Chrome ran nine builder checks and five play-save checks with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
   selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing

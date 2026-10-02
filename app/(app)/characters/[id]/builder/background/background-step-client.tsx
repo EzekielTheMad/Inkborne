@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useSaveNavigationGuard } from "@/lib/builder/use-save-navigation-guard";
 import { updateCharacter } from "@/lib/supabase/character-client";
 import { setCharacterBackground } from "@/lib/supabase/background-selection-client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ import { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
+
+type NarrativeField = "personality_traits" | "ideals" | "bonds" | "flaws";
 
 interface BackgroundStepClientProps {
   characterId: string;
@@ -73,6 +76,9 @@ export function BackgroundStepClient({
   schema,
   availableLanguages = [],
 }: BackgroundStepClientProps) {
+  const saveBusy = useRef(false);
+  const [customDrafts, setCustomDrafts] = useState<Partial<Record<NarrativeField, string[]>>>({});
+  const { notice: navigationNotice, setBlocked } = useSaveNavigationGuard("background notes and choices");
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
@@ -95,6 +101,26 @@ export function BackgroundStepClient({
   const selectedBgContent = conflictingPins ? undefined :
     (selectedOverride?.slug === selectedBackground ? selectedOverride : pinnedBackground);
   const missingSnapshot = !!selectedBackground && !selectedBgContent && !conflictingPins;
+
+  const hasDrafts = Object.keys(customDrafts).length > 0;
+  useEffect(() => {
+    setBlocked(hasDrafts || isSavingBackground || !!selectionError);
+  }, [hasDrafts, isSavingBackground, selectionError, setBlocked]);
+
+  function beginSave() {
+    if (saveBusy.current || conflictingPins) return false;
+    saveBusy.current = true;
+    setIsSavingBackground(true);
+    setSelectionError(null);
+    setBlocked(true);
+    return true;
+  }
+
+  function navigateTo(step: string) {
+    if (saveBusy.current) return;
+    if ((hasDrafts || selectionError) && !window.confirm("Your background notes or choices have unconfirmed changes. A save already sent may still complete. Leave anyway?")) return;
+    router.push(`/characters/${characterId}/builder/${step}`);
+  }
 
   const allEffects: Effect[] = [
     ...contentRefs
@@ -120,13 +146,11 @@ export function BackgroundStepClient({
     (selectedBgContent?.data.flaws as string[] | undefined) ?? [];
 
   async function handleSelectBackground(content: ContentEntry) {
-    if (isSavingBackground || conflictingPins) return;
+    if (!beginSave()) return;
 
     setPreviewContent(null);
-    setSelectionError(null);
 
     const prev = localChoices;
-    setIsSavingBackground(true);
 
     try {
       const saved = await setCharacterBackground(
@@ -143,12 +167,13 @@ export function BackgroundStepClient({
       setLocalChoices(prev);
       setSelectionError(getBackgroundSelectionError(error, "selected"));
     } finally {
+      saveBusy.current = false;
       setIsSavingBackground(false);
     }
   }
 
   function handleStartChangingBackground() {
-    if (isSavingBackground || conflictingPins) return;
+    if (saveBusy.current || conflictingPins) return;
 
     setPreviewContent(null);
     setSelectionError(null);
@@ -156,7 +181,7 @@ export function BackgroundStepClient({
   }
 
   function handleKeepCurrentBackground() {
-    if (isSavingBackground || conflictingPins) return;
+    if (saveBusy.current || conflictingPins) return;
 
     setPreviewContent(null);
     setSelectionError(null);
@@ -164,10 +189,10 @@ export function BackgroundStepClient({
   }
 
   async function handleNarrativeChange(
-    field: "personality_traits" | "ideals" | "bonds" | "flaws",
+    field: NarrativeField,
     value: string[],
   ) {
-    if (isSavingBackground || conflictingPins) return;
+    if (!beginSave()) return;
 
     const newChoices = { ...localChoices, [field]: value };
 
@@ -176,15 +201,24 @@ export function BackgroundStepClient({
 
     try {
       await updateCharacter(characterId, { choices: newChoices });
+      setCustomDrafts(drafts => {
+        if (drafts[field] !== value) return drafts;
+        const next = { ...drafts };
+        delete next[field];
+        return next;
+      });
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save narrative trait:", err);
       setSelectionError("These background choices could not be confirmed. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setIsSavingBackground(false);
     }
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
-    if (isSavingBackground || conflictingPins) return;
+    if (!beginSave()) return;
 
     const newResolved = {
       ...localChoices.resolved_choices,
@@ -201,16 +235,19 @@ export function BackgroundStepClient({
       setLocalChoices(prev);
       console.error("Failed to save choice selection:", err);
       setSelectionError("These background choices could not be confirmed. Reload the character before trying again.");
+    } finally {
+      saveBusy.current = false;
+      setIsSavingBackground(false);
     }
   }
 
   const renderNarrativeSelector = (
     label: string,
-    field: "personality_traits" | "ideals" | "bonds" | "flaws",
+    field: NarrativeField,
     options: string[],
     max: number,
   ) => {
-    const current = localChoices[field] ?? [];
+    const current = customDrafts[field] ?? localChoices[field] ?? [];
 
     return (
       <div className="space-y-2">
@@ -253,9 +290,21 @@ export function BackgroundStepClient({
           </div>
         ) : (
           <Input
+            aria-label={label}
             placeholder={`Enter custom ${label.toLowerCase()}`}
             value={current[0] ?? ""}
-            onChange={(e) => handleNarrativeChange(field, [e.target.value])}
+            onChange={(e) => {
+              const value = e.target.value;
+              setBlocked(true);
+              setCustomDrafts(drafts => ({ ...drafts, [field]: [value] }));
+            }}
+            onBlur={() => {
+              const draft = customDrafts[field];
+              if (draft) void handleNarrativeChange(field, draft);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+            }}
           />
         )}
       </div>
@@ -270,6 +319,8 @@ export function BackgroundStepClient({
         className="min-w-0 space-y-6 border-0 p-0"
       >
         <h2 className="text-xl font-semibold">Background</h2>
+        {hasDrafts && <p role="status" className="text-sm text-muted-foreground">You have unsaved notes. Leave the text field or press Enter to save.</p>}
+        {navigationNotice && <p role="alert" className="text-sm text-destructive">{navigationNotice}</p>}
         {conflictingPins && <p role="alert" className="text-sm text-destructive">Multiple saved snapshots match this background. Reload the character and resolve its references before editing.</p>}
         {missingSnapshot && <p role="alert" className="text-sm text-destructive">The selected background has no matching saved snapshot. Reload the character and check its references before making further choices.</p>}
 
@@ -474,17 +525,13 @@ export function BackgroundStepClient({
         <div className="flex justify-between pt-4">
           <Button
             variant="outline"
-            onClick={() =>
-              router.push(`/characters/${characterId}/builder/abilities`)
-            }
+            onClick={() => navigateTo("abilities")}
           >
             Previous: Abilities
           </Button>
           <Button
             className="bg-character-fg text-background hover:opacity-90"
-            onClick={() =>
-              router.push(`/characters/${characterId}/builder/equipment`)
-            }
+            onClick={() => navigateTo("equipment")}
           >
             Next: Equipment
           </Button>

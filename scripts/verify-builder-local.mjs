@@ -26,8 +26,9 @@ const stubs = {
       });
     }
     export async function updateCharacterAndReturn(id,patch){window.fixture.classCalls.push(patch);await new Promise(resolve=>{window.fixture.resolveClass=resolve});return {choices:patch.choices,level:patch.level}}
-    export async function updateCharacter(id,patch){if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
+    export async function updateCharacter(id,patch){if(location.pathname==='/background'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
   `,
+  "@/lib/supabase/background-selection-client": `export async function setCharacterBackground(){throw new Error("Fixture does not replace backgrounds")}`,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(){} export async function removeContentRefById(){}`,
   "@/lib/supabase/inventory": `export async function addInventoryItem(id,grant){window.fixture.grants.push(grant);if(window.fixture.grants.length===2)throw new Error("private grant detail");return {id:"local-grant"}}`,
   "@/lib/sheet/update-state": `export async function updateCharacterState(){throw new Error("Fixture does not save currency")}`,
@@ -43,8 +44,9 @@ await build({
       import {AbilitiesStepClient} from '@/app/(app)/characters/[id]/builder/abilities/abilities-step-client';
       import {RaceStepClient} from '@/app/(app)/characters/[id]/builder/race/race-step-client';
       import {ClassStepClient} from '@/app/(app)/characters/[id]/builder/class/class-step-client';
+      import {BackgroundStepClient} from '@/app/(app)/characters/[id]/builder/background/background-step-client';
       import {EquipmentStepClient} from '@/app/(app)/characters/[id]/builder/equipment/equipment-step-client';
-      window.fixture={mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[]};
+      window.fixture={mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
@@ -52,15 +54,17 @@ await build({
       const newerHuman={...human,version:2,data:{description:'New catalog race description.'},effects:[{type:'choice',choose:1,from:['skill-stealth'],grant_type:'proficiency',choice_id:'new-skill'}]};
       const pinnedFighter={...human,id:'fighter',slug:'fighter',name:'Pinned Fighter',content_type:'class',data:{hit_die:10,levels:[{level:1,features:['second-wind']}]}};
       const pinnedWind={...human,id:'second-wind',slug:'second-wind',name:'Pinned Second Wind',content_type:'feature',data:{description:'Authorized pinned recovery.'}};
+      const courier={...human,id:'courier',slug:'courier',name:'Courier',content_type:'background',data:{ideals:[],bonds:[],flaws:[],personality_traits:[]}};
       function App(){
         const [route,setRoute]=useState(location.pathname);
         function navigate(to){history.pushState({fixture:true},'',to);setRoute(to)}
         useEffect(()=>{const pop=()=>setRoute(location.pathname);const go=e=>navigate(e.detail);window.addEventListener('popstate',pop);window.addEventListener('fixture-navigation',go);return()=>{window.removeEventListener('popstate',pop);window.removeEventListener('fixture-navigation',go)}},[]);
         return <><h1>Isolated builder fixture</h1><p>Simulated history and persistence; real editor and selection components.</p>
-          <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/equipment' onClick={e=>{e.preventDefault();navigate('/equipment')}}>Equipment</a> | <a href='/pinned-class' onClick={e=>{e.preventDefault();navigate('/pinned-class')}}>Pinned Class</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
+          <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/background' onClick={e=>{e.preventDefault();navigate('/background')}}>Background</a> | <a href='/equipment' onClick={e=>{e.preventDefault();navigate('/equipment')}}>Equipment</a> | <a href='/pinned-class' onClick={e=>{e.preventDefault();navigate('/pinned-class')}}>Pinned Class</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
           {route==='/overview'&&<h2>Overview fixture</h2>}
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
           <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[]} contentRefs={[{id:'pin',content_id:'human',context:{},choice_source:null,content_definitions:pinnedHuman}]} schema={undefined}/></Activity>
+          <Activity mode={route==='/background'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[courier]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
           <Activity mode={route==='/pinned-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Fixture fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...pinnedFighter,name:'Catalog Fighter',version:2,data:{hit_die:12,levels:[]}}]} subclasses={[]} features={[{...pinnedWind,name:'Catalog Second Wind',version:2}]} feats={[]} spells={[]} contentRefs={[pinnedFighter,pinnedWind].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
           <Activity mode={route==='/race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{}}} races={[human]} subraces={[]} traits={[]} contentRefs={[]} schema={undefined}/></Activity>
@@ -74,7 +78,7 @@ await build({
   plugins: [{
     name: "isolated-boundaries",
     setup(builder) {
-      builder.onResolve({ filter: /^(next\/navigation|@\/lib\/supabase\/(character-client|content-refs-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
+      builder.onResolve({ filter: /^(next\/navigation|@\/lib\/supabase\/(character-client|content-refs-client|background-selection-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
       builder.onResolve({filter: /^@\/lib\/(supabase\/inventory|sheet\/update-state)$/}, args=>({path:args.path,namespace:"fixture"}));
       builder.onResolve({filter: /^\.\/actions$/}, args => args.importer.endsWith("class-step-client.tsx") ? {path:"class-actions",namespace:"fixture"} : undefined);
       builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: stubs[args.path], loader: "js" }));
@@ -147,6 +151,28 @@ try {
   assert.equal(unloadPrompt, true);
   assert.equal(await page.getByRole("spinbutton", { name: "Strength score" }).inputValue(), "10");
   evidence.push("Chrome refresh presents a beforeunload prompt after user input; accepting refresh discards the fixture draft.");
+  await page.goto(origin + "/background");
+  await page.getByRole("textbox", {name:"Ideals",exact:true}).fill("Keep promises");
+  assert.equal(await page.evaluate(()=>window.fixture.backgroundCalls.length),0);
+  await page.getByRole("textbox", {name:"Ideals",exact:true}).press("Tab");
+  await page.waitForFunction(()=>window.fixture.backgroundCalls.length===1);
+  assert.equal(await page.getByRole("button", {name:"Saving...",exact:true}).isDisabled(),true);
+  await page.evaluate(()=>window.fixture.rejectBackground());
+  await page.getByRole("alert").filter({hasText:"background choices could not be confirmed"}).waitFor();
+  assert.equal(await page.getByRole("textbox", {name:"Ideals",exact:true}).inputValue(),"Keep promises");
+  await page.getByRole("textbox", {name:"Ideals",exact:true}).focus();
+  await page.getByRole("textbox", {name:"Ideals",exact:true}).press("Tab");
+  await page.waitForFunction(()=>window.fixture.backgroundCalls.length===2);
+  page.once("dialog",dialog=>dialog.accept());
+  await page.getByRole("link",{name:"Overview",exact:true}).click();
+  await page.getByRole("heading",{name:"Overview fixture"}).waitFor();
+  await page.evaluate(()=>window.fixture.resolveBackground());
+  await page.goBack();
+  await page.getByRole("button",{name:"Change Background",exact:true}).waitFor();
+  assert.equal(await page.getByRole("textbox", {name:"Ideals",exact:true}).inputValue(),"Keep promises");
+  assert.equal(await page.getByText(/You have unsaved notes/).count(),0);
+  await page.screenshot({path:path.join(output,"background-note-mobile.png"),fullPage:true,animations:"disabled"});
+  evidence.push({check:"background note blur save failure, explicit retry and hidden Activity completion",passed:true});
   await page.setViewportSize({width:1280,height:900});
   await page.goto(origin + "/pinned-class");
   await page.getByRole("button", { name: "Remove Pinned Fighter", exact: true }).waitFor();

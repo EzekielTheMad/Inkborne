@@ -164,4 +164,23 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
+  it("blocks a second background subchoice while the first full-choice save is pending", async () => {
+    let rejectSave!: (error: Error) => void;
+    mocks.update.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));
+    const background: ContentEntry = { ...human, id: "soldier", name: "Soldier", slug: "soldier", content_type: "background", effects: [
+      { type: "choice", choose: 1, from: ["skill-athletics"], grant_type: "proficiency", choice_id: "skill" },
+      { type: "choice", choose: 1, from: ["tool-dice"], grant_type: "proficiency", choice_id: "tool" },
+    ] };
+    render(<BackgroundStepClient characterId="char-1" character={{ ...character, choices: { background: "soldier" } }} backgrounds={[background]} contentRefs={[{ id: "pin", content_id: background.id, context: {}, choice_source: null, content_definitions: background }]} schema={undefined} />);
+    fireEvent.click(screen.getByRole("button", { name: "Athletics" }));
+    expect(screen.getByRole("button", { name: "Tool Dice" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Tool Dice" }));
+    expect(mocks.update).toHaveBeenCalledOnce();
+    await act(async () => rejectSave(new Error("offline")));
+    expect(screen.getByRole("button", { name: "Athletics" })).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(screen.getByRole("button", { name: "Tool Dice" }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledTimes(2));
+    expect(mocks.update.mock.calls[1][1].choices.resolved_choices).toEqual({ tool: ["tool-dice"] });
+  });
+
 });

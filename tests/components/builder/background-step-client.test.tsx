@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { Activity } from "react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices } from "@/lib/types/character";
@@ -51,6 +52,7 @@ vi.mock("@/components/builder/stat-preview", () => ({
 }));
 
 import { BackgroundStepClient } from "@/app/(app)/characters/[id]/builder/background/background-step-client";
+import { updateCharacter } from "@/lib/supabase/character-client";
 import { setCharacterBackground } from "@/lib/supabase/background-selection-client";
 
 const setBackgroundMock = vi.mocked(setCharacterBackground);
@@ -115,6 +117,7 @@ function renderStep({
 describe("BackgroundStepClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(updateCharacter).mockResolvedValue(undefined);
     setBackgroundMock.mockResolvedValue({
       savedChoices: { background: "lantern-courier" },
       selectedContentId: currentBackground.id,
@@ -141,6 +144,42 @@ describe("BackgroundStepClient", () => {
     expect(screen.queryByText("Pinned Courier")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Choose first background" })).toBeDisabled();
     expect(setBackgroundMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps custom text editable until blur and retains a failed draft for explicit retry", async () => {
+    let rejectSave!: (error: Error) => void;
+    vi.mocked(updateCharacter).mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));
+    renderStep();
+    const input = screen.getByPlaceholderText("Enter custom ideals");
+    fireEvent.change(input, { target: { value: "Keep promises" } });
+    expect(input).toBeEnabled();
+    expect(vi.mocked(updateCharacter)).not.toHaveBeenCalled();
+    fireEvent.blur(input);
+    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+    await act(async () => rejectSave(new Error("offline")));
+    expect(input).toHaveValue("Keep promises");
+    expect(input).toBeEnabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("could not be confirmed");
+    fireEvent.focus(input); fireEvent.blur(input);
+    await waitFor(() => expect(vi.mocked(updateCharacter)).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(updateCharacter).mock.calls[1][1]).toEqual({ choices: { background: "lantern-courier", ideals: ["Keep promises"] } });
+    await waitFor(() => expect(screen.queryByText(/unsaved notes/i)).not.toBeInTheDocument());
+  });
+
+  it("reconciles a background note saved while Activity is hidden", async () => {
+    let resolveSave!: () => void;
+    vi.mocked(updateCharacter).mockReturnValueOnce(new Promise<void>(resolve => { resolveSave = resolve; }));
+    const view = (mode: "visible" | "hidden") => <Activity mode={mode}><BackgroundStepClient characterId="char-1" character={{ id: "char-1", level: 1, base_stats: {}, choices: { background: "lantern-courier" } }} backgrounds={[currentBackground]} contentRefs={[pinnedRef]} schema={undefined} /></Activity>;
+    const rendered = render(view("visible"));
+    fireEvent.change(screen.getByLabelText("Ideals"), { target: { value: "Keep promises" } });
+    fireEvent.blur(screen.getByLabelText("Ideals"));
+    rendered.rerender(view("hidden"));
+    await act(async () => resolveSave());
+    rendered.rerender(view("visible"));
+    expect(screen.getByLabelText("Ideals")).toHaveValue("Keep promises");
+    expect(screen.getByRole("button", { name: "Change Background" })).toBeEnabled();
+    expect(screen.queryByText(/unsaved notes/i)).not.toBeInTheDocument();
+    expect(vi.mocked(updateCharacter)).toHaveBeenCalledOnce();
   });
 
   it("renders the exact pinned snapshot instead of the mutable catalog row", () => {
