@@ -1,10 +1,10 @@
 # Inkborne current work
 
-Updated October 2, 2026, around 19:30 UTC. Branch: `codex/playable-core-stability`.
-Verified source: `e209583b9cf208305305f33a62653de38c358d88`. **Not release-ready.**
+Updated October 2, 2026, around 19:44 UTC. Branch: `codex/playable-core-stability`.
+Verified source: `d69be9d32c74ccfb676836a143105bbc86bf7e49`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[latest validation/recovery handoff](handoffs/2026-10-02-builder-validation-recovery.md).
+[latest validation/recovery handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 
 ## Direction and authority
@@ -34,22 +34,24 @@ which is its merge base/ancestor. No main-only commits; no remote fetch or main 
   action hook. Overview/navigation say **Saved**, not full completion, and orphaned core pins show
   **In progress**. Supported per-level/ASI/style/trait/category checks now participate in saved readiness.
 - Existing immutable class grants support explicit missing-feature restoration with failed-save retry.
-  Missing race trait history is visible and blocks dependent choices; historical pins stay intact.
-- Strict types, zero-warning lint, **204 files / 1,990 tests**, production build (24 static pages),
-  **22 builder + 6 play/effect Chrome checks** passed. These browser fixtures use actual components,
+  Fresh race selection writes parent pins only; unpinned trait choices remain usable with explicit current-
+  catalog disclosure. Recorded trait pins stay authoritative; strict builder reads reject unreadable/mismatched snapshots.
+- Strict types, zero-warning lint, **204 files / 2,001 tests**, production build (24 static pages),
+  **23 builder + 6 play/effect Chrome checks** passed. These browser fixtures use actual components,
   Activity and production CSS with simulated persistence/router; no errors or remote attempts.
 
 ## Remaining work and approval boundaries
 
-Supported per-level/category validation and existing class-manifest recovery are complete for this
-milestone. Unknown custom categories need authoritative vocabulary; lost original core/race trait pins
+The fresh-race false block and authored any-language compatibility gap are fixed and independently
+reviewed. Saved validates recorded evidence; unpinned traits remain outside full historical validation.
+Other unknown categories need original-source research first; lost original core/race trait pins
 and conflicting/orphaned provenance require evidence and a recovery policy, not catalog guessing.
-Existing selection display fallbacks do not repair pins or make readiness Saved. Legacy rolled-only HP
+Catalog fallback does not reconstruct original versions. Saved covers recorded evidence. Legacy rolled-only HP
 grandfathering remains a product decision. No new critical local data-loss regression remained known;
 this is not a whole-character or real-backend acceptance verdict.
 
-The next major blockers require approval for a named disposable staging target and tracked authenticated
-acceptance/failure tests. The latest handoff contains a precise approval question. Durable schema changes
+Victor is answering whether a disposable staging target exists or the configured project is live.
+Hosted execution and credentials remain untouched pending that answer and the named acceptance scope. The latest handoff contains a precise approval question. Durable schema changes
 remain a separate approval; further general local cleanup cannot prove committed-response recovery.
 
 Required real Next/auth/backend acceptance and the state RPC's no-match/search-path risks are in

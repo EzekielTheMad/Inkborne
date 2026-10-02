@@ -1,13 +1,13 @@
 # Release-readiness checklist
 
-October 2, 2026. Source `e209583`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [latest handoff](handoffs/2026-10-02-builder-validation-recovery.md).
+October 2, 2026. Source `d69be9d`; branch `codex/playable-core-stability`. **Not release-ready.**
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [latest handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 
 ## Verified locally
 
 - [x] Full branch reviewed against local main `26e1f514693190e4afb2dc708ac97fb04a0f5814`; no main-only commits.
-- [x] Strict types, zero-warning lint, 204 files / 1,990 tests; Next 16.2.10 production build, 24 static pages.
-- [x] 22 builder + 6 play/effect installed-Chrome checks with fresh production CSS, simulated router/persistence,
+- [x] Strict types, zero-warning lint, 204 files / 2,001 tests; Next 16.2.10 production build, 24 static pages.
+- [x] 23 builder + 6 play/effect installed-Chrome checks with fresh production CSS, simulated router/persistence,
   actual components/Activity; no page errors or remote attempts. Covers pending/rejected saves, Back/reveal,
   note replacement, exact HP failure recovery and effect-draft retry. Creation remains unit-tested, not real-browser accepted.
 - [x] Exact saved core, active feature/trait, ASI/style and supported category checks shared by overview/navigation; **Saved** labels disclose limited readiness.
@@ -31,20 +31,27 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [latest handoff]
 
 ## Supported milestone and remaining content/product decisions
 
-- [x] Required per-level/ASI/style/trait and explicit/category choices are validated from exact pins; existing
-  all_languages options are resolved consistently. Generic feature/subclass choices are reachable in actual panes.
+- [x] Required per-level/ASI/style, recorded-trait and explicit/category choices are validated from exact pins; existing
+  all_languages and authoring-defined any/language options are resolved consistently. Generic feature/subclass choices are reachable in actual panes.
 - [x] Missing active class features can explicitly reconcile from the existing immutable grant manifest, with
-  pending/error/Activity retry. Valid historical pins remain intact. Missing race trait history blocks dependent choices.
-- [ ] Unknown custom category vocabularies and missing original core/race trait versions need authoritative content
-  evidence/policy. Conflicting/orphan references remain incomplete; display fallbacks do not repair saved pins.
+  pending/error/Activity retry. Valid historical pins remain intact. Fresh race parent-only persistence no longer
+  causes false trait blocking; unpinned catalog choices are disclosed and are outside Saved validation.
+- [x] Independent review findings fixed: strict builder reads reject unreadable/mismatched recorded snapshots,
+  and race/subrace/trait conflicts gate edits. Actual fresh selection/refresh/Back path is covered.
+- [ ] Other unknown custom category vocabularies and missing original core/race trait versions need authoritative content
+  evidence/policy after source/provenance research. Conflicting/orphan references remain incomplete;
+  unpinned current-catalog selection does not reconstruct an original version or prove full trait readiness.
   Saved remains limited validation, not a full playable-character verdict.
-- [ ] Victor must settle legacy Manual/Average HP under rolled-only rules and how legacy partial grants/copies are reconciled.
+- [ ] Victor must settle legacy Manual/Average HP under rolled-only rules and ambiguous legacy partial grants.
+  Normal copying already preserves state/pins/current inventory; it is not a new equipment award.
 
 ## Next approval boundary
 
+Victor has been asked whether staging exists or the configured project is live. Hosted execution remains paused.
+
 - [ ] Approve a named disposable staging project, owner/nonowner accounts, tracked creation/builder/sheet and
   exact-pin recovery fixtures, denial/no-match and before/after-commit/two-tab tests, and cleanup by ID.
-  The [latest handoff](handoffs/2026-10-02-builder-validation-recovery.md) contains the precise proposed question. This does not authorize SQL/schema changes.
+  The [latest handoff](handoffs/2026-10-02-builder-compatibility-review.md) contains the precise proposed question. This does not authorize SQL/schema changes.
 
 ## Victor approval needed for durable work
 

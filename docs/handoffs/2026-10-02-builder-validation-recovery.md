@@ -1,5 +1,8 @@
 # Builder choice validation and reference recovery
 
+Historical checkpoint. Its missing-trait gate and category coverage were narrowed/corrected by
+[compatibility review](2026-10-02-builder-compatibility-review.md); current evidence is there.
+
 October 2, 2026, around 19:30 UTC. Source `e209583b9cf208305305f33a62653de38c358d88`.
 Branch `codex/playable-core-stability`; pass began at clean `3da50703cb9fa3546c7a2db8f0620605eb653c9d`.
 **Not release-ready.** [CURRENT-STATE](../CURRENT-STATE.md) and [RELEASE-READINESS](../RELEASE-READINESS.md)
