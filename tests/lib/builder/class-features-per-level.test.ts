@@ -251,6 +251,22 @@ describe("classFeaturesPerLevel", () => {
     ]);
   });
 
+  it.each([
+    {name:"unknown style",selected:["missing-style"],styleClass:"fighter",kind:"fighting_style",made:false},
+    {name:"duplicate style picks",selected:["fighter-style","fighter-style"],styleClass:"fighter",kind:"fighting_style",made:false},
+    {name:"foreign class style",selected:["fighter-style"],styleClass:"wizard",kind:"fighting_style",made:false},
+    {name:"ordinary feature",selected:["fighter-style"],styleClass:"fighter",kind:"passive",made:false},
+    {name:"compatible style",selected:["fighter-style"],styleClass:"fighter",kind:"fighting_style",made:true},
+  ])("validates the actual selected fighting-style definition: $name", ({selected,styleClass,kind,made}) => {
+    const cls={...makeClass(),slug:"fighter",data:{hit_die:10,levels:[{level:1,features:["fighter-fighting-style"]}]}};
+    const rows=classFeaturesPerLevel({classContent:cls,features:[
+      feature("fighter-fighting-style","Fighting Style",1,"fighter",{feature_type:"fighting_style"}),
+      feature("fighter-style","Fighting Style: Defense",1,styleClass,{feature_type:kind}),
+    ],subclassContent:null,characterChoices:{resolved_choices:{"fighter-fighting-style":selected}},classIndex:0});
+    expect(rows[0].choices[0].isMade).toBe(made);
+    expect(pendingChoicesUpTo(rows,1)).toHaveLength(made?0:1);
+  });
+
   it("includes a row for levels with no features and no choices (so the rail can navigate to them)", () => {
     const wizard: ContentEntry = {
       id: "c-wizard",

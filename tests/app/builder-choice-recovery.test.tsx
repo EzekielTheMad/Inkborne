@@ -329,6 +329,64 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.canonical.mock.calls[0][1]).toEqual({choices:{classes:[{slug:"fighter",level:2}]},level:2});
   });
 
+  it.each([true,false])("preserves the selected pinned fighting style (newer catalog=%s)", (hasNewer) => {
+    const parent:ContentEntry={...human,id:"fighting-style",slug:"fighting-style",name:"Fighting Style",content_type:"feature",data:{class:"fighter",feature_type:"fighting_style"}};
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[parent.slug]}]}};
+    const style:ContentEntry={...parent,id:"defense",slug:"defense",name:"Pinned Defense",data:{class:"fighter",feature_type:"fighting_style",description:"Authorized defense."}};
+    const newer={...style,name:"Catalog Defense",version:2,data:{class:"wizard",feature_type:"fighting_style",description:"Changed defense."}};
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}],resolved_choices:{[parent.slug]:[style.slug]}}}} classes={[cls]} subclasses={[]} features={[parent,...(hasNewer?[newer]:[])]} feats={[]} spells={[]} contentRefs={[cls,parent,style].map(content=>({id:"pin-"+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/>);
+    expect(screen.getByRole("button",{name:/Pinned Defense/})).toHaveAttribute("aria-pressed","true");
+    expect(screen.queryByText("Catalog Defense")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Choice made")).toBeVisible();
+    fireEvent.click(screen.getByRole("button",{name:/Pinned Defense/}));
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it("keeps the first style pin when selecting a separate fighting-style feature", async () => {
+    const first:ContentEntry={...human,id:"first-style",slug:"first-style",name:"Fighting Style",content_type:"feature",data:{class:"fighter",feature_type:"fighting_style"}};
+    const second={...first,id:"second-style",slug:"second-style"};
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[first.slug]},{level:2,features:[second.slug]}]}};
+    const defense={...first,id:"defense",slug:"defense",name:"Defense"};
+    const archery={...first,id:"archery",slug:"archery",name:"Archery"};
+    const refs=[cls,first,second,defense].map(content=>({id:"pin-"+content.id,content_id:content.id,context:content===defense?{source:"fighting_style",class:"fighter",feature:first.slug}:{},choice_source:null,content_definitions:content}));
+    render(<ClassStepClient characterId="char-1" character={{...character,level:2,choices:{classes:[{slug:"fighter",level:2}],resolved_choices:{[first.slug]:[defense.slug]}}}} classes={[cls]} subclasses={[]} features={[first,second,defense,archery]} feats={[]} spells={[]} contentRefs={refs} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Level 2/}));
+    fireEvent.click(screen.getByRole("button",{name:/Archery/}));
+    await waitFor(()=>expect(mocks.insert).toHaveBeenCalledOnce());
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.update.mock.calls[0][1].choices.resolved_choices).toEqual({[first.slug]:[defense.slug],[second.slug]:[archery.slug]});
+  });
+
+  it.each(["owned", "legacy", "shared-legacy"])("replaces only its own fighting-style reference (%s)", async (ownership) => {
+    const parent:ContentEntry={...human,id:"fighting-style",slug:"fighting-style",name:"Fighting Style",content_type:"feature",data:{class:"fighter",feature_type:"fighting_style"}};
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[parent.slug]}]}};
+    const defense={...parent,id:"defense",slug:"defense",name:"Defense"};
+    const archery={...parent,id:"archery",slug:"archery",name:"Archery"};
+    const refs=[cls,parent,defense].map(content=>({id:"pin-"+content.id,content_id:content.id,context:content===defense?{source:"fighting_style",class:"fighter",...(ownership==="owned"?{feature:parent.slug}:{})}:{},choice_source:null,content_definitions:content}));
+    const resolved_choices={[parent.slug]:[defense.slug],...(ownership==="shared-legacy"?{"another-choice":[defense.slug]}:{})};
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}],resolved_choices}}} classes={[cls]} subclasses={[]} features={[parent,defense,archery]} feats={[]} spells={[]} contentRefs={refs} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Archery/}));
+    await waitFor(()=>expect(mocks.insert).toHaveBeenCalledOnce());
+    if(ownership==="shared-legacy") expect(mocks.remove).not.toHaveBeenCalled();
+    else expect(mocks.remove).toHaveBeenCalledExactlyOnceWith("pin-defense");
+    expect(mocks.insert).toHaveBeenCalledWith({characterId:"char-1",contentId:"archery",contentVersion:1,context:{source:"fighting_style",class:"fighter",feature:parent.slug}});
+    expect(mocks.update.mock.calls[0][1].choices.resolved_choices).toEqual({...resolved_choices,[parent.slug]:[archery.slug]});
+  });
+
+  it("refuses conflicting saved fighting-style snapshots before editing", () => {
+    const parent:ContentEntry={...human,id:"fighting-style",slug:"fighting-style",name:"Fighting Style",content_type:"feature",data:{class:"fighter",feature_type:"fighting_style"}};
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[parent.slug]}]}};
+    const style:ContentEntry={...parent,id:"defense",slug:"defense",name:"Pinned Defense"};
+    const refs=[cls,parent,style,{...style,name:"Other Defense",version:2}].map((content,index)=>({id:"pin-"+index,content_id:content.id,context:{},choice_source:null,content_definitions:content}));
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}],resolved_choices:{[parent.slug]:[style.slug]}}}} classes={[cls]} subclasses={[]} features={[parent,style]} feats={[]} spells={[]} contentRefs={refs} schema={undefined}/>);
+    expect(screen.getByRole("alert")).toHaveTextContent("Multiple saved snapshots");
+    expect(screen.queryByRole("button",{name:/Pinned Defense/})).not.toBeInTheDocument();
+    expect(screen.queryByText("Other Defense")).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {
     let rejectSave!: (error: Error) => void;
     mocks.update.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));

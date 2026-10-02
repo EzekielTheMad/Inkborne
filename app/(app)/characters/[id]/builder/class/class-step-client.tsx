@@ -120,8 +120,14 @@ export function ClassStepClient({
     ...savedSubclasses.entries.filter(entry => selectedClasses.some(cls => cls.subclass === entry.slug))]
     .flatMap(entry => (entry.data.levels as Array<{ features?: string[] }> | undefined) ?? [])
     .flatMap(level => level.features ?? []);
-  const savedFeatures = pinnedEntries(features, contentRefs, "feature", referencedFeatures);
-  const conflictingPins = [...savedClasses.conflicts, ...savedSubclasses.conflicts, ...savedFeatures.conflicts];
+  const savedLevelFeatures = pinnedEntries(features, contentRefs, "feature", referencedFeatures);
+  const selectedStyleSlugs = savedLevelFeatures.entries
+    .filter(feature => referencedFeatures.includes(feature.slug) &&
+      feature.data.feature_type === "fighting_style" && feature.name === "Fighting Style")
+    .flatMap(feature => localChoices.resolved_choices?.[feature.slug] ?? []);
+  const savedFeatures = pinnedEntries(savedLevelFeatures.entries, contentRefs, "feature", selectedStyleSlugs);
+  const conflictingPins = [...savedClasses.conflicts, ...savedSubclasses.conflicts,
+    ...savedLevelFeatures.conflicts, ...savedFeatures.conflicts];
   const snapshotConflict = conflictingPins.length > 0 || mismatchedSubclass;
 
   const hpRule = resolveHpRule(
@@ -389,23 +395,29 @@ export function ClassStepClient({
     try {
       await updateCharacter(characterId, { choices: newChoices });
 
-      const oldRef = contentRefs.find(
-        (ref) =>
-          ref.context?.source === "fighting_style" &&
-          ref.context?.class === classSlug,
-      );
+      const previousStyles = prev.resolved_choices?.[featureSlug] ?? [];
+      const oldRef = contentRefs.find((ref) => {
+        if (ref.context?.source !== "fighting_style" || ref.context?.class !== classSlug) return false;
+        if (ref.context?.feature) return ref.context.feature === featureSlug;
+        // Legacy references have no feature owner. Only retire a uniquely owned
+        // previous selection; another choice may still depend on the same pin.
+        const slug = ref.content_definitions?.slug;
+        return previousStyles.length === 1 && slug === previousStyles[0] &&
+          !Object.entries(prev.resolved_choices ?? {}).some(([choice, selected]) =>
+            choice !== featureSlug && selected.includes(slug));
+      });
       if (oldRef) {
         await removeContentRefById(oldRef.id);
       }
 
       if (styleSlug) {
-        const styleContent = features.find((f) => f.slug === styleSlug);
+        const styleContent = savedFeatures.entries.find((f) => f.slug === styleSlug);
         if (styleContent) {
           await insertContentRef({
             characterId,
             contentId: styleContent.id,
             contentVersion: styleContent.version,
-            context: { source: "fighting_style", class: classSlug },
+            context: { source: "fighting_style", class: classSlug, feature: featureSlug },
           });
         }
       }

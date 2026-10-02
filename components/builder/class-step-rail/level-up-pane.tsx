@@ -155,13 +155,14 @@ export function LevelUpPane(props: LevelUpPaneProps) {
                 );
               }
               if (choice.type === "fighting-style" && choice.featureSlug) {
+                const selectedStyles = localChoices.resolved_choices?.[choice.featureSlug] ?? [];
                 return (
                   <ChoiceCardFightingStyle
                     key={choice.featureSlug}
                     featureSlug={choice.featureSlug}
                     classSlug={choice.classSlug}
                     styleOptions={styleOptions}
-                    currentStyleSlug={localChoices.resolved_choices?.[choice.featureSlug]?.[0]}
+                    currentStyleSlug={selectedStyles.length === 1 ? selectedStyles[0] : undefined}
                     onSelect={(featureSlug, classSlug, styleSlug) =>
                       onFightingStyleSelect(featureSlug, classSlug, styleSlug)
                     }

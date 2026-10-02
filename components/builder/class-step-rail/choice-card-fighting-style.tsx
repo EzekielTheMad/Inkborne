@@ -18,7 +18,7 @@ export function ChoiceCardFightingStyle({
   currentStyleSlug,
   onSelect,
 }: ChoiceCardFightingStyleProps) {
-  const isMade = !!currentStyleSlug;
+  const isMade = styleOptions.some(style => style.slug === currentStyleSlug);
 
   return (
     <article className="rounded-md border border-border bg-card/40 p-4">
@@ -49,7 +49,7 @@ export function ChoiceCardFightingStyle({
                 key={style.id}
                 type="button"
                 aria-pressed={selected}
-                onClick={() => onSelect(featureSlug, classSlug, style.slug)}
+                onClick={() => { if (!selected) onSelect(featureSlug, classSlug, style.slug); }}
                 className={cn(
                   "text-left rounded-md border bg-card/30 px-3 py-3 transition-colors",
                   "border-border hover:border-accent/50",

@@ -142,7 +142,8 @@ export function ClassLevelPane({
                 );
               }
               if (choice.type === "fighting-style") {
-                const currentStyle = localChoices.resolved_choices?.[choice.featureSlug!]?.[0];
+                const selectedStyles = localChoices.resolved_choices?.[choice.featureSlug!] ?? [];
+                const currentStyle = selectedStyles.length === 1 ? selectedStyles[0] : undefined;
                 return (
                   <ChoiceCardFightingStyle
                     key={`${choice.type}-${idx}`}

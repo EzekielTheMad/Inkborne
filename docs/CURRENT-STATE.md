@@ -11,7 +11,7 @@ and compatibility, but defer expanding those surfaces.
 
 ## Baseline and work
 
-- Verified GitHub main: `0a4acb93ab5fcda94d8efa13a87568c3315da108`.
+- Provided baseline main checkpoint: `0a4acb93ab5fcda94d8efa13a87568c3315da108`.
 - Local branch: `codex/playable-core-stability`, isolated from existing worktrees.
 - Save recovery: ordered optimistic state patches; failure removes the failed
   patch and rejects overlapping queued full nested snapshots that may carry it.
@@ -99,10 +99,17 @@ records tests, five isolated Chrome checks and limitations. **Not release-ready:
 equipment grant atomicity, cross-client/ambiguous writes and builder
 choice/reference synchronization remain separate risks.
 
+Fighting-style completion now requires one compatible definition, selected child
+styles honor their saved pins, and selecting a separate style feature does not
+retire another feature's reference. Selected-style clicks are inert. See the
+[fighting-style checkpoint](handoffs/2026-10-02-fighting-style-references.md).
+Choice/reference writes still lack a durable shared transaction; this repair
+does not resolve partial or ambiguous outcomes.
+
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,946 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,958 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -110,7 +117,7 @@ choice/reference synchronization remain separate risks.
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Installed Chrome ran fourteen builder checks and five play-save checks with real editors and mocked
+- Installed Chrome ran fifteen builder checks and five play-save checks with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
   selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing

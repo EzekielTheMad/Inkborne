@@ -90,7 +90,10 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
         continue;
       }
       if (featureType === "fighting_style" && f.name === "Fighting Style") {
-        const isMade = (resolvedChoices[f.slug] ?? []).length > 0;
+        const selectedStyles = resolvedChoices[f.slug] ?? [];
+        const isMade = selectedStyles.length === 1 && features.some(style =>
+          style.slug === selectedStyles[0] && style.name !== "Fighting Style" &&
+          style.data.class === classSlug && style.data.feature_type === "fighting_style");
         choices.push({
           type: "fighting-style",
           featureSlug: f.slug,
