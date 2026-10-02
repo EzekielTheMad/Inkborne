@@ -16,6 +16,8 @@ import type {
   CharacterState,
 } from "@/lib/types/character";
 import type { ActiveEffect } from "@/lib/types/active-effects";
+import { computeMaxHp } from "@/lib/character/max-hp";
+import { initializeState } from "@/lib/sheet/helpers";
 
 // Mock the supabase paths the provider invokes.
 vi.mock("@/lib/sheet/update-state", () => ({
@@ -95,6 +97,7 @@ const mockSchema = {
 } as unknown;
 
 interface ProbeProps {
+  maxHp?: number;
   initialState?: CharacterState;
   primaryColor?: string | null;
   onPrimaryColorChange?: (c: string | null) => void;
@@ -130,7 +133,7 @@ function renderWithProvider(
       isOwner={true}
       isDm={false}
       hasSheet={true}
-      maxHp={10}
+      maxHp={overrides.maxHp ?? 10}
       primaryColor={overrides.primaryColor ?? null}
       onPrimaryColorChange={overrides.onPrimaryColorChange ?? (() => {})}
     >
@@ -142,6 +145,37 @@ function renderWithProvider(
 describe("<CharacterProvider> public hook surface", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("opens a newly built fighter's sheet and recovers a failed first play save", async () => {
+    const character: CharacterWithSystem = {
+      ...mockCharacter,
+      name: "New adventurer",
+      choices: {
+        classes: [{ slug: "fighter", level: 1 }], race: "human", background: "soldier",
+        ability_method: "standard_array",
+        starting_equipment: { selections: {}, picks: {}, confirmed: true },
+      },
+      base_stats: { strength: 15, dexterity: 13, constitution: 14, intelligence: 10, wisdom: 12, charisma: 8 },
+    };
+    const maxHp = computeMaxHp(character.choices.classes!, {
+      fighter: { slug: "fighter", data: { hit_die: 10 } },
+    }, character.base_stats.constitution);
+    let save: ReturnType<typeof useCharacterState>["patchState"];
+    function Probe() {
+      const { state, patchState } = useCharacterState();
+      save = patchState;
+      return <span data-testid="new-fighter-hp">{state.current_hp}</span>;
+    }
+    renderWithProvider(Probe, { character, maxHp, classData: { fighter: { slug: "fighter", data: { hit_die: 10 } } }, initialState: initializeState({}, maxHp) });
+    expect(screen.getByTestId("new-fighter-hp")).toHaveTextContent("12");
+    mockedUpdateState.mockRejectedValueOnce(new Error("offline"));
+    await act(async () => { expect(await save!({ current_hp: maxHp - 3 })).toBe(false); });
+    expect(screen.getByTestId("new-fighter-hp")).toHaveTextContent("12");
+    expect(screen.getByRole("alert")).toHaveTextContent(/try that action again/i);
+    await act(async () => { expect(await save!({ current_hp: maxHp - 3 })).toBe(true); });
+    expect(screen.getByTestId("new-fighter-hp")).toHaveTextContent("9");
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { current_hp: 9 });
   });
 
   it("useCharacter() exposes character, schema, contentRefs, isOwner, isDm, hasSheet", () => {

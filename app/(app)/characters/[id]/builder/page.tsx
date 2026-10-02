@@ -10,9 +10,8 @@ import {
 import { cn } from "@/lib/utils";
 import {
   describeStartingEquipment,
-  isEquipmentConfirmed,
-  isStructuredSelections,
 } from "@/lib/builder/equipment-choices";
+import { getBuilderStepStatus, builderStepStatusLabels } from "@/lib/builder/step-status";
 import type { CreationStep } from "@/lib/types/system";
 import type { CharacterChoices } from "@/lib/types/character";
 
@@ -43,33 +42,6 @@ function getStepSummary(
       return describeStartingEquipment(choices.starting_equipment);
     default:
       return "Not started";
-  }
-}
-
-function getStepStatus(
-  step: CreationStep,
-  choices: CharacterChoices,
-  baseStats: Record<string, number>,
-): "complete" | "in_progress" | "untouched" {
-  switch (step.type) {
-    case "class":
-      return choices.classes?.length ? "complete" : "untouched";
-    case "race":
-      return choices.race ? "complete" : "untouched";
-    case "background":
-      return choices.background ? "complete" : "untouched";
-    case "abilities":
-      if (choices.ability_method && Object.keys(baseStats).length > 0)
-        return "complete";
-      if (choices.ability_method) return "in_progress";
-      return "untouched";
-    case "equipment":
-      if (isEquipmentConfirmed(choices.starting_equipment)) return "complete";
-      if (isStructuredSelections(choices.starting_equipment))
-        return "in_progress";
-      return "untouched";
-    default:
-      return "untouched";
   }
 }
 
@@ -104,7 +76,7 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((step, index) => {
-          const status = getStepStatus(step, choices, baseStats);
+          const status = getBuilderStepStatus(step.type, choices, baseStats);
           const summary = getStepSummary(step, choices);
 
           return (
@@ -129,6 +101,7 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
                       {status === "complete" ? "\u2713" : index + 1}
                     </span>
                     <CardTitle className="text-base">{step.label}</CardTitle>
+                    <span className="sr-only">{builderStepStatusLabels[status]}</span>
                   </div>
                 </CardHeader>
                 <CardContent>

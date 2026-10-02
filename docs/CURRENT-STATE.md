@@ -23,13 +23,16 @@ and compatibility, but defer expanding those surfaces.
 - Character creation now validates string fields, handles failed/empty inserts,
   maps stable error codes to readable copy, and blocks submission while game
   systems are unavailable. Existing single-system entry is preserved.
+- Builder overview/navigation now share saved-choice status rules and expose
+  accessible status/active-step text. The character-return label is corrected.
+  Local journey cases include new-fighter sheet initialization and save retry.
 - The separate alpha-readiness candidate remains unmerged and preserved. It
   contains dependency/auth/E2E/security work; this branch does not absorb it.
 
 ## Verification
 
-- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 197 files /
-  1,817 tests passed on the final combined character-save and creation source.
+- Final `npm.cmd run check`: strict typecheck, zero-warning lint, 198 files /
+  1,827 tests passed including the builder milestone.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -44,8 +47,10 @@ and compatibility, but defer expanding those surfaces.
 
 1. Character creation validation/recovery is complete locally: malformed values,
    rejected/empty inserts, readable errors and unavailable game systems are covered.
-2. Continue [the prepared builder journey task](specs/2026-10-02-builder-journey-next.md):
-   consolidate duplicate status rules and cover the local journey before changing readiness semantics.
+2. Builder overview/navigation consolidation is complete locally; see the
+   [milestone handoff](handoffs/2026-10-02-builder-journey.md). Next:
+   [ability-score save recovery](specs/2026-10-02-ability-save-recovery-next.md),
+   based on concurrent full-object saves and console-only rollback.
 3. Equipment grant retry safety is deferred: separate inserts/currency/confirmed
    writes need durable atomic/idempotent provenance. Session-only tracking is
    insufficient after reload or ambiguous network completion. No schema change

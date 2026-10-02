@@ -4,75 +4,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BuilderStepNav } from "@/components/builder/builder-step-nav";
 import { characterColorStyle } from "@/lib/character/character-color-style";
-import {
-  isEquipmentConfirmed,
-  isStructuredSelections,
-} from "@/lib/builder/equipment-choices";
+import { getBuilderStepStatus } from "@/lib/builder/step-status";
 import type { CreationStep } from "@/lib/types/system";
-import type { CharacterChoices } from "@/lib/types/character";
 
 interface LayoutProps {
   children: React.ReactNode;
   params: Promise<{ id: string }>;
-}
-
-function computeStepStatus(
-  steps: CreationStep[],
-  choices: CharacterChoices,
-  baseStats: Record<string, number>,
-): Record<string, "complete" | "in_progress" | "untouched"> {
-  const status: Record<string, "complete" | "in_progress" | "untouched"> = {};
-
-  for (const step of steps) {
-    switch (step.type) {
-      case "class":
-        if (choices.classes && choices.classes.length > 0) {
-          status.class = "complete";
-        } else {
-          status.class = "untouched";
-        }
-        break;
-      case "race":
-        if (choices.race) {
-          status.race = "complete";
-        } else {
-          status.race = "untouched";
-        }
-        break;
-      case "background":
-        if (choices.background) {
-          status.background = "complete";
-        } else {
-          status.background = "untouched";
-        }
-        break;
-      case "abilities":
-        if (
-          choices.ability_method &&
-          Object.keys(baseStats).length > 0
-        ) {
-          status.abilities = "complete";
-        } else if (choices.ability_method) {
-          status.abilities = "in_progress";
-        } else {
-          status.abilities = "untouched";
-        }
-        break;
-      case "equipment":
-        if (isEquipmentConfirmed(choices.starting_equipment)) {
-          status.equipment = "complete";
-        } else if (isStructuredSelections(choices.starting_equipment)) {
-          status.equipment = "in_progress";
-        } else {
-          status.equipment = "untouched";
-        }
-        break;
-      default:
-        status[step.type] = "untouched";
-    }
-  }
-
-  return status;
 }
 
 export default async function BuilderLayout({ children, params }: LayoutProps) {
@@ -100,10 +37,10 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
 
   const schema = character.game_systems?.schema_definition;
   const steps: CreationStep[] = schema?.creation_steps ?? [];
-  const stepStatus = computeStepStatus(
-    steps,
-    character.choices ?? {},
-    character.base_stats ?? {},
+  const stepStatus = Object.fromEntries(
+    steps.map((step) => [step.type, getBuilderStepStatus(
+      step.type, character.choices ?? {}, character.base_stats ?? {},
+    )]),
   );
 
   return (
@@ -116,7 +53,7 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
           </div>
           <Link href={`/characters/${id}`}>
             <Button variant="outline" size="sm" className="w-full sm:w-auto">
-              Back to Dashboard
+              View Character
             </Button>
           </Link>
         </div>

@@ -5,14 +5,12 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { CreationStep } from "@/lib/types/system";
 
-interface StepStatus {
-  [stepType: string]: "complete" | "in_progress" | "untouched";
-}
+import { builderStepStatusLabels, type BuilderStepStatus } from "@/lib/builder/step-status";
 
 interface BuilderStepNavProps {
   characterId: string;
   steps: CreationStep[];
-  stepStatus: StepStatus;
+  stepStatus: Record<string, BuilderStepStatus>;
 }
 
 export function BuilderStepNav({
@@ -23,9 +21,10 @@ export function BuilderStepNav({
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap gap-1 border-b pb-3 mb-6 overflow-x-auto">
+    <nav aria-label="Character builder" className="flex flex-wrap gap-1 border-b pb-3 mb-6 overflow-x-auto">
       <Link
         href={`/characters/${characterId}/builder`}
+        aria-current={pathname === `/characters/${characterId}/builder` ? "page" : undefined}
         className={cn(
           "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
           pathname === `/characters/${characterId}/builder`
@@ -42,6 +41,7 @@ export function BuilderStepNav({
         return (
           <Link
             key={step.type}
+            aria-current={isActive ? "step" : undefined}
             href={`/characters/${characterId}/builder/${step.type}`}
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
@@ -59,6 +59,7 @@ export function BuilderStepNav({
               )}
             />
             {step.label}
+            <span className="sr-only">: {builderStepStatusLabels[status]}</span>
           </Link>
         );
       })}
