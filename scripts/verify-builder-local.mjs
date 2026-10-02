@@ -25,7 +25,7 @@ const stubs = {
         signal.addEventListener('abort',()=>reject(new DOMException('Interrupted','AbortError')),{once:true});
       });
     }
-    export async function updateCharacterAndReturn(){throw new Error('Simulated private database failure')}
+    export async function updateCharacterAndReturn(id,patch){window.fixture.classCalls.push(patch);await new Promise(resolve=>{window.fixture.resolveClass=resolve});return {choices:patch.choices,level:patch.level}}
     export async function updateCharacter(){throw new Error('Simulated private database failure')}
   `,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(){} export async function removeContentRefById(){}`,
@@ -41,7 +41,7 @@ await build({
       import {AbilitiesStepClient} from '@/app/(app)/characters/[id]/builder/abilities/abilities-step-client';
       import {RaceStepClient} from '@/app/(app)/characters/[id]/builder/race/race-step-client';
       import {ClassStepClient} from '@/app/(app)/characters/[id]/builder/class/class-step-client';
-      window.fixture={mode:'pending',calls:[],resolve:null};
+      window.fixture={mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null};
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
@@ -150,6 +150,17 @@ try {
   assert.equal(await page.getByText("Catalog Second Wind", { exact: true }).count(), 0);
   await page.screenshot({path:path.join(output,"pinned-class-desktop.png"),fullPage:true,animations:"disabled"});
   evidence.push({check:"pinned class/feature rail survives newer catalog content",passed:true});
+  await page.getByRole("combobox", {name:"Set level for Pinned Fighter",exact:true}).selectOption("2");
+  await page.getByRole("status").waitFor();
+  assert.equal(await page.getByRole("button", {name:"Remove Pinned Fighter",exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole("button", {name:"Next: Abilities",exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole("combobox", {name:"Set level for Pinned Fighter",exact:true}).isDisabled(),true);
+  assert.equal(await page.evaluate(()=>window.fixture.classCalls.length),1);
+  await page.evaluate(()=>window.fixture.resolveClass());
+  await page.getByRole("status").filter({hasText:"Saving this class change."}).waitFor({state:"hidden"});
+  assert.equal(await page.getByRole("combobox", {name:"Set level for Pinned Fighter",exact:true}).inputValue(),"2");
+  assert.equal(await page.getByRole("button", {name:"Next: Abilities",exact:true}).isEnabled(),true);
+  evidence.push({check:"pending canonical class save locks competing controls and releases after confirmation",passed:true});
   assert.deepEqual(errors, []);
   assert.deepEqual(blockedRequests, []);
   await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));
