@@ -87,6 +87,32 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update).not.toHaveBeenCalled(); expect(mocks.insert).not.toHaveBeenCalled();
   });
 
+  it("uses a saved race trait's pinned options instead of its mutable catalog row", () => {
+    const raceContent:ContentEntry={...human,data:{traits:["tool-training"]}};
+    const savedTrait:ContentEntry={...human,id:"tool-training",slug:"tool-training",name:"Pinned Tool Training",content_type:"trait",effects:[{type:"choice",choose:1,from:["tool-smith"],grant_type:"proficiency",choice_id:"tool-training"}]};
+    const newerTrait:ContentEntry={...savedTrait,name:"New Tool Training",version:2,effects:[{...savedTrait.effects[0],from:["tool-dice"]} as typeof savedTrait.effects[number]]};
+    render(<RaceStepClient characterId="char-1" character={{...character,choices:{race:"human"}}} races={[raceContent]} subraces={[]} traits={[newerTrait]} contentRefs={[raceContent,savedTrait].map(content=>({id:"pin-"+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/>);
+    expect(screen.getByRole("button",{name:"Tool Smith"})).toBeVisible();
+    expect(screen.queryByRole("button",{name:"Tool Dice"})).not.toBeInTheDocument();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("retains a removed pinned race trait and refuses conflicting trait snapshots", () => {
+    const raceContent:ContentEntry={...human,data:{traits:["tool-training"]}};
+    const trait:ContentEntry={...human,id:"tool-training",slug:"tool-training",name:"Pinned Tool Training",content_type:"trait",data:{description:"Authorized training."}};
+    const pin=(content:ContentEntry,index=0)=>({id:"pin-"+content.id+index,content_id:content.id,context:{},choice_source:null,content_definitions:content});
+    const props={characterId:"char-1",character:{...character,choices:{race:"human"}},races:[raceContent],subraces:[],traits:[],schema:undefined};
+    const rendered=render(<RaceStepClient {...props} contentRefs={[pin(raceContent),pin(trait)]}/>);
+    expect(screen.getByText("Pinned Tool Training")).toBeVisible();
+    expect(screen.getByText("Authorized training.")).toBeVisible();
+    rendered.rerender(<RaceStepClient {...props} contentRefs={[pin(raceContent),pin(trait),pin({...trait,name:"Conflicting Training",version:2},1)]}/>);
+    expect(screen.getByRole("alert")).toHaveTextContent("Multiple snapshots");
+    expect(screen.queryByText("Pinned Tool Training")).not.toBeInTheDocument();
+    expect(screen.queryByText("Conflicting Training")).not.toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"Change Race"})).toBeDisabled();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
   it("keeps an authorized pinned race visible when it is absent from the current catalog", () => {
     render(<RaceStepClient characterId="char-1" character={{ ...character, choices: { race: "human" } }} races={[]} subraces={[]} traits={[]} contentRefs={[{ id: "pin", content_id: "human", context: {}, choice_source: null, content_definitions: human }]} schema={undefined} />);
     expect(screen.getByText("Human")).toBeInTheDocument();

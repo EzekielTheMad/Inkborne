@@ -44,6 +44,8 @@ and compatibility, but defer expanding those surfaces.
   a returned row, and stale/wrong-category equipment picks cannot confirm.
   Ability progress now validates every schema ability against shared editor rules.
   Race/subrace display respects existing pins instead of newer catalog data.
+  Referenced race traits now also prefer unique existing pins, preserve retired
+  catalog traits and reject conflicting snapshots; see [pinned race traits](handoffs/2026-10-02-pinned-race-traits.md).
 - Class/subclass display and referenced level features now prefer unique pinned
   snapshots in the class rail; removed catalog classes remain visible, and
   duplicate/incompatible snapshots show errors before editing. See the
@@ -89,7 +91,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,932 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,934 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network

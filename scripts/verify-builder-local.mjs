@@ -50,7 +50,9 @@ await build({
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
-      const pinnedHuman={...human,name:'Pinned Human',data:{description:'Authorized pinned race description.'},effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'pinned-skill'}]};
+      const pinnedHuman={...human,name:'Pinned Human',data:{description:'Authorized pinned race description.',traits:['tool-training']},effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'pinned-skill'}]};
+      const pinnedTrait={...human,id:'tool-training',slug:'tool-training',name:'Pinned Tool Training',content_type:'trait',effects:[{type:'choice',choose:1,from:['tool-smith'],grant_type:'proficiency',choice_id:'tool-training'}]};
+      const newerTrait={...pinnedTrait,name:'Catalog Tool Training',version:2,effects:[{type:'choice',choose:1,from:['tool-dice'],grant_type:'proficiency',choice_id:'tool-training'}]};
       const newerHuman={...human,version:2,data:{description:'New catalog race description.'},effects:[{type:'choice',choose:1,from:['skill-stealth'],grant_type:'proficiency',choice_id:'new-skill'}]};
       const pinnedFighter={...human,id:'fighter',slug:'fighter',name:'Pinned Fighter',content_type:'class',data:{hit_die:10,levels:[{level:1,features:['second-wind']}]}};
       const pinnedWind={...human,id:'second-wind',slug:'second-wind',name:'Pinned Second Wind',content_type:'feature',data:{description:'Authorized pinned recovery.'}};
@@ -64,7 +66,7 @@ await build({
           <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/background' onClick={e=>{e.preventDefault();navigate('/background')}}>Background</a> | <a href='/equipment' onClick={e=>{e.preventDefault();navigate('/equipment')}}>Equipment</a> | <a href='/pinned-class' onClick={e=>{e.preventDefault();navigate('/pinned-class')}}>Pinned Class</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
           {route==='/overview'&&<h2>Overview fixture</h2>}
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
-          <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[]} contentRefs={[{id:'pin',content_id:'human',context:{},choice_source:null,content_definitions:pinnedHuman}]} schema={undefined}/></Activity>
+          <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[newerTrait]} contentRefs={[pinnedHuman,pinnedTrait].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
           <Activity mode={route==='/invalid-choice'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier',resolved_choices:{'courier-skill':['skill-removed']}}}} backgrounds={[choiceCourier]} contentRefs={[{id:'choice-pin',content_id:'courier',context:{},choice_source:null,content_definitions:choiceCourier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/background'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[courier]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
@@ -140,8 +142,10 @@ try {
   assert.equal(await page.getByText("New catalog race description.", { exact: true }).isVisible(), false);
   assert.equal(await page.getByRole("button", { name: "Athletics", exact: true }).isVisible(), true);
   assert.equal(await page.getByRole("button", { name: "Stealth", exact: true }).isVisible(), false);
+  assert.equal(await page.getByRole("button", { name: "Tool Smith", exact: true }).isVisible(), true);
+  assert.equal(await page.getByRole("button", { name: "Tool Dice", exact: true }).isVisible(), false);
   await page.screenshot({ path: path.join(output, "pinned-race-mobile.png"), fullPage: true });
-  evidence.push("Saved race UI displays pinned data and choices, preserving an older authorized snapshot against a newer catalog entry.");
+  evidence.push("Saved race and referenced trait UI display pinned data and choices against newer catalog entries.");
   await page.getByRole("link", { name: "Abilities", exact: true }).click();
   await page.evaluate(() => { window.fixture.mode = "pending"; });
   await page.getByRole("spinbutton", { name: "Strength score" }).fill("20");
