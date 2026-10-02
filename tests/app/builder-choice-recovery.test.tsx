@@ -315,6 +315,20 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update.mock.calls[0][1].choices.hp_rolls).toEqual({"fighter-2":{method:"manual",value:4}});
   });
 
+  it.each(["average_only","max_for_all"] as const)("allows deterministic %s HP without inventing a per-level record", async (hp_rule) => {
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}};
+    const hero={...character,choices:{classes:[{slug:"fighter",level:1}]},campaigns:{hp_rule}};
+    mocks.canonical.mockResolvedValueOnce({choices:{classes:[{slug:"fighter",level:2}]},level:2});
+    render(<ClassStepClient characterId="char-1" character={hero} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Level up Fighter to level 2/i}));
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    const confirm=screen.getByRole("button",{name:/Confirm level 2/i});
+    expect(confirm).toBeEnabled();
+    fireEvent.click(confirm);
+    await waitFor(()=>expect(mocks.canonical).toHaveBeenCalledOnce());
+    expect(mocks.canonical.mock.calls[0][1]).toEqual({choices:{classes:[{slug:"fighter",level:2}]},level:2});
+  });
+
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {
     let rejectSave!: (error: Error) => void;
     mocks.update.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));

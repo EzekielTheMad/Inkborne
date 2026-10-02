@@ -77,6 +77,8 @@ and compatibility, but defer expanding those surfaces.
   their portal controls while saving; see [mobile feedback](handoffs/2026-10-02-mobile-class-save-feedback.md).
   Manual HP rejects fractional/blank/out-of-range input with accessible
   correction instead of truncation; see [manual validation](handoffs/2026-10-02-manual-hp-validation.md).
+  Deterministic Average/Max rules can now confirm level-up without a redundant
+  record; see [locked HP confirmation](handoffs/2026-10-02-locked-hp-confirmation.md).
 - Equipment selections/confirmation now share a local pending gate; selection
   failures are visible and require explicit retry. A failed/partial confirmation
   blocks blind same-session re-grants and gives readable inventory-review copy.
@@ -100,7 +102,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,944 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,946 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -108,7 +110,7 @@ choice/reference synchronization remain separate risks.
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Installed Chrome ran twelve builder checks and five play-save checks with real editors and mocked
+- Installed Chrome ran fourteen builder checks and five play-save checks with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
   selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing

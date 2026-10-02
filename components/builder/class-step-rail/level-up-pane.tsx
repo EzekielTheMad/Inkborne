@@ -72,7 +72,11 @@ export function LevelUpPane(props: LevelUpPaneProps) {
   const description = getFeatureDescription(perLevelRow.features);
 
   const allChoicesMade = perLevelRow.choices.every((c) => c.isMade);
-  const hpSet = isFirstLevelOfPrimary || storedRoll != null;
+  // Locked rules compute HP directly; their read-only pickers cannot create a
+  // redundant record. Free/rolled choices still require an explicit selection.
+  const ruleSuppliesHp = hpRule === "average_only" || hpRule === "max_for_all" ||
+    (hpRule === "max_first_level_each_class" && draftLevel === 1);
+  const hpSet = isFirstLevelOfPrimary || ruleSuppliesHp || storedRoll != null;
   const canConfirm = allChoicesMade && hpSet;
 
   const missingReasons: string[] = [];

@@ -71,6 +71,7 @@ await build({
           <Activity mode={route==='/invalid-choice'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier',resolved_choices:{'courier-skill':['skill-removed']}}}} backgrounds={[choiceCourier]} contentRefs={[{id:'choice-pin',content_id:'courier',context:{},choice_source:null,content_definitions:choiceCourier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/background'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[courier]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
+          {(route==='/locked-average'||route==='/locked-max')&&<ClassStepClient characterId='local-character' character={{...character,name:'Locked HP fighter',choices:{classes:[{slug:'fighter',level:1}]},campaigns:{hp_rule:route==='/locked-average'?'average_only':'max_for_all'}}} classes={[{...emptyFighter,effects:[],data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
           <Activity mode={route==='/hp-recovery'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Recovery fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...emptyFighter,effects:[],data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/></Activity>
           <Activity mode={route==='/empty-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Choice fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[emptyFighter]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[{id:'empty-class-pin',content_id:'fighter',context:{},choice_source:null,content_definitions:emptyFighter}]} schema={undefined}/></Activity>
           <Activity mode={route==='/pinned-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Fixture fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...pinnedFighter,name:'Catalog Fighter',version:2,data:{hit_die:12,levels:[]}}]} subclasses={[]} features={[{...pinnedWind,name:'Catalog Second Wind',version:2}]} feats={[]} spells={[]} contentRefs={[pinnedFighter,pinnedWind].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
@@ -227,6 +228,18 @@ try {
   assert.equal(await page.getByRole("button",{name:/Confirm level 2/i}).isEnabled(),true);
   assert.deepEqual(await page.evaluate(()=>window.fixture.hpCalls[1].choices.hp_rolls),{'fighter-2':{method:'average',value:6}});
   evidence.push({check:"failed mobile level-up HP save removes draft completion and permits explicit retry",passed:true});
+  for (const route of ["locked-average","locked-max"]) {
+    await page.goto(origin + "/" + route);
+    await page.getByRole("button",{name:/Level up Choice Fighter to level 2/i}).click();
+    assert.equal(await page.getByRole("radio").count(),0);
+    assert.equal(await page.getByRole("button",{name:/Confirm level 2/i}).isEnabled(),true);
+    await page.getByRole("button",{name:/Confirm level 2/i}).click();
+    await page.waitForFunction(()=>window.fixture.classCalls.length===1);
+    assert.deepEqual(await page.evaluate(()=>window.fixture.classCalls[0]),{choices:{classes:[{slug:'fighter',level:2}]},level:2});
+    await page.evaluate(()=>window.fixture.resolveClass());
+    await page.getByRole("status").filter({hasText:"Saving this class change"}).waitFor({state:"hidden"});
+    evidence.push({check:route+" permits deterministic HP confirmation without a fabricated record",passed:true});
+  }
   await page.setViewportSize({width:1280,height:900});
   await page.goto(origin + "/pinned-class");
   await page.getByRole("button", { name: "Remove Pinned Fighter", exact: true }).waitFor();
