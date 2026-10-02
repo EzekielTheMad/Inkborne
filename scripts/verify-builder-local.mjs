@@ -202,11 +202,16 @@ try {
   evidence.push({check:"first-level class choice remains usable with no feature rows",passed:true});
   await page.goto(origin + "/hp-recovery");
   await page.getByRole("button",{name:/Level up Choice Fighter to level 2/i}).click();
+  const hpDrawer=page.getByRole("dialog");
   await page.getByRole("radio",{name:"Manual",exact:true}).click();
+  await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).fill("3.5");
+  await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).press("Enter");
+  await hpDrawer.getByRole("alert").filter({hasText:"whole number from 1 to 10"}).waitFor();
+  assert.equal(await page.evaluate(()=>window.fixture.hpCalls.length),0);
+  assert.equal(await page.getByRole("button",{name:/Confirm level 2/i}).isDisabled(),true);
   await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).fill("3");
   await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).press("Enter");
   await page.waitForFunction(()=>window.fixture.hpCalls.length===1);
-  const hpDrawer=page.getByRole("dialog");
   await hpDrawer.getByRole("status",{name:"",exact:true}).filter({hasText:"Saving this class change"}).waitFor();
   await page.screenshot({path:path.join(output,"class-hp-pending-mobile.png"),fullPage:true,animations:"disabled"});
   assert.equal(await hpDrawer.getByRole("radio",{name:/^Manual/}).isDisabled(),true);

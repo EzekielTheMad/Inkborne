@@ -100,6 +100,8 @@ interface InteractiveProps {
 
 function HpPickerInteractive(props: InteractiveProps) {
   const { labelId, hitDie, avg, conMod, storedRoll, onChange, onlyRoll } = props;
+  const [manualError, setManualError] = useState(false);
+  const manualHintId = `${labelId}-manual-hint`;
   const [showManualInput, setShowManualInput] = useState(storedRoll?.method === "manual");
   const [manualValue, setManualValue] = useState<string>(
     storedRoll?.method === "manual" ? String(storedRoll.value) : "",
@@ -124,8 +126,12 @@ function HpPickerInteractive(props: InteractiveProps) {
   }
 
   function commitManual() {
-    const n = Number.parseInt(manualValue, 10);
-    if (!Number.isInteger(n) || n < 1 || n > hitDie) return;
+    const n = Number(manualValue);
+    if (!manualValue.trim() || !Number.isInteger(n) || n < 1 || n > hitDie) {
+      setManualError(true);
+      return;
+    }
+    setManualError(false);
     if (storedRoll?.method === "manual" && storedRoll.value === n) return;
     onChange({ method: "manual", value: n });
   }
@@ -193,8 +199,10 @@ function HpPickerInteractive(props: InteractiveProps) {
             min={1}
             max={hitDie}
             aria-label="Manual HP value"
+            aria-describedby={manualHintId}
+            aria-invalid={manualError || undefined}
             value={manualValue}
-            onChange={(e) => setManualValue(e.target.value)}
+            onChange={(e) => { setManualValue(e.target.value); setManualError(false); }}
             onKeyDown={(e) => {
               if (e.key === "Enter") commitManual();
             }}
@@ -207,8 +215,8 @@ function HpPickerInteractive(props: InteractiveProps) {
             }}
             className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm"
           />
-          <span className="ml-2 text-xs text-muted-foreground">
-            Enter a value in [1, {hitDie}]
+          <span id={manualHintId} role={manualError ? "alert" : undefined} className={cn("ml-2 text-xs", manualError ? "text-destructive" : "text-muted-foreground")}>
+            {manualError ? `Enter a whole number from 1 to ${hitDie}.` : `Enter a value in [1, ${hitDie}]`}
           </span>
         </div>
       )}

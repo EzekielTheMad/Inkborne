@@ -296,6 +296,25 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update.mock.calls[1][1].choices.resolved_choices).toEqual({"fighter-skill":["skill-stealth"]});
   });
 
+  it.each(["3.5","","0","11"])("rejects invalid manual HP %s with visible correction and no save", async (value) => {
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}};
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}]}}} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:/Level up Fighter to level 2/i}));
+    fireEvent.click(screen.getByRole("radio",{name:"Manual"}));
+    const input=screen.getByRole("spinbutton",{name:"Manual HP value"});
+    fireEvent.change(input,{target:{value}});
+    fireEvent.keyDown(input,{key:"Enter"});
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(input).toHaveAttribute("aria-invalid","true");
+    expect(screen.getByRole("alert")).toHaveTextContent("whole number from 1 to 10");
+    expect(screen.getByRole("button",{name:/Confirm level 2/i})).toBeDisabled();
+    fireEvent.change(input,{target:{value:"4"}});
+    fireEvent.keyDown(input,{key:"Enter"});
+    await waitFor(()=>expect(screen.getByRole("button",{name:/Confirm level 2/i})).toBeEnabled());
+    expect(input).not.toHaveAttribute("aria-invalid","true");
+    expect(mocks.update.mock.calls[0][1].choices.hp_rolls).toEqual({"fighter-2":{method:"manual",value:4}});
+  });
+
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {
     let rejectSave!: (error: Error) => void;
     mocks.update.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));

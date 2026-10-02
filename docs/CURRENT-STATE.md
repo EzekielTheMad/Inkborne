@@ -75,6 +75,8 @@ and compatibility, but defer expanding those surfaces.
   [class HP recovery](handoffs/2026-10-02-class-hp-draft-recovery.md).
   Mobile class drawers now display the existing save status/errors and disable
   their portal controls while saving; see [mobile feedback](handoffs/2026-10-02-mobile-class-save-feedback.md).
+  Manual HP rejects fractional/blank/out-of-range input with accessible
+  correction instead of truncation; see [manual validation](handoffs/2026-10-02-manual-hp-validation.md).
 - Equipment selections/confirmation now share a local pending gate; selection
   failures are visible and require explicit retry. A failed/partial confirmation
   blocks blind same-session re-grants and gives readable inventory-review copy.
@@ -98,7 +100,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,940 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,944 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
