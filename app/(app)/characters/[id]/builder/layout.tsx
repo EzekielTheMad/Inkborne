@@ -1,3 +1,4 @@
+import { getContentByType } from "@/lib/supabase/content-definitions";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
@@ -37,11 +38,16 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
   if (character.user_id !== user.id) notFound();
 
   const contentRefs = await getContentRefsByCharacter(id);
+  const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && effect.from === "all_languages"));
+  // A failed catalog read leaves category choices incomplete; it never upgrades a pin.
+  const languages = hasLanguageCategory
+    ? await getContentByType(character.system_id, "language").then(rows => rows.map(row => row.slug)).catch(() => undefined)
+    : undefined;
   const schema = character.game_systems?.schema_definition;
   const steps: CreationStep[] = schema?.creation_steps ?? [];
   const stepStatus = Object.fromEntries(
     steps.map((step) => [step.type, getBuilderStepStatus(
-      step.type, character.choices ?? {}, character.base_stats ?? {}, schema, contentRefs,
+      step.type, character.choices ?? {}, character.base_stats ?? {}, schema, contentRefs, languages,
     )]),
   );
 

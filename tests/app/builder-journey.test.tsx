@@ -4,8 +4,11 @@ import BuilderLayout from "@/app/(app)/characters/[id]/builder/layout";
 import BuilderOverviewPage from "@/app/(app)/characters/[id]/builder/page";
 import { createClient } from "@/lib/supabase/server";
 import { getBuilderStepStatus } from "@/lib/builder/step-status";
+import { getContentByType } from "@/lib/supabase/content-definitions";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import type { CharacterChoices } from "@/lib/types/character";
+
+vi.mock("@/lib/supabase/content-definitions", () => ({ getContentByType: vi.fn() }));
 
 const navigation = vi.hoisted(() => ({ pathname: "/characters/char-1/builder" }));
 vi.mock("@/lib/supabase/content-refs", () => ({ getContentRefsByCharacter: vi.fn() }));
@@ -147,5 +150,24 @@ describe("local builder journey", () => {
     expect(getBuilderStepStatus("abilities", { ability_method: "manual" }, { strength: 10 })).toBe("in_progress");
     expect(getBuilderStepStatus("class", { classes: [{ slug: "fighter", level: 3 }] }, {})).toBe("in_progress");
     expect(getBuilderStepStatus("future-step", selected, scores)).toBe("untouched");
+  });
+});
+
+describe("category readiness in actual overview and navigation",()=>{
+  beforeEach(()=>{vi.clearAllMocks();navigation.pathname="/characters/char-1/builder";});
+  it.each([true,false])("shares supported category vocabulary and fixed-language exclusions (valid=%s)",async(valid)=>{
+    const refs=pins.map(pin=>pin.content_id==="soldier"?{...pin,content_definitions:{...pin.content_definitions,effects:[{type:"choice",choose:1,from:"all_languages",grant_type:"proficiency",choice_id:"language"}]}}:pin.content_id==="human"?{...pin,content_definitions:{...pin.content_definitions,data:{languages:["common"]}}}:pin);
+    vi.mocked(getContentRefsByCharacter).mockResolvedValue(refs as never);
+    vi.mocked(getContentByType).mockResolvedValue([{slug:"common"},{slug:"elvish"}] as never);
+    mockCharacter({...selected,resolved_choices:{language:[valid?"elvish":"common"]}},scores);
+    render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})})}));
+    expect(screen.getAllByRole("link",{name:new RegExp(`Background.*${valid?"Saved":"In progress"}`)})).toHaveLength(2);
+  });
+  it("keeps a failed category catalog read incomplete instead of guessing from the saved strings",async()=>{
+    vi.mocked(getContentRefsByCharacter).mockResolvedValue(pins.map(pin=>pin.content_id==="soldier"?{...pin,content_definitions:{...pin.content_definitions,effects:[{type:"choice",choose:1,from:"all_languages",grant_type:"proficiency",choice_id:"language"}]}}:pin) as never);
+    vi.mocked(getContentByType).mockRejectedValue(new Error("offline"));
+    mockCharacter({...selected,resolved_choices:{language:["elvish"]}},scores);
+    render(await BuilderLayout({params:Promise.resolve({id:"char-1"}),children:await BuilderOverviewPage({params:Promise.resolve({id:"char-1"})})}));
+    expect(screen.getAllByRole("link",{name:/Background.*In progress/})).toHaveLength(2);
   });
 });

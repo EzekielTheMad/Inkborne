@@ -105,7 +105,7 @@ export function ClassLevelPane({
           </h3>
           <div className="space-y-2">
             {row.level === 1 &&
-              classChoices.map((choice) => (
+              classChoices.filter(choice => !row.choices.some(item => item.choiceEffect?.choice_id === choice.choice_id)).map((choice) => (
                 <ChoiceCardGeneric
                   key={choice.choice_id}
                   choiceEffect={choice}
@@ -154,6 +154,12 @@ export function ClassLevelPane({
                     onSelect={onFightingStyleSelect}
                   />
                 );
+              }
+              if (choice.type === "generic" && choice.choiceEffect) {
+                const effect = choice.choiceEffect;
+                return <ChoiceCardGeneric key={effect.choice_id} choiceEffect={effect}
+                  currentSelections={localChoices.resolved_choices?.[effect.choice_id] ?? []}
+                  onSelect={selections => onChoiceSelect(effect.choice_id, selections)} />;
               }
               return null;
             })}

@@ -304,3 +304,24 @@ describe("classFeaturesPerLevel", () => {
     expect(lv3?.choices).toHaveLength(0);
   });
 });
+
+describe("feature-owned choices", () => {
+  it("emits required generic choices from pinned features for actual level panes", () => {
+    const cls=makeClass();
+    const entry={...feature("divine-sense", "Divine Sense", 1, "paladin"), effects:[{type:"choice" as const,choose:1,from:["old-option"],grant_type:"proficiency" as const,choice_id:"training"}]};
+    const args={classContent:cls,features:[entry],subclassContent:null,characterChoices:{},classIndex:0};
+    const pending=classFeaturesPerLevel(args)[0].choices;
+    expect(pending).toHaveLength(1);
+    expect(pending[0]).toMatchObject({type:"generic",featureSlug:"training",isMade:false,choiceEffect:entry.effects[0]});
+    expect(classFeaturesPerLevel({...args,characterChoices:{resolved_choices:{training:["old-option"]}}})[0].choices[0].isMade).toBe(true);
+    expect(classFeaturesPerLevel({...args,characterChoices:{resolved_choices:{training:["new-option"]}}})[0].choices[0].isMade).toBe(false);
+  });
+});
+
+it("surfaces selected subclass-owned choices at its gate level",()=>{
+  const cls=makeClass();
+  const gate=feature("sacred-oath", "Sacred Oath", 3, "paladin", {feature_type:"subclass"});
+  const subclass:ContentEntry={...gate,id:"devotion",slug:"devotion",name:"Devotion",content_type:"subclass",data:{parent_class:"paladin",levels:[]},effects:[{type:"choice",choose:1,from:["old-option"],grant_type:"proficiency",choice_id:"oath-training"}]};
+  const row=classFeaturesPerLevel({classContent:cls,features:[gate],subclassContent:subclass,characterChoices:{classes:[{slug:"paladin",level:3,subclass:"devotion"}]},classIndex:0}).find(row=>row.level===3)!;
+  expect(row.choices.find(choice=>choice.featureSlug==="oath-training")).toMatchObject({type:"generic",isMade:false,choiceEffect:subclass.effects![0]});
+});

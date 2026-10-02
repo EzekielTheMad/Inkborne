@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveChoiceOptions } from "@/lib/builder/choice-validation";
 import { cn } from "@/lib/utils";
 import type { ChoiceEffect } from "@/lib/types/effects";
 
@@ -8,6 +9,7 @@ interface ChoiceSelectorProps {
   currentSelections: string[];
   onSelect: (selections: string[]) => void;
   label?: string;
+  disabled?: boolean;
 }
 
 export function ChoiceSelector({
@@ -15,10 +17,10 @@ export function ChoiceSelector({
   currentSelections,
   onSelect,
   label,
+  disabled = false,
 }: ChoiceSelectorProps) {
-  const options = Array.isArray(choiceEffect.from)
-    ? choiceEffect.from
-    : [];
+  const resolvedOptions = resolveChoiceOptions(choiceEffect);
+  const options = resolvedOptions ?? [];
   const maxSelections = choiceEffect.choose;
   const invalidSelections = Array.isArray(choiceEffect.from) && (
     currentSelections.length > maxSelections ||
@@ -27,6 +29,7 @@ export function ChoiceSelector({
   );
 
   function handleToggle(option: string) {
+    if (disabled) return;
     if (currentSelections.includes(option)) {
       // Deselect
       onSelect(currentSelections.filter((s) => s !== option));
@@ -47,10 +50,11 @@ export function ChoiceSelector({
           {currentSelections.length} / {maxSelections} selected
         </span>
       </div>
+      {!resolvedOptions && <p role="alert" className="text-sm text-destructive">Options for this choice are unavailable. Saved picks are kept. Reload the saved content before choosing again.</p>}
       {invalidSelections && (
         <div className="space-y-2">
           <p role="alert" className="text-sm text-destructive">Saved selections do not match the available choices. Clear them and choose again.</p>
-          <button type="button" onClick={() => onSelect([])} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent">
+          <button type="button" disabled={disabled} onClick={() => onSelect([])} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent">
             Clear saved selections
           </button>
         </div>
@@ -67,7 +71,7 @@ export function ChoiceSelector({
               type="button"
               onClick={() => handleToggle(option)}
               aria-pressed={isSelected}
-              disabled={isDisabled}
+              disabled={disabled || isDisabled}
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm border transition-colors",
                 isSelected

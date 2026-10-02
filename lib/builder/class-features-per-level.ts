@@ -1,6 +1,9 @@
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices } from "@/lib/types/character";
 
+import type { ChoiceEffect } from "@/lib/types/effects";
+import { isAsiChoiceComplete, isChoiceComplete } from "./choice-validation";
+
 export type ChoiceType = "asi" | "subclass" | "fighting-style" | "generic";
 
 export interface PerLevelChoice {
@@ -8,6 +11,7 @@ export interface PerLevelChoice {
   /** Feature slug that gates this choice — used as the choice id for ASI / fighting-style. */
   featureSlug?: string;
   classSlug: string;
+  choiceEffect?: ChoiceEffect;
   /** Display label for level pill summary + breadcrumb title. */
   label: string;
   /** True if the user has already made this choice. */
@@ -49,10 +53,19 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
     slugsByLevel.set(row.level, [...(slugsByLevel.get(row.level) ?? []), ...row.features]);
   }
 
+  const coreChoices = (classContent.effects ?? []).filter((effect): effect is ChoiceEffect => effect.type === "choice");
+  if (coreChoices.length > 0 && !slugsByLevel.has(1)) slugsByLevel.set(1, []);
+
   const featureBySlug = new Map<string, ContentEntry>();
   for (const f of features) {
     featureBySlug.set(f.slug, f);
   }
+
+  const subclassChoices = (subclassContent?.effects ?? []).filter((effect): effect is ChoiceEffect => effect.type === "choice");
+  const subclassGateLevel = [...slugsByLevel.entries()].filter(([, slugs]) => slugs.some(slug => featureBySlug.get(slug)?.data.feature_type === "subclass"))
+    .map(([level]) => level).sort((a, b) => a - b)[0];
+  const subclassChoiceLevel = subclassGateLevel ?? subclassLevels.map(row => row.level).sort((a, b) => a - b)[0] ?? 1;
+  if (subclassChoices.length > 0 && !slugsByLevel.has(subclassChoiceLevel)) slugsByLevel.set(subclassChoiceLevel, []);
 
   const classSlug = classContent.slug;
   const pickedSubclass = characterChoices.classes?.[classIndex]?.subclass;
@@ -62,13 +75,30 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
   const result: PerLevel[] = [];
   for (const [level, slugs] of slugsByLevel.entries()) {
     const featureEntries: ContentEntry[] = [];
-    const choices: PerLevelChoice[] = [];
+    const choices: PerLevelChoice[] = level === 1 ? coreChoices.map(effect => ({
+      type: "generic", featureSlug: effect.choice_id, choiceEffect: effect, classSlug,
+      label: classContent.name, isMade: isChoiceComplete(effect, resolvedChoices[effect.choice_id] ?? []),
+    })) : [];
 
-    for (const slug of slugs) {
+    if (level === subclassChoiceLevel) {
+      for (const effect of subclassChoices) choices.push({
+        type: "generic", featureSlug: effect.choice_id, choiceEffect: effect, classSlug,
+        label: subclassContent!.name, isMade: isChoiceComplete(effect, resolvedChoices[effect.choice_id] ?? []),
+      });
+    }
+
+    for (const slug of new Set(slugs)) {
       const f = featureBySlug.get(slug);
       if (!f) continue;
       const fdata = f.data as Record<string, unknown>;
       const featureType = fdata.feature_type as string | undefined;
+
+      for (const effect of f.effects ?? []) {
+        if (effect.type !== "choice") continue;
+        choices.push({ type: "generic", featureSlug: effect.choice_id, classSlug,
+          choiceEffect: effect, label: f.name,
+          isMade: isChoiceComplete(effect, resolvedChoices[effect.choice_id] ?? []) });
+      }
 
       if (featureType === "subclass") {
         choices.push({
@@ -85,7 +115,7 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
           featureSlug: f.slug,
           classSlug,
           label: f.name,
-          isMade: !!asiChoices[f.slug],
+          isMade: isAsiChoiceComplete(asiChoices[f.slug]),
         });
         continue;
       }

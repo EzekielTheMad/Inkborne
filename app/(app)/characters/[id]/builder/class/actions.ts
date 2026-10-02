@@ -9,6 +9,8 @@ import {
   type SetCharacterAsiChoiceResult,
 } from "@/lib/supabase/feat-selection-server";
 import type { UsableFeatOption } from "@/lib/types/character";
+import { syncClassFeatureRefs } from "@/lib/supabase/feature-refs-server";
+import { getContentRefsByCharacter, type ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
 
 const allocationSchema = z.object({
@@ -108,4 +110,27 @@ export async function setCharacterAsiChoiceAction(
     revalidatePath(`/characters/${parsed.data.characterId}`);
   }
   return result;
+}
+
+
+/** Restore exact feature versions from existing immutable grants. Never infer a
+ * lost class pin or rewrite a valid historical version from the current catalog. */
+export async function reconcileClassFeatureRefsAction(input: unknown): Promise<
+  { status: "success"; refs: ContentRefWithContent[] } | { status: "error"; message: string }
+> {
+  const parsed = z.object({ characterId: z.string().uuid() }).strict().safeParse(input);
+  if (!parsed.success) return { status: "error", message: "This character reference request is invalid." };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: "Sign in before restoring saved class features." };
+  try {
+    // Existing RPC verifies owner authorization and preserves active grant pins.
+    await syncClassFeatureRefs(supabase, { characterId: parsed.data.characterId });
+    const refs = await getContentRefsByCharacter(parsed.data.characterId);
+    revalidatePath(`/characters/${parsed.data.characterId}/builder`);
+    revalidatePath(`/characters/${parsed.data.characterId}`);
+    return { status: "success", refs };
+  } catch {
+    return { status: "error", message: "Saved class features could not be restored. Please try again." };
+  }
 }

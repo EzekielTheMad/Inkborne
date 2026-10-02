@@ -32,13 +32,14 @@ export default async function RaceStepPage({ params }: PageProps) {
 
   const systemId = character.system_id;
 
-  const [raceContent, subraceContent, traitContent, contentRefs] =
+  const [raceContent, subraceContent, traitContent, contentRefs, languages] =
     await Promise.all([
       getContentByType(systemId, "race"),
       getContentByType(systemId, "subrace"),
       // Traits resolve race choices such as Dwarf tool proficiency.
       getContentByType(systemId, "trait"),
       getContentRefsByCharacter(id),
+      getContentByType(systemId, "language"),
     ]);
 
   return (
@@ -48,6 +49,7 @@ export default async function RaceStepPage({ params }: PageProps) {
       races={raceContent}
       subraces={subraceContent}
       traits={traitContent}
+      availableLanguages={languages.map(language => language.slug)}
       contentRefs={contentRefs}
       schema={character.game_systems?.schema_definition}
     />

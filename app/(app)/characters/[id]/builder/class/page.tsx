@@ -32,13 +32,14 @@ export default async function ClassStepPage({ params }: PageProps) {
 
   const systemId = character.system_id;
 
-  const [classContent, subclassContent, featureContent, spells, contentRefs] =
+  const [classContent, subclassContent, featureContent, spells, contentRefs, languages] =
     await Promise.all([
       getContentByType(systemId, "class"),
       getContentByType(systemId, "subclass"),
       getContentByType(systemId, "feature"),
       getContentByType(systemId, "spell"),
       getContentRefsByCharacter(id),
+      getContentByType(systemId, "language"),
     ]);
 
   return (
@@ -48,6 +49,7 @@ export default async function ClassStepPage({ params }: PageProps) {
       classes={classContent}
       subclasses={subclassContent}
       features={featureContent}
+      availableLanguages={languages.map(language => language.slug)}
       feats={[]}
       spells={spells}
       contentRefs={contentRefs}

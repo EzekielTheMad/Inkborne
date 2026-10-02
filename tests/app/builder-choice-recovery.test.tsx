@@ -6,12 +6,12 @@ import { ClassStepClient } from "@/app/(app)/characters/[id]/builder/class/class
 import { BackgroundStepClient } from "@/app/(app)/characters/[id]/builder/background/background-step-client";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
-const mocks = vi.hoisted(() => ({ mobile:false, update: vi.fn(), canonical: vi.fn(), insert: vi.fn(), remove: vi.fn(), refresh: vi.fn(), push: vi.fn() }));
+const mocks = vi.hoisted(() => ({ mobile:false, reconcile: vi.fn(), update: vi.fn(), canonical: vi.fn(), insert: vi.fn(), remove: vi.fn(), refresh: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mocks.refresh, push: mocks.push }) }));
 vi.mock("@/lib/supabase/character-client", () => ({ updateCharacter: mocks.update, updateCharacterAndReturn: mocks.canonical }));
 vi.mock("@/lib/supabase/content-refs-client", () => ({ insertContentRef: mocks.insert, removeContentRefById: mocks.remove }));
 vi.mock("@/lib/supabase/background-selection-client", () => ({ setCharacterBackground: vi.fn() }));
-vi.mock("@/app/(app)/characters/[id]/builder/class/actions", () => ({ searchUsableFeatsAction: vi.fn(), setCharacterAsiChoiceAction: vi.fn() }));
+vi.mock("@/app/(app)/characters/[id]/builder/class/actions", () => ({ reconcileClassFeatureRefsAction: mocks.reconcile, searchUsableFeatsAction: vi.fn(), setCharacterAsiChoiceAction: vi.fn() }));
 vi.mock("@/components/builder/stat-preview", () => ({ StatPreview: () => null }));
 vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => mocks.mobile }));
 
@@ -472,4 +472,59 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update.mock.calls[1][1].choices.resolved_choices).toEqual({ tool: ["tool-dice"] });
   });
 
+});
+
+describe("saved class feature recovery", () => {
+  const training: ContentEntry={...human,id:"training",slug:"training",name:"Pinned Training",content_type:"feature",effects:[{type:"choice",choose:1,from:["old-option"],grant_type:"proficiency",choice_id:"training-option"}]};
+  const cls: ContentEntry={...human,id:"fighter",slug:"fighter",name:"Pinned Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:["training"]}]}};
+  const pin=(entry:ContentEntry)=>({id:entry.id+"-pin",content_id:entry.id,context:{},choice_source:null,content_definitions:entry});
+  beforeEach(()=>{vi.resetAllMocks();mocks.mobile=false;vi.spyOn(console,"error").mockImplementation(()=>{});});
+  afterEach(()=>vi.restoreAllMocks());
+  it("keeps missing historical features blocked through hidden failure, then restores the exact version and choices",async()=>{
+    let reject!: (error:Error)=>void;
+    mocks.reconcile.mockReturnValueOnce(new Promise((_,fail)=>{reject=fail})).mockResolvedValueOnce({status:"success",refs:[pin(cls),pin(training)]});
+    const editor=(mode:"visible"|"hidden")=><Activity mode={mode}><ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}]}}} classes={[{...cls,name:"Catalog Fighter",version:2}]} subclasses={[]} features={[{...training,name:"Catalog Training",version:2,effects:[]}]} feats={[]} spells={[]} contentRefs={[pin(cls)]} schema={undefined}/></Activity>;
+    // Preserve the authoritative server-ref identity across Activity reveals.
+    const refs=[pin(cls)];
+    const stable=(mode:"visible"|"hidden")=><Activity mode={mode}><ClassStepClient {...editor(mode).props.children.props} contentRefs={refs}/></Activity>;
+    const view=render(stable("visible"));
+    expect(screen.getByRole("alert")).toHaveTextContent("Saved class features are missing");
+    expect(screen.queryByText("Catalog Training")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Restore saved class features"}));
+    expect(screen.getByRole("button",{name:"Restore saved class features"})).toBeDisabled();
+    fireEvent.click(screen.getByRole("button",{name:"Restore saved class features"}));
+    expect(mocks.reconcile).toHaveBeenCalledOnce();
+    view.rerender(stable("hidden"));
+    await act(async()=>reject(new Error("private recovery detail")));
+    view.rerender(stable("visible"));
+    expect(screen.getAllByRole("alert")[0]).not.toHaveTextContent("private recovery detail");
+    fireEvent.click(screen.getByRole("button",{name:"Restore saved class features"}));
+    await waitFor(()=>expect(screen.queryByText(/Saved class features are missing/)).not.toBeInTheDocument());
+    expect(screen.getAllByText("Pinned Training").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button",{name:"Old Option"})).toBeVisible();
+    expect(mocks.update).not.toHaveBeenCalled();expect(mocks.insert).not.toHaveBeenCalled();expect(mocks.remove).not.toHaveBeenCalled();
+  });
+  it("uses the same language option exclusions in the background editor",()=>{
+    const bg:ContentEntry={...human,id:"scholar",slug:"scholar",name:"Scholar",content_type:"background",effects:[{type:"choice",choose:1,from:"all_languages",grant_type:"proficiency",choice_id:"language"}]};
+    const race={...human,data:{languages:["common"]}};
+    render(<BackgroundStepClient characterId="char-1" character={{...character,choices:{background:"scholar"}}} backgrounds={[bg]} contentRefs={[pin(bg),pin(race)]} availableLanguages={["common","elvish"]} schema={undefined}/>);
+    expect(screen.queryByRole("button",{name:"Common"})).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Elvish"}));
+    expect(mocks.update).toHaveBeenCalledWith("char-1",expect.objectContaining({choices:expect.objectContaining({resolved_choices:{language:["elvish"]}})}));
+  });
+});
+
+describe("missing race trait history",()=>{
+  beforeEach(()=>{vi.resetAllMocks();mocks.mobile=false;});
+  it("does not substitute a current trait or silently accept dependent choices",()=>{
+    const cls:ContentEntry={...human,data:{traits:["versatility"]},effects:[{type:"choice",choose:1,from:["skill-athletics"],grant_type:"proficiency",choice_id:"skill"}]};
+    const trait:ContentEntry={...human,id:"versatility",slug:"versatility",name:"Current Trait",content_type:"trait",version:2,effects:[{type:"choice",choose:1,from:["new-option"],grant_type:"proficiency",choice_id:"trait-option"}]};
+    render(<RaceStepClient characterId="char-1" character={{...character,choices:{race:"human"}}} races={[cls]} subraces={[]} traits={[trait]} contentRefs={[{id:"race-pin",content_id:cls.id,context:{},choice_source:null,content_definitions:cls}]} schema={undefined}/>);
+    expect(screen.getByRole("alert")).toHaveTextContent("Saved trait snapshots are missing");
+    expect(screen.queryByRole("button",{name:"New Option"})).not.toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"Athletics"})).toBeDisabled();
+    fireEvent.click(screen.getByRole("button",{name:"Athletics"}));
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(screen.getByRole("button",{name:"Change Race"})).toBeEnabled();
+  });
 });

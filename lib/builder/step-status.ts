@@ -1,5 +1,6 @@
 import type { Effect } from "@/lib/types/effects";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
+import { activeFeatureSlugs, fixedLanguages, isAsiChoiceComplete, isChoiceComplete } from "./choice-validation";
 import { hasCompleteAbilityScores } from "./ability-score-validation";
 import type { CharacterChoices } from "@/lib/types/character";
 import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choices";
@@ -16,8 +17,11 @@ export const builderStepStatusLabels: Record<BuilderStepStatus, string> = {
 export interface BuilderStatusRef {
   content_id: string;
   content_version: number;
+  context?: Record<string, unknown>;
+  choice_source?: string | null;
   content_definitions: {
     id: string;
+    name?: string;
     slug: string;
     content_type: string;
     version: number;
@@ -36,28 +40,56 @@ function exactSavedPin(type: string, slug: string, refs: BuilderStatusRef[]) {
     pin.content_version === pin.content_definitions.version ? pin.content_definitions : undefined;
 }
 
-/** Validate choices whose entire option set is in the pinned definition.
- * Category-based sources and per-level feature choices need their own resolvers. */
-function hasSavedExplicitChoices(definition: BuilderStatusRef["content_definitions"], choices: CharacterChoices) {
-  return (definition.effects ?? []).every(effect => {
-    if (effect.type !== "choice" || !Array.isArray(effect.from)) return true;
-    if (!Number.isInteger(effect.choose) || effect.choose < 1 || !effect.choice_id) return false;
-    const selected = choices.resolved_choices?.[effect.choice_id] ?? [];
-    return Array.isArray(selected) && selected.length === effect.choose &&
-      new Set(selected).size === selected.length && selected.every(value => effect.from.includes(value));
+function hasSavedChoices(definition: BuilderStatusRef["content_definitions"], choices: CharacterChoices, languages?: readonly string[], granted: readonly string[] = []) {
+  return (definition.effects ?? []).every(effect => effect.type !== "choice" ||
+    isChoiceComplete(effect, choices.resolved_choices?.[effect.choice_id] ?? [], languages, granted));
+}
+
+function hasSavedLevelChoices(definition: BuilderStatusRef["content_definitions"], level: number, classSlug: string, choices: CharacterChoices, refs: BuilderStatusRef[], languages?: readonly string[], granted: readonly string[] = []): boolean {
+  return activeFeatureSlugs(definition, level).every(slug => {
+    const feature = exactSavedPin("feature", slug, refs);
+    if (!feature || !hasSavedChoices(feature, choices, languages, granted)) return false;
+    if (feature.data.feature_type === "subclass") return !!choices.classes?.find(cls => cls.slug === classSlug)?.subclass;
+    if (feature.data.feature_type === "asi") {
+      const choice = choices.asi_choices?.[slug];
+      if (!isAsiChoiceComplete(choice)) return false;
+      if (choice?.mode !== "feat") return true;
+      const matching = refs.filter(ref => ref.content_definitions.content_type === "feat" &&
+        ref.content_id === choice.featId && ref.content_definitions.id === choice.featId &&
+        ref.content_version === choice.featVersion && ref.content_definitions.version === choice.featVersion &&
+        ref.context?.source === "asi_feat" && ref.context?.feature_slug === slug && ref.choice_source?.startsWith("choice:asi:"));
+      return matching.length === 1;
+    }
+    if (feature.data.feature_type === "fighting_style" && feature.name === "Fighting Style") {
+      const selected = choices.resolved_choices?.[slug] ?? [];
+      const style = selected.length === 1 ? exactSavedPin("feature", selected[0], refs) : undefined;
+      return !!style && style.name !== "Fighting Style" && style.data.class === classSlug && style.data.feature_type === "fighting_style";
+    }
+    return true;
+  });
+}
+
+function hasSavedTraits(definition: BuilderStatusRef["content_definitions"], choices: CharacterChoices, refs: BuilderStatusRef[], languages?: readonly string[], granted: readonly string[] = []) {
+  const traits = definition.data.traits;
+  return !Array.isArray(traits) || traits.every(slug => {
+    if (typeof slug !== "string") return false;
+    const trait = exactSavedPin("trait", slug, refs);
+    return !!trait && hasSavedChoices(trait, choices, languages, granted);
   });
 }
 
 /** Saved core identity/reference consistency and schema-aware abilities.
- * Complete validates explicit choices on selected core definitions, not every
- * per-level feature/category choice or playability. */
+ * Validates supported core/per-level/category choices from exact saved pins.
+ * Still not a whole-character playability or backend authorization verdict. */
 export function getBuilderStepStatus(
   stepType: string,
   choices: CharacterChoices,
   baseStats: Record<string, number>,
   schema?: SystemSchemaDefinition,
   refs: BuilderStatusRef[] = [],
+  languages?: readonly string[],
 ): BuilderStepStatus {
+  const granted = fixedLanguages(refs.map(ref => ref.content_definitions));
   const countPins = (type: string) => refs.filter(ref => ref.content_definitions.content_type === type).length;
   switch (stepType) {
     case "class": {
@@ -70,8 +102,8 @@ export function getBuilderStepStatus(
           !Number.isInteger(cls.level) || cls.level <= 0) return false;
         const definition = exactSavedPin("class", cls.slug, refs);
         const subclass = cls.subclass ? exactSavedPin("subclass", cls.subclass, refs) : undefined;
-        return !!definition && hasSavedExplicitChoices(definition, choices) &&
-          (!cls.subclass || (subclass?.data.parent_class === cls.slug && hasSavedExplicitChoices(subclass, choices)));
+        return !!definition && hasSavedChoices(definition, choices, languages, granted) && hasSavedLevelChoices(definition, cls.level, cls.slug, choices, refs, languages, granted) &&
+          (!cls.subclass || (subclass?.data.parent_class === cls.slug && hasSavedChoices(subclass, choices, languages, granted) && hasSavedLevelChoices(subclass, cls.level, cls.slug, choices, refs, languages, granted)));
       }) ? "complete" : "in_progress";
     }
     case "race": {
@@ -79,13 +111,13 @@ export function getBuilderStepStatus(
       const race = exactSavedPin("race", choices.race, refs);
       const subrace = choices.subrace ? exactSavedPin("subrace", choices.subrace, refs) : undefined;
       return race && countPins("race") === 1 && countPins("subrace") === (choices.subrace ? 1 : 0) &&
-        hasSavedExplicitChoices(race, choices) &&
-        (!choices.subrace || (subrace?.data.parent_race === choices.race && hasSavedExplicitChoices(subrace, choices))) ? "complete" : "in_progress";
+        hasSavedChoices(race, choices, languages, granted) && hasSavedTraits(race, choices, refs, languages, granted) &&
+        (!choices.subrace || (subrace?.data.parent_race === choices.race && hasSavedChoices(subrace, choices, languages, granted) && hasSavedTraits(subrace, choices, refs, languages, granted))) ? "complete" : "in_progress";
     }
     case "background": {
       if (!choices.background) return countPins("background") ? "in_progress" : "untouched";
       const definition = exactSavedPin("background", choices.background, refs);
-      return countPins("background") === 1 && definition && hasSavedExplicitChoices(definition, choices) ? "complete" : "in_progress";
+      return countPins("background") === 1 && definition && hasSavedChoices(definition, choices, languages, granted) ? "complete" : "in_progress";
     }
     case "abilities":
       if (hasCompleteAbilityScores(choices.ability_method, baseStats, schema?.ability_scores,

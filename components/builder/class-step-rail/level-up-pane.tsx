@@ -170,11 +170,7 @@ export function LevelUpPane(props: LevelUpPaneProps) {
                 );
               }
               if (choice.type === "generic") {
-                // Generic choices are looked up in `classChoices` (the class's ChoiceEffect[])
-                // by treating `choice.featureSlug` as a `choice_id`. classFeaturesPerLevel
-                // doesn't yet emit "generic" entries — when it does, ensure the per-level
-                // helper passes the ChoiceEffect's `choice_id` value as featureSlug.
-                const choiceEffect = classChoices.find((e) => e.choice_id === choice.featureSlug);
+                const choiceEffect = choice.choiceEffect ?? classChoices.find((e) => e.choice_id === choice.featureSlug);
                 if (!choiceEffect) return null;
                 return (
                   <ChoiceCardGeneric

@@ -23,6 +23,8 @@ import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
 
+import { fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
+
 const ABILITY_ABBR = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
 
 function formatScores(scores: number[]): string {
@@ -67,6 +69,7 @@ interface RaceStepClientProps {
     };
   }>;
   schema: SystemSchemaDefinition | undefined;
+  availableLanguages?: string[];
 }
 
 export function RaceStepClient({
@@ -77,6 +80,7 @@ export function RaceStepClient({
   traits,
   contentRefs,
   schema,
+  availableLanguages,
 }: RaceStepClientProps) {
   const saveBusy = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -117,31 +121,38 @@ export function RaceStepClient({
     (ref) => ref.content_definitions?.effects ?? [],
   );
 
+  const grantedLanguages = fixedLanguages(contentRefs.map(ref => ref.content_definitions));
+  const resolveChoices = (entry: ContentEntry | undefined) => entry ? resolveDefinitionChoices(entry, availableLanguages, grantedLanguages).effects ?? [] : [];
+
   // Get choice effects from race and subrace
-  const raceChoices: ChoiceEffect[] = (selectedRaceContent?.effects ?? []).filter(
+  const raceChoices: ChoiceEffect[] = resolveChoices(selectedRaceContent).filter(
     (e): e is ChoiceEffect => e.type === "choice",
   );
   const subraceChoices: ChoiceEffect[] = (
-    selectedSubraceContent?.effects ?? []
+    resolveChoices(selectedSubraceContent)
   ).filter((e): e is ChoiceEffect => e.type === "choice");
 
   // Resolve trait choices from race's data.traits array
-  const raceTraitSlugs = (selectedRaceContent?.data?.traits as string[] | undefined) ?? [];
+  const raceTraitSlugs = [...new Set([
+    ...((selectedRaceContent?.data?.traits as string[] | undefined) ?? []),
+    ...((selectedSubraceContent?.data?.traits as string[] | undefined) ?? []),
+  ])];
   const referencedTraitPins = raceTraitSlugs.map(slug => contentRefs.filter(ref =>
     ref.content_definitions.content_type === "trait" && ref.content_definitions.slug === slug &&
     ref.content_id === ref.content_definitions.id));
   const conflictingPins = racePins.length > 1 || subracePins.length > 1 ||
     referencedTraitPins.some(pins => pins.length > 1);
+  const missingTraits = raceTraitSlugs.filter((_, index) => !!pinnedRace && referencedTraitPins[index].length === 0);
   const resolvedTraits = raceTraitSlugs
     .map((slug, index) => {
       const pins = referencedTraitPins[index];
-      if (pins.length > 1) return undefined;
+      if (pins.length > 1 || (pinnedRace && pins.length === 0)) return undefined;
       return pins[0]?.content_definitions ?? traits.find(trait => trait.slug === slug);
     })
     .filter((trait): trait is ContentEntry => !!trait);
   const traitChoices: Array<{ trait: ContentEntry; choice: ChoiceEffect }> = resolvedTraits.flatMap(
     (trait) =>
-      (trait.effects ?? [])
+      resolveChoices(trait)
         .filter((e): e is ChoiceEffect => e.type === "choice")
         .map((choice) => ({ trait, choice })),
   );
@@ -263,7 +274,7 @@ export function RaceStepClient({
   }
 
   async function handleChoiceSelect(choiceId: string, selections: string[]) {
-    if (saveBusy.current) return;
+    if (saveBusy.current || missingTraits.length > 0) return;
     saveBusy.current = true; setIsSaving(true); setSaveError(null);
     const newResolved = {
       ...localChoices.resolved_choices,
@@ -318,6 +329,7 @@ export function RaceStepClient({
       <fieldset disabled={isSaving || conflictingPins} aria-busy={isSaving} className="min-w-0 space-y-6 border-0 p-0">
         <h2 className="text-xl font-semibold">{raceTypeLabel}</h2>
         {conflictingPins && <p role="alert" className="text-sm text-destructive">Multiple snapshots are saved for this race, subrace or trait. Reload and check the saved references before making changes.</p>}
+        {missingTraits.length > 0 && <p role="alert" className="text-sm text-destructive">Saved trait snapshots are missing: {missingTraits.join(", ")}. Reload and check the saved references; their original versions cannot be inferred from today’s catalog.</p>}
         {mismatchedSubrace && <p role="alert" className="text-sm text-destructive">Your saved subrace does not belong to the selected race. Reload and check the saved choices before making changes.</p>}
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
         {isSaving && <p role="status">Saving race choices. Keep this page open.</p>}
@@ -458,6 +470,7 @@ export function RaceStepClient({
                 {/* Race-level choices */}
                 {raceChoices.map((choice) => (
                   <ChoiceSelector
+                      disabled={missingTraits.length > 0}
                     key={choice.choice_id}
                     choiceEffect={choice}
                     currentSelections={
@@ -472,6 +485,7 @@ export function RaceStepClient({
                 {/* Trait-level choices (e.g., Dwarf Tool Proficiency, Half-Elf Skill Versatility) */}
                 {traitChoices.map(({ trait, choice }) => (
                   <ChoiceSelector
+                      disabled={missingTraits.length > 0}
                     key={choice.choice_id}
                     choiceEffect={choice}
                     currentSelections={
@@ -514,6 +528,7 @@ export function RaceStepClient({
                       )}
                       {subraceChoices.map((choice) => (
                         <ChoiceSelector
+                      disabled={missingTraits.length > 0}
                           key={choice.choice_id}
                           choiceEffect={choice}
                           currentSelections={

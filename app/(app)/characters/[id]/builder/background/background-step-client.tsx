@@ -23,6 +23,8 @@ import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
 
+import { fixedLanguages, resolveChoiceOptions } from "@/lib/builder/choice-validation";
+
 type NarrativeField = "personality_traits" | "ideals" | "bonds" | "flaws";
 
 interface BackgroundStepClientProps {
@@ -426,33 +428,11 @@ export function BackgroundStepClient({
                 )}
 
                 {bgChoices.map((choice) => {
-                  // Resolve category strings like "all_languages" to actual options
-                  let resolvedChoice = choice;
-                  if (typeof choice.from === "string") {
-                    if (choice.from === "all_languages") {
-                      // Get languages already granted by race or other sources
-                      const grantedLanguages = allEffects
-                        .filter((e) => e.type === "grant" && (e as { stat: string }).stat.startsWith("language"))
-                        .map((e) => (e as { stat: string }).stat);
-                      const raceLanguages = contentRefs
-                        .filter((ref) => ref.content_definitions?.content_type === "race")
-                        .flatMap((ref) => {
-                          const langs = ref.content_definitions?.data?.languages;
-                          return Array.isArray(langs) ? langs as string[] : [];
-                        });
-                      const alreadyGranted = new Set([...grantedLanguages, ...raceLanguages]);
-
-                      // Filter available languages to exclude already-granted ones
-                      const filteredLanguages = availableLanguages.filter(
-                        (lang) => !alreadyGranted.has(lang)
-                      );
-
-                      resolvedChoice = {
-                        ...choice,
-                        from: filteredLanguages,
-                      };
-                    }
-                  }
+                  const options = resolveChoiceOptions(choice, availableLanguages, fixedLanguages([
+                    ...contentRefs.filter(ref => ref.content_definitions.content_type !== "background").map(ref => ref.content_definitions),
+                    ...(selectedBgContent ? [selectedBgContent] : []),
+                  ]));
+                  const resolvedChoice = options ? { ...choice, from: [...options] } : choice;
 
                   return (
                     <ChoiceSelector

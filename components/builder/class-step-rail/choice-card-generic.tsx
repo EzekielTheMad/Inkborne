@@ -1,5 +1,6 @@
 "use client";
 
+import { isChoiceComplete } from "@/lib/builder/choice-validation";
 import { cn } from "@/lib/utils";
 import { ChoiceSelector } from "@/components/builder/choice-selector";
 import type { ChoiceEffect } from "@/lib/types/effects";
@@ -18,10 +19,7 @@ export function ChoiceCardGeneric({
   onSelect,
   label,
 }: ChoiceCardGenericProps) {
-  const options = choiceEffect.from;
-  const isMade = currentSelections.length === choiceEffect.choose &&
-    new Set(currentSelections).size === currentSelections.length &&
-    (!Array.isArray(options) || currentSelections.every(selection => options.includes(selection)));
+  const isMade = isChoiceComplete(choiceEffect, currentSelections);
 
   return (
     <article className="rounded-md border border-border bg-card/40 p-4">

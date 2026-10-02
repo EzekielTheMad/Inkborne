@@ -26,13 +26,14 @@ const stubs = {
       });
     }
     export async function updateCharacterAndReturn(id,patch){window.fixture.classCalls.push(patch);await new Promise(resolve=>{window.fixture.resolveClass=resolve});return {choices:patch.choices,level:patch.level}}
-    export async function updateCharacter(id,patch){if(location.pathname==='/low-con'){window.fixture.hpCalls.push(patch);return}if(location.pathname==='/hp-recovery'){window.fixture.hpCalls.push(patch);if(window.fixture.hpMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveHp=resolve;window.fixture.rejectHp=()=>reject(new Error('private HP detail'))});return}if(location.pathname==='/empty-class'){window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/background'||location.pathname==='/invalid-choice'||location.pathname==='/note-replacement'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
+    export async function updateCharacter(id,patch){if(location.pathname==='/low-con'){window.fixture.hpCalls.push(patch);return}if(location.pathname==='/hp-recovery'){window.fixture.hpCalls.push(patch);if(window.fixture.hpMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveHp=resolve;window.fixture.rejectHp=()=>reject(new Error('private HP detail'))});return}if(location.pathname==='/feature-recovery') {window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/language-category'){window.fixture.backgroundCalls.push(patch);return}if(location.pathname==='/empty-class'){window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/background'||location.pathname==='/invalid-choice'||location.pathname==='/note-replacement'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
   `,
   "@/lib/supabase/background-selection-client": `export async function setCharacterBackground(id,contentId,version){if(location.pathname!=='/note-replacement')throw new Error('Fixture does not replace backgrounds');window.fixture.backgroundReplacements.push({contentId,version});return {savedChoices:{background:'scholar',ideals:[]},selectedContentId:contentId,selectedContentVersion:version}}`,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(){} export async function removeContentRefById(){}`,
   "@/lib/supabase/inventory": `export async function addInventoryItem(id,grant){window.fixture.grants.push(grant);if(window.fixture.grants.length===2)throw new Error("private grant detail");return {id:"local-grant"}}`,
   "@/lib/sheet/update-state": `export async function updateCharacterState(){throw new Error("Fixture does not save currency")}`,
-  "class-actions": `export async function searchUsableFeatsAction(){return {status:"success",feats:[]}} export async function setCharacterAsiChoiceAction(){throw new Error("Fixture does not save class choices")}`,
+  "class-actions": `export async function reconcileClassFeatureRefsAction(){window.fixture.recoveryCalls.push({});if(window.fixture.recoveryMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveRecovery=resolve;window.fixture.rejectRecovery=()=>reject(new Error('private recovery detail'))});return {status:'success',refs:window.fixture.recoveryRefs}}
+    export async function searchUsableFeatsAction(){return {status:"success",feats:[]}} export async function setCharacterAsiChoiceAction(){throw new Error("Fixture does not save class choices")}`,
   "@/components/builder/stat-preview": `export function StatPreview(){return null}`,
 };
 await build({
@@ -46,7 +47,7 @@ await build({
       import {ClassStepClient} from '@/app/(app)/characters/[id]/builder/class/class-step-client';
       import {BackgroundStepClient} from '@/app/(app)/characters/[id]/builder/background/background-step-client';
       import {EquipmentStepClient} from '@/app/(app)/characters/[id]/builder/equipment/equipment-step-client';
-      window.fixture={backgroundReplacements:[],mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],hpCalls:[],hpMode:'pending',resolveHp:null,rejectHp:null,classChoiceCalls:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
+      window.fixture={recoveryCalls:[],recoveryMode:'pending',recoveryRefs:[],backgroundReplacements:[],mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],hpCalls:[],hpMode:'pending',resolveHp:null,rejectHp:null,classChoiceCalls:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
@@ -64,12 +65,19 @@ await build({
       const pinnedWind={...human,id:'second-wind',slug:'second-wind',name:'Pinned Second Wind',content_type:'feature',data:{description:'Authorized pinned recovery.'}};
       const courier={...human,id:'courier',slug:'courier',name:'Courier',content_type:'background',data:{ideals:[],bonds:[],flaws:[],personality_traits:[]}};
       const choiceCourier={...courier,effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'courier-skill'}]};
+      const recoveryWind={...pinnedWind,effects:[{type:'choice',choose:1,from:['old-option'],grant_type:'proficiency',choice_id:'training'}]};
+      const recoveryPins=[pinnedFighter,recoveryWind].map(content=>({id:'pin-'+content.id,content_id:content.id,content_version:1,context:{},choice_source:null,content_definitions:content}));
+      const recoveryStart=[recoveryPins[0]];
+      window.fixture.recoveryRefs=recoveryPins;
+      const languageBackground={...courier,effects:[{type:'choice',choose:1,from:'all_languages',grant_type:'proficiency',choice_id:'language'}]};
       function App(){
         const [route,setRoute]=useState(location.pathname);
         function navigate(to){history.pushState({fixture:true},'',to);setRoute(to)}
         useEffect(()=>{const pop=()=>setRoute(location.pathname);const go=e=>navigate(e.detail);window.addEventListener('popstate',pop);window.addEventListener('fixture-navigation',go);return()=>{window.removeEventListener('popstate',pop);window.removeEventListener('fixture-navigation',go)}},[]);
         return <><h1>Isolated builder fixture</h1><p>Simulated history and persistence; real editor and selection components.</p>
           <nav><a href='/overview' onClick={e=>{e.preventDefault();navigate('/overview')}}>Overview</a> | <a href='/abilities' onClick={e=>{e.preventDefault();navigate('/abilities')}}>Abilities</a> | <a href='/race' onClick={e=>{e.preventDefault();navigate('/race')}}>Race</a> | <a href='/background' onClick={e=>{e.preventDefault();navigate('/background')}}>Background</a> | <a href='/equipment' onClick={e=>{e.preventDefault();navigate('/equipment')}}>Equipment</a> | <a href='/pinned-class' onClick={e=>{e.preventDefault();navigate('/pinned-class')}}>Pinned Class</a> | <a href='/pinned-race' onClick={e=>{e.preventDefault();navigate('/pinned-race')}}>Pinned Race</a></nav>
+          <Activity mode={route==='/feature-recovery'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...pinnedFighter,name:'Current Fighter',version:2}]} subclasses={[]} features={[{...recoveryWind,name:'Current Feature',version:2,effects:[]}]} feats={[]} spells={[]} contentRefs={recoveryStart} schema={undefined}/></Activity>
+          <Activity mode={route==='/language-category'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[languageBackground]} contentRefs={[languageBackground,{...human,data:{languages:['common']}}].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} availableLanguages={['common','elvish']} schema={undefined}/></Activity>
           {route==='/overview'&&<h2>Overview fixture</h2>}
           <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
           <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[newerTrait]} contentRefs={[pinnedHuman,pinnedTrait].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
@@ -368,6 +376,34 @@ try {
   assert.equal(await page.getByRole("button", {name:"Confirm Equipment",exact:true}).isDisabled(),true);
   assert.equal(await page.evaluate(()=>window.fixture.grants.length),2);
   evidence.push({check:"equipment selection save/retry and partial grant failure block blind confirmation",passed:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(origin+'/feature-recovery');
+  await page.getByRole('button',{name:'Restore saved class features'}).click();
+  assert.equal(await page.getByRole('button',{name:'Restore saved class features'}).isDisabled(),true);
+  assert.equal(await page.evaluate(()=>window.fixture.recoveryCalls.length),1);
+  await page.getByRole('link',{name:'Overview',exact:true}).click();
+  await page.evaluate(()=>window.fixture.rejectRecovery());
+  await page.goBack();
+  await page.getByRole('alert').filter({hasText:'could not be restored'}).waitFor();
+  assert.equal(await page.getByRole('alert').filter({hasText:'could not be restored'}).textContent().then(text=>text.includes('private recovery detail')),false);
+  await page.evaluate(()=>{window.fixture.recoveryMode='success'});
+  await page.getByRole('button',{name:'Restore saved class features'}).click();
+  await page.getByRole('button',{name:'Restore saved class features'}).waitFor({state:'hidden'});
+  await page.getByRole('button',{name:/^Level 1:/}).click();
+  await page.getByRole('button',{name:'Old Option',exact:true}).waitFor();
+  assert.equal(await page.getByText('Current Feature',{exact:true}).count(),0);
+  await page.getByRole('button',{name:'Old Option',exact:true}).click();
+  await page.waitForFunction(()=>window.fixture.classChoiceCalls.length===1);
+  assert.deepEqual(await page.evaluate(()=>window.fixture.classChoiceCalls[0].choices.resolved_choices),{training:['old-option']});
+  await page.screenshot({path:path.join(output,'feature-recovery-mobile.png'),fullPage:true,animations:'disabled'});
+  evidence.push({check:'mobile retained Activity feature recovery settles hidden, retries, and restores historical feature choices',passed:true});
+  await page.goto(origin+'/language-category');
+  await page.getByRole('button',{name:'Elvish',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Common',exact:true}).count(),0);
+  await page.getByRole('button',{name:'Elvish',exact:true}).click();
+  await page.waitForFunction(()=>window.fixture.backgroundCalls.length===1);
+  assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[0].choices.resolved_choices),{language:['elvish']});
+  evidence.push({check:'language category options exclude fixed grants and persist the selected accessible language',passed:true});
   assert.deepEqual(errors, []);
   assert.deepEqual(blockedRequests, []);
   await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));

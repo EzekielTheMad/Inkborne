@@ -26,9 +26,12 @@ import { resolveHpRule, type HpRule } from "@/lib/builder/level-up-rules";
 import type { Effect } from "@/lib/types/effects";
 import { evaluate } from "@/lib/engine/evaluator";
 import {
+  reconcileClassFeatureRefsAction,
   searchUsableFeatsAction,
   setCharacterAsiChoiceAction,
 } from "./actions";
+
+import { activeFeatureSlugs, fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 
 interface ClassStepClientProps {
   characterId: string;
@@ -61,6 +64,7 @@ interface ClassStepClientProps {
     };
   }>;
   schema: SystemSchemaDefinition | undefined;
+  availableLanguages?: string[];
 }
 
 /** Resolve only saved selections/referenced features. New picks stay catalog-based;
@@ -94,9 +98,12 @@ export function ClassStepClient({
   features,
   feats,
   spells,
-  contentRefs,
+  contentRefs: serverContentRefs,
   schema,
+  availableLanguages,
 }: ClassStepClientProps) {
+  const [recovered, setRecovered] = useState<{ source: ClassStepClientProps["contentRefs"]; refs: ClassStepClientProps["contentRefs"] } | null>(null);
+  const contentRefs = recovered?.source === serverContentRefs ? recovered.refs : serverContentRefs;
   const saveBusy = useRef(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -130,6 +137,34 @@ export function ClassStepClient({
     ...savedLevelFeatures.conflicts, ...savedFeatures.conflicts];
   const snapshotConflict = conflictingPins.length > 0 || mismatchedSubclass;
 
+  const activeSlugs = selectedClasses.flatMap(cls => {
+    const pin = contentRefs.find(ref => ref.content_id === ref.content_definitions.id && ref.content_definitions.content_type === "class" && ref.content_definitions.slug === cls.slug);
+    if (!pin) return [];
+    const subclass = contentRefs.find(ref => ref.content_id === ref.content_definitions.id && ref.content_definitions.content_type === "subclass" && ref.content_definitions.slug === cls.subclass);
+    return [...activeFeatureSlugs(pin.content_definitions, cls.level), ...(subclass ? activeFeatureSlugs(subclass.content_definitions, cls.level) : [])];
+  });
+  const missingFeatures = [...new Set(activeSlugs)].filter(slug => !contentRefs.some(ref => ref.content_id === ref.content_definitions.id && ref.content_definitions.content_type === "feature" && ref.content_definitions.slug === slug));
+  const grantedLanguages = fixedLanguages(contentRefs.map(ref => ref.content_definitions));
+  const resolveEntries = (entries: ContentEntry[]) => entries.map(entry => resolveDefinitionChoices(entry, availableLanguages, grantedLanguages));
+
+  async function recoverFeatureRefs() {
+    if (saveBusy.current || snapshotConflict) return;
+    saveBusy.current = true;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const result = await reconcileClassFeatureRefsAction({ characterId });
+      if (result.status !== "success") throw new Error(result.message);
+      setRecovered({ source: serverContentRefs, refs: result.refs });
+      startTransition(() => router.refresh());
+    } catch {
+      setSaveError("Saved class features could not be restored. Your selections are kept. Try again or reload the character.");
+    } finally {
+      saveBusy.current = false;
+      setSaving(false);
+    }
+  }
+
   const hpRule = resolveHpRule(
     (character as unknown as { campaigns?: { hp_rule?: HpRule | null } | null }).campaigns?.hp_rule,
     (schema as unknown as { hp_rule?: HpRule } | undefined)?.hp_rule,
@@ -152,7 +187,7 @@ export function ClassStepClient({
       setSaveError("The class build is still saving. Wait for it to finish, then retry this change.");
       return false;
     }
-    if (snapshotConflict) return false;
+    if (snapshotConflict || missingFeatures.length > 0) return false;
     saveBusy.current = true;
     setSaving(true);
     return true;
@@ -549,14 +584,18 @@ export function ClassStepClient({
 
         {conflictingPins.length > 0 && <p role="alert" className="text-sm text-destructive">Multiple saved snapshots match this class build. Reload the character and resolve its references before editing.</p>}
         {mismatchedSubclass && <p role="alert" className="text-sm text-destructive">The selected subclass is missing or does not belong to its class. Reload the character and check its references before editing.</p>}
-        {snapshotConflict ? null : hasClass ? (
+        {missingFeatures.length > 0 && <div role="alert" className="space-y-2 text-sm">
+          <p>Saved class features are missing: {missingFeatures.join(", ")}. Restore their saved versions before editing this build.</p>
+          <Button type="button" variant="outline" onClick={recoverFeatureRefs}>Restore saved class features</Button>
+        </div>}
+        {snapshotConflict || missingFeatures.length > 0 ? null : hasClass ? (
           <ClassStepRail
             characterName={character.name}
             savePending={saving}
             saveError={saveError}
-            classes={savedClasses.entries}
-            subclasses={savedSubclasses.entries}
-            features={savedFeatures.entries}
+            classes={resolveEntries(savedClasses.entries)}
+            subclasses={resolveEntries(savedSubclasses.entries)}
+            features={resolveEntries(savedFeatures.entries)}
             feats={feats}
             onFeatSearch={handleFeatSearch}
             selectedClasses={selectedClasses}

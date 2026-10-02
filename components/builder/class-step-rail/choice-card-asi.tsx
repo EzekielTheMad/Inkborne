@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Search, Sparkles } from "lucide-react";
 
+import { isAsiChoiceComplete } from "@/lib/builder/choice-validation";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -118,11 +119,7 @@ export function ChoiceCardASI({
     );
   }, [feats, onSearch, query, searchResults]);
 
-  const isMade = currentChoice?.mode === "feat"
-    || (currentChoice?.mode === "asi" &&
-      (currentChoice.allocations.length === 1
-        ? currentChoice.allocations[0]?.amount === 2
-        : currentChoice.allocations.length === 2));
+  const isMade = isAsiChoiceComplete(currentChoice);
 
   async function persist(choice: AsiChoice) {
     setPending(true);
