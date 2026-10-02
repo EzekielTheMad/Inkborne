@@ -39,7 +39,7 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
   const steps: CreationStep[] = schema?.creation_steps ?? [];
   const stepStatus = Object.fromEntries(
     steps.map((step) => [step.type, getBuilderStepStatus(
-      step.type, character.choices ?? {}, character.base_stats ?? {},
+      step.type, character.choices ?? {}, character.base_stats ?? {}, schema,
     )]),
   );
 

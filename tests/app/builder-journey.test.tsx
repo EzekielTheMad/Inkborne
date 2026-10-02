@@ -23,7 +23,7 @@ function mockCharacter(choices: CharacterChoices, baseStats: Record<string, numb
     select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: {
       id: "char-1", name: "New adventurer", user_id: owner, choices, base_stats: baseStats,
-      game_systems: { schema_definition: { creation_steps: steps } },
+      game_systems: { schema_definition: { creation_steps: steps, ability_scores: ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"].map(slug => ({ slug, name: slug, abbr: slug })) } },
     }, error: null }),
   };
   vi.mocked(createClient).mockResolvedValue({
@@ -46,10 +46,11 @@ describe("local builder journey", () => {
     { name: "fresh character", choices: {}, stats: {}, labels: ["Not started", "Not started", "Not started", "Not started", "Not started"] },
     { name: "ability method selected", choices: { ability_method: "standard_array" }, stats: {}, labels: ["Not started", "Not started", "Not started", "In progress", "Not started"] },
     { name: "saved core choices", choices: selected, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "Not started"] },
+    { name: "partial abilities", choices: selected, stats: { strength: 15 }, labels: ["Complete", "Complete", "Complete", "In progress", "Not started"] },
     { name: "equipment draft", choices: { ...selected, starting_equipment: { selections: {}, picks: {} } }, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "In progress"] },
     { name: "equipment confirmed", choices: { ...selected, starting_equipment: { selections: {}, picks: {}, confirmed: true } }, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "Complete"] },
   ])("keeps overview and navigation aligned for $name", async ({ choices, stats, labels }) => {
-    mockCharacter(choices as CharacterChoices, stats);
+    mockCharacter(choices as CharacterChoices, stats as Record<string, number>);
     const overview = await BuilderOverviewPage({ params: Promise.resolve({ id: "char-1" }) });
     render(await BuilderLayout({ params: Promise.resolve({ id: "char-1" }), children: overview }));
     const nav = screen.getByRole("navigation", { name: "Character builder" });
@@ -84,7 +85,7 @@ describe("local builder journey", () => {
 
   it("preserves saved-choice indicators without claiming full readiness validation", () => {
     expect(getBuilderStepStatus("equipment", { starting_equipment: "acknowledged" }, {})).toBe("complete");
-    expect(getBuilderStepStatus("abilities", { ability_method: "manual" }, { strength: 10 })).toBe("complete");
+    expect(getBuilderStepStatus("abilities", { ability_method: "manual" }, { strength: 10 })).toBe("in_progress");
     expect(getBuilderStepStatus("class", { classes: [{ slug: "fighter", level: 3 }] }, {})).toBe("complete");
     expect(getBuilderStepStatus("future-step", selected, scores)).toBe("untouched");
   });

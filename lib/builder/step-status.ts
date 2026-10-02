@@ -1,3 +1,5 @@
+import type { SystemSchemaDefinition } from "@/lib/types/system";
+import { hasCompleteAbilityScores } from "./ability-score-validation";
 import type { CharacterChoices } from "@/lib/types/character";
 import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choices";
 
@@ -9,11 +11,13 @@ export const builderStepStatusLabels: Record<BuilderStepStatus, string> = {
   untouched: "Not started",
 };
 
-/** Saved-choice indicators, not validation that every required choice is resolved. */
+/** Saved step status: abilities use schema/editor rules. Other steps still
+ * indicate selected identities, not full pinned-reference/subchoice readiness. */
 export function getBuilderStepStatus(
   stepType: string,
   choices: CharacterChoices,
   baseStats: Record<string, number>,
+  schema?: SystemSchemaDefinition,
 ): BuilderStepStatus {
   switch (stepType) {
     case "class":
@@ -23,7 +27,8 @@ export function getBuilderStepStatus(
     case "background":
       return choices.background ? "complete" : "untouched";
     case "abilities":
-      if (choices.ability_method && Object.keys(baseStats).length > 0) return "complete";
+      if (hasCompleteAbilityScores(choices.ability_method, baseStats, schema?.ability_scores,
+        schema?.creation_steps?.find(step => step.type === "abilities")?.methods)) return "complete";
       return choices.ability_method ? "in_progress" : "untouched";
     case "equipment":
       if (isEquipmentConfirmed(choices.starting_equipment)) return "complete";

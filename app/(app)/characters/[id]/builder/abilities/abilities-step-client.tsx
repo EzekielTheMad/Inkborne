@@ -19,11 +19,7 @@ import type { Effect } from "@/lib/types/effects";
 import { createAbilityScoreWriter, type AbilityDraft, type AbilitySaveStatus } from "@/lib/builder/ability-score-writer";
 import { useSaveNavigationGuard } from "@/lib/builder/use-save-navigation-guard";
 
-const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
-const POINT_BUY_BUDGET = 27;
-const POINT_BUY_COSTS: Record<number, number> = {
-  8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9,
-};
+import { STANDARD_ARRAY, POINT_BUY_BUDGET, POINT_BUY_COSTS } from "@/lib/builder/ability-score-validation";
 
 interface AbilitiesStepClientProps {
   characterId: string;

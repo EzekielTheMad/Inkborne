@@ -76,7 +76,7 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((step, index) => {
-          const status = getBuilderStepStatus(step.type, choices, baseStats);
+          const status = getBuilderStepStatus(step.type, choices, baseStats, schema);
           const summary = getStepSummary(step, choices);
 
           return (
@@ -115,6 +115,9 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
                   >
                     {summary}
                   </p>
+                  {step.type === "abilities" && status === "in_progress" && choices.ability_method && (
+                    <p className="mt-2 text-xs text-muted-foreground">Assign a valid base score to every ability using the selected method.</p>
+                  )}
                 </CardContent>
               </Card>
             </Link>
