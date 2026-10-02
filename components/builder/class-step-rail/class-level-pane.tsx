@@ -75,7 +75,8 @@ export function ClassLevelPane({
   }
 
   const title = paneTitle(row);
-  const isEmpty = row.features.length === 0 && row.choices.length === 0;
+  const isEmpty = row.features.length === 0 && row.choices.length === 0 &&
+    !(row.level === 1 && classChoices.length > 0);
   const isFirstLevelOfPrimary = isPrimaryClass && row.level === 1;
   const hpKey = `${classSlug}-${row.level}`;
   const storedRoll = hpRolls[hpKey];

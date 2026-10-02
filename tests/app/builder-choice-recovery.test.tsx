@@ -208,6 +208,25 @@ describe("builder choice error recovery with real selection controls", () => {
     expect(mocks.update.mock.calls[2][1].choices.resolved_choices).toEqual({skill:["skill-athletics"]});
   });
 
+  it("shows first-level class choices even when the level has no feature rows", async () => {
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:[]}]},effects:[{type:"choice",choose:1,from:["skill-athletics"],grant_type:"proficiency",choice_id:"fighter-skill"}]};
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}]}}} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[{id:"pin",content_id:cls.id,context:{},choice_source:null,content_definitions:cls}]} schema={undefined}/>);
+    fireEvent.click(screen.getByRole("button",{name:"Athletics"}));
+    await waitFor(()=>expect(mocks.update).toHaveBeenCalledOnce());
+    expect(mocks.update.mock.calls[0][1].choices.resolved_choices).toEqual({"fighter-skill":["skill-athletics"]});
+    expect(screen.getByLabelText("Choice made")).toBeVisible();
+  });
+
+  it("does not mark unavailable first-level class selections as chosen", () => {
+    const feature:ContentEntry={...human,id:"training",slug:"training",name:"Training",content_type:"feature"};
+    const cls:ContentEntry={...human,id:"fighter",slug:"fighter",name:"Fighter",content_type:"class",data:{hit_die:10,levels:[{level:1,features:["training"]}]},effects:[{type:"choice",choose:1,from:["skill-athletics"],grant_type:"proficiency",choice_id:"fighter-skill"}]};
+    render(<ClassStepClient characterId="char-1" character={{...character,choices:{classes:[{slug:"fighter",level:1}],resolved_choices:{"fighter-skill":["skill-removed"]}}}} classes={[cls]} subclasses={[]} features={[feature]} feats={[]} spells={[]} contentRefs={[cls,feature].map(content=>({id:"pin-"+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/>);
+    expect(screen.getByLabelText("Choice not yet made")).toBeVisible();
+    expect(screen.queryByLabelText("Choice made")).not.toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"Clear saved selections"})).toBeEnabled();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
   it("blocks a second background subchoice while the first full-choice save is pending", async () => {
     let rejectSave!: (error: Error) => void;
     mocks.update.mockReturnValueOnce(new Promise<void>((_, reject) => { rejectSave = reject; }));

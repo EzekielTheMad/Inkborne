@@ -68,6 +68,8 @@ and compatibility, but defer expanding those surfaces.
 - Explicit choice selectors now expose readable invalid-pick recovery through an
   explicit clear/save action; failed clears restore the prior selection. See
   [invalid-choice recovery](handoffs/2026-10-02-invalid-choice-recovery.md).
+  First-level class choices now remain visible without feature rows and generic
+  badges reject invalid picks; see [class choice display](handoffs/2026-10-02-class-choice-display.md).
 - Equipment selections/confirmation now share a local pending gate; selection
   failures are visible and require explicit retry. A failed/partial confirmation
   blocks blind same-session re-grants and gives readable inventory-review copy.
@@ -91,7 +93,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,934 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,936 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -99,7 +101,7 @@ choice/reference synchronization remain separate risks.
 - Dependencies were copied from an existing checkout with identical package and
   lock manifests. No install occurred; runtime Vitest reported 4.1.10. This is
   validation with reused dependencies, not proof of a fresh lockfile installation.
-- Installed Chrome ran ten builder checks and five play-save checks with real editors and mocked
+- Installed Chrome ran eleven builder checks and five play-save checks with real editors and mocked
   routing/persistence: link refusal, Back/Forward restoration/retry, keyboard
   selection, mobile error display, pinned race display and native refresh warning passed. This is
   simulated local coverage, not live Next/auth/Supabase acceptance. The existing

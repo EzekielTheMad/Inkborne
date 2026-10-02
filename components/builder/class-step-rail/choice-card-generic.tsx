@@ -18,7 +18,10 @@ export function ChoiceCardGeneric({
   onSelect,
   label,
 }: ChoiceCardGenericProps) {
-  const isMade = currentSelections.length >= choiceEffect.choose;
+  const options = choiceEffect.from;
+  const isMade = currentSelections.length === choiceEffect.choose &&
+    new Set(currentSelections).size === currentSelections.length &&
+    (!Array.isArray(options) || currentSelections.every(selection => options.includes(selection)));
 
   return (
     <article className="rounded-md border border-border bg-card/40 p-4">
