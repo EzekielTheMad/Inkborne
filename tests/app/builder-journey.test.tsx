@@ -4,9 +4,11 @@ import BuilderLayout from "@/app/(app)/characters/[id]/builder/layout";
 import BuilderOverviewPage from "@/app/(app)/characters/[id]/builder/page";
 import { createClient } from "@/lib/supabase/server";
 import { getBuilderStepStatus } from "@/lib/builder/step-status";
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import type { CharacterChoices } from "@/lib/types/character";
 
 const navigation = vi.hoisted(() => ({ pathname: "/characters/char-1/builder" }));
+vi.mock("@/lib/supabase/content-refs", () => ({ getContentRefsByCharacter: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("next/navigation", () => ({
   usePathname: () => navigation.pathname,
@@ -37,10 +39,13 @@ const selected: CharacterChoices = {
   classes: [{ slug: "fighter", level: 1 }], race: "human", background: "soldier",
   ability_method: "standard_array",
 };
+const pins = [
+  { slug: "fighter", content_type: "class" }, { slug: "human", content_type: "race" }, { slug: "soldier", content_type: "background" },
+].map(definition => ({ content_id: definition.slug, content_version: 1, content_definitions: { ...definition, id: definition.slug, name: definition.slug, version: 1, source: "srd" as const, data: {}, effects: [] } }));
 const scores = { strength: 15, dexterity: 13, constitution: 14, intelligence: 10, wisdom: 12, charisma: 8 };
 
 describe("local builder journey", () => {
-  beforeEach(() => { vi.clearAllMocks(); navigation.pathname = "/characters/char-1/builder"; });
+  beforeEach(() => { vi.clearAllMocks(); vi.mocked(getContentRefsByCharacter).mockResolvedValue(pins as never); navigation.pathname = "/characters/char-1/builder"; });
 
   it.each([
     { name: "fresh character", choices: {}, stats: {}, labels: ["Not started", "Not started", "Not started", "Not started", "Not started"] },
@@ -48,8 +53,17 @@ describe("local builder journey", () => {
     { name: "saved core choices", choices: selected, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "Not started"] },
     { name: "partial abilities", choices: selected, stats: { strength: 15 }, labels: ["Complete", "Complete", "Complete", "In progress", "Not started"] },
     { name: "equipment draft", choices: { ...selected, starting_equipment: { selections: {}, picks: {} } }, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "In progress"] },
+    { name: "missing saved pins", choices: selected, stats: scores, refs: [], labels: ["In progress", "In progress", "In progress", "Complete", "Not started"] },
+    { name: "duplicate race pin", choices: selected, stats: scores, refs: [...pins, pins[1]], labels: ["Complete", "In progress", "Complete", "Complete", "Not started"] },
+    { name: "wrong background identity", choices: selected, stats: scores, refs: pins.map(pin => pin.content_id === "soldier" ? { ...pin, content_id: "wrong-id" } : pin), labels: ["Complete", "Complete", "In progress", "Complete", "Not started"] },
+    { name: "mismatched race version", choices: selected, stats: scores, refs: pins.map(pin => pin.content_id === "human" ? { ...pin, content_version: 2 } : pin), labels: ["Complete", "In progress", "Complete", "Complete", "Not started"] },
+    { name: "extra stale class pin", choices: selected, stats: scores, refs: [...pins, { ...pins[0], content_id: "bard", content_definitions: { ...pins[0].content_definitions, id: "bard", slug: "bard" } }], labels: ["In progress", "Complete", "Complete", "Complete", "Not started"] },
+    { name: "incompatible selected subrace", choices: { ...selected, subrace: "wood-elf" }, stats: scores, refs: [...pins, { content_id: "wood-elf", content_version: 1, content_definitions: { ...pins[1].content_definitions, id: "wood-elf", slug: "wood-elf", content_type: "subrace", data: { parent_race: "elf" } } }], labels: ["Complete", "In progress", "Complete", "Complete", "Not started"] },
+    { name: "missing selected subclass pin", choices: { ...selected, classes: [{ slug: "fighter", level: 3, subclass: "champion" }] }, stats: scores, labels: ["In progress", "Complete", "Complete", "Complete", "Not started"] },
+    { name: "invalid saved class level", choices: { ...selected, classes: [{ slug: "fighter", level: 0 }] }, stats: scores, labels: ["In progress", "Complete", "Complete", "Complete", "Not started"] },
     { name: "equipment confirmed", choices: { ...selected, starting_equipment: { selections: {}, picks: {}, confirmed: true } }, stats: scores, labels: ["Complete", "Complete", "Complete", "Complete", "Complete"] },
-  ])("keeps overview and navigation aligned for $name", async ({ choices, stats, labels }) => {
+  ])("keeps overview and navigation aligned for $name", async ({ choices, stats, labels, refs }) => {
+    if (refs) vi.mocked(getContentRefsByCharacter).mockResolvedValue(refs as never);
     mockCharacter(choices as CharacterChoices, stats as Record<string, number>);
     const overview = await BuilderOverviewPage({ params: Promise.resolve({ id: "char-1" }) });
     render(await BuilderLayout({ params: Promise.resolve({ id: "char-1" }), children: overview }));
@@ -76,17 +90,26 @@ describe("local builder journey", () => {
     const query = mockCharacter({}, {}, "user-1", null);
     await expect(BuilderLayout({ params: Promise.resolve({ id: "char-1" }), children: null })).rejects.toThrow("redirect:/login");
     expect(query.single).not.toHaveBeenCalled();
+    expect(getContentRefsByCharacter).not.toHaveBeenCalled();
   });
 
   it("rejects another user's character at the layout boundary", async () => {
     mockCharacter({}, {}, "other-user");
     await expect(BuilderLayout({ params: Promise.resolve({ id: "char-1" }), children: null })).rejects.toThrow("notFound");
+    expect(getContentRefsByCharacter).not.toHaveBeenCalled();
+  });
+
+  it("propagates failed snapshot reads rather than rendering a false Complete status", async () => {
+    mockCharacter(selected, scores);
+    vi.mocked(getContentRefsByCharacter).mockRejectedValue(new Error("Simulated snapshot read failure"));
+    await expect(BuilderOverviewPage({ params: Promise.resolve({ id: "char-1" }) })).rejects.toThrow("Simulated snapshot read failure");
+    await expect(BuilderLayout({ params: Promise.resolve({ id: "char-1" }), children: null })).rejects.toThrow("Simulated snapshot read failure");
   });
 
   it("preserves saved-choice indicators without claiming full readiness validation", () => {
     expect(getBuilderStepStatus("equipment", { starting_equipment: "acknowledged" }, {})).toBe("complete");
     expect(getBuilderStepStatus("abilities", { ability_method: "manual" }, { strength: 10 })).toBe("in_progress");
-    expect(getBuilderStepStatus("class", { classes: [{ slug: "fighter", level: 3 }] }, {})).toBe("complete");
+    expect(getBuilderStepStatus("class", { classes: [{ slug: "fighter", level: 3 }] }, {})).toBe("in_progress");
     expect(getBuilderStepStatus("future-step", selected, scores)).toBe("untouched");
   });
 });

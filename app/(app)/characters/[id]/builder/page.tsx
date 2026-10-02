@@ -1,3 +1,4 @@
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -62,6 +63,7 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
 
   if (!character) notFound();
 
+  const contentRefs = await getContentRefsByCharacter(id);
   const schema = character.game_systems?.schema_definition;
   const steps: CreationStep[] = schema?.creation_steps ?? [];
   const choices: CharacterChoices = character.choices ?? {};
@@ -76,7 +78,7 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((step, index) => {
-          const status = getBuilderStepStatus(step.type, choices, baseStats, schema);
+          const status = getBuilderStepStatus(step.type, choices, baseStats, schema, contentRefs);
           const summary = getStepSummary(step, choices);
 
           return (
@@ -115,6 +117,9 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
                   >
                     {summary}
                   </p>
+                  {["race", "class", "background"].includes(step.type) && status === "in_progress" && (
+                    <p className="mt-2 text-xs text-muted-foreground">Review the saved details in this step to finish your selection.</p>
+                  )}
                   {step.type === "abilities" && status === "in_progress" && choices.ability_method && (
                     <p className="mt-2 text-xs text-muted-foreground">Assign a valid base score to every ability using the selected method.</p>
                   )}

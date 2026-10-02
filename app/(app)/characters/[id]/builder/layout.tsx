@@ -1,3 +1,4 @@
+import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -35,11 +36,12 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
   if (!character) notFound();
   if (character.user_id !== user.id) notFound();
 
+  const contentRefs = await getContentRefsByCharacter(id);
   const schema = character.game_systems?.schema_definition;
   const steps: CreationStep[] = schema?.creation_steps ?? [];
   const stepStatus = Object.fromEntries(
     steps.map((step) => [step.type, getBuilderStepStatus(
-      step.type, character.choices ?? {}, character.base_stats ?? {}, schema,
+      step.type, character.choices ?? {}, character.base_stats ?? {}, schema, contentRefs,
     )]),
   );
 

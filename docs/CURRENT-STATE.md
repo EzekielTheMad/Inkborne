@@ -54,6 +54,11 @@ and compatibility, but defer expanding those surfaces.
   Background display matches the selected pin identity and identifies missing
   or duplicate snapshots. See the [builder gates handoff](handoffs/2026-10-02-builder-save-gates.md).
   Background subchoice concurrency and cross-client/ambiguous outcomes remain open.
+- Overview and navigation now require matching unique saved core pins (including
+  content identity/version and child-parent compatibility) before Complete.
+  Missing/extra/conflicting pins remain In progress. Ability rules stay schema-aware.
+  See [saved reference progress](handoffs/2026-10-02-saved-reference-progress.md).
+  This is still not full feature/subchoice or playable-system validation.
 - The separate alpha-readiness candidate remains unmerged and preserved. It
   contains dependency/auth/E2E/security work; this branch does not absorb it.
 
@@ -72,7 +77,7 @@ choice/reference synchronization remain separate risks.
 ## Verification
 
 - Latest blocker checkpoint `npm.cmd run check`: strict typecheck, zero-warning lint, 203 files /
-  1,906 tests passed including real desktop/mobile dialog lifetime interactions.
+  1,918 tests passed including real desktop/mobile dialog lifetime interactions.
 - `npm.cmd run build`: passed Next 16.2.10 compile, TypeScript and 24 static pages.
   Used loopback-only Supabase placeholders and existing Google Fonts. Initial
   restricted-network attempt failed to download the two fonts; authorized network
@@ -116,8 +121,10 @@ choice/reference synchronization remain separate risks.
    verifies cached draft recovery without trapping Back/Forward. Remaining
    priorities: P1/P2 now repaired locally; continue with equipment atomicity, choice/reference synchronization, concurrent
    full-choice writes and remaining system-aware readiness validation.
-   This worker stops at the committed checkpoint for the Fast-requested task.
-   See the [continuation handoff](handoffs/2026-10-02-fast-continuation.md).
+   Durable cross-client/ambiguous action recovery has a separate
+   [proposal](specs/2026-10-02-durable-character-actions-proposal.md); it is not implemented.
+   The earlier [continuation handoff](handoffs/2026-10-02-fast-continuation.md) is
+   historical; use the latest branch HEAD and current checkpoint handoffs.
 
 ## Authority
 
