@@ -21,6 +21,7 @@ export default defineConfig({
     projects: [
         { name: "create", testMatch: /builder\.spec\.ts/ },
         { name: "journey", testMatch: /journey\.spec\.ts/, dependencies: ["create"] },
+        { name: "access", testMatch: /access\.spec\.ts/, dependencies: ["journey"] },
     ],
     webServer: { command: `npm run dev -- -p ${url.port}`, cwd: "../..", url: baseURL, reuseExistingServer: false, timeout: 180000 },
 });

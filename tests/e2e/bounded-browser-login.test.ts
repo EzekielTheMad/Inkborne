@@ -20,3 +20,19 @@ it("withholds credential call logs and closes its page before failure artifact c
     expect(String(failure)).not.toContain(settings.E2E_TEST_EMAIL);
     expect(close).toHaveBeenCalledOnce();
 });
+
+it("uses only the selected existing secondary account for browser isolation checks", async () => {
+    const settings = { E2E_TEST_EMAIL: "owner@example.invalid", E2E_TEST_PASSWORD: "owner-placeholder",
+        E2E_PLAYER_EMAIL: "viewer@example.invalid", E2E_PLAYER_PASSWORD: "viewer-placeholder" } as RunnerSettings;
+    const email = vi.fn(async () => {});
+    const password = vi.fn(async () => {});
+    const page = { goto: vi.fn(async () => {}),
+        getByLabel: vi.fn((label: string) => ({ fill: label === "Email" ? email : password })),
+        getByRole: vi.fn(() => ({ click: vi.fn(async () => {}) })),
+        waitForURL: vi.fn(async () => {}) } as unknown as Page;
+    await browserLogin(page, settings, "secondary");
+    expect(email).toHaveBeenCalledWith(settings.E2E_PLAYER_EMAIL);
+    expect(password).toHaveBeenCalledWith(settings.E2E_PLAYER_PASSWORD);
+    expect(email).not.toHaveBeenCalledWith(settings.E2E_TEST_EMAIL);
+    expect(password).not.toHaveBeenCalledWith(settings.E2E_TEST_PASSWORD);
+});

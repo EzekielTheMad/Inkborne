@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { BoundedManifest } from "../manifest";
@@ -102,7 +103,22 @@ test("bounded journey selects existing SRD choices and reaches the sheet", async
             expect(inventory.error).toBeNull();
             expect(inventory.data?.length).toBeGreaterThan(0);
             await page.setViewportSize({ width: 390, height: 844 });
-            await expect(page.getByText(fixture.name, { exact: true }).and(page.locator(":visible"))).toBeVisible();
+            const mobileName = page.getByRole("paragraph").filter({ hasText: fixture.name });
+            await expect(mobileName).toHaveCount(1);
+            await expect(mobileName).toBeVisible();
+            await expect(page.getByRole("tab", { name: "Character Sheet", exact: true })).toHaveAttribute("aria-selected", "true");
+            await expect(page.getByRole("tabpanel", { name: "Character Sheet", exact: true }).getByRole("navigation").getByRole("button", { name: "Stats", exact: true })).toBeVisible();
+            await expect(page.getByRole("tabpanel", { name: "Character Sheet", exact: true }).getByRole("navigation").getByRole("button", { name: "Inventory", exact: true })).toBeVisible();
+            await page.reload();
+            await expect(mobileName).toBeVisible();
+            await expect(page.getByRole("tab", { name: "Character Sheet", exact: true })).toHaveAttribute("aria-selected", "true");
+            writeFileSync(path.join(dir, "mobile-dom.json"), JSON.stringify({ characterId: id,
+                capturedAt: new Date().toISOString(), viewport: page.viewportSize(),
+                visibleNameRole: "paragraph", visibleNameTag: await mobileName.evaluate(node => node.tagName),
+                visibleNameCount: await mobileName.count(),
+                visibleNameHeadings: await page.getByRole("heading", { name: fixture.name, exact: true }).count(),
+                sheetTabSelected: await page.getByRole("tab", { name: "Character Sheet", exact: true }).getAttribute("aria-selected"),
+                mobileReloadVerified: true }, null, 2)+"\n");
         }
         catch (error) {
             journeyFailed = true;

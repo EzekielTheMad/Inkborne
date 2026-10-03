@@ -1,17 +1,25 @@
 # Release-readiness checklist
 
-Latest checkpoint: [request deduplication and bounded acceptance](handoffs/2026-10-03-request-deduplication.md). Request-scoped reads and post-write freshness checks passed 2,028 tests/types/lint/build. Desktop journey assertions passed; final mobile locator correction is not yet live-verified. Two of six fixtures were created and both cleaned; four attempts remain. No 57014 occurred in this run; prior root cause remains unresolved. **Not release-ready.**
+Latest checkpoint: [mobile and private-access acceptance](handoffs/2026-10-03-mobile-access-acceptance.md). Real hosted SRD builder persistence, desktop/mobile refresh, private owner/nonowner/anonymous checks and guarded concurrent ability filters passed per-scenario checks. Final local types/lint and 2,029 tests passed. Three of six fixtures created, all cleaned; three attempts remain. No timeout reproduced; prior root cause unresolved. **Not release-ready.**
 
-October 3, 2026. Prior verified application source `d69be9d`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-bounded-acceptance.md).
+October 3, 2026. Prior verified application source `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-mobile-access-acceptance.md).
 
-## October 3 bounded checkpoint
+## Latest bounded acceptance
+
+- [x] Real hosted SRD race/class/abilities/background/equipment path, desktop sheet refresh and mobile 390x844 identity/navigation/reload.
+- [x] Private owner reads; nonowner and anonymous character/ref denials; isolated nonowner 404 and anonymous login redirects.
+- [x] Two SDK ability writes with application compare-and-set filters: one confirmed writer, one stale no-match; guarded baseline restoration.
+- [x] Three total recorded fixtures exact-ID cleaned; nine child scopes verified absent.
+- [ ] Real HP/cast/rest retained Activity, response loss, full rule correctness and broader content/campaign authorization remain unaccepted.
+
+## Historical first October 3 bounded checkpoint
 
 - [x] Approved target, active/auth health, two existing distinct accounts and trusted exact-ID cleanup preflight.
 - [x] Dedicated no-sweep runner, fsynced six-attempt journal outside browser output clearing, 18 dry-run regressions; types/lint and 210 files / 2,019 tests.
 - [x] Real login/create/builder refresh; secondary-account update attempt left owner readback unchanged.
 - [x] The one run-owned character and all inspected children verified absent after exact-ID cleanup; no residual fixture known.
-- [ ] Complete journey failed on hosted 57014 timeouts after race/class/first skill. Later reads passed, cause unproven. Further acceptance is paused at this blocker.
+- [ ] Complete journey failed on hosted 57014 timeouts after race/class/first skill. Later reads passed, cause unproven. Later bounded mobile/private-access checks passed; prior root cause remains unproven.
 
 ## Prior October 2 application verification
 

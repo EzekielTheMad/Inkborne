@@ -59,3 +59,5 @@ Full builder-to-sheet, equipment, concurrency and after-commit interruption rema
 [October 3 handoff](../../docs/handoffs/2026-10-03-bounded-acceptance.md).
 
 October 3 follow-up: desktop builder-to-sheet assertions and persisted equipment/refs passed without a reproduced timeout. The journey suite still failed its mobile name locator; its final visible-text correction is not live-verified. Two of six attempts used, both exact-ID cleaned. See [deduplication handoff](../../docs/handoffs/2026-10-03-request-deduplication.md) for timings and limits.
+
+Latest mobile/private-access acceptance passed per scenario; three of six attempts used and all cleaned. See [mobile acceptance handoff](../../docs/handoffs/2026-10-03-mobile-access-acceptance.md). The access project depends on journey; for a recorded existing fixture use `npm run test:e2e:bounded -- --project access --no-deps`. It verifies private SDK/browser denials and guarded ability-filter concurrency, restores only recognized fixture state, and creates no new fixture. Other concurrency and ambiguous writes remain unaccepted.
