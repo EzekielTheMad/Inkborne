@@ -46,6 +46,7 @@ interface MobileSheetProps {
   state: CharacterState;
   patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
   maxHp: number;
+  conditionalPatchState?: (patch: Partial<CharacterState>) => Promise<boolean>;
   hpPatchState?: (patch: Partial<CharacterState>) => Promise<boolean>;
   /** Read-only hit-dice pools threaded into the HP tracker popover. */
   hitDicePools?: HitDicePool[];
@@ -62,6 +63,7 @@ export function MobileSheet({
   patchState,
   maxHp,
   hpPatchState,
+  conditionalPatchState,
   hitDicePools,
   concentration,
 }: MobileSheetProps) {
@@ -200,6 +202,7 @@ export function MobileSheet({
                 currentHp={state.current_hp ?? maxHp}
                 deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
                 patchState={patchState}
+                manualPatchState={conditionalPatchState}
               />
               <div className="pt-2 border-t border-border">
                 <RestButton />
@@ -225,14 +228,14 @@ export function MobileSheet({
           {/* Activation toggles (e.g. Rage) */}
           <ActivationToggles
             toggles={availableToggles}
-            onToggle={(key, active) => patchState({ [key]: active })}
+            onToggle={(key, active) => (conditionalPatchState ?? patchState)({ [key]: active })}
           />
 
           {/* Conditions */}
           <Conditions
             conditions={state.conditions ?? []}
             exhaustion={(state.exhaustion as number | undefined) ?? 0}
-            patchState={patchState}
+            patchState={conditionalPatchState ?? patchState}
           />
 
           {/* Quick notes */}

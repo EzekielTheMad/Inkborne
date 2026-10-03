@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { X, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useActiveEffects, useSpells } from "@/lib/character/character-context";
@@ -7,6 +10,13 @@ import { useActiveEffects, useSpells } from "@/lib/character/character-context";
 export function ConcentrationBadge() {
   const { concentration, setConcentration } = useSpells();
   const { activeEffects } = useActiveEffects();
+  const { pending, run } = useDialogAction();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const end = () => {
+    setSaveError(null);
+    void run(() => setConcentration(null), () => {}, error => setSaveError(error instanceof CharacterStateReloadError
+      ? error.message : "Concentration could not be ended. Wait for any pending save, then try again."));
+  };
   if (!concentration) return null;
 
   // Effects that ending concentration will remove. The ✕ goes through
@@ -33,11 +43,13 @@ export function ConcentrationBadge() {
         variant="ghost"
         size="icon"
         className="size-5 hover:bg-purple-800/50"
-        onClick={() => setConcentration(null)}
+        disabled={pending}
+        onClick={end}
         aria-label="End concentration"
       >
         <X className="size-3" />
       </Button>
+      {saveError && <span role="alert">{saveError}</span>}
     </div>
   );
 }

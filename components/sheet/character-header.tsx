@@ -14,6 +14,7 @@ import { updateCharacterColor } from "@/lib/supabase/character-client";
 interface CharacterHeaderProps {
   character: CharacterWithSystem;
   inspiration: boolean;
+  inspirationPending?: boolean;
   onToggleInspiration: () => void;
   mobile?: boolean;
   portraitUrl?: string;
@@ -52,6 +53,7 @@ export function CharacterHeader({
   character,
   inspiration,
   onToggleInspiration,
+  inspirationPending,
   mobile = false,
   portraitUrl,
   portraitCrop,
@@ -134,6 +136,7 @@ export function CharacterHeader({
           variant="ghost"
           size="icon-sm"
           aria-label={inspiration ? "Inspiration active" : "Inspiration inactive"}
+          disabled={inspirationPending}
           onClick={onToggleInspiration}
           className={cn(
             "hover:bg-white/15",
@@ -201,6 +204,7 @@ export function CharacterHeader({
           variant="ghost"
           size="icon"
           aria-label={inspiration ? "Remove inspiration" : "Grant inspiration"}
+          disabled={inspirationPending}
           onClick={onToggleInspiration}
           className={cn(
             "hover:bg-white/15",

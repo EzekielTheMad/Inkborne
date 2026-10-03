@@ -1,11 +1,19 @@
 # Release-readiness checklist
 
-Latest checkpoint: [local conditional casting, slots and resources](handoffs/2026-10-03-conditional-casting-resources-local.md). Casting and manual slot/resource callers now explicitly compare raw confirmed state after settled-state gates; conflicts/uncertainty require reload without replay. Widget, feature-card and cast dialogs await saves and preserve readable errors across retained Activity. Independent absolute notes remain eligible. Types, lint, 214 files / 2,079 tests, production build and 22 isolated Chrome checks passed. No new hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. The handoff's consolidated writer table distinguishes converted actions, legacy paths and separate roll/equipment transaction risks. **Not release-ready.**
+Latest checkpoint: [local conditional manual state controls](handoffs/2026-10-03-conditional-manual-state-controls-local.md). Conditions, exhaustion, inspiration, activation toggles, manual death-save pips, effects, manual concentration and currency now explicitly use settled gates and raw-state conditional saves. Independent notes and failed currency/effect drafts remain reviewable; typed recovery survives retained Activity. Types, lint, 215 files / 2,104 tests, production build and 40 isolated Chrome checks passed, including 18 new responsive manual-control checks. No hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. Active manual state-only paths are converted locally; rolled outcomes, equipment transactions and old/direct writers remain separate boundaries. **Not release-ready.**
 
 October 3, 2026. Historical application baseline before conditional HP integration `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current local handoff](handoffs/2026-10-03-conditional-casting-resources-local.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current local handoff](handoffs/2026-10-03-conditional-manual-state-controls-local.md).
 
-## Latest local casting/resource milestone
+## Latest local manual-state milestone
+
+- [x] Conditions, exhaustion, inspiration, activation, manual death-save pips, effects, manual concentration and currency explicitly guarded; actual desktop/mobile callers await and show typed recovery.
+- [x] Currency uses a reviewable draft with explicit Save/Discard and changed-baseline refusal.
+- [x] Types, lint, 215 files / 2,104 tests and production build passed; eighteen new responsive Chrome checks passed.
+- [x] Final read-only critical review found no blockers. Rolled actions, equipment and old/direct writers remain separate.
+- [ ] New hosted acceptance, durable roll/grant transactions and coordinated legacy-writer handling require separate approval.
+
+## Prior local casting/resource milestone
 
 - [x] Explicit guarded casting, manual slots and all manual resource-hook mutations; widget and feature-card callers await settlement and show errors.
 - [x] Types, lint, 214 files / 2,079 tests, production build and 22 isolated Chrome checks passed.

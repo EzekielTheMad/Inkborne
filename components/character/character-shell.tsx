@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CharacterHeader } from "@/components/sheet/character-header";
 import { SheetPanel } from "@/components/character/sheet-panel";
@@ -31,14 +34,21 @@ export function CharacterShell({
   relationships,
 }: CharacterShellProps) {
   const { character, hasSheet } = useCharacter();
-  const { state, patchState } = useCharacterState();
+  const { state, patchState, patchConditionalState } = useCharacterState();
   const { portrait } = usePortrait();
 
-  const onToggleInspiration = () =>
-    patchState({ inspiration: !(state.inspiration ?? false) });
+  const { pending: inspirationPending, run } = useDialogAction();
+  const [inspirationError, setInspirationError] = useState<string | null>(null);
+  const onToggleInspiration = () => {
+    setInspirationError(null);
+    void run(() => patchConditionalState({ inspiration: !(state.inspiration ?? false) }), () => {},
+      error => setInspirationError(error instanceof CharacterStateReloadError
+        ? error.message : "Inspiration could not be saved. Wait for any pending save, then try again."));
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {inspirationError && <p role="alert" className="p-3 text-sm text-destructive">{inspirationError}</p>}
       {hasSheet && (
         <FirstArrival
           characterId={character.id}
@@ -52,6 +62,7 @@ export function CharacterShell({
           character={character}
           inspiration={state.inspiration ?? false}
           onToggleInspiration={onToggleInspiration}
+          inspirationPending={inspirationPending}
           portraitUrl={portrait.url}
           portraitCrop={portrait.crop}
         />
@@ -61,6 +72,7 @@ export function CharacterShell({
           character={character}
           inspiration={state.inspiration ?? false}
           onToggleInspiration={onToggleInspiration}
+          inspirationPending={inspirationPending}
           portraitUrl={portrait.url}
           portraitCrop={portrait.crop}
           mobile

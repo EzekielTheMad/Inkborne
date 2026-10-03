@@ -1,14 +1,14 @@
 # Inkborne current work
 
-Latest checkpoint: [local conditional casting, slots and resources](handoffs/2026-10-03-conditional-casting-resources-local.md). Casting and manual slot/resource callers now explicitly compare raw confirmed state after settled-state gates; conflicts/uncertainty require reload without replay. Widget, feature-card and cast dialogs await saves and preserve readable errors across retained Activity. Independent absolute notes remain eligible. Types, lint, 214 files / 2,079 tests, production build and 22 isolated Chrome checks passed. No new hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. The handoff's consolidated writer table distinguishes converted actions, legacy paths and separate roll/equipment transaction risks. **Not release-ready.**
+Latest checkpoint: [local conditional manual state controls](handoffs/2026-10-03-conditional-manual-state-controls-local.md). Conditions, exhaustion, inspiration, activation toggles, manual death-save pips, effects, manual concentration and currency now explicitly use settled gates and raw-state conditional saves. Independent notes and failed currency/effect drafts remain reviewable; typed recovery survives retained Activity. Types, lint, 215 files / 2,104 tests, production build and 40 isolated Chrome checks passed, including 18 new responsive manual-control checks. No hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. Active manual state-only paths are converted locally; rolled outcomes, equipment transactions and old/direct writers remain separate boundaries. **Not release-ready.**
 
-Local follow-up authority covers the bounded casting/manual-slot/resource slice and local validation only. No new hosted allowance was granted. The prior conditional short-rest checkpoint is retained as historical local evidence; use the latest handoff for current counts and the remaining-writer table.
+Local continuation authority covers remaining manual state-only paths and local validation. No new hosted allowance was granted. The prior conditional short-rest checkpoint is retained as historical local evidence; use the latest handoff for current counts and the remaining-writer table.
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Historical application baseline before conditional HP integration: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current local handoff](handoffs/2026-10-03-conditional-casting-resources-local.md).
+[current local handoff](handoffs/2026-10-03-conditional-manual-state-controls-local.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 

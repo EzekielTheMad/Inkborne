@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ConcentrationPrompt } from "@/components/sheet/concentration-prompt";
 import type { PendingConcentrationCheck } from "@/lib/active-effects/concentration";
 import type { ActiveEffect } from "@/lib/types/active-effects";
@@ -13,6 +13,7 @@ import type { RollRequest } from "@/lib/dice/types";
 let mockConcentration: ConcentrationState | null = null;
 let mockPendingCheck: PendingConcentrationCheck | null = null;
 let mockActiveEffects: ActiveEffect[] = [];
+const setConcentration = vi.fn().mockResolvedValue(undefined);
 const resolveCheck = vi.fn().mockResolvedValue(undefined);
 
 // roll() echoes a controllable total so success/failure paths are exact.
@@ -36,6 +37,7 @@ const mockEvalResult = {
 };
 
 vi.mock("@/lib/character/character-context", () => ({
+  useSpells: () => ({ setConcentration }),
   useConcentration: () => ({
     concentration: mockConcentration,
     pendingCheck: mockPendingCheck,
@@ -146,10 +148,11 @@ describe("ConcentrationPrompt", () => {
     expect(resolveCheck).toHaveBeenCalledWith("keep");
   });
 
-  it("supports the manual Drop override without rolling", () => {
+  it("supports the manual Drop override without rolling", async () => {
     render(<ConcentrationPrompt />);
     fireEvent.click(screen.getByRole("button", { name: /^drop$/i }));
     expect(roll).not.toHaveBeenCalled();
-    expect(resolveCheck).toHaveBeenCalledWith("drop");
+    expect(setConcentration).toHaveBeenCalledWith(null);
+    await waitFor(() => expect(resolveCheck).toHaveBeenCalledWith("keep"));
   });
 });

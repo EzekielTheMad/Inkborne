@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Brain, Plus, Sparkle, X } from "lucide-react";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { useDialogAction } from "@/lib/character/use-dialog-action";
 import { cn } from "@/lib/utils";
 import { useActiveEffects, useSpells } from "@/lib/character/character-context";
@@ -70,16 +71,18 @@ export function ActiveEffectsWidget() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const { pending, run, canDismiss } = useDialogAction();
 
-  async function saveEffect(save: () => Promise<boolean>) {
+  async function saveEffect(save: () => Promise<boolean>, closeAdder = true) {
     if (!canDismiss()) return;
     setSaveError(null);
     await run(save, saved => {
-      if (saved) setAdderOpen(false);
+      if (saved && closeAdder) setAdderOpen(false);
+      else if (saved) return;
       else setSaveError("This effect could not be confirmed. Check your connection, then try again.");
-    }, () => setSaveError("This effect could not be confirmed. Check your connection, then try again."));
+    }, (error) => setSaveError(error instanceof CharacterStateReloadError
+      ? error.message : "This effect could not be confirmed. Wait for any pending save, then try again."));
   }
 
-  if (activeEffects.length === 0 && !adderOpen) return null;
+  if (activeEffects.length === 0 && !adderOpen && !saveError && !pending) return null;
 
   const now = new Date();
 
@@ -121,7 +124,8 @@ export function ActiveEffectsWidget() {
               )}
               <button
                 type="button"
-                onClick={() => void removeEffect(effect.id)}
+                disabled={pending}
+                onClick={() => void saveEffect(() => removeEffect(effect.id), false)}
                 aria-label={removeLabel}
                 title={removeLabel}
                 className="size-4 inline-flex items-center justify-center rounded text-muted-foreground hover:text-destructive shrink-0"
@@ -133,6 +137,7 @@ export function ActiveEffectsWidget() {
         })}
       </div>
 
+      {saveError && !adderOpen && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
       <div className="relative">
         <button
           type="button"

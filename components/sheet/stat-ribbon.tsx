@@ -15,6 +15,7 @@ interface StatRibbonProps {
   state: CharacterState;
   maxHp: number;
   patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
+  manualPatchState?: (patch: Partial<CharacterState>) => Promise<boolean>;
   hpPatchState?: (patch: Partial<CharacterState>) => Promise<boolean>;
   /** Read-only hit-dice pools threaded into the HP tracker popover. */
   hitDicePools?: HitDicePool[];
@@ -29,6 +30,7 @@ export function StatRibbon({
   maxHp,
   patchState,
   hpPatchState,
+  manualPatchState,
   hitDicePools,
   concentration,
 }: StatRibbonProps) {
@@ -94,6 +96,7 @@ export function StatRibbon({
           currentHp={state.current_hp ?? maxHp}
           deathSaves={state.death_saves ?? { successes: 0, failures: 0 }}
           patchState={patchState}
+          manualPatchState={manualPatchState}
         />
       </div>
 

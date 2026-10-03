@@ -560,7 +560,7 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
       active_effects: [],
       concentrating_on: null,
-    });
+    }, {});
     expect(screen.getByTestId("remove").textContent).toBe("0");
   });
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { X, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CharacterState } from "@/lib/types/character";
@@ -42,27 +44,36 @@ interface ConditionsProps {
 export function Conditions({ conditions, exhaustion, patchState }: ConditionsProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  const { pending, run } = useDialogAction();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const save = (patch: Partial<CharacterState>, closePicker = false) => {
+    setSaveError(null);
+    void run(async () => patchState(patch), (saved) => {
+      if (saved === false) setSaveError("This condition change could not be saved. Please try again.");
+      else if (closePicker) setPickerOpen(false);
+    }, (error) => setSaveError(error instanceof CharacterStateReloadError
+      ? error.message : "This condition change could not be saved. Wait for any pending save, then try again."));
+  };
   const exhaustionApplied = exhaustion > 0;
   const hasAnyApplied = conditions.length > 0 || exhaustionApplied;
 
   const removeCondition = (name: string) => {
-    patchState({ conditions: conditions.filter((c) => c !== name) });
+    save({ conditions: conditions.filter((c) => c !== name) });
   };
 
   const addCondition = (name: string) => {
-    setPickerOpen(false);
     if (name === "Exhaustion") {
-      patchState({ exhaustion: 1 });
+      save({ exhaustion: 1 }, true);
     } else {
-      patchState({ conditions: [...conditions, name] });
+      save({ conditions: [...conditions, name] }, true);
     }
   };
 
   const incExhaustion = () => {
-    patchState({ exhaustion: Math.min(6, exhaustion + 1) });
+    save({ exhaustion: Math.min(6, exhaustion + 1) });
   };
   const decExhaustion = () => {
-    patchState({ exhaustion: Math.max(0, exhaustion - 1) });
+    save({ exhaustion: Math.max(0, exhaustion - 1) });
   };
 
   const availableConditions = BOOLEAN_CONDITIONS.filter(
@@ -71,7 +82,7 @@ export function Conditions({ conditions, exhaustion, patchState }: ConditionsPro
   const showExhaustionInPicker = !exhaustionApplied;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+    <div className="rounded-lg border border-border bg-card p-3 space-y-2" aria-busy={pending}>
       <h3 className="text-accent font-semibold text-sm uppercase tracking-wide">
         Conditions
       </h3>
@@ -84,6 +95,7 @@ export function Conditions({ conditions, exhaustion, patchState }: ConditionsPro
             <button
               key={c}
               type="button"
+              disabled={pending}
               onClick={() => removeCondition(c)}
               aria-label={`Remove ${c}`}
               className="text-xs px-2 py-1 rounded-md bg-destructive/10 text-destructive border border-destructive/50 hover:bg-destructive/20 flex items-center gap-1"
@@ -105,6 +117,7 @@ export function Conditions({ conditions, exhaustion, patchState }: ConditionsPro
               <span>Exhaustion</span>
               <button
                 type="button"
+                disabled={pending}
                 onClick={decExhaustion}
                 aria-label="Decrease exhaustion"
                 className="size-4 inline-flex items-center justify-center rounded hover:bg-destructive/20"
@@ -116,7 +129,7 @@ export function Conditions({ conditions, exhaustion, patchState }: ConditionsPro
                 type="button"
                 onClick={incExhaustion}
                 aria-label="Increase exhaustion"
-                disabled={exhaustion >= 6}
+                disabled={pending || exhaustion >= 6}
                 className="size-4 inline-flex items-center justify-center rounded hover:bg-destructive/20 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus className="size-3" />
@@ -126,10 +139,12 @@ export function Conditions({ conditions, exhaustion, patchState }: ConditionsPro
         </div>
       )}
 
+      {saveError && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
       {/* Picker */}
       <div className="relative">
         <button
           type="button"
+          disabled={pending}
           onClick={() => setPickerOpen((v) => !v)}
           className="text-xs px-2 py-1 rounded-md border border-dashed border-muted-foreground/40 text-muted-foreground hover:text-foreground hover:border-muted-foreground flex items-center gap-1"
         >
@@ -144,6 +159,7 @@ export function Conditions({ conditions, exhaustion, patchState }: ConditionsPro
                 <button
                   key={c}
                   type="button"
+                  disabled={pending}
                   onClick={() => addCondition(c)}
                   className="w-full text-left text-xs px-2 py-1 rounded hover:bg-accent"
                 >
@@ -153,6 +169,7 @@ export function Conditions({ conditions, exhaustion, patchState }: ConditionsPro
               {showExhaustionInPicker && (
                 <button
                   type="button"
+                  disabled={pending}
                   onClick={() => addCondition("Exhaustion")}
                   className="w-full text-left text-xs px-2 py-1 rounded hover:bg-accent"
                   title={EXHAUSTION_TOOLTIP}

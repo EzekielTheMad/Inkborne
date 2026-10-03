@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +22,7 @@ import {
   useCharacter,
   useConcentration,
   useRolls,
+  useSpells,
 } from "@/lib/character/character-context";
 
 /**
@@ -39,6 +43,15 @@ export function ConcentrationPrompt() {
   const { roll } = useRolls();
   const { activeEffects } = useActiveEffects();
 
+  const { setConcentration } = useSpells();
+  const { pending, run, canDismiss } = useDialogAction();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const dropManually = () => {
+    setSaveError(null);
+    void run(() => setConcentration(null), () => { void resolveCheck("keep"); }, error =>
+      setSaveError(error instanceof CharacterStateReloadError ? error.message
+        : "Concentration could not be ended. Wait for any pending save, then try again."));
+  };
   if (!pendingCheck || !concentration) return null;
 
   const { grants, stats, computed } = evalResult;
@@ -72,7 +85,7 @@ export function ConcentrationPrompt() {
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open) void resolveCheck("keep");
+        if (!open && canDismiss()) void resolveCheck("keep");
       }}
     >
       <DialogContent showCloseButton={false}>
@@ -91,14 +104,15 @@ export function ConcentrationPrompt() {
           </DialogDescription>
         </DialogHeader>
 
+        {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
         <DialogFooter>
-          <Button variant="outline" onClick={() => void resolveCheck("keep")}>
+          <Button variant="outline" disabled={pending} onClick={() => void resolveCheck("keep")}>
             Keep
           </Button>
-          <Button variant="outline" onClick={() => void resolveCheck("drop")}>
+          <Button variant="outline" disabled={pending} onClick={dropManually}>
             Drop
           </Button>
-          <Button onClick={handleRollSave}>
+          <Button disabled={pending} onClick={handleRollSave}>
             Roll CON Save ({formatModifier(saveModifier)})
           </Button>
         </DialogFooter>

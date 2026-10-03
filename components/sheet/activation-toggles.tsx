@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { Button } from "@/components/ui/button";
 
 interface ActivationToggle {
@@ -10,13 +13,22 @@ interface ActivationToggle {
 
 interface ActivationTogglesProps {
   toggles: ActivationToggle[];
-  onToggle: (key: string, active: boolean) => void;
+  onToggle: (key: string, active: boolean) => Promise<boolean | void> | void;
 }
 
 export function ActivationToggles({
   toggles,
   onToggle,
 }: ActivationTogglesProps) {
+  const { pending, run } = useDialogAction();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const change = (key: string, active: boolean) => {
+    setSaveError(null);
+    void run(async () => onToggle(key, active), saved => {
+      if (saved === false) setSaveError("This toggle could not be saved. Please try again.");
+    }, error => setSaveError(error instanceof CharacterStateReloadError
+      ? error.message : "This toggle could not be saved. Wait for any pending save, then try again."));
+  };
   if (toggles.length === 0) return null;
 
   return (
@@ -28,7 +40,8 @@ export function ActivationToggles({
             key={toggle.key}
             variant={toggle.active ? "default" : "outline"}
             size="sm"
-            onClick={() => onToggle(toggle.key, !toggle.active)}
+            disabled={pending}
+            onClick={() => change(toggle.key, !toggle.active)}
             className={
               toggle.active
                 ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
@@ -40,6 +53,7 @@ export function ActivationToggles({
           </Button>
         ))}
       </div>
+      {saveError && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
     </div>
   );
 }

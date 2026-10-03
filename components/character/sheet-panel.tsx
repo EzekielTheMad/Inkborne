@@ -28,7 +28,7 @@ import {
 export function SheetPanel() {
   const { character, schema, contentRefs, hasSheet, evalResult, maxHp } =
     useCharacter();
-  const { state, patchState, patchActionState } = useCharacterState();
+  const { state, patchState, patchActionState, patchConditionalState } = useCharacterState();
   const { hitDicePools } = useRest();
   const { concentration, dropPatch, requestCheck } = useConcentration();
 
@@ -92,6 +92,7 @@ export function SheetPanel() {
           state={state}
           patchState={patchState}
           hpPatchState={patchActionState}
+          manualPatchState={patchConditionalState}
           maxHp={maxHp}
           hitDicePools={hitDicePools}
           concentration={hpConcentration}
@@ -107,12 +108,12 @@ export function SheetPanel() {
           <ActiveEffectsWidget />
           <ActivationToggles
             toggles={availableToggles}
-            onToggle={(key, active) => patchState({ [key]: active })}
+            onToggle={(key, active) => patchConditionalState({ [key]: active })}
           />
           <Conditions
             conditions={state.conditions ?? []}
             exhaustion={(state.exhaustion as number | undefined) ?? 0}
-            patchState={patchState}
+            patchState={patchConditionalState}
           />
           <Proficiencies grants={evalResult.grants} contentRefs={contentRefs} />
           <QuickNotes state={state} patchState={patchState} />
@@ -140,6 +141,7 @@ export function SheetPanel() {
         state={state}
         patchState={patchState}
         hpPatchState={patchActionState}
+        conditionalPatchState={patchConditionalState}
         maxHp={maxHp}
         hitDicePools={hitDicePools}
         concentration={hpConcentration}

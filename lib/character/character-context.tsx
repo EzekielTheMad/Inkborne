@@ -171,7 +171,7 @@ export interface CharacterContextValue {
   addItem: (item: AddItemPayload) => Promise<void>;
   updateItem: (id: string, updates: InventoryUpdate) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
-  setCurrency: (currency: Currency) => void;
+  setCurrency: (currency: Currency) => Promise<boolean>;
 
   // Feature resources
   resources: FeatureResource[];
@@ -335,9 +335,9 @@ export function CharacterProvider({
 
   const setCurrency = useCallback(
     (newCurrency: Currency) => {
-      patchState({ currency: newCurrency });
+      return patchState.runAction(state, () => ({ patch: { currency: newCurrency }, result: true }), { requireCurrent: true });
     },
-    [patchState],
+    [patchState, state],
   );
 
   // Portrait updates (merges partial updates)
@@ -443,19 +443,12 @@ export function CharacterProvider({
 
   const setConcentration = useCallback(
     async (spell: Omit<ConcentrationState, "started_at"> | null) => {
-      if (!spell) {
-        // Ending concentration strips every linked active effect in the SAME
-        // atomic patch (design §6.6) — the badge ✕, the prompt's Drop, and any
-        // other caller all get the full drop for free.
-        await patchState(computeConcentrationDropPatch(state));
-      } else {
-        await patchState({
-          concentrating_on: {
-            ...spell,
-            started_at: new Date().toISOString(),
-          },
-        });
-      }
+      await patchState.runAction(state, (confirmed) => ({
+        patch: !spell ? computeConcentrationDropPatch(confirmed) : {
+          concentrating_on: { ...spell, started_at: new Date().toISOString() },
+        },
+        result: true,
+      }), { requireCurrent: true });
     },
     [patchState, state],
   );
@@ -490,23 +483,23 @@ export function CharacterProvider({
   // --- Active-effect mutations (each is one atomic patchState) ---
   const applyEffect = useCallback(
     async (entry: ActiveEffect) => {
-      return patchState(applyActiveEffectPatch(state, entry));
+      return patchState.runAction(state, (confirmed) => ({ patch: applyActiveEffectPatch(confirmed, entry), result: true }), { requireCurrent: true });
     },
     [state, patchState],
   );
 
   const removeEffect = useCallback(
     async (id: string) => {
-      return patchState(removeActiveEffectPatch(state, id));
+      return patchState.runAction(state, (confirmed) => ({ patch: removeActiveEffectPatch(confirmed, id), result: true }), { requireCurrent: true });
     },
     [state, patchState],
   );
 
   const addCustomEffect = useCallback(
     async (input: CustomEffectInput) => {
-      return patchState(
-        applyActiveEffectPatch(state, buildCustomActiveEffect(input)),
-      );
+      return patchState.runAction(state, (confirmed) => ({
+        patch: applyActiveEffectPatch(confirmed, buildCustomActiveEffect(input)), result: true,
+      }), { requireCurrent: true });
     },
     [state, patchState],
   );
@@ -800,6 +793,10 @@ export function useCharacterState() {
   return {
     state: ctx.state,
     patchState: ctx.patchState,
+    // Explicit state-only UI patches are derived from this render. Refuse a
+    // stale or pending render before saving against the separate raw baseline.
+    patchConditionalState: (patch: Partial<CharacterState>) =>
+      ctx.patchState.runAction(ctx.state, () => ({ patch, result: true }), { requireCurrent: true }),
     // Relative HP callers computed their patch from this render. Keep raw
     // absolute edits on patchState; only this action path requires settled state.
     patchActionState: (patch: Partial<CharacterState>) =>
@@ -946,7 +943,7 @@ export function useRest(): {
    *  unavailable picks are ignored with a console warning. */
   shortRest: (arcaneRecoveryPicks?: ArcaneRecoveryPicks) => Promise<boolean>;
   longRest: () => Promise<boolean>;
-  setExhaustion: (level: number) => void;
+  setExhaustion: (level: number) => Promise<boolean>;
   canShortRest: boolean;
   canLongRest: boolean;
   /** Per-class hit-dice pools (max = class level, die from class content). */
@@ -1020,12 +1017,17 @@ export function useRest(): {
 
   const longRest = () => {
     if (!longEffects.canApply) return Promise.resolve(false);
-    return patchState.runAction(state, () => ({ patch: longEffects.statePatch, result: true })).catch(() => false);
+    return patchState.runAction(state, () => ({ patch: longEffects.statePatch, result: true })).catch((error: unknown) => {
+      if (error instanceof CharacterStateReloadError) throw error;
+      return false;
+    });
   };
 
   const setExhaustion = (level: number) => {
-    const clamped = Math.max(0, Math.min(6, Math.floor(level)));
-    patchState({ exhaustion: clamped });
+    return patchState.runAction(state, () => {
+      if (!Number.isFinite(level)) throw new Error("Exhaustion must be a finite number.");
+      return { patch: { exhaustion: Math.max(0, Math.min(6, Math.floor(level))) }, result: true };
+    }, { requireCurrent: true });
   };
 
   return {

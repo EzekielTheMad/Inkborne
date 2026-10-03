@@ -105,8 +105,9 @@ function RestDialogSession({ onClose }: Pick<RestDialogProps, "onClose">) {
     setSaveError(null);
     await run(() => spendHitDie(classSlug), (result) => {
       if (!result) setSaveError("The hit die could not be spent. Check your HP and remaining dice, then try again.");
-    }, () => {
-      setSaveError("The hit die could not be spent. Please try again.");
+    }, (error) => {
+      setSaveError(error instanceof CharacterStateReloadError
+        ? error.message : "The hit die could not be spent. Please try again.");
     });
   };
 

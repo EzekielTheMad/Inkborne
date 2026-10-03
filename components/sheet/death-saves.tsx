@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { cn } from "@/lib/utils";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import { resolveDeathSave } from "@/lib/rolls/death-saves";
@@ -9,10 +12,20 @@ import type { CharacterState, CharacterDeathSaves } from "@/lib/types/character"
 interface DeathSavesProps {
   currentHp: number;
   deathSaves: CharacterDeathSaves;
+  manualPatchState?: (patch: Partial<CharacterState>) => Promise<boolean | void>;
   patchState: (patch: Partial<CharacterState>) => Promise<boolean | void>;
 }
 
-export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProps) {
+export function DeathSaves({ currentHp, deathSaves, patchState, manualPatchState }: DeathSavesProps) {
+  const { pending, run } = useDialogAction();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saveManual = (patch: Partial<CharacterState>) => {
+    setSaveError(null);
+    void run(() => (manualPatchState ?? patchState)(patch), (saved) => {
+      if (saved === false) setSaveError("These death-save marks could not be saved. Please try again.");
+    }, error => setSaveError(error instanceof CharacterStateReloadError
+      ? error.message : "These death-save marks could not be saved. Wait for any pending save, then try again."));
+  };
   // Only render when HP is 0
   if (currentHp > 0) return null;
 
@@ -20,14 +33,14 @@ export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProp
 
   function handleSuccessClick() {
     const newSuccesses = successes >= 3 ? 0 : successes + 1;
-    patchState({
+    saveManual({
       death_saves: { successes: newSuccesses, failures },
     });
   }
 
   function handleFailureClick() {
     const newFailures = failures >= 3 ? 0 : failures + 1;
-    patchState({
+    saveManual({
       death_saves: { successes, failures: newFailures },
     });
   }
@@ -61,6 +74,7 @@ export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProp
               <button
                 key={i}
                 type="button"
+                disabled={pending}
                 onClick={handleSuccessClick}
                 className={cn(
                   "w-5 h-5 rounded-full border-2 transition-colors",
@@ -82,6 +96,7 @@ export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProp
               <button
                 key={i}
                 type="button"
+                disabled={pending}
                 onClick={handleFailureClick}
                 className={cn(
                   "w-5 h-5 rounded-full border-2 transition-colors",
@@ -96,6 +111,7 @@ export function DeathSaves({ currentHp, deathSaves, patchState }: DeathSavesProp
         </div>
       </div>
 
+      {saveError && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
       {/* RAW roll — pips above stay for manual DM adjudication. Rolling stops
           once the character is stabilized or dead. */}
       {!isStabilized && !isDead && (
