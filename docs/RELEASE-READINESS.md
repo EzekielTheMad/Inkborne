@@ -1,16 +1,17 @@
 # Release-readiness checklist
 
-Latest checkpoint: [mobile and private-access acceptance](handoffs/2026-10-03-mobile-access-acceptance.md). Real hosted SRD builder persistence, desktop/mobile refresh, private owner/nonowner/anonymous checks and guarded concurrent ability filters passed per-scenario checks. Final local types/lint and 2,029 tests passed. Three of six fixtures created, all cleaned; three attempts remain. No timeout reproduced; prior root cause unresolved. **Not release-ready.**
+Latest checkpoint: [bounded play diagnostic and acceptance matrix](handoffs/2026-10-03-play-diagnostic.md). Fourth fixture creation/journey/mobile passed; real play diagnostics completed no scenario and establish no product defect. Fresh local production build, types/lint and 2,029 tests passed. Four of six creation attempts used, first three cleaned; **fixture bf573168-adcc-4162-a4fb-5fdb823745cf remains live**, two attempts remain. Automatic approval review blocked hosted continuation; exact-ID audit/cleanup needs approval. **Not release-ready.**
 
 October 3, 2026. Prior verified application source `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-mobile-access-acceptance.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-play-diagnostic.md).
 
 ## Latest bounded acceptance
 
 - [x] Real hosted SRD race/class/abilities/background/equipment path, desktop sheet refresh and mobile 390x844 identity/navigation/reload.
 - [x] Private owner reads; nonowner and anonymous character/ref denials; isolated nonowner 404 and anonymous login redirects.
 - [x] Two SDK ability writes with application compare-and-set filters: one confirmed writer, one stale no-match; guarded baseline restoration.
-- [x] Three total recorded fixtures exact-ID cleaned; nine child scopes verified absent.
+- [x] First three recorded fixtures exact-ID cleaned; nine child scopes verified absent.
+- [ ] Fourth fixture remains live; exact-ID audit/cleanup blocked pending renewed action-time approval. Four attempts used, two remain.
 - [ ] Real HP/cast/rest retained Activity, response loss, full rule correctness and broader content/campaign authorization remain unaccepted.
 
 ## Historical first October 3 bounded checkpoint

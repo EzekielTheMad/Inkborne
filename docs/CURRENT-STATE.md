@@ -1,12 +1,12 @@
 # Inkborne current work
 
-Latest checkpoint: [mobile and private-access acceptance](handoffs/2026-10-03-mobile-access-acceptance.md). Real hosted SRD builder persistence, desktop/mobile refresh, private owner/nonowner/anonymous checks and guarded concurrent ability filters passed per-scenario checks. Final local types/lint and 2,029 tests passed. Three of six fixtures created, all cleaned; three attempts remain. No timeout reproduced; prior root cause unresolved. **Not release-ready.**
+Latest checkpoint: [bounded play diagnostic and acceptance matrix](handoffs/2026-10-03-play-diagnostic.md). Fourth fixture creation/journey/mobile passed; real play diagnostics completed no scenario and establish no product defect. Fresh local production build, types/lint and 2,029 tests passed. Four of six creation attempts used, first three cleaned; **fixture bf573168-adcc-4162-a4fb-5fdb823745cf remains live**, two attempts remain. Automatic approval review blocked hosted continuation; exact-ID audit/cleanup needs approval. **Not release-ready.**
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Prior verified application source: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current bounded acceptance handoff](handoffs/2026-10-03-mobile-access-acceptance.md).
+[current bounded acceptance handoff](handoffs/2026-10-03-play-diagnostic.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 
