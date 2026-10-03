@@ -1,6 +1,6 @@
 # Inkborne current work
 
-Latest checkpoint: [bounded play diagnostic and acceptance matrix](handoffs/2026-10-03-play-diagnostic.md). Fourth fixture creation/journey/mobile passed; real play diagnostics completed no scenario and establish no product defect. Fresh local production build, types/lint and 2,029 tests passed. Four of six creation attempts used, first three cleaned; **fixture bf573168-adcc-4162-a4fb-5fdb823745cf remains live**, two attempts remain. Automatic approval review blocked hosted continuation; exact-ID audit/cleanup needs approval. **Not release-ready.**
+Latest checkpoint: [bounded play diagnostic and acceptance matrix](handoffs/2026-10-03-play-diagnostic.md). Fourth fixture creation/journey/mobile passed; approved play retry failed at HP trigger lookup before any intercepted gameplay request. No gameplay scenario or product defect was established. Fresh local production build, types/lint and 2,029 tests passed. **All four tracked fixtures exact-ID cleaned; two creation attempts remain.** Initial approval-review rejection was resolved with Victor's explicit transcript; the same call was retried once, then cleanup was approved and verified. **Not release-ready.**
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Prior verified application source: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
