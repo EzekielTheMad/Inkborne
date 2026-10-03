@@ -1,5 +1,6 @@
 "use client";
 
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { useState, useRef } from "react";
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { Button } from "@/components/ui/button";
@@ -85,8 +86,8 @@ export function HPTracker({
       setInputValue("");
       setOpen(false);
       return true;
-    } catch {
-      setSaveError("The HP change could not be saved. Please try again.");
+    } catch (error) {
+      setSaveError(error instanceof CharacterStateReloadError ? error.message : "The HP change could not be saved. Please try again.");
       return false;
     } finally {
       savingRef.current = false;

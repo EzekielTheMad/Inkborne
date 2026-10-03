@@ -1,14 +1,14 @@
 # Inkborne current work
 
-Latest checkpoint: [seventh bounded recovery and concurrency acceptance](handoffs/2026-10-03-seventh-recovery-concurrency.md). Corrected hosted recovery passed; controlled two-tab damage reproduced a lost update (10 to 8 to 7 rather than 5). All seven approved fixtures exact-ID cleaned; zero attempts remain. The runner passed three tests, but the gameplay durability contract failed. **Not release-ready.** Application source remains 71681c7; no hosted schema or settings changes. Final types, lint, 2,030 tests and production build passed; independent review accepted the evidence framing.
+Latest checkpoint: [applied conditional HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md). Approved development endpoint applied; local provider HP saves use raw-state CAS and explicit reload after conflict/uncertainty. Eighth hosted run passed 3 tests: conditional concurrency, owner/stale/denial behavior, actual two-tab conflict and explicit reload/new action. All eight fixtures exact-ID cleaned; zero attempts remain. Final types, lint, 2,048 tests, production build and seven simulated Chrome regressions passed. No app deployment. Legacy unconditional writers, roll/equipment atomicity and broader acceptance remain unresolved. **Not release-ready.**
 
-Local follow-up: [reviewed conditional HP proposal](handoffs/2026-10-03-conditional-hp-proposal.md). Existing RPC lacks expected-state/version support; SQL/client contract and deterministic tests are prepared without production wiring or hosted changes. Applying the function/grant requires separate approval; demonstrated overwrite remains unfixed.
+Local follow-up: Victor approved the new function and one eighth fixture. See current applied endpoint/local client evidence above; the earlier proposal remains historical.
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
-Prior verified application source: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
+Historical application baseline before conditional HP integration: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current bounded acceptance handoff](handoffs/2026-10-03-seventh-recovery-concurrency.md).
+[current bounded acceptance handoff](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 

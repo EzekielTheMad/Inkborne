@@ -1,3 +1,4 @@
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act, fireEvent, waitFor } from "@testing-library/react";
@@ -216,7 +217,7 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/try that action again/i);
     await act(async () => { expect(await save!({ current_hp: maxHp - 3 })).toBe(true); });
     expect(screen.getByTestId("new-fighter-hp")).toHaveTextContent("9");
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { current_hp: 9 });
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { current_hp: 9 }, {});
   });
 
   it("rejects a hit-die heal during pending UI damage before rolling, then heals confirmed HP on retry", async () => {
@@ -243,7 +244,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: /spend & roll/i })); });
     expect(screen.getByTestId("hp")).toHaveTextContent("13");
     expect(screen.getByTestId("spent")).toHaveTextContent("1");
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", expect.objectContaining({ current_hp: 13, hit_dice_spent: { fighter: 1 } }));
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", expect.objectContaining({ current_hp: 13, hit_dice_spent: { fighter: 1 } }), {});
   });
 
   it.each(["shortRest", "longRest"] as const)("refuses %s computed from pending HP/resource edits and preserves an independent absolute edit", async (action) => {
@@ -312,6 +313,27 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(onChange).toHaveBeenCalledWith("#7c3aed");
   });
 
+  it("requires reload after an HP conflict, waits for independent queued notes, and never resends HP", async () => {
+    let rejectHp!: (error: Error) => void; let resolveNotes!: () => void;
+    mockedUpdateState.mockReturnValueOnce(new Promise((_, reject) => { rejectHp = reject; }))
+      .mockReturnValueOnce(new Promise<void>(resolve => { resolveNotes = resolve; }));
+    let write!: ReturnType<typeof useCharacterState>["patchState"];
+    let action!: ReturnType<typeof useCharacterState>["patchActionState"];
+    function Probe() { const ctx = useCharacterState(); write = ctx.patchState; action = ctx.patchActionState;
+      return <output data-testid="conflict-notes">{ctx.state.quick_notes}</output>; }
+    renderWithProvider(Probe, { initialState: { current_hp: 10, quick_notes: "old" } });
+    let hp!: Promise<boolean>; let notes!: Promise<boolean>;
+    await act(async () => { hp = write({ current_hp: 8 }); notes = write({ quick_notes: "new" }); });
+    await act(async () => { rejectHp(new CharacterStateReloadError("This character changed in another tab. Reload before choosing a new HP action.")); expect(await hp).toBe(false); });
+    expect(screen.getByRole("button", { name: "Reload character" })).toBeDisabled();
+    expect(screen.getByTestId("conflict-notes")).toHaveTextContent("new");
+    await act(async () => { resolveNotes(); expect(await notes).toBe(true); });
+    expect(screen.getByRole("button", { name: "Reload character" })).toBeEnabled();
+    await act(async () => { await expect(action({ current_hp: 7 })).rejects.toThrow("Reload"); });
+    expect(mockedUpdateState).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("alert")).toHaveTextContent("changed in another tab");
+  });
+
   it("useCharacterState().patchState calls the atomic-merge RPC and updates local state", async () => {
     function Probe() {
       const { state, patchState } = useCharacterState();
@@ -331,7 +353,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => {
       screen.getByTestId("apply").click();
     });
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", { current_hp: 7 });
+    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", { current_hp: 7 }, {});
     expect(screen.getByTestId("apply").textContent).toBe("7");
   });
 

@@ -65,6 +65,19 @@ describe("bounded fixture journal", () => {
         expect(reopened.cleanupScope(runId)).toEqual([]);
         expect(() => reopened.reserve(randomUUID(), "eighth")).toThrow(/ceiling/);
     });
+    it("requires a separate eighth approval after seven cleanups and never allows a ninth", () => {
+        const { file, runId, journal } = fixture();
+        vi.stubEnv("INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID", runId);
+        for (let i = 0; i < 7; i++) { const a = journal.reserve(randomUUID(), "fixture"); const id = randomUUID(); journal.recordCreated(a.attemptId, id); journal.recordCleaned(id); }
+        expect(() => journal.reserve(randomUUID(), "eighth")).toThrow(/ceiling/);
+        vi.stubEnv("INKBORNE_BOUNDED_EIGHTH_APPROVED_RUN_ID", randomUUID());
+        expect(() => journal.reserve(randomUUID(), "eighth")).toThrow(/ceiling/);
+        vi.stubEnv("INKBORNE_BOUNDED_EIGHTH_APPROVED_RUN_ID", runId);
+        const a = journal.reserve(randomUUID(), "eighth"); const id = randomUUID(); journal.recordCreated(a.attemptId, id); journal.recordCleaned(id);
+        expect(() => journal.reserve(randomUUID(), "ninth")).toThrow(/ceiling/);
+        journal.close(); vi.unstubAllEnvs(); const reopened = new BoundedManifest(file, runId); journals.push(reopened);
+        expect(reopened.attempts).toHaveLength(8); expect(reopened.cleanupScope(runId)).toEqual([]);
+    });
     it("blocks simultaneous runners and foreign cleanup IDs", () => {
         const { file, runId, journal } = fixture();
         expect(() => new BoundedManifest(file, runId)).toThrow();

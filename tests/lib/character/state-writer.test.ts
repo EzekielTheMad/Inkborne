@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { createStateWriter } from "@/lib/character/state-writer";
 import type { CharacterState } from "@/lib/types/character";
 import type { ActiveEffect } from "@/lib/types/active-effects";
@@ -92,5 +93,29 @@ describe("character state saves", () => {
     const save = createStateWriter(state, vi.fn().mockRejectedValue(new Error("denied")), (next) => { state = next; }, vi.fn());
     expect(await save({ spell_slots_used: { "1": 2 } })).toBe(false);
     expect(state.spell_slots_used).toEqual({ "1": 1 });
+  });
+});
+
+describe("conditional raw snapshots and reload boundary", () => {
+  it("uses raw saved state rather than display defaults, then advances only after a confirmed save", async () => {
+    const raw = { quick_notes: "keep" };
+    const persist = vi.fn().mockResolvedValueOnce({ ...raw, current_hp: 8 }).mockResolvedValueOnce({ ...raw, current_hp: 7 });
+    const writer = createStateWriter({ ...raw, current_hp: 10, temp_hp: 0 }, persist, vi.fn(), vi.fn(), { persistedState: raw });
+    await writer({ current_hp: 8 }); await writer({ current_hp: 7 });
+    expect(persist.mock.calls[0][1]).toEqual(raw);
+    expect(persist.mock.calls[1][1]).toEqual({ ...raw, current_hp: 8 });
+  });
+  it("blocks subsequent HP actions after conflict while preserving an independent queued absolute edit", async () => {
+    const pending = deferred(); const conflict = new CharacterStateReloadError("Reload required");
+    const persist = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(undefined);
+    let state: CharacterState = { current_hp: 10, quick_notes: "old" };
+    const writer = createStateWriter(state, persist, next => { state = next; }, vi.fn(), { persistedState: state });
+    const damage = writer({ current_hp: 8 }); const notes = writer({ quick_notes: "new" });
+    await Promise.resolve(); pending.reject(conflict);
+    expect(await damage).toBe(false); expect(await notes).toBe(true);
+    expect(state).toEqual({ current_hp: 10, quick_notes: "new" });
+    expect(await writer({ temp_hp: 3 })).toBe(false);
+    await expect(writer.runAction(state, () => ({ patch: { current_hp: 7 }, result: true }))).rejects.toThrow("Reload required");
+    expect(persist).toHaveBeenCalledTimes(2);
   });
 });

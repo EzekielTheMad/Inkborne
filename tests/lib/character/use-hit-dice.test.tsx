@@ -178,7 +178,7 @@ describe("useRest() — hit dice", () => {
     expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
       hit_dice_spent: { fighter: 1 },
       current_hp: 18,
-    });
+    }, {});
   });
 
   it("uses the class's own die size for the second class (wizard d6)", async () => {
@@ -193,7 +193,7 @@ describe("useRest() — hit dice", () => {
     expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
       hit_dice_spent: { wizard: 1 },
       current_hp: 16, // d6 face 4 + 2
-    });
+    }, {});
   });
 
   it("the roll lands in the roll log pipeline (insertRoll fired)", async () => {
@@ -224,7 +224,7 @@ describe("useRest() — hit dice", () => {
     expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
       hit_dice_spent: { fighter: 1 },
       current_hp: MAX_HP,
-    });
+    }, {});
   });
 
   it("resolves null without rolling or patching when the pool is empty", async () => {
@@ -291,7 +291,7 @@ describe("useRest() — hit dice", () => {
     expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", {
       hit_dice_spent: { fighter: 2 },
       current_hp: 21, // 5 + 8 + 8
-    });
+    }, { hit_dice_spent: { fighter: 1 }, current_hp: 13 });
     expect(screen.getByTestId("pools").textContent).toBe(
       "fighter:d10:1/3,wizard:d6:2/2",
     );

@@ -1,5 +1,7 @@
 # Conditional HP follow-up — local proposal only
 
+Historical checkpoint. Superseded by [applied conditional HP acceptance](2026-10-03-eighth-conditional-hp-acceptance.md); all eight fixtures cleaned, conditional guard tested locally against approved development endpoint. Legacy writers remain outside that scope.
+
 Parent authorized continuing the demonstrated two-tab overwrite locally, using existing conditional RPC support if available, otherwise preparing a reviewed SQL/code proposal without applying hosted schema/permissions or creating an eighth fixture.
 
 ## Finding and deliverables

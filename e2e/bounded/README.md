@@ -1,6 +1,6 @@
 # Bounded acceptance runner
 
-Current run is closed: all seven approved fixtures exact-ID cleaned, zero attempts remain. The separately approved seventh run passed the corrected recovery checks and reproduced a two-tab HP lost update; three green harness tests do not establish safe gameplay durability. See [current acceptance](../../docs/handoffs/2026-10-03-seventh-recovery-concurrency.md). Further hosted creation requires new approval. Examples below are reference, not renewed authorization.
+Current run is closed: all eight approved fixtures exact-ID cleaned, zero attempts remain. Approved conditional endpoint and local client passed the eighth owner/concurrency/denial/reload checks. Existing unconditional writers remain unsafe; no deployment. See [current acceptance](../../docs/handoffs/2026-10-03-eighth-conditional-hp-acceptance.md). Further creation needs new scoped approval.
 
 This is separate from the legacy smoke suite. It imports neither its setup nor its prefix-wide teardown.
 Use existing configured sources and existing approved accounts only. Never copy secrets into a worktree,
@@ -68,4 +68,6 @@ Historical mobile/private-access checkpoint passed per scenario; three of six at
 
 INKBORNE_BOUNDED_PLAY_SCOPE=remaining selects the sole remaining play project; run --project remaining with the existing create/journey dependencies. Default full scope selects play instead, never both flavors. Invalid scopes fail. Do not reset the journal or run both flavors on one fixture: replay guards conservatively reject spent dice/roll history. Remaining scope deliberately seeds one spent die as fixture setup, then verifies known rest rejection across real navigation, clean reopen or retained error, one explicit confirmed retry/reload and the two-tab relative-write diagnostic. It does not claim a hit-die action. See [the reviewed plan](../../docs/handoffs/2026-10-03-rest-remount-final-plan.md); the final hosted creation remains held. No automatic retry follows ambiguous outcomes.
 
-The default journal ceiling remains six. The single separately approved seventh attempt requires `INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID` equal to the existing run ID and all six predecessor cleanup receipts. The hard ceiling is seven; no gate can permit an eighth. Cleanup can reopen a seven-attempt journal without this creation gate.
+The default journal ceiling remains six. The single separately approved seventh attempt requires `INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID` equal to the existing run ID and all six predecessor cleanup receipts. A separately approved eighth attempt requires `INKBORNE_BOUNDED_EIGHTH_APPROVED_RUN_ID` matching the original run and all seven predecessor cleanup receipts. Hard ceiling is eight; no gate permits a ninth. Cleanup can reopen the eight-attempt journal without either creation gate.
+
+`INKBORNE_BOUNDED_PLAY_SCOPE=conditional` selects only the conditional acceptance project, with creation/journey dependencies. Never rerun creation after a committed or ambiguous attempt; continuation must explicitly use the recorded fixture and scope.

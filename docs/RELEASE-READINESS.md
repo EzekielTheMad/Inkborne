@@ -1,11 +1,18 @@
 # Release-readiness checklist
 
-Latest checkpoint: [seventh bounded recovery and concurrency acceptance](handoffs/2026-10-03-seventh-recovery-concurrency.md). Corrected hosted recovery passed; controlled two-tab damage reproduced a lost update (10 to 8 to 7 rather than 5). All seven approved fixtures exact-ID cleaned; zero attempts remain. The runner passed three tests, but the gameplay durability contract failed. **Not release-ready.** Application source remains 71681c7; no hosted schema or settings changes. Final types, lint, 2,030 tests and production build passed; independent review accepted the evidence framing.
+Latest checkpoint: [applied conditional HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md). Approved development endpoint applied; local provider HP saves use raw-state CAS and explicit reload after conflict/uncertainty. Eighth hosted run passed 3 tests: conditional concurrency, owner/stale/denial behavior, actual two-tab conflict and explicit reload/new action. All eight fixtures exact-ID cleaned; zero attempts remain. Final types, lint, 2,048 tests, production build and seven simulated Chrome regressions passed. No app deployment. Legacy unconditional writers, roll/equipment atomicity and broader acceptance remain unresolved. **Not release-ready.**
 
-October 3, 2026. Prior verified application source `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-seventh-recovery-concurrency.md).
+October 3, 2026. Historical application baseline before conditional HP integration `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md).
 
 ## Latest bounded acceptance
+
+- [x] Approved conditional function/authenticated-only grants applied; old RPC and RLS fingerprints unchanged.
+- [x] Eighth fixture: SDK conditional concurrency/stale/denial checks and actual two-tab conflict/reload/new action passed.
+- [x] All eight exact-ID cleaned, zero attempts remain; no app publication.
+- [ ] Legacy/unconditional writers, durable ambiguous outcomes and roll/equipment atomicity remain unresolved.
+
+Earlier seventh/proposal bullets below are historical; the eighth endpoint acceptance supersedes their unapplied status.
 
 - [x] Reviewed local conditional-state SQL/client proposal prepared; existing state RPC lacks CAS support.
 - [ ] Apply proposed function/grant and coordinate production writers after separate approval. The local proposal does not fix live behavior.

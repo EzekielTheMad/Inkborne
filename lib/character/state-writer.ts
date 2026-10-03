@@ -1,3 +1,4 @@
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import type { CharacterState } from "@/lib/types/character";
 
 /** Serialize shallow RPC patches and rebuild optimistic state from confirmed
@@ -5,11 +6,14 @@ import type { CharacterState } from "@/lib/types/character";
  * snapshot over a newer change. This is session-local, with no automatic retry. */
 export function createStateWriter(
   initialState: CharacterState,
-  persist: (patch: Partial<CharacterState>) => Promise<void>,
+  persist: (patch: Partial<CharacterState>, expectedState?: CharacterState) => Promise<void | CharacterState>,
   onState: (state: CharacterState) => void,
-  onFailure: () => void,
+  onFailure: (error?: unknown) => void,
+  options?: { persistedState: CharacterState },
 ) {
   let confirmed = initialState;
+  let persisted = options?.persistedState ?? initialState;
+  let reloadError: CharacterStateReloadError | undefined;
   let visible = initialState;
   const pending: Array<Partial<CharacterState>> = [];
   const invalidated = new Set<Partial<CharacterState>>();
@@ -28,10 +32,13 @@ export function createStateWriter(
       let saved = false;
       try {
         if (invalidated.has(change)) throw new Error("A prior save invalidated this snapshot.");
-        await persist(change);
-        confirmed = { ...confirmed, ...change };
+        if (reloadError && ("current_hp" in change || "temp_hp" in change)) throw reloadError;
+        const savedState = options ? await persist(change, persisted) : await persist(change);
+        persisted = savedState ?? { ...persisted, ...change };
+        confirmed = { ...confirmed, ...(savedState ?? change) };
         saved = true;
-      } catch {
+      } catch (error) {
+        if (error instanceof CharacterStateReloadError) reloadError = error;
         // Full nested maps may embed optimistic edits from this failed write.
         // Their intent cannot be inferred safely: reject, rather than persist it.
         for (const queued of pending) {
@@ -39,7 +46,7 @@ export function createStateWriter(
             key in queued && typeof change[key] === "object" && typeof queued[key] === "object",
           )) invalidated.add(queued);
         }
-        onFailure();
+        onFailure(reloadError ?? error);
       }
       invalidated.delete(change);
       pending.splice(pending.indexOf(change), 1);
@@ -51,17 +58,20 @@ export function createStateWriter(
   };
 
   return Object.assign(write, {
+    hasPendingWrites: () => pending.length > 0,
     /** A state-dependent action must start from a settled, current render.
      * Refuse stale/busy commands before computing effects or spending a slot. */
     async runAction<T>(
       expectedState: CharacterState,
       compute: (state: CharacterState) => { patch: Partial<CharacterState>; result: T },
     ): Promise<T> {
+      if (reloadError) throw reloadError;
       if (pending.length > 0 || expectedState !== visible) {
         throw new Error("The character is still saving or has changed. Please try the action again.");
       }
       const { patch, result } = compute(confirmed);
       if (Object.keys(patch).length > 0 && !(await write(patch))) {
+        if (reloadError) throw reloadError;
         throw new Error("The character change could not be saved. Please try the action again.");
       }
       return result;

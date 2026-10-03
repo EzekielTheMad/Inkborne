@@ -1,5 +1,7 @@
 # Seventh bounded recovery and concurrency acceptance
 
+Historical checkpoint. Superseded by [applied conditional HP acceptance](2026-10-03-eighth-conditional-hp-acceptance.md); all eight fixtures cleaned, conditional guard tested locally against approved development endpoint. Legacy writers remain outside that scope.
+
 **Not release-ready.** The corrected recovery scenario passed, and the controlled two-tab test demonstrated a gameplay durability defect. No application fix or schema change was made. Character builder priority and LegendKeeper/worldbuilding integration remain unchanged.
 
 ## Authority and scope

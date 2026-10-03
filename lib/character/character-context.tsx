@@ -20,6 +20,7 @@ import type { Effect } from "@/lib/types/effects";
 import type { InventoryItem, Currency } from "@/lib/types/inventory";
 import { DEFAULT_CURRENCY } from "@/lib/types/inventory";
 import type { CropArea } from "@/components/narrative/character-portrait";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { createStateWriter } from "@/lib/character/state-writer";
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import {
@@ -274,12 +275,20 @@ export function CharacterProvider({
   });
 
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [reloadRequired, setReloadRequired] = useState(false);
   const [patchState] = useState(() =>
     createStateWriter(
       initialState,
-      (patch) => updateCharacterState(character.id, patch),
+      (patch, expectedState) => "current_hp" in patch || "temp_hp" in patch
+        ? updateCharacterState(character.id, patch, expectedState)
+        : updateCharacterState(character.id, patch),
       setState,
-      () => setSaveError("A character change could not be saved. Check your connection and try that action again."),
+      (error) => {
+        if (error instanceof CharacterStateReloadError) {
+          setReloadRequired(true); setSaveError(error.message);
+        } else setSaveError("A character change could not be saved. Check your connection and try that action again.");
+      },
+      { persistedState: character.state ?? {} },
     ),
   );
 
@@ -744,7 +753,11 @@ export function CharacterProvider({
       {saveError && (
         <div role="alert" className="flex items-center justify-between gap-3 border-b border-destructive bg-background px-4 py-3 text-sm text-destructive">
           <p>{saveError}</p>
-          <button type="button" className="underline" onClick={() => setSaveError(null)}>Dismiss</button>
+          {reloadRequired ? (
+            <button type="button" className="underline" disabled={patchState.hasPendingWrites()} onClick={() => window.location.reload()}>Reload character</button>
+          ) : (
+            <button type="button" className="underline" onClick={() => setSaveError(null)}>Dismiss</button>
+          )}
         </div>
       )}
       {children}

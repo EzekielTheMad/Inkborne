@@ -3,8 +3,8 @@ import { closeSync, existsSync, fsyncSync, openSync, readFileSync, unlinkSync, w
 import { z } from "zod";
 export const APPROVED_PROJECT = "etcaodglvcspcmwecyxq";
 export const CHARACTER_LIMIT = 6;
-// One separately approved extension, never an unlimited budget or a new journal.
-const EXTENDED_CHARACTER_LIMIT = 7;
+// Separately approved one-attempt extensions; never reset the original journal.
+const EXTENDED_CHARACTER_LIMIT = 8;
 const uuid = z.string().uuid();
 const header = z.object({ kind: z.literal("run"), project: z.literal(APPROVED_PROJECT), runId: uuid }).strict();
 const reservation = z.object({ kind: z.literal("reserve"), attemptId: uuid, ownerId: uuid, name: z.string().min(1).max(100) }).strict();
@@ -91,11 +91,13 @@ export class BoundedManifest {
         if (this.attempts.some(a => !a.characterId && !a.cleaned))
             throw new Error("Reconcile the unresolved creation attempt first");
         if (this.attempts.length >= CHARACTER_LIMIT) {
-            const approvedExtension = process.env.INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID === this.runId;
-            if (!approvedExtension || this.attempts.length >= EXTENDED_CHARACTER_LIMIT)
+            const approvalGate = this.attempts.length === 6
+                ? process.env.INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID
+                : process.env.INKBORNE_BOUNDED_EIGHTH_APPROVED_RUN_ID;
+            if (approvalGate !== this.runId || this.attempts.length >= EXTENDED_CHARACTER_LIMIT)
                 throw new Error("Approved creation ceiling reached");
             if (!this.attempts.every(a => a.characterId && a.cleaned))
-                throw new Error("All six prior fixtures must be cleaned before the seventh attempt");
+                throw new Error("All six prior fixtures must be cleaned; each separately approved extra attempt requires every predecessor cleanup");
         }
         if (!/^[a-z0-9-]{1,24}$/.test(label))
             throw new Error("Use a short non-secret fixture label");

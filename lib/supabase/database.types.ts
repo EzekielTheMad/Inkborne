@@ -1656,6 +1656,10 @@ export type Database = {
           shared: boolean
         }[]
       }
+      patch_character_state_if_current: {
+        Args: { character_id: string; expected_state: Json; state_patch: Json }
+        Returns: { status: string; resulting_state: Json }[]
+      }
       patch_character_state: {
         Args: { character_id: string; state_patch: Json }
         Returns: undefined
