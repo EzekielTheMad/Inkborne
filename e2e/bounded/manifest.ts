@@ -3,6 +3,8 @@ import { closeSync, existsSync, fsyncSync, openSync, readFileSync, unlinkSync, w
 import { z } from "zod";
 export const APPROVED_PROJECT = "etcaodglvcspcmwecyxq";
 export const CHARACTER_LIMIT = 6;
+// One separately approved extension, never an unlimited budget or a new journal.
+const EXTENDED_CHARACTER_LIMIT = 7;
 const uuid = z.string().uuid();
 const header = z.object({ kind: z.literal("run"), project: z.literal(APPROVED_PROJECT), runId: uuid }).strict();
 const reservation = z.object({ kind: z.literal("reserve"), attemptId: uuid, ownerId: uuid, name: z.string().min(1).max(100) }).strict();
@@ -15,7 +17,7 @@ export type Reservation = z.infer<typeof reservation> & {
     cleaned?: boolean;
 };
 /** One process owns the journal. Every creation attempt is fsynced BEFORE click/insert.
- * Failed or ambiguous attempts still consume the six-character budget. Never sweep names.
+ * Failed or ambiguous attempts consume the budget, including the single opt-in extension. Never sweep names.
  */
 export class BoundedManifest {
     private readonly lockPath: string;
@@ -51,7 +53,7 @@ export class BoundedManifest {
     }
     private apply(entry: Event) {
         if (entry.kind === "reserve") {
-            if (this.attempts.length >= CHARACTER_LIMIT || this.attempts.some(a => a.attemptId === entry.attemptId || a.name === entry.name)) {
+            if (this.attempts.length >= EXTENDED_CHARACTER_LIMIT || this.attempts.some(a => a.attemptId === entry.attemptId || a.name === entry.name)) {
                 throw new Error("Invalid or over-budget reservation");
             }
             if (!entry.name.startsWith(`Inkborne bounded ${this.runId} `))
@@ -88,8 +90,13 @@ export class BoundedManifest {
     reserve(ownerId: string, label: string): Reservation {
         if (this.attempts.some(a => !a.characterId && !a.cleaned))
             throw new Error("Reconcile the unresolved creation attempt first");
-        if (this.attempts.length >= CHARACTER_LIMIT)
-            throw new Error("Six-character creation ceiling reached");
+        if (this.attempts.length >= CHARACTER_LIMIT) {
+            const approvedExtension = process.env.INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID === this.runId;
+            if (!approvedExtension || this.attempts.length >= EXTENDED_CHARACTER_LIMIT)
+                throw new Error("Approved creation ceiling reached");
+            if (!this.attempts.every(a => a.characterId && a.cleaned))
+                throw new Error("All six prior fixtures must be cleaned before the seventh attempt");
+        }
         if (!/^[a-z0-9-]{1,24}$/.test(label))
             throw new Error("Use a short non-secret fixture label");
         const entry = reservation.parse({ kind: "reserve", attemptId: randomUUID(), ownerId, name: `Inkborne bounded ${this.runId} ${this.attempts.length + 1}-${label}` });

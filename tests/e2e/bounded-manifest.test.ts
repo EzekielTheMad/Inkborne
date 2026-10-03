@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { APPROVED_PROJECT, BoundedManifest } from "@/e2e/bounded/manifest";
 import { readRunnerSettings, requireLiveGate, validateRunnerSettings, type RunnerSettings } from "@/e2e/bounded/settings";
 const dirs: string[] = [];
@@ -16,7 +16,7 @@ function fixture() {
     journals.push(journal);
     return { file, runId, journal };
 }
-afterEach(() => { journals.splice(0).forEach(j => j.close()); dirs.splice(0).forEach(dir => rmSync(dir, { recursive: true })); });
+afterEach(() => { vi.unstubAllEnvs(); journals.splice(0).forEach(j => j.close()); dirs.splice(0).forEach(dir => rmSync(dir, { recursive: true })); });
 describe("bounded fixture journal", () => {
     it("durably reserves before a simulated creation and recovers after restart", () => {
         const { file, runId, journal } = fixture();
@@ -42,6 +42,28 @@ describe("bounded fixture journal", () => {
         const resumed = new BoundedManifest(file, runId);
         journals.push(resumed);
         expect(() => resumed.reserve(randomUUID(), "seventh")).toThrow(/ceiling/);
+    });
+    it("allows exactly one run-specific extension after six cleaned fixtures and reopens for cleanup without the gate", () => {
+        const { file, runId, journal } = fixture();
+        const ids: string[] = [];
+        for (let i = 0; i < 6; i++) {
+            const a = journal.reserve(randomUUID(), "fixture");
+            const id = randomUUID(); ids.push(id); journal.recordCreated(a.attemptId, id);
+        }
+        vi.stubEnv("INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID", randomUUID());
+        expect(() => journal.reserve(randomUUID(), "seventh")).toThrow(/ceiling/);
+        vi.stubEnv("INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID", runId);
+        expect(() => journal.reserve(randomUUID(), "seventh")).toThrow(/six prior fixtures must be cleaned/);
+        ids.forEach(id => journal.recordCleaned(id));
+        const seventh = journal.reserve(randomUUID(), "seventh");
+        const id = randomUUID(); journal.recordCreated(seventh.attemptId, id);
+        journal.recordCleaned(id);
+        expect(() => journal.reserve(randomUUID(), "eighth")).toThrow(/ceiling/);
+        journal.close(); vi.unstubAllEnvs();
+        const reopened = new BoundedManifest(file, runId); journals.push(reopened);
+        expect(reopened.attempts).toHaveLength(7);
+        expect(reopened.cleanupScope(runId)).toEqual([]);
+        expect(() => reopened.reserve(randomUUID(), "eighth")).toThrow(/ceiling/);
     });
     it("blocks simultaneous runners and foreign cleanup IDs", () => {
         const { file, runId, journal } = fixture();

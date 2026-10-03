@@ -1,5 +1,7 @@
 # Final bounded acceptance — October 3, 2026
 
+Historical sixth-run checkpoint. Superseded by the separately approved [seventh-run recovery/concurrency evidence](2026-10-03-seventh-recovery-concurrency.md); all seven fixtures are now cleaned and the two-tab defect is demonstrated.
+
 **Not release-ready.** Branch codex/playable-core-stability; application source remains 71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d. Final changes correct test assertions and consolidate evidence; no application behavior, schema, credentials or hosted settings changed. Character builder priority and LegendKeeper/worldbuilding integration remain intact.
 
 ## Acceptance matrix

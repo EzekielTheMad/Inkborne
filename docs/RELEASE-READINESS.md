@@ -1,11 +1,18 @@
 # Release-readiness checklist
 
-Latest checkpoint: [final bounded acceptance](handoffs/2026-10-03-final-bounded-acceptance.md). All six fixtures exact-ID cleaned; zero creation attempts remain. Hosted builder/mobile/private-access and isolated HP recovery have supporting receipts. Final hosted run: two tests passed, one failed on an incorrect full-HP test expectation; known-rejection rest navigation passed, retry persistence/reload was observed, and two-tab gameplay was never reached. Corrected assertion passes locally. Types/lint, 2,029 tests and production build passed. **Not release-ready.**
+Latest checkpoint: [seventh bounded recovery and concurrency acceptance](handoffs/2026-10-03-seventh-recovery-concurrency.md). Corrected hosted recovery passed; controlled two-tab damage reproduced a lost update (10 to 8 to 7 rather than 5). All seven approved fixtures exact-ID cleaned; zero attempts remain. The runner passed three tests, but the gameplay durability contract failed. **Not release-ready.** Application source remains 71681c7; no hosted schema or settings changes. Final types, lint, 2,030 tests and production build passed; independent review accepted the evidence framing.
 
 October 3, 2026. Prior verified application source `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-final-bounded-acceptance.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-seventh-recovery-concurrency.md).
 
 ## Latest bounded acceptance
+
+- [x] Separately approved seventh fixture: corrected rest navigation/retry/reload and full-HP control passed.
+- [x] Controlled two-tab reproduction completed: both damage writes reported success, persisted HP7 rather than serial-intent HP5.
+- [ ] Cross-client gameplay durability: demonstrated lost update remains unfixed; conditional write design requires separate approval.
+- [x] Seventh fixture exact-ID cleaned with parent and nine child scopes absent. All seven approved attempts used, zero remain.
+
+The sixth-run bullets below are historical evidence; the seventh outcome above supersedes their untested two-tab status.
 
 - [x] Real hosted SRD race/class/abilities/background/equipment path, desktop sheet refresh and mobile 390x844 identity/navigation/reload.
 - [x] Private owner reads; nonowner and anonymous character/ref denials; isolated nonowner 404 and anonymous login redirects.

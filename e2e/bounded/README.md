@@ -1,6 +1,6 @@
 # Bounded acceptance runner
 
-Current run is closed: six of six fixtures exact-ID cleaned, zero attempts remain. Final hosted suite was partial (2 passed/1 incorrect full-HP assertion failed); corrected assertion is locally verified. Two-tab gameplay was not reached. See [final acceptance](../../docs/handoffs/2026-10-03-final-bounded-acceptance.md). Further hosted creation requires new bounded approval. Examples below are operational reference, not renewed authorization.
+Current run is closed: all seven approved fixtures exact-ID cleaned, zero attempts remain. The separately approved seventh run passed the corrected recovery checks and reproduced a two-tab HP lost update; three green harness tests do not establish safe gameplay durability. See [current acceptance](../../docs/handoffs/2026-10-03-seventh-recovery-concurrency.md). Further hosted creation requires new approval. Examples below are reference, not renewed authorization.
 
 This is separate from the legacy smoke suite. It imports neither its setup nor its prefix-wide teardown.
 Use existing configured sources and existing approved accounts only. Never copy secrets into a worktree,
@@ -28,7 +28,7 @@ is not persisted. Browser traces, videos and screenshots are disabled. Login fai
 because Playwright input errors can include supplied values. Secrets remain internal to the runner.
 
 `test-results/bounded-runs/<run UUID>/fixtures.jsonl` is an exclusive, fsynced, append-only journal. A unique
-owner/name reservation precedes each creation click. Six attempts total are allowed, even after restart
+owner/name reservation precedes each creation click. Six attempts are allowed by default, even after restart
 or cleanup. An unresolved attempt blocks further creation and cleanup. A stale `.lock` is not removed
 automatically; verify that its process has stopped before manually reconciling it. Truncated/invalid
 journals fail closed. Retain them for reconciliation instead of starting another run to bypass a budget.
@@ -62,8 +62,10 @@ Full builder-to-sheet, equipment, concurrency and after-commit interruption rema
 
 October 3 follow-up: desktop builder-to-sheet assertions and persisted equipment/refs passed without a reproduced timeout. The journey suite still failed its mobile name locator; its final visible-text correction is not live-verified. Two of six attempts used, both exact-ID cleaned. See [deduplication handoff](../../docs/handoffs/2026-10-03-request-deduplication.md) for timings and limits.
 
-Historical mobile/private-access checkpoint passed per scenario; three of six attempts used and all cleaned. See [mobile acceptance handoff](../../docs/handoffs/2026-10-03-mobile-access-acceptance.md). The access project depends on journey; for a recorded existing fixture use `npm run test:e2e:bounded -- --project access --no-deps`. It verifies private SDK/browser denials and guarded ability-filter concurrency, restores only recognized fixture state, and creates no new fixture. Other concurrency and ambiguous writes remain unaccepted.
+Historical mobile/private-access checkpoint passed per scenario; three of six attempts used and all cleaned. See [mobile acceptance handoff](../../docs/handoffs/2026-10-03-mobile-access-acceptance.md). The access project depends on journey; for a recorded existing fixture use `npm run test:e2e:bounded -- --project access --no-deps`. It verifies private SDK/browser denials and guarded ability-filter concurrency, restores only recognized fixture state, and creates no new fixture. The current handoff supersedes this historical scope: two-tab gameplay overwrite is now reproduced; durable conflict and ambiguous-write safety remain unaccepted.
 
 ## Remaining-only play scope (final fixture held)
 
 INKBORNE_BOUNDED_PLAY_SCOPE=remaining selects the sole remaining play project; run --project remaining with the existing create/journey dependencies. Default full scope selects play instead, never both flavors. Invalid scopes fail. Do not reset the journal or run both flavors on one fixture: replay guards conservatively reject spent dice/roll history. Remaining scope deliberately seeds one spent die as fixture setup, then verifies known rest rejection across real navigation, clean reopen or retained error, one explicit confirmed retry/reload and the two-tab relative-write diagnostic. It does not claim a hit-die action. See [the reviewed plan](../../docs/handoffs/2026-10-03-rest-remount-final-plan.md); the final hosted creation remains held. No automatic retry follows ambiguous outcomes.
+
+The default journal ceiling remains six. The single separately approved seventh attempt requires `INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID` equal to the existing run ID and all six predecessor cleanup receipts. The hard ceiling is seven; no gate can permit an eighth. Cleanup can reopen a seven-attempt journal without this creation gate.

@@ -1,12 +1,12 @@
 # Inkborne current work
 
-Latest checkpoint: [final bounded acceptance](handoffs/2026-10-03-final-bounded-acceptance.md). All six fixtures exact-ID cleaned; zero creation attempts remain. Hosted builder/mobile/private-access and isolated HP recovery have supporting receipts. Final hosted run: two tests passed, one failed on an incorrect full-HP test expectation; known-rejection rest navigation passed, retry persistence/reload was observed, and two-tab gameplay was never reached. Corrected assertion passes locally. Types/lint, 2,029 tests and production build passed. **Not release-ready.**
+Latest checkpoint: [seventh bounded recovery and concurrency acceptance](handoffs/2026-10-03-seventh-recovery-concurrency.md). Corrected hosted recovery passed; controlled two-tab damage reproduced a lost update (10 to 8 to 7 rather than 5). All seven approved fixtures exact-ID cleaned; zero attempts remain. The runner passed three tests, but the gameplay durability contract failed. **Not release-ready.** Application source remains 71681c7; no hosted schema or settings changes. Final types, lint, 2,030 tests and production build passed; independent review accepted the evidence framing.
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Prior verified application source: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current bounded acceptance handoff](handoffs/2026-10-03-final-bounded-acceptance.md).
+[current bounded acceptance handoff](handoffs/2026-10-03-seventh-recovery-concurrency.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 
