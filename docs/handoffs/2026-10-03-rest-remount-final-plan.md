@@ -1,0 +1,44 @@
+# Real Next remount investigation and final-run plan - October 3, 2026
+
+No hosted calls or fixture creation in this phase. Five of six creation attempts remain used, all five cleaned. **The final attempt is held**, as requested. Application source/configuration remains unchanged at 71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d. Not release-ready.
+
+## Why the Rest dialog was absent
+
+The actual edit link in components/sheet/character-header.tsx points to /characters/[id]/builder using next/link. The sheet's CharacterProvider and RestButton live under [id]/page.tsx -> CharacterPageClient -> CharacterShell, not in a layout shared with the builder. The builder has its own nested layout/page. Only the authenticated app layout is shared, and it does not own this provider/dialog state.
+
+Installed Next16.2.10 docs/01-app/02-guides/preserving-ui-state.md explicitly requires cacheComponents:true for page-level React Activity retention. The current next.config.ts does not enable it, set staleTimes or provide an explicit route Activity wrapper. The installed glossary Client Cache section describes cached RSC payload/back-forward reuse; it does not supply a promise that this page-owned dialog instance survives. staleTimes.md distinguishes shared layouts and back-forward caching. No caching flag was changed to force the test's old expectation.
+
+An isolated real Next App Router reproduction now confirms the expected remount with the matched cache configuration and route structure. scripts/verify-next-rest-local.mjs uses the installed Next/React/Chrome, actual provider/RestButton/RestDialog/HPTracker and real next/link. Its dynamic sheet page owns the provider; the nested builder page shares only the root layout. It asserts readable Saving status and a disabled rest button while the captured write is pending, then no stale Saving status after settlement/reopening. It uses a local in-memory API, strips Supabase/E2E/Inkborne environment settings from the server process and blocks nonlocal browser requests. No hosted configuration file is read.
+
+The fixture uses Webpack to accommodate an external node_modules junction and esbuild's prebundled client components. This is an explicit tooling difference from the app's Turbopack dev run; cache settings and page ownership are matched. Authentication, full builder layout/data loading and production deployment are not reproduced. Existing CSS/fonts are reused, without installing software. Two initial fixture setup failures were missing CSS font-relative paths and a bundled CommonJS React shim; both were fixed locally before the successful proof, with no timeout changes.
+
+## Local proof and stronger test contract
+
+Real Next proof: session1 mounted -> navigated away/unmounted -> Back mounted session2, no Rest dialog. A captured pending local rest request was fulfilled with a guaranteed no-commit403 while away. Every persisted baseline key stayed HP10/temp0/spent Barbarian die1. The shared recovery helper reopened a fresh dialog, verified pending=false, no inherited error and an enabled Long Rest button; reopening sent no request. One explicit retry after known rejection then persisted HP14/die0, closed the dialog and survived reload. Exactly two requests, no blind retry, page errors or remote attempts. This is local simulated persistence, not hosted acceptance.
+
+Separately, the actual React Activity Chrome fixture exercises the same helper with a retained dialog. It requires the prior readable rest error, pending=false and enabled recovery; state stays HP10 and request count1. All seven play/effect local checks pass. Thus the fallback does not drop the retained generation/error assertions. A missing dialog is not automatically counted as a retained-Activity success.
+
+e2e/bounded/rest-recovery.ts now supports a present dialog with its settled error or a fresh reopened dialog with no inherited error. It is called only after the caller verifies the returned sheet and **known no-commit** persisted baseline. The test waits for the exact held RPC before navigation, settles its403 while away, verifies zero forwarding and full state equality, and confirms reopening never retries. Only then does it offer an explicit retry; confirmed HP/dice/unchanged roll history and reload are asserted separately. This does not permit replay after an ambiguous response.
+
+Current/max HP are parsed separately by hpReading; a current-HP check cannot accidentally pass by matching the maximum displayed on the same button. The same reader passes the actual desktop/mobile component regression with current8/max20 after Damage.
+
+## Compact proposed final hosted pass - not executed
+
+Use **one final recorded fixture**, existing two accounts and existing SRD only, with creation/journey as dependencies. Scope to the following:
+
+1. Known rest rejection across navigation: deliberate setup HP10/temp0/spent Barbarian die1 (setup only, no roll/action claim). Capture one pending RPC, navigate the actual edit Link, settle guaranteed403 before forwarding, then Back. Verify every persisted state key unchanged, exact displayed HP10, truthful settled dialog/error behavior for either present or reopened session, no automatic request on reopen.
+2. Explicit recovery after confirmed no-commit: one Long Rest write, verified full displayed/server HP, spent die0, unchanged zero roll history, clean settled UI and reload. Never repeat an unresolved command.
+3. Controlled two-tab relative HP contract: both tabs read HP10; hold damage2 and damage3, forward each once in a controlled order and read back each outcome. The current shallow-merge contract predicts8 then7, with stale first-tab8 and reload7 versus serial-intent HP5. If reproduced, record **blocked durability contract**, not accepted concurrency; stop dependent play actions. Unexpected outcomes/errors also halt rather than prompting a blind retry or SQL change.
+4. Audit and cleanup only the final journaled ID and its run-owned children; verify parent/nine child scopes absent, preserve receipts and close the local server. No name sweeps, schema/security changes, new content/account fixtures, installs, deployment or extra attempts.
+
+The already accepted isolated HP rejection and hit-die response-loss scenarios are excluded from this final remaining-only flavor. Configuration includes exactly one play flavor: default full/play, or explicit INKBORNE_BOUNDED_PLAY_SCOPE=remaining with --project remaining. This prevents a default invocation from running both writers against the same fixture and consuming/masking freshness state. Invalid scopes fail early. The existing six-attempt journal, project/account gates, zero browser retries and replay guard stay intact.
+
+After the parent releases the hold, the concrete invocation uses the existing approved settings path, project etcaodglvcspcmwecyxq, run c9e2c9a0-0440-4d10-88b3-313bef708a28, localhost3015, INKBORNE_BOUNDED_PLAY_SCOPE=remaining, and npm run test:e2e:bounded -- --project remaining (dependencies enabled). **Do not run it in this phase**, create a new journal, use the legacy sweeping setup, or run both play flavors. This plan is ready for review; it does not claim hosted rest/two-tab acceptance.
+
+## Validation and artifacts
+
+Local checks: real Next remount/reopen/retry/reload proof passed; seven actual Activity/play/effect Chrome checks passed; desktop/mobile exact HP reading regression passed. Final types/lint passed after the last assertions; full local check passed 211 files / 2,029 tests. Fresh Next16.2.10 production build passed with nonsecret localhost public placeholders. git diff --check passed. No application source/config or timeout change.
+
+Ignored evidence: test-results/next-rest-local/evidence.json, pending-sheet.txt, back-sheet.txt, server.log; existing play-save-local/evidence.json and hp-trigger-local/evidence.json. Separate task-5 copies preserve this proof without overwriting hosted fifth-fixture receipts. Temp logs: inkborne-next-rest-final-proof.txt, inkborne-retained-rest-final-proof.txt, inkborne-rest-plan-hp-proof.txt, inkborne-rest-plan-check.txt, inkborne-rest-plan-final-types.txt, inkborne-rest-plan-final-lint.txt, inkborne-rest-plan-final-build.txt. The isolated spawned Next process tree was stopped; no unrelated process was stopped.
+
+Prior [hosted HP/play checkpoint](2026-10-03-hp-locator-play-recovery.md) remains authoritative for the fifth fixture's actual results and cleanup. Its absent-dialog symptom is consistent with the locally verified remount, not evidence of a proven product regression. Durable cross-client intent/conditional writes and ambiguous action receipts still require the separate [action proposal](../specs/2026-10-02-durable-character-actions-proposal.md); receipts alone do not fix stale relative writes. Equipment atomicity remains separate. No SQL implementation was made.

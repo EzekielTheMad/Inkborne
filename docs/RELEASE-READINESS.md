@@ -1,9 +1,9 @@
 # Release-readiness checklist
 
-Latest checkpoint: [HP locator proof and bounded play recovery](handoffs/2026-10-03-hp-locator-play-recovery.md). Fixed hyphen/em-dash test mismatch; actual desktop/mobile component regression passed. Fifth hosted fixture passed precommit HP rejection, independent temp HP and isolated hit-die response-loss/reload. Real Next Back did not retain the Rest dialog; hidden-settlement and two-tab scenarios remain unaccepted. **Five tracked fixtures cleaned; one final creation attempt reserved.** Final types/lint, 2,029 tests and fresh production build passed. **Not release-ready.**
+Latest checkpoint: [real Next remount proof and final-run plan](handoffs/2026-10-03-rest-remount-final-plan.md). Page-owned Rest dialog remounts without Cache Components; offline real Next proof verified unchanged state, clean reopening and explicit recovery/reload. Shared helper also passes retained Activity error recovery. Hosted rest/two-tab remain unaccepted. **Five fixtures cleaned; final creation attempt held.** Types/lint, 2,029 tests and fresh production build passed. No hosted calls, app configuration or timeout changes in this phase. **Not release-ready.**
 
 October 3, 2026. Prior verified application source `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-hp-locator-play-recovery.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-rest-remount-final-plan.md).
 
 ## Latest bounded acceptance
 
@@ -14,7 +14,8 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff
 - [x] Fourth fixture exact-ID cleaned after approved single diagnostic retry; all nine child scopes verified absent. Four attempts used, two remain.
 - [x] Fifth fixture: known precommit HP rejection and independent temp HP persisted; one hit die committed with lost response reconciled after reload without retry, one roll. Isolated outcome only.
 - [x] Fifth fixture exact-ID cleaned; parent/nine child scopes absent. Five attempts used, final one reserved.
-- [ ] Real Next retained Rest lifecycle failed at first Back before proving retention; hidden settlement and two-tab never reached. Cast, full rule correctness and broader authorization remain unaccepted.
+- [x] Offline real Next matched-cache remount and fresh-dialog recovery/reload proof; separate retained Activity shared-helper check.
+- [ ] Revised hosted rest/two-tab final pass remains held and unaccepted. Fifth-fixture missing dialog was consistent with page remount; do not require Activity retention without the enabling configuration. Cast, full rule correctness and broader authorization remain unaccepted.
 
 ## Historical first October 3 bounded checkpoint
 

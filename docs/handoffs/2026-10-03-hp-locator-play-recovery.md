@@ -1,5 +1,7 @@
 # HP locator proof and bounded play recovery - October 3, 2026
 
+Later [real Next remount investigation](2026-10-03-rest-remount-final-plan.md) reproduces the absent-dialog lifecycle locally and adjusts recovery assertions. The hosted outcomes/cleanup below remain unchanged; the revised final hosted pass is held.
+
 This checkpoint fixes the test locator only. Application source remains 71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d. No application defect or hosted concurrency guarantee is inferred. Not release-ready.
 
 ## Exact cause and local regression

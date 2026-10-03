@@ -5,6 +5,10 @@ requireLiveGate(process.env.INKBORNE_BOUNDED_LIVE_PROJECT, process.env.INKBORNE_
 const envFile = process.env.INKBORNE_RUNNER_ENV_FILE;
 if (!envFile)
     throw new Error("An existing approved runner configuration path is required");
+const scope = process.env.INKBORNE_BOUNDED_PLAY_SCOPE;
+if (scope !== undefined && scope !== "full" && scope !== "remaining")
+    throw new Error("Choose full or remaining bounded play scope");
+const playProject = scope === "remaining" ? "remaining" : "play";
 const settings = readRunnerSettings(envFile);
 // Process-local only. Browser bundles expose only Next's NEXT_PUBLIC_* settings.
 for (const [name, value] of Object.entries(settings))
@@ -22,7 +26,7 @@ export default defineConfig({
         { name: "create", testMatch: /builder\.spec\.ts/ },
         { name: "journey", testMatch: /journey\.spec\.ts/, dependencies: ["create"] },
         { name: "access", testMatch: /access\.spec\.ts/, dependencies: ["journey"] },
-        { name: "play", testMatch: /play\.spec\.ts/, dependencies: ["journey"] },
+        { name: playProject, testMatch: /play\.spec\.ts/, dependencies: ["journey"] },
     ],
     webServer: { command: `npm run dev -- -p ${url.port}`, cwd: "../..", url: baseURL, reuseExistingServer: false, timeout: 180000 },
 });

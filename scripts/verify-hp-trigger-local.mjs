@@ -8,7 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { chromium } from "playwright";
-import { hpTrigger } from "../e2e/bounded/sheet-locators.ts";
+import { hpTrigger, hpReading } from "../e2e/bounded/sheet-locators.ts";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "test-results", "hp-trigger-local");
 await fs.mkdir(output, { recursive: true });
@@ -86,6 +86,7 @@ try {
     await page.getByRole('button',{name:'Damage',exact:true}).click();
     await page.waitForFunction(()=>window.fixture.calls.length===1);
     assert.equal(await page.evaluate(()=>window.fixture.calls[0].current_hp),8);
+    assert.deepEqual(await hpReading(page),{current:8,maximum:20});
     item.openedAndSaved=true;evidence.push(item);
     await page.screenshot({path:path.join(output,'sheet-'+viewport.width+'.png'),fullPage:true});
   }

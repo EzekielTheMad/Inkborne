@@ -6,10 +6,12 @@ import { runDirectory } from "../run-paths";
 import { readRunnerSettings } from "../settings";
 import { verifyExistingAccounts } from "../runtime";
 import { browserLogin } from "../browser-login";
-import { hpTrigger } from "../sheet-locators";
+import { hpTrigger, hpReading } from "../sheet-locators";
+import { restAfterSettledBack } from "../rest-recovery";
 import { captureOwnedRows } from "../owned-rows";
 
-test("bounded play recovery distinguishes rejection, committed response loss and stale tabs", async ({ page, context }) => {
+test("bounded play recovery preserves state across navigation and exposes stale clients", async ({ page, context }, testInfo) => {
+    const remainingOnly = testInfo.project.name === "remaining";
     test.setTimeout(120000);
     page.setDefaultTimeout(12000);
     page.setDefaultNavigationTimeout(20000);
@@ -53,6 +55,7 @@ test("bounded play recovery distinguishes rejection, committed response loss and
         const hp = hpTrigger(page);
         const rest = page.getByRole("dialog", { name: "Rest", exact: true });
         const reject = (route: Route) => route.fulfill({ status: 403, contentType: "application/json",
+            headers: { "access-control-allow-origin": new URL(page.url()).origin, "access-control-allow-credentials": "true" },
             body: JSON.stringify({ code: "42501", message: "Injected before forwarding: fixture write rejected" }) });
         await page.route(pattern, async route => {
             if (route.request().method() !== "POST") return route.continue();
@@ -102,94 +105,135 @@ test("bounded play recovery distinguishes rejection, committed response loss and
             state: { current_hp: observedState.current_hp, temp_hp: observedState.temp_hp, hit_dice_spent: observedState.hit_dice_spent }
         }, null, 2) + "\n");
 
-        phase = "known-before-commit-hp-rejection"; receipt();
-        const before = requests;
-        const beforeForward = forwarded;
-        mode = "reject";
-        await hp.click();
-        await page.getByPlaceholder("Amount", { exact: true }).fill("5");
-        await page.getByRole("button", { name: "Damage", exact: true }).click();
-        await expect(page.getByRole("alert").filter({ hasText: "The HP change could not be saved" })).toBeVisible();
-        expect((await read()).current_hp).toBe(10);
-        expect(requests - before).toBe(1);
-        expect(forwarded - beforeForward).toBe(0);
-        await expect(hp).toContainText("10");
-        // Independent absolute input is allowed after the known rejected action.
-        mode = "pass";
-        await page.getByPlaceholder("Amount", { exact: true }).fill("3");
-        await page.getByRole("button", { name: "Set Temp HP", exact: true }).click();
-        await expect.poll(async () => (await read()).temp_hp).toBe(3);
-        expect((await read()).current_hp).toBe(10);
-        results.push({ scenario: phase, status: "accepted", damageRequests: 1, damageForwarded: 0,
-            unchangedHp: 10, independentTempHpPersisted: 3 }); receipt();
+        if (!remainingOnly) {
+            phase = "known-before-commit-hp-rejection"; receipt();
+            const before = requests;
+            const beforeForward = forwarded;
+            mode = "reject";
+            await hp.click();
+            await page.getByPlaceholder("Amount", { exact: true }).fill("5");
+            await page.getByRole("button", { name: "Damage", exact: true }).click();
+            await expect(page.getByRole("alert").filter({ hasText: "The HP change could not be saved" })).toBeVisible();
+            expect((await read()).current_hp).toBe(10);
+            expect(requests - before).toBe(1);
+            expect(forwarded - beforeForward).toBe(0);
+            await expect.poll(async () => (await hpReading(page)).current).toBe(10);
+            // Independent absolute input is allowed after the known rejected action.
+            mode = "pass";
+            await page.getByPlaceholder("Amount", { exact: true }).fill("3");
+            await page.getByRole("button", { name: "Set Temp HP", exact: true }).click();
+            await expect.poll(async () => (await read()).temp_hp).toBe(3);
+            expect((await read()).current_hp).toBe(10);
+            results.push({ scenario: phase, status: "accepted", damageRequests: 1, damageForwarded: 0,
+                unchangedHp: 10, independentTempHpPersisted: 3 }); receipt();
 
-        phase = "hit-die-committed-response-lost"; receipt();
-        await seed({ current_hp: 10, temp_hp: 0, hit_dice_spent: {} });
-        await page.reload();
-        await expect(hp).toContainText("10");
-        const beforeLost = requests;
-        const forwardedBeforeLost = forwarded;
-        mode = "lost";
-        await page.getByRole("button", { name: "Rest", exact: true }).click();
-        await rest.getByRole("button", { name: "Spend & Roll", exact: true }).click();
-        await expect(rest.getByRole("alert")).toContainText("The hit die could not be spent");
-        expect(lostPatch).toBeDefined();
-        const committed = await read();
-        expect(committed.current_hp).toBe(lostPatch!.current_hp);
-        expect(committed.hit_dice_spent).toEqual(lostPatch!.hit_dice_spent);
-        expect((committed.hit_dice_spent as Record<string, number>).barbarian).toBe(1);
-        expect(requests - beforeLost).toBe(1);
-        expect(forwarded - forwardedBeforeLost).toBe(1);
-        // Do not click Spend again. Reload reconciles the single committed action.
-        mode = "pass";
-        await page.reload();
-        await hp.click();
-        await expect(page.getByText("Hit Dice: d12 0/1", { exact: true })).toBeVisible();
-        await page.keyboard.press("Escape");
-        await page.getByRole("button", { name: "Rest", exact: true }).click();
-        await expect(rest.getByRole("button", { name: "Spend & Roll", exact: true })).toBeDisabled();
-        await rest.getByRole("button", { name: "Close", exact: true }).click();
-        const rolls = await accounts.primary.from("character_rolls").select("id").eq("character_id", id);
-        expect(rolls.error).toBeNull();
-        expect(rolls.data).toHaveLength(1);
-        results.push({ scenario: phase, status: "accepted-isolated-reconciliation",
-            requests: 1, serverSuccesses: 1, blindRetries: 0, spentDiceAfterReload: 1,
-            recordedRolls: 1, limitation: "No durable action receipt; readback resolves this isolated observation only" }); receipt();
+            phase = "hit-die-committed-response-lost"; receipt();
+            await seed({ current_hp: 10, temp_hp: 0, hit_dice_spent: {} });
+            await page.reload();
+            await expect.poll(async () => (await hpReading(page)).current).toBe(10);
+            const beforeLost = requests;
+            const forwardedBeforeLost = forwarded;
+            mode = "lost";
+            await page.getByRole("button", { name: "Rest", exact: true }).click();
+            await rest.getByRole("button", { name: "Spend & Roll", exact: true }).click();
+            await expect(rest.getByRole("alert")).toContainText("The hit die could not be spent");
+            expect(lostPatch).toBeDefined();
+            const committed = await read();
+            expect(committed.current_hp).toBe(lostPatch!.current_hp);
+            expect(committed.hit_dice_spent).toEqual(lostPatch!.hit_dice_spent);
+            expect((committed.hit_dice_spent as Record<string, number>).barbarian).toBe(1);
+            expect(requests - beforeLost).toBe(1);
+            expect(forwarded - forwardedBeforeLost).toBe(1);
+            // Do not click Spend again. Reload reconciles the single committed action.
+            mode = "pass";
+            await page.reload();
+            await hp.click();
+            await expect(page.getByText("Hit Dice: d12 0/1", { exact: true })).toBeVisible();
+            await page.keyboard.press("Escape");
+            await page.getByRole("button", { name: "Rest", exact: true }).click();
+            await expect(rest.getByRole("button", { name: "Spend & Roll", exact: true })).toBeDisabled();
+            await rest.getByRole("button", { name: "Close", exact: true }).click();
+            const rolls = await accounts.primary.from("character_rolls").select("id").eq("character_id", id);
+            expect(rolls.error).toBeNull();
+            expect(rolls.data).toHaveLength(1);
+            results.push({ scenario: phase, status: "accepted-isolated-reconciliation",
+                requests: 1, serverSuccesses: 1, blindRetries: 0, spentDiceAfterReload: 1,
+                recordedRolls: 1, limitation: "No durable action receipt; readback resolves this isolated observation only" }); receipt();
 
-        phase = "retained-rest-hide-settle-back"; receipt();
+        } else {
+            // Known local test setup, not a hit-die action or a roll-history claim.
+            await seed({ hit_dice_spent: { barbarian: 1 } });
+        }
+
+        phase = "rest-navigation-known-rejection-recovery"; receipt();
         await seed({ current_hp: 10, temp_hp: 0 });
         await page.reload();
+        const restBaseline = await read();
+        const hpBeforeRest = await hpReading(page);
+        expect(hpBeforeRest.current).toBe(10);
+        const displayedMaxHp = hpBeforeRest.maximum;
+        expect(displayedMaxHp).toBeGreaterThan(10);
         mode = "hold-reject";
         gate = new Promise<void>(resolve => { release = resolve; });
         const beforeRest = requests;
+        const forwardedBeforeRest = forwarded;
+        const settledBeforeRest = heldSettled;
         await page.getByRole("button", { name: "Rest", exact: true }).click();
         await rest.getByRole("button", { name: "Take Long Rest", exact: true }).click();
         await expect(rest).toHaveAttribute("aria-busy", "true");
-        const hide = async () => {
-            // Invoke the actual Next Link, preserving client navigation/Activity.
-            await page.locator(`a[href="/characters/${id}/builder"]:visible`).evaluate((node: HTMLAnchorElement) => node.click());
-            await page.waitForURL(`**/characters/${id}/builder`);
-        };
-        await hide();
-        await page.goBack();
-        await expect(rest).toBeVisible();
-        await expect(rest).toHaveAttribute("aria-busy", "true"); // Proves retained pending dialog, not a fresh mount.
-        await hide();
+        await expect(rest.getByRole("status")).toContainText("Saving this rest action");
+        await expect(rest.getByRole("button", { name: "Take Long Rest", exact: true })).toBeDisabled();
+        await expect.poll(() => requests - beforeRest).toBe(1); // Capture the exact held request before navigating.
+        // This is a real Next Link. Client navigation does not imply Activity retention.
+        await page.locator(`a[href="/characters/${id}/builder"]:visible`).evaluate((node: HTMLAnchorElement) => node.click());
+        await page.waitForURL(`**/characters/${id}/builder`);
         const hiddenResponse = page.waitForResponse(response => response.url() === pattern && response.request().method() === "POST");
         release!(); release = undefined;
-        await expect.poll(() => heldSettled).toBe(1);
-        expect(await (await hiddenResponse).finished()).toBeNull();
+        await expect.poll(() => heldSettled - settledBeforeRest).toBe(1);
+        const rejectionResponse = await hiddenResponse;
+        expect(rejectionResponse.status()).toBe(403);
+        expect(await rejectionResponse.finished()).toBeNull();
         await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
         expect(requests - beforeRest).toBe(1);
-        expect((await read()).current_hp).toBe(10);
+        expect(forwarded - forwardedBeforeRest).toBe(0);
+        expect(await read()).toEqual(restBaseline); // Every persisted state key, including the spent die, must survive.
         await page.goBack();
-        await expect(rest.getByRole("alert")).toContainText("The rest could not be saved");
-        await expect(rest).toHaveAttribute("aria-busy", "false");
-        await expect(rest.getByRole("button", { name: "Take Long Rest", exact: true })).toBeEnabled();
-        await rest.getByRole("button", { name: "Close", exact: true }).click();
+        await expect(hp).toBeVisible();
+        await expect.poll(async () => (await hpReading(page)).current).toBe(10);
+        await expect(page.getByRole("tab", { name: "Character Sheet", exact: true })).toHaveAttribute("aria-selected", "true");
+        const recovery = await restAfterSettledBack(page);
+        expect(await read()).toEqual(restBaseline);
+        expect(requests - beforeRest).toBe(1); // Reopening never retries the action.
+        results.push({ scenario: phase, status: "accepted-known-no-commit-recovery",
+            navigationLifecycle: recovery.lifecycle, failureForwarded: 0, baselinePreserved: true,
+            settledWhileAway: true, reopenedWithoutRetry: true }); receipt();
+
+        phase = "rest-explicit-confirmed-retry"; receipt();
         mode = "pass";
-        results.push({ scenario: phase, status: "accepted", retainedPendingVerified: true,
-            hiddenSettlement: "known precommit rejection", reactivationClearedPending: true, requests: 1 }); receipt();
+        const beforeRestRetry = requests;
+        const forwardedBeforeRetry = forwarded;
+        await recovery.dialog.getByRole("button", { name: "Take Long Rest", exact: true }).click();
+        await expect(recovery.dialog).toHaveCount(0);
+        const recovered = await read();
+        expect(recovered.current_hp).toBe(displayedMaxHp);
+        expect(recovered.temp_hp).toBe(0);
+        expect((recovered.hit_dice_spent as Record<string, number>).barbarian).toBe(0);
+        expect(requests - beforeRestRetry).toBe(1);
+        expect(forwarded - forwardedBeforeRetry).toBe(1);
+        const restRolls = await accounts.primary.from("character_rolls").select("id").eq("character_id", id);
+        expect(restRolls.error).toBeNull();
+        expect(restRolls.data).toHaveLength(remainingOnly ? 0 : 1);
+        await page.reload();
+        await expect.poll(async () => (await hpReading(page)).current).toBe(displayedMaxHp);
+        await page.getByRole("button", { name: "Rest", exact: true }).click();
+        await expect(rest).toHaveAttribute("aria-busy", "false");
+        await expect(rest.getByRole("alert")).toHaveCount(0);
+        await expect(rest.getByRole("button", { name: "Take Long Rest", exact: true })).toBeDisabled();
+        await expect(rest.getByRole("button", { name: "Spend & Roll", exact: true })).toBeEnabled();
+        await rest.getByRole("button", { name: "Close", exact: true }).click();
+        results.push({ scenario: phase, status: "accepted-confirmed-retry", requests: 1,
+            serverSuccesses: 1, resultingHp: displayedMaxHp, spentDice: 0,
+            rollHistoryUnchanged: true, reloadVerified: true }); receipt();
 
         phase = "two-tab-relative-hp-contract"; receipt();
         await seed({ current_hp: 10, temp_hp: 0 });
@@ -198,8 +242,8 @@ test("bounded play recovery distinguishes rejection, committed response loss and
         try {
             await other.goto(`/characters/${id}`);
             const otherHp = hpTrigger(other);
-            await expect(hp).toContainText("10");
-            await expect(otherHp).toContainText("10");
+            await expect.poll(async () => (await hpReading(page)).current).toBe(10);
+            await expect.poll(async () => (await hpReading(other)).current).toBe(10);
             mode = "hold-pass";
             gate = new Promise<void>(resolve => { release = resolve; });
             let otherRelease: (() => void) | undefined;
@@ -225,10 +269,10 @@ test("bounded play recovery distinguishes rejection, committed response loss and
                 await expect.poll(async () => (await read()).current_hp).toBe(7);
                 await expect(page.getByPlaceholder("Amount", { exact: true })).toHaveCount(0);
                 await expect(other.getByPlaceholder("Amount", { exact: true })).toHaveCount(0);
-                await expect(hp).toContainText("8");
-                await expect(otherHp).toContainText("7");
+                await expect.poll(async () => (await hpReading(page)).current).toBe(8);
+                await expect.poll(async () => (await hpReading(other)).current).toBe(7);
                 await page.reload();
-                await expect(hp).toContainText("7");
+                await expect.poll(async () => (await hpReading(page)).current).toBe(7);
                 results.push({ scenario: phase, status: "blocked-durability-contract",
                     initialHp: 10, damageIntents: [2, 3], serialIntentHp: 5, persistedHp: 7,
                     bothWritesConfirmed: true, firstTabStaleHp: 8, reloadReconciledHp: 7,
