@@ -1,28 +1,35 @@
 # Inkborne current work
 
-Updated October 2, 2026, around 19:44 UTC. Branch: `codex/playable-core-stability`.
-Verified source: `d69be9d32c74ccfb676836a143105bbc86bf7e49`. **Not release-ready.**
+Updated October 3, 2026. Branch: `codex/playable-core-stability`.
+Prior verified application source: `d69be9d32c74ccfb676836a143105bbc86bf7e49`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[latest validation/recovery handoff](handoffs/2026-10-02-builder-compatibility-review.md).
+[current bounded acceptance handoff](handoffs/2026-10-03-bounded-acceptance.md).
+October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 
 ## Direction and authority
 
 Victor prioritizes the character builder and the fresh-character-to-play-sheet journey.
 Preserve mechanics, narrative, campaign and LegendKeeper integration; no worldbuilding expansion.
-Only local edits, safe tests/builds and commits are authorized. No installs, hosted Supabase
-tests/writes, schema/migrations, credential/security changes, other-worktree changes, push,
-merge or deploy. The parent reauthorized continuation at 18:25 UTC without a new deadline,
-then requested consolidation and this bounded builder validation/recovery milestone. Product/architecture changes need the parent;
-durable schema and hosted acceptance need Victor's explicit approval.
+Victor approved bounded hosted acceptance on October 3 for project `etcaodglvcspcmwecyxq`: at most six new uniquely identified characters, two existing approved accounts, and their run-owned refs/grants/inventory/spells/rolls. Existing rules and data must remain intact. Trello ownership was confirmed by the parent. Local edits/tests/commits remain authorized. No installs, new accounts, extra campaign/content fixtures, schema/migrations, credential/security configuration changes, other-worktree changes, push, merge or deploy. Cleanup must use exact recorded IDs and stop if action-time approval blocks deletion. Durable schema work remains a separate approval.
 
 Checkout: `C:/Users/kaios/Documents/Codex/2026-10-02/task/inkborne-core`.
 Supplied original baseline: `0a4acb93ab5fcda94d8efa13a87568c3315da108`.
 The preceding consolidation review compared the full branch to local main `26e1f514693190e4afb2dc708ac97fb04a0f5814`,
 which is its merge base/ancestor. No main-only commits; no remote fetch or main verification.
 
-## Verified local result
+## October 3 acceptance checkpoint
+
+The dedicated bounded runner is implemented and locally checked: types/lint and 210 files / 2,019 tests.
+One real login/create/builder-refresh/nonowner-unchanged check passed. The same-fixture continuation
+stopped at hosted 57014 statement timeouts after race/class and the first skill choice. Later read-only
+probes passed, so the cause remains unproven. One character, four refs and 23 generated feature grants
+were tracked and cleaned by exact ID; parent and all nine child-table scopes verified absent. Port 3015
+is closed. No application code/schema/dependency change or publication occurred. Full journey/recovery/
+concurrency acceptance remains pending; see the current handoff before any further hosted mutations.
+
+## Prior October 2 local application result
 
 - Relative HP/hit-die/rest gates preserve the failed-damage recovery and independent absolute
   edits. Retained Activity cast/rest sessions reconcile hidden completion/error once.
@@ -50,11 +57,9 @@ Catalog fallback does not reconstruct original versions. Saved covers recorded e
 grandfathering remains a product decision. No new critical local data-loss regression remained known;
 this is not a whole-character or real-backend acceptance verdict.
 
-Victor is answering whether a disposable staging target exists or the configured project is live.
-Hosted execution and credentials remain untouched pending that answer and the named acceptance scope. The latest handoff contains a precise approval question. Durable schema changes
-remain a separate approval; further general local cleanup cannot prove committed-response recovery.
+The approved project is ACTIVE_HEALTHY. Effective RPC definitions/grants and RLS metadata were inspected read-only; seven relevant function bodies match local migrations. Main_PC and the original checkout configuration were verified without exposing values. Both existing accounts authenticate as distinct users; the isolated checkout simply lacks ignored configuration. The dedicated runner loads only the seven required settings internally. Real creation/builder refresh/nonowner no-match denial passed on one journaled fixture. Further acceptance and exact-ID cleanup are tracked in the current handoff.
 
-Required real Next/auth/backend acceptance and the state RPC's no-match/search-path risks are in
+Required real Next/auth/backend acceptance and the state RPC's no-match/ambiguous-outcome risks are in
 the checklist. Equipment grants, concurrent choices/pins and ambiguous committed responses still
 need durable guarantees. The [equipment proposal](specs/2026-10-02-equipment-atomicity-proposal.md)
 and [action proposal](specs/2026-10-02-durable-character-actions-proposal.md) contain exact proposed

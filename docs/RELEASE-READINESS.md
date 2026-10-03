@@ -1,9 +1,17 @@
 # Release-readiness checklist
 
-October 2, 2026. Source `d69be9d`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [latest handoff](handoffs/2026-10-02-builder-compatibility-review.md).
+October 3, 2026. Prior verified application source `d69be9d`; branch `codex/playable-core-stability`. **Not release-ready.**
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-bounded-acceptance.md).
 
-## Verified locally
+## October 3 bounded checkpoint
+
+- [x] Approved target, active/auth health, two existing distinct accounts and trusted exact-ID cleanup preflight.
+- [x] Dedicated no-sweep runner, fsynced six-attempt journal outside browser output clearing, 18 dry-run regressions; types/lint and 210 files / 2,019 tests.
+- [x] Real login/create/builder refresh; secondary-account update attempt left owner readback unchanged.
+- [x] The one run-owned character and all inspected children verified absent after exact-ID cleanup; no residual fixture known.
+- [ ] Complete journey failed on hosted 57014 timeouts after race/class/first skill. Later reads passed, cause unproven. Further acceptance is paused at this blocker.
+
+## Prior October 2 application verification
 
 - [x] Full branch reviewed against local main `26e1f514693190e4afb2dc708ac97fb04a0f5814`; no main-only commits.
 - [x] Strict types, zero-warning lint, 204 files / 2,001 tests; Next 16.2.10 production build, 24 static pages.
@@ -21,9 +29,7 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [latest handoff]
   choices, equipment, HP/slots/resources, keyboard/dialog behavior, real Next refresh/history/cache and character switching.
 - [ ] Owner/nonowner/anonymous, private/campaign-shared/retired content and guessed IDs: rejected/no-match writes must not
   appear successful. Expired auth, offline interruption, denied content and failed reference reads need readable recovery.
-- [ ] Verify `patch_character_state` specifically: local 00031 returns void/no affected-row receipt; 00041 sets empty
-  search_path while the earlier body uses unqualified `characters`. Inspect effective definition and replay the local chain
-  in an approved disposable DB. No hosted behavior is claimed. Any SQL/contract correction requires separate approval.
+- [ ] Verify `patch_character_state` behavior under denied/no-match writes and ambiguous outcomes. October 3 read-only inspection confirms both local 00031 and hosted bodies qualify `public.characters`; the earlier search-path suspicion was incorrect. Hosted body is SECURITY INVOKER, returns void and shallow-merges JSON. Seven relevant RPC bodies match local migration bodies. No SQL correction is authorized or implemented.
 - [ ] Inject rejection before commit and loss of response after commit separately; verify reload/two-tab recovery,
   state/choice/pin synchronization and no repeated equipment/currency/roll-log consequences. Current local gates do not prove this.
 - [ ] Run approved fresh lockfile/dependency and existing production UAT/security/privacy gates; confirm fixture cleanup by
@@ -47,11 +53,7 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [latest handoff]
 
 ## Next approval boundary
 
-Victor has been asked whether staging exists or the configured project is live. Hosted execution remains paused.
-
-- [ ] Approve a named disposable staging project, owner/nonowner accounts, tracked creation/builder/sheet and
-  exact-pin recovery fixtures, denial/no-match and before/after-commit/two-tab tests, and cleanup by ID.
-  The [latest handoff](handoffs/2026-10-02-builder-compatibility-review.md) contains the precise proposed question. This does not authorize SQL/schema changes.
+Victor approved bounded acceptance on October 3 for `etcaodglvcspcmwecyxq`, up to six new characters and two existing approved accounts. Main_PC has existing settings for this exact project. Auth/account preflight and one real creation/builder refresh/nonowner denial check passed. Full builder-to-sheet/recovery/concurrency remains pending after hosted 57014 failures; exact-ID cleanup was verified for the single created fixture. The dedicated harness excludes legacy prefix sweeps and keeps durable run journals outside Playwright outputDir. This does not authorize SQL/schema/security changes, accounts, extra campaigns/content, deployment or publishing.
 
 ## Victor approval needed for durable work
 
@@ -61,4 +63,4 @@ Victor has been asked whether staging exists or the configured project is live. 
   shared character revision, operation receipts, participation by every relevant writer and accepted roll-history linkage.
 - [ ] Approval must name the target DB/project, migrations/permissions/types/caller changes, disposable fixture and failure
   injection scope, receipt retention/roll authority/copy policy and cleanup. Existing trusted-server capability must be
-  reviewed; credential/security changes are not implicitly authorized. No schema/hosted change was implemented here.
+  reviewed; credential/security changes are not implicitly authorized. Neither durable schema proposal was implemented here.
