@@ -1,5 +1,7 @@
 # Inkborne current work
 
+Next permission boundary: [one bounded hosted regression and separate equipment transaction design](specs/2026-10-03-next-permission-package.md); [local design evidence](handoffs/2026-10-03-next-permission-package.md). Proposal only; no execution authorized by these documents.
+
 Latest checkpoint: [local conditional manual state controls](handoffs/2026-10-03-conditional-manual-state-controls-local.md). Conditions, exhaustion, inspiration, activation toggles, manual death-save pips, effects, manual concentration and currency now explicitly use settled gates and raw-state conditional saves. Independent notes and failed currency/effect drafts remain reviewable; typed recovery survives retained Activity. Types, lint, 215 files / 2,104 tests, production build and 40 isolated Chrome checks passed, including 18 new responsive manual-control checks. No hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. Active manual state-only paths are converted locally; rolled outcomes, equipment transactions and old/direct writers remain separate boundaries. **Not release-ready.**
 
 Local continuation authority covers remaining manual state-only paths and local validation. No new hosted allowance was granted. The prior conditional short-rest checkpoint is retained as historical local evidence; use the latest handoff for current counts and the remaining-writer table.

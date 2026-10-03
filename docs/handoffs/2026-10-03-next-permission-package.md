@@ -1,0 +1,15 @@
+# Next permission package: local evidence
+
+October 3, 2026. Application checkpoint remains `920d5170fb319c9a8161ca5dd5e4e2bcdb8319d7`. This follow-up changes documentation only; final response supplies the documentation commit.
+
+The [single permission package](../specs/2026-10-03-next-permission-package.md) proposes one new private character/one creation attempt for all newly converted state-only controls, existing two accounts and exact nine-scope cleanup, with no rolls, equipment awards or schema changes. The old exhausted journal is preserved. Future execution must first enforce the new one-attempt bound; existing manifest defaults are not permission.
+
+Equipment design separately specifies one natural-key ledger with eligible/awarded/inherited-completion lifecycle, inventory provenance, server-derived plans and one locked transaction for items/currency/confirmation/receipt. Trusted creation/copy initializes eligibility, avoiding guessed eligibility for legacy partial grants. Completed copies preserve current state/inventory and cannot reaward. Rollback preserves committed receipts and never restores sequential granting. No global gameplay revision is required solely for this grant contract; pin locks, old-client limitations and explicit rollout requirements remain named.
+
+Local command: `npx vitest run tests/components/builder/equipment-step-client.test.tsx tests/lib/builder/equipment-choices.test.ts tests/app/characters-copy-actions.test.ts tests/supabase/feat-choice-atomicity-migration-contract.test.ts tests/supabase/atomic-background-selection-migration-contract.test.ts` — **5 files / 70 tests passed**, 2.79s. These are existing actual caller/parser and static migration-contract tests with mocks/no network, not database idempotency proof. No hypothetical in-memory ledger tests were added to imply a durable implementation.
+
+Read-only critical review found no authority/rollback blocker. Its setup clarifications were incorporated: synthetic fixture-only class baseline is explicit, no fabricated rolled HP, and concentration prompt comes from actual nonfatal damage because pendingCheck is transient. Existing product questions outside this equipment package are preserved. Final read-only review found no semantic contradictions in the eligibility/copy changes.
+
+No hosted calls/fixtures, schema/function/grant/legacy-endpoint permission changes, installs, credentials, production code changes, remote publication or other-worktree changes. Evidence log `inkborne-permission-package-tests.txt` is preserved in Temp and task-5. Full suite/build were not repeated for documentation-only changes; application checkpoint's types/lint/2,104 tests/build/40 local Chrome checks remain its historical evidence, not new hosted acceptance.
+
+No new product goal decision is required to specify fresh once-only grants or completed-copy no-reaward. Ambiguous legacy partial-grant reconciliation remains excluded until Victor chooses an audited policy. The parent can request the whole bounded state acceptance scope once and review equipment schema approval separately.
