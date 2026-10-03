@@ -1,5 +1,7 @@
 # Inkborne current work
 
+Latest checkpoint: [request deduplication and bounded acceptance](handoffs/2026-10-03-request-deduplication.md). Request-scoped reads and post-write freshness checks passed 2,028 tests/types/lint/build. Desktop journey assertions passed; final mobile locator correction is not yet live-verified. Two of six fixtures were created and both cleaned; four attempts remain. No 57014 occurred in this run; prior root cause remains unresolved. **Not release-ready.**
+
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Prior verified application source: `d69be9d32c74ccfb676836a143105bbc86bf7e49`. **Not release-ready.**
 

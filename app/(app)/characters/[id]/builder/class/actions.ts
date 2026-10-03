@@ -126,7 +126,7 @@ export async function reconcileClassFeatureRefsAction(input: unknown): Promise<
   try {
     // Existing RPC verifies owner authorization and preserves active grant pins.
     await syncClassFeatureRefs(supabase, { characterId: parsed.data.characterId });
-    const refs = await getContentRefsByCharacter(parsed.data.characterId, { requireCompleteSnapshots: true });
+    const refs = await getContentRefsByCharacter(parsed.data.characterId, { requireCompleteSnapshots: true, fresh: true });
     revalidatePath(`/characters/${parsed.data.characterId}/builder`);
     revalidatePath(`/characters/${parsed.data.characterId}`);
     return { status: "success", refs };

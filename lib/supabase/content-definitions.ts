@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { createClient } from "@/lib/supabase/server";
 import {
   parseContentDefinitions,
@@ -17,7 +19,8 @@ export type { ParsedContentDefinition } from "@/lib/supabase/content-definitions
  * - a Supabase/PostgREST failure rejects with the original structured error;
  * - malformed rows are logged and omitted individually by the pure parser.
  */
-export async function getContentByType(
+// Request-scoped only: system/type keys never share data across users or renders.
+export const getContentByType = cache(async function getContentByType(
   systemId: string,
   contentType: string,
 ): Promise<ParsedContentDefinition[]> {
@@ -34,4 +37,4 @@ export async function getContentByType(
   if (error) throw error;
 
   return parseContentDefinitions(data ?? []);
-}
+});

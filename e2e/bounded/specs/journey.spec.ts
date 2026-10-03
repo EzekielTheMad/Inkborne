@@ -102,7 +102,7 @@ test("bounded journey selects existing SRD choices and reaches the sheet", async
             expect(inventory.error).toBeNull();
             expect(inventory.data?.length).toBeGreaterThan(0);
             await page.setViewportSize({ width: 390, height: 844 });
-            await expect(page.getByRole("heading", { name: fixture.name, exact: true })).toBeVisible();
+            await expect(page.getByText(fixture.name, { exact: true }).and(page.locator(":visible"))).toBeVisible();
         }
         catch (error) {
             journeyFailed = true;

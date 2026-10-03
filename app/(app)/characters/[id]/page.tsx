@@ -119,7 +119,7 @@ export default async function CharacterPage({ params }: PageProps) {
         classChoices,
       });
       if (syncResult.inserted > 0 || syncResult.deleted > 0) {
-        contentRefs = await getContentRefsByCharacter(id);
+        contentRefs = await getContentRefsByCharacter(id, { fresh: true });
       }
     } catch (error) {
       const syncError = error instanceof Error ? error : new Error(String(error));

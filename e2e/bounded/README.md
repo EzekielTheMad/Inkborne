@@ -57,3 +57,5 @@ with owner readback unchanged passed. The fuller existing-SRD builder journey fa
 timeouts after race/class and the first class skill. Later bounded reads succeeded; root cause is unproven.
 Full builder-to-sheet, equipment, concurrency and after-commit interruption remain unaccepted. See the
 [October 3 handoff](../../docs/handoffs/2026-10-03-bounded-acceptance.md).
+
+October 3 follow-up: desktop builder-to-sheet assertions and persisted equipment/refs passed without a reproduced timeout. The journey suite still failed its mobile name locator; its final visible-text correction is not live-verified. Two of six attempts used, both exact-ID cleaned. See [deduplication handoff](../../docs/handoffs/2026-10-03-request-deduplication.md) for timings and limits.

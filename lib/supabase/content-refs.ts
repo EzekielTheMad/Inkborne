@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { z } from "zod";
 
 import {
@@ -55,10 +56,9 @@ export function parseContentRefWithContent(
   };
 }
 
-export async function getContentRefsByCharacter(
-  characterId: string,
-  options: { requireCompleteSnapshots?: boolean } = {},
-): Promise<ContentRefWithContent[]> {
+// React owns this memoization scope for one server render request. Sharing raw
+// rows lets layout/page readers retain their own complete-snapshot validation.
+async function readContentRefRows(characterId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("character_content_refs")
@@ -73,6 +73,17 @@ export async function getContentRefsByCharacter(
     .eq("character_id", characterId);
 
   if (error) throw error;
+  return data ?? [];
+}
+
+const readContentRefRowsForRequest = cache(readContentRefRows);
+
+export async function getContentRefsByCharacter(
+  characterId: string,
+  options: { requireCompleteSnapshots?: boolean; fresh?: boolean } = {},
+): Promise<ContentRefWithContent[]> {
+  // Reads after a write in the same render must bypass its earlier snapshot.
+  const data = await (options.fresh ? readContentRefRows : readContentRefRowsForRequest)(characterId);
 
   const refs: ContentRefWithContent[] = [];
   for (const row of data ?? []) {

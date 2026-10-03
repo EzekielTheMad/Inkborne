@@ -1,5 +1,7 @@
 # Release-readiness checklist
 
+Latest checkpoint: [request deduplication and bounded acceptance](handoffs/2026-10-03-request-deduplication.md). Request-scoped reads and post-write freshness checks passed 2,028 tests/types/lint/build. Desktop journey assertions passed; final mobile locator correction is not yet live-verified. Two of six fixtures were created and both cleaned; four attempts remain. No 57014 occurred in this run; prior root cause remains unresolved. **Not release-ready.**
+
 October 3, 2026. Prior verified application source `d69be9d`; branch `codex/playable-core-stability`. **Not release-ready.**
 Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-bounded-acceptance.md).
 
