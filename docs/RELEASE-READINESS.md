@@ -7,6 +7,10 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff
 
 ## Latest bounded acceptance
 
+- [x] Reviewed local conditional-state SQL/client proposal prepared; existing state RPC lacks CAS support.
+- [ ] Apply proposed function/grant and coordinate production writers after separate approval. The local proposal does not fix live behavior.
+
+
 - [x] Separately approved seventh fixture: corrected rest navigation/retry/reload and full-HP control passed.
 - [x] Controlled two-tab reproduction completed: both damage writes reported success, persisted HP7 rather than serial-intent HP5.
 - [ ] Cross-client gameplay durability: demonstrated lost update remains unfixed; conditional write design requires separate approval.

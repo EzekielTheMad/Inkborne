@@ -2,6 +2,8 @@
 
 Latest checkpoint: [seventh bounded recovery and concurrency acceptance](handoffs/2026-10-03-seventh-recovery-concurrency.md). Corrected hosted recovery passed; controlled two-tab damage reproduced a lost update (10 to 8 to 7 rather than 5). All seven approved fixtures exact-ID cleaned; zero attempts remain. The runner passed three tests, but the gameplay durability contract failed. **Not release-ready.** Application source remains 71681c7; no hosted schema or settings changes. Final types, lint, 2,030 tests and production build passed; independent review accepted the evidence framing.
 
+Local follow-up: [reviewed conditional HP proposal](handoffs/2026-10-03-conditional-hp-proposal.md). Existing RPC lacks expected-state/version support; SQL/client contract and deterministic tests are prepared without production wiring or hosted changes. Applying the function/grant requires separate approval; demonstrated overwrite remains unfixed.
+
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Prior verified application source: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
