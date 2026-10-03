@@ -1,9 +1,9 @@
 # Release-readiness checklist
 
-Latest checkpoint: [real Next remount proof and final-run plan](handoffs/2026-10-03-rest-remount-final-plan.md). Page-owned Rest dialog remounts without Cache Components; offline real Next proof verified unchanged state, clean reopening and explicit recovery/reload. Shared helper also passes retained Activity error recovery. Hosted rest/two-tab remain unaccepted. **Five fixtures cleaned; final creation attempt held.** Types/lint, 2,029 tests and fresh production build passed. No hosted calls, app configuration or timeout changes in this phase. **Not release-ready.**
+Latest checkpoint: [final bounded acceptance](handoffs/2026-10-03-final-bounded-acceptance.md). All six fixtures exact-ID cleaned; zero creation attempts remain. Hosted builder/mobile/private-access and isolated HP recovery have supporting receipts. Final hosted run: two tests passed, one failed on an incorrect full-HP test expectation; known-rejection rest navigation passed, retry persistence/reload was observed, and two-tab gameplay was never reached. Corrected assertion passes locally. Types/lint, 2,029 tests and production build passed. **Not release-ready.**
 
 October 3, 2026. Prior verified application source `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-rest-remount-final-plan.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-final-bounded-acceptance.md).
 
 ## Latest bounded acceptance
 
@@ -13,9 +13,11 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff
 - [x] First three recorded fixtures exact-ID cleaned; nine child scopes verified absent.
 - [x] Fourth fixture exact-ID cleaned after approved single diagnostic retry; all nine child scopes verified absent. Four attempts used, two remain.
 - [x] Fifth fixture: known precommit HP rejection and independent temp HP persisted; one hit die committed with lost response reconciled after reload without retry, one roll. Isolated outcome only.
-- [x] Fifth fixture exact-ID cleaned; parent/nine child scopes absent. Five attempts used, final one reserved.
+- [x] Fifth fixture exact-ID cleaned; parent/nine child scopes absent. At that checkpoint five attempts were used; the sixth is now completed and cleaned below.
 - [x] Offline real Next matched-cache remount and fresh-dialog recovery/reload proof; separate retained Activity shared-helper check.
-- [ ] Revised hosted rest/two-tab final pass remains held and unaccepted. Fifth-fixture missing dialog was consistent with page remount; do not require Activity retention without the enabling configuration. Cast, full rule correctness and broader authorization remain unaccepted.
+- [x] Sixth fixture exact-ID cleaned; parent and nine child scopes absent. Six attempts used, zero remain.
+- [x] Sixth known-rejection rest navigation/reopening receipt accepted; explicit retry persistence/reload observed before an incorrect full-HP assertion failed. Assertion fixed and verified locally, without a hosted rerun.
+- [ ] Two-tab gameplay was never reached; final hosted suite remains partial. Cast, full rule correctness and broader authorization remain unaccepted.
 
 ## Historical first October 3 bounded checkpoint
 

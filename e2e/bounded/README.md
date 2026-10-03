@@ -1,5 +1,7 @@
 # Bounded acceptance runner
 
+Current run is closed: six of six fixtures exact-ID cleaned, zero attempts remain. Final hosted suite was partial (2 passed/1 incorrect full-HP assertion failed); corrected assertion is locally verified. Two-tab gameplay was not reached. See [final acceptance](../../docs/handoffs/2026-10-03-final-bounded-acceptance.md). Further hosted creation requires new bounded approval. Examples below are operational reference, not renewed authorization.
+
 This is separate from the legacy smoke suite. It imports neither its setup nor its prefix-wide teardown.
 Use existing configured sources and existing approved accounts only. Never copy secrets into a worktree,
 print credential values, enroll accounts, or change persistent runner configuration.

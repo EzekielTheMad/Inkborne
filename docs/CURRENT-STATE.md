@@ -1,12 +1,12 @@
 # Inkborne current work
 
-Latest checkpoint: [real Next remount proof and final-run plan](handoffs/2026-10-03-rest-remount-final-plan.md). Page-owned Rest dialog remounts without Cache Components; offline real Next proof verified unchanged state, clean reopening and explicit recovery/reload. Shared helper also passes retained Activity error recovery. Hosted rest/two-tab remain unaccepted. **Five fixtures cleaned; final creation attempt held.** Types/lint, 2,029 tests and fresh production build passed. No hosted calls, app configuration or timeout changes in this phase. **Not release-ready.**
+Latest checkpoint: [final bounded acceptance](handoffs/2026-10-03-final-bounded-acceptance.md). All six fixtures exact-ID cleaned; zero creation attempts remain. Hosted builder/mobile/private-access and isolated HP recovery have supporting receipts. Final hosted run: two tests passed, one failed on an incorrect full-HP test expectation; known-rejection rest navigation passed, retry persistence/reload was observed, and two-tab gameplay was never reached. Corrected assertion passes locally. Types/lint, 2,029 tests and production build passed. **Not release-ready.**
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Prior verified application source: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current bounded acceptance handoff](handoffs/2026-10-03-rest-remount-final-plan.md).
+[current bounded acceptance handoff](handoffs/2026-10-03-final-bounded-acceptance.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 

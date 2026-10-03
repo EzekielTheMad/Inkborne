@@ -96,6 +96,12 @@ try {
   mode="pass";await rest.getByRole("button",{name:"Take Long Rest",exact:true}).click();await rest.waitFor({state:"hidden"});
   evidence.persistedAfterExplicitRetry=await (await fetch(origin+"/api/state")).json();assert.equal(evidence.persistedAfterExplicitRetry.current_hp,14);assert.equal(evidence.persistedAfterExplicitRetry.hit_dice_spent.barbarian,0);assert.equal(requests,2);
   await page.reload();assert.equal(await page.getByLabel("Current HP").textContent(),"14");assert.equal(await page.getByLabel("Spent dice").textContent(),"0");
+  await page.getByRole("button",{name:"Rest",exact:true}).click();await rest.waitFor();
+  assert.equal(await rest.getByRole("button",{name:"Spend & Roll",exact:true}).isDisabled(),true);
+  assert.equal(await rest.getByRole("button",{name:"Spend & Roll",exact:true}).getAttribute("title"),"HP is already full");
+  await rest.getByText("1/1",{exact:true}).waitFor();
+  assert.equal(await rest.getByRole("button",{name:"Take Long Rest",exact:true}).isDisabled(),true);
+  evidence.fullHpSpendDisabled=true;evidence.recoveredDiceAvailable=1;
   evidence.passed=true;evidence.requests=requests;evidence.blindRetries=0;assert.deepEqual(evidence.remoteRequests,[]);assert.deepEqual(evidence.errors,[]);
   await fs.writeFile(path.join(output,"evidence.json"),JSON.stringify(evidence,null,2));console.log(JSON.stringify(evidence,null,2));
 } finally {

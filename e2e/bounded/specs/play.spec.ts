@@ -229,7 +229,9 @@ test("bounded play recovery preserves state across navigation and exposes stale 
         await expect(rest).toHaveAttribute("aria-busy", "false");
         await expect(rest.getByRole("alert")).toHaveCount(0);
         await expect(rest.getByRole("button", { name: "Take Long Rest", exact: true })).toBeDisabled();
-        await expect(rest.getByRole("button", { name: "Spend & Roll", exact: true })).toBeEnabled();
+        await expect(rest.getByRole("button", { name: "Spend & Roll", exact: true })).toBeDisabled();
+        await expect(rest.getByRole("button", { name: "Spend & Roll", exact: true })).toHaveAttribute("title", "HP is already full");
+        await expect(rest.getByText("1/1", { exact: true })).toBeVisible();
         await rest.getByRole("button", { name: "Close", exact: true }).click();
         results.push({ scenario: phase, status: "accepted-confirmed-retry", requests: 1,
             serverSuccesses: 1, resultingHp: displayedMaxHp, spentDice: 0,
