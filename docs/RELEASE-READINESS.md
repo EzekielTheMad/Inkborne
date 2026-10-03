@@ -1,9 +1,17 @@
 # Release-readiness checklist
 
-Latest checkpoint: [applied conditional HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md). Approved development endpoint applied; local provider HP saves use raw-state CAS and explicit reload after conflict/uncertainty. Eighth hosted run passed 3 tests: conditional concurrency, owner/stale/denial behavior, actual two-tab conflict and explicit reload/new action. All eight fixtures exact-ID cleaned; zero attempts remain. Final types, lint, 2,048 tests, production build and seven simulated Chrome regressions passed. No app deployment. Legacy unconditional writers, roll/equipment atomicity and broader acceptance remain unresolved. **Not release-ready.**
+Latest checkpoint: [local conditional short-rest recovery](handoffs/2026-10-03-conditional-short-rest-local.md). Short rests and Arcane Recovery now explicitly compare the provider's raw confirmed state using the already approved endpoint, including full-HP resource-only patches. Pending/stale actions are gated; conflict/uncertainty requires explicit reload, without replay; independent notes remain eligible. Local provider/dialog and isolated Chrome validation only: no additional hosted acceptance or schema change. The [eighth endpoint/HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md) remains supporting historical evidence. All eight fixtures are cleaned and no attempts remain. No app deployment. Legacy writers and roll/equipment atomicity remain unresolved. **Not release-ready.**
 
 October 3, 2026. Historical application baseline before conditional HP integration `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current local handoff](handoffs/2026-10-03-conditional-short-rest-local.md).
+
+## Latest local recovery milestone
+
+- [x] Short-rest/Arcane Recovery explicit conditional routing, raw snapshots and settled-state computation.
+- [x] Provider/dialog conflict and uncertain-result handling; independent notes preserved; retained Activity settlement and no replay verified locally.
+- [x] Types, lint, 213 files / 2,060 tests, production build and thirteen isolated Chrome checks passed.
+- [ ] Hosted short-rest acceptance requires a new bounded approval; zero attempts remain in the existing run.
+- [ ] Broader unconditional writer integration and roll/equipment transactions require separate review/scope.
 
 ## Latest bounded acceptance
 

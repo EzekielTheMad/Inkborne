@@ -1,12 +1,17 @@
 import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import type { CharacterState } from "@/lib/types/character";
 
+export interface StateWriteOptions {
+  /** Explicit opt-in for a state-only action that must compare its raw baseline. */
+  requireCurrent?: boolean;
+}
+
 /** Serialize shallow RPC patches and rebuild optimistic state from confirmed
  * writes plus pending changes. A failed write never restores an old whole-page
  * snapshot over a newer change. This is session-local, with no automatic retry. */
 export function createStateWriter(
   initialState: CharacterState,
-  persist: (patch: Partial<CharacterState>, expectedState?: CharacterState) => Promise<void | CharacterState>,
+  persist: (patch: Partial<CharacterState>, expectedState?: CharacterState, writeOptions?: StateWriteOptions) => Promise<void | CharacterState>,
   onState: (state: CharacterState) => void,
   onFailure: (error?: unknown) => void,
   options?: { persistedState: CharacterState },
@@ -24,7 +29,7 @@ export function createStateWriter(
     onState(visible);
   };
 
-  const write = (patch: Partial<CharacterState>): Promise<boolean> => {
+  const write = (patch: Partial<CharacterState>, writeOptions?: StateWriteOptions): Promise<boolean> => {
     const change = { ...patch };
     pending.push(change);
     publish();
@@ -32,8 +37,10 @@ export function createStateWriter(
       let saved = false;
       try {
         if (invalidated.has(change)) throw new Error("A prior save invalidated this snapshot.");
-        if (reloadError && ("current_hp" in change || "temp_hp" in change)) throw reloadError;
-        const savedState = options ? await persist(change, persisted) : await persist(change);
+        if (reloadError && (writeOptions?.requireCurrent || "current_hp" in change || "temp_hp" in change)) throw reloadError;
+        const savedState = writeOptions
+          ? await persist(change, persisted, writeOptions)
+          : options ? await persist(change, persisted) : await persist(change);
         persisted = savedState ?? { ...persisted, ...change };
         confirmed = { ...confirmed, ...(savedState ?? change) };
         saved = true;
@@ -64,13 +71,14 @@ export function createStateWriter(
     async runAction<T>(
       expectedState: CharacterState,
       compute: (state: CharacterState) => { patch: Partial<CharacterState>; result: T },
+      writeOptions?: StateWriteOptions,
     ): Promise<T> {
       if (reloadError) throw reloadError;
       if (pending.length > 0 || expectedState !== visible) {
         throw new Error("The character is still saving or has changed. Please try the action again.");
       }
       const { patch, result } = compute(confirmed);
-      if (Object.keys(patch).length > 0 && !(await write(patch))) {
+      if (Object.keys(patch).length > 0 && !(await write(patch, writeOptions))) {
         if (reloadError) throw reloadError;
         throw new Error("The character change could not be saved. Please try the action again.");
       }

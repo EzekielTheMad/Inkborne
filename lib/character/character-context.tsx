@@ -279,7 +279,7 @@ export function CharacterProvider({
   const [patchState] = useState(() =>
     createStateWriter(
       initialState,
-      (patch, expectedState) => "current_hp" in patch || "temp_hp" in patch
+      (patch, expectedState, writeOptions) => writeOptions?.requireCurrent || "current_hp" in patch || "temp_hp" in patch
         ? updateCharacterState(character.id, patch, expectedState)
         : updateCharacterState(character.id, patch),
       setState,
@@ -993,36 +993,38 @@ export function useRest(): {
     maxSlots,
   });
 
-  const shortRest = (arcaneRecoveryPicks?: ArcaneRecoveryPicks) => {
-    // Validate picks before folding them in — the dialog enforces the budget,
-    // but the hook is the last line of defense for the RAW invariants.
-    let picks: ArcaneRecoveryPicks | null = null;
-    if (arcaneRecoveryPicks && totalPickedLevels(arcaneRecoveryPicks) > 0) {
-      if (!arcaneRecovery.available) {
-        console.warn(
-          "[arcane-recovery] Ignoring picks — Arcane Recovery is not available.",
-        );
-      } else {
-        const check = validateArcaneRecoveryPicks(
-          arcaneRecoveryPicks,
-          arcaneRecovery.budget,
-          maxSlots,
-          (state.spell_slots_used ?? {}) as SpellSlotsUsed,
-        );
-        if (check.valid) {
-          picks = arcaneRecoveryPicks;
+  const shortRest = (arcaneRecoveryPicks?: ArcaneRecoveryPicks) =>
+    patchState.runAction(state, (confirmed) => {
+      // Gate first, then validate and compute from the settled display state.
+      // Persistence compares the separate raw snapshot, without display defaults.
+      const effects = computeShortRestEffects(confirmed, resources);
+      const recovery = computeArcaneRecoveryInfo({
+        wizardLevel: arcaneRecoveryClassLevel(character.choices?.classes ?? [], contentRefs),
+        resources, state: confirmed, maxSlots,
+      });
+      let picks: ArcaneRecoveryPicks | null = null;
+      if (arcaneRecoveryPicks && totalPickedLevels(arcaneRecoveryPicks) > 0) {
+        if (!recovery.available) {
+          console.warn("[arcane-recovery] Ignoring picks - Arcane Recovery is not available.");
         } else {
-          console.warn(`[arcane-recovery] Ignoring invalid picks: ${check.reason}`);
+          const check = validateArcaneRecoveryPicks(
+            arcaneRecoveryPicks, recovery.budget, maxSlots,
+            (confirmed.spell_slots_used ?? {}) as SpellSlotsUsed,
+          );
+          if (check.valid) picks = arcaneRecoveryPicks;
+          else console.warn(`[arcane-recovery] Ignoring invalid picks: ${check.reason}`);
         }
       }
-    }
-
-    if (!shortEffects.canApply && !picks) return Promise.resolve(false);
-    const patch = picks
-      ? mergeShortRestWithRecovery(state, shortEffects.statePatch, picks)
-      : shortEffects.statePatch;
-    return patchState.runAction(state, () => ({ patch, result: true })).catch(() => false);
-  };
+      if (!effects.canApply && !picks) return { patch: {}, result: false };
+      return {
+        patch: picks ? mergeShortRestWithRecovery(confirmed, effects.statePatch, picks) : effects.statePatch,
+        result: true,
+      };
+    }, { requireCurrent: true }).catch((error: unknown) => {
+      // Dialogs must distinguish a reload boundary from a safe explicit retry.
+      if (error instanceof CharacterStateReloadError) throw error;
+      return false;
+    });
 
   const longRest = () => {
     if (!longEffects.canApply) return Promise.resolve(false);

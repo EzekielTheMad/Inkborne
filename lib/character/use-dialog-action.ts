@@ -25,7 +25,7 @@ export function useDialogAction() {
     async run<T>(
       action: () => Promise<T>,
       onSuccess: (result: T) => void,
-      onFailure: () => void,
+      onFailure: (error: unknown) => void,
     ) {
       if (busy.current || !active.current || completion.current) return;
       const actionGeneration = ++generation.current;
@@ -35,8 +35,8 @@ export function useDialogAction() {
       try {
         const result = await action();
         deliver = () => onSuccess(result);
-      } catch {
-        deliver = onFailure;
+      } catch (error) {
+        deliver = () => onFailure(error);
       }
       if (generation.current !== actionGeneration) return;
       busy.current = false;

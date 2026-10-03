@@ -749,7 +749,7 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
       spell_slots_used: { "1": 0 },
       feature_uses: { "arcane-recovery": 1 },
-    });
+    }, {});
   });
 
   it("useRest().shortRest ignores invalid picks instead of writing state", async () => {

@@ -66,3 +66,24 @@ describe("conditional HP persistence", () => {
     expect(rpcMock).toHaveBeenCalledTimes(1);
   });
 });
+
+
+describe("explicit conditional state-only recovery", () => {
+  it("uses the approved endpoint for a non-HP patch with a raw snapshot", async () => {
+    const raw = { spell_slots_used: { pact: 1 }, quick_notes: "keep" };
+    const patch = { spell_slots_used: { pact: 0 } };
+    const canonical = { ...raw, ...patch };
+    rpcMock.mockResolvedValue({ error: null, data: [{ status: "applied", resulting_state: canonical }] });
+    expect(await updateCharacterState("char", patch, raw)).toEqual(canonical);
+    expect(rpcMock).toHaveBeenCalledWith("patch_character_state_if_current", {
+      character_id: "char", expected_state: raw, state_patch: patch,
+    });
+  });
+  it("uses action-neutral conflict and uncertain-result messages", async () => {
+    rpcMock.mockResolvedValueOnce({ error: null, data: [{ status: "conflict", resulting_state: {} }] });
+    await expect(updateCharacterState("char", { feature_uses: {} }, {})).rejects.toThrow("Reload before choosing a new action");
+    rpcMock.mockResolvedValueOnce({ error: { message: "lost" }, data: null });
+    await expect(updateCharacterState("char", { feature_uses: {} }, {})).rejects.toThrow("The character save could not be confirmed");
+    expect(rpcMock).toHaveBeenCalledTimes(2);
+  });
+});

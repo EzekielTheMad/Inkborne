@@ -1,14 +1,14 @@
 # Inkborne current work
 
-Latest checkpoint: [applied conditional HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md). Approved development endpoint applied; local provider HP saves use raw-state CAS and explicit reload after conflict/uncertainty. Eighth hosted run passed 3 tests: conditional concurrency, owner/stale/denial behavior, actual two-tab conflict and explicit reload/new action. All eight fixtures exact-ID cleaned; zero attempts remain. Final types, lint, 2,048 tests, production build and seven simulated Chrome regressions passed. No app deployment. Legacy unconditional writers, roll/equipment atomicity and broader acceptance remain unresolved. **Not release-ready.**
+Latest checkpoint: [local conditional short-rest recovery](handoffs/2026-10-03-conditional-short-rest-local.md). Short rests and Arcane Recovery now explicitly compare the provider's raw confirmed state using the already approved endpoint, including full-HP resource-only patches. Pending/stale actions are gated; conflict/uncertainty requires explicit reload, without replay; independent notes remain eligible. Local provider/dialog and isolated Chrome validation only: no additional hosted acceptance or schema change. The [eighth endpoint/HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md) remains supporting historical evidence. All eight fixtures are cleaned and no attempts remain. No app deployment. Legacy writers and roll/equipment atomicity remain unresolved. **Not release-ready.**
 
-Local follow-up: Victor approved the new function and one eighth fixture. See current applied endpoint/local client evidence above; the earlier proposal remains historical.
+Local follow-up: the parent authorized conditional short-rest/Arcane Recovery changes and local validation only. Final types, lint, 213 files / 2,060 tests, production build and thirteen simulated Chrome checks passed. Victor's prior function/eighth-fixture approval is historical; no new hosted allowance was granted.
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Historical application baseline before conditional HP integration: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current bounded acceptance handoff](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md).
+[current local handoff](handoffs/2026-10-03-conditional-short-rest-local.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 

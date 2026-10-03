@@ -8,6 +8,7 @@ import { useRest, useCharacter, useCharacterState, useResources } from "@/lib/ch
 import { computeLongRestHdRecovery, formatClassSlug } from "@/lib/hit-dice/helpers";
 import { totalPickedLevels, type ArcaneRecoveryPicks } from "@/lib/rest/arcane-recovery";
 import type { ConcentrationState } from "@/lib/types/spells";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { useDialogAction } from "@/lib/character/use-dialog-action";
 
 interface RestDialogProps {
@@ -92,8 +93,10 @@ function RestDialogSession({ onClose }: Pick<RestDialogProps, "onClose">) {
     await run(save, (saved) => {
       if (saved) onClose();
       else setSaveError("The rest could not be saved. Please try again.");
-    }, () => {
-      setSaveError("The rest could not be saved. Please try again.");
+    }, (error) => {
+      setSaveError(error instanceof CharacterStateReloadError
+        ? error.message
+        : "The rest could not be saved. Please try again.");
     });
   };
 
