@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useDialogAction } from "@/lib/character/use-dialog-action";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { cn } from "@/lib/utils";
 import { useCharacterState, useSpells } from "@/lib/character/character-context";
 import type { SpellSlotsUsed } from "@/lib/types/spells";
@@ -28,11 +31,13 @@ function SlotDots({
   total,
   used,
   onSetUsed,
+  pending,
 }: {
   slotKey: SlotKey;
   total: number;
   used: number;
   onSetUsed: (next: number) => void;
+  pending: boolean;
 }) {
   return (
     <span className="flex gap-0.5">
@@ -42,6 +47,7 @@ function SlotDots({
           <button
             key={i}
             type="button"
+            disabled={pending}
             onClick={() =>
               onSetUsed(
                 available
@@ -69,7 +75,9 @@ function SlotDots({
 
 export function SlotTracker() {
   const { maxSlots, slotState } = useSpells();
-  const { patchState } = useCharacterState();
+  const { state, patchState } = useCharacterState();
+  const { pending, run } = useDialogAction();
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const visibleKeys: SlotKey[] = [];
   for (const k of SLOT_KEYS) {
@@ -80,12 +88,19 @@ export function SlotTracker() {
   if (visibleKeys.length === 0) return null;
 
   const setUsed = (key: SlotKey, next: number) => {
-    const slots = (slotState ?? {}) as SpellSlotsUsed;
-    patchState({ spell_slots_used: { ...slots, [key]: next } });
+    setSaveError(null);
+    void run(() => patchState.runAction(state, (confirmed) => {
+      const slots = (confirmed.spell_slots_used ?? {}) as SpellSlotsUsed;
+      return { patch: { spell_slots_used: { ...slots, [key]: next } }, result: true };
+    }, { requireCurrent: true }), () => {}, (error) => {
+      setSaveError(error instanceof CharacterStateReloadError
+        ? error.message
+        : "This slot change could not be saved. Wait for any pending character save to finish, then try again.");
+    });
   };
 
   return (
-    <div className="rounded-lg border border-border bg-card/50 p-3 space-y-2">
+    <div className="rounded-lg border border-border bg-card/50 p-3 space-y-2" aria-busy={pending}>
       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
         Slots
       </p>
@@ -98,6 +113,7 @@ export function SlotTracker() {
               <span className="text-muted-foreground w-10">{levelLabel(k)}</span>
               <SlotDots
                 slotKey={k}
+                pending={pending}
                 total={total}
                 used={used}
                 onSetUsed={(next) => setUsed(k, next)}
@@ -109,6 +125,7 @@ export function SlotTracker() {
           );
         })}
       </div>
+      {saveError && <p role="alert" className="text-xs text-destructive">{saveError}</p>}
     </div>
   );
 }

@@ -12,7 +12,7 @@ import type { CharacterState } from "@/lib/types/character";
  * atomic shallow-merge, preserving unrelated top-level state keys. It does
  * not serialize gameplay intent or concurrent replacements of nested maps
  * across clients (e.g., two feature_uses patches can still overwrite uses).
- * Provider HP patches and explicitly guarded short rests use the conditional RPC
+ * Provider HP patches and explicitly guarded casts, slots, resources and rests use the conditional RPC
  * with a raw confirmed snapshot; callers without it retain the legacy contract.
  *
  * Shallow merge semantics: top-level keys in `patch` replace existing keys

@@ -48,7 +48,7 @@ interface ResourceGroupProps {
   icon: React.ReactNode;
   resources: FeatureResource[];
   uses: Record<string, number>;
-  setUsed: (slug: string, n: number) => void;
+  setUsed: (slug: string, n: number) => Promise<boolean>;
 }
 
 function ResourceGroup({ label, icon, resources, uses, setUsed }: ResourceGroupProps) {

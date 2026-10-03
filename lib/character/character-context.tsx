@@ -618,7 +618,7 @@ export function CharacterProvider({
           classSlug: spell.class_slug,
         });
         return { patch: outcome.statePatch, result: outcome };
-      });
+      }, { requireCurrent: true });
     },
     [state, casterInfo, evalResult, character.level, patchState],
   );
@@ -903,42 +903,34 @@ export function useRolls(): {
   };
 }
 
-/** Access character's feature-usage resources: read, spend, restore, set absolute. */
+/** Access feature usage counters. Every mutation starts from a settled render
+ * and conditionally saves the whole nested map against the raw baseline. */
 export function useResources(): {
   resources: FeatureResource[];
   uses: Record<string, number>;
-  spend: (slug: string, amount?: number) => void;
-  restore: (slug: string, amount?: number) => void;
-  setUsed: (slug: string, newUsed: number) => void;
+  spend: (slug: string, amount?: number) => Promise<boolean>;
+  restore: (slug: string, amount?: number) => Promise<boolean>;
+  setUsed: (slug: string, newUsed: number) => Promise<boolean>;
 } {
-  const ctx = useCharacterContext();
-
-  const { resources, state, patchState } = ctx;
+  const { resources, state, patchState } = useCharacterContext();
   const uses = (state.feature_uses ?? {}) as Record<string, number>;
+  const changeUsed = (slug: string, compute: (current: number) => number) =>
+    patchState.runAction(state, (confirmed) => {
+      const confirmedUses = confirmed.feature_uses ?? {};
+      const current = confirmedUses[slug] ?? 0;
+      const resource = resources.find((r) => r.slug === slug);
+      const value = compute(current);
+      if (!Number.isFinite(value)) throw new Error("Resource usage must be a finite number.");
+      const next = Math.max(0, resource ? Math.min(resource.max, value) : value);
+      return {
+        patch: next === current ? {} : { feature_uses: { ...confirmedUses, [slug]: next } },
+        result: true,
+      };
+    }, { requireCurrent: true });
 
-  const clamp = (resource: FeatureResource | undefined, value: number) => {
-    if (!resource) return Math.max(0, value);
-    return Math.max(0, Math.min(resource.max, value));
-  };
-
-  const setUsed = (slug: string, newUsed: number) => {
-    const resource = resources.find((r) => r.slug === slug);
-    const clamped = clamp(resource, newUsed);
-    patchState({
-      feature_uses: { ...uses, [slug]: clamped },
-    });
-  };
-
-  const spend = (slug: string, amount = 1) => {
-    const current = uses[slug] ?? 0;
-    setUsed(slug, current + amount);
-  };
-
-  const restore = (slug: string, amount = 1) => {
-    const current = uses[slug] ?? 0;
-    setUsed(slug, current - amount);
-  };
-
+  const setUsed = (slug: string, newUsed: number) => changeUsed(slug, () => newUsed);
+  const spend = (slug: string, amount = 1) => changeUsed(slug, (current) => current + amount);
+  const restore = (slug: string, amount = 1) => changeUsed(slug, (current) => current - amount);
   return { resources, uses, spend, restore, setUsed };
 }
 

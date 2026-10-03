@@ -1,9 +1,18 @@
 # Release-readiness checklist
 
-Latest checkpoint: [local conditional short-rest recovery](handoffs/2026-10-03-conditional-short-rest-local.md). Short rests and Arcane Recovery now explicitly compare the provider's raw confirmed state using the already approved endpoint, including full-HP resource-only patches. Pending/stale actions are gated; conflict/uncertainty requires explicit reload, without replay; independent notes remain eligible. Local provider/dialog and isolated Chrome validation only: no additional hosted acceptance or schema change. The [eighth endpoint/HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md) remains supporting historical evidence. All eight fixtures are cleaned and no attempts remain. No app deployment. Legacy writers and roll/equipment atomicity remain unresolved. **Not release-ready.**
+Latest checkpoint: [local conditional casting, slots and resources](handoffs/2026-10-03-conditional-casting-resources-local.md). Casting and manual slot/resource callers now explicitly compare raw confirmed state after settled-state gates; conflicts/uncertainty require reload without replay. Widget, feature-card and cast dialogs await saves and preserve readable errors across retained Activity. Independent absolute notes remain eligible. Types, lint, 214 files / 2,079 tests, production build and 22 isolated Chrome checks passed. No new hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. The handoff's consolidated writer table distinguishes converted actions, legacy paths and separate roll/equipment transaction risks. **Not release-ready.**
 
 October 3, 2026. Historical application baseline before conditional HP integration `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current local handoff](handoffs/2026-10-03-conditional-short-rest-local.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current local handoff](handoffs/2026-10-03-conditional-casting-resources-local.md).
+
+## Latest local casting/resource milestone
+
+- [x] Explicit guarded casting, manual slots and all manual resource-hook mutations; widget and feature-card callers await settlement and show errors.
+- [x] Types, lint, 214 files / 2,079 tests, production build and 22 isolated Chrome checks passed.
+- [x] Consolidated converted/legacy/transactional writer inventory recorded.
+- [ ] Hosted acceptance, coordinated legacy-client handling and publication remain separate approval boundaries.
+
+The following short-rest section is the prior local checkpoint.
 
 ## Latest local recovery milestone
 

@@ -1,14 +1,14 @@
 # Inkborne current work
 
-Latest checkpoint: [local conditional short-rest recovery](handoffs/2026-10-03-conditional-short-rest-local.md). Short rests and Arcane Recovery now explicitly compare the provider's raw confirmed state using the already approved endpoint, including full-HP resource-only patches. Pending/stale actions are gated; conflict/uncertainty requires explicit reload, without replay; independent notes remain eligible. Local provider/dialog and isolated Chrome validation only: no additional hosted acceptance or schema change. The [eighth endpoint/HP acceptance](handoffs/2026-10-03-eighth-conditional-hp-acceptance.md) remains supporting historical evidence. All eight fixtures are cleaned and no attempts remain. No app deployment. Legacy writers and roll/equipment atomicity remain unresolved. **Not release-ready.**
+Latest checkpoint: [local conditional casting, slots and resources](handoffs/2026-10-03-conditional-casting-resources-local.md). Casting and manual slot/resource callers now explicitly compare raw confirmed state after settled-state gates; conflicts/uncertainty require reload without replay. Widget, feature-card and cast dialogs await saves and preserve readable errors across retained Activity. Independent absolute notes remain eligible. Types, lint, 214 files / 2,079 tests, production build and 22 isolated Chrome checks passed. No new hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. The handoff's consolidated writer table distinguishes converted actions, legacy paths and separate roll/equipment transaction risks. **Not release-ready.**
 
-Local follow-up: the parent authorized conditional short-rest/Arcane Recovery changes and local validation only. Final types, lint, 213 files / 2,060 tests, production build and thirteen simulated Chrome checks passed. Victor's prior function/eighth-fixture approval is historical; no new hosted allowance was granted.
+Local follow-up authority covers the bounded casting/manual-slot/resource slice and local validation only. No new hosted allowance was granted. The prior conditional short-rest checkpoint is retained as historical local evidence; use the latest handoff for current counts and the remaining-writer table.
 
 Updated October 3, 2026. Branch: `codex/playable-core-stability`.
 Historical application baseline before conditional HP integration: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current local handoff](handoffs/2026-10-03-conditional-short-rest-local.md).
+[current local handoff](handoffs/2026-10-03-conditional-casting-resources-local.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 

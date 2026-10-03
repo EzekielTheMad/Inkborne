@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/lib/builder/use-is-mobile";
+import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { useDialogAction } from "@/lib/character/use-dialog-action";
 import {
   useCharacter,
@@ -176,8 +177,10 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
           ? { type: "pact", level: selectedOption!.castLevel }
           : { type: "slot", level: selectedOption!.castLevel };
     setCastError(null);
-    await run(() => castSpell(spell, choice), setOutcome, () => {
-      setCastError("The spell could not be saved. Wait for any pending character save to finish, then try casting again.");
+    await run(() => castSpell(spell, choice), setOutcome, (error) => {
+      setCastError(error instanceof CharacterStateReloadError
+        ? error.message
+        : "The spell could not be saved. Wait for any pending character save to finish, then try casting again.");
     });
   };
 

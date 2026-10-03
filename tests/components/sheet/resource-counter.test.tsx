@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ResourceCounter } from "@/components/sheet/resource-counter";
 import type { FeatureResource } from "@/lib/types/resources";
 
@@ -16,6 +16,15 @@ function mk(overrides: Partial<FeatureResource> = {}): FeatureResource {
 }
 
 describe("ResourceCounter", () => {
+  it("shows a resolved failed save without retrying automatically", async () => {
+    const onChange = vi.fn().mockResolvedValue(false);
+    render(<ResourceCounter resource={mk()} used={1} onChange={onChange} />);
+    fireEvent.click(screen.getByRole("button", { name: /use one/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be saved");
+    await waitFor(() => expect(screen.getByRole("button", { name: /use one/i })).toBeEnabled());
+    expect(onChange).toHaveBeenCalledOnce();
+  });
+
   it("renders label and remaining/max", () => {
     render(<ResourceCounter resource={mk()} used={0} onChange={vi.fn()} />);
     expect(screen.getByText("Rage")).toBeInTheDocument();

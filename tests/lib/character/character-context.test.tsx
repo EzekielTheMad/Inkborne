@@ -633,7 +633,7 @@ describe("<CharacterProvider> public hook surface", () => {
         content_definitions: { id: "magic-missile", name: "Magic Missile", slug: "magic-missile", data: { level: 1, duration: "Instantaneous" }, effects: [] },
       } as never, { type: "slot", level: 1 })).rejects.toThrow("could not be saved");
     });
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", { spell_slots_used: { "1": 1 } });
+    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", { spell_slots_used: { "1": 1 } }, {});
     expect(screen.getByTestId("slots")).toHaveTextContent("0");
     expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
   });
@@ -665,7 +665,7 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(screen.getByTestId("queued-slots")).toHaveTextContent("0");
     await act(async () => { await cast(spell, { type: "slot", level: 1 }); });
     expect(mockedUpdateState).toHaveBeenCalledTimes(2);
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 1 } });
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 1 } }, {});
     expect(screen.getByTestId("queued-slots")).toHaveTextContent("1");
   });
 
@@ -689,7 +689,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await expect(staleCast(spell, { type: "slot", level: 1 })).rejects.toThrow(/saving|changed/i);
     await act(async () => { await cast(spell, { type: "slot", level: 1 }); });
     expect(mockedUpdateState).toHaveBeenCalledTimes(2);
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 2 } });
+    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 2 } }, { spell_slots_used: { "1": 1 } });
   });
 
   it("returns failure for an unsaved rest and restores HP before retry", async () => {
