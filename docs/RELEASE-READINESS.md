@@ -1,9 +1,9 @@
 # Release-readiness checklist
 
-Latest checkpoint: [bounded play diagnostic and acceptance matrix](handoffs/2026-10-03-play-diagnostic.md). Fourth fixture creation/journey/mobile passed; approved play retry failed at HP trigger lookup before any intercepted gameplay request. No gameplay scenario or product defect was established. Fresh local production build, types/lint and 2,029 tests passed. **All four tracked fixtures exact-ID cleaned; two creation attempts remain.** Initial approval-review rejection was resolved with Victor's explicit transcript; the same call was retried once, then cleanup was approved and verified. **Not release-ready.**
+Latest checkpoint: [HP locator proof and bounded play recovery](handoffs/2026-10-03-hp-locator-play-recovery.md). Fixed hyphen/em-dash test mismatch; actual desktop/mobile component regression passed. Fifth hosted fixture passed precommit HP rejection, independent temp HP and isolated hit-die response-loss/reload. Real Next Back did not retain the Rest dialog; hidden-settlement and two-tab scenarios remain unaccepted. **Five tracked fixtures cleaned; one final creation attempt reserved.** Final types/lint, 2,029 tests and fresh production build passed. **Not release-ready.**
 
 October 3, 2026. Prior verified application source `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-play-diagnostic.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff](handoffs/2026-10-03-hp-locator-play-recovery.md).
 
 ## Latest bounded acceptance
 
@@ -12,7 +12,9 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current handoff
 - [x] Two SDK ability writes with application compare-and-set filters: one confirmed writer, one stale no-match; guarded baseline restoration.
 - [x] First three recorded fixtures exact-ID cleaned; nine child scopes verified absent.
 - [x] Fourth fixture exact-ID cleaned after approved single diagnostic retry; all nine child scopes verified absent. Four attempts used, two remain.
-- [ ] Real HP/cast/rest retained Activity, response loss, full rule correctness and broader content/campaign authorization remain unaccepted.
+- [x] Fifth fixture: known precommit HP rejection and independent temp HP persisted; one hit die committed with lost response reconciled after reload without retry, one roll. Isolated outcome only.
+- [x] Fifth fixture exact-ID cleaned; parent/nine child scopes absent. Five attempts used, final one reserved.
+- [ ] Real Next retained Rest lifecycle failed at first Back before proving retention; hidden settlement and two-tab never reached. Cast, full rule correctness and broader authorization remain unaccepted.
 
 ## Historical first October 3 bounded checkpoint
 

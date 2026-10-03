@@ -1,5 +1,7 @@
 # Bounded play diagnostic and acceptance matrix - October 3, 2026
 
+Superseded by the [HP locator/play checkpoint](2026-10-03-hp-locator-play-recovery.md): punctuation mismatch now proven and fixed; fifth fixture recovery results and final five-fixture cleanup are recorded there. The observations below describe the fourth-fixture checkpoint.
+
 Application source remains 71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d. This checkpoint adds an independently reviewed diagnostic harness and records incomplete acceptance; no production or SQL change was made. Not release-ready.
 
 ## Evidence and current fixture

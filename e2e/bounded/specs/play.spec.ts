@@ -6,6 +6,7 @@ import { runDirectory } from "../run-paths";
 import { readRunnerSettings } from "../settings";
 import { verifyExistingAccounts } from "../runtime";
 import { browserLogin } from "../browser-login";
+import { hpTrigger } from "../sheet-locators";
 import { captureOwnedRows } from "../owned-rows";
 
 test("bounded play recovery distinguishes rejection, committed response loss and stale tabs", async ({ page, context }) => {
@@ -49,7 +50,7 @@ test("bounded play recovery distinguishes rejection, committed response loss and
             const state = await read();
             for (const [key, value] of Object.entries(state_patch)) expect(state[key]).toEqual(value);
         };
-        const hp = page.getByRole("button", { name: "HP tracker - click to heal or damage", exact: true });
+        const hp = hpTrigger(page);
         const rest = page.getByRole("dialog", { name: "Rest", exact: true });
         const reject = (route: Route) => route.fulfill({ status: 403, contentType: "application/json",
             body: JSON.stringify({ code: "42501", message: "Injected before forwarding: fixture write rejected" }) });
@@ -88,6 +89,18 @@ test("bounded play recovery distinguishes rejection, committed response loss and
         phase = "sheet-navigation"; receipt();
         await page.goto(`/characters/${id}`);
         await expect(page.getByRole("heading", { name: fixture.name, exact: true })).toBeVisible();
+        await expect(page.getByRole("tab", { name: "Character Sheet", exact: true })).toHaveAttribute("aria-selected", "true");
+        await expect(hp).toHaveCount(1);
+        await expect(hp).toBeVisible();
+        // Narrow DOM/state evidence only; no account, narrative or credential capture.
+        const observedState = await read();
+        writeFileSync(path.join(dir, "play-dom.json"), JSON.stringify({
+            runId, characterId: id, viewport: page.viewportSize(), route: new URL(page.url()).pathname,
+            selectedSheet: await page.getByRole("tab", { name: "Character Sheet", exact: true }).getAttribute("aria-selected"),
+            hpControlCount: await hp.count(),
+            hpLabels: await page.locator('[aria-label^="HP tracker"]').evaluateAll(nodes => nodes.map(node => node.getAttribute("aria-label"))),
+            state: { current_hp: observedState.current_hp, temp_hp: observedState.temp_hp, hit_dice_spent: observedState.hit_dice_spent }
+        }, null, 2) + "\n");
 
         phase = "known-before-commit-hp-rejection"; receipt();
         const before = requests;
@@ -184,7 +197,7 @@ test("bounded play recovery distinguishes rejection, committed response loss and
         const other = await context.newPage();
         try {
             await other.goto(`/characters/${id}`);
-            const otherHp = other.getByRole("button", { name: "HP tracker - click to heal or damage", exact: true });
+            const otherHp = hpTrigger(other);
             await expect(hp).toContainText("10");
             await expect(otherHp).toContainText("10");
             mode = "hold-pass";
