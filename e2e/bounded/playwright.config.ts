@@ -6,9 +6,9 @@ const envFile = process.env.INKBORNE_RUNNER_ENV_FILE;
 if (!envFile)
     throw new Error("An existing approved runner configuration path is required");
 const scope = process.env.INKBORNE_BOUNDED_PLAY_SCOPE;
-if (scope !== undefined && scope !== "full" && scope !== "remaining" && scope !== "conditional")
-    throw new Error("Choose full, remaining or conditional bounded play scope");
-const playProject = scope === "conditional" ? "conditional" : scope === "remaining" ? "remaining" : "play";
+if (scope !== undefined && scope !== "full" && scope !== "remaining" && scope !== "conditional" && scope !== "state-controls")
+    throw new Error("Choose full, remaining, conditional or state-controls bounded play scope");
+const playProject = scope === "state-controls" ? "state-controls" : scope === "conditional" ? "conditional" : scope === "remaining" ? "remaining" : "play";
 const settings = readRunnerSettings(envFile);
 // Process-local only. Browser bundles expose only Next's NEXT_PUBLIC_* settings.
 for (const [name, value] of Object.entries(settings))
@@ -22,7 +22,10 @@ export default defineConfig({
     timeout: 120000, expect: { timeout: 20000 }, reporter: [["list"]],
     // No old global setup, prefix teardown, storage-state files, traces or credential screenshots.
     use: { ...devices["Desktop Chrome"], channel: "chrome", baseURL, trace: "off", screenshot: "off", video: "off" },
-    projects: [
+    projects: scope === "state-controls" ? [
+        { name: "create", testMatch: /builder\.spec\.ts/ },
+        { name: "state-controls", testMatch: /state-controls\.spec\.ts/, dependencies: ["create"] },
+    ] : [
         { name: "create", testMatch: /builder\.spec\.ts/ },
         { name: "journey", testMatch: /journey\.spec\.ts/, dependencies: ["create"] },
         { name: "access", testMatch: /access\.spec\.ts/, dependencies: ["journey"] },

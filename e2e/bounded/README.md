@@ -1,6 +1,6 @@
 # Bounded acceptance runner
 
-Current run is closed: all eight approved fixtures exact-ID cleaned, zero attempts remain. Approved conditional endpoint and local client passed the eighth owner/concurrency/denial/reload checks. Existing unconditional writers remain unsafe; no deployment. See [current acceptance](../../docs/handoffs/2026-10-03-eighth-conditional-hp-acceptance.md). Further creation needs new scoped approval.
+Current runs are closed: all nine fixtures exact-ID cleaned, zero attempts remain. The separate ninth state-controls journal is permanently limited to one reservation; no second attempt after cleanup/restart. Its hosted matrix is partial and further hosted testing was blocked by action-time approval review. See [ninth partial acceptance](../../docs/handoffs/2026-10-04-ninth-state-controls-acceptance.md). The earlier eight-attempt journal remains unchanged. Approved conditional endpoint and local client passed the eighth owner/concurrency/denial/reload checks. Existing unconditional writers remain unsafe; no deployment. See [current acceptance](../../docs/handoffs/2026-10-03-eighth-conditional-hp-acceptance.md). Further creation needs new scoped approval.
 
 This is separate from the legacy smoke suite. It imports neither its setup nor its prefix-wide teardown.
 Use existing configured sources and existing approved accounts only. Never copy secrets into a worktree,
@@ -71,3 +71,6 @@ INKBORNE_BOUNDED_PLAY_SCOPE=remaining selects the sole remaining play project; r
 The default journal ceiling remains six. The single separately approved seventh attempt requires `INKBORNE_BOUNDED_SEVENTH_APPROVED_RUN_ID` equal to the existing run ID and all six predecessor cleanup receipts. A separately approved eighth attempt requires `INKBORNE_BOUNDED_EIGHTH_APPROVED_RUN_ID` matching the original run and all seven predecessor cleanup receipts. Hard ceiling is eight; no gate permits a ninth. Cleanup can reopen the eight-attempt journal without either creation gate.
 
 `INKBORNE_BOUNDED_PLAY_SCOPE=conditional` selects only the conditional acceptance project, with creation/journey dependencies. Never rerun creation after a committed or ambiguous attempt; continuation must explicitly use the recorded fixture and scope.
+
+
+`INKBORNE_BOUNDED_PLAY_SCOPE=state-controls` is a dedicated package A scope: only create and state-controls projects, never the old journey/equipment project. Creation additionally requires `INKBORNE_STATE_CONTROLS_APPROVED_RUN_ID` matching the separately approved run ID and an empty `OneAttemptManifest`. The ninth journal is consumed and cleaned; setting gates is not approval and cannot revive it. Any future run needs new trusted fixture authorization. Same-fixture continuation must explicitly use `--project state-controls --no-deps`, never creation dependencies. The prepared full matrix is not a claim of acceptance; consult the closed-run handoff for actual evidence.

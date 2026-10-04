@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 import { BoundedManifest } from "../manifest";
+import { OneAttemptManifest } from "../one-attempt-manifest";
 import { runDirectory } from "../run-paths";
 import { readRunnerSettings } from "../settings";
 import { verifyExistingAccounts } from "../runtime";
@@ -13,7 +14,8 @@ test("bounded real creation reaches builder, refreshes, and denies nonowner upda
         const runId = process.env.INKBORNE_BOUNDED_RUN_ID!;
         const dir = runDirectory(runId);
         mkdirSync(dir, { recursive: true });
-        const manifest = new BoundedManifest(path.join(dir, "fixtures.jsonl"), runId);
+        const Manifest = process.env.INKBORNE_BOUNDED_PLAY_SCOPE === "state-controls" ? OneAttemptManifest : BoundedManifest;
+        const manifest = new Manifest(path.join(dir, "fixtures.jsonl"), runId);
         try {
             await browserLogin(page, settings);
             await page.goto("/characters/new");
