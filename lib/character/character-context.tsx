@@ -468,11 +468,13 @@ export function CharacterProvider({
   const resolveConcentrationCheck = useCallback(
     async (outcome: "keep" | "drop") => {
       if (outcome === "drop") {
-        if (!(await patchState(computeConcentrationDropPatch(state)))) return;
+        await patchState.runAction(state, (confirmed) => ({
+          patch: computeConcentrationDropPatch(confirmed), result: true,
+        }), { requireCurrent: true });
       }
-      setPendingConcentrationCheck(null);
+      setPendingConcentrationCheck(current => current === pendingConcentrationCheck ? null : current);
     },
-    [patchState, state],
+    [patchState, state, pendingConcentrationCheck],
   );
 
   const concentrationDropPatch = useMemo(

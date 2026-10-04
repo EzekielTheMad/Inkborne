@@ -46,6 +46,7 @@ vi.mock("@/lib/character/character-context", () => ({
     dropPatch: {},
   }),
   useCharacter: () => ({ evalResult: mockEvalResult }),
+  useCharacterState: () => ({ state: {}, patchState: { runAction: async (_state: unknown, compute: () => { result: unknown }) => compute().result } }),
   useRolls: () => ({ rolls: [], roll }),
   useActiveEffects: () => ({ activeEffects: mockActiveEffects }),
 }));
@@ -102,18 +103,18 @@ describe("ConcentrationPrompt", () => {
     });
   });
 
-  it("auto-resolves a successful save as keep", () => {
+  it("auto-resolves a successful save as keep", async () => {
     mockRollTotal = 11; // meets DC 11
     render(<ConcentrationPrompt />);
     fireEvent.click(screen.getByRole("button", { name: /roll con save/i }));
-    expect(resolveCheck).toHaveBeenCalledWith("keep");
+    await waitFor(() => expect(resolveCheck).toHaveBeenCalledWith("keep"));
   });
 
-  it("auto-resolves a failed save as drop", () => {
+  it("auto-resolves a failed save as drop", async () => {
     mockRollTotal = 10; // below DC 11
     render(<ConcentrationPrompt />);
     fireEvent.click(screen.getByRole("button", { name: /roll con save/i }));
-    expect(resolveCheck).toHaveBeenCalledWith("drop");
+    await waitFor(() => expect(resolveCheck).toHaveBeenCalledWith("drop"));
   });
 
   it("appends active roll_save riders to the save (Bless helps keep Bless)", () => {

@@ -1,4 +1,4 @@
-import { Activity, useEffect } from "react";
+import { Activity, useEffect, useRef } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CharacterProvider, useCharacterState, useRest, useResources, useSpells, useActiveEffects, useInventory, useConcentration } from "@/lib/character/character-context";
@@ -15,6 +15,10 @@ import { insertRoll } from "@/lib/supabase/rolls";
 import type { CharacterSpell } from "@/lib/types/spells";
 import type { CharacterState } from "@/lib/types/character";
 
+vi.mock("@/lib/dice/roller", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/lib/dice/roller")>();
+  return { ...actual, executeRoll: vi.fn((request) => ({ request, total: 1, natural: 1, groups: [], modifier: 0, rolled_at: "2026-10-04T00:00:00Z" })) };
+});
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@/components/sheet/content-tabs", () => ({ ContentTabs: () => null }));
 vi.mock("@/components/character/narrative-panel", () => ({ NarrativePanel: () => null }));
@@ -29,7 +33,7 @@ const refs = [
   { content_definitions: { id: "ar", slug: "arcane-recovery", name: "Arcane Recovery", content_type: "feature", data: { class: "wizard", level: 1, usages: 1, recovery: "long rest" }, effects: [] } },
   { content_definitions: { id: "wind", slug: "second-wind", name: "Second Wind", content_type: "feature", data: { class: "fighter", level: 1, usages: 3, recovery: "short rest" }, effects: [] } },
 ];
-type Handles = { rest: ReturnType<typeof useRest>; saves: ReturnType<typeof useCharacterState>; resources: ReturnType<typeof useResources>; spells: ReturnType<typeof useSpells>; effects: ReturnType<typeof useActiveEffects>; inventory: ReturnType<typeof useInventory> };
+type Handles = { rest: ReturnType<typeof useRest>; saves: ReturnType<typeof useCharacterState>; resources: ReturnType<typeof useResources>; spells: ReturnType<typeof useSpells>; effects: ReturnType<typeof useActiveEffects>; inventory: ReturnType<typeof useInventory>; concentration: ReturnType<typeof useConcentration> };
 let handles: Record<string, Handles>;
 let stored: CharacterState;
 function persist(name: string, args: { expected_state?: CharacterState; state_patch: Partial<CharacterState> }) {
@@ -54,10 +58,17 @@ type Surface = "shell" | "conditions" | "death" | "effects" | "badge" | "toggles
 function Probe({ label, surface }: { label: string; surface: Surface }) {
   const rest = useRest(); const saves = useCharacterState();
   const resources = useResources(); const spells = useSpells();
-  const { requestCheck } = useConcentration();
-  useEffect(() => { if (surface === "prompt") requestCheck(5); }, [surface, requestCheck]);
+  const concentration = useConcentration();
+  const { requestCheck } = concentration;
+  const requestedCheck = useRef(false);
+  useEffect(() => {
+    if (surface === "prompt" && !requestedCheck.current) {
+      requestedCheck.current = true;
+      requestCheck(5);
+    }
+  }, [surface, requestCheck]);
   const effects = useActiveEffects(); const inventory = useInventory();
-  useEffect(() => { handles[label] = { rest, saves, resources, spells, effects, inventory }; }, [label, rest, saves, resources, spells, effects, inventory]);
+  useEffect(() => { handles[label] = { rest, saves, resources, spells, effects, inventory, concentration }; }, [label, rest, saves, resources, spells, effects, inventory, concentration]);
   const state = saves.state;
   return <><pre aria-label={`${label} state`}>{JSON.stringify(state)}</pre>
     {surface === "prompt" && <ConcentrationPrompt />}
@@ -84,6 +95,7 @@ function Fixture({ raw, label = "sheet", surface = "none" }: { raw: CharacterSta
 
 beforeEach(() => {
   handles = {};
+  vi.mocked(insertRoll).mockReset().mockResolvedValue(undefined as never);
   rpc.mockReset().mockImplementation(async (name, args) => persist(name, args));
 });
 
@@ -104,6 +116,92 @@ function trigger(surface: Surface, mobile = false) {
 }
 
 describe("remaining state-only actual controls", () => {
+  it("rolled concentration failure uses one raw conditional drop, retaining independent effects", async () => {
+    stored = structuredClone(baseline); render(<Fixture raw={baseline} surface="prompt" />);
+    fireEvent.click(screen.getByRole("button", { name: /Roll CON Save/ }));
+    await waitFor(() => expect(stored.concentrating_on).toBeNull());
+    expect(stored.active_effects?.map(effect => effect.id)).toEqual(["guard"]);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc.mock.calls[0][0]).toBe("patch_character_state_if_current");
+    expect(rpc.mock.calls[0][1].expected_state).toEqual(baseline);
+    expect(insertRoll).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Concentration Check")).not.toBeInTheDocument();
+  });
+
+  it.each(["conflict", "response-lost"])("rolled concentration hidden %s preserves notes and never rerolls", async outcome => {
+    stored = structuredClone(baseline); const hold = deferred();
+    rpc.mockImplementationOnce(async (name, args) => {
+      await hold.promise;
+      if (outcome === "conflict") return { error: null, data: [{ status: "conflict", resulting_state: structuredClone(stored) }] };
+      persist(name, args); return { error: { message: "committed response lost" }, data: null };
+    });
+    const fixture = <Fixture raw={baseline} surface="prompt" />;
+    const view = render(<Activity mode="visible">{fixture}</Activity>);
+    const trigger = screen.getByRole("button", { name: /Roll CON Save/ });
+    fireEvent.click(trigger); fireEvent.click(trigger);
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
+    expect(insertRoll).toHaveBeenCalledTimes(1);
+    let notes!: Promise<boolean>;
+    await act(async () => { notes = handles.sheet.saves.patchState({ quick_notes: "independent" }); });
+    view.rerender(<Activity mode="hidden">{fixture}</Activity>);
+    if (outcome === "conflict") stored = { ...stored, concentrating_on: { ...baseline.concentrating_on!, spell_name: "Winner" } };
+    await act(async () => { hold.resolve(); await notes; });
+    view.rerender(<Activity mode="visible">{fixture}</Activity>);
+    await waitFor(() => expect(screen.getAllByRole("alert").at(-1)).toHaveTextContent(outcome === "conflict" ? "Reload before choosing a new action" : "could not be confirmed"));
+    expect(screen.getByRole("button", { name: /Roll CON Save/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Keep" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /Roll CON Save/ }));
+    expect(insertRoll).toHaveBeenCalledTimes(1); expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc.mock.calls[1][0]).toBe("patch_character_state");
+    expect(stored.quick_notes).toBe("independent");
+    expect(stored.concentrating_on?.spell_name ?? null).toBe(outcome === "conflict" ? "Winner" : null);
+    expect(handles.sheet.concentration.pendingCheck).not.toBeNull();
+  });
+
+  it("concentration rolling refuses a pending write before RNG or roll logging", async () => {
+    stored = structuredClone(baseline); const hold = deferred();
+    rpc.mockImplementationOnce(async (name, args) => { await hold.promise; return persist(name, args); });
+    render(<Fixture raw={baseline} surface="prompt" />);
+    let notes!: Promise<boolean>;
+    await act(async () => { notes = handles.sheet.saves.patchState({ quick_notes: "pending" }); });
+    fireEvent.click(screen.getByRole("button", { name: /Roll CON Save/ }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Wait for pending saves"));
+    expect(insertRoll).not.toHaveBeenCalled(); expect(rpc).toHaveBeenCalledTimes(1);
+    await act(async () => { hold.resolve(); await notes; });
+    expect(handles.sheet.concentration.pendingCheck).not.toBeNull();
+    expect(screen.getByRole("button", { name: /Roll CON Save/ })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /Roll CON Save/ }));
+    await waitFor(() => expect(stored.concentrating_on).toBeNull());
+    expect(insertRoll).toHaveBeenCalledTimes(1); expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("a newer check does not inherit an older check's error or reroll lock", async () => {
+    stored = structuredClone(baseline);
+    rpc.mockImplementationOnce(async () => ({ error: null, data: [{ status: "conflict", resulting_state: structuredClone(stored) }] }));
+    render(<Fixture raw={baseline} surface="prompt" />);
+    fireEvent.click(screen.getByRole("button", { name: /Roll CON Save/ }));
+    await waitFor(() => expect(screen.getAllByRole("alert").at(-1)).toHaveTextContent("Reload before choosing a new action"));
+    expect(screen.getByRole("button", { name: /Roll CON Save/ })).toBeDisabled();
+    act(() => handles.sheet.concentration.requestCheck(42));
+    expect(screen.getByRole("dialog")).not.toHaveTextContent("Reload before choosing a new action");
+    expect(screen.getByRole("button", { name: /Roll CON Save/ })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /Roll CON Save/ }));
+    await waitFor(() => expect(screen.getByRole("button", { name: /Roll CON Save/ })).toBeDisabled());
+    // Provider reload gate still refuses RNG; new check does not erase global recovery.
+    expect(insertRoll).toHaveBeenCalledTimes(1); expect(rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("a completed older concentration check does not clear a newer pending check", async () => {
+    stored = structuredClone(baseline); const hold = deferred();
+    rpc.mockImplementationOnce(async (name, args) => { await hold.promise; return persist(name, args); });
+    render(<Fixture raw={baseline} surface="prompt" />);
+    let dropping!: Promise<void>;
+    await act(async () => { dropping = handles.sheet.concentration.resolveCheck("drop"); });
+    act(() => handles.sheet.concentration.requestCheck(42));
+    await act(async () => { hold.resolve(); await dropping; });
+    expect(handles.sheet.concentration.pendingCheck).toEqual({ damage: 42, dc: 21 });
+  });
+
   it.each(surfaces)("actual %s uses raw conditional state without roll or inventory persistence", async surface => {
     stored = structuredClone(baseline); render(<Fixture raw={baseline} surface={surface} />);
     trigger(surface);

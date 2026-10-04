@@ -18,13 +18,14 @@ const stubs = {
   "@/lib/supabase/client": `export function createClient(){return {rpc:(name,args)=>window.fixtureRpc(name,args)}}`,
   "@/lib/supabase/inventory": `export async function addInventoryItem(){} export async function updateInventoryItem(){} export async function removeInventoryItem(){} export async function unequipAllArmor(){}`,
   "@/lib/supabase/spells": `export async function addCharacterSpell(){} export async function updateCharacterSpell(){} export async function removeCharacterSpell(){}`,
-  "@/lib/supabase/rolls": `export async function insertRoll(){throw new Error('Unexpected roll persistence in state-only recovery')}`,
+  "@/lib/supabase/rolls": `export async function insertRoll(...args){window.fixture.rolls.push(args)}`,
+  "@/lib/dice/roller": `export function executeRoll(request){return {request,total:1,natural:1,groups:[],modifier:0,rolled_at:'2026-10-04T00:00:00Z'}}`,
 };
 await build({
   stdin: { resolveDir: root, loader: "tsx", sourcefile: "local-state-controls-fixture.tsx", contents: `
     import React,{Activity,useEffect,useState} from 'react';
     import {createRoot} from 'react-dom/client';
-    import {CharacterProvider,useCharacterState,useInventory} from '@/lib/character/character-context';
+    import {CharacterProvider,useCharacterState,useInventory,useConcentration} from '@/lib/character/character-context';
     import {CharacterShell} from '@/components/character/character-shell';
     import {CurrencyTracker} from '@/components/sheet/inventory/currency-tracker';
     const raw=window.fixture.raw;
@@ -32,13 +33,13 @@ await build({
     const schema={ability_scores:[],proficiency_levels:[],derived_stats:[],skills:[],resources:[],content_types:[],currencies:[],creation_steps:[],sheet_sections:[]};
     const refs=[{content_definitions:{id:'ar',slug:'arcane-recovery',name:'Arcane Recovery',content_type:'feature',data:{class:'wizard',level:1,usages:1,recovery:'long rest'},effects:[]}},{content_definitions:{id:'wind',slug:'second-wind',name:'Second Wind',content_type:'feature',data:{class:'fighter',level:1,usages:3,recovery:'short rest'},effects:[]}}];
     const spell={id:'local-spell',name:'Local Focus',class_slug:'wizard',content_definitions:{id:'focus',slug:'focus',name:'Local Focus',data:{level:1,duration:'1 minute',concentration:true,attack_type:'ranged'},effects:[]}};
-    function Sheet(){const saves=useCharacterState();const inventory=useInventory();window.fixture.saves=saves;return <><pre aria-label='Character state' style={{fontSize:8,maxHeight:32,overflow:'hidden'}}>{JSON.stringify(saves.state)}</pre><CharacterShell campaignPageBacklinks={[]} timelineEvents={[]} relationships={[]}/><CurrencyTracker currency={inventory.currency} onChange={inventory.setCurrency}/></>}
+    function Sheet(){const saves=useCharacterState();const inventory=useInventory();const concentration=useConcentration();window.fixture.concentration=concentration;window.fixture.rolls??=[];window.fixture.saves=saves;return <><pre aria-label='Character state' style={{fontSize:8,maxHeight:32,overflow:'hidden'}}>{JSON.stringify(saves.state)}</pre><CharacterShell campaignPageBacklinks={[]} timelineEvents={[]} relationships={[]}/><CurrencyTracker currency={inventory.currency} onChange={inventory.setCurrency}/></>}
     function App(){const [route,setRoute]=useState(location.pathname);useEffect(()=>{const pop=()=>setRoute(location.pathname);window.addEventListener('popstate',pop);window.fixture.away=()=>{history.pushState({},'','/away');setRoute('/away')};return()=>window.removeEventListener('popstate',pop)},[]);return <><h1>Local conditional state controls fixture</h1><p>Simulated CAS persistence and history; actual provider, dispatcher and dialogs.</p>{route==='/away'&&<h2>Away fixture</h2>}<Activity mode={route==='/sheet'?'visible':'hidden'}><CharacterProvider character={character} schema={schema} contentRefs={refs} initialState={{...raw,temp_hp:0}} initialInventory={[]} initialSpells={[spell]} classData={{wizard:{slug:'wizard',data:{hit_die:6,spellcasting:{type:'full',ability:'intelligence'}}},fighter:{slug:'fighter',data:{hit_die:10}},barbarian:{slug:'barbarian',data:{hit_die:12}}}} allEffects={[]} baseStatsWithLevel={{level:4,constitution:10,intelligence:10}} structuredSources={{}} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={()=>{}}><Sheet/></CharacterProvider></Activity></>}
     createRoot(document.getElementById('root')).render(<App/>);
   ` },
   outfile: path.join(output, "fixture.js"), bundle: true, platform: "browser", jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' },
   plugins: [{ name: "local-boundaries", setup(builder) {
-    builder.onResolve({ filter: /^(next\/(link|navigation)|@\/components\/(sheet\/content-tabs|character\/narrative-panel)|@\/lib\/supabase\/(client|inventory|spells|rolls))$/ }, args => ({ path: args.path, namespace: "fixture" }));
+    builder.onResolve({ filter: /^(next\/(link|navigation)|@\/components\/(sheet\/content-tabs|character\/narrative-panel)|@\/lib\/supabase\/(client|inventory|spells|rolls)|@\/lib\/dice\/roller)$/ }, args => ({ path: args.path, namespace: "fixture" }));
     builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: stubs[args.path], loader: "js", resolveDir: root }));
   } }],
 });
@@ -138,6 +139,30 @@ try {
   await page.getByRole('alert').filter({hasText:'Reload before choosing a new action'}).last().waitFor();assert.equal(await page.getByLabel('Custom effect name').inputValue(),'Half cover');assert.equal(await page.getByLabel('Modifier value').inputValue(),'2');
   await click('Add custom effect');await settled();assert.equal(calls.length,1);await page.screenshot({path:path.join(output,'custom-effect-draft-mobile.png'),fullPage:true});
   evidence.push({check:'actual mobile effect editor retains failed name/modifier draft, no replay',passed:true});
+  assert.deepEqual(await page.evaluate(()=>window.fixture.rolls),[]);
+  for(const mobile of [false,true]){
+    for(const outcome of ['conflict','response-lost']){
+      await reset(mobile);await page.evaluate(()=>window.fixture.concentration.requestCheck(5));
+      const rollButton=page.getByRole('button',{name:/Roll CON Save/});await rollButton.waitFor();
+      holdConditional=true;
+      // Two native clicks in one task exercise the actual handler's synchronous busy gate.
+      await rollButton.evaluate(button=>{button.click();button.click()});
+      await page.waitForFunction(()=>window.fixture.saves.patchState.hasPendingWrites());
+      assert.equal(held.length,1);assert.equal(await page.evaluate(()=>window.fixture.rolls.length),1);
+      assert.equal(calls[0].name,'patch_character_state_if_current');assert.deepEqual(calls[0].args.expected_state,baseline);
+      await page.evaluate(()=>{window.fixture.notes=window.fixture.saves.patchState({quick_notes:'rolled-independent'})});
+      await page.evaluate(()=>window.fixture.away());await page.getByRole('heading',{name:'Away fixture'}).waitFor();
+      if(outcome==='conflict')stored={...stored,concentrating_on:{...stored.concentrating_on,spell_name:'Winner'}};
+      held.shift()(outcome);await page.evaluate(()=>window.fixture.notes);await page.goBack();
+      await page.getByRole('alert').filter({hasText:outcome==='conflict'?'Reload before choosing a new action':'The character save could not be confirmed'}).last().waitFor();
+      await settled();assert.equal(await rollButton.isDisabled(),true);await click('Keep');
+      assert.equal(await page.evaluate(()=>window.fixture.rolls.length),1);assert.equal(calls.length,2);
+      assert.equal(calls[1].name,'patch_character_state');assert.equal(stored.quick_notes,'rolled-independent');
+      assert.equal(stored.concentrating_on?.spell_name??null,outcome==='conflict'?'Winner':null);
+      await reload();assert.deepEqual(await state(),{...stored,temp_hp:0});assert.equal(calls.length,2);
+      evidence.push({check:`actual ${mobile?'mobile':'desktop'} rolled concentration hidden ${outcome}: one separately logged roll, conditional drop, notes, cleared busy, Keep, explicit reload/no replay`,passed:true});
+    }
+  }
   assert.deepEqual(errors,[]);assert.deepEqual(remoteRequests,[]);
   await fs.writeFile(path.join(output,'evidence.json'),JSON.stringify({simulated:true,endpointModelOnly:true,evidence,errors,remoteRequests},null,2));console.log(JSON.stringify(evidence,null,2));
 }finally{while(held.length)held.shift()();try{if(browser)await browser.close()}finally{await new Promise(resolve=>server.close(resolve))}}
