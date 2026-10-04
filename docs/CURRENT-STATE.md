@@ -1,18 +1,21 @@
 # Inkborne current work
 
-Latest checkpoint: [closed ninth state-controls partial acceptance](handoffs/2026-10-04-ninth-state-controls-acceptance.md). One new private fixture was created and exact-ID cleaned; all nine child scopes verified absent, port 3015 closed, zero attempts remain. Desktop conditions, exhaustion and inspiration passed actual conditional saves/readback/reload. Remaining desktop/mobile/conflict/response-loss/Next lifecycle matrix is unaccepted. Hosted continuation was blocked by automatic approval review; cleanup-only approval succeeded. Local runner checks passed 216 files / 2,105 tests, types/lint and 35 isolated Chrome checks. Application remains `920d517`; no production/schema/security/publication change. **Not release-ready.**
+Latest checkpoint: [complete replacement state-controls acceptance](handoffs/2026-10-04-replacement-state-controls-acceptance.md). One approved replacement/one creation attempt completed 32 desktop/mobile positive cases, 32 hidden conflict/committed-loss cases, two-owner and denial/rejection checks. All Back cases remounted; retained Activity remains local evidence. A proven mobile concentration/tools overlap is fixed. Types/lint, 216 files / 2,105 tests, build and 36 isolated Chrome checks passed. Exact-ID cleanup and ten-zero-count readback passed; port 3015 closed, all ten fixtures cleaned, zero attempts remain. No schema/security/publication change. **Not release-ready.**
+
+
+Previous checkpoint: [closed ninth state-controls partial acceptance](handoffs/2026-10-04-ninth-state-controls-acceptance.md). One new private fixture was created and exact-ID cleaned; all nine child scopes verified absent, port 3015 closed, zero attempts remain. Desktop conditions, exhaustion and inspiration passed actual conditional saves/readback/reload. Remaining desktop/mobile/conflict/response-loss/Next lifecycle matrix is unaccepted. Hosted continuation was blocked by automatic approval review; cleanup-only approval succeeded. Local runner checks passed 216 files / 2,105 tests, types/lint and 35 isolated Chrome checks. Application remains `920d517`; no production/schema/security/publication change. **Not release-ready.**
 
 Prior permission proposal: [one bounded hosted regression and separate equipment transaction design](specs/2026-10-03-next-permission-package.md); [local design evidence](handoffs/2026-10-03-next-permission-package.md). Proposal only; no execution authorized by these documents.
 
 Previous application checkpoint: [local conditional manual state controls](handoffs/2026-10-03-conditional-manual-state-controls-local.md). Conditions, exhaustion, inspiration, activation toggles, manual death-save pips, effects, manual concentration and currency now explicitly use settled gates and raw-state conditional saves. Independent notes and failed currency/effect drafts remain reviewable; typed recovery survives retained Activity. Types, lint, 215 files / 2,104 tests, production build and 40 isolated Chrome checks passed, including 18 new responsive manual-control checks. No hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. Active manual state-only paths are converted locally; rolled outcomes, equipment transactions and old/direct writers remain separate boundaries. **Not release-ready.**
 
-Local edits and validation remain authorized. The ninth hosted allowance recorded by the parent is now exhausted and cleaned; the latest handoff records the action-time approval blocker and partial results. The prior conditional short-rest checkpoint is retained as historical local evidence; use the latest handoff for current counts and the remaining-writer table.
+Local edits and validation remain authorized. The verbatim replacement approval was accepted after the working claim was confirmed; selected hosted acceptance is complete and the replacement allowance is exhausted and cleaned. The ninth rejection/partial results remain historical. The prior conditional short-rest checkpoint is retained as historical local evidence; use the latest handoff for current counts and the remaining-writer table.
 
 Updated October 4, 2026. Branch: `codex/playable-core-stability`.
 Historical application baseline before conditional HP integration: `71681c77c6bff1d5f6f2d9e1a2d1f0ec107c4b4d`. **Not release-ready.**
 
 Start with the [release-readiness checklist](RELEASE-READINESS.md) and
-[current closed-run handoff](handoffs/2026-10-04-ninth-state-controls-acceptance.md).
+[current closed-run handoff](handoffs/2026-10-04-replacement-state-controls-acceptance.md).
 October 2 source validation is retained in the [compatibility handoff](handoffs/2026-10-02-builder-compatibility-review.md).
 Other October 2 handoffs are historical checkpoints, not current counts or release claims.
 

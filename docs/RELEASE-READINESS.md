@@ -1,13 +1,16 @@
 # Release-readiness checklist
 
-Latest checkpoint: [closed ninth state-controls partial acceptance](handoffs/2026-10-04-ninth-state-controls-acceptance.md). One new private fixture was created and exact-ID cleaned; all nine child scopes verified absent, port 3015 closed, zero attempts remain. Desktop conditions, exhaustion and inspiration passed actual conditional saves/readback/reload. Remaining desktop/mobile/conflict/response-loss/Next lifecycle matrix is unaccepted. Hosted continuation was blocked by automatic approval review; cleanup-only approval succeeded. Local runner checks passed 216 files / 2,105 tests, types/lint and 35 isolated Chrome checks. Application remains `920d517`; no production/schema/security/publication change. **Not release-ready.**
+Latest checkpoint: [complete replacement state-controls acceptance](handoffs/2026-10-04-replacement-state-controls-acceptance.md). One approved replacement/one creation attempt completed 32 desktop/mobile positive cases, 32 hidden conflict/committed-loss cases, two-owner and denial/rejection checks. All Back cases remounted; retained Activity remains local evidence. A proven mobile concentration/tools overlap is fixed. Types/lint, 216 files / 2,105 tests, build and 36 isolated Chrome checks passed. Exact-ID cleanup and ten-zero-count readback passed; port 3015 closed, all ten fixtures cleaned, zero attempts remain. No schema/security/publication change. **Not release-ready.**
+
+
+Previous checkpoint: [closed ninth state-controls partial acceptance](handoffs/2026-10-04-ninth-state-controls-acceptance.md). One new private fixture was created and exact-ID cleaned; all nine child scopes verified absent, port 3015 closed, zero attempts remain. Desktop conditions, exhaustion and inspiration passed actual conditional saves/readback/reload. Remaining desktop/mobile/conflict/response-loss/Next lifecycle matrix is unaccepted. Hosted continuation was blocked by automatic approval review; cleanup-only approval succeeded. Local runner checks passed 216 files / 2,105 tests, types/lint and 35 isolated Chrome checks. Application remains `920d517`; no production/schema/security/publication change. **Not release-ready.**
 
 Prior permission proposal: [one bounded hosted regression and separate equipment transaction design](specs/2026-10-03-next-permission-package.md); [local design evidence](handoffs/2026-10-03-next-permission-package.md). Proposal only; no execution authorized by these documents.
 
 Previous application checkpoint: [local conditional manual state controls](handoffs/2026-10-03-conditional-manual-state-controls-local.md). Conditions, exhaustion, inspiration, activation toggles, manual death-save pips, effects, manual concentration and currency now explicitly use settled gates and raw-state conditional saves. Independent notes and failed currency/effect drafts remain reviewable; typed recovery survives retained Activity. Types, lint, 215 files / 2,104 tests, production build and 40 isolated Chrome checks passed, including 18 new responsive manual-control checks. No hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. Active manual state-only paths are converted locally; rolled outcomes, equipment transactions and old/direct writers remain separate boundaries. **Not release-ready.**
 
 October 3, 2026. Historical application baseline before conditional HP integration `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current closed-run handoff](handoffs/2026-10-04-ninth-state-controls-acceptance.md).
+Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current closed-run handoff](handoffs/2026-10-04-replacement-state-controls-acceptance.md).
 
 ## Latest local manual-state milestone
 
@@ -15,7 +18,8 @@ Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current closed-
 - [x] Currency uses a reviewable draft with explicit Save/Discard and changed-baseline refusal.
 - [x] Types, lint, 215 files / 2,104 tests and production build passed; eighteen new responsive Chrome checks passed.
 - [x] Final read-only critical review found no blockers. Rolled actions, equipment and old/direct writers remain separate.
-- [ ] New hosted acceptance, durable roll/grant transactions and coordinated legacy-writer handling require separate approval.
+- [x] Selected state-only hosted acceptance completed on the cleaned replacement; actual Back remounted, retained Activity evidence remains local.
+- [ ] Durable roll/grant transactions, coordinated legacy-writer handling and publication remain separate gates.
 
 ## Prior local casting/resource milestone
 

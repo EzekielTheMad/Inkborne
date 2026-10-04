@@ -15,8 +15,10 @@ import type { Json } from "@/lib/supabase/database.types";
 type State = Record<string, Json>;
 type Capture = { expected: State; patch: State; response?: unknown; settled: boolean };
 type Surface = "condition" | "exhaustion" | "inspiration" | "activation" | "death" | "effect" | "custom" | "badge" | "prompt" | "currency" | "cast" | "slots" | "resource" | "card" | "short" | "long";
-test("ninth fixture: actual state controls, conflict and committed response-loss recovery", async ({page,context,browser})=>{
+test("bounded fixture: actual state controls, conflict and committed response-loss recovery", async ({page,context,browser})=>{
  test.setTimeout(900000);
+ context.setDefaultTimeout(20000);
+ context.setDefaultNavigationTimeout(30000);
  page.setDefaultTimeout(20000);
  page.setDefaultNavigationTimeout(30000);
  const settings=readRunnerSettings(process.env.INKBORNE_RUNNER_ENV_FILE!);
@@ -28,13 +30,14 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
  const clientErrors:string[]=[];
  page.on("pageerror",error=>{let message=error.message;for(const value of Object.values(settings))message=message.replaceAll(value,"[redacted]");clientErrors.push(message)});
  let results:Array<Record<string,unknown>>=[];
- try{if(existsSync(resultFile))results=JSON.parse(readFileSync(resultFile,"utf8")).results}catch(error){try{manifest.close()}finally{await accounts.close()}throw error}
+ try{if(existsSync(resultFile)){const prior=JSON.parse(readFileSync(resultFile,"utf8"));if(prior.runId!==runId||prior.characterId!==manifest.attempts.find(a=>a.characterId&&!a.cleaned)?.characterId||!Array.isArray(prior.results))throw new Error("Prior results do not match the exact active fixture");results=prior.results}}catch(error){try{manifest.close()}finally{await accounts.close()}throw error}
  let phase="setup",failed=false,abandon=false;
  let release:(()=>void)|undefined;
  let mode:"pass"|"conflict"|"lost"|"reject"="pass";
- let gate:Promise<void>=Promise.resolve();const captures:Capture[]=[];
+ let gate:Promise<void>=Promise.resolve();const captures:Capture[]=[];const noteWrites:State[]=[];
+ const completed=(scenario:string)=>process.env.INKBORNE_STATE_CONTROLS_RESUME_COMPLETED==="1"&&results.findLast(result=>result.scenario===scenario)?.status==="accepted";
  const fixture=manifest.attempts.find(a=>a.characterId&&!a.cleaned);
- if(!fixture||manifest.attempts.length!==1||fixture.ownerId!==accounts.ownerId){manifest.close();await accounts.close();throw new Error("Requires the exact approved ninth fixture")}
+ if(!fixture||manifest.attempts.length!==1||fixture.ownerId!==accounts.ownerId){manifest.close();await accounts.close();throw new Error("Requires the exact approved one-attempt fixture")}
  const id=fixture.characterId!,sheet="/characters/"+id;
  const rpcUrl=settings.NEXT_PUBLIC_SUPABASE_URL+"/rest/v1/rpc/patch_character_state_if_current";
  const record=(scenario:string,detail:Record<string,unknown>={})=>{
@@ -53,10 +56,10 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
   expect(r.error).toBeNull();expect(r.data).toEqual([{status:"applied",resulting_state:{...before,...patch}}]);
   expect(await state()).toEqual({...before,...patch});
  };
- const click=async(name:string,scope:Locator=page.locator("body"))=>scope.getByRole("button",{name,exact:true}).locator("visible=true").first().click();
+ const click=async(name:string,scope:Locator=page.locator("body"))=>{const button=scope.getByRole("button",{name,exact:true}).locator("visible=true").first();await button.evaluate(node=>node.scrollIntoView({block:"center",inline:"nearest"}));await button.click()};
  let mobile=false,spellName="",spellSlug="",spellId="";
  const panel=()=>page.getByRole("tabpanel");
- const hpTrigger=(target:typeof page)=>target.getByRole("tabpanel").getByRole("button",{name:/^HP tracker\b/});
+ const hpTrigger=(target:typeof page)=>target.getByRole("tabpanel").getByRole("button",{name:/^HP tracker\b/}).locator("visible=true").first();
  const hpReading=async(target:typeof page)=>{const values=(await hpTrigger(target).innerText()).match(/(\d+)\s*\/\s*(\d+)/);if(!values)throw new Error("HP pair unavailable");return {current:Number(values[1]),maximum:Number(values[2])}};
  const mobileRoot=()=>panel().locator("div.md\\:hidden").first();
  const stats=()=>mobile?mobileRoot().locator("section.snap-start").nth(0):panel().locator("div.md\\:grid");
@@ -69,26 +72,29 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
   feature_uses:{"second-wind":1,"arcane-recovery":0},hit_dice_spent:{wizard:0,fighter:0,barbarian:0},
   concentrating_on:{spell_slug:spellSlug,spell_name:spellName,slot_level:1,started_at:"2026-10-04T00:00:00.000Z"},
   active_effects:[{id:"ninth-linked",slug:spellSlug,name:spellName,source:"spell",content_id:spellId,effects:[],duration:{type:"minutes",value:10},concentration:true,applied_at:"2026-10-04T00:00:00.000Z",expires_at:null}]}) as unknown as State;
- const load=async(isMobile=false)=>{mobile=isMobile;mode="pass";await seed(baseline());await page.setViewportSize(mobile?{width:390,height:844}:{width:1280,height:900});await page.goto(sheet);await expect(hpTrigger(page)).toBeVisible();await expect.poll(async()=>(await hpReading(page)).current).toBe(0);
+ const hydrated=async(target:typeof page,isMobile=false)=>{
   // SSR controls are visible before hydration. Prove a harmless local state toggle first.
-  const reminder=stats().getByPlaceholder("Quick reminders, initiative order, HP tracking...");
-  await expect.poll(async()=>{if(await reminder.isVisible())return true;await stats().getByRole("button",{name:"Quick Notes",exact:true}).click();return reminder.isVisible()}).toBe(true);
-  await click("Quick Notes",stats());await expect(reminder).toHaveCount(0);
+  const sheetPanel=target.getByRole("tabpanel");
+  const scope=isMobile?sheetPanel.locator("div.md\\:hidden").first().locator("section.snap-start").nth(0):sheetPanel.locator("div.md\\:grid");
+  const reminder=scope.getByPlaceholder("Quick reminders, initiative order, HP tracking...");
+  await expect.poll(async()=>{if(await reminder.isVisible())return true;await scope.getByRole("button",{name:"Quick Notes",exact:true}).click();return reminder.isVisible()}).toBe(true);
+  await scope.getByRole("button",{name:"Quick Notes",exact:true}).click();await expect(reminder).toHaveCount(0);
  };
+ const load=async(isMobile=false)=>{mobile=isMobile;mode="pass";await seed(baseline());await page.setViewportSize(mobile?{width:390,height:844}:{width:1280,height:900});await page.goto(sheet);await expect(hpTrigger(page)).toBeVisible();await expect.poll(async()=>(await hpReading(page)).current).toBe(0);await hydrated(page,mobile)};
  const prepare=async(surface:Surface)=>{
   if(mobile)await click("Stats",mobileRoot().locator("nav"));
   if(surface==="currency"){const scope=await tab("Inventory");await scope.getByLabel("GP amount").fill("15");return ()=>click("Save currency",scope)}
   if(surface==="slots"){const scope=await tab("Spells");return ()=>click("Mark 1st slot used",scope)}
   if(surface==="cast"){const scope=await tab("Spells");await click("Cast "+spellName,scope);return ()=>click("Cast",page.getByRole("dialog"))}
   if(surface==="card"){const scope=await tab("Features");return ()=>click("Restore one Second Wind",scope)}
-  if(surface==="resource")return ()=>click("Use one Rage",stats());
+  if(surface==="resource")return ()=>click("Restore one Second Wind",stats());
   if(surface==="short"||surface==="long"){
    await click("Rest");const dialog=page.getByRole("dialog",{name:"Rest",exact:true});
    if(surface==="short")await click("Recover one more 1st-level slot",dialog);
    return ()=>click(surface==="short"?"Take Short Rest":"Take Long Rest",dialog);
   }
   if(surface==="prompt"){
-   await seed({current_hp:10});await page.reload();await expect.poll(async()=>(await hpReading(page)).current).toBe(10);
+   await seed({current_hp:10});await page.reload();await expect.poll(async()=>(await hpReading(page)).current).toBe(10);await hydrated(page,mobile);
    await hpTrigger(page).click();await page.getByPlaceholder("Amount",{exact:true}).fill("1");await click("Damage");
    await expect.poll(async()=>(await state()).current_hp).toBe(9);
    await expect(page.getByRole("dialog").getByRole("button",{name:"Drop",exact:true})).toBeVisible();
@@ -99,6 +105,11 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
   return ()=>click(names[surface]);
  };
  const uiAction=async(surface:Surface)=>{
+  // The existing effect adder is shown while at least one effect is present.
+  if(surface==="effect"){
+   const before=await state(),n=captures.length;await click("Add effect",stats());await click(spellName,stats());await expect.poll(()=>captures.length).toBe(n+1);await expect.poll(()=>captures[n].settled).toBe(true);expect(captures[n].response).toMatchObject([{status:"applied"}]);
+   const applied=await state();expect(applied).toEqual({...captures[n].expected,...captures[n].patch});expect(applied.concentrating_on).toMatchObject({spell_slug:spellSlug});expect(applied.active_effects).toHaveLength(1);expect(applied.spell_slots_used).toEqual(before.spell_slots_used);
+  }
   const trigger=await prepare(surface);const before=captures.length;await trigger();
   await expect.poll(()=>captures.length).toBe(before+1);await expect.poll(()=>captures[before].settled).toBe(true);
   expect(captures[before].response).toMatchObject([{status:"applied"}]);
@@ -110,11 +121,20 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
   if(surface==="currency")expect(saved.currency).toEqual({pp:0,gp:15,ep:0,sp:2,cp:3});
   if(surface==="death")expect(saved.death_saves).toEqual({successes:1,failures:1});
   const follow=async(name:string,scope?:Locator)=>{const n=captures.length;await click(name,scope);await expect.poll(()=>captures.length).toBe(n+1);await expect.poll(()=>captures[n].settled).toBe(true);expect(captures[n].response).toMatchObject([{status:"applied"}]);expect(await state()).toEqual({...captures[n].expected,...captures[n].patch});await expect(page.locator('[aria-busy="true"]:visible')).toHaveCount(0)};
+  if(surface==="currency"){
+   const initialMobile=mobile;let scope=await tab("Inventory");let n=captures.length;
+   await scope.getByLabel("GP amount").fill("17");await click("Discard currency draft",scope);await expect(scope.getByLabel("GP amount")).toHaveValue("15");expect(captures.length).toBe(n);expect(await state()).toEqual(saved);
+   await scope.getByLabel("GP amount").fill("17");mobile=!initialMobile;await page.setViewportSize(mobile?{width:390,height:844}:{width:1280,height:900});scope=await tab("Inventory");await scope.getByLabel("GP amount").fill("20");await follow("Save currency",scope);
+   const current=await state();expect(current.currency).toEqual({pp:0,gp:20,ep:0,sp:2,cp:3});mobile=initialMobile;await page.setViewportSize(mobile?{width:390,height:844}:{width:1280,height:900});scope=await tab("Inventory");await expect(scope.getByLabel("GP amount")).toHaveValue("17");n=captures.length;
+   await click("Save currency",scope);await expect(scope.getByRole("alert").filter({hasText:"Currency changed while you were editing"})).toBeVisible();expect(captures.length).toBe(n);expect(await state()).toEqual(current);
+   await click("Discard currency draft",scope);await expect(scope.getByLabel("GP amount")).toHaveValue("20");expect(captures.length).toBe(n);
+  }
   if(surface==="condition"){expect(saved.conditions).toEqual([]);await click("Add Condition",stats());await follow("Blinded",stats());expect((await state()).conditions).toEqual(["Blinded"])}
   if(surface==="exhaustion"){expect(saved.exhaustion).toBe(2);await follow("Decrease exhaustion",stats());expect((await state()).exhaustion).toBe(1)}
   if(surface==="inspiration"){expect(saved.inspiration).toBe(true);await follow(mobile?"Inspiration active":"Remove inspiration");expect((await state()).inspiration).toBe(false)}
   if(surface==="activation"){expect(saved.rage_active).toBe(true);await follow("Rage (Active)");expect((await state()).rage_active).toBe(false)}
   if(surface==="death"){for(const name of ["Failure 2 (empty)","Success 2 (empty)","Success 3 (empty)","Success 1 (filled)","Failure 3 (empty)","Failure 1 (filled)"])await follow(name);expect((await state()).death_saves).toEqual({successes:0,failures:0})}
+  if(surface==="resource"){expect(saved.feature_uses).toMatchObject({"second-wind":0});await follow("Use one Second Wind",stats());expect((await state()).feature_uses).toMatchObject({"second-wind":1})}
   if(surface==="card"){expect(saved.feature_uses).toMatchObject({"second-wind":0});await follow("Use one Second Wind",await tab("Features"));expect((await state()).feature_uses).toMatchObject({"second-wind":1})}
   if(surface==="slots"){expect(saved.spell_slots_used).toMatchObject({"1":2});await follow("Restore 1st slot",await tab("Spells"));expect((await state()).spell_slots_used).toMatchObject({"1":1})}
   if(surface==="short"){expect(saved.spell_slots_used).toMatchObject({"1":0});expect(saved.feature_uses).toMatchObject({"second-wind":0,"arcane-recovery":1})}
@@ -139,6 +159,11 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
   await browserLogin(page,settings);
   await context.route("**/rest/v1/character_rolls*",async route=>{if(route.request().method()==="POST"){await route.abort("failed");throw new Error("Forbidden roll attempted");}await route.continue()});
   await context.route("**/rest/v1/character_inventory*",async route=>{if(route.request().method()!=="GET"&&route.request().method()!=="OPTIONS"){await route.abort("failed");throw new Error("Forbidden inventory mutation attempted");}await route.continue()});
+  await page.route(settings.NEXT_PUBLIC_SUPABASE_URL+"/rest/v1/rpc/patch_character_state",async(route:Route)=>{
+   if(route.request().method()!=="POST")return route.continue();const body=route.request().postDataJSON();
+   if(body.character_id!==id||Object.keys(body.state_patch??{}).length!==1||typeof body.state_patch.quick_notes!=="string"){await route.abort("failed");throw new Error("Unexpected unconditional state write in state-only acceptance")}
+   noteWrites.push(body.state_patch);await route.continue();
+  });
   await page.route(rpcUrl,async(route:Route)=>{
    if(route.request().method()!=="POST"||route.request().postDataJSON().character_id!==id)return route.continue();
    const body=route.request().postDataJSON();const entry:Capture={expected:body.expected_state,patch:body.state_patch,settled:false};captures.push(entry);const requestMode=mode;
@@ -149,23 +174,26 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
    if(requestMode==="lost"){expect(entry.response).toMatchObject([{status:"applied"}]);expect(await state()).toEqual({...entry.expected,...entry.patch});await route.abort("failed")}else await route.fulfill({response});entry.settled=true;
   });
   const surfaces:Surface[]=["condition","exhaustion","inspiration","activation","death","effect","custom","badge","prompt","currency","cast","slots","resource","card","short","long"];
-  for(const viewport of [false,true])for(const surface of surfaces){phase=(viewport?"mobile":"desktop")+"-"+surface;await load(viewport);await uiAction(surface);await page.reload();await expect(hpTrigger(page)).toBeVisible();record(phase,{persistedReadback:true,reload:true});}
-  phase="two-actual-owner-tabs";await load();const other=await context.newPage();try{
-   await other.goto(sheet);await expect(hpTrigger(other)).toBeVisible();const base=await state();
-   await uiAction("condition");const winner=await state();expect(winner).toEqual({...base,conditions:[]});
+  for(const viewport of [false,true])for(const surface of surfaces){phase=(viewport?"mobile":"desktop")+"-"+surface;if(completed(phase))continue;await load(viewport);await uiAction(surface);await page.reload();await expect(hpTrigger(page)).toBeVisible();record(phase,{persistedReadback:true,reload:true});}
+  phase="two-actual-owner-tabs";if(!completed(phase)){await load();const other=await context.newPage();try{
+   await other.goto(sheet);await expect(hpTrigger(other)).toBeVisible();await hydrated(other);const base=await state();
+   await uiAction("condition");const winner=await state();expect(winner).toEqual({...base,conditions:["Blinded"]});
    await other.getByRole("button",{name:"Rage",exact:true}).click();await expect(other.getByRole("button",{name:"Reload character",exact:true})).toBeVisible();expect(await state()).toEqual(winner);
    await other.getByRole("button",{name:"Rage",exact:true}).click();expect(await state()).toEqual(winner);
-   await other.getByRole("button",{name:"Reload character",exact:true}).click();await expect(hpTrigger(other)).toBeVisible();
+   await other.getByRole("button",{name:"Reload character",exact:true}).click();await expect(hpTrigger(other)).toBeVisible();await hydrated(other);
    await other.getByRole("button",{name:"Rage",exact:true}).click();await expect.poll(async()=>(await state()).rage_active).toBe(true);
    record(phase,{winnerUnchanged:true,explicitReloadThenNewIntent:true});
-  }finally{await other.close()}
+  }finally{await other.close()}}
   for(const surface of surfaces)for(const outcome of ["conflict","lost"] as const){
-   phase="mobile-"+surface+"-hidden-"+outcome;await load(true);
+   phase="mobile-"+surface+"-hidden-"+outcome;if(completed(phase))continue;await load(true);
    const trigger=await prepare(surface);
    // Expand the actual note caller without dismissing an already prepared modal.
-   await stats().getByRole("button",{name:"Quick Notes",exact:true}).evaluate((node:HTMLButtonElement)=>node.click());
-   const note=stats().getByPlaceholder("Quick reminders, initiative order, HP tracking...");await expect(note).toBeVisible();
-   const before=await state();const count=captures.length;
+   // Modal focus traps hide the background from role queries; this is controlled
+   // stimulation of the real note caller, not a claim of typing under the modal.
+   const noteScope=page.locator('[role="tabpanel"]').locator("div.md\\:hidden").first().locator("section.snap-start").nth(0);
+   await noteScope.getByRole("button",{name:"Quick Notes",exact:true,includeHidden:true}).evaluate((node:HTMLButtonElement)=>node.click());
+   const note=noteScope.getByPlaceholder("Quick reminders, initiative order, HP tracking...");await expect(note).toBeVisible();
+   const before=await state();const count=captures.length,noteCount=noteWrites.length;
    gate=new Promise<void>(resolve=>{release=resolve});mode=outcome;await trigger();await expect.poll(()=>captures.length).toBe(count+1);
    // Native input event invokes React's actual QuickNotes debounce without closing a pending modal.
    await note.evaluate((node:HTMLTextAreaElement)=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(node,"ninth independent draft");node.dispatchEvent(new Event("input",{bubbles:true}));});
@@ -174,7 +202,7 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
    await page.locator(`a[href="${sheet}/builder"]:visible`).evaluate((node:HTMLAnchorElement)=>node.click());await page.waitForURL("**"+sheet+"/builder");
    release!();release=undefined;await expect.poll(()=>captures[count].settled).toBe(true);
    await expect.poll(async()=>(await state()).quick_notes).toBe("ninth independent draft");
-   const persisted=await state();expect(persisted).toEqual({...(outcome==="conflict"?persistedBefore:{...before,...captures[count].patch}),quick_notes:"ninth independent draft"});
+   expect(noteWrites.length).toBe(noteCount+1);expect(noteWrites[noteCount]).toEqual({quick_notes:"ninth independent draft"});const persisted=await state();expect(persisted).toEqual({...(outcome==="conflict"?persistedBefore:{...before,...captures[count].patch}),quick_notes:"ninth independent draft"});
    if(outcome==="conflict")expect(captures[count].response).toMatchObject([{status:"conflict"}]);
    await page.goBack();await expect(hpTrigger(page)).toBeVisible();await expect(page.locator('[aria-busy="true"]:visible')).toHaveCount(0);
    const boundary=page.getByRole("button",{name:"Reload character",exact:true});const retained=await boundary.isVisible();
@@ -183,10 +211,10 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
     if(surface==="custom")await expect(stats().getByLabel("Custom effect name")).toHaveValue("Ninth half cover");
     await boundary.click();await expect(hpTrigger(page)).toBeVisible();
    }else{await page.reload();await expect(hpTrigger(page)).toBeVisible();}
-   expect(captures.length).toBe(count+1);expect(await state()).toEqual(persisted);mode="pass";
+   await hydrated(page,mobile);expect(captures.length).toBe(count+1);expect(await state()).toEqual(persisted);mode="pass";
    await click(persisted.inspiration?"Inspiration active":"Inspiration inactive");await expect.poll(()=>captures.length).toBe(count+2);await expect.poll(()=>captures[count+1].settled).toBe(true);
    expect(captures[count+1].response).toMatchObject([{status:"applied"}]);expect(captures[count+1].expected).toEqual(persisted);expect(await state()).toEqual({...persisted,inspiration:!persisted.inspiration});
-   record(phase,{navigationLifecycle:retained?"retained-boundary":"remounted-explicit-reload",notesPreserved:true,failedActionRequests:1,replay:0,persistedReadback:true,explicitNewActionAfterReload:true});
+   record(phase,{navigationLifecycle:retained?"retained-boundary":"remounted-explicit-reload",notesPreserved:true,independentNoteRequests:1,challengedActionRequests:1,replay:0,persistedReadback:true,explicitNewActionAfterReload:true});
   }
   phase="known-pre-forward-rejection";await load();const trigger=await prepare("inspiration");const before=await state(),count=captures.length;gate=Promise.resolve();mode="reject";await trigger();await expect.poll(()=>captures.length).toBe(count+1);await expect.poll(()=>captures[count].settled).toBe(true);await expect(page.getByRole("button",{name:"Reload character",exact:true})).toBeVisible();expect(await state()).toEqual(before);record(phase,{forwarded:0,baselineUnchanged:true});mode="pass";
   phase="access-and-empty-side-effects";
@@ -196,8 +224,8 @@ test("ninth fixture: actual state controls, conflict and committed response-loss
   const missing=await accounts.primary.rpc("patch_character_state_if_current",{character_id:randomUUID(),expected_state:{},state_patch:{inspiration:true}});expect(missing.error).toBeNull();expect(missing.data).toEqual([{status:"missing",resulting_state:null}]);
   for(const client of [accounts.secondary,anon]){const r=await client.from("characters").select("id").eq("id",id);expect(r.error).toBeNull();expect(r.data).toEqual([])}
   expect(await state()).toEqual(preserved);
-  const nonownerContext=await browser.newContext({baseURL:new URL(page.url()).origin});try{const other=await nonownerContext.newPage();await browserLogin(other,settings,"secondary");await other.goto(sheet);await expect(other.getByText("This page could not be found.", {exact:false})).toBeVisible();}finally{await nonownerContext.close()}
-  const anonContext=await browser.newContext();try{const other=await anonContext.newPage();await other.goto(new URL(sheet,page.url()).href);await other.waitForURL("**/login");}finally{await anonContext.close()}
+  const nonownerContext=await browser.newContext({baseURL:new URL(page.url()).origin});try{nonownerContext.setDefaultTimeout(20000);nonownerContext.setDefaultNavigationTimeout(30000);const other=await nonownerContext.newPage();await browserLogin(other,settings,"secondary");await other.goto(sheet);await expect(other.getByText("This page could not be found.", {exact:false})).toBeVisible();}finally{await nonownerContext.close()}
+  const anonContext=await browser.newContext();try{anonContext.setDefaultTimeout(20000);anonContext.setDefaultNavigationTimeout(30000);const other=await anonContext.newPage();await other.goto(new URL(sheet,page.url()).href);await other.waitForURL("**/login");}finally{await anonContext.close()}
   for(const table of ["character_rolls","character_inventory"]){const r=await accounts.primary.from(table).select("id").eq("character_id",id);expect(r.error).toBeNull();expect(r.data).toEqual([])}
   expect((await read()).choices.hp_rolls).toBeUndefined();record(phase,{ownerUnchanged:true,nonownerAndAnonymousDenied:true,missingRejected:true,rolls:0,inventory:0});phase="complete";
  }catch(error){failed=true;results.push({scenario:phase,status:"failed",detail:"See sanitized runner log; no automatic retry or second creation"});throw error}

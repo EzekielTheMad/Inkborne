@@ -80,20 +80,20 @@ export function CharacterShell({
       </div>
 
       <Tabs defaultValue="sheet" className="flex-1 flex flex-col">
-        <TabsList className="border-b bg-transparent rounded-none w-full justify-start h-auto p-0 shrink-0">
+        <TabsList className="border-b bg-transparent rounded-none w-full justify-start h-auto group-data-horizontal/tabs:h-auto flex-wrap md:flex-nowrap p-0 shrink-0">
           <TabsTrigger
             value="sheet"
-            className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-2"
+            className="h-auto rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-2"
           >
             Character Sheet
           </TabsTrigger>
           <TabsTrigger
             value="narrative"
-            className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-2"
+            className="h-auto rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-2"
           >
             Narrative
           </TabsTrigger>
-          <div className="ml-auto flex items-center gap-1 pr-3">
+          <div className="ml-auto flex w-full min-w-0 items-center gap-1 pr-3 md:w-auto">
             <ConcentrationBadge />
             <RollLayer />
           </div>
