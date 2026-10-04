@@ -1,5 +1,7 @@
 # Exact equipment approval: execution-review blocker
 
+> Superseded local status: the direct user task completed [local atomic equipment staging/integration](2026-10-04-equipment-atomic-local-staging.md) without an approval rejection. This document preserves the historical rejection and evidence; hosted changes remain forbidden.
+
 October 4, 2026. Started from clean `adcd14ea8c0e7d0f2112e5dcc8f1ee1b2442a1ec`; application source remains `4e14e8e1f26f097507a9a3f283ae2cfc6e783421`. **No equipment staging or integration executed. Not release-ready.**
 
 ## New approval and claim

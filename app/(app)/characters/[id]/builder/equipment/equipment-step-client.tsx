@@ -3,8 +3,8 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateCharacter } from "@/lib/supabase/character-client";
-import { updateCharacterState } from "@/lib/sheet/update-state";
-import { addInventoryItem } from "@/lib/supabase/inventory";
+import { confirmStartingEquipment } from "./actions";
+import type { EquipmentRequest, StartingEquipmentCompletion } from "@/lib/builder/starting-equipment-contract";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,12 +30,12 @@ import type {
   StartingEquipmentSelections,
 } from "@/lib/types/character";
 import type { Currency } from "@/lib/types/inventory";
-import { DEFAULT_CURRENCY } from "@/lib/types/inventory";
 
 interface ContentSummary {
   id: string;
   name: string;
   slug: string;
+  version: number;
   data: Record<string, unknown>;
 }
 
@@ -50,6 +50,7 @@ interface EquipmentStepClientProps {
   classContent: ContentSummary | null;
   backgroundContent: ContentSummary | null;
   catalog: EquipmentCatalogItem[];
+  completion?: StartingEquipmentCompletion;
 }
 
 export function EquipmentStepClient({
@@ -58,6 +59,7 @@ export function EquipmentStepClient({
   classContent,
   backgroundContent,
   catalog,
+  completion,
 }: EquipmentStepClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -76,6 +78,9 @@ export function EquipmentStepClient({
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [canRecover, setCanRecover] = useState(false);
+  const pendingRequest = useRef<EquipmentRequest | null>(null);
+  const [receiptPlan, setReceiptPlan] = useState<ReturnType<typeof buildInventoryGrants> | null>(null);
 
   const classText = classContent?.data?.equipment as string | undefined;
   const backgroundText = backgroundContent?.data?.equipment as string | undefined;
@@ -90,14 +95,14 @@ export function EquipmentStepClient({
     [classText, backgroundText],
   );
 
-  const confirmed = !!equipmentState.confirmed;
+  const confirmed = !!completion || !!equipmentState.confirmed;
   const complete = isSelectionComplete(groups, equipmentState, catalog);
   const hasUnavailablePicks = !complete && isSelectionComplete(groups, equipmentState);
 
   const grantPreview = useMemo(
     () =>
-      confirmed ? buildInventoryGrants(groups, equipmentState, catalog) : null,
-    [confirmed, groups, equipmentState, catalog],
+      receiptPlan ?? (confirmed ? buildInventoryGrants(groups, equipmentState, catalog) : null),
+    [receiptPlan, confirmed, groups, equipmentState, catalog],
   );
 
   async function persistEquipmentState(next: StartingEquipmentSelections) {
@@ -139,61 +144,41 @@ export function EquipmentStepClient({
     });
   }
 
-  async function handleConfirm() {
-    if (!complete || confirmed || saveBusy.current || confirmationLocked.current || selectionUnresolved.current) return;
+  async function handleConfirm(recover = false) {
+    if (saveBusy.current || selectionUnresolved.current) return;
+    if (!recover && (!complete || confirmed || confirmationLocked.current || !classContent)) return;
+    if (recover && (!canRecover || !pendingRequest.current)) return;
     saveBusy.current = true;
     confirmationLocked.current = true;
     setIsConfirming(true);
     setConfirmError(null);
-
+    setCanRecover(false);
+    const request: EquipmentRequest = pendingRequest.current ?? {
+      characterId, selections: equipmentState,
+      sources: { class: { id: classContent!.id, version: classContent!.version },
+        background: backgroundContent ? { id: backgroundContent.id, version: backgroundContent.version } : null },
+    };
+    pendingRequest.current = request;
     try {
-      const { items, currency } = buildInventoryGrants(
-        groups,
-        equipmentState,
-        catalog,
-      );
-
-      // Sequential inserts keep sort_order deterministic. The data layer
-      // throws the structured database error so confirmation cannot be marked
-      // complete after a failed grant.
-      for (const grant of items) {
-        try {
-          await addInventoryItem(characterId, {
-            content_id: grant.content_id,
-            content_version: grant.content_version,
-            name: grant.name,
-            content_type: grant.content_type,
-            quantity: grant.quantity,
-          });
-        } catch (error) {
-          const detail = error instanceof Error ? error.message : String(error);
-          throw new Error(`Could not add ${grant.name}: ${detail}`);
-        }
+      const result = await confirmStartingEquipment(request);
+      if (result.status === "awarded") {
+        setReceiptPlan(result.receipt.plan);
+        setEquipmentState(prev => ({ ...prev, confirmed: true }));
+        startTransition(() => router.refresh());
+      } else if (result.status === "already_completed") {
+        setEquipmentState(prev => ({ ...prev, confirmed: true }));
+        startTransition(() => router.refresh());
+      } else {
+        setCanRecover(result.status === "uncertain" || result.status === "unavailable");
+        setConfirmError(result.status === "not_eligible"
+          ? "This character's earlier equipment grants need review before another award can be made."
+          : result.status === "conflict"
+            ? "The saved equipment changed or was already awarded with different selections. Reload before continuing."
+            : "Equipment could not be confirmed. Check the saved award using the same selections before continuing.");
       }
-
-      if (Object.keys(currency).length > 0) {
-        const current = character.state?.currency ?? DEFAULT_CURRENCY;
-        const merged: Currency = { ...DEFAULT_CURRENCY, ...current };
-        for (const [unit, amount] of Object.entries(currency)) {
-          merged[unit as keyof Currency] += amount;
-        }
-        await updateCharacterState(characterId, { currency: merged });
-      }
-
-      const confirmedState: StartingEquipmentSelections = {
-        ...equipmentState,
-        confirmed: true,
-      };
-      await updateCharacter(characterId, {
-        choices: { ...character.choices, starting_equipment: confirmedState },
-      });
-      setEquipmentState(confirmedState);
-      startTransition(() => router.refresh());
-    } catch (err) {
-      console.error("Failed to confirm equipment:", err);
-      // The separate writes may have partially committed. Do not offer a
-      // same-session re-grant as if local rollback could prove retry safety.
-      setConfirmError("Equipment could not be confirmed. Some items or currency may already have been added. Reload the character and review its inventory before making another confirmation.");
+    } catch {
+      setCanRecover(true);
+      setConfirmError("Equipment could not be confirmed. Check the saved award using the same selections before continuing.");
     } finally {
       saveBusy.current = false;
       setIsConfirming(false);
@@ -208,7 +193,19 @@ export function EquipmentStepClient({
       {isSavingSelection && <p role="status" className="text-sm text-muted-foreground">Saving equipment selection. Please wait.</p>}
       {selectionError && <p role="alert" className="text-sm text-destructive">{selectionError}</p>}
 
-      {isLegacyConfirmed ? (
+      {completion ? (
+        <Card>
+          <CardHeader><CardTitle>{completion.status === "awarded" ? "Starting equipment award recorded" : "Equipment completion inherited from the source character"}</CardTitle></CardHeader>
+          <CardContent>
+            {completion.status === "awarded" ? <>
+              <ul className="space-y-1 text-sm">{completion.receipt.plan.items.map((item, index) => <li key={index}>{item.name}{item.quantity > 1 ? ` x${item.quantity}` : ""}</li>)}
+                {Object.entries(completion.receipt.plan.currency).map(([unit, amount]) => <li key={unit}>{amount} {unit}</li>)}
+              </ul>
+              <p className="mt-2 text-sm">This is the original award record. Current inventory and currency may have changed.</p>
+            </> : <p>No new equipment or currency was awarded by copying. Manage current items from the Inventory tab.</p>}
+          </CardContent>
+        </Card>
+      ) : isLegacyConfirmed ? (
         <LegacyConfirmedNotice classText={classText} backgroundText={backgroundText} />
       ) : hasAnyEquipment ? (
         <div className="space-y-4">
@@ -242,7 +239,7 @@ export function EquipmentStepClient({
           {!confirmed ? (
             <div className="space-y-2">
               <Button
-                onClick={handleConfirm}
+                onClick={() => void handleConfirm()}
                 disabled={!complete || isConfirming || isSavingSelection || !!selectionError || !!confirmError}
               >
                 {isConfirming ? "Adding to inventory…" : "Confirm Equipment"}
@@ -253,6 +250,7 @@ export function EquipmentStepClient({
                   Make a selection in every group to confirm.
                 </p>
               )}
+              {canRecover && <Button variant="outline" disabled={isConfirming} onClick={() => void handleConfirm(true)}>Check saved equipment award</Button>}
               {confirmError && (
                 <p className="text-xs text-destructive" role="alert">
                   {confirmError}

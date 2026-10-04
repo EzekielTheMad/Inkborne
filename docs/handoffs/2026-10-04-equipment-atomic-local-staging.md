@@ -1,0 +1,45 @@
+# Atomic starting-equipment local staging handoff
+
+October 4, 2026. Worktree `C:/Users/kaios/Documents/Codex/2026-10-02/task/inkborne-core`, branch `codex/playable-core-stability`. Started clean at `53d18e5b2a3edb90272eb5c19f61fc4f94c0ec18`. The resulting commit is reported by the final response and `git rev-parse HEAD` rather than embedded in its own contents. **Local staging and integration only; not release-ready.**
+
+## Authority and outcome
+
+The human user directly approved: "I approve local-only SQL staging and application integration for atomic starting-equipment awards. Do not apply hosted database changes or deploy." Local edits executed without an action-review rejection. The earlier mediated-authorization denials in the [exact approval blocker](2026-10-04-equipment-exact-approval-review-blocker.md) remain historical; there is no current local approval-recognition blocker. Hosted data/schema/security, fixtures, push and deployment remain forbidden. No attempt was made to bypass a review or perform a hosted action.
+
+Implemented package B of the [permission package](../specs/2026-10-03-next-permission-package.md), with the existing parser and character-copy design retained:
+
+- SQL text lives in `supabase/staged/starting-equipment-transaction.sql`, outside automatic migrations. It stages the unique natural-key ledger, eligible/awarded/inherited lifecycle, immutable receipt, inventory provenance, owner receipt-read RLS, restricted invoker create/resolve/commit functions, actor-aware immutable-content access and parent locks for direct pin mutations.
+- Trusted creation adds character and eligible marker in one transaction when the default-off server gate is enabled; rejected/ambiguous creation never falls back. Verified authentication supplies the actor; no browser actor/plan/currency is accepted. No environment file or credential was opened/changed, and live service-role availability is unverified.
+- The actual equipment caller uses a single authenticated server action instead of sequential item/currency/confirmation writes. Receipt resolution precedes rollout gating and current catalog/source reconstruction. New planning independently checks fresh complete immutable refs, saved picks, parser completeness and numeric bounds, then supplies locked expected choices/ref inputs to the transaction. Different intent, missing eligibility, malformed/unavailable pins and unsafe plans fail closed.
+- The locked commit stages items, current-currency increments, confirmation merge and original receipt in one commit. Same-intent receipt recovery returns original IDs/delta after consumption without reconstructing inventory or currency. The internal commit also compares full canonical plan on concurrent terminal replay. These are source contracts, not proven PostgreSQL behavior.
+- Uncertain responses retain an exact request and offer an explicit saved-award check. New confirmation remains locked; there is no sequential fallback. Reload reads the owner ledger before catalogs/pins and displays original award evidence or explicitly labeled inherited completion. Legacy confirmed characters remain read-only; unconfirmed absent-marker legacy characters remain unresolved.
+- Copy extends the latest `20260722221534_atomic_background_selection.sql` implementation, preserving its choices/state/pins, ASI/background/content/campaign guards, notes/timeline/spells/NPC/privacy and current inventory behavior. Completed sources produce inherited completion with target provenance, zero new award currency/items and no copied source receipt IDs. Eligible sources alone preserve first-confirmation eligibility. Missing markers are not inferred from empty inventory.
+- `database.types.ts` contains hand-maintained staged API/table/provenance declarations, **not hosted-generated types**. The unused legacy `lib/supabase/characters.ts` creation helper remains outside the eligible creation path and has no current application callers.
+
+The server gate is `INKBORNE_ATOMIC_STARTING_EQUIPMENT=true`, default off. Nothing enables it in this task. Gate-off creation produces legacy/unverified characters; gate-off new equipment awards are unavailable, while terminal read/replay recovery remains possible once the schema exists. Missing staged tables preserve existing equipment-page loading; other receipt read errors fail closed.
+
+## Independent review
+
+The fresh read-only `equipment_review` agent challenged the plan and issued design verdict **v1 APPROVE** with receipt-first, actor-aware access, lock/copy/legacy and rollback conditions. Implemented review **v3 PASS for local staging/integration**, confirmed after its conditions were fixed. It caught auth errors that could accompany a nonnull user before privileged creation and a quantity separator encoding defect; both now have regression coverage. It found no remaining code review blockers. The reviewer did not make edits, run hosted calls or independently rerun the test suite. It explicitly withheld a PostgreSQL/runtime verdict.
+
+## Final local validation
+
+| Command | Result and scope |
+| --- | --- |
+| `npm run check` | PASS: TypeScript, zero-warning ESLint, **220 files / 2,185 tests**. Previous baseline was 217 files / 2,147 tests; this is +38 tests. Includes actual action/page/component mocks, prior builder/copy tests and staged structural SQL checks. |
+| `npm run test:e2e -- --config e2e/local-equipment/playwright.config.ts` | PASS: 1 Playwright test invokes **24 installed-Chrome real-component checks** at desktop/mobile sizes. Includes selection-save recovery and explicit exact-request receipt recovery. Simulated router/persistence; zero page errors and zero remote requests. No hosted config, credentials, setup or cleanup loaded. |
+| `npm run build` | PASS with process-scoped dummy Supabase configuration and gate off: optimized build, TypeScript, **24 static pages**. No live configuration changed. |
+| `git diff --check` and strict UTF-8 decoding | PASS. |
+
+An intermediate full run had one failing quantity-display regression (2,184 passing); the corrected **final** full run passed all 2,185. An earlier structural-copy assertion needed CRLF handling. Neither intermediate failure remains open. Local tests are not database or hosted acceptance. No in-memory ledger was introduced as durability proof.
+
+Browser evidence: ignored `test-results/builder-local/evidence.json` and `equipment-receipt-recovery-mobile.png`; separate offline Playwright output under `test-results/equipment-offline-playwright`. Existing bounded journals/receipts were not cleared. The browser fixture recorded Node PID 31524, parent 34004, worktree, command/start time and ephemeral loopback port 54851; it closed browser/server in `finally`. Final validation runners exited. Inspection found no worktree-owned Node process and no listener on 54851, 3000, 3015, 3016, 4173 or 4174. No unrelated process was stopped.
+
+## Remaining blockers and next coordination step for Morrigan
+
+1. **PostgreSQL execution remains unverified.** No `psql` or Supabase CLI is installed. Docker executable is now present, but the engine is stopped/unavailable; it was not started/restarted. No database executed the staged file. SQL syntax/runtime, grants/RLS/triggers, lock ordering under contention, atomic failure rollback, concurrent equivalent/different plans, lost-response durable replay, copy races, migration generation/replay and forward/down safety remain unproved.
+2. Supply an explicitly authorized disposable local PostgreSQL/Supabase runtime and verify the current migration chain, actor/owner/content denial, every write-stage failure, pin/ownership races, post-consumption recovery, completed/eligible/unresolved copies and schema/endpoint fingerprints. Generate a real migration with an approved CLI and regenerate types from that schema. The detailed matrix and receipt-preserving rollback are in [the staged README](../../supabase/staged/README.md). Do not treat the hand-maintained stage as an applied migration.
+3. Hosted schema/security application, a named disposable acceptance target/accounts/fixtures and rollout/configuration/deployment need separate explicit authorization. Ten historical hosted fixtures remain cleaned and their allowances exhausted; **zero hosted creation attempts were used or added here**. No hosted verification from this task exists.
+4. Ambiguous legacy partial grants still need an authoritative reconciliation policy. Older/direct writers, stale whole-choice/state replacements and the separate roll/state durability gaps remain rollout limitations. Current full builder-to-sheet/rolled hosted acceptance and release/UAT/security gates from the consolidated handoff remain outstanding.
+
+Rollback preserves ledger/provenance/receipts and safe copy. Disable new awards while retaining owner reads and terminal recovery; never drop used evidence, subtract spent currency, remove real granted inventory or restore sequential grants. No destructive down SQL was written or executed. No reset, install, other-worktree edit, hosted data/security change, hosted character creation, push, merge or deployment occurred.

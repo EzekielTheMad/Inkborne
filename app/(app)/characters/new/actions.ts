@@ -1,15 +1,17 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createStartingEquipmentClient, startingEquipmentEnabled } from "@/lib/supabase/starting-equipment-server";
 import { redirect } from "next/navigation";
 
 export async function createCharacter(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  if (authError || !user) redirect("/login");
 
   const nameField = formData.get("name");
   const systemField = formData.get("system_id");
@@ -22,12 +24,20 @@ export async function createCharacter(formData: FormData) {
 
   let createdId: string | undefined;
   try {
-    const { data, error } = await supabase
-      .from("characters")
-      .insert([{ name, user_id: user.id, system_id: systemId }])
-      .select("id")
-      .single();
-    if (!error) createdId = data?.id;
+    if (startingEquipmentEnabled()) {
+      const { data, error } = await createStartingEquipmentClient().rpc("create_character_with_starting_grant", {
+        actor_id: user.id, character_name: name, target_system_id: systemId,
+      });
+      if (!error && typeof data === "string") createdId = data;
+      // Never fall back after a failed/ambiguous transaction response.
+    } else {
+      const { data, error } = await supabase
+        .from("characters")
+        .insert([{ name, user_id: user.id, system_id: systemId }])
+        .select("id")
+        .single();
+      if (!error) createdId = data?.id;
+    }
   } catch {
     // A network failure uses the same recovery path as a rejected insert.
   }

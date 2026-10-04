@@ -36,6 +36,16 @@ export function equalEquipmentIntent(left: unknown, right: unknown): boolean {
   };
   return canonical(left) === canonical(right);
 }
-export type StartingEquipmentResult =
-  | { status: "awarded"; receipt: Record<string, unknown> }
-  | { status: "unavailable" | "not_eligible" | "already_completed" | "conflict" | "uncertain" };
+export const startingEquipmentReceiptSchema = z.object({
+  grant_id: z.string().uuid(), inventory_ids: z.array(z.string().uuid()),
+  plan: equipmentPlanSchema, awarded_at: z.string().min(1),
+}).strict();
+export const startingEquipmentResultSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("awarded"), receipt: startingEquipmentReceiptSchema }).strict(),
+  ...(["unavailable", "not_eligible", "already_completed", "conflict", "uncertain"] as const).map(status => z.object({ status: z.literal(status) }).strict()),
+]);
+export type StartingEquipmentResult = z.infer<typeof startingEquipmentResultSchema>;
+
+export type StartingEquipmentCompletion =
+  | { status: "awarded"; receipt: z.infer<typeof startingEquipmentReceiptSchema> }
+  | { status: "inherited_completion" };

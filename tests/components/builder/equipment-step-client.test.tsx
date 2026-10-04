@@ -12,6 +12,10 @@ vi.mock("@/lib/supabase/character-client", () => ({
   updateCharacter: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/app/(app)/characters/[id]/builder/equipment/actions", () => ({ confirmStartingEquipment: vi.fn() }));
+import { confirmStartingEquipment } from "@/app/(app)/characters/[id]/builder/equipment/actions";
+const mockedConfirm = vi.mocked(confirmStartingEquipment);
+
 vi.mock("@/lib/supabase/inventory", () => ({
   addInventoryItem: vi.fn().mockResolvedValue({ id: "inv-1" }),
 }));
@@ -72,6 +76,7 @@ function classContent(equipment: string) {
     id: "class-1",
     name: "Cleric",
     slug: "cleric",
+    version: 1,
     data: { equipment },
   };
 }
@@ -87,6 +92,7 @@ function renderStep({
     id: string;
     name: string;
     slug: string;
+    version: number;
     data: Record<string, unknown>;
   } | null;
 } = {}) {
@@ -108,6 +114,10 @@ function renderStep({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockedConfirm.mockResolvedValue({ status: "awarded", receipt: {
+    grant_id: "11111111-1111-4111-8111-111111111111", inventory_ids: [], awarded_at: "2026-10-04",
+    plan: { items: [{ content_id: null, content_version: null, name: "Recorded item", content_type: "item", quantity: 1 }], currency: { gp: 15 } },
+  } });
   mockedUpdateCharacter.mockResolvedValue(undefined);
   mockedAddInventoryItem.mockResolvedValue({
     id: "inv-1",
@@ -136,15 +146,16 @@ describe("EquipmentStepClient", () => {
     expect(mockedAddInventoryItem).not.toHaveBeenCalled();
   });
 
-  it("blocks a second local confirmation after a partial grant failure without exposing server details", async () => {
-    mockedAddInventoryItem.mockResolvedValueOnce({ id: "first-grant" } as never).mockRejectedValueOnce(new Error("private grant detail"));
+  it("blocks new confirmation after an uncertain atomic response without exposing server details", async () => {
+    mockedConfirm.mockResolvedValueOnce({ status: "uncertain" });
     renderStep({ startingEquipment: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "amulet" } } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("may already have been added");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Check the saved award");
     expect(screen.getByRole("alert")).not.toHaveTextContent("private grant detail");
     expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
-    expect(mockedAddInventoryItem).toHaveBeenCalledTimes(2);
+    expect(mockedConfirm).toHaveBeenCalledTimes(1);
+    expect(mockedAddInventoryItem).not.toHaveBeenCalled();
     expect(mockedUpdateCharacter).not.toHaveBeenCalled();
   });
 
@@ -207,7 +218,7 @@ describe("EquipmentStepClient", () => {
     ).toBeEnabled();
   });
 
-  it("grants the selected items on confirm and marks the step confirmed", async () => {
+  it("submits pinned selection intent once and displays the recorded receipt plan", async () => {
     renderStep({
       startingEquipment: {
         selections: { "class:0": "a" },
@@ -221,54 +232,20 @@ describe("EquipmentStepClient", () => {
       expect(screen.getByText("Added to inventory")).toBeInTheDocument(),
     );
 
-    expect(mockedAddInventoryItem).toHaveBeenCalledTimes(3);
-    expect(mockedAddInventoryItem).toHaveBeenCalledWith("char-1", {
-      content_id: "id-mace",
-      content_version: 1,
-      name: "Mace",
-      content_type: "weapon",
-      quantity: 1,
+    expect(mockedConfirm).toHaveBeenCalledWith({
+      characterId: "char-1", selections: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "amulet" } },
+      sources: { class: { id: "class-1", version: 1 }, background: null },
     });
-    expect(mockedAddInventoryItem).toHaveBeenCalledWith("char-1", {
-      content_id: "id-shield",
-      content_version: 1,
-      name: "Shield",
-      content_type: "armor",
-      quantity: 1,
-    });
-    expect(mockedAddInventoryItem).toHaveBeenCalledWith("char-1", {
-      content_id: "id-amulet",
-      content_version: 1,
-      name: "Amulet",
-      content_type: "item",
-      quantity: 1,
-    });
-
-    // Unselected option was NOT granted
-    expect(mockedAddInventoryItem).not.toHaveBeenCalledWith(
-      "char-1",
-      expect.objectContaining({ name: "Warhammer" }),
-    );
-
-    // No currency in this equipment string
+    expect(screen.getByText("Recorded item")).toBeInTheDocument();
+    expect(mockedAddInventoryItem).not.toHaveBeenCalled();
     expect(mockedUpdateCharacterState).not.toHaveBeenCalled();
-
-    // Confirmed flag persisted
-    expect(mockedUpdateCharacter).toHaveBeenLastCalledWith("char-1", {
-      choices: {
-        starting_equipment: {
-          selections: { "class:0": "a" },
-          picks: { "class:1:a:1:0": "amulet" },
-          confirmed: true,
-        },
-      },
-    });
+    expect(mockedUpdateCharacter).not.toHaveBeenCalled();
 
     // Chooser is locked after confirm
     expect(screen.getByRole("button", { name: /a mace/i })).toBeDisabled();
   });
 
-  it("grants background currency through the state patch helper", async () => {
+  it("leaves background currency and confirmation to the atomic server entry", async () => {
     renderStep({
       equipment: "A mace or a warhammer",
       startingEquipment: { selections: { "class:0": "a" }, picks: {} },
@@ -276,21 +253,22 @@ describe("EquipmentStepClient", () => {
         id: "bg-1",
         name: "Acolyte",
         slug: "acolyte",
+        version: 1,
         data: { equipment: "Vestments, and a pouch containing 15 gp" },
       },
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
 
-    await waitFor(() =>
-      expect(mockedUpdateCharacterState).toHaveBeenCalledWith("char-1", {
-        currency: { cp: 0, sp: 0, ep: 0, gp: 15, pp: 0 },
-      }),
-    );
+    await screen.findByText("Added to inventory");
+    expect(mockedConfirm).toHaveBeenCalledWith(expect.objectContaining({ sources: {
+      class: { id: "class-1", version: 1 }, background: { id: "bg-1", version: 1 },
+    } }));
+    expect(mockedUpdateCharacterState).not.toHaveBeenCalled();
   });
 
   it("surfaces an error and stays unconfirmed when a grant fails", async () => {
-    mockedAddInventoryItem.mockRejectedValue(new Error("permission denied"));
+    mockedConfirm.mockRejectedValue(new Error("private permission detail"));
     renderStep({
       equipment: "A mace or a warhammer",
       startingEquipment: { selections: { "class:0": "a" }, picks: {} },
@@ -353,4 +331,34 @@ describe("EquipmentStepClient", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("current options");
   });
 
+});
+
+describe("atomic equipment recovery", () => {
+  it("replays the exact request on an explicit receipt check and never uses sequential helpers", async () => {
+    mockedConfirm.mockResolvedValueOnce({ status: "uncertain" });
+    renderStep({ startingEquipment: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "amulet" } } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Check saved equipment award" }));
+    await screen.findByText("Added to inventory");
+    expect(mockedConfirm.mock.calls[1]).toEqual(mockedConfirm.mock.calls[0]);
+    expect(mockedAddInventoryItem).not.toHaveBeenCalled();
+    expect(mockedUpdateCharacter).not.toHaveBeenCalled();
+  });
+  it.each(["conflict", "not_eligible"] as const)("locks %s without a grant retry", async status => {
+    mockedConfirm.mockResolvedValue({ status });
+    renderStep({ startingEquipment: { selections: { "class:0": "a" }, picks: { "class:1:a:1:0": "amulet" } } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Equipment" }));
+    await screen.findByRole("alert");
+    expect(screen.getByRole("button", { name: "Confirm Equipment" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Check saved equipment award" })).not.toBeInTheDocument();
+  });
+});
+
+it.each(["awarded", "inherited_completion"] as const)("shows terminal %s with no catalog and no confirmation path", status => {
+  const receipt = { grant_id: "11111111-1111-4111-8111-111111111111", inventory_ids: [], awarded_at: "2026-10-04", plan: { items: [{ content_id: null, content_version: null, name: "Consumed original item", content_type: "item" as const, quantity: 2 }], currency: { gp: 15 } } };
+  render(<EquipmentStepClient characterId="char-1" character={{ id: "char-1", level: 1, choices: {}, state: null }} classContent={null} backgroundContent={null} catalog={[]} completion={status === "awarded" ? { status, receipt } : { status }} />);
+  expect(screen.queryByRole("button", { name: "Confirm Equipment" })).not.toBeInTheDocument();
+  expect(mockedConfirm).not.toHaveBeenCalled();
+  if (status === "awarded") expect(screen.getByText("Consumed original item x2")).toBeInTheDocument();
+  else expect(screen.getByText(/No new equipment or currency/)).toBeInTheDocument();
 });

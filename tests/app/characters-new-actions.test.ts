@@ -18,6 +18,8 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase/starting-equipment-server", () => ({ createStartingEquipmentClient: vi.fn(), startingEquipmentEnabled: vi.fn().mockReturnValue(false) }));
+import { createStartingEquipmentClient, startingEquipmentEnabled } from "@/lib/supabase/starting-equipment-server";
 import { createClient } from "@/lib/supabase/server";
 import { createCharacter } from "@/app/(app)/characters/new/actions";
 
@@ -68,6 +70,7 @@ async function captureRedirect(fn: () => Promise<unknown>): Promise<string> {
 describe("createCharacter", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(startingEquipmentEnabled).mockReturnValue(false);
   });
 
   it("redirects to /login when no user", async () => {
@@ -146,4 +149,34 @@ describe("createCharacter", () => {
     mockSupabase({ insertResult: { data: null, error: null } });
     expect(await captureRedirect(() => createCharacter(fd))).toBe("/characters/new?error=creation_failed");
   });
+});
+
+describe("atomic character eligibility", () => {
+  it("derives the actor and redirects from the trusted creation transaction", async () => {
+    const { chain } = mockSupabase();
+    vi.mocked(startingEquipmentEnabled).mockReturnValue(true);
+    const rpc = vi.fn().mockResolvedValue({ data: "new-eligible", error: null });
+    vi.mocked(createStartingEquipmentClient).mockReturnValue({ rpc } as never);
+    expect(await captureRedirect(() => createCharacter(makeFormData({ name: " Elara ", system_id: "sys-1", user_id: "forged" })))).toBe("/characters/new-eligible/builder");
+    expect(rpc).toHaveBeenCalledWith("create_character_with_starting_grant", { actor_id: "user-1", character_name: "Elara", target_system_id: "sys-1" });
+    expect(chain.insert).not.toHaveBeenCalled();
+  });
+  it.each(["error", "throw", "empty"])("never falls back after a %s creation response", async mode => {
+    const { chain } = mockSupabase();
+    vi.mocked(startingEquipmentEnabled).mockReturnValue(true);
+    const rpc = mode === "throw" ? vi.fn().mockRejectedValue(new Error("private key")) : vi.fn().mockResolvedValue({ data: null, error: mode === "error" ? { message: "private key" } : null });
+    vi.mocked(createStartingEquipmentClient).mockReturnValue({ rpc } as never);
+    expect(await captureRedirect(() => createCharacter(makeFormData({ name: "Elara", system_id: "sys-1" })))).toBe("/characters/new?error=creation_failed");
+    expect(chain.insert).not.toHaveBeenCalled();
+  });
+});
+
+it("does not construct a privileged client when getUser returns both an error and user", async () => {
+  const { supabase, chain } = mockSupabase();
+  vi.mocked(startingEquipmentEnabled).mockReturnValue(true);
+  vi.mocked(createStartingEquipmentClient).mockClear();
+  supabase.auth.getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: { message: "expired" } } as never);
+  expect(await captureRedirect(() => createCharacter(makeFormData({ name: "Elara", system_id: "sys-1" })))).toBe("/login");
+  expect(chain.insert).not.toHaveBeenCalled();
+  expect(createStartingEquipmentClient).not.toHaveBeenCalled();
 });

@@ -3,6 +3,7 @@ import { getContentByType } from "@/lib/supabase/content-definitions";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { EquipmentStepClient } from "./equipment-step-client";
+import { startingEquipmentReceiptSchema } from "@/lib/builder/starting-equipment-contract";
 import type { EquipmentCatalogItem } from "@/lib/builder/equipment-choices";
 
 interface PageProps {
@@ -31,6 +32,22 @@ export default async function EquipmentStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
+  // Owner-policy read preserves terminal recovery on reload even with disabled
+  // new awards, missing pins, consumed inventory or an unavailable catalog.
+  const grant = await supabase.from("character_starting_grants")
+    .select("status, receipt").eq("character_id", id).eq("grant_kind", "starting_equipment").maybeSingle();
+  if (grant.error && !["42P01", "PGRST205"].includes(grant.error.code)) {
+    throw new Error("The saved equipment award could not be read. Reload before continuing.");
+  }
+  if (grant.data?.status === "awarded" || grant.data?.status === "inherited_completion") {
+    const receipt = startingEquipmentReceiptSchema.safeParse(grant.data.receipt);
+    if (grant.data.status === "awarded" && !receipt.success) throw new Error("The saved equipment award could not be read.");
+    const completion = grant.data.status === "awarded" && receipt.success
+      ? { status: "awarded" as const, receipt: receipt.data }
+      : { status: "inherited_completion" as const };
+    return <EquipmentStepClient characterId={id} character={character} classContent={null} backgroundContent={null} catalog={[]} completion={completion} />;
+  }
+
   // Starting equipment comes from the exact class/background snapshots pinned
   // to this character. Catalog items remain current because the player is
   // making a new equipment selection now.
@@ -38,7 +55,7 @@ export default async function EquipmentStepPage({ params }: PageProps) {
   const backgroundSlug = character.choices?.background;
 
   const [contentRefs, weapons, armor, items] = await Promise.all([
-    getContentRefsByCharacter(id),
+    getContentRefsByCharacter(id, { requireCompleteSnapshots: true }),
     getContentByType(character.system_id, "weapon"),
     getContentByType(character.system_id, "armor"),
     getContentByType(character.system_id, "item"),

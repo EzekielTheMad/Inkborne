@@ -1,5 +1,7 @@
 # Starting-equipment local boundary checkpoint
 
+> Superseded local status: the direct user task completed [local atomic equipment staging/integration](2026-10-04-equipment-atomic-local-staging.md) without an approval rejection. This document preserves the historical rejection and evidence; hosted changes remain forbidden.
+
 October 4, 2026. Based on clean `55f6cbfaa8179f6e1851e364fbfbd82944799d54`.
 
 ## Outcome and authorization blocker

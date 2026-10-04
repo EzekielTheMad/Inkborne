@@ -14,6 +14,13 @@ export type Database = {
   }
   public: {
     Tables: {
+      // Local staged declarations, not a hosted introspection result.
+      character_starting_grants: {
+        Row: { id: string; character_id: string; grant_kind: string; status: string; canonical_intent: Json | null; receipt: Json | null; created_at: string; completed_at: string | null }
+        Insert: { id?: string; character_id: string; grant_kind?: string; status: string; canonical_intent?: Json | null; receipt?: Json | null; created_at?: string; completed_at?: string | null }
+        Update: { status?: string; canonical_intent?: Json | null; receipt?: Json | null; completed_at?: string | null }
+        Relationships: [{ foreignKeyName: "character_starting_grants_character_id_fkey"; columns: ["character_id"]; isOneToOne: false; referencedRelation: "characters"; referencedColumns: ["id"] }]
+      }
       app_errors: {
         Row: {
           admin_notes: string | null
@@ -386,6 +393,7 @@ export type Database = {
           name: string
           notes: string | null
           quantity: number
+          starting_grant_id?: string | null
           sort_order: number
         }
         Insert: {
@@ -401,6 +409,7 @@ export type Database = {
           name: string
           notes?: string | null
           quantity?: number
+          starting_grant_id?: string | null
           sort_order?: number
         }
         Update: {
@@ -416,9 +425,11 @@ export type Database = {
           name?: string
           notes?: string | null
           quantity?: number
+          starting_grant_id?: string | null
           sort_order?: number
         }
         Relationships: [
+          { foreignKeyName: "inventory_starting_grant_character_fkey"; columns: ["starting_grant_id", "character_id"]; isOneToOne: false; referencedRelation: "character_starting_grants"; referencedColumns: ["id", "character_id"] },
           {
             foreignKeyName: "character_inventory_character_id_fkey"
             columns: ["character_id"]
@@ -1572,6 +1583,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      // Local staged starting-equipment API; not generated from hosted schema.
+      create_character_with_starting_grant: {
+        Args: { actor_id: string; character_name: string; target_system_id: string }
+        Returns: string
+      }
+      resolve_starting_equipment: {
+        Args: { actor_id: string; target_character_id: string; request_intent: Json }
+        Returns: Json
+      }
+      commit_starting_equipment: {
+        Args: { actor_id: string; target_character_id: string; expected_choices: Json; expected_refs: Json; canonical_intent: Json }
+        Returns: Json
+      }
       cancel_mpmb_import: {
         Args: { target_import_id: string }
         Returns: boolean

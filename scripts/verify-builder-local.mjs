@@ -30,6 +30,7 @@ const stubs = {
   `,
   "@/lib/supabase/background-selection-client": `export async function setCharacterBackground(id,contentId,version){if(location.pathname!=='/note-replacement')throw new Error('Fixture does not replace backgrounds');window.fixture.backgroundReplacements.push({contentId,version});return {savedChoices:{background:'scholar',ideals:[]},selectedContentId:contentId,selectedContentVersion:version}}`,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(params){if(location.pathname==='/fresh-race'){window.fixture.raceRefCalls.push(params);window.fixture.raceRefs.push({id:'fresh-race-pin',content_id:params.contentId,content_version:params.contentVersion,context:params.context,choice_source:null,content_definitions:window.fixture.freshRace})}} export async function removeContentRefById(){}`,
+  "equipment-actions": `export async function confirmStartingEquipment(request){window.fixture.grants.push(request);return window.fixture.awardMode === 'recovered' ? {status:'awarded',receipt:{grant_id:'local-grant',inventory_ids:['local-item'],awarded_at:'local-simulated',plan:{items:[{content_id:null,content_version:null,name:'Recorded warhammer',quantity:1,content_type:'item'}],currency:{gp:15}}}} : {status:'uncertain'}}`,
   "@/lib/supabase/inventory": `export async function addInventoryItem(id,grant){window.fixture.grants.push(grant);if(window.fixture.grants.length===2)throw new Error("private grant detail");return {id:"local-grant"}}`,
   "@/lib/sheet/update-state": `export async function updateCharacterState(){throw new Error("Fixture does not save currency")}`,
   "class-actions": `export async function reconcileClassFeatureRefsAction(){window.fixture.recoveryCalls.push({});if(window.fixture.recoveryMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveRecovery=resolve;window.fixture.rejectRecovery=()=>reject(new Error('private recovery detail'))});return {status:'success',refs:window.fixture.recoveryRefs}}
@@ -90,7 +91,7 @@ await build({
           <Activity mode={route==='/invalid-choice'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier',resolved_choices:{'courier-skill':['skill-removed']}}}} backgrounds={[choiceCourier]} contentRefs={[{id:'choice-pin',content_id:'courier',context:{},choice_source:null,content_definitions:choiceCourier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/note-replacement'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[{...courier,id:'scholar',slug:'scholar',name:'Scholar',data:{ideals:['Study old maps']}}]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/background'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[courier]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
-          <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
+          <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',version:1,data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
           {route==='/rolled-legacy'&&<ClassStepClient characterId='local-character' character={{...character,level:2,choices:{classes:[{slug:'wizard',level:2}],hp_rolls:{'wizard-2':{method:'manual',value:3}}},campaigns:{hp_rule:'rolled_only'}}} classes={[{...emptyFighter,id:'wizard',slug:'wizard',name:'Legacy Wizard',effects:[],data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
           {route==='/low-con'&&<ClassStepClient characterId='local-character' character={{...character,base_stats:{constitution:3},choices:{classes:[{slug:'wizard',level:1}]}}} classes={[{...emptyFighter,id:'wizard',slug:'wizard',name:'Low CON Wizard',effects:[],data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
           {(route==='/locked-average'||route==='/locked-max')&&<ClassStepClient characterId='local-character' character={{...character,name:'Locked HP fighter',choices:{classes:[{slug:'fighter',level:1}]},campaigns:{hp_rule:route==='/locked-average'?'average_only':'max_for_all'}}} classes={[{...emptyFighter,effects:[],data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
@@ -111,7 +112,7 @@ await build({
     setup(builder) {
       builder.onResolve({ filter: /^(next\/navigation|@\/lib\/supabase\/(character-client|content-refs-client|background-selection-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
       builder.onResolve({filter: /^@\/lib\/(supabase\/inventory|sheet\/update-state)$/}, args=>({path:args.path,namespace:"fixture"}));
-      builder.onResolve({filter: /^\.\/actions$/}, args => args.importer.endsWith("class-step-client.tsx") ? {path:"class-actions",namespace:"fixture"} : undefined);
+      builder.onResolve({filter: /^\.\/actions$/}, args => args.importer.endsWith("class-step-client.tsx") ? {path:"class-actions",namespace:"fixture"} : args.importer.endsWith("equipment-step-client.tsx") ? {path:"equipment-actions",namespace:"fixture"} : undefined);
       builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: stubs[args.path], loader: "js" }));
     },
   }],
@@ -125,6 +126,7 @@ const server = http.createServer(async (request, response) => {
 });
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
+console.log(JSON.stringify({ taskProcess: { pid: process.pid, parentPid: process.ppid, command: 'node scripts/verify-builder-local.mjs', cwd: root, startTime: new Date().toISOString(), listeningPort: server.address().port } }));
 let browser;
 const evidence = [];
 try {
@@ -377,11 +379,20 @@ try {
   await page.getByRole("button", {name:/warhammer/i}).click();
   await page.waitForFunction(()=>!document.querySelector('[aria-busy="true"]'));
   await page.getByRole("button", {name:"Confirm Equipment",exact:true}).click();
-  await page.getByRole("alert").filter({hasText:"may already have been added"}).waitFor();
+  await page.getByRole("alert").filter({hasText:"Check the saved award"}).waitFor();
   assert.equal(await page.getByRole("alert").textContent().then(text=>text.includes("private grant detail")),false);
   assert.equal(await page.getByRole("button", {name:"Confirm Equipment",exact:true}).isDisabled(),true);
-  assert.equal(await page.evaluate(()=>window.fixture.grants.length),2);
-  evidence.push({check:"equipment selection save/retry and partial grant failure block blind confirmation",passed:true});
+  assert.equal(await page.evaluate(()=>window.fixture.grants.length),1);
+  evidence.push({check:"equipment selection save/retry and uncertain atomic response block blind confirmation",passed:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>{window.fixture.awardMode='recovered'});
+  await page.getByRole('button',{name:'Check saved equipment award'}).click();
+  await page.getByText('Added to inventory',{exact:true}).waitFor();
+  await page.getByText('Recorded warhammer',{exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>window.fixture.grants[1]),await page.evaluate(()=>window.fixture.grants[0]));
+  assert.equal(await page.getByRole('button',{name:/a mace/i}).isDisabled(),true);
+  await page.screenshot({path:path.join(output,'equipment-receipt-recovery-mobile.png'),fullPage:true,animations:'disabled'});
+  evidence.push({check:'explicit mobile recovery reuses exact request and displays original receipt without sequential item/currency writes',passed:true});
   await page.setViewportSize({width:390,height:844});
   await page.goto(origin+'/feature-recovery');
   await page.getByRole('button',{name:'Restore saved class features'}).click();
