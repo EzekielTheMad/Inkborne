@@ -1,133 +1,35 @@
 # Release-readiness checklist
 
-Latest checkpoint: [complete replacement state-controls acceptance](handoffs/2026-10-04-replacement-state-controls-acceptance.md). One approved replacement/one creation attempt completed 32 desktop/mobile positive cases, 32 hidden conflict/committed-loss cases, two-owner and denial/rejection checks. All Back cases remounted; retained Activity remains local evidence. A proven mobile concentration/tools overlap is fixed. Types/lint, 216 files / 2,105 tests, build and 36 isolated Chrome checks passed. Exact-ID cleanup and ten-zero-count readback passed; port 3015 closed, all ten fixtures cleaned, zero attempts remain. No schema/security/publication change. **Not release-ready.**
+October 4, 2026. Current application `4e14e8e1f26f097507a9a3f283ae2cfc6e783421`; branch `codex/playable-core-stability`. **Not release-ready.** Use [CURRENT-STATE](CURRENT-STATE.md) for authority and the [consolidated project handoff](handoffs/2026-10-04-consolidated-project-handoff.md) for ranked risks, capabilities and evidence. This checklist supersedes earlier unapplied/partial-status bullets; historical results remain in their linked handoffs.
 
+## Completed within scope
 
-Previous checkpoint: [closed ninth state-controls partial acceptance](handoffs/2026-10-04-ninth-state-controls-acceptance.md). One new private fixture was created and exact-ID cleaned; all nine child scopes verified absent, port 3015 closed, zero attempts remain. Desktop conditions, exhaustion and inspiration passed actual conditional saves/readback/reload. Remaining desktop/mobile/conflict/response-loss/Next lifecycle matrix is unaccepted. Hosted continuation was blocked by automatic approval review; cleanup-only approval succeeded. Local runner checks passed 216 files / 2,105 tests, types/lint and 35 isolated Chrome checks. Application remains `920d517`; no production/schema/security/publication change. **Not release-ready.**
+- [x] Supported builder exact-pin/choice/readiness validation, visible conflicts and save/draft recovery; Saved explicitly means limited recorded evidence.
+- [x] Relative HP dependency regression and retained Activity cast/rest pending regression fixed; current full suite covers them.
+- [x] Conditional state-dependent sheet actions, pre-RNG rolled concentration/death-save gates, no implicit uncertain-action replay, independent notes and mobile control access.
+- [x] Current local types/zero-warning lint, **217 files / 2,147 tests**, build/24 pages and **30 isolated Chrome checks** passed; independent review found no further blockers.
+- [x] Existing approved conditional endpoint/authenticated grants accepted previously; old RPC/RLS unchanged. Earlier unapplied proposal wording is historical, not current endpoint status.
+- [x] [Hosted replacement](handoffs/2026-10-04-replacement-state-controls-acceptance.md): 32 desktop/mobile positive + 32 hidden recovery cases for selected manual-state callers, setup/ownership/denials; latest accepted receipts supersede its six historical failures. All Back lifecycles remounted; retained Activity remains local evidence.
+- [x] All ten tracked hosted fixtures exact-ID cleaned and verified absent; zero attempts remain. Run-owned server/browser processes stopped; unrelated StreamDeck process untouched.
 
-Prior permission proposal: [one bounded hosted regression and separate equipment transaction design](specs/2026-10-03-next-permission-package.md); [local design evidence](handoffs/2026-10-03-next-permission-package.md). Proposal only; no execution authorized by these documents.
+## Open release gates, in priority order
 
-Previous application checkpoint: [local conditional manual state controls](handoffs/2026-10-03-conditional-manual-state-controls-local.md). Conditions, exhaustion, inspiration, activation toggles, manual death-save pips, effects, manual concentration and currency now explicitly use settled gates and raw-state conditional saves. Independent notes and failed currency/effect drafts remain reviewable; typed recovery survives retained Activity. Types, lint, 215 files / 2,104 tests, production build and 40 isolated Chrome checks passed, including 18 new responsive manual-control checks. No hosted calls, fixtures, schema changes or publication. All eight prior fixtures remain cleaned with zero attempts. Active manual state-only paths are converted locally; rolled outcomes, equipment transactions and old/direct writers remain separate boundaries. **Not release-ready.**
+- [ ] Equipment grant atomicity/idempotency/provenance and legacy partial-grant policy. Sequential implementation remains; denied staging is paused. Requires exact new equipment/schema authority, not another staging attempt under old quotes.
+- [ ] Durable roll/state receipts, cross-client ambiguous-outcome handling, ABA/derived-input protection and coordinated old/direct writers. Separate insertion confirmation is not an atomic receipt. Requires separate durable-action/schema/hosted scope.
+- [ ] Fresh current builder-to-sheet acceptance, choice/ref partial failures, latest rolled outcomes, actual retained lifecycle and broader auth/content/offline/device coverage. Requires new bounded hosted target/accounts/fixture/failure/cleanup approval; no residual allowance exists.
+- [ ] Legacy Manual/Average HP under rolled-only rules, ambiguous legacy grants and irrecoverable original-pin policy; unknown vocabulary needs authoritative source research. No guessing or automatic regrant.
+- [ ] Existing production UAT/security/privacy/dependency and publication/deployment gates. No release or rollout authority is implied.
 
-October 3, 2026. Historical application baseline before conditional HP integration `71681c7`; branch `codex/playable-core-stability`. **Not release-ready.**
-Current authority: [CURRENT-STATE](CURRENT-STATE.md); evidence: [current closed-run handoff](handoffs/2026-10-04-replacement-state-controls-acceptance.md).
+## Next authorized step
 
-## Latest local manual-state milestone
+This cleanup pass is closed. A narrow local read-only choice/reference failure-path inventory can use existing source/evidence if requested; no known critical local defect demands speculative implementation. Every remaining release gate needs additional hosted/schema/equipment authority or a product/content decision. The smallest next acceptance request is one bounded fresh builder/current rolled-action journey with exact cleanup; it cannot resolve equipment atomicity.
 
-- [x] Conditions, exhaustion, inspiration, activation, manual death-save pips, effects, manual concentration and currency explicitly guarded; actual desktop/mobile callers await and show typed recovery.
-- [x] Currency uses a reviewable draft with explicit Save/Discard and changed-baseline refusal.
-- [x] Types, lint, 215 files / 2,104 tests and production build passed; eighteen new responsive Chrome checks passed.
-- [x] Final read-only critical review found no blockers. Rolled actions, equipment and old/direct writers remain separate.
-- [x] Selected state-only hosted acceptance completed on the cleaned replacement; actual Back remounted, retained Activity evidence remains local.
-- [ ] Durable roll/grant transactions, coordinated legacy-writer handling and publication remain separate gates.
+## Historical evidence
 
-## Prior local casting/resource milestone
+- [Builder compatibility](handoffs/2026-10-02-builder-compatibility-review.md): 23 builder + 6 play/effect local Chrome checks; simulated router/persistence.
+- [Current rolled death saves](handoffs/2026-10-04-conditional-death-saves-local.md): current full suite and 30 local Chrome checks, separate insert/state limitation.
+- [Previous concentration cleanup](handoffs/2026-10-04-conditional-concentration-result-local.md): 2,128-test/22-check local checkpoint, superseded counts.
+- [Hosted replacement](handoffs/2026-10-04-replacement-state-controls-acceptance.md): accepted manual-state matrix and cleanup, synthetic setup rather than full builder progression.
+- [Equipment review boundary](handoffs/2026-10-04-starting-equipment-local-boundary.md): exact denials and unused pure contract.
 
-- [x] Explicit guarded casting, manual slots and all manual resource-hook mutations; widget and feature-card callers await settlement and show errors.
-- [x] Types, lint, 214 files / 2,079 tests, production build and 22 isolated Chrome checks passed.
-- [x] Consolidated converted/legacy/transactional writer inventory recorded.
-- [ ] Hosted acceptance, coordinated legacy-client handling and publication remain separate approval boundaries.
-
-The following short-rest section is the prior local checkpoint.
-
-## Latest local recovery milestone
-
-- [x] Short-rest/Arcane Recovery explicit conditional routing, raw snapshots and settled-state computation.
-- [x] Provider/dialog conflict and uncertain-result handling; independent notes preserved; retained Activity settlement and no replay verified locally.
-- [x] Types, lint, 213 files / 2,060 tests, production build and thirteen isolated Chrome checks passed.
-- [ ] Hosted short-rest acceptance requires a new bounded approval; zero attempts remain in the existing run.
-- [ ] Broader unconditional writer integration and roll/equipment transactions require separate review/scope.
-
-## Latest bounded acceptance
-
-- [x] Approved conditional function/authenticated-only grants applied; old RPC and RLS fingerprints unchanged.
-- [x] Eighth fixture: SDK conditional concurrency/stale/denial checks and actual two-tab conflict/reload/new action passed.
-- [x] All eight exact-ID cleaned, zero attempts remain; no app publication.
-- [ ] Legacy/unconditional writers, durable ambiguous outcomes and roll/equipment atomicity remain unresolved.
-
-Earlier seventh/proposal bullets below are historical; the eighth endpoint acceptance supersedes their unapplied status.
-
-- [x] Reviewed local conditional-state SQL/client proposal prepared; existing state RPC lacks CAS support.
-- [ ] Apply proposed function/grant and coordinate production writers after separate approval. The local proposal does not fix live behavior.
-
-
-- [x] Separately approved seventh fixture: corrected rest navigation/retry/reload and full-HP control passed.
-- [x] Controlled two-tab reproduction completed: both damage writes reported success, persisted HP7 rather than serial-intent HP5.
-- [ ] Cross-client gameplay durability: demonstrated lost update remains unfixed; conditional write design requires separate approval.
-- [x] Seventh fixture exact-ID cleaned with parent and nine child scopes absent. All seven approved attempts used, zero remain.
-
-The sixth-run bullets below are historical evidence; the seventh outcome above supersedes their untested two-tab status.
-
-- [x] Real hosted SRD race/class/abilities/background/equipment path, desktop sheet refresh and mobile 390x844 identity/navigation/reload.
-- [x] Private owner reads; nonowner and anonymous character/ref denials; isolated nonowner 404 and anonymous login redirects.
-- [x] Two SDK ability writes with application compare-and-set filters: one confirmed writer, one stale no-match; guarded baseline restoration.
-- [x] First three recorded fixtures exact-ID cleaned; nine child scopes verified absent.
-- [x] Fourth fixture exact-ID cleaned after approved single diagnostic retry; all nine child scopes verified absent. Four attempts used, two remain.
-- [x] Fifth fixture: known precommit HP rejection and independent temp HP persisted; one hit die committed with lost response reconciled after reload without retry, one roll. Isolated outcome only.
-- [x] Fifth fixture exact-ID cleaned; parent/nine child scopes absent. At that checkpoint five attempts were used; the sixth is now completed and cleaned below.
-- [x] Offline real Next matched-cache remount and fresh-dialog recovery/reload proof; separate retained Activity shared-helper check.
-- [x] Sixth fixture exact-ID cleaned; parent and nine child scopes absent. Six attempts used, zero remain.
-- [x] Sixth known-rejection rest navigation/reopening receipt accepted; explicit retry persistence/reload observed before an incorrect full-HP assertion failed. Assertion fixed and verified locally, without a hosted rerun.
-- [ ] Two-tab gameplay was never reached; final hosted suite remains partial. Cast, full rule correctness and broader authorization remain unaccepted.
-
-## Historical first October 3 bounded checkpoint
-
-- [x] Approved target, active/auth health, two existing distinct accounts and trusted exact-ID cleanup preflight.
-- [x] Dedicated no-sweep runner, fsynced six-attempt journal outside browser output clearing, 18 dry-run regressions; types/lint and 210 files / 2,019 tests.
-- [x] Real login/create/builder refresh; secondary-account update attempt left owner readback unchanged.
-- [x] The one run-owned character and all inspected children verified absent after exact-ID cleanup; no residual fixture known.
-- [ ] Complete journey failed on hosted 57014 timeouts after race/class/first skill. Later reads passed, cause unproven. Later bounded mobile/private-access checks passed; prior root cause remains unproven.
-
-## Prior October 2 application verification
-
-- [x] Full branch reviewed against local main `26e1f514693190e4afb2dc708ac97fb04a0f5814`; no main-only commits.
-- [x] Strict types, zero-warning lint, 204 files / 2,001 tests; Next 16.2.10 production build, 24 static pages.
-- [x] 23 builder + 6 play/effect installed-Chrome checks with fresh production CSS, simulated router/persistence,
-  actual components/Activity; no page errors or remote attempts. Covers pending/rejected saves, Back/reveal,
-  note replacement, exact HP failure recovery and effect-draft retry. Creation remains unit-tested, not real-browser accepted.
-- [x] Exact saved core, active feature/trait, ASI/style and supported category checks shared by overview/navigation; **Saved** labels disclose limited readiness.
-  Orphan core pins show **In progress**. Clean local source/docs checkpoints; no publication or hosted mutation.
-
-## Required real Next/auth/backend acceptance
-
-- [ ] Approved disposable target and account/content/character fixture IDs; confirm effective migrations, generated types,
-  RPC definitions/grants/RLS and cleanup plan before writes. Do not run hosted Playwright setup under local-only authority.
-- [ ] Real authenticated creation -> builder -> sheet on desktop/mobile: fresh inserts, exact immutable pins, all required
-  choices, equipment, HP/slots/resources, keyboard/dialog behavior, real Next refresh/history/cache and character switching.
-- [ ] Owner/nonowner/anonymous, private/campaign-shared/retired content and guessed IDs: rejected/no-match writes must not
-  appear successful. Expired auth, offline interruption, denied content and failed reference reads need readable recovery.
-- [ ] Verify `patch_character_state` behavior under denied/no-match writes and ambiguous outcomes. October 3 read-only inspection confirms both local 00031 and hosted bodies qualify `public.characters`; the earlier search-path suspicion was incorrect. Hosted body is SECURITY INVOKER, returns void and shallow-merges JSON. Seven relevant RPC bodies match local migration bodies. No SQL correction is authorized or implemented.
-- [ ] Inject rejection before commit and loss of response after commit separately; verify reload/two-tab recovery,
-  state/choice/pin synchronization and no repeated equipment/currency/roll-log consequences. Current local gates do not prove this.
-- [ ] Run approved fresh lockfile/dependency and existing production UAT/security/privacy gates; confirm fixture cleanup by
-  tracked IDs and record residual rows/errors. Prior historical hosted results do not accept this branch.
-
-## Supported milestone and remaining content/product decisions
-
-- [x] Required per-level/ASI/style, recorded-trait and explicit/category choices are validated from exact pins; existing
-  all_languages and authoring-defined any/language options are resolved consistently. Generic feature/subclass choices are reachable in actual panes.
-- [x] Missing active class features can explicitly reconcile from the existing immutable grant manifest, with
-  pending/error/Activity retry. Valid historical pins remain intact. Fresh race parent-only persistence no longer
-  causes false trait blocking; unpinned catalog choices are disclosed and are outside Saved validation.
-- [x] Independent review findings fixed: strict builder reads reject unreadable/mismatched recorded snapshots,
-  and race/subrace/trait conflicts gate edits. Actual fresh selection/refresh/Back path is covered.
-- [ ] Other unknown custom category vocabularies and missing original core/race trait versions need authoritative content
-  evidence/policy after source/provenance research. Conflicting/orphan references remain incomplete;
-  unpinned current-catalog selection does not reconstruct an original version or prove full trait readiness.
-  Saved remains limited validation, not a full playable-character verdict.
-- [ ] Victor must settle legacy Manual/Average HP under rolled-only rules and ambiguous legacy partial grants.
-  Normal copying already preserves state/pins/current inventory; it is not a new equipment award.
-
-## Next approval boundary
-
-Victor approved bounded acceptance on October 3 for `etcaodglvcspcmwecyxq`, up to six new characters and two existing approved accounts. Main_PC has existing settings for this exact project. Auth/account preflight and one real creation/builder refresh/nonowner denial check passed. Full builder-to-sheet/recovery/concurrency remains pending after hosted 57014 failures; exact-ID cleanup was verified for the single created fixture. The dedicated harness excludes legacy prefix sweeps and keeps durable run journals outside Playwright outputDir. This does not authorize SQL/schema/security changes, accounts, extra campaigns/content, deployment or publishing.
-
-## Victor approval needed for durable work
-
-- [ ] Approve the [equipment schema/hosted scope](specs/2026-10-02-equipment-atomicity-proposal.md#exact-approval-scope):
-  one natural-key grant ledger, inventory provenance and a server-owned locked transaction for grant/currency/confirmation.
-- [ ] Approve the [action schema/hosted scope](specs/2026-10-02-durable-character-actions-proposal.md#exact-approval-scope):
-  shared character revision, operation receipts, participation by every relevant writer and accepted roll-history linkage.
-- [ ] Approval must name the target DB/project, migrations/permissions/types/caller changes, disposable fixture and failure
-  injection scope, receipt retention/roll authority/copy policy and cleanup. Existing trusted-server capability must be
-  reviewed; credential/security changes are not implicitly authorized. Neither durable schema proposal was implemented here.
+Earlier hosted builder/HP/rest receipts are partial evidence for their historical source; early 57014 cause remains unproven. They do not accept this entire branch. Current local tests prove neither PostgreSQL guarantees nor hosted retained Activity. Preserve journals and both failed/accepted receipts rather than resetting history.

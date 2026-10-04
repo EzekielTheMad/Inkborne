@@ -1,5 +1,7 @@
 # Replacement state-controls acceptance: complete and cleaned
 
+> Historical checkpoint. Current counts, authority and remaining blockers are consolidated in [the closing project handoff](2026-10-04-consolidated-project-handoff.md). Later local rolled-concentration/death-save fixes supersede its writer-status summary, but do not extend this hosted matrix.
+
 October 4, 2026. Resumed from `4b3c88b076ecd5773932ec42fb44164ce5dd3fee` on `codex/playable-core-stability`. The final response supplies the committed HEAD. **Not release-ready.** The selected manual-state matrix is complete across one tracked replacement fixture and same-fixture continuations; it is not whole-builder or release acceptance.
 
 ## Authority and bounds

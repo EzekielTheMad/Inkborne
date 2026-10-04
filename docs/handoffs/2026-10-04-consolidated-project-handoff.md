@@ -1,0 +1,44 @@
+# Inkborne consolidated project handoff
+
+October 4, 2026. Branch `codex/playable-core-stability`. Exact clean application checkpoint: **`4e14e8e1f26f097507a9a3f283ae2cfc6e783421`**. This closing pass changes documentation only; its commit is reported by the final response and `git rev-parse HEAD`. **Not release-ready; nothing pushed, merged, published or deployed.**
+
+## What works now
+
+The character builder supports the existing race/subrace, class/subclass, abilities, background, feature/style/ASI/category choices and equipment panes. Supported saved-readiness checks share exact recorded definitions with overview/navigation. Saved means supported recorded evidence, not a complete playable-character guarantee. Conflicting, orphaned or unreadable pins cannot silently become valid through catalog fallback. Historical pins stay authoritative; unpinned trait choices disclose their current-catalog basis. Existing class grant manifests support explicit missing-feature restoration. Pending/error states and recoverable drafts make failed saves visible.
+
+The play sheet supports HP/temp HP, hit dice, casting/slots/resources, short/long rests, conditions/exhaustion/inspiration/activation, effects/concentration, currency and death saves. State-dependent callers use the existing settled/conditional state path, with conflict/uncertain-save guidance and explicit reload rather than automatic replay. Relative HP work no longer retains failed damage; retained cast/rest completion reconciles pending state with generation/error recovery. Recent rolled concentration/death-save callers gate before RNG. Death saves preserve established rules and prevent repeated rolls while separately tracked insertion is pending or uncertain, including responsive controls and natural-20 recovery after the control hides. Independent notes retain their separate absolute-edit queue. The mobile concentration/tool overlap is fixed.
+
+Worldbuilding, campaigns, narrative and LegendKeeper integration remain intact. Starting-equipment grants still use their existing sequential implementation; no new atomicity guarantee was added.
+
+## Evidence: current versus historical
+
+| Evidence | Accepted scope and limits |
+| --- | --- |
+| Current application at `4e14e8e` | `npm run check`: types, zero-warning lint, **217 files / 2,147 tests passed**. Dummy-config production build passed, 24 static pages. **30 isolated installed-Chrome state-control checks passed**, zero page errors/remote requests. Independent review closed two recovery P2s and found no further blockers. Local simulated persistence/router only. |
+| October 2 builder milestone | 23 builder + 6 play/effect local Chrome checks passed with actual components and production CSS; recorded-pin compatibility, fresh parent-only race shape, choices, drafts and retained Activity. Historical counts were 2,001 tests, superseded by the current full suite. Not hosted acceptance. |
+| Completed hosted replacement | **32 desktop/mobile positive + 32 hidden conflict/committed-response-loss cases**, plus setup, two-owner and denial/rejection checks. 68 unique latest accepted scenarios including setup; creation was separate. Selected manual-state callers include cast/slots/resources/rests, currency/effects/concentration/manual pips. All 32 Back cases **remounted with explicit reload**, so hosted retained Activity is unaccepted. Synthetic setup bypassed full builder progression and generated no rolls/equipment awards. |
+| Earlier hosted builder/HP work | Actual login/create, builder refresh, a bounded SRD progression, mobile identity/navigation/reload, privacy denials and selected HP/hit-die/rest failures passed across historical fixtures. Coverage was partial; the early 57014 timeout root cause remains unproven. These receipts do not accept today's full builder or rolled callers. |
+
+The replacement receipt retains six historical harness/layout failures; later same-fixture accepted receipts supersede those individual failures, not unrelated missing coverage. October 2 independent-review P1 relative HP and P2 retained pending defects were fixed and remain covered by the current passing suite. Earlier test counts and failed intermediate assertions must not be reported as current failures. Conversely, local roll/state tests do not become hosted evidence because an older manual-control matrix passed.
+
+All **ten** prior hosted fixtures were exact-ID cleaned; replacement readback recorded parent plus nine child scopes at zero. All allowances are exhausted: **zero hosted creation attempts remain**. Never reset a journal or reuse an exhausted allowance. Durable nonsecret journals/receipts remain under task-5 and ignored `test-results/bounded-runs/`; retain them.
+
+## Remaining release blockers, ranked by user impact
+
+1. **Equipment grants can partially commit or duplicate.** Item/currency/confirmation writes are sequential; legacy partial grants lack a settled reconciliation policy. SQL/application transaction staging and its single retry were rejected by automatic approval review for lack of trusted direct authorization for that exact scope, then explicitly paused. The pure contract is unused. Smallest durable step requires direct, exact equipment scope approval; no staging retry is authorized here.
+2. **Cross-client and ambiguous rolled-action durability is incomplete.** Roll insertion and state mutation are separate; strict death-save insert confirmation is not an atomic receipt or proof of noncommit. Old/direct unconditional writers, ABA and changing derived inputs can bypass current conditional protection. Notes can overwrite another client's same-field edit. Database-supported receipt/revision coordination and participation by relevant writers require separate schema/permission/hosted approval.
+3. **Current full builder-to-sheet and latest rolled-action hosted acceptance is missing.** Choices/pins still involve separate writes; retained Activity, expiration/offline, broader access/content/device cases and end-to-end equipment consequences are not comprehensively accepted. Existing selected hosted manual-state evidence is complete within its bound; further verification needs new named target/accounts/fixture/cleanup authorization.
+4. **Legacy/content decisions remain.** Manual/Average HP under rolled-only rules, ambiguous legacy partial grants and irrecoverably missing original pins need authoritative policy/evidence. Unknown custom category vocabulary must be researched from original authoring/import sources before assigning meaning. Catalog fallback cannot reconstruct provenance.
+5. **Release operations are unaccepted.** Existing production UAT/security/privacy/dependency gates and publication/deployment need their own approved scope. No deployment or release verdict follows from this local checkpoint.
+
+## Smallest next step and authority
+
+Close this pass at the documentation checkpoint. Under existing local-only authority, a narrow read-only choice/reference failure-path inventory using checked-in source and existing evidence remains possible; proceed to a fix only for a concrete reproducible defect within that scope. There is no known critical local regression demanding another speculative change, and neither broad rewrites nor new features are justified.
+
+**Not every conceivable local task needs new permission, but every remaining release gate above needs hosted authorization, paused equipment/schema authorization, or an explicit product/content decision.** The smallest next acceptance request is one precisely bounded fresh builder-to-sheet and latest rolled-action hosted matrix with named target, existing accounts, one disposable fixture, failure injection and exact-ID cleanup; it cannot establish equipment atomicity. Prior quotes/proposals do not authorize it. Equipment staging remains a distinct paused request.
+
+## Cleanup and receipts
+
+After the final Chrome runner exited, inspection found no run-owned Node server process. The only Node process was preexisting unrelated StreamDeck PID 15152, left untouched. No listener existed on 3015, 3016, 4173 or 4174. The latest fixture used an ephemeral loopback port and closed its owned server/browser in `finally`; its process has exited. No other worktrees changed.
+
+Latest [death-save handoff](2026-10-04-conditional-death-saves-local.md) links the 2,147-test/build/30-check receipts copied to task-5. [Hosted replacement handoff](2026-10-04-replacement-state-controls-acceptance.md) records accepted scenario and exact cleanup limits. [Equipment boundary](2026-10-04-starting-equipment-local-boundary.md) records both automatic-review denials. [Builder compatibility](2026-10-02-builder-compatibility-review.md) describes recorded versus unpinned evidence. These historical documents retain their original counts and authority; this consolidation governs current interpretation.

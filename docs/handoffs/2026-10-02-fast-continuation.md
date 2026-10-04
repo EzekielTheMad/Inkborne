@@ -1,5 +1,7 @@
 # Fast continuation checkpoint
 
+> Historical checkpoint. Current counts, authority and remaining blockers are consolidated in [the closing project handoff](2026-10-04-consolidated-project-handoff.md). The P1 relative-HP and P2 retained-dialog findings below were subsequently fixed and are covered by the current passing suite.
+
 > Historical milestone record. Counts/status describe this checkpoint. Use [CURRENT-STATE](../CURRENT-STATE.md) and the [release checklist](../RELEASE-READINESS.md) for current authority.
 
 Resume branch `codex/playable-core-stability` at:

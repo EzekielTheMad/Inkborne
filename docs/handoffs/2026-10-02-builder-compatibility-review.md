@@ -1,5 +1,7 @@
 # Builder compatibility and independent review
 
+> Historical checkpoint. Current counts, authority and remaining blockers are consolidated in [the closing project handoff](2026-10-04-consolidated-project-handoff.md). The acceptance permission section below describes October 2 only; later bounded hosted evidence completed and was cleaned, with zero attempts remaining.
+
 October 2, 2026, around 19:44 UTC. Tested source `d69be9d32c74ccfb676836a143105bbc86bf7e49`; branch `codex/playable-core-stability`.
 Started at clean `f2dce6f`. **Not release-ready.** [CURRENT-STATE](../CURRENT-STATE.md) and
 [RELEASE-READINESS](../RELEASE-READINESS.md) are authoritative. Earlier milestone evidence is historical.
