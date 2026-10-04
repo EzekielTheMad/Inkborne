@@ -1,5 +1,7 @@
 # Inkborne current work
 
+Latest local-only validation checkpoint: [starting-equipment boundary and approval-review blocker](handoffs/2026-10-04-starting-equipment-local-boundary.md). Strict standalone input/plan contracts are tested but unused. SQL/application staging was rejected by automatic approval review for lack of trusted user authorization; no transaction, migration, eligibility or caller integration was implemented. Types/lint and 217 files / 2,122 tests passed. Application remains `55f6cbf`; PostgreSQL atomicity/idempotency/permissions remain unproven. **Not release-ready.**
+
 Latest checkpoint: [complete replacement state-controls acceptance](handoffs/2026-10-04-replacement-state-controls-acceptance.md). One approved replacement/one creation attempt completed 32 desktop/mobile positive cases, 32 hidden conflict/committed-loss cases, two-owner and denial/rejection checks. All Back cases remounted; retained Activity remains local evidence. A proven mobile concentration/tools overlap is fixed. Types/lint, 216 files / 2,105 tests, build and 36 isolated Chrome checks passed. Exact-ID cleanup and ten-zero-count readback passed; port 3015 closed, all ten fixtures cleaned, zero attempts remain. No schema/security/publication change. **Not release-ready.**
 
 
