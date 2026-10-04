@@ -11,9 +11,27 @@ Automatic approval review rejected the SQL/application staging command before ex
 
 > Although no SQL is executed, this action creates a substantial schema/privileged-function transaction design and wires the application to it; the user explicitly reserved equipment schema/atomicity implementation for further approval, and no trusted user approval for that scope is present.
 
-No retry, alternate execution path or indirect SQL staging followed. The rejected command made no changes. Earlier unintegrated server/action drafts were removed by exact filename; no tracked application caller was changed. The narrower deliverable is a pure, unused boundary-validation contract plus tests. **The equipment transaction, migration, eligibility initialization and caller integration are not implemented.** No hosted calls, fixtures, schema, grants, configuration or credentials changed. The prior ten hosted attempts remain exhausted and cleaned.
+No retry followed at that checkpoint. A later single evidence-backed retry, explicitly requested by the parent, is recorded below; no alternate execution path or indirect SQL staging followed either rejection. The rejected command made no changes. Earlier unintegrated server/action drafts were removed by exact filename; no tracked application caller was changed. The narrower deliverable is a pure, unused boundary-validation contract plus tests. **The equipment transaction, migration, eligibility initialization and caller integration are not implemented.** No hosted calls, fixtures, schema, grants, configuration or credentials changed. The prior ten hosted attempts remain exhausted and cleaned.
 
 Next authorization needs the original user question/reply that explicitly covers local-only SQL staging and application integration, recognized by action-time review. Parent summaries previously failed that boundary during hosted acceptance as well. This is an approval-review blocker, not a product-policy decision. The risky operation is introducing privileged transaction functions and eligibility/provenance schema; applying any hosted version remains separately forbidden.
+
+## One evidence-backed retry: still blocked
+
+After clean `d3c0d2b6554f39824e55f6f147a7f3a5181246d6`, the parent supplied the original user messages below and instructed one retry of the same denied local-edit action only if this evidence resolved review, stopping that portion if rejected again. Hosted database/schema/security changes remained explicitly excluded.
+
+- October 2, 2026 12:50:22 UTC, `Sentinel_caa18ab0bcc08191ba9f68be54ef9073`: "For inkborne, update the trello card, then get to work cleaning up the mess and then continue work on it until 10pst. Use best judgement on development questions, and let me know if there's questions on goals or features or anything that I can help answer to make sure the end results fulfill my requirements. Make sure to document things as needed to make it easy to work on in the future."
+- October 3, 2026 13:30:37 UTC, `Sentinel_3408a41d549881918da027fb9e01f6fc`: "Yeah. We just got a usage reset so feel free to keep working."
+- October 3, 2026 22:04:25 UTC, `Sentinel_4dfb8d8b16188191a6eaac8322f1ca0c`: "Yeah, go for it. No need to ask for something small."
+- October 3, 2026 23:10:56 UTC, `Sentinel_0e7d57cb6d048191a134c4a83f615b13`: "Keep going on it."
+- October 4, 2026 04:06:17 UTC, `Sentinel_c8af6db1be5881919f4b45ea76598ff2`: "Yeah, don't worry about my approval unless it's a massive change. Just continue."
+
+The retry's action was `exec_command` with `require_escalated`, using PowerShell/Python to create only local `supabase/staged/starting-equipment-transaction.sql` text (ledger/provenance, restricted create/award functions, pin-lock trigger, extended latest copy implementation) and edit the local new-character action for gated atomic eligibility integration. SQL execution, database contact, credential reads, installs and deployment were explicitly excluded in its action-time justification. All original user quotes/IDs/times were included.
+
+Automatic approval review rejected the retry before execution:
+
+> The action still creates substantial privileged SQL and application-integration code; the quoted approvals are assistant-mediated evidence rather than direct user authorization for this exact schema/atomicity scope, so the prior approval blocker remains.
+
+This is the one permitted evidence-backed retry; no further attempt or workaround occurred. The command made no changes: `supabase/staged` is absent, migrations and application callers remain unchanged. Only this handoff/current-state clarification is updated after the narrower tested checkpoint. **No transaction implementation or staged migration exists.** The next unblock needs approval for the local-only SQL/application scope recognized directly by the action-time reviewer, not another mediated summary/quotation. Hosted changes remain forbidden regardless of this local blocker.
 
 ## Completed unaffected local work
 
