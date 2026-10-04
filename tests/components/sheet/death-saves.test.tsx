@@ -5,9 +5,16 @@ import type { RollRequest, RollResult } from "@/lib/dice/types";
 import type { CharacterDeathSaves } from "@/lib/types/character";
 
 const rollMock = vi.fn();
+let currentHpMock = 0;
+let savesMock: CharacterDeathSaves;
+let patchStateMock = vi.fn();
 
 vi.mock("@/lib/character/character-context", () => ({
-  useRolls: () => ({ rolls: [], roll: rollMock }),
+  useRolls: () => ({ rolls: [], roll: rollMock, rollWithPersistence: (request: RollRequest) => ({ result: rollMock(request), persistence: Promise.resolve() }), rollPersistencePending: false, rollPersistenceUncertain: false }),
+  useCharacterState: () => ({ state: {}, patchState: { runAction: async (_state: unknown, compute: (state: unknown) => { patch: unknown; result: unknown }) => {
+    const computed = compute({ current_hp: currentHpMock, death_saves: savesMock });
+    await patchStateMock(computed.patch); return computed.result;
+  } } }),
   useActiveEffects: () => ({
     activeEffects: [],
     applyEffect: vi.fn(),
@@ -32,6 +39,7 @@ function seedRoll(natural: number, total = natural) {
 
 function setup(deathSaves: CharacterDeathSaves, currentHp = 0) {
   const patchState = vi.fn().mockResolvedValue(undefined);
+  patchStateMock = patchState; savesMock = deathSaves; currentHpMock = currentHp;
   const utils = render(
     <DeathSaves currentHp={currentHp} deathSaves={deathSaves} patchState={patchState} />,
   );

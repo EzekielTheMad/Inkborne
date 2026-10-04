@@ -12,7 +12,7 @@ import {
   isD20RollKind,
   rollModifierKindFor,
 } from "@/lib/rolls/requests";
-import type { RollKind, RollMode, RollResult } from "@/lib/dice/types";
+import type { RollKind, RollMode, RollResult, RollRequest } from "@/lib/dice/types";
 import { cn } from "@/lib/utils";
 
 export interface RollPopoverProps {
@@ -27,6 +27,8 @@ export interface RollPopoverProps {
   crit?: boolean;
   meta?: Record<string, unknown>;
   onResult?: (result: RollResult) => void;
+  /** Caller owns gating, RNG/logging and persistence; replaces default rolling. */
+  onRollRequest?: (request: RollRequest) => void;
   disabled?: boolean;
   /** Trigger element classes — callers keep their existing stat styling. */
   className?: string;
@@ -57,6 +59,7 @@ export function RollPopover({
   crit,
   meta,
   onResult,
+  onRollRequest,
   disabled,
   className,
   ariaLabel,
@@ -69,16 +72,10 @@ export function RollPopover({
   // Immediate kinds: one click, one roll — no popover (design §3.4).
   if (!isD20RollKind(kind)) {
     const executeImmediate = () => {
-      const result = roll(
-        buildImmediateRollRequest({
-          kind,
-          label,
-          expression: expression ?? "",
-          crit,
-          meta,
-        }),
-      );
-      onResult?.(result);
+      if (disabled) return;
+      const request = buildImmediateRollRequest({ kind, label, expression: expression ?? "", crit, meta });
+      if (onRollRequest) onRollRequest(request);
+      else { const result = roll(request); onResult?.(result); }
     };
 
     return (
@@ -100,19 +97,14 @@ export function RollPopover({
   );
 
   const executeD20 = (mode: RollMode) => {
-    const result = roll(
-      buildD20RollRequest({
-        kind,
-        label,
-        modifier,
-        mode,
-        // Re-collect at click time so mid-popover effect changes still apply.
-        rollModifiers: collectRollModifiers(activeEffects, rollModifierKindFor(kind)),
-        meta,
-      }),
-    );
+    if (disabled) return;
+    const request = buildD20RollRequest({
+      kind, label, modifier, mode,
+      rollModifiers: collectRollModifiers(activeEffects, rollModifierKindFor(kind)), meta,
+    });
     setOpen(false);
-    onResult?.(result);
+    if (onRollRequest) onRollRequest(request);
+    else { const result = roll(request); onResult?.(result); }
   };
 
   return (
@@ -145,6 +137,7 @@ export function RollPopover({
               <Button
                 size="sm"
                 className="w-full bg-character-fg text-background hover:opacity-90"
+                disabled={disabled}
                 onClick={() => executeD20("normal")}
               >
                 Roll
@@ -153,6 +146,7 @@ export function RollPopover({
                 variant="outline"
                 size="sm"
                 className="w-full border-emerald-500/40 text-emerald-500 hover:text-emerald-400"
+                disabled={disabled}
                 onClick={() => executeD20("advantage")}
               >
                 Advantage
@@ -161,6 +155,7 @@ export function RollPopover({
                 variant="outline"
                 size="sm"
                 className="w-full border-destructive/40 text-destructive hover:text-destructive"
+                disabled={disabled}
                 onClick={() => executeD20("disadvantage")}
               >
                 Disadvantage

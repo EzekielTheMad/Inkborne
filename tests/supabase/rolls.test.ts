@@ -75,6 +75,25 @@ describe("insertRoll", () => {
   });
 });
 
+describe("explicit roll insert confirmation", () => {
+  it("requires one returned row without changing ordinary inserts", async () => {
+    const single = vi.fn().mockResolvedValue({ data: { id: "roll-1" }, error: null });
+    const select = vi.fn().mockReturnValue({ single });
+    insertMock.mockReturnValueOnce({ select });
+    const { insertRoll } = await import("@/lib/supabase/rolls");
+    await expect(insertRoll("char-1", mockResult, { requireConfirmation: true })).resolves.toBeUndefined();
+    expect(select).toHaveBeenCalledWith("id"); expect(single).toHaveBeenCalledTimes(1);
+    expect(insertMock).toHaveBeenCalledTimes(1);
+  });
+  it.each([{ data: null, error: null }, { data: {}, error: null }, { data: null, error: { message: "private rejection detail" } }])("rejects missing/failed receipt without replay or private details", async response => {
+    const single = vi.fn().mockResolvedValue(response);
+    insertMock.mockReturnValueOnce({ select: () => ({ single }) });
+    const { insertRoll } = await import("@/lib/supabase/rolls");
+    await expect(insertRoll("char-1", mockResult, { requireConfirmation: true })).rejects.toThrow("roll record could not be confirmed");
+    expect(insertMock).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("getRecentRolls", () => {
   it("queries newest-first with the default limit of 50", async () => {
     const { getRecentRolls } = await import("@/lib/supabase/rolls");

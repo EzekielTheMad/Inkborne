@@ -7,14 +7,17 @@ import type { RollLogEntry } from "@/lib/types/rolls";
  *
  * Fire-and-forget by contract: a failed insert logs to the console and never
  * throws — persistence must never block the roll toast (design §3.5).
+ * Explicit requireConfirmation callers instead await one returned row; failure
+ * remains potentially committed and must never be automatically inserted again.
  * `user_id` is filled server-side (DEFAULT auth.uid()).
  */
 export async function insertRoll(
   characterId: string,
   result: RollResult,
+  options?: { requireConfirmation: boolean },
 ): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase.from("character_rolls").insert({
+  const insertion = supabase.from("character_rolls").insert({
     character_id: characterId,
     kind: result.request.kind,
     label: result.request.label,
@@ -24,8 +27,14 @@ export async function insertRoll(
     rolled_at: result.rolled_at,
   });
 
-  if (error) {
-    console.error("[insertRoll] Error:", error.message);
+  if (options?.requireConfirmation) {
+    const { data, error } = await insertion.select("id").single();
+    if (error || !data || typeof data.id !== "string") {
+      throw new Error("The roll record could not be confirmed. Reload and review the roll log before rolling again.");
+    }
+  } else {
+    const { error } = await insertion;
+    if (error) console.error("[insertRoll] Error:", error.message);
   }
 }
 

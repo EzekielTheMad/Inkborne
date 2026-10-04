@@ -11,6 +11,7 @@ import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
 import { ConcentrationBadge } from "@/components/sheet/spells/concentration-badge";
 import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { CurrencyTracker } from "@/components/sheet/inventory/currency-tracker";
+import { executeRoll } from "@/lib/dice/roller";
 import { insertRoll } from "@/lib/supabase/rolls";
 import type { CharacterSpell } from "@/lib/types/spells";
 import type { CharacterState } from "@/lib/types/character";
@@ -114,6 +115,107 @@ function trigger(surface: Surface, mobile = false) {
     fireEvent.click(screen.getAllByRole("button", { name })[0]);
   }
 }
+
+function deathRoll(natural: number, total = natural) {
+  vi.mocked(executeRoll).mockImplementationOnce(request => ({ request, total, natural, groups: [], modifier: 0, rolled_at: "2026-10-04T00:00:00Z" }));
+}
+async function clickDeathRoll(index = 0) {
+  fireEvent.click(screen.getAllByRole("button", { name: "Roll death save" })[index]);
+  fireEvent.click(await screen.findByRole("button", { name: "Roll" }));
+}
+describe("actual conditional rolled death-save callers (separate roll/state saves)", () => {
+  it.each([[1, 1, 0, 3, 0], [7, 7, 0, 2, 0], [14, 14, 1, 1, 0], [8, 12, 1, 1, 0], [20, 20, 0, 0, 1]])("natural %s total %s preserves established rules in one raw conditional patch", async (natural, total, successes, failures, hp) => {
+    stored = structuredClone(baseline); deathRoll(natural, total);
+    render(<Fixture raw={baseline} surface="death" />); await clickDeathRoll();
+    await waitFor(() => expect(stored.death_saves).toEqual({ successes, failures }));
+    expect(stored.current_hp).toBe(hp); expect(stored.quick_notes).toBe("keep");
+    expect(rpc).toHaveBeenCalledTimes(1); expect(rpc.mock.calls[0][0]).toBe("patch_character_state_if_current");
+    expect(rpc.mock.calls[0][1].expected_state).toEqual(baseline);
+    expect(insertRoll).toHaveBeenCalledTimes(1); expect(vi.mocked(insertRoll).mock.calls[0][2]).toEqual({ requireConfirmation: true });
+  });
+  it("pending notes reject before RNG, remain intact, and permit an explicit roll after settlement", async () => {
+    stored = structuredClone(baseline); const hold = deferred();
+    rpc.mockImplementationOnce(async (name, args) => { await hold.promise; return persist(name, args); });
+    render(<Fixture raw={baseline} surface="death" />);
+    let notes!: Promise<boolean>;
+    await act(async () => { notes = handles.sheet.saves.patchState({ quick_notes: "independent" }); });
+    await clickDeathRoll();
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Wait for pending saves"));
+    expect(insertRoll).not.toHaveBeenCalled(); expect(rpc).toHaveBeenCalledTimes(1);
+    await act(async () => { hold.resolve(); await notes; });
+    deathRoll(14); await clickDeathRoll();
+    await waitFor(() => expect(stored.death_saves?.successes).toBe(1));
+    expect(stored.quick_notes).toBe("independent"); expect(insertRoll).toHaveBeenCalledTimes(1);
+  });
+  it.each([1,20])("natural %s hidden conflict/lost response retains recovery and refuses reroll", async natural => {
+    for (const outcome of ["conflict","response-lost"]) {
+      stored = structuredClone(baseline); const hold = deferred(); deathRoll(natural);
+      rpc.mockReset().mockImplementation(async (name, args) => persist(name,args));
+      rpc.mockImplementationOnce(async (name,args) => {
+        await hold.promise;
+        if (outcome === "conflict") return { error: null, data: [{ status: "conflict", resulting_state: structuredClone(stored) }] };
+        persist(name,args); return { error: { message: "committed response lost" }, data: null };
+      });
+      const fixture = <Fixture raw={baseline} surface="death" />;
+      const view = render(<Activity mode="visible">{fixture}</Activity>);
+      await clickDeathRoll(); await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
+      let notes!: Promise<boolean>;
+      await act(async () => { notes = handles.sheet.saves.patchState({ quick_notes: "independent" }); });
+      view.rerender(<Activity mode="hidden">{fixture}</Activity>);
+      if (outcome === "conflict") stored={...stored,death_saves:{successes:2,failures:1}};
+      await act(async () => { hold.resolve(); await notes; });
+      view.rerender(<Activity mode="visible">{fixture}</Activity>);
+      await waitFor(() => expect(screen.getAllByRole("alert").at(-1)).toHaveTextContent("separate saves"));
+      expect(screen.getByRole("button",{name:"Roll death save"})).toBeDisabled();
+      fireEvent.click(screen.getByRole("button",{name:"Roll death save"}));
+      expect(rpc).toHaveBeenCalledTimes(2); expect(rpc.mock.calls[1][0]).toBe("patch_character_state");
+      expect(stored.quick_notes).toBe("independent");
+      expect(insertRoll).toHaveBeenCalledTimes(outcome === "conflict" ? 1 : 2);
+      view.unmount();
+    }
+  });
+  it("both responsive instances block while the roll record is still pending after state confirmation", async () => {
+    stored=structuredClone(baseline); const hold=deferred(); deathRoll(14);
+    vi.mocked(insertRoll).mockReturnValueOnce(hold.promise);
+    render(<Fixture raw={baseline} surface="shell" />); await clickDeathRoll();
+    await waitFor(()=>expect(stored.death_saves?.successes).toBe(1));
+    await waitFor(()=>expect(handles.sheet.saves.patchState.hasPendingWrites()).toBe(false));
+    for(const trigger of screen.getAllByRole("button",{name:"Roll death save"})) { expect(trigger).toBeDisabled();fireEvent.click(trigger); }
+    expect(insertRoll).toHaveBeenCalledTimes(1); expect(rpc).toHaveBeenCalledTimes(1);
+    await act(async()=>hold.resolve());
+    await waitFor(()=>expect(screen.getAllByRole("button",{name:"Roll death save"})[0]).toBeEnabled());
+  });
+  it("reload waits for a held roll insert after the conditional state conflict has settled", async()=>{
+    stored=structuredClone(baseline);deathRoll(14);const hold=deferred();
+    vi.mocked(insertRoll).mockReturnValueOnce(hold.promise);
+    rpc.mockImplementationOnce(async()=>({error:null,data:[{status:"conflict",resulting_state:structuredClone(stored)}]}));
+    render(<Fixture raw={baseline} surface="death" />);await clickDeathRoll();
+    await waitFor(()=>expect(screen.getByRole("button",{name:"Reload character"})).toBeDisabled());
+    await waitFor(()=>expect(handles.sheet.saves.patchState.hasPendingWrites()).toBe(false));
+    expect(screen.getByRole("button",{name:"Reload character"})).toBeDisabled();
+    await act(async()=>hold.resolve());
+    await waitFor(()=>expect(screen.getByRole("button",{name:"Reload character"})).toBeEnabled());
+    expect(insertRoll).toHaveBeenCalledTimes(1);
+  });
+  it("natural-20 roll uncertainty stays visible after an independent note also fails",async()=>{
+    stored=structuredClone(baseline);deathRoll(20);vi.mocked(insertRoll).mockRejectedValueOnce(new Error("lost roll response"));
+    render(<Fixture raw={baseline} surface="death" />);await clickDeathRoll();
+    await waitFor(()=>expect(screen.getByRole("alert")).toHaveTextContent("roll record could not be confirmed"));
+    rpc.mockImplementationOnce(async()=>({error:{message:"note rejected"},data:null}));
+    await act(async()=>{ expect(await handles.sheet.saves.patchState({quick_notes:"draft"})).toBe(false); });
+    expect(screen.getByRole("alert")).toHaveTextContent("roll record could not be confirmed");
+    expect(screen.getByRole("button",{name:"Reload character"})).toBeEnabled();
+    expect(stored.current_hp).toBe(1);expect(insertRoll).toHaveBeenCalledTimes(1);
+  });
+  it.each([14,20])("natural %s roll insert uncertainty remains visible after state success, without reinsertion",async natural=>{
+    stored=structuredClone(baseline);deathRoll(natural);vi.mocked(insertRoll).mockRejectedValueOnce(new Error("lost roll response"));
+    render(<Fixture raw={baseline} surface="death" />);await clickDeathRoll();
+    await waitFor(()=>expect(screen.getAllByRole("alert")[0]).toHaveTextContent("roll record could not be confirmed"));
+    expect(stored.current_hp).toBe(natural===20?1:0);expect(insertRoll).toHaveBeenCalledTimes(1);expect(rpc).toHaveBeenCalledTimes(1);
+    if(natural===14) expect(screen.getByRole("button",{name:"Roll death save"})).toBeDisabled();
+    else expect(screen.queryByRole("button",{name:"Roll death save"})).not.toBeInTheDocument();
+  });
+});
 
 describe("remaining state-only actual controls", () => {
   it("rolled concentration failure uses one raw conditional drop, retaining independent effects", async () => {

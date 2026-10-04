@@ -6,7 +6,8 @@ import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { cn } from "@/lib/utils";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import { resolveDeathSave } from "@/lib/rolls/death-saves";
-import type { RollResult } from "@/lib/dice/types";
+import { useCharacterState, useRolls } from "@/lib/character/character-context";
+import type { RollRequest } from "@/lib/dice/types";
 import type { CharacterState, CharacterDeathSaves } from "@/lib/types/character";
 
 interface DeathSavesProps {
@@ -18,6 +19,9 @@ interface DeathSavesProps {
 
 export function DeathSaves({ currentHp, deathSaves, patchState, manualPatchState }: DeathSavesProps) {
   const { pending, run } = useDialogAction();
+  const { state, reloadRequired, patchState: stateWriter } = useCharacterState();
+  const { rollWithPersistence, rollPersistencePending, rollPersistenceUncertain } = useRolls();
+  const [rollRecoveryRequired, setRollRecoveryRequired] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const saveManual = (patch: Partial<CharacterState>) => {
     setSaveError(null);
@@ -45,15 +49,35 @@ export function DeathSaves({ currentHp, deathSaves, patchState, manualPatchState
     });
   }
 
-  // RAW automation (design D9): nat 1 = two failures, nat 20 = regain 1 HP +
-  // reset, total ≥ 10 = success, else failure — one atomic patch per roll.
-  function handleRollResult(result: RollResult) {
-    void patchState(
-      resolveDeathSave({ successes, failures }, {
-        natural: result.natural,
-        total: result.total,
-      }).patch,
-    );
+  // Established RAW resolution stays one conditional state patch. The roll
+  // record is a separate write; either uncertain result requires review/reload.
+  function handleRollRequest(request: RollRequest) {
+    if (rollRecoveryRequired) return;
+    setSaveError(null);
+    let rolled = false;
+    let rollSave: Promise<boolean> | undefined;
+    void run(async () => {
+      await stateWriter.runAction(state, confirmed => {
+        const counts = confirmed.death_saves ?? { successes: 0, failures: 0 };
+        if ((confirmed.current_hp ?? currentHp) > 0 || counts.successes >= 3 || counts.failures >= 3) {
+          throw new Error("This character is no longer waiting for a death save.");
+        }
+        const tracked = rollWithPersistence(request);
+        rolled = true;
+        // Handle insertion rejection immediately, even if state settles first.
+        rollSave = tracked.persistence.then(() => true, () => false);
+        return { patch: resolveDeathSave(counts, tracked.result).patch, result: true };
+      }, { requireCurrent: true });
+      if (rollSave && !(await rollSave)) {
+        throw new CharacterStateReloadError("The death-save marks were saved, but the roll record could not be confirmed. Reload and review the roll log before rolling again.");
+      }
+    }, () => {}, error => {
+      if (rolled || error instanceof CharacterStateReloadError) setRollRecoveryRequired(true);
+      setSaveError(error instanceof CharacterStateReloadError
+        ? `${error.message} Roll recording and character state are separate saves; review both before rolling again.`
+        : rolled ? "The death-save result could not be confirmed. Roll recording and character state are separate saves. Reload and review both before rolling again."
+          : "The character is still saving or has changed. Wait for pending saves, then choose the action again.");
+    });
   }
 
   const isStabilized = successes >= 3;
@@ -119,7 +143,8 @@ export function DeathSaves({ currentHp, deathSaves, patchState, manualPatchState
           kind="death_save"
           label="Death Save"
           ariaLabel="Roll death save"
-          onResult={handleRollResult}
+          onRollRequest={handleRollRequest}
+          disabled={pending || rollRecoveryRequired || rollPersistencePending || rollPersistenceUncertain || reloadRequired}
           className="w-full rounded-md border border-destructive/40 px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-destructive hover:bg-destructive/10"
         >
           Roll Death Save

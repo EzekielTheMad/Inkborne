@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -156,6 +157,7 @@ export interface CharacterContextValue {
 
   // Play state
   state: CharacterState;
+  reloadRequired: boolean;
   patchState: ReturnType<typeof createStateWriter>;
 
   // Evaluation
@@ -179,6 +181,9 @@ export interface CharacterContextValue {
   // Rolls (hydrated history + session, newest first)
   rolls: RollLogEntry[];
   roll: (request: RollRequest) => RollResult;
+  rollWithPersistence: (request: RollRequest) => { result: RollResult; persistence: Promise<void> };
+  rollPersistencePending: boolean;
+  rollPersistenceUncertain: boolean;
 
   // Hit dice (per-class pools; max computed from class levels)
   hitDicePools: HitDicePool[];
@@ -622,8 +627,8 @@ export function CharacterProvider({
   // Newest first: hydrated history seeds the list; session rolls prepend.
   const [rolls, setRolls] = useState<RollLogEntry[]>(initialRolls ?? []);
 
-  const roll = useCallback(
-    (request: RollRequest): RollResult => {
+  const recordRoll = useCallback(
+    (request: RollRequest, requireConfirmation = false) => {
       // Active-effect roll modifiers (Bless +1d4, Bane -1d4…) are collected
       // by the roll SURFACES (RollPopover, ConcentrationPrompt) via
       // `collectRollModifiers` and arrive already baked into the request —
@@ -644,14 +649,40 @@ export function CharacterProvider({
         rolled_at: result.rolled_at,
       };
       setRolls((prev) => [entry, ...prev]);
-      // Fire-and-forget persistence — never blocks the toast (design §3.5).
-      void Promise.resolve(insertRoll(character.id, result)).catch((err) => {
-        console.error("Failed to persist roll:", err);
-      });
-      return result;
+      const persistence = requireConfirmation
+        ? insertRoll(character.id, result, { requireConfirmation: true })
+        : insertRoll(character.id, result);
+      return { result, persistence: Promise.resolve(persistence) };
     },
     [character.id, character.user_id],
   );
+  const roll = useCallback((request: RollRequest): RollResult => {
+    const tracked = recordRoll(request);
+    void tracked.persistence.catch(err => console.error("Failed to persist roll:", err));
+    return tracked.result;
+  }, [recordRoll]);
+  const trackedRollPending = useRef(false);
+  const trackedRollUncertain = useRef(false);
+  const [rollPersistencePending, setRollPersistencePending] = useState(false);
+  const [rollPersistenceUncertain, setRollPersistenceUncertain] = useState(false);
+  const rollWithPersistence = useCallback((request: RollRequest) => {
+    if (trackedRollUncertain.current) throw new CharacterStateReloadError("The death-save roll record could not be confirmed. Reload before rolling again.");
+    if (trackedRollPending.current) throw new Error("A death-save roll record is still saving.");
+    const tracked = recordRoll(request, true);
+    trackedRollPending.current = true;
+    setRollPersistencePending(true);
+    const persistence = tracked.persistence.catch(error => {
+      // Natural-20 HP can hide the death-save control before its insert settles.
+      setReloadRequired(true);
+      trackedRollUncertain.current = true;
+      setRollPersistenceUncertain(true);
+      throw error;
+    }).finally(() => {
+      trackedRollPending.current = false;
+      setRollPersistencePending(false);
+    });
+    return { result: tracked.result, persistence };
+  }, [recordRoll]);
 
   const resources = useMemo<FeatureResource[]>(() => {
     const classChoices = (character.choices?.classes ?? []).map((c) => ({
@@ -705,6 +736,7 @@ export function CharacterProvider({
     hasSheet,
     maxHp,
     state,
+    reloadRequired,
     patchState,
     evalResult,
     portrait,
@@ -718,6 +750,9 @@ export function CharacterProvider({
     resources,
     rolls,
     roll,
+    rollWithPersistence,
+    rollPersistencePending,
+    rollPersistenceUncertain,
     hitDicePools,
     spendHitDie,
     spells,
@@ -745,11 +780,14 @@ export function CharacterProvider({
 
   return (
     <CharacterContext.Provider value={value}>
-      {saveError && (
+      {(saveError || rollPersistenceUncertain) && (
         <div role="alert" className="flex items-center justify-between gap-3 border-b border-destructive bg-background px-4 py-3 text-sm text-destructive">
-          <p>{saveError}</p>
+          <div className="space-y-1">
+            {saveError && <p>{saveError}</p>}
+            {rollPersistenceUncertain && <p>The death-save roll record could not be confirmed. Reload and review the roll log before rolling again.</p>}
+          </div>
           {reloadRequired ? (
-            <button type="button" className="underline" disabled={patchState.hasPendingWrites()} onClick={() => window.location.reload()}>Reload character</button>
+            <button type="button" className="underline" disabled={patchState.hasPendingWrites() || rollPersistencePending} onClick={() => window.location.reload()}>Reload character</button>
           ) : (
             <button type="button" className="underline" onClick={() => setSaveError(null)}>Dismiss</button>
           )}
@@ -794,6 +832,7 @@ export function useCharacterState() {
   const ctx = useCharacterContext();
   return {
     state: ctx.state,
+    reloadRequired: ctx.reloadRequired,
     patchState: ctx.patchState,
     // Explicit state-only UI patches are derived from this render. Refuse a
     // stale or pending render before saving against the separate raw baseline.
@@ -894,11 +933,17 @@ export function useRolls(): {
   /** Hydrated + session rolls, newest first. */
   rolls: RollLogEntry[];
   roll: (request: RollRequest) => RollResult;
+  rollWithPersistence: (request: RollRequest) => { result: RollResult; persistence: Promise<void> };
+  rollPersistencePending: boolean;
+  rollPersistenceUncertain: boolean;
 } {
   const ctx = useCharacterContext();
   return {
     rolls: ctx.rolls,
     roll: ctx.roll,
+    rollWithPersistence: ctx.rollWithPersistence,
+    rollPersistencePending: ctx.rollPersistencePending,
+    rollPersistenceUncertain: ctx.rollPersistenceUncertain,
   };
 }
 

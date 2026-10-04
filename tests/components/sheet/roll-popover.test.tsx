@@ -50,6 +50,27 @@ beforeEach(() => {
   rollMock.mockImplementation((request: RollRequest) => mkResult(request));
 });
 
+describe("caller-owned guarded roll requests", () => {
+  it("replaces default RNG/result delivery while preserving the d20 request", async () => {
+    const request = vi.fn(); const result = vi.fn();
+    render(<RollPopover kind="death_save" label="Death Save" onRollRequest={request} onResult={result}>Death Save</RollPopover>);
+    fireEvent.click(screen.getByRole("button", { name: "Roll Death Save" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Advantage" }));
+    expect(request).toHaveBeenCalledWith({ kind: "death_save", label: "Death Save", expression: "1d20", mode: "advantage" });
+    expect(rollMock).not.toHaveBeenCalled(); expect(result).not.toHaveBeenCalled();
+  });
+  it("disables every mode in an already-open popover", async () => {
+    const view = render(<RollPopover kind="death_save" label="Death Save">Death Save</RollPopover>);
+    fireEvent.click(screen.getByRole("button", { name: "Roll Death Save" }));
+    await screen.findByRole("button", { name: "Advantage" });
+    view.rerender(<RollPopover kind="death_save" label="Death Save" disabled>Death Save</RollPopover>);
+    for (const name of ["Roll", "Advantage", "Disadvantage"]) {
+      expect(screen.getByRole("button", { name })).toBeDisabled(); fireEvent.click(screen.getByRole("button", { name }));
+    }
+    expect(rollMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("<RollPopover> — d20 kinds", () => {
   function renderCheck(props: Partial<React.ComponentProps<typeof RollPopover>> = {}) {
     return render(

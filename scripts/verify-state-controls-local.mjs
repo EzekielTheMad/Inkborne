@@ -18,8 +18,8 @@ const stubs = {
   "@/lib/supabase/client": `export function createClient(){return {rpc:(name,args)=>window.fixtureRpc(name,args)}}`,
   "@/lib/supabase/inventory": `export async function addInventoryItem(){} export async function updateInventoryItem(){} export async function removeInventoryItem(){} export async function unequipAllArmor(){}`,
   "@/lib/supabase/spells": `export async function addCharacterSpell(){} export async function updateCharacterSpell(){} export async function removeCharacterSpell(){}`,
-  "@/lib/supabase/rolls": `export async function insertRoll(...args){window.fixture.rolls.push(args)}`,
-  "@/lib/dice/roller": `export function executeRoll(request){return {request,total:1,natural:1,groups:[],modifier:0,rolled_at:'2026-10-04T00:00:00Z'}}`,
+  "@/lib/supabase/rolls": `export async function insertRoll(...args){window.fixture.rolls.push(args);await window.fixtureRollSave(...args)}`,
+  "@/lib/dice/roller": `export function executeRoll(request){return {request,total:window.fixture.rollTotal??window.fixture.rollNatural??1,natural:window.fixture.rollNatural??1,groups:[],modifier:0,rolled_at:'2026-10-04T00:00:00Z'}}`,
 };
 await build({
   stdin: { resolveDir: root, loader: "tsx", sourcefile: "local-state-controls-fixture.tsx", contents: `
@@ -48,6 +48,9 @@ const linked={...guard,id:'old',slug:'old',name:'Old Focus',source:'spell',conce
 const baseline={current_hp:0,conditions:['Poisoned'],exhaustion:1,death_saves:{successes:0,failures:1},inspiration:false,rage_active:false,seen_sheet_first_time:true,active_effects:[guard,linked],concentrating_on:{spell_slug:'old',spell_name:'Old Focus',slot_level:1,started_at:linked.applied_at},currency:{pp:0,gp:10,ep:0,sp:2,cp:3},quick_notes:'keep'};
 let stored = structuredClone(baseline);
 let holdConditional = false;
+let holdRollSave = false;
+let loseRollResponse = false;
+const heldRollSaves = [];
 const held = [];
 const calls = [];
 function settle(name, args, outcome = "normal") {
@@ -82,8 +85,12 @@ try {
     if(holdConditional&&name==='patch_character_state_if_current') return new Promise(resolve=>held.push(outcome=>resolve(settle(name,args,outcome))));
     return settle(name,args);
   });
+  await context.exposeBinding("fixtureRollSave", async()=>{
+    if(holdRollSave) return new Promise((resolve,reject)=>heldRollSaves.push(fail=>fail?reject(new Error('Simulated lost roll response')):resolve()));
+    if(loseRollResponse) throw new Error('Simulated lost roll response');
+  });
   const page=await context.newPage(); page.on('pageerror',error=>errors.push(error.message));
-  async function reset(mobile=false){assert.equal(held.length,0);stored=structuredClone(baseline);calls.length=0;holdConditional=false;await page.setViewportSize(mobile?{width:390,height:844}:{width:1280,height:900});await page.goto(origin+'/sheet');await page.getByRole('button',{name:mobile?'Inspiration inactive':'Grant inspiration',exact:true}).waitFor()}
+  async function reset(mobile=false){assert.equal(heldRollSaves.length,0);holdRollSave=false;loseRollResponse=false;assert.equal(held.length,0);stored=structuredClone(baseline);calls.length=0;holdConditional=false;await page.setViewportSize(mobile?{width:390,height:844}:{width:1280,height:900});await page.goto(origin+'/sheet');await page.getByRole('button',{name:mobile?'Inspiration inactive':'Grant inspiration',exact:true}).waitFor()}
   async function settled(){await page.waitForFunction(()=>!window.fixture.saves.patchState.hasPendingWrites());await page.waitForFunction(()=>!document.querySelector('[aria-busy="true"]'))}
   async function state(target=page){return JSON.parse(await target.getByLabel('Character state').textContent())}
   async function click(name,target=page){await target.getByRole('button',{name,exact:true}).click()}
@@ -163,6 +170,48 @@ try {
       evidence.push({check:`actual ${mobile?'mobile':'desktop'} rolled concentration hidden ${outcome}: one separately logged roll, conditional drop, notes, cleared busy, Keep, explicit reload/no replay`,passed:true});
     }
   }
+  async function rollDeath(natural=14){
+    await page.evaluate(value=>{window.fixture.rollNatural=value},natural);
+    await click('Roll death save');await page.getByRole('button',{name:'Roll',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Roll',exact:true}).evaluate(button=>{button.click();button.click()});
+  }
+  for(const mobile of [false,true]){
+    await reset(mobile);await rollDeath(mobile?1:14);await settled();
+    await page.waitForFunction(()=>window.fixture.rolls.length===1);
+    assert.deepEqual(stored.death_saves,mobile?{successes:0,failures:3}:{successes:1,failures:1});
+    assert.equal(calls.length,1);assert.equal(calls[0].name,'patch_character_state_if_current');
+    assert.equal(await page.evaluate(()=>window.fixture.rolls[0][2].requireConfirmation),true);
+    evidence.push({check:`actual ${mobile?'mobile':'desktop'} rolled death save: unchanged rules, one conditional patch/strict separate insert and no duplicate click`,passed:true});
+    for(const outcome of ['conflict','response-lost']){
+      await reset(mobile);holdConditional=true;await rollDeath(20);
+      await page.waitForFunction(()=>window.fixture.saves.patchState.hasPendingWrites());assert.equal(held.length,1);
+      await page.evaluate(()=>{window.fixture.notes=window.fixture.saves.patchState({quick_notes:'death-independent'})});
+      await page.evaluate(()=>window.fixture.away());await page.getByRole('heading',{name:'Away fixture'}).waitFor();
+      if(outcome==='conflict')stored={...stored,death_saves:{successes:2,failures:1}};
+      held.shift()(outcome);await page.evaluate(()=>window.fixture.notes);await page.goBack();
+      await page.getByRole('alert').filter({hasText:'separate saves'}).last().waitFor();await settled();
+      assert.equal(await page.getByRole('button',{name:'Roll death save',exact:true}).isDisabled(),true);
+      assert.equal(await page.evaluate(()=>window.fixture.rolls.length),1);assert.equal(calls.length,2);
+      assert.equal(calls[1].name,'patch_character_state');assert.equal(stored.quick_notes,'death-independent');
+      assert.equal(stored.current_hp,outcome==='conflict'?0:1);
+      await reload();assert.deepEqual(await state(),{...stored,temp_hp:0});assert.equal(calls.length,2);
+      evidence.push({check:`actual ${mobile?'mobile':'desktop'} natural-20 death save hidden ${outcome}: optimistic HP restoration, typed separate-save recovery, notes, Back, explicit reload/no replay`,passed:true});
+    }
+  }
+  await reset(true);loseRollResponse=true;await rollDeath(20);await settled();
+  await page.getByRole('alert').filter({hasText:'roll record could not be confirmed'}).waitFor();
+  assert.equal(stored.current_hp,1);assert.equal(await page.getByRole('button',{name:'Roll death save',exact:true}).count(),0);
+  assert.equal(await page.evaluate(()=>window.fixture.rolls.length),1);assert.equal(calls.length,1);
+  await reload();assert.equal(stored.current_hp,1);assert.equal(calls.length,1);
+  evidence.push({check:'actual mobile natural-20 state success/roll response loss: global recovery survives hidden death control, explicit reload/no reinsertion',passed:true});
+  await reset(false);holdRollSave=true;await rollDeath(14);await settled();
+  await page.waitForFunction(()=>!window.fixture.saves.patchState.hasPendingWrites());assert.equal(heldRollSaves.length,1);
+  await page.setViewportSize({width:390,height:844});
+  const mobileRoll=page.getByRole('button',{name:'Roll death save',exact:true});assert.equal(await mobileRoll.isDisabled(),true);
+  await mobileRoll.evaluate(button=>button.click());assert.equal(await page.evaluate(()=>window.fixture.rolls.length),1);assert.equal(calls.length,1);
+  holdRollSave=false;heldRollSaves.shift()();await mobileRoll.waitFor();await page.waitForFunction(()=>!document.querySelector('[aria-busy="true"]'));
+  await page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).filter(button=>button.getAttribute('aria-label')==='Roll death save').some(button=>button.disabled));
+  evidence.push({check:'actual desktop-to-mobile death-save switch waits for separately pending roll insert after state confirmation; no second RNG/write',passed:true});
   assert.deepEqual(errors,[]);assert.deepEqual(remoteRequests,[]);
   await fs.writeFile(path.join(output,'evidence.json'),JSON.stringify({simulated:true,endpointModelOnly:true,evidence,errors,remoteRequests},null,2));console.log(JSON.stringify(evidence,null,2));
-}finally{while(held.length)held.shift()();try{if(browser)await browser.close()}finally{await new Promise(resolve=>server.close(resolve))}}
+}finally{while(heldRollSaves.length)heldRollSaves.shift()();while(held.length)held.shift()();try{if(browser)await browser.close()}finally{await new Promise(resolve=>server.close(resolve))}}
