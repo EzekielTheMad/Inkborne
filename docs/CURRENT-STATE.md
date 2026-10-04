@@ -1,5 +1,7 @@
 # Inkborne current work
 
+Latest equipment attempt: [exact local approval still rejected by execution review](handoffs/2026-10-04-equipment-exact-approval-review-blocker.md). Victor explicitly approved local staging/integration at 08:19 UTC; automatic review rejected the single command as mediated authorization. No SQL/application change, retry/workaround or exposed manual approval mechanism. Hosted changes/deployment remain forbidden.
+
 Start with the [consolidated project handoff](handoffs/2026-10-04-consolidated-project-handoff.md) and [release checklist](RELEASE-READINESS.md). Updated October 4, 2026. **Not release-ready.**
 
 Branch: `codex/playable-core-stability`. Exact application checkpoint: `4e14e8e1f26f097507a9a3f283ae2cfc6e783421`; the closing documentation-only commit is reported separately. Checkout: `C:/Users/kaios/Documents/Codex/2026-10-02/task/inkborne-core`. Other worktrees remain untouched.

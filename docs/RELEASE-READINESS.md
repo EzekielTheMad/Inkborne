@@ -1,5 +1,7 @@
 # Release-readiness checklist
 
+Latest equipment attempt: [exact local approval still rejected by execution review](handoffs/2026-10-04-equipment-exact-approval-review-blocker.md). Victor explicitly approved local staging/integration at 08:19 UTC; automatic review rejected the single command as mediated authorization. No SQL/application change, retry/workaround or exposed manual approval mechanism. Hosted changes/deployment remain forbidden.
+
 October 4, 2026. Current application `4e14e8e1f26f097507a9a3f283ae2cfc6e783421`; branch `codex/playable-core-stability`. **Not release-ready.** Use [CURRENT-STATE](CURRENT-STATE.md) for authority and the [consolidated project handoff](handoffs/2026-10-04-consolidated-project-handoff.md) for ranked risks, capabilities and evidence. This checklist supersedes earlier unapplied/partial-status bullets; historical results remain in their linked handoffs.
 
 ## Completed within scope

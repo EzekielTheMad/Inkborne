@@ -1,5 +1,7 @@
 # Inkborne consolidated project handoff
 
+> Later authority update: [exact equipment approval and execution-review rejection](2026-10-04-equipment-exact-approval-review-blocker.md). Victor stated exact local approval; action review rejected its mediated delivery before execution. Implementation remains absent; the blocker is reviewer recognition, not a new product-scope decision.
+
 October 4, 2026. Branch `codex/playable-core-stability`. Exact clean application checkpoint: **`4e14e8e1f26f097507a9a3f283ae2cfc6e783421`**. This closing pass changes documentation only; its commit is reported by the final response and `git rev-parse HEAD`. **Not release-ready; nothing pushed, merged, published or deployed.**
 
 ## What works now
