@@ -129,6 +129,7 @@ npm run build   # Next.js production build
 separate gate:
 
 ```sh
+npx playwright install chromium
 npm run test:e2e
 ```
 
