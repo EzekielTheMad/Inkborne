@@ -257,7 +257,7 @@ export function makeContentRef(
 
 ### Browser smoke (manual, during PR review)
 
-Test account: `test@inkborne.app` / `testpassword123`.
+Test account: `${E2E_TEST_EMAIL}` / `${E2E_TEST_PASSWORD}`.
 
 - **Voltee (Wizard 3):** open the builder, walk race/class/abilities/background/equipment. Every content list (races, classes, subclasses, backgrounds, features) should look identical to today. No "missing" entries means parsing is succeeding for every existing row.
 - **Xero (Barbarian 10 / Fighter 5):** open the sheet. Class features, racial traits, spells, inventory items render identically.

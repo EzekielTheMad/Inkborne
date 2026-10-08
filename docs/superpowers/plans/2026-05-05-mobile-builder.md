@@ -2142,7 +2142,7 @@ If using `preview_resize`, resize to 390 × 844.
 
 - [ ] **Step 3: Log in with the test account and navigate to a multiclass character's class step.**
 
-Voltee is single-class — use Xero (Barbarian 10 / Fighter 5) for the multiclass scenarios. Log in as test@inkborne.app.
+Voltee is single-class — use Xero (Barbarian 10 / Fighter 5) for the multiclass scenarios. Log in as ${E2E_TEST_EMAIL}.
 
 - [ ] **Step 4: Verify mobile layout renders.**
 

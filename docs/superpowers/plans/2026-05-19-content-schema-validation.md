@@ -1818,7 +1818,7 @@ If the build fails with the next/headers-in-client-bundle error, follow PR #56's
 
 - [ ] **Step 12.4: Browser smoke — Voltee (Wizard 3, build-from-scratch)**
 
-Copy `.env.local` into the worktree if not already present. Start the dev server via `mcp__Claude_Preview__preview_start` (server name `inkborne-dev` per `.claude/launch.json`). Log in with `test@inkborne.app` / `testpassword123`.
+Copy `.env.local` into the worktree if not already present. Start the dev server via `mcp__Claude_Preview__preview_start` (server name `inkborne-dev` per `.claude/launch.json`). Log in with `${E2E_TEST_EMAIL}` / `${E2E_TEST_PASSWORD}`.
 
 Open Voltee in the builder. Walk each step:
 - **Race:** every race in the list renders identically to today. Pick Mountain Dwarf (or any race with rich data).
