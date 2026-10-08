@@ -284,7 +284,7 @@ describe("<CharacterProvider> public hook surface", () => {
 
 ### Browser smoke (manual, during PR review)
 
-- Test account: `test@inkborne.app` / `testpassword123`
+- Test account: `${E2E_TEST_EMAIL}` / `${E2E_TEST_PASSWORD}`
 - Voltee (Wizard 3): rebuild from scratch via the builder — exercise each step (race, class, abilities, background, equipment). Confirm each commit persists, level/choices stay in sync.
 - Xero (Barbarian 10 / Fighter 5): pick a color via the sheet picker (regression check for PR-F's `updateCharacterColor` after delegation). Pick / unpick a class via the rail. Confirm content_refs round-trip.
 - Force a failure: in DevTools, temporarily set a network block on the supabase update endpoint and confirm one of the step actions reverts local state + logs to console (per the new error pattern).

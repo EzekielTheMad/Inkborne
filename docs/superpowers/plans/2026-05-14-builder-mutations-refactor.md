@@ -2099,7 +2099,7 @@ cp ../../../.env.local .env.local
 
 (Or use `Copy-Item` on PowerShell.)
 
-Start the dev server via the preview tooling (`preview_start`). Log in with `test@inkborne.app` / `testpassword123`. Open Voltee in the builder.
+Start the dev server via the preview tooling (`preview_start`). Log in with `${E2E_TEST_EMAIL}` / `${E2E_TEST_PASSWORD}`. Open Voltee in the builder.
 
 Walk each step:
 - **Race step:** Pick a race, confirm a subrace, change subrace, then change race. Each commit should persist after refresh. The Change-Subrace fix (Task 5.6) means the subrace content_ref also disappears — verify via the sheet's racial-traits area after clearing.

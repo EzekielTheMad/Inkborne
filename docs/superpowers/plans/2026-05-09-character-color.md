@@ -1454,7 +1454,7 @@ Wait for "Ready in <ms>" output.
 
 - [ ] **Step 2: Resize to mobile and log in**
 
-If using preview MCP, set viewport mobile (375×812). Navigate to `http://localhost:3000/login` and log in as `test@inkborne.app` / `testpassword123`.
+If using preview MCP, set viewport mobile (375×812). Navigate to `http://localhost:3000/login` and log in as `${E2E_TEST_EMAIL}` / `${E2E_TEST_PASSWORD}`.
 
 - [ ] **Step 3: Test on Voltee (single-class Wizard)**
 

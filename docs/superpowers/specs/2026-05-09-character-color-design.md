@@ -305,7 +305,7 @@ Every surface that reads the color. Each is a class swap.
 
 ### Smoke (manual, during PR review)
 
-- Test account: `test@inkborne.app` / `testpassword123`
+- Test account: `${E2E_TEST_EMAIL}` / `${E2E_TEST_PASSWORD}`
 - Voltee (Wizard 3) and Xero (Barbarian 10 / Fighter 5):
   - Pick gold (default), purple, teal, magenta, custom hex
   - Verify carry-through on builder Race, Class (single + multiclass), Abilities steps
