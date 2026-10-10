@@ -42,7 +42,7 @@ beforeAll(async () => {
     grant select on public.game_systems to authenticated;
     insert into public.game_systems values ('${system}', '{"ability_scores":[{"slug":"str"},{"slug":"dex"},{"slug":"con"},{"slug":"int"},{"slug":"wis"},{"slug":"cha"}]}');
   `);
-  await db.exec(readFileSync(resolve("supabase/migrations/20261010225355_save_character_abilities.sql"), "utf8"));
+  await db.exec(readFileSync(resolve("supabase/migrations/20261010232200_save_character_abilities.sql"), "utf8"));
 }, 30_000);
 
 beforeEach(async () => {

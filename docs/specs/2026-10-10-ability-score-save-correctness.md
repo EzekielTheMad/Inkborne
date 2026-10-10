@@ -33,13 +33,34 @@ assignment, and starts unordered writes for rapid edits.
   a conflict requires reloading instead of a blind overwrite.
 - No equipment, authentication configuration, live-data or deployment changes.
 
-## Release prerequisite and limits
+## Release status and limits
 
-Migration `20261010225355_save_character_abilities.sql` must be applied through
-the normal reviewed release process before deploying the new client. There is
-no fallback to unsafe whole-choices writes. Generated RPC types are reconciled
-to the migration contract in this change; hosted regeneration is still a
-release verification step.
+The reviewed SQL was applied to the Inkborne hosted project on 2026-10-10 at
+23:22 UTC and verified at 23:23 UTC. Supabase recorded live migration version
+`20261010232200`; the original PR file used source version `20261010225355`.
+The repository file is now `20261010232200_save_character_abilities.sql` to
+match the existing ledger entry. Its SQL bytes are unchanged:
+`b31702903d0fc8fb1a31b86a5d3c0d54c01e0b69e8c57d4ba9c5a970f725e6c1` (SHA-256).
+
+This is repository bookkeeping only: no SQL was reapplied, no live migration
+history was repaired, and no other migration was renamed. Available repository
+history/configuration contains no evidence that another environment applied the
+original source version. Inventory every target environment before a future
+broad CLI push; any other recorded source-version mapping needs deliberate
+reconciliation.
+
+**Broad CLI migration pushes still require separate reconciliation of
+preexisting, unrelated history drift**, including older timestamp mismatches and
+remote-only October 3 entries. This rename resolves only the ability migration's version pair. Do not
+use a blanket push, forced `--include-all`, or live-history repair as a shortcut.
+
+The live function signature, permissions and missing-identity denial were
+verified without mutating characters. Successful live owner saves, integration
+with the existing trigger happy path, multi-connection races, and authenticated
+browser acceptance remain unverified. The live generated contract confirms the
+argument/result shape; the reviewed client intentionally also permits a null
+expected method for a character with no persisted allocation method. No unsafe
+whole-choices fallback is used. The application PR remains draft and unmerged.
 
 Previous/Next buttons wait for saves. Other builder links and browser Back are
 not a universal navigation blocker: accepted requests can complete for their
