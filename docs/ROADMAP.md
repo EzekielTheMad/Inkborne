@@ -12,6 +12,8 @@ This document layers the new vision items (homebrew authoring, content importer,
 
 ## Immediate priority
 
+Use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) for the current executable queue and existing evidence links.
+
 Stabilize character creation, builder completion and the playable sheet before
 adding content families or expanding worldbuilding. Keep existing narrative and
 campaign integration intact; the group currently uses LegendKeeper. Follow
@@ -87,7 +89,7 @@ Each milestone has a **goal**, **scope**, **exit criteria**, and ideally a **fee
 ---
 
 ### M2 — Claude Design implementation (parallel with M1)
-**Status (2026-06-19): ◑ Builder polish shipped; journey polish outstanding.** The builder half — preview modal, class step rail, multiclass, level-up, mobile, color carry-through — shipped via PRs #37–#54. The journey half (landing / auth / dashboard / sheet aesthetic) is **not** built; its Claude Design handoff bundle is stranded on the `feat/mobile-builder` WIP commit (rescue before deleting that branch). Journey polish is not required for alpha #1.
+**Status (reconciled 2026-10-11): Builder and journey polish shipped.** Builder #37-#54 and journey [#67](https://github.com/EzekielTheMad/Inkborne/pull/67) are complete. Rescued references remain in `docs/design-briefs/design_handoff_journey_alpha/`; historical scope below is not a rebuild queue.
 **Goal:** Apply the design polish coming back from Claude Design without rushing.
 **Estimated effort:** 2–4 weeks (paced by Claude Design output cadence).
 

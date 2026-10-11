@@ -1,5 +1,7 @@
 # Inkborne current work
 
+**Fresh Codex thread:** start with [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md). Development is paused for handoff. Local implementation checkpoint `77e9a956` has 2,230 passing unit tests, focused checks, build and offline UI; the full quality gate is blocked by ten inherited React lint findings.
+
 ## October 11 local continuation
 
 The isolated `codex/equipment-executable-verification` branch now has [executable starting-equipment coverage](handoffs/2026-10-11-equipment-postgres-wasm.md): 45 synthetic PostgreSQL-WASM cases, plus existing application boundaries and offline desktop/mobile component acceptance. The first run exposed a copy-function variable/alias collision, fixed by renaming the new ledger row variable only. No hosted change or migration application occurred. Full migration-chain/concurrent-connection acceptance remains outstanding; the earlier October 4 statement that no SQL runtime had executed the stage is historical. PR101's separate ability implementation remains the reviewed dev build and still needs integration into the broader local core before any release.

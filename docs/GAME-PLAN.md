@@ -8,6 +8,8 @@
 
 ## Current priority (2026-10-02)
 
+For current execution use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md): inspected worktrees, reconciled queue, evidence and approval boundaries. The October 11 checkpoint is paused for a new orchestrator; historical instructions below do not grant new authority.
+
 Character builder first: complete the fresh-character-to-play-sheet journey,
 including validation, understandable UI and recoverable saves. Preserve existing
 narrative/campaign integration; worldbuilding expansion is deferred because the
@@ -71,7 +73,9 @@ The goal: **invite the 8 friends** from the April 2026 survey to build character
 - **A9 — Closed-alpha feedback hardening.** Implementation and component coverage are complete in the active release candidate: the desktop header is persistent and mobile has a direct feedback control. Protected-preview UAT proved exact originating path/query capture and mobile access. Remaining gate: open that submitted context in the admin dashboard with an admin browser session.
 - **A10 — Player compendium v1.** *(Shipped and production-UAT verified.)* `/library` covers all eight seeded categories for players and DMs, uses platform + personal + campaign-shared entitlements, and hides unrelated private/campaign content. Authoring/imports now live at `/homebrew` with compatibility redirects. Contract: `docs/specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md`.
 
-### Track B — M2 journey polish (parallel, not alpha-blocking)
+### Track B - M2 journey polish (complete)
+
+Journey polish shipped in [#67](https://github.com/EzekielTheMad/Inkborne/pull/67). B1-B4 below are historical scope, not an unfinished implementation queue.
 
 The landing → auth → dashboard → characters-list → sheet aesthetic pass. Design bundle: **`docs/design-briefs/design_handoff_journey_alpha/`** (start with its `README.md`); brief: `docs/design-briefs/journey-landing-to-sheet.md`. One focused PR per surface, mirroring how the builder polish shipped (#37–#54):
 
