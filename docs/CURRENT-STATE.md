@@ -1,5 +1,11 @@
 # Inkborne current work
 
+## October 11 local continuation
+
+The isolated `codex/equipment-executable-verification` branch now has [executable starting-equipment coverage](handoffs/2026-10-11-equipment-postgres-wasm.md): 45 synthetic PostgreSQL-WASM cases, plus existing application boundaries and offline desktop/mobile component acceptance. The first run exposed a copy-function variable/alias collision, fixed by renaming the new ledger row variable only. No hosted change or migration application occurred. Full migration-chain/concurrent-connection acceptance remains outstanding; the earlier October 4 statement that no SQL runtime had executed the stage is historical. PR101's separate ability implementation remains the reviewed dev build and still needs integration into the broader local core before any release.
+
+## October 4 checkpoint (historical)
+
 Latest equipment implementation: [atomic starting-equipment local staging](handoffs/2026-10-04-equipment-atomic-local-staging.md), committed as `c1d622c5de71c54515f52208f88137cc9f5b7b73`. Staged SQL and application integration are present; the earlier mediated-approval rejection is historical and superseded by the direct-session implementation. No PostgreSQL or hosted execution has occurred.
 
 Start with the [consolidated project handoff](handoffs/2026-10-04-consolidated-project-handoff.md) and [release checklist](RELEASE-READINESS.md). Updated October 4, 2026. **Not release-ready.**

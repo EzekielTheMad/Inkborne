@@ -245,7 +245,7 @@ DECLARE
   source_character public.characters%ROWTYPE;
   new_character_id uuid;
   resolved_name text;
-  source_grant public.character_starting_grants%ROWTYPE;
+  source_starting_grant public.character_starting_grants%ROWTYPE;
   target_grant_id uuid;
   inherited boolean := false;
   source_asi_ref record;
@@ -579,9 +579,9 @@ BEGIN
       USING ERRCODE = '23514';
   END IF;
 
-  SELECT * INTO source_grant FROM public.character_starting_grants
+  SELECT * INTO source_starting_grant FROM public.character_starting_grants
     WHERE character_id = source_character_id AND grant_kind = 'starting_equipment';
-  inherited := COALESCE(source_grant.status IN ('awarded', 'inherited_completion'), false)
+  inherited := COALESCE(source_starting_grant.status IN ('awarded', 'inherited_completion'), false)
     OR (jsonb_typeof(source_character.choices->'starting_equipment') = 'string'
       AND btrim(source_character.choices->>'starting_equipment') <> '')
     OR COALESCE(source_character.choices->'starting_equipment'->>'confirmed' = 'true', false);
@@ -592,7 +592,7 @@ BEGIN
     IF jsonb_typeof(source_character.choices->'starting_equipment') = 'object' THEN
       UPDATE public.characters SET choices = jsonb_set(choices, '{starting_equipment,confirmed}', 'true') WHERE id = new_character_id;
     END IF;
-  ELSIF source_grant.status = 'eligible' THEN
+  ELSIF source_starting_grant.status = 'eligible' THEN
     INSERT INTO public.character_starting_grants(character_id, status)
       VALUES (new_character_id, 'eligible') RETURNING id INTO target_grant_id;
   END IF;
@@ -605,7 +605,7 @@ BEGIN
     new_character_id, item.content_id, item.content_version, item.name,
     item.content_type, item.quantity, item.equipped, item.attuned,
     item.sort_order, item.notes, item.custom_data,
-    CASE WHEN item.starting_grant_id = source_grant.id THEN target_grant_id ELSE NULL END
+    CASE WHEN item.starting_grant_id = source_starting_grant.id THEN target_grant_id ELSE NULL END
   FROM public.character_inventory AS item
   WHERE item.character_id = source_character_id;
 

@@ -42,12 +42,12 @@ describe("local staged equipment SQL contracts (no database execution)", () => {
     const original = latest.slice(latest.indexOf("CREATE OR REPLACE FUNCTION public.copy_character"));
     // Exact unchanged prefix includes background/ASI guards, campaign/content
     // access, state/choices and private notes/timeline copying.
-    const strippedDeclarations = copy.replace(/  source_grant public.character_starting_grants%ROWTYPE;\r?\n  target_grant_id uuid;\r?\n  inherited boolean := false;\r?\n/, "");
-    expect(strippedDeclarations.slice(0, strippedDeclarations.indexOf("  SELECT * INTO source_grant"))).toBe(original.slice(0, original.indexOf("  INSERT INTO public.character_inventory")));
+    const strippedDeclarations = copy.replace(/  source_starting_grant public.character_starting_grants%ROWTYPE;\r?\n  target_grant_id uuid;\r?\n  inherited boolean := false;\r?\n/, "");
+    expect(strippedDeclarations.slice(0, strippedDeclarations.indexOf("  SELECT * INTO source_starting_grant"))).toBe(original.slice(0, original.indexOf("  INSERT INTO public.character_inventory")));
     for (const table of ["character_content_refs", "character_inventory", "character_spells", "npcs"]) expect(copy).toContain(`INSERT INTO public.${table}`);
     expect(copy).toContain("VALUES (new_character_id, 'inherited_completion', now())");
-    expect(copy).toContain("ELSIF source_grant.status = 'eligible'");
-    expect(copy).toContain("item.starting_grant_id = source_grant.id THEN target_grant_id");
+    expect(copy).toContain("ELSIF source_starting_grant.status = 'eligible'");
+    expect(copy).toContain("item.starting_grant_id = source_starting_grant.id THEN target_grant_id");
     expect(copy).not.toContain("INSERT INTO public.character_rolls");
     expect(copy).not.toContain("source_grant.receipt");
   });
