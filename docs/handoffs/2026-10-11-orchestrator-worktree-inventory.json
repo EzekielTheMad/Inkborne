@@ -1,0 +1,294 @@
+{
+  "capturedAtUtc": "2026-10-11T22:40:44.0288509Z",
+  "phase": "sole orchestrator discovery; original work preserved",
+  "worktrees": [
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne",
+      "head": "15418a0373a41ac7bf0f8397333d70ce16005a7e",
+      "branch": "codex/backup-hardening",
+      "status": [
+        " M AGENTS.md",
+        "?? .codex/",
+        "?? build-content-versioning-uat-20260720-1126/",
+        "?? build-verification-content-versioning-20260720-1043/",
+        "?? worktrees/"
+      ],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/.claude/worktrees/agent-abab8ed7529d4ffd9",
+      "head": "8dd441e1c2cde040901c95f9a4d61a0d0b803455",
+      "branch": "docs/m4-homebrew-importer-spec",
+      "status": [
+        "?? docs/specs/2026-07-16-m4-homebrew-importer-design.md",
+        "?? docs/specs/2026-07-16-m4-homebrew-importer-plan.md"
+      ],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/.claude/worktrees/content-schema-spec",
+      "head": "b8d9be452b54268ba35db74e96418222d6ef9a37",
+      "branch": "refactor/content-schema-validation",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/.codex/worktrees/account-linking-rebase",
+      "head": "b5b3520f08ef1643e331a0b0ba7c78328c8d33a8",
+      "branch": "codex/account-linking-rebase-alpha",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/.codex/worktrees/alpha-readiness",
+      "head": "7f4630fb2f62c6ccea7d82d78b3c87462c574e4d",
+      "branch": "codex/alpha-readiness",
+      "status": [
+        " M docs/alpha/closed-alpha-runbook.md",
+        " M docs/alpha/supabase-security-acceptance.md",
+        " M docs/alpha/verification-2026-09-04.md"
+      ],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/.codex/worktrees/character-insert-rls",
+      "head": "ac2ae4ae5bfedc8684c29a17f6848454cf9b1c51",
+      "branch": "codex/character-insert-rls",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/.codex/worktrees/content-versioning-rls",
+      "head": "092835e85b1b571eebce5ae02b8ec4a4af66d6eb",
+      "branch": "codex/content-versioning-rls",
+      "status": [
+        " M app/(app)/characters/[id]/builder/equipment/equipment-step-client.tsx",
+        " M app/(app)/characters/[id]/builder/equipment/page.tsx",
+        " M app/(app)/characters/[id]/page.tsx",
+        " D app/(auth)/login/page.tsx",
+        " D app/(auth)/signup/page.tsx",
+        " M components/builder/class-step-rail/index.tsx",
+        " M components/editor/rich-text-editor.tsx",
+        " M components/sheet/first-arrival.tsx",
+        " M components/sheet/inventory/add-item-panel.tsx",
+        " M components/sheet/inventory/item-detail-card.tsx",
+        " M components/sheet/spells/add-spell-panel.tsx",
+        " M lib/builder/equipment-choices.ts",
+        " M lib/character/character-context.tsx",
+        " M lib/supabase/content-definitions-parser.ts",
+        " M lib/supabase/content-refs.ts",
+        " M lib/supabase/database.types.ts",
+        " M lib/supabase/inventory.ts",
+        " M lib/supabase/spells-server.ts",
+        " M lib/supabase/spells.ts",
+        " M lib/types/inventory.ts",
+        " M lib/types/spells.ts",
+        " M package-lock.json",
+        " M package.json",
+        " M scripts/import-srd.ts",
+        " M tests/components/builder/equipment-chooser.test.tsx",
+        " M tests/components/builder/equipment-step-client.test.tsx",
+        " M tests/components/sheet/first-arrival.test.tsx",
+        " M tests/components/sheet/inventory-tab.test.tsx",
+        " M tests/inventory/helpers.test.ts",
+        " M tests/lib/builder/equipment-choices.test.ts",
+        " M tests/lib/supabase/content-definitions-parser.test.ts",
+        " M tests/lib/supabase/content-refs.test.ts",
+        " M tests/supabase/inventory.test.ts",
+        " M tests/supabase/spells-server.test.ts",
+        " M tests/supabase/spells.test.ts",
+        "?? lib/supabase/feature-refs-server.ts",
+        "?? supabase/migrations/20260720171627_content_version_pinning_and_rls.sql",
+        "?? supabase/migrations/20260720173545_content_version_policy_performance.sql",
+        "?? supabase/migrations/20260720175650_feature_grant_integrity.sql",
+        "?? supabase/migrations/20260720175654_feature_spell_grants.sql",
+        "?? supabase/migrations/20260720180201_srd_import_atomic_promote.sql",
+        "?? supabase/migrations/20260720183426_character_content_boundary_guards.sql",
+        "?? tests/auth/login-page.test.tsx",
+        "?? tests/scripts/",
+        "?? tests/supabase/character-content-boundary-guards-migration-contract.test.ts",
+        "?? tests/supabase/content-version-policy-performance-contract.test.ts",
+        "?? tests/supabase/content-versioning-migration-contract.test.ts",
+        "?? tests/supabase/feature-grant-integrity-migration-contract.test.ts",
+        "?? tests/supabase/feature-refs-server.test.ts",
+        "?? tests/supabase/feature-spell-grants-migration-contract.test.ts"
+      ],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/account-linking-hardening",
+      "head": "c4299f3367296bc040685f20573ff2e36348c9fb",
+      "branch": "codex/account-linking-hardening",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/backup-hardening-refresh",
+      "head": "0cc2938dc078349a7738866dc2ad00b33ac11ea6",
+      "branch": "codex/backup-hardening-refresh",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/campaign-homebrew-sharing",
+      "head": "5058ebf4291a4290dd9a509cc91d79089823f020",
+      "branch": "codex/campaign-homebrew-sharing",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/content-versioning-release",
+      "head": "3a92030f924dd898a9ffb3fa201de8668b3f5418",
+      "branch": "codex/content-versioning-release",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/feat-selection",
+      "head": "8fb02f9e38c135787b0d184769edbaa8f49833a5",
+      "branch": "codex/feat-selection",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/guided-repair",
+      "head": "26e1f514693190e4afb2dc708ac97fb04a0f5814",
+      "branch": "main",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/homebrew-feat-authoring",
+      "head": "416d4dcac42eb6d86d97e337717598c1d8bd0a0d",
+      "branch": "codex/homebrew-feat-authoring",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/homebrew-magic-item-authoring",
+      "head": "4cbd70bb475d35421974851fedac2afb70480f84",
+      "branch": "codex/homebrew-magic-item-authoring",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/mpmb-import-conflict-resolution",
+      "head": "78de4b3a0c025c948a10c4a1552a4e9e87ef9440",
+      "branch": "codex/mpmb-import-conflict-resolution",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/mpmb-import-preview",
+      "head": "e495e39db8c013685e6e43605e3988ce26658929",
+      "branch": "codex/mpmb-import-preview",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/mpmb-import-resolution",
+      "head": "421165e28f2a13e71d9bf3bd3f1c5a8d2932eacf",
+      "branch": "codex/mpmb-import-resolution",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/mpmb-import-review",
+      "head": "41869e63c75203b769275236f3a30c4fd6111204",
+      "branch": "codex/mpmb-import-review",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/mpmb-schema-mapping",
+      "head": "226b735711d6fda810a6118066e02138519e9d6d",
+      "branch": "codex/mpmb-schema-mapping",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/mpmb-static-parser",
+      "head": "9cfa9049345dc38d3d880988f9deb63bdf5a284e",
+      "branch": "codex/mpmb-static-parser",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Projects/Inkborne/worktrees/private-homebrew-spell",
+      "head": "9b27d645e7c737e727bc353dcce7e5ed5ab4df40",
+      "branch": "codex/private-homebrew-spell",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Users/kaios/Documents/Codex/2026-10-02/task/inkborne-core",
+      "head": "7b7f45bd9f64dbe847238ac108eaed9fa6bcdc32",
+      "branch": "codex/playable-core-stability",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Projects\\Inkborne",
+      "path": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/m1-magic-item-worker",
+      "head": "4cbd70bb475d35421974851fedac2afb70480f84",
+      "branch": "codex/m1-magic-item-revalidation",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\dev-candidate",
+      "path": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/dev-candidate",
+      "head": "5c85e5f3898ed8f5fc44aaaf61f25a7ce78ff730",
+      "branch": null,
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\dev-candidate",
+      "path": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/d1-contract-worker",
+      "head": "56db57e46e93783356cd132240350784accf1f28",
+      "branch": "codex/durable-roll-contract",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\dev-candidate",
+      "path": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
+      "head": "56db57e46e93783356cd132240350784accf1f28",
+      "branch": "codex/equipment-executable-verification",
+      "status": [],
+      "statusExit": 0
+    },
+    {
+      "repository": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\dev-candidate",
+      "path": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/l1-lint-worker",
+      "head": "56db57e46e93783356cd132240350784accf1f28",
+      "branch": "codex/l1-lint-repair",
+      "status": [],
+      "statusExit": 0
+    }
+  ]
+}
