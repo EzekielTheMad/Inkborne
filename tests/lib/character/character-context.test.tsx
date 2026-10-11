@@ -1,5 +1,5 @@
 import { CharacterStateReloadError } from "@/lib/character/state-save-error";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act, fireEvent, waitFor } from "@testing-library/react";
 import {
@@ -206,7 +206,7 @@ describe("<CharacterProvider> public hook surface", () => {
     let save: ReturnType<typeof useCharacterState>["patchState"];
     function Probe() {
       const { state, patchState } = useCharacterState();
-      save = patchState;
+      useEffect(() => { save = patchState; }, [patchState]);
       return <span data-testid="new-fighter-hp">{state.current_hp}</span>;
     }
     renderWithProvider(Probe, { character, maxHp, classData: { fighter: { slug: "fighter", data: { hit_die: 10 } } }, initialState: initializeState({}, maxHp) });
@@ -253,8 +253,10 @@ describe("<CharacterProvider> public hook surface", () => {
     let hooks!: ReturnType<typeof useRest>;
     let saves!: ReturnType<typeof useCharacterState>;
     function Probe() {
-      hooks = useRest(); saves = useCharacterState();
-      return <span data-testid="rest-hp">{saves.state.current_hp}</span>;
+      const rest = useRest();
+      const state = useCharacterState();
+      useEffect(() => { hooks = rest; saves = state; }, [rest, state]);
+      return <span data-testid="rest-hp">{state.state.current_hp}</span>;
     }
     renderWithProvider(Probe, { maxHp: 20, initialState: { current_hp: 10, spell_slots_used: { pact: 1 } } });
     let first!: Promise<boolean>;
@@ -319,8 +321,11 @@ describe("<CharacterProvider> public hook surface", () => {
       .mockReturnValueOnce(new Promise<void>(resolve => { resolveNotes = resolve; }));
     let write!: ReturnType<typeof useCharacterState>["patchState"];
     let action!: ReturnType<typeof useCharacterState>["patchActionState"];
-    function Probe() { const ctx = useCharacterState(); write = ctx.patchState; action = ctx.patchActionState;
-      return <output data-testid="conflict-notes">{ctx.state.quick_notes}</output>; }
+    function Probe() {
+      const ctx = useCharacterState();
+      useEffect(() => { write = ctx.patchState; action = ctx.patchActionState; }, [ctx.patchState, ctx.patchActionState]);
+      return <output data-testid="conflict-notes">{ctx.state.quick_notes}</output>;
+    }
     renderWithProvider(Probe, { initialState: { current_hp: 10, quick_notes: "old" } });
     let hp!: Promise<boolean>; let notes!: Promise<boolean>;
     await act(async () => { hp = write({ current_hp: 8 }); notes = write({ quick_notes: "new" }); });
@@ -622,7 +627,8 @@ describe("<CharacterProvider> public hook surface", () => {
     mockedUpdateState.mockRejectedValueOnce(new Error("offline"));
     let cast!: ReturnType<typeof useSpells>["castSpell"];
     function Probe() {
-      cast = useSpells().castSpell;
+      const { castSpell } = useSpells();
+      useEffect(() => { cast = castSpell; }, [castSpell]);
       const { state } = useCharacterState();
       return <span data-testid="slots">{state.spell_slots_used?.["1"] ?? 0}</span>;
     }
@@ -643,7 +649,8 @@ describe("<CharacterProvider> public hook surface", () => {
     mockedUpdateState.mockReturnValueOnce(new Promise<void>((_resolve, reject) => { rejectFirst = reject; }));
     let cast!: ReturnType<typeof useSpells>["castSpell"];
     function Probe() {
-      cast = useSpells().castSpell;
+      const { castSpell } = useSpells();
+      useEffect(() => { cast = castSpell; }, [castSpell]);
       const { state } = useCharacterState();
       return <span data-testid="queued-slots">{state.spell_slots_used?.["1"] ?? 0}</span>;
     }
@@ -673,7 +680,11 @@ describe("<CharacterProvider> public hook surface", () => {
     let resolveFirst!: () => void;
     mockedUpdateState.mockReturnValueOnce(new Promise<void>((resolve) => { resolveFirst = resolve; }));
     let cast!: ReturnType<typeof useSpells>["castSpell"];
-    function Probe() { cast = useSpells().castSpell; return null; }
+    function Probe() {
+      const { castSpell } = useSpells();
+      useEffect(() => { cast = castSpell; }, [castSpell]);
+      return null;
+    }
     const spell = {
       name: "Magic Missile", class_slug: "wizard",
       content_definitions: { id: "magic-missile", name: "Magic Missile", slug: "magic-missile", data: { level: 1, duration: "Instantaneous" }, effects: [] },
@@ -696,7 +707,8 @@ describe("<CharacterProvider> public hook surface", () => {
     mockedUpdateState.mockRejectedValueOnce(new Error("offline"));
     let rest!: ReturnType<typeof useRest>["longRest"];
     function Probe() {
-      rest = useRest().longRest;
+      const { longRest } = useRest();
+      useEffect(() => { rest = longRest; }, [longRest]);
       const { state } = useCharacterState();
       return <span data-testid="hp">{state.current_hp}</span>;
     }

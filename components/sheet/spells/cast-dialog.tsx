@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Brain, Sparkles, TriangleAlert } from "lucide-react";
 import {
   Dialog,
@@ -113,13 +113,9 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
   const spellLevel = data.level ?? 0;
   const isCantrip = spellLevel === 0;
 
-  const slotOptions = useMemo(
-    () =>
-      isCantrip
-        ? []
-        : getEligibleSlotOptions(spellLevel, maxSlots, slotState, pactSlotLevel),
-    [isCantrip, spellLevel, maxSlots, slotState, pactSlotLevel],
-  );
+  const slotOptions = isCantrip
+    ? []
+    : getEligibleSlotOptions(spellLevel, maxSlots, slotState, pactSlotLevel);
 
   const ritualEligible =
     castability === "ritual-only" || isRitualEligible(spell, casterInfo);

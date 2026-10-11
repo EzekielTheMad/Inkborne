@@ -268,6 +268,26 @@ describe("CastDialog - configure pane", () => {
     );
   });
 
+  it("rechecks live slot availability without resetting the selected cast level", () => {
+    const spell = mkSpell();
+    const dialog = <CastDialog spell={spell} castability="full" open onClose={vi.fn()} />;
+    const view = render(dialog);
+    fireEvent.click(screen.getByRole("radio", { name: /2nd/ }));
+
+    mockSlotState = { "2": 2 };
+    view.rerender(<CastDialog spell={spell} castability="full" open onClose={vi.fn()} />);
+    expect(screen.getByRole("radio", { name: /2nd/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cast" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("radio", { name: /1st/ }));
+    mockSlotState = {};
+    view.rerender(<CastDialog spell={spell} castability="full" open onClose={vi.fn()} />);
+    expect(screen.getByRole("radio", { name: /1st/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: /2nd/ })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    expect(castSpell).toHaveBeenCalledWith(spell, { type: "slot", level: 1 });
+  });
+
   it("updates the upcast damage preview when the selection changes", () => {
     renderDialog();
     expect(screen.getByText(/3d6\s*fire damage/)).toBeInTheDocument();

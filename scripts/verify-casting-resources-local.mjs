@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { chromium } from "playwright";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const processStartedAt = new Date().toISOString();
 const output = path.join(root, "test-results", "casting-resources-local");
 await fs.mkdir(output, { recursive: true });
 const stubs = {
@@ -65,6 +66,7 @@ const server = http.createServer(async (request, response) => {
 });
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
+console.log(JSON.stringify({ pid: process.pid, parentPid: process.ppid, cwd: root, command: process.argv, port: server.address().port, startTime: processStartedAt }));
 let browser;
 const evidence = [];
 try {
