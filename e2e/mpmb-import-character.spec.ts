@@ -212,7 +212,7 @@ test("imports MPMB rules and uses their exact pins on a level-4 Wizard", async (
   await page.getByPlaceholder("Search available feats").fill(featName);
   const featOption = page.getByRole("button").filter({ hasText: featName });
   await expect(featOption).toContainText("v1");
-  await expect(featOption).toContainText("Private");
+  await expect(featOption).toContainText("Your homebrew");
   await featOption.click();
   await expect(page.getByLabel("Choice made")).toBeVisible();
 

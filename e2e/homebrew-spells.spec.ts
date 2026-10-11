@@ -37,7 +37,7 @@ test.afterAll(async () => {
 
 async function openSpellPicker(page: Page, characterId: string): Promise<void> {
   await page.goto(`/characters/${characterId}`);
-  await page.getByRole("button", { name: "Spells", exact: true }).click();
+  await visible(page.getByRole("button", { name: "Spells", exact: true })).first().click();
   await page.getByRole("button", { name: "Add Spell", exact: true }).click();
   await expect(page.getByPlaceholder("Search spells…")).toBeVisible();
 }
@@ -74,7 +74,7 @@ test("private spell versions stay pinned while new characters discover the lates
   await page.getByLabel("Damage dice", { exact: true }).fill("2d6");
   await page.getByRole("button", { name: "Create private spell" }).click();
 
-  await expect(page.getByRole("status")).toHaveText("Private spell created.");
+  await expect(page.getByRole("status")).toHaveText("Private homebrew created.");
   const editLink = page.getByRole("link", { name: new RegExp(originalName) });
   await expect(editLink).toContainText("v1");
   const editHref = await editLink.getAttribute("href");
@@ -94,11 +94,11 @@ test("private spell versions stay pinned while new characters discover the lates
   await page.getByLabel("Damage dice", { exact: true }).fill("3d6");
   await page.getByRole("button", { name: "Save new version" }).click();
 
-  await expect(page.getByRole("status")).toContainText("new spell version");
+  await expect(page.getByRole("status")).toHaveText("A new homebrew version was saved. Existing character pins are unchanged.");
   await expect(page.getByRole("link", { name: new RegExp(revisedName) })).toContainText("v2");
 
   await page.goto(`/characters/${firstCharacterId}`);
-  await page.getByRole("button", { name: "Spells", exact: true }).click();
+  await visible(page.getByRole("button", { name: "Spells", exact: true })).first().click();
   await expect(visible(page.getByText(originalName, { exact: true })).first()).toBeVisible();
   await expect(visible(page.getByText("Homebrew · v1", { exact: true })).first()).toBeVisible();
   await visible(page.getByRole("button", { name: "Prepare", exact: true })).first().click();
@@ -110,7 +110,7 @@ test("private spell versions stay pinned while new characters discover the lates
   await openSpellPicker(page, secondCharacterId);
   await addSearchedSpell(page, revisedName, 2);
   await page.goto(`/characters/${secondCharacterId}`);
-  await page.getByRole("button", { name: "Spells", exact: true }).click();
+  await visible(page.getByRole("button", { name: "Spells", exact: true })).first().click();
   await expect(visible(page.getByText(revisedName, { exact: true })).first()).toBeVisible();
   await expect(visible(page.getByText("Homebrew · v2", { exact: true })).first()).toBeVisible();
   await visible(page.getByRole("button", { name: "Prepare", exact: true })).first().click();
