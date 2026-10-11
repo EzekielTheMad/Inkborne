@@ -67,6 +67,15 @@ function errorAttributes(state: HomebrewMagicItemActionState, name: string) {
   } as const;
 }
 
+function preserveFormDraft(form: HTMLFormElement | null) {
+  if (!form) return;
+  // React resets action forms during its commit, when delegated onReset
+  // handlers are suppressed. Keep the native reset from discarding drafts.
+  const preventReset = (event: Event) => event.preventDefault();
+  form.addEventListener("reset", preventReset);
+  return () => form.removeEventListener("reset", preventReset);
+}
+
 export function MagicItemForm({ mode, initialValue }: MagicItemFormProps) {
   const action = mode === "create" ? createHomebrewMagicItem : updateHomebrewMagicItem;
   const [state, formAction, pending] = useActionState(action, emptyState);
@@ -88,7 +97,7 @@ export function MagicItemForm({ mode, initialValue }: MagicItemFormProps) {
   return (
     <form
       action={formAction}
-      onReset={(event) => event.preventDefault()}
+      ref={preserveFormDraft}
       className="j-card-paper space-y-7 p-5 sm:p-7"
     >
       {initialValue && (
