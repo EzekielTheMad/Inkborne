@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { saveCharacterAbilityScores } from "@/lib/supabase/character-client";
+import { discardAbilityScoreDraft, useAbilityScoreDraft } from "@/lib/builder/use-ability-score-draft";
+import type { AbilityMethod } from "@/lib/supabase/ability-scores-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,13 +16,11 @@ import { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
-
-import { createAbilityScoreWriter, type AbilityDraft, type AbilitySaveStatus } from "@/lib/builder/ability-score-writer";
+import { STANDARD_ARRAY, POINT_BUY_BUDGET, POINT_BUY_COSTS } from "@/lib/builder/ability-score-validation";
 import { useSaveNavigationGuard } from "@/lib/builder/use-save-navigation-guard";
 
-import { STANDARD_ARRAY, POINT_BUY_BUDGET, POINT_BUY_COSTS } from "@/lib/builder/ability-score-validation";
-
 interface AbilitiesStepClientProps {
+  ownerId: string;
   characterId: string;
   character: {
     id: string;
@@ -46,7 +45,12 @@ interface AbilitiesStepClientProps {
   schema: SystemSchemaDefinition | undefined;
 }
 
-export function AbilitiesStepClient({
+export function AbilitiesStepClient(props: AbilitiesStepClientProps) {
+  return <AbilitiesEditor key={`${props.ownerId}:${props.characterId}`} {...props} />;
+}
+
+function AbilitiesEditor({
+  ownerId,
   characterId,
   character,
   contentRefs,
@@ -58,34 +62,34 @@ export function AbilitiesStepClient({
     [schema?.ability_scores],
   );
 
-  const [draft, setDraft] = useState<AbilityDraft>(() => {
-    const method = character.choices?.ability_method ?? "standard_array";
-    const existing = character.base_stats ?? {};
-    const scores = method === "standard_array"
-      ? character.choices?.ability_method === "standard_array" ? existing : {}
-      : Object.keys(existing).length > 0 ? existing : Object.fromEntries(
-        abilities.map((ability) => [ability.slug, method === "point_buy" ? 8 : 10]),
-      );
-    return { method, scores };
-  });
-  const [saveStatus, setSaveStatus] = useState<AbilitySaveStatus>("idle");
-  const navigationGuard = useSaveNavigationGuard();
-  const [writer] = useState(() => createAbilityScoreWriter(
-    draft,
-    (next, signal) => saveCharacterAbilityScores(characterId, next.method, next.scores, signal),
-    setDraft,
-    (status) => {
-      navigationGuard.setBlocked(status === "saving" || status === "error");
-      setSaveStatus(status);
+  function defaultScores(method: AbilityMethod): Record<string, number> {
+    return method === "standard_array" ? {} : Object.fromEntries(
+      abilities.map((ability) => [ability.slug, method === "point_buy" ? 8 : 10]),
+    );
+  }
+
+  const initialMethod = character.choices?.ability_method ?? "standard_array";
+  const persistedScores = character.base_stats ?? {};
+  const { draft, status, changeDraft, retry } = useAbilityScoreDraft(
+    ownerId,
+    characterId,
+    {
+      method: initialMethod,
+      scores: character.choices?.ability_method && Object.keys(persistedScores).length
+        ? persistedScores : defaultScores(initialMethod),
     },
-  ));
-  useEffect(() => {
-    writer.activate();
-    return () => { writer.deactivate(); };
-  }, [writer]);
+    { method: character.choices?.ability_method ?? null, scores: persistedScores },
+  );
   const { method, scores } = draft;
   const arrayAssignments = scores;
-  const navigationBlocked = saveStatus === "saving" || saveStatus === "error";
+  const cannotNavigate = status !== "saved";
+  const hasConflict = status === "conflict" || status === "session_changed";
+  const navigationGuard = useSaveNavigationGuard();
+  const { setBlocked } = navigationGuard;
+  useEffect(() => {
+    // Cleared account data needs reload, but must not retain an unload warning.
+    setBlocked(cannotNavigate && status !== "session_changed");
+  }, [cannotNavigate, status, setBlocked]);
 
   const allEffects: Effect[] = contentRefs.flatMap(
     (ref) => ref.content_definitions?.effects ?? [],
@@ -174,61 +178,74 @@ export function AbilitiesStepClient({
     );
   }, [scores, method]);
 
-  const currentScores = method === "standard_array" ? arrayAssignments : scores;
+  const currentScores = scores;
 
-  function handleMethodChange(newMethod: AbilityDraft["method"]) {
-    writer.edit((current) => current.method === newMethod ? current : {
-      method: newMethod,
-      scores: newMethod === "standard_array" ? {} : Object.fromEntries(
-        abilities.map((ability) => [ability.slug, newMethod === "point_buy" ? 8 : 10]),
-      ),
+  function handleMethodChange(newMethod: AbilityMethod) {
+    changeDraft((previous) => previous.method === newMethod ? previous : {
+      method: newMethod, scores: defaultScores(newMethod),
     });
   }
 
   function handleStandardArrayAssign(abilitySlug: string, value: string) {
-    const numValue = value === "" ? 0 : Number(value);
-    if (numValue !== 0 && !STANDARD_ARRAY.includes(numValue)) return;
-    writer.edit((current) => {
-      const next = { ...current.scores };
-      for (const key of Object.keys(next)) {
-        if (next[key] === numValue && key !== abilitySlug) delete next[key];
+    const numValue = value === "" ? null : Number(value);
+    if (numValue !== null && !STANDARD_ARRAY.includes(numValue)) return;
+    changeDraft((previous) => {
+      const newAssignments = { ...previous.scores };
+      for (const key of Object.keys(newAssignments)) {
+        if (newAssignments[key] === numValue && key !== abilitySlug) delete newAssignments[key];
       }
-      if (numValue === 0) delete next[abilitySlug];
-      else next[abilitySlug] = numValue;
-      return { method: current.method, scores: next };
+      if (numValue === null) delete newAssignments[abilitySlug];
+      else newAssignments[abilitySlug] = numValue;
+      return { ...previous, scores: newAssignments };
     });
   }
 
   function handlePointBuyChange(abilitySlug: string, delta: number) {
-    writer.edit((current) => {
-      const next = (current.scores[abilitySlug] ?? 8) + delta;
-      if (next < 8 || next > 15) return current;
-      const nextScores = { ...current.scores, [abilitySlug]: next };
-      const used = Object.values(nextScores).reduce((sum, score) => sum + (POINT_BUY_COSTS[score] ?? 0), 0);
-      return used > POINT_BUY_BUDGET ? current : { method: current.method, scores: nextScores };
+    changeDraft((previous) => {
+      const next = (previous.scores[abilitySlug] ?? 8) + delta;
+      if (next < 8 || next > 15) return previous;
+      const newScores = { ...previous.scores, [abilitySlug]: next };
+      const newPointsUsed = Object.values(newScores).reduce(
+        (sum, score) => sum + (POINT_BUY_COSTS[score] ?? 0), 0,
+      );
+      return newPointsUsed > POINT_BUY_BUDGET ? previous : { ...previous, scores: newScores };
     });
   }
 
   function handleManualChange(abilitySlug: string, value: string) {
     const numValue = Number(value);
     if (!Number.isInteger(numValue) || numValue < 1 || numValue > 30) return;
-    writer.edit((current) => ({ ...current, scores: { ...current.scores, [abilitySlug]: numValue } }));
+    changeDraft((previous) => ({ ...previous, scores: { ...previous.scores, [abilitySlug]: numValue } }));
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6">
         <h2 className="text-xl font-semibold">Ability Scores</h2>
-        {navigationGuard.notice && <p role="alert" className="text-sm text-destructive">{navigationGuard.notice}</p>}
-        {saveStatus === "error" && (
+        {navigationGuard.notice && <p role="alert" className="text-sm text-destructive">{hasConflict
+          ? "Reload the saved ability scores before editing again. This draft has not been saved."
+          : navigationGuard.notice}</p>}
+
+        <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+          {status === "saving" ? "Saving ability scores… Stay on this step until saving finishes." : status === "saved" ? "Changes save automatically." : "Ability scores have not been saved. Stay on this step to resolve the save."}
+        </p>
+        {status === "error" && (
           <div role="alert" className="space-y-2 text-sm text-destructive">
-            <p>Your latest ability scores are not confirmed saved. Keep this page open and retry, or reload to check the saved character first. Reloading discards this draft. If the character changed elsewhere, reload before editing again.</p>
-            <Button variant="outline" size="sm" onClick={() => writer.retry()}>Retry save</Button>
+            <p>Could not save ability scores. Your changes are still here. Retry before continuing.</p>
+            <Button variant="outline" size="sm" onClick={retry}>Retry save</Button>
           </div>
         )}
-        <p role="status" className="text-sm text-muted-foreground">
-          {saveStatus === "saving" ? "Saving ability scores. Wait before using Back, Forward, or refresh; leaving may interrupt your save." : saveStatus === "saved" ? "Ability scores saved." : saveStatus === "error" ? "Unsaved ability scores." : "Changes save automatically."}
-        </p>
+        {hasConflict && (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>{status === "session_changed"
+              ? "Your sign-in session changed. Reload before editing ability scores."
+              : "Ability scores changed in another editor. Reload the saved scores before editing again."}</p>
+            <Button variant="outline" size="sm" onClick={() => {
+              discardAbilityScoreDraft(ownerId, characterId);
+              window.location.reload();
+            }}>Reload saved scores</Button>
+          </div>
+        )}
 
         {/* Method selector */}
         <div className="space-y-2">
@@ -244,8 +261,9 @@ export function AbilitiesStepClient({
               <Button
                 key={value}
                 variant={method === value ? "default" : "outline"}
-                aria-pressed={method === value}
                 size="sm"
+                disabled={hasConflict}
+                aria-pressed={method === value}
                 onClick={() => handleMethodChange(value)}
               >
                 {label}
@@ -287,6 +305,7 @@ export function AbilitiesStepClient({
                   {method === "standard_array" && (
                     <select
                       aria-label={`${ability.name} score`}
+                      disabled={hasConflict}
                       value={arrayAssignments[ability.slug] ?? ""}
                       onChange={(e) =>
                         handleStandardArrayAssign(ability.slug, e.target.value)
@@ -324,8 +343,9 @@ export function AbilitiesStepClient({
                           handlePointBuyChange(ability.slug, -1)
                         }
                         disabled={
-                          (scores[ability.slug] ?? 8) <= 8
+                          hasConflict || (scores[ability.slug] ?? 8) <= 8
                         }
+                        aria-label={`Decrease ${ability.name}`}
                         className="h-8 w-8 p-0"
                       >
                         -
@@ -340,8 +360,9 @@ export function AbilitiesStepClient({
                           handlePointBuyChange(ability.slug, 1)
                         }
                         disabled={
-                          (scores[ability.slug] ?? 8) >= 15
+                          hasConflict || (scores[ability.slug] ?? 8) >= 15
                         }
+                        aria-label={`Increase ${ability.name}`}
                         className="h-8 w-8 p-0"
                       >
                         +
@@ -353,6 +374,7 @@ export function AbilitiesStepClient({
                     <Input
                       type="number"
                       aria-label={`${ability.name} score`}
+                      disabled={hasConflict}
                       min={1}
                       max={30}
                       value={scores[ability.slug] ?? 10}
@@ -401,7 +423,7 @@ export function AbilitiesStepClient({
         <div className="flex justify-between pt-4">
           <Button
             variant="outline"
-            disabled={navigationBlocked}
+            disabled={cannotNavigate}
             onClick={() =>
               router.push(`/characters/${characterId}/builder/class`)
             }
@@ -410,7 +432,7 @@ export function AbilitiesStepClient({
           </Button>
           <Button
             className="bg-character-fg text-background hover:opacity-90"
-            disabled={navigationBlocked}
+            disabled={cannotNavigate}
             onClick={() =>
               router.push(`/characters/${characterId}/builder/background`)
             }

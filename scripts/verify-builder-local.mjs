@@ -16,15 +16,19 @@ const output = path.join(root, "test-results", "builder-local");
 await fs.mkdir(output, { recursive: true });
 const stubs = {
   "next/navigation": `export function useRouter(){return {push:to=>window.dispatchEvent(new CustomEvent('fixture-navigation',{detail:to})),refresh:()=>{if(location.pathname==='/fresh-race')window.dispatchEvent(new Event('fixture-refresh'))}}}`,
-  "@/lib/supabase/character-client": `
-    export async function saveCharacterAbilityScores(id,method,scores,signal){
-      window.fixture.calls.push({method,scores});
-      if(window.fixture.mode==='success')return;
-      await new Promise((resolve,reject)=>{
-        window.fixture.resolve=resolve;
-        signal.addEventListener('abort',()=>reject(new DOMException('Interrupted','AbortError')),{once:true});
-      });
+  "@/lib/supabase/client": `export function createClient(){return {
+    auth:{onAuthStateChange:callback=>{window.fixture.authChange=callback;return {data:{subscription:{unsubscribe(){window.fixture.authChange=null}}}}}},
+    rpc:async(name,args)=>{
+      if(name!=='save_character_abilities')throw new Error('Unexpected local RPC');
+      window.fixture.calls.push({id:args.target_character_id,method:args.ability_method,scores:args.ability_scores,expectedMethod:args.expected_method,expectedScores:args.expected_scores});
+      if(window.fixture.mode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolve=resolve;window.fixture.reject=()=>reject(new Error('Simulated local ability failure'))});
+      const saved=window.fixture.abilitySaved;
+      if(args.expected_method!==saved.method||JSON.stringify(args.expected_scores)!==JSON.stringify(saved.scores))return {data:null,error:{code:'P0001',message:'ABILITY_SCORES_CHANGED'}};
+      window.fixture.abilitySaved={method:args.ability_method,scores:args.ability_scores};
+      return {data:[{saved_method:args.ability_method,saved_scores:args.ability_scores}],error:null};
     }
+  }}`,
+  "@/lib/supabase/character-client": `
     export async function updateCharacterAndReturn(id,patch){window.fixture.classCalls.push(patch);await new Promise(resolve=>{window.fixture.resolveClass=resolve});return {choices:patch.choices,level:patch.level}}
     export async function updateCharacter(id,patch){if(location.pathname==='/fresh-race'){window.fixture.raceCalls.push(patch);window.fixture.raceChoices=patch.choices;return}if(location.pathname==='/low-con'){window.fixture.hpCalls.push(patch);return}if(location.pathname==='/hp-recovery'){window.fixture.hpCalls.push(patch);if(window.fixture.hpMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveHp=resolve;window.fixture.rejectHp=()=>reject(new Error('private HP detail'))});return}if(location.pathname==='/feature-recovery') {window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/language-category'){window.fixture.backgroundCalls.push(patch);return}if(location.pathname==='/empty-class'){window.fixture.classChoiceCalls.push(patch);return}if(location.pathname==='/background'||location.pathname==='/invalid-choice'||location.pathname==='/note-replacement'){window.fixture.backgroundCalls.push(patch);if(window.fixture.backgroundMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveBackground=resolve;window.fixture.rejectBackground=()=>reject(new Error('private note detail'))});return}if(location.pathname!=='/equipment')throw new Error('Simulated private database failure');window.fixture.equipmentCalls.push(patch);if(window.fixture.equipmentMode==='pending')await new Promise((resolve,reject)=>{window.fixture.resolveEquipment=resolve;window.fixture.rejectEquipment=()=>reject(new Error('private selection detail'))})}
   `,
@@ -50,6 +54,8 @@ await build({
       import {EquipmentStepClient} from '@/app/(app)/characters/[id]/builder/equipment/equipment-step-client';
       window.fixture={raceCalls:[],raceRefCalls:[],raceChoices:{},raceRefs:[],recoveryCalls:[],recoveryMode:'pending',recoveryRefs:[],backgroundReplacements:[],mode:'pending',calls:[],resolve:null,classCalls:[],resolveClass:null,equipmentCalls:[],equipmentMode:'pending',resolveEquipment:null,rejectEquipment:null,grants:[],hpCalls:[],hpMode:'pending',resolveHp:null,rejectHp:null,classChoiceCalls:[],backgroundCalls:[],backgroundMode:'pending',resolveBackground:null,rejectBackground:null};
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
+      window.fixture.abilitySaved={method:'manual',scores:{...character.base_stats}};
+      window.fixture.authChange=null;
       const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
       const pinnedHuman={...human,name:'Pinned Human',data:{description:'Authorized pinned race description.',traits:['tool-training']},effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'pinned-skill'}]};
@@ -86,7 +92,7 @@ await build({
           <Activity mode={route==='/language-category'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[languageBackground]} contentRefs={[languageBackground,{...human,data:{languages:['common']}}].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} availableLanguages={['common','elvish']} schema={undefined}/></Activity>
           {route==='/fresh-race'&&<RaceStepClient characterId='local-character' character={{...character,choices:window.fixture.raceChoices}} races={[freshRace]} subraces={[]} traits={[freshTrait]} contentRefs={window.fixture.raceRefs} availableLanguages={['common','elvish']} schema={undefined}/>}
           {route==='/overview'&&<h2>Overview fixture</h2>}
-          <Activity mode={route==='/abilities'?'visible':'hidden'}><AbilitiesStepClient characterId='local-character' character={character} contentRefs={[]} schema={schema}/></Activity>
+          {route==='/abilities'&&<AbilitiesStepClient ownerId='local-owner' characterId='local-character' character={{...character,base_stats:window.fixture.abilitySaved.scores,choices:{...character.choices,ability_method:window.fixture.abilitySaved.method}}} contentRefs={[]} schema={schema}/>}
           <Activity mode={route==='/pinned-race'?'visible':'hidden'}><RaceStepClient characterId='local-character' character={{...character,choices:{race:'human'}}} races={[newerHuman]} subraces={[]} traits={[newerTrait]} contentRefs={[pinnedHuman,pinnedTrait].map(content=>({id:'pin-'+content.id,content_id:content.id,context:{},choice_source:null,content_definitions:content}))} schema={undefined}/></Activity>
           <Activity mode={route==='/invalid-choice'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier',resolved_choices:{'courier-skill':['skill-removed']}}}} backgrounds={[choiceCourier]} contentRefs={[{id:'choice-pin',content_id:'courier',context:{},choice_source:null,content_definitions:choiceCourier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/note-replacement'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[{...courier,id:'scholar',slug:'scholar',name:'Scholar',data:{ideals:['Study old maps']}}]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
@@ -110,7 +116,7 @@ await build({
   plugins: [{
     name: "isolated-boundaries",
     setup(builder) {
-      builder.onResolve({ filter: /^(next\/navigation|@\/lib\/supabase\/(character-client|content-refs-client|background-selection-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
+      builder.onResolve({ filter: /^(next\/navigation|@\/lib\/supabase\/(client|character-client|content-refs-client|background-selection-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
       builder.onResolve({filter: /^@\/lib\/(supabase\/inventory|sheet\/update-state)$/}, args=>({path:args.path,namespace:"fixture"}));
       builder.onResolve({filter: /^\.\/actions$/}, args => args.importer.endsWith("class-step-client.tsx") ? {path:"class-actions",namespace:"fixture"} : args.importer.endsWith("equipment-step-client.tsx") ? {path:"equipment-actions",namespace:"fixture"} : undefined);
       builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: stubs[args.path], loader: "js" }));
@@ -151,13 +157,15 @@ try {
   await page.screenshot({ path: path.join(output, "pending-navigation.png"), fullPage: true });
   await page.goBack();
   await page.getByRole("heading", { name: "Overview fixture" }).waitFor();
+  await page.evaluate(() => window.fixture.reject());
   await page.goForward();
-  await page.getByRole("alert").filter({ hasText: "not confirmed saved" }).waitFor();
+  await page.getByRole("alert").filter({ hasText: "Could not save ability scores" }).waitFor();
   assert.equal(await page.getByRole("spinbutton", { name: "Strength score" }).inputValue(), "18");
   await page.evaluate(() => { window.fixture.mode = "success"; });
   await page.getByRole("button", { name: "Retry save" }).click();
-  await page.getByRole("status").filter({ hasText: "Ability scores saved." }).waitFor();
-  evidence.push("Native Back/Forward with Activity retention restores the unconfirmed draft and explicit retry succeeds.");
+  await page.getByRole("status").filter({ hasText: "Changes save automatically." }).waitFor();
+  assert.deepEqual(await page.evaluate(() => window.fixture.calls[1]), await page.evaluate(() => window.fixture.calls[0]));
+  evidence.push("Native Back/Forward with SPA remount restores the failed draft and retries the exact CAS snapshot.");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("link", { name: "Race", exact: true }).click();
   const preview = page.getByRole("button", { name: "Preview Human" });
@@ -439,6 +447,57 @@ try {
   assert.equal(await page.evaluate(()=>window.fixture.raceRefCalls.length),1);
   await page.screenshot({path:path.join(output,'fresh-race-traits-mobile.png'),fullPage:true,animations:'disabled'});
   evidence.push({check:'fresh race selection persists only the parent pin, refresh/Back keeps unpinned trait choices usable with current-catalog disclosure',passed:true});
+  assert.deepEqual(errors, []);
+  assert.deepEqual(blockedRequests, []);
+  await page.goto(origin + "/overview");
+  await page.getByRole("link", { name: "Abilities", exact: true }).click();
+  await page.getByRole("spinbutton", { name: "Strength score" }).fill("16");
+  await page.waitForFunction(() => window.fixture.calls.length === 1);
+  await page.getByRole("spinbutton", { name: "Dexterity score" }).fill("18");
+  await page.getByRole("button", { name: "Point Buy", exact: true }).click();
+  assert.equal(await page.evaluate(() => window.fixture.calls.length), 1);
+  await page.evaluate(() => { window.fixture.mode = "success"; window.fixture.resolve(); });
+  await page.getByRole("status").filter({ hasText: "Changes save automatically." }).waitFor();
+  const orderedCalls = await page.evaluate(() => window.fixture.calls);
+  assert.equal(orderedCalls.length, 3);
+  assert.deepEqual(orderedCalls[1].expectedScores, { strength: 16, dexterity: 10 });
+  assert.deepEqual(orderedCalls[2].expectedScores, { strength: 16, dexterity: 18 });
+  assert.equal(orderedCalls[2].method, "point_buy");
+  assert.deepEqual(orderedCalls[2].scores, { strength: 8, dexterity: 8 });
+  evidence.push({ check: "rapid ability edits and method switch serialize against the last canonical response", passed: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => { window.fixture.mode = "pending"; });
+  await page.getByRole("button", { name: "Increase Strength", exact: true }).click();
+  await page.waitForFunction(() => window.fixture.calls.length === 4);
+  await page.evaluate(() => {
+    window.fixture.abilitySaved = { method: "point_buy", scores: { strength: 10, dexterity: 8 } };
+    window.fixture.resolve();
+  });
+  await page.getByRole("alert").filter({ hasText: "changed in another editor" }).waitFor();
+  assert.equal(await page.getByRole("button", { name: "Next: Background", exact: true }).isDisabled(), true);
+  assert.equal(await page.getByRole("button", { name: "Retry save", exact: true }).count(), 0);
+  page.once("dialog", dialog => dialog.dismiss());
+  await page.getByRole("link", { name: "Overview", exact: true }).click();
+  assert.equal(new URL(page.url()).pathname, "/abilities");
+  assert.equal(await page.evaluate(() => window.fixture.calls.length), 4);
+  await page.screenshot({ path: path.join(output, "ability-conflict-mobile.png"), fullPage: true });
+  evidence.push({ check: "mobile stale ability CAS blocks edits, retry and declined same-window navigation", passed: true });
+
+  await page.evaluate(() => window.fixture.authChange("SIGNED_OUT", null));
+  await page.getByRole("alert").filter({ hasText: "sign-in session changed" }).waitFor();
+  assert.equal(await page.getByRole("combobox", { name: "Strength score", exact: true }).inputValue(), "");
+  const warnedAfterSignout = await page.evaluate(() => {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  assert.equal(warnedAfterSignout, false);
+  await page.getByRole("link", { name: "Overview", exact: true }).click();
+  await page.getByRole("heading", { name: "Overview fixture", exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => window.fixture.calls.length), 4);
+  evidence.push({ check: "sign-out clears private ability draft and navigation warning without replaying a save", passed: true });
+
   assert.deepEqual(errors, []);
   assert.deepEqual(blockedRequests, []);
   await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));

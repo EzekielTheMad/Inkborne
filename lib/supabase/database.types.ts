@@ -1583,6 +1583,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_character_abilities: {
+        Args: {
+          ability_method: string
+          ability_scores: Json
+          expected_method: string | null
+          expected_scores: Json
+          target_character_id: string
+        }
+        Returns: {
+          saved_method: string
+          saved_scores: Json
+        }[]
+      }
       // Local staged starting-equipment API; not generated from hosted schema.
       create_character_with_starting_grant: {
         Args: { actor_id: string; character_name: string; target_system_id: string }
