@@ -1,5 +1,7 @@
 # Release-readiness checklist
 
+October 11 continuation: [orchestrator queue](CODEX-ORCHESTRATOR.md) is current. L1's full local gate now passes (2,231 tests, build and 40 offline checks); [D1](specs/2026-10-11-durable-roll-state-contract.md) and [E1 runtime](specs/2026-10-11-equipment-runtime-proposal.md) proposals describe remaining approval boundaries. A1 integration/T1 reproduction and final combined verification are in progress. **Not release-ready.** The October 4 checklist below is historical and does not restrict the current directly authorized local queue or imply runtime/hosted approval.
+
 Equipment staging/integration is complete at [the local equipment checkpoint](handoffs/2026-10-04-equipment-atomic-local-staging.md). The old execution-review rejection is historical; PostgreSQL execution, hosted acceptance and rollout remain unapproved/unproved.
 
 October 4, 2026. Current application `c1d622c5de71c54515f52208f88137cc9f5b7b73`; branch `codex/playable-core-stability`. **Not release-ready.** Use [CURRENT-STATE](CURRENT-STATE.md) for authority and the [consolidated project handoff](handoffs/2026-10-04-consolidated-project-handoff.md) for ranked risks, capabilities and evidence. This checklist supersedes earlier unapplied/partial-status bullets; historical results remain in their linked handoffs.

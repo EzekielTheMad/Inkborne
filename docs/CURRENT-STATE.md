@@ -1,6 +1,6 @@
 # Inkborne current work
 
-**Fresh Codex thread:** start with [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md). Development is paused for handoff. Local implementation checkpoint `77e9a956` has 2,230 passing unit tests, focused checks, build and offline UI; the full quality gate is blocked by ten inherited React lint findings.
+**Sole orchestrator active:** start with [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md). [L1](handoffs/2026-10-11-l1-lint.md) repaired all ten lint findings: worker `0f0f993`, integrated locally as `7e1c831`, passed full check (221 files / 2,231 tests), dummy build and 40 offline checks. The integration also contains eight [D1 gap checks and proposals](specs/2026-10-11-durable-roll-state-contract.md); its final combined gate is pending A1/T1 assembly. PR99 revalidation is independent. Local evidence does not accept hosted/runtime/auth behavior.
 
 ## October 11 local continuation
 
