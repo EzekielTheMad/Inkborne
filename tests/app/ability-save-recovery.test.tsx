@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { AbilitiesStepClient } from "@/app/(app)/characters/[id]/builder/abilities/abilities-step-client";
 import { saveCharacterAbilities, type AbilityScoreDraft } from "@/lib/supabase/ability-scores-client";
 import { discardAbilityScoreDraft } from "@/lib/builder/use-ability-score-draft";
+import type { SystemSchemaDefinition } from "@/lib/types/system";
 
 vi.mock("@/lib/supabase/ability-scores-client", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/supabase/ability-scores-client")>(), saveCharacterAbilities: vi.fn(),
@@ -15,10 +16,12 @@ vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ auth: {
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/components/builder/stat-preview", () => ({ StatPreview: () => null }));
 
-const schema = { ability_scores: [
+const schema: SystemSchemaDefinition = { ability_scores: [
   { slug: "strength", name: "Strength", abbr: "STR" },
   { slug: "dexterity", name: "Dexterity", abbr: "DEX" },
-] };
+], proficiency_levels: [], derived_stats: [], skills: [], resources: [],
+  content_types: [], currencies: [], creation_steps: [], sheet_sections: [],
+};
 function mount(method: "standard_array" | "manual" | "point_buy" = "standard_array", scores: Record<string, number> = {}) {
   return render(<AbilitiesStepClient ownerId="owner-1" characterId="char-1" character={{
     id: "char-1", level: 1, choices: { ability_method: method, race: "human" }, base_stats: scores,
