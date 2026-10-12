@@ -118,7 +118,7 @@ describe("durable hit-die service-internal request and snapshot", () => {
     expect(canonicalHitDieJson(["fighter","wizard"])).not.toBe(canonicalHitDieJson(["wizard","fighter"]));
     expect(() => canonicalHitDieJson({hp:Infinity})).toThrow();
     const s = snapshot();
-    expect(hitDieDependencyFingerprint(s)).toBe(hitDieDependencyFingerprint({...s,character:{...s.character,base_stats:{dexterity:10,constitution:14}}}));
+    expect(hitDieDependencyFingerprint(s)).toBe(hitDieDependencyFingerprint({...s,character:{...s.character,base_stats:{charisma:10,wisdom:10,intelligence:10,dexterity:10,constitution:14,strength:10}}}));
   });
   it.each(["missing", "version", "system", "character", "duplicate", "die", "unselected", "unknown_type", "unknown_system"])("rejects unresolved/mismatched pin %s without fallback", kind => {
     const s = snapshot();
