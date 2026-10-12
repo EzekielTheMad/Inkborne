@@ -55,7 +55,7 @@ function metadata() {
 const catalog = { database: "postgres", actor: "postgres", backend_pid: 101,
   extensions: [], roles: [], tables: [{ schema: "public", name: "characters", rls: true }],
   functions: [], triggers: [], policies: [], table_grants: [] };
-function transport(options: { container?: ReturnType<typeof metadata>; failSQL?: string; engine?: string; unsafeTable?: boolean } = {}) {
+function transport(options: { container?: ReturnType<typeof metadata>; failSQL?: string; engine?: string; unsafeTable?: boolean; forbiddenStageGrant?: { role: "anon" | "authenticated"; privilege: string } } = {}) {
   return vi.fn(async (command: Command) => {
     expect(command.args.slice(0,2)).toEqual(["--context", "desktop-linux"]);
     if (command.args[2] === "info") return { code: 0, stdout: JSON.stringify(options.engine ?? "test-desktop-engine") };
@@ -67,6 +67,11 @@ function transport(options: { container?: ReturnType<typeof metadata>; failSQL?:
     expect(command.args).toContain("ON_ERROR_STOP=1");
     expect(command.args).toContain("--no-password");
     expect(command.args).not.toContain("--env");
+    if (options.forbiddenStageGrant && command.stdin?.includes("R07.1 forbidden grant-table privilege")) {
+      const privileges = command.stdin.match(/FOREACH forbidden_privilege IN ARRAY ARRAY\[([^\]]+)\]/)?.[1].match(/'[A-Z]+'/g)?.map(value=>value.slice(1,-1)) ?? [];
+      const { role, privilege } = options.forbiddenStageGrant;
+      if (privileges.includes(privilege) && !(role === "authenticated" && privilege === "SELECT")) return {code:3,stdout:"",stderr:"ERROR: P0001"};
+    }
     if (command.stdin === options.failSQL) return { code: 3, stdout: "secret must not persist", stderr: "secret DSN password=do-not-retain" };
     if (command.stdin?.includes("'server_version'")) return { code: 0, stdout: JSON.stringify(options.unsafeTable ? { ...catalog, tables: [{ schema: "public", name: 'characters";drop table profiles' }] } : catalog) };
     if (command.stdin?.includes("SELECT count(*)")) return { code: 0, stdout: "0\n" };
@@ -158,6 +163,28 @@ describe("real runtime transport boundary", () => {
     expect(stage.complete).toBe(true); expect(stage.audits).toHaveLength(2);
     expect(run.mock.calls.filter(([command])=>command.stdin==="SELECT 'stage';")).toHaveLength(1);
     expect(run.mock.calls.some(([command])=>command.stdin?.includes("Stage already present"))).toBe(true);
+  });
+  it("retains the only allowed owner SELECT and asserts every other PG17 table/column privilege", () => {
+    const sql = readFileSync(path.join(root,"scripts/equipment-runtime/stage-assertions.sql"),"utf8");
+    const denied = sql.match(/FOREACH forbidden_privilege IN ARRAY ARRAY\[([^\]]+)\]/)?.[1].match(/'[A-Z]+'/g)?.map(value=>value.slice(1,-1));
+    expect(denied).toEqual(["SELECT","INSERT","UPDATE","DELETE","TRUNCATE","REFERENCES","TRIGGER","MAINTAIN"]);
+    expect(sql).toContain("FOREACH api_role IN ARRAY ARRAY['anon','authenticated'] LOOP");
+    expect(sql).toContain("IF api_role = 'authenticated' AND forbidden_privilege = 'SELECT' THEN CONTINUE;");
+    expect(sql).toContain("IF NOT pg_catalog.has_table_privilege('authenticated','public.character_starting_grants','SELECT')");
+    expect(sql).toContain("pg_catalog.has_table_privilege(api_role,'public.character_starting_grants',forbidden_privilege)");
+    expect(sql).toContain("pg_catalog.has_any_column_privilege(api_role,'public.character_starting_grants',forbidden_privilege)");
+  });
+  it.each([
+    ...["INSERT","UPDATE","DELETE","TRUNCATE","REFERENCES","TRIGGER","MAINTAIN"].map(privilege=>({role:"authenticated" as const,privilege})),
+    ...["SELECT","INSERT","UPDATE","DELETE","TRUNCATE","REFERENCES","TRIGGER","MAINTAIN"].map(privilege=>({role:"anon" as const,privilege})),
+  ])("never completes the stage with effective $role $privilege in the injected permission result", async forbiddenStageGrant => {
+    const {manifest,approved}=approval(); const receipts: Journal[] = [];
+    const baseline=await executeApproved({root,manifest,approval:approved,confirmation:manifestHash(manifest),phase:"baseline",transport:transport(),saveJournal:()=>{}});
+    const run=transport({forbiddenStageGrant});
+    await expect(executeApproved({root,manifest,approval:approved,confirmation:manifestHash(manifest),phase:"stage",transport:run,baselineReceipt:baseline,saveJournal:j=>receipts.push(j)})).rejects.toThrow(/first SQL failure at stage-assertions/);
+    expect(receipts.at(-1)?.complete).toBe(false);
+    expect(receipts.at(-1)?.steps.at(-1)).toEqual({name:"stage-assertions",outcome:"failed",exitCode:3});
+    expect(receipts.at(-1)?.audits).toHaveLength(1);
   });
   it("rejects a drifted baseline receipt before the first staged write", async () => {
     const {manifest,approved}=approval(); const run=transport();

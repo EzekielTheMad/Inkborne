@@ -2,7 +2,7 @@
 BEGIN READ ONLY;
 SET LOCAL statement_timeout = '15s';
 DO $check$
-DECLARE function_name text; api_role text;
+DECLARE function_name text; api_role text; forbidden_privilege text;
 BEGIN
   IF pg_catalog.to_regclass('public.character_starting_grants') IS NULL THEN RAISE EXCEPTION 'R07.1 stage table absent'; END IF;
   FOREACH function_name IN ARRAY ARRAY[
@@ -18,13 +18,24 @@ BEGIN
     END LOOP;
   END LOOP;
   IF NOT pg_catalog.has_table_privilege('authenticated','public.character_starting_grants','SELECT')
-     OR pg_catalog.has_table_privilege('authenticated','public.character_starting_grants','INSERT')
-     OR pg_catalog.has_table_privilege('authenticated','public.character_starting_grants','UPDATE')
-     OR pg_catalog.has_table_privilege('anon','public.character_starting_grants','SELECT')
      OR NOT EXISTS (SELECT FROM pg_catalog.pg_class WHERE oid = 'public.character_starting_grants'::regclass AND relrowsecurity)
      OR NOT EXISTS (SELECT FROM pg_catalog.pg_policy WHERE polrelid = 'public.character_starting_grants'::regclass) THEN
     RAISE EXCEPTION 'R07.1 stage table grants/RLS mismatch';
   END IF;
+  FOREACH api_role IN ARRAY ARRAY['anon','authenticated'] LOOP
+    -- PostgreSQL 17 also includes MAINTAIN. Authenticated access allows SELECT only.
+    FOREACH forbidden_privilege IN ARRAY ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER','MAINTAIN'] LOOP
+      IF api_role = 'authenticated' AND forbidden_privilege = 'SELECT' THEN CONTINUE; END IF;
+      IF pg_catalog.has_table_privilege(api_role,'public.character_starting_grants',forbidden_privilege) THEN
+        RAISE EXCEPTION 'R07.1 forbidden grant-table privilege';
+      END IF;
+      IF forbidden_privilege IN ('SELECT','INSERT','UPDATE','REFERENCES') THEN
+        IF pg_catalog.has_any_column_privilege(api_role,'public.character_starting_grants',forbidden_privilege) THEN
+          RAISE EXCEPTION 'R07.1 forbidden grant-table column privilege';
+        END IF;
+      END IF;
+    END LOOP;
+  END LOOP;
   IF NOT EXISTS (SELECT FROM pg_catalog.pg_trigger WHERE tgrelid = 'public.character_starting_grants'::regclass AND tgname = 'preserve_starting_grant_receipt' AND tgenabled = 'O')
      OR NOT EXISTS (SELECT FROM pg_catalog.pg_trigger WHERE tgrelid = 'public.character_content_refs'::regclass AND tgname = 'aaa_lock_starting_equipment_refs' AND tgenabled = 'O')
      OR NOT EXISTS (SELECT FROM pg_catalog.pg_trigger WHERE tgrelid = 'public.character_inventory'::regclass AND tgname = 'protect_starting_inventory_provenance' AND tgenabled = 'O') THEN

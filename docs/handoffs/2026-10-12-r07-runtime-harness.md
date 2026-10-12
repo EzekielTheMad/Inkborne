@@ -51,11 +51,16 @@ scratch SQL operation, not a replacement gate.
   policy MD5s and table privilege matrices. Metadata hashes supplement the source
   SHA256 manifest; they are not cryptographic proofs of behavior.
 - `stage` requires the exact completed full baseline receipt for the same source,
-  manifest and container. Recompute/compare the complete catalog/grants/count
-  fingerprint before applying stage once. Already-present stage and catalog drift
-  are refused. After stage, assert trusted entrypoints, forbidden API executes,
+  manifest and container. Recompute/compare the selected catalog/count fingerprint
+  before applying stage once. Already-present stage and catalog drift are refused.
+  After stage, assert trusted entrypoints, forbidden API executes,
   grant-table RLS/grants and enabled receipt/provenance/ref-lock protections, then
   capture the complete post-stage audit again.
+
+The fingerprint compares **selected catalog fields plus exact table counts**. It
+does not hash full row contents, every column/index/constraint or every possible
+privilege. Same-count row-content mutations may be undetected. This is a bounded
+pre-stage drift check, not full data immutability or rollback/privacy acceptance.
 - Journal each successful/failed SQL filename and exit code before continuing.
   Keep `complete=false` on failures. Never persist raw stderr/stdout from migrations,
   SQL failure bodies, credential-bearing DSNs or row bodies. Retain the first failure
@@ -167,12 +172,14 @@ shell PID 44792, parent 30200, known worker cwd, UTC start
 37 audit findings; root's independent security/lock lane owns that work. No audit fix
 or lock change was made here.
 
-- `npm.cmd test -- tests/scripts/equipment-runtime.test.ts`: **17 passed**.
+- `npm.cmd test -- tests/scripts/equipment-runtime.test.ts`: **33 passed** after review.
   Tests inject transport only: wrong daemon/name/state/image ownership/isolation,
   writable/unowned mounts, hash/source/inventory drift, missing human G2/hash gate,
   exact ordered bytes, first-error stop, output suppression, exact-count audit,
   full baseline receipt, stage fingerprint drift and one stage application.
-- `npm.cmd run typecheck`: passed again after all 17 cases were present.
+  Added a stage SQL contract plus 15 injected permissive-grant cases; none can
+  complete stage with authenticated non-SELECT or any anonymous table privilege.
+- `npm.cmd run typecheck`: passed again after all 33 cases were present.
 - No real Docker transport, SQL files, schema, secrets, fixtures or stages executed.
   Fake Git repositories and SQL strings exist solely for injected-transport tests;
   they are not baseline substitutes or DB acceptance evidence.
@@ -194,4 +201,14 @@ Worker artifact SHA256s, before integration:
 | `bootstrap-preflight.sql` | `8db5f351395cb7f65f8230c0b95725a3937d91cd2338f16e812e049f159349b0` |
 | `baseline-assertions.sql` | `138e38f47929e5ee9658a7c8427ac70dfaf9568bff0dd17c05a17996bd42c5ef` |
 | `catalog-audit.sql` | `b15a098e4534e626873b72de5a7abfa10fc1bbf63c6b7b09cb5a4fed24479e77` |
-| `stage-assertions.sql` | `cfc051e9ecf5aa2de0de121524dcbfd0950407ab0ff04acab2f337d8ddd87618` |
+| `stage-assertions.sql` | `e28028a02d3456181e5272b4b769a8bd25c7bc85f7df9a0adce422d790adb650` |
+
+Independent review found missing effective DELETE/anonymous DML checks. The fix
+keeps authenticated SELECT required, denies every other authenticated table
+privilege, and denies all anonymous table privileges: SELECT, INSERT, UPDATE,
+DELETE, TRUNCATE, REFERENCES, TRIGGER and PostgreSQL 17 MAINTAIN. Applicable column
+privileges are also checked using `has_any_column_privilege`. These are assertions
+only; no grant/schema/data operation is added. The privilege list follows the
+[official PostgreSQL 17 privilege contract](https://www.postgresql.org/docs/17/ddl-priv.html).
+The added tests are source-contract and injected-transport evidence, not actual
+PostgreSQL execution or an extension of the accepted race matrix.
