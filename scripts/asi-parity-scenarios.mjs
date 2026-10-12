@@ -41,6 +41,7 @@ async function previewStrength(page) {
 }
 export async function executeAsiScenario(page, scenario, helpers) {
   const { size, layout, keyboardReach, capture } = helpers, checks = [];
+  let backgroundPendingProof;
   const check = async (label, action) => { await action(); checks.push(label); };
   await page.waitForFunction(() => window.asiHarness.snapshot && window.asiHarness.projection);
   const initial = await read(page);
@@ -116,10 +117,75 @@ export async function executeAsiScenario(page, scenario, helpers) {
       await page.getByText("Original original-courier", { exact: true }).click(); await page.getByRole("button", { name: "Add Background", exact: true }).click();
       await page.waitForFunction(() => !!window.asiHarness.rejectBackground);
       // Actual preview is responsive/hidden on mobile; read the rendered draft notice there too.
-      await check("pending selection is disabled/busy and preview is explicitly draft (mobile sidebar hidden)", async () => { assert.equal(await page.locator('fieldset[aria-busy="true"]').isDisabled(), true); assert.ok(await page.getByText(/Draft preview only/).count()); });
+      await check("pending native fieldset/selection controls are disabled and busy; preview explicitly draft (mobile sidebar hidden)", async () => {
+        await page.waitForFunction(() => {
+          const fieldset = document.querySelector('fieldset[aria-busy="true"]');
+          return fieldset instanceof HTMLFieldSetElement && fieldset.disabled;
+        });
+        const fieldset = page.locator('fieldset[aria-busy="true"]');
+        // Playwright isDisabled deliberately excludes FIELDSET itself. Read its
+        // native reflected property, then check effective inherited disabling
+        // on the supported form controls instead of relaxing this contract.
+        const native = await fieldset.evaluate(node => ({ tagName: node.tagName, disabled: node.disabled,
+          disabledAttribute: node.hasAttribute("disabled"), ariaBusy: node.getAttribute("aria-busy") }));
+        assert.deepEqual(native, { tagName: "FIELDSET", disabled: true, disabledAttribute: true, ariaBusy: "true" });
+        const controls = [];
+        for (const [name, locator] of [
+          ["Search Background", fieldset.getByRole("textbox", { name: "Search Background", exact: true })],
+          ["Preview Original original-courier", fieldset.getByRole("button", { name: "Preview Original original-courier", exact: true })],
+          ["Keep Current Background", fieldset.getByRole("button", { name: "Keep Current Background", exact: true })],
+        ]) {
+          const effectiveDisabled = await locator.isDisabled();
+          const nativeDisabled = await locator.evaluate(node => node.matches(":disabled"));
+          assert.equal(effectiveDisabled, true, `Pending ${name} must be effectively disabled`);
+          assert.equal(nativeDisabled, true, `Pending ${name} must inherit native disabling`);
+          controls.push({ name, effectiveDisabled, nativeDisabled });
+        }
+        assert.ok(await page.getByText(/Draft preview only/).count());
+        backgroundPendingProof = { native, controls };
+      });
+      await check("pending native activation cannot select twice, cancel the selection or navigate", async () => {
+        const before = await read(page), navigationControls = [];
+        assert.equal(before.calls.filter(call => call.name === "backgroundSelection").length, 1);
+        for (const name of ["Previous: Abilities", "Next: Equipment"]) {
+          const button = page.getByRole("button", { name, exact: true });
+          const inPendingFieldset = await button.evaluate(node => !!node.closest('fieldset[aria-busy="true"]'));
+          const effectiveDisabled = await button.isDisabled();
+          // Assert inheritance only if the actual navigation control is inside
+          // the fieldset; an outside control must still obey saveBusy.
+          if (inPendingFieldset) assert.equal(effectiveDisabled, true, `Pending ${name} must inherit disabling`);
+          navigationControls.push({ name, inPendingFieldset, effectiveDisabled });
+        }
+        for (const name of ["Preview Original original-courier", "Keep Current Background", "Previous: Abilities", "Next: Equipment"]) {
+          // Native click() respects disabled form controls. No forced pointer
+          // or synthetic event bypasses the pending UI contract.
+          await page.getByRole("button", { name, exact: true }).evaluate(node => { node.click(); node.click(); });
+        }
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(null)))));
+        const after = await read(page);
+        assert.deepEqual(after.calls, before.calls, "Pending controls must not invoke another action");
+        assert.deepEqual(after.navigation, before.navigation, "Pending controls must not navigate");
+        assert.deepEqual(count(after.journal), count(before.journal));
+        assert.deepEqual(after.snapshot.state, before.snapshot.state);
+        assert.deepEqual(after.projection.rawRefs, before.projection.rawRefs);
+        assert.equal(await page.getByRole("button", { name: "Add Background", exact: true }).count(), 0, "Pending selection cannot reopen its confirmation");
+        backgroundPendingProof.navigationControls = navigationControls;
+        backgroundPendingProof.actionCount = after.calls.filter(call => call.name === "backgroundSelection").length;
+      });
       await page.evaluate(() => window.asiHarness.rejectBackground());
       await page.getByRole("alert").filter({ hasText: /could not be selected/ }).waitFor();
-      await check("rejected selection retains draft notice and original immutable raw data", async () => { assert.ok(await page.getByText(/Draft preview only/).count()); assert.deepEqual((await read(page)).initialProjection, initial.initialProjection); });
+      await check("rejected selection clears pending, retains draft notice and original immutable raw data", async () => {
+        await page.waitForFunction(() => {
+          const fieldset = document.querySelector("fieldset");
+          return fieldset instanceof HTMLFieldSetElement && !fieldset.disabled && fieldset.getAttribute("aria-busy") === "false";
+        });
+        assert.ok(await page.getByText(/Draft preview only/).count());
+        const after = await read(page);
+        assert.deepEqual(after.initialProjection, initial.initialProjection);
+        assert.deepEqual(after.projection.rawRefs, initial.projection.rawRefs);
+        assert.deepEqual(after.snapshot.state, initial.snapshot.state);
+        assert.equal(after.calls.filter(call => call.name === "backgroundSelection").length, 1);
+      });
     }
   } else if (["weapon-crit", "retained-crit"].includes(scenario)) {
     const scope = await actualSheetTab(page, size, "Actions");
@@ -196,5 +262,5 @@ export async function executeAsiScenario(page, scenario, helpers) {
   } else throw Error(`Unimplemented finite scenario: ${scenario}`);
   await check("no unexpected boundary calls; real viewport/controls bounded", async () => { assert.deepEqual((await read(page)).unexpectedCalls, []); await layout(page, size, scenario); });
   await capture();
-  return { checks, ...(await read(page)), limits: "Simulated read/auth/actions/CAS/navigation/print; native RNG untouched; actual consumer UI. Critical accepted result is openly simulated only in named crit cases." };
+  return { checks, backgroundPendingProof, ...(await read(page)), limits: "Simulated read/auth/actions/CAS/navigation/print; native RNG untouched; actual consumer UI. Critical accepted result is openly simulated only in named crit cases." };
 }
