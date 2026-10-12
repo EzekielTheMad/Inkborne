@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { listOwnedHomebrewBackgrounds } from "@/lib/supabase/homebrew-backgrounds-server";
 import { listOwnedHomebrewFeats } from "@/lib/supabase/homebrew-feats-server";
+import { listOwnedHomebrewWeapons } from "@/lib/supabase/homebrew-weapons-server";
 import { listOwnedHomebrewItems } from "@/lib/supabase/homebrew-items-server";
 import { listOwnedHomebrewMagicItems } from "@/lib/supabase/homebrew-magic-items-server";
 import { listOwnedHomebrewSpells } from "@/lib/supabase/homebrew-spells-server";
@@ -21,16 +22,18 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
     listOwnedHomebrewBackgrounds(),
     listOwnedHomebrewMagicItems(),
     listOwnedHomebrewItems(),
+    listOwnedHomebrewWeapons(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
   const backgrounds = backgroundsResult.status === "fulfilled" ? backgroundsResult.value : [];
+  const weapons = weaponsResult.status === "fulfilled" ? weaponsResult.value : [];
   const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
   const magicItems = magicItemsResult.status === "fulfilled" ? magicItemsResult.value : [];
 
@@ -57,6 +60,10 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     console.error("[HomebrewPage] Failed to load owned homebrew items", itemsResult.reason);
   }
 
+  if (weaponsResult.status === "rejected") {
+    console.error("[HomebrewPage] Failed to load owned homebrew weapons", weaponsResult.reason);
+  }
+
   const notice = typeof query.created === "string"
     ? "Private homebrew created."
     : typeof query.updated === "string"
@@ -67,11 +74,13 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && backgrounds.length === 0
     && magicItems.length === 0
     && items.length === 0
+    && weapons.length === 0
     && spellsResult.status === "fulfilled"
     && featsResult.status === "fulfilled"
     && backgroundsResult.status === "fulfilled"
     && magicItemsResult.status === "fulfilled"
-    && itemsResult.status === "fulfilled";
+    && itemsResult.status === "fulfilled"
+    && weaponsResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -97,6 +106,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
             <Plus className="size-4" />
             Create background
           </Link>
+          <Link href="/homebrew/weapons/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create weapon</Link>
           <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>
             <Plus className="size-4" />
             Create item
@@ -125,12 +135,13 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
           </div>
           <h2 className="j-display mt-4 text-xl text-foreground">Write your first private rule</h2>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-            Start with a spell, feat, background, or magic item. Every change is versioned so character sheets can remain pinned to exactly what they chose.
+            Start with a spell, feat, background, item, weapon, or magic item. Every change is versioned so character sheets can remain pinned to exactly what they chose.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link href="/homebrew/spells/new" className={buttonVariants({ variant: "outline" })}>Create spell</Link>
             <Link href="/homebrew/feats/new" className={buttonVariants({ variant: "outline" })}>Create feat</Link>
             <Link href="/homebrew/backgrounds/new" className={buttonVariants({ variant: "outline" })}>Create background</Link>
+            <Link href="/homebrew/weapons/new" className={buttonVariants({ variant: "outline" })}>Create weapon</Link>
             <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>Create item</Link>
             <Link href="/homebrew/magic-items/new" className={buttonVariants({ variant: "outline" })}>Create magic item</Link>
           </div>
@@ -285,6 +296,32 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
                   <div className="flex shrink-0 gap-1.5">
                     <Badge variant="outline">Private</Badge>
                     <Badge variant="secondary">v{item.version}</Badge>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {weaponsResult.status === "rejected" ? (
+        <HomebrewLoadError label="weapons" />
+      ) : weapons.length > 0 ? (
+        <section aria-labelledby="owned-weapons-heading" className="space-y-3">
+          <h2 id="owned-weapons-heading" className="j-folio">My weapons</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {weapons.map((weapon) => (
+              <Link key={weapon.id} href={`/homebrew/weapons/${weapon.id}/edit`}
+                className="j-card-paper group p-5 transition-colors hover:border-accent/50">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="j-display truncate text-lg text-foreground group-hover:text-accent">{weapon.name}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{weapon.data.weapon_category} &middot; {weapon.data.weapon_range}</p>
+                    <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{weapon.data.damage ? `${weapon.data.damage.dice} ${weapon.data.damage.type}` : "No damage authored"}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="secondary">v{weapon.version}</Badge>
                   </div>
                 </div>
               </Link>

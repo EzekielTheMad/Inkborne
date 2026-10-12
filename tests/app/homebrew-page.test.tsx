@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedBackgrounds: vi.fn(),
   listOwnedMagicItems: vi.fn(),
   listOwnedItems: vi.fn(),
+  listOwnedWeapons: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -19,6 +20,7 @@ vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
 vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
   listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
 }));
+vi.mock("@/lib/supabase/homebrew-weapons-server", () => ({ listOwnedHomebrewWeapons: mocks.listOwnedWeapons }));
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({ listOwnedHomebrewItems: mocks.listOwnedItems }));
 vi.mock("@/lib/supabase/homebrew-magic-items-server", () => ({
   listOwnedHomebrewMagicItems: mocks.listOwnedMagicItems,
@@ -46,6 +48,7 @@ describe("HomebrewPage", () => {
     mocks.listOwnedBackgrounds.mockResolvedValue([]);
     mocks.listOwnedMagicItems.mockResolvedValue([]);
     mocks.listOwnedItems.mockResolvedValue([]);
+    mocks.listOwnedWeapons.mockResolvedValue([]);
   });
 
   it("shows each authoring section with its versioned homebrew links", async () => {
@@ -153,6 +156,7 @@ describe("HomebrewPage", () => {
     expect(screen.getAllByRole("link", { name: "Create background" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create magic item" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create item" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Create weapon" })).toHaveLength(2);
   });
 
   it("keeps available content visible when one content type fails to load", async () => {
@@ -187,6 +191,24 @@ describe("HomebrewPage", () => {
     mocks.listOwnedItems.mockRejectedValue(new Error("item read failed"));
     render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByText("Your homebrew items could not be loaded.")).toBeVisible();
+    expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
+  });
+
+  it("discovers private weapons with their canonical damage and editable version", async () => {
+    mocks.listOwnedWeapons.mockResolvedValue([{ id: "77777777-7777-4777-8777-777777777777", name: "Oathblade", version: 2,
+      data: { weapon_category: "Martial", weapon_range: "Melee", damage: { dice: "1d8", type: "slashing" } } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("My weapons")).toBeVisible();
+    expect(screen.getByText("Martial · Melee")).toBeVisible();
+    expect(screen.getByText("1d8 slashing")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Oathblade/ })).toHaveAttribute("href", "/homebrew/weapons/77777777-7777-4777-8777-777777777777/edit");
+    expect(screen.getByRole("link", { name: "Create weapon" })).toHaveAttribute("href", "/homebrew/weapons/new");
+  });
+
+  it("reports a private weapon read failure without calling it an empty catalog", async () => {
+    mocks.listOwnedWeapons.mockRejectedValue(new Error("weapon read failed"));
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Your homebrew weapons could not be loaded.")).toBeVisible();
     expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
 });
