@@ -58,6 +58,12 @@ Next/ESLint `16.3.8`, coherent Tiptap `3.30.5` and scoped compatible transitive
 patches. The updated production-only audit reports **zero**; the full audit still
 reports **24 development-tool findings**, including one critical through shadcn's
 MCP/Express/proxy-addr chain. That remaining risk is open, not accepted or hidden.
+Root subsequently confirmed the maintainer's [critical advisory and patched version](https://github.com/jshttp/proxy-addr/security/advisories/GHSA-jqcg-44mw-7w3h)
+and changed only locked development `proxy-addr` from `2.0.7` to `2.0.8` at
+`12290be`. The refreshed lockfile audit reports **23 findings / zero critical**
+(15 high, seven moderate, one low); independent review/install/combined checks
+remain pending. Production findings remain zero. Earlier 24/one-critical counts
+above describe the preceding checkpoint, not the current lockfile.
 The real mounted editor harness was reviewed/integrated as `2bca782`; its 12 offline
 checks still require a final combined-source run with build CSS.
 
@@ -72,8 +78,16 @@ Additional reviewed local checkpoints:
 | R09.1 writer plan | `fffea05`; source `aabf2d0` | Independently challenged writer/fence/revision/expiry/recovery plan. Pure hit-die model child in progress; no provider routing, RPC or database authority enabled. |
 
 Root corrected the print effect cleanup warning at `3bfc90b`; the existing five
-focus/title/guard tests passed. R12.2 private weapon authoring is in independent
-local development; R21.1 is inventory/planning for the documented M6 mechanics.
+focus/title/guard tests passed. R12.2 private core weapon authoring was independently
+reviewed, corrected for raw extension-key preservation, and integrated as `dd39a79`,
+`e4293f3`, `d17d021` (source `4a3873c`, `40ca7d4`, docs `bcdb0bf`). Six files / 57
+focused tests preceded the correction; 38 focused tests covered the correction.
+Its real form/mapper passed 14 offline desktop/mobile checks with simulated actions;
+actual owner/RLS/version-trigger/race and inventory-pin continuity remain open.
+R12.3 private armor authoring is in development; R21.1 is inventory/planning for the
+documented M6 mechanics. R09.2 initial pure model was blocked in review for omitted
+selected non-class pins and unchecked result intent; correction is in progress and
+that source is not integrated.
 These are implementation checkpoints, not complete milestone or beta acceptance.
 
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
