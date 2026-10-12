@@ -2,9 +2,11 @@
 
 2026-10-12. **PROPOSED, pending the human format decision and independent plan
 challenge.** Root has asked an optional JSON-versus-evidenced-MPMB preference;
-no answer is recorded here. This document does not authorize dependent code,
-enable uploads/commits, change SQL, or mark R17/import accepted. If the selected
-format differs, challenge the revised contract before implementation.
+no answer is recorded here. Root uses recommended JSON only as a working local
+prototype assumption. This document does not authorize dependent code, enable
+app uploads/commits, change SQL, or mark the format approved or R17/import
+accepted. Elapsed time is not approval. If the selected format differs, challenge
+the revised app/persistence contract before implementation.
 
 Inspected root `fe236dbf05d2ddcbf44239614ea3bfd282a21b90` and clean owned NPC
 worker `48af0f691908e66a46129735c79baf4ea425c051`, product correction
@@ -76,8 +78,15 @@ proficiency/choice effects) is rejected, never repaired or dropped.
   discard it. No comments, trailing commas, non-JSON primitives, nonfinite
   numeric result or trailing non-whitespace. No eval/Function/VM/module/import/
   script execution or external reads. Ordinary JSON strings/escapes remain
-  data; literal invalid UTF-8 fails; valid JSON Unicode escapes are preserved
-  under existing schema semantics, with no new Unicode normalization policy.
+  data; literal invalid UTF-8 fails. Decode and validate EVERY object key and
+  string value before candidate admission or profile rendering: reject decoded
+  U+0000 and any lone high/low UTF-16 surrogate or incorrect surrogate pair,
+  including JSON escape sequences. Preserve valid pairs and all other accepted
+  plaintext unchanged; do not normalize, replace, truncate or repair strings.
+  This codec boundary matches PostgreSQL17 JSONB's restrictions reported by
+  root from [the official JSON documentation](https://www.postgresql.org/docs/17/datatype-json.html).
+  It does not upgrade the shared NPC schema, migrate legacy values or claim
+  existing authoring/hosted acceptance of these additional import constraints.
 - Use a bounded JSON lexer/parser, or bounded duplicate-key scanner followed
   by JSON.parse, before accepting an object. Depth≤8 (root depth1), total
   value nodes≤2048, total object member occurrences≤512. Each array entry is
@@ -87,43 +96,58 @@ proficiency/choice effects) is rejected, never repaired or dropped.
   Never let JSON.parse's last-key-wins behavior establish accepted content.
 - Return bounded diagnostics (≤100paths, ≤3messages/path, ≤200chars/message)
   and one-based line/column plus zero-based original UTF-8 byte offset for the
-  offending token/value. Do not label UTF-16 indices as byte offsets. Preserve
-  path/token offsets for schema failures; no entire source excerpts/logging.
+  offending token/value. NUL/surrogate failures identify the original token and
+  offending escape's original UTF-8 byte offset (or literal scalar byte offset),
+  including after multibyte text and within object keys. Do not label decoded
+  UTF-16 indices as byte offsets or lose offsets by reserializing the decoded
+  value. Preserve path/token offsets for schema failures; no entire source excerpts/logging.
   Budget or syntax failure returns no partial accepted candidate.
 - Normalized JSON/schema semantics are separate from the original-byte hash:
   indentation/escape differences change the audit hash, not story meaning.
 
-## First bounded implementation child: codec and review only
+## Provisional first child: local pure codec and read-only profile prototype
 
-After the format decision and independent challenge, own new
-`lib/import/npc-json/{types,codec,review}.ts`,
-`components/library/npc-json-import-review.tsx`, and authenticated static route
-`app/(app)/homebrew/import/npc-json/page.tsx`, plus a minimal explicit format link
-in the existing import chooser. No shared importer refactor, schema change or
-MPMB dispatch change. Read locked installed Next guides before React/route code.
+After independent challenge and explicit scoped local implementation release,
+use JSON as the root's working prototype assumption while human format choice
+remains pending. Own only new `lib/import/npc-json/{types,codec,review}.ts`,
+read-only `components/library/npc-json-import-preview.tsx` wrapping the actual
+shipped `NpcProfile`, and original unit/component/offline fixtures and their
+bounded explicit config/runner. Read locked installed Next guides before React
+edits. No shared schema upgrade, importer refactor or MPMB dispatch change.
 
-Actual user flow: select file → bounded decode/validation → original narrative
-`NpcProfile` preview, filename/hash/format and absence/empty disclosure. Pure
-review does not create a durable import or NPC. Authenticated page access is
-real server authorization; browser preview is not write authority. No commit
-button in this child, no fake import ID or success notice. A rejected file
-retains the last explicitly labeled draft preview and its filename/hash; it
-cannot masquerade as the newly selected valid file. Replacing bytes invalidates
-confirmation; do not mutate the file or silently repair JSON. Keyboard labels,
-invalid-file focus, pending duplicate disable and mobile reachability are real.
+The local fixture may select synthetic bytes/native files → bounded codec →
+read-only actual profile with filename/hash/format and absence/empty disclosure.
+The component takes validated review data, offers no authoring/relationship
+action and cannot create a durable import or NPC. No authenticated app route,
+upload action, app upload chooser/link, stage/commit action/control, import job
+or success notice belongs to this first touchset. Browser preview is not write
+authority. An offline rejected-file scenario keeps any old preview explicitly
+labeled with its prior filename/hash; it cannot masquerade as the new valid
+file. Replacing bytes invalidates local review; do not mutate/repair the file.
+Keyboard labels, invalid-file focus and mobile profile reachability are tested
+only within the offline fixture. This is not a shipped app upload workflow.
 
 Pure tests: exact fixture/optional presence/ordered duplicates/plain markup;
 all envelope authority fields; missing/null/nonempty valid-effect negatives;
 unknown nested keys; duplicate/escaped/dangerous keys; multibyte offsets, BOM,
 bad UTF-8, grammar, each hard bound, finite numbers, no partial result and no
-side effects. Actual-profile rendering must remain escaped. Offline browser
-tests use native file selection and actual codec/profile, complete production
-CSS/fonts, blocked remotes and guarded private processes. Auth/router/actions/
-persistence models are labeled; this child provides no DB/RLS/commit proof.
+side effects. Add decoded NUL/lone high/lone low/reversed or incorrect pair
+negatives in EVERY key/string-value position (including escaped keys), offsets
+after multibyte tokens, and positive valid literal/escaped surrogate-pair and
+plain-text controls with exact preservation. Failures must produce no candidate
+or profile. Actual-profile rendering remains escaped. Offline browser tests use
+only the fixture's native file selection and actual codec/profile, complete
+production CSS/fonts, blocked remotes and guarded private processes. Fixture
+navigation/read behavior is labeled; no real app Auth/actions/persistence path,
+DB/RLS/staging/commit or hosted support is exercised.
 
 ## Later separate child: durable review, audit and immutable commit
 
-Before implementing/enabling persistence, freeze exact staged SQL TEXT and
+Authenticated app route `app/(app)/homebrew/import/npc-json/page.tsx`, native app
+upload/review UI and explicit import chooser link are later touchsets, dependent
+on the actual human format decision, reviewed app contract and applicable G2
+authority gates; the local assumption cannot release them. Before implementing/
+enabling staging or commit, freeze exact staged SQL TEXT and
 fingerprint, generated types, read/write DTOs and feature gate in another
 independently challenged plan. The proposed format discriminator is
 `inkborne_npc_json_v1`; proposed persisted registry discriminator is also
@@ -192,8 +216,10 @@ claim NPCs are selectable character-building content.
 
 ## Acceptance and dependencies
 
-Pure codec/profile acceptance is the first useful source child; it does not close
-durable import. Later default-off persistence requires exact SQL TEXT review plus
+Local prototype codec/profile acceptance is the first useful source child; it
+does not approve the format or close app upload/durable import. The actual
+format decision remains pending irrespective of elapsed time. Later default-off
+app/persistence work requires its own review and exact SQL TEXT review plus
 authorized G2 actual-role/transaction proof: anon/foreign denial, owner isolation,
 published-system zero/duplicate/error rejection, direct stage/preview tamper,
 effectful/missing NPC effects, mixed format/type tuples, stale revision/CAS,
