@@ -3,6 +3,10 @@ import { buildCharacterPrintModel } from "@/lib/character/print-model";
 import { printFixture } from "../../../e2e/print/fixtures";
 
 describe("paper-safe current character snapshot", () => {
+  it("refuses unresolved slot evidence instead of printing an empty pool", () => {
+    const ctx = printFixture("caster"); ctx.slotResolution = { status: "unavailable", reason: "missing class pin" };
+    expect(() => buildCharacterPrintModel(ctx)).toThrow(/Spell slots are unavailable/);
+  });
   it("uses evaluated caster abilities, saves, current HP and spent resources", () => {
     const ctx = printFixture("caster");
     const model = buildCharacterPrintModel(ctx, "captured");

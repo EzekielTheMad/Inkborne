@@ -1,3 +1,4 @@
+import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { useEffect } from "react";
 import { act, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -24,9 +25,9 @@ function Probe() {
 }
 function Fixture() {
   return <CharacterProvider
-    character={{ id: "local-character", user_id: "local-owner", state: baseline, choices: { classes: [{ slug: "fighter", level: 2 }] }, base_stats: {}, narrative: {} } as never}
+    character={{ id: "local-character", system_id: "local-system", user_id: "local-owner", state: baseline, choices: { classes: [{ slug: "fighter", level: 2 }] }, base_stats: {}, narrative: {} } as never}
     schema={{ ability_scores: [], proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] } as never}
-    contentRefs={[]} initialState={baseline} initialInventory={[]} initialSpells={[]}
+    contentRefs={[pinnedSlotClass("fighter", 2, null, null)]} initialState={baseline} initialInventory={[]} initialSpells={[]}
     classData={{ fighter: { slug: "fighter", data: { hit_die: 10 } } } as never}
     allEffects={[]} baseStatsWithLevel={{ level: 2, constitution: 10 }} structuredSources={{}}
     isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}

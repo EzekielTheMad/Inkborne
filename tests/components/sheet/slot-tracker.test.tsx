@@ -10,7 +10,8 @@ let mockMaxSlots: MaxSlotsByLevel = {};
 let mockSlotState: SpellSlotsUsed = {};
 
 vi.mock("@/lib/character/character-context", () => ({
-  useSpells: () => ({ maxSlots: mockMaxSlots, slotState: mockSlotState }),
+  useSpells: () => ({ slotResolution: { status: "available", maxSlots: mockMaxSlots, pactSlotLevel: null },
+    maxSlots: mockMaxSlots, slotState: mockSlotState }),
   useCharacterState: () => ({
     state: { spell_slots_used: mockSlotState },
     patchState: { runAction: (_state: CharacterState, compute: (state: CharacterState) => { patch: Partial<CharacterState>; result: boolean }) => {

@@ -31,6 +31,7 @@ vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => viewport.mobi
 vi.mock("@/lib/character/character-context", () => ({
   useCharacter: () => ({ character: { id: "char-1", level: 3 } }),
   useSpells: () => ({
+    slotResolution: { status: "available", maxSlots: mockMaxSlots, pactSlotLevel: mockPactSlotLevel },
     maxSlots: mockMaxSlots,
     slotState: mockSlotState,
     pactSlotLevel: mockPactSlotLevel,

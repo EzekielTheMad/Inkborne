@@ -45,7 +45,7 @@ const LEVEL_PILLS: Array<{ key: string; label: string; level: number }> = [
  */
 function getMaxCastableLevel(
   maxSlots: Record<string, number | undefined>,
-  casterClasses: Array<{ slug: string; level: number }>,
+  pactSlotLevel: number | null,
 ): number {
   // Full/half casters: highest slot key with count > 0
   let maxLevel = 0;
@@ -55,18 +55,14 @@ function getMaxCastableLevel(
       break;
     }
   }
-  // Warlock pact slots: determine pact slot level from class level
-  // (Warlock L1-2 = 1st, L3-4 = 2nd, L5-6 = 3rd, L7-8 = 4th, L9+ = 5th)
-  const warlock = casterClasses.find((c) => c.slug === "warlock");
-  if (warlock && (maxSlots.pact ?? 0) > 0) {
-    const pactLevel = warlock.level >= 9 ? 5 : Math.min(5, Math.ceil(warlock.level / 2));
-    if (pactLevel > maxLevel) maxLevel = pactLevel;
+  if ((maxSlots.pact ?? 0) > 0 && pactSlotLevel !== null) {
+    maxLevel = Math.max(maxLevel, pactSlotLevel);
   }
   return maxLevel;
 }
 
 export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps) {
-  const { casterInfo, maxSlots, addSpell, removeSpell, spells } = useSpells();
+  const { casterInfo, maxSlots, pactSlotLevel, slotResolution, addSpell, removeSpell, spells } = useSpells();
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [selectedClass, setSelectedClass] = useState<string | null>(
@@ -82,8 +78,8 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
 
   const selectedCaster = casterInfo.classes.find((c) => c.slug === selectedClass);
   const maxCastableLevel = useMemo(
-    () => getMaxCastableLevel(maxSlots as Record<string, number | undefined>, casterInfo.classes),
-    [maxSlots, casterInfo.classes],
+    () => getMaxCastableLevel(maxSlots as Record<string, number | undefined>, pactSlotLevel),
+    [maxSlots, pactSlotLevel],
   );
 
   // Count cantrips already known for the selected class (for cap enforcement).
@@ -163,16 +159,17 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
   }, [characterId, query, selectedClass, selectedLevel, maxCastableLevel]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || slotResolution?.status !== "available") return;
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(runSearch, 200);
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       searchRequest.current += 1;
     };
-  }, [runSearch, open]);
+  }, [runSearch, open, slotResolution]);
 
   if (!open) return null;
+  if (slotResolution?.status !== "available") return <p role="status" className="text-sm text-muted-foreground">Spell choices are unavailable. Reload the character or restore its saved class content.</p>;
 
   const handleAdd = async (spell: SpellSearchResult) => {
     if (!selectedClass || !selectedCaster) return;

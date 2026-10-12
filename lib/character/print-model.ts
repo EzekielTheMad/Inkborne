@@ -8,7 +8,7 @@ export interface PrintEntry { name: string; details: string; description: string
 export type CharacterPrintInput = Pick<CharacterContextValue,
   "character" | "schema" | "evalResult" | "state" | "isOwner" | "hasSheet" | "reloadRequired" |
   "patchState" | "rollPersistencePending" | "rollPersistenceUncertain" | "pendingConcentrationCheck" |
-  "contentRefs" | "contentSnapshotsComplete" | "inventory" | "currency" | "spells" | "maxSlots" | "slotState" | "pactSlotLevel" |
+  "contentRefs" | "contentSnapshotsComplete" | "inventory" | "currency" | "spells" | "slotResolution" | "maxSlots" | "slotState" | "pactSlotLevel" |
   "hitDicePools" | "resources" | "casterInfo" | "concentration" | "maxHp">;
 export interface CharacterPrintModel {
   name: string;
@@ -51,6 +51,8 @@ function assertIdentity(row: { character_id?: string; content_definitions?: Pars
 export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = new Date().toISOString()): CharacterPrintModel {
   const { character, schema, evalResult: result, state } = ctx;
   if (!ctx.isOwner || !ctx.hasSheet) throw new Error("Print is available for your completed character sheets.");
+  const resolution = ctx.slotResolution;
+  if (resolution?.status !== "available") throw new Error("Spell slots are unavailable. Reload the character or restore its saved class content before printing.");
   if (!ctx.contentSnapshotsComplete) throw new Error("A saved content version is unavailable. Reload the character before printing.");
   if (ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending ||
     ctx.rollPersistenceUncertain || ctx.pendingConcentrationCheck) {
@@ -64,9 +66,9 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
     const modifier = getSkillModifier(abilityMod(skill.ability), bonus, result.grants, skill.slug);
     return { name: skill.name, modifier: formatModifier(modifier), passive: 10 + modifier };
   });
-  const slots = Object.entries(ctx.maxSlots).map(([level, max]) => {
+  const slots = Object.entries(resolution.maxSlots).map(([level, max]) => {
     const used = ctx.slotState[level as keyof typeof ctx.slotState] ?? 0;
-    const name = level === "pact" ? `Pact slots (level ${ctx.pactSlotLevel ?? "?"})` : `Level ${level} slots`;
+    const name = level === "pact" ? `Pact slots (level ${resolution.pactSlotLevel ?? "?"})` : `Level ${level} slots`;
     return { name, value: `${Math.max(0, Math.min(max, max - used))}/${max} remaining` };
   });
   const classNames = (character.choices.classes ?? []).map(choice => {

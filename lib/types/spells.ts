@@ -47,6 +47,11 @@ export interface MaxSlotsByLevel {
   pact?: number;
 }
 
+/** Missing slot evidence must never be interpreted as a confirmed empty pool. */
+export type SlotResolution =
+  | { status: "available"; maxSlots: MaxSlotsByLevel; pactSlotLevel: number | null }
+  | { status: "unavailable"; reason: string };
+
 export interface ConcentrationState {
   spell_slug: string;
   spell_name: string;

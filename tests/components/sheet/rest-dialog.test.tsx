@@ -1,3 +1,4 @@
+import type { SlotResolution } from "@/lib/types/spells";
 import { Activity } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
@@ -15,6 +16,7 @@ interface RestHookMock {
   hitDicePools: HitDicePool[];
   spendHitDie: ReturnType<typeof vi.fn>;
   arcaneRecovery: ArcaneRecoveryInfo;
+  slotResolution: SlotResolution;
 }
 
 let mockUseRest: () => RestHookMock;
@@ -30,6 +32,7 @@ function buildMock(overrides: Partial<RestHookMock> = {}): RestHookMock {
     setExhaustion: vi.fn(),
     hitDicePools: [],
     spendHitDie: vi.fn().mockResolvedValue(null),
+    slotResolution: { status: "available", maxSlots: {}, pactSlotLevel: null },
     arcaneRecovery: { available: false, budget: 0, recoverableSlots: {} },
     ...overrides,
   };

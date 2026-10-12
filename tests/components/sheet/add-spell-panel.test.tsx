@@ -32,6 +32,8 @@ vi.mock("@/lib/character/character-context", () => ({
       spellDc: 10,
       spellAttackBonus: 2,
     },
+    slotResolution: { status: "available", maxSlots: { "1": 2 }, pactSlotLevel: null },
+    pactSlotLevel: null,
     maxSlots: { "1": 2 },
     addSpell: context.addSpell,
     removeSpell: context.removeSpell,

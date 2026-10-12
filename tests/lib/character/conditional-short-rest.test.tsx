@@ -1,3 +1,4 @@
+import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { Activity, useEffect, useState } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,6 +14,8 @@ vi.mock("@/lib/supabase/rolls", () => ({ insertRoll: vi.fn() }));
 
 const schema = { ability_scores: [], proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
 const refs = [
+  pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0]),
+  pinnedSlotClass("fighter", 1, null, null),
   { content_definitions: { id: "ar", slug: "arcane-recovery", name: "Arcane Recovery", content_type: "feature", data: { class: "wizard", level: 1, usages: 1, recovery: "long rest" }, effects: [] } },
   { content_definitions: { id: "wind", slug: "second-wind", name: "Second Wind", content_type: "feature", data: { class: "fighter", level: 1, usages: 1, recovery: "short rest" }, effects: [] } },
 ];
@@ -45,7 +48,7 @@ function Probe({ label, dialog }: { label: string; dialog: boolean }) {
 }
 function Fixture({ raw, label = "sheet", dialog = false }: { raw: CharacterState; label?: string; dialog?: boolean }) {
   return <CharacterProvider
-    character={{ id: "local-character", state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }] }, base_stats: {}, narrative: {} } as never}
+    character={{ id: "local-character", system_id: "local-system", state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }] }, base_stats: {}, narrative: {} } as never}
     schema={schema as never} contentRefs={refs as never}
     initialState={{ ...raw, temp_hp: 0 }} initialInventory={[]} initialSpells={[]}
     classData={{ wizard: { slug: "wizard", data: { hit_die: 6, spellcasting: { type: "full", ability: "intelligence" } } }, fighter: { slug: "fighter", data: { hit_die: 10 } } } as never}

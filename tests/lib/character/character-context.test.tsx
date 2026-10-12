@@ -1,3 +1,4 @@
+import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { useEffect, useState } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -623,6 +624,7 @@ describe("<CharacterProvider> public hook surface", () => {
     choices: { classes: [{ slug: "wizard", level: 3 }] },
   } as unknown as CharacterWithSystem;
 
+  const wizardRef = pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0], "char-1", "system-1");
   const wizardClassData = {
     wizard: {
       slug: "wizard",
@@ -642,7 +644,7 @@ describe("<CharacterProvider> public hook surface", () => {
       const { state } = useCharacterState();
       return <span data-testid="slots">{state.spell_slots_used?.["1"] ?? 0}</span>;
     }
-    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData });
+    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData, contentRefs: [wizardRef] });
     await act(async () => {
       await expect(cast({
         name: "Magic Missile", class_slug: "wizard",
@@ -668,7 +670,7 @@ describe("<CharacterProvider> public hook surface", () => {
       name: "Magic Missile", class_slug: "wizard",
       content_definitions: { id: "magic-missile", name: "Magic Missile", slug: "magic-missile", data: { level: 1, duration: "Instantaneous" }, effects: [] },
     } as never;
-    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData });
+    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData, contentRefs: [wizardRef] });
     let first!: Promise<unknown>;
     await act(async () => { first = cast(spell, { type: "slot", level: 1 }).catch((error: Error) => error); });
     let second!: Promise<unknown>;
@@ -699,7 +701,7 @@ describe("<CharacterProvider> public hook surface", () => {
       name: "Magic Missile", class_slug: "wizard",
       content_definitions: { id: "magic-missile", name: "Magic Missile", slug: "magic-missile", data: { level: 1, duration: "Instantaneous" }, effects: [] },
     } as never;
-    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData });
+    renderWithProvider(Probe, { character: wizardCharacter, classData: wizardClassData, contentRefs: [wizardRef] });
     const staleCast = cast;
     let first!: Promise<unknown>;
     await act(async () => {
@@ -752,7 +754,7 @@ describe("<CharacterProvider> public hook surface", () => {
     renderWithProvider(Probe, {
       initialState,
       character: wizardCharacter,
-      contentRefs: [arcaneRecoveryRef],
+      contentRefs: [wizardRef, arcaneRecoveryRef],
       classData: wizardClassData,
     });
   }

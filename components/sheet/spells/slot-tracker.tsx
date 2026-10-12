@@ -74,7 +74,7 @@ function SlotDots({
 }
 
 export function SlotTracker() {
-  const { maxSlots, slotState } = useSpells();
+  const { maxSlots, slotState, slotResolution } = useSpells();
   const { state, patchState } = useCharacterState();
   const { pending, run } = useDialogAction();
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -85,6 +85,8 @@ export function SlotTracker() {
   }
   if ((maxSlots.pact ?? 0) > 0) visibleKeys.push("pact");
 
+  if (slotResolution?.status !== "available") return <p role="status" className="text-sm text-muted-foreground">Spell slots are unavailable. Reload the character or restore its saved class content.</p>;
+  if (slotResolution?.status !== "available") return <p role="status" className="text-sm text-muted-foreground">Spell slots are unavailable. Reload the character or restore its saved class content.</p>;
   if (visibleKeys.length === 0) return null;
 
   const setUsed = (key: SlotKey, next: number) => {

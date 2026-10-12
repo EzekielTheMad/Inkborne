@@ -32,6 +32,7 @@ function makeDefaultMock() {
     },
     spells: [],
     slotState: {},
+    slotResolution: { status: "available", maxSlots: {}, pactSlotLevel: null },
     maxSlots: {},
     concentration: null,
     addSpell: vi.fn(),

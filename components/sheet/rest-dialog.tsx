@@ -45,6 +45,7 @@ function RestDialogSession({ onClose }: Pick<RestDialogProps, "onClose">) {
     hitDicePools,
     spendHitDie,
     arcaneRecovery,
+    slotResolution,
   } = useRest();
   const { maxHp } = useCharacter();
   const { state } = useCharacterState();
@@ -118,6 +119,7 @@ function RestDialogSession({ onClose }: Pick<RestDialogProps, "onClose">) {
           <DialogTitle>Rest</DialogTitle>
         </DialogHeader>
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+        {slotResolution?.status !== "available" && <p role="status" className="text-sm text-muted-foreground">Rests are unavailable while spell slots cannot be resolved. Reload the character or restore its saved class content.</p>}
         {saving && <p role="status" className="text-sm text-muted-foreground">Saving this rest action. Please wait.</p>}
 
         <div className="grid md:grid-cols-2 gap-4">
@@ -270,7 +272,7 @@ function RestDialogSession({ onClose }: Pick<RestDialogProps, "onClose">) {
             <Button
               className="w-full"
               onClick={() => void saveRest(() => shortRest(recoveryPicks))}
-              disabled={saving || (!canShortRest && pickedTotal === 0)}
+              disabled={saving || slotResolution?.status !== "available" || (!canShortRest && pickedTotal === 0)}
               title={
                 !canShortRest && pickedTotal === 0
                   ? "No short-rest recovery available for this character"
@@ -308,7 +310,7 @@ function RestDialogSession({ onClose }: Pick<RestDialogProps, "onClose">) {
             <Button
               className="w-full"
               onClick={() => void saveRest(longRest)}
-              disabled={saving || !canLongRest}
+              disabled={saving || slotResolution?.status !== "available" || !canLongRest}
               title={!canLongRest ? "Fully rested" : undefined}
             >
               Take Long Rest

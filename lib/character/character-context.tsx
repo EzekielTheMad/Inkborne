@@ -38,6 +38,7 @@ import type {
   SpellUpdate,
   SpellSlotsUsed,
   MaxSlotsByLevel,
+  SlotResolution,
   CasterInfo,
   CasterClass,
   ConcentrationState,
@@ -51,8 +52,7 @@ import {
   computeSpellDc,
   computeSpellAttackBonus,
   computeMaxPrepared,
-  computeMaxSlots,
-  computePactSlotLevel,
+  resolvePinnedSpellSlots,
 } from "@/lib/spells/helpers";
 import {
   computeCastEffects,
@@ -139,6 +139,7 @@ export type ClassContentData = Record<
         prepared?: boolean;
       };
       levels?: Array<{
+        level: number;
         spellcasting?: { cantrips_known?: number; spell_slots?: number[] } | null;
       }>;
     };
@@ -194,7 +195,8 @@ export interface CharacterContextValue {
   spells: CharacterSpell[];
   slotState: SpellSlotsUsed;
   maxSlots: MaxSlotsByLevel;
-  /** Slot level of Warlock pact slots (null without pact magic). */
+  slotResolution: SlotResolution;
+  /** Slot level of separately resolved Pact Magic slots (null without pact magic). */
   pactSlotLevel: number | null;
   casterInfo: CasterInfo;
   concentration: ConcentrationState | null;
@@ -571,33 +573,12 @@ export function CharacterProvider({
     };
   }, [character.choices, classData, evalResult]);
 
-  const maxSlots = useMemo<MaxSlotsByLevel>(() => {
-    const classChoices =
-      (character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string }> })
-        ?.classes ?? [];
-    const forCalc = classChoices.map((c) => {
-      const cd = classData[c.slug];
-      const type = cd?.data?.spellcasting?.type ?? null;
-      return { slug: c.slug, level: c.level, type };
-    });
-    // computeMaxSlots expects { levels } directly; ClassContentData nests it under .data
-    const classDataForSlots: Record<string, { levels?: Array<{ spellcasting?: { spell_slots?: number[] } | null }> }> = {};
-    for (const [slug, content] of Object.entries(classData)) {
-      classDataForSlots[slug] = { levels: content.data.levels };
-    }
-    return computeMaxSlots(forCalc, classDataForSlots);
-  }, [character.choices, classData]);
-
-  const pactSlotLevel = useMemo<number | null>(() => {
-    const classChoices =
-      (character.choices as { classes?: Array<{ slug: string; level: number }> })
-        ?.classes ?? [];
-    const classDataForSlots: Record<string, { levels?: Array<{ spellcasting?: { spell_slots?: number[] } | null }> }> = {};
-    for (const [slug, content] of Object.entries(classData)) {
-      classDataForSlots[slug] = { levels: content.data.levels };
-    }
-    return computePactSlotLevel(classChoices, classDataForSlots);
-  }, [character.choices, classData]);
+  const slotResolution = useMemo(() => resolvePinnedSpellSlots(
+    character.choices?.classes ?? [], contentRefs, { id: character.id, system_id: character.system_id },
+  ), [character.choices, character.id, character.system_id, contentRefs]);
+  // Compatibility aliases are usable only alongside the explicit resolution.
+  const maxSlots = slotResolution.status === "available" ? slotResolution.maxSlots : {};
+  const pactSlotLevel = slotResolution.status === "available" ? slotResolution.pactSlotLevel : null;
 
   const slotState = (state.spell_slots_used ?? {}) as SpellSlotsUsed;
   const concentration = (state.concentrating_on ?? null) as ConcentrationState | null;
@@ -607,6 +588,7 @@ export function CharacterProvider({
   // back the roll requests the dialog's result pane offers (design §4.3).
   const castSpell = useCallback(
     async (spell: CharacterSpell, choice: CastChoice): Promise<CastOutcome> => {
+      if (slotResolution.status !== "available") throw new Error(slotResolution.reason);
       const source = castSourceFromCharacterSpell(spell);
       if (!source) {
         throw new Error(`Spell "${spell.name}" has no castable content data.`);
@@ -624,7 +606,7 @@ export function CharacterProvider({
         return { patch: outcome.statePatch, result: outcome };
       }, { requireCurrent: true });
     },
-    [state, casterInfo, evalResult, character.level, patchState],
+    [state, casterInfo, evalResult, character.level, patchState, slotResolution],
   );
 
   // --- Rolls ---
@@ -763,6 +745,7 @@ export function CharacterProvider({
     spells,
     slotState,
     maxSlots,
+    slotResolution,
     pactSlotLevel,
     casterInfo,
     concentration,
@@ -869,6 +852,7 @@ export function useSpells() {
     spells: ctx.spells,
     slotState: ctx.slotState,
     maxSlots: ctx.maxSlots,
+    slotResolution: ctx.slotResolution,
     pactSlotLevel: ctx.pactSlotLevel,
     casterInfo: ctx.casterInfo,
     concentration: ctx.concentration,
@@ -1007,6 +991,7 @@ export function useRest(): {
   /** Arcane Recovery availability + budget + recoverable slot levels for the
    *  short-rest pane (design §4.6 / D8). */
   arcaneRecovery: ArcaneRecoveryInfo;
+  slotResolution: SlotResolution;
 } {
   const ctx = useCharacterContext();
   const {
@@ -1019,13 +1004,16 @@ export function useRest(): {
     character,
     contentRefs,
     maxSlots,
+    slotResolution,
   } = ctx;
   const exhaustion = (state.exhaustion as number | undefined) ?? 0;
 
   const shortEffects = computeShortRestEffects(state, resources);
   const longEffects = computeLongRestEffects(state, maxHp, resources, hitDicePools);
 
-  const arcaneRecovery = computeArcaneRecoveryInfo({
+  const arcaneRecovery = slotResolution.status !== "available"
+    ? { available: false, budget: 0, recoverableSlots: {} }
+    : computeArcaneRecoveryInfo({
     wizardLevel: arcaneRecoveryClassLevel(
       character.choices?.classes ?? [],
       contentRefs,
@@ -1035,8 +1023,9 @@ export function useRest(): {
     maxSlots,
   });
 
-  const shortRest = (arcaneRecoveryPicks?: ArcaneRecoveryPicks) =>
-    patchState.runAction(state, (confirmed) => {
+  const shortRest = (arcaneRecoveryPicks?: ArcaneRecoveryPicks) => {
+    if (slotResolution.status !== "available") return Promise.resolve(false);
+    return patchState.runAction(state, (confirmed) => {
       // Gate first, then validate and compute from the settled display state.
       // Persistence compares the separate raw snapshot, without display defaults.
       const effects = computeShortRestEffects(confirmed, resources);
@@ -1067,9 +1056,10 @@ export function useRest(): {
       if (error instanceof CharacterStateReloadError) throw error;
       return false;
     });
+  };
 
   const longRest = () => {
-    if (!longEffects.canApply) return Promise.resolve(false);
+    if (slotResolution.status !== "available" || !longEffects.canApply) return Promise.resolve(false);
     return patchState.runAction(state, () => ({ patch: longEffects.statePatch, result: true })).catch((error: unknown) => {
       if (error instanceof CharacterStateReloadError) throw error;
       return false;
@@ -1088,10 +1078,11 @@ export function useRest(): {
     shortRest,
     longRest,
     setExhaustion,
-    canShortRest: shortEffects.canApply,
-    canLongRest: longEffects.canApply,
+    canShortRest: slotResolution.status === "available" && shortEffects.canApply,
+    canLongRest: slotResolution.status === "available" && longEffects.canApply,
     hitDicePools,
     spendHitDie,
     arcaneRecovery,
+    slotResolution,
   };
 }

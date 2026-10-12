@@ -34,7 +34,7 @@ function levelLabel(level: number): string {
 
 export function SpellsTab() {
   const { character } = useCharacter();
-  const { casterInfo, spells, updateSpell, removeSpell } = useSpells();
+  const { casterInfo, spells, slotResolution, updateSpell, removeSpell } = useSpells();
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [castTarget, setCastTarget] = useState<{
     spell: CharacterSpell;
@@ -69,6 +69,7 @@ export function SpellsTab() {
   const hasAnySpells = spells.length > 0;
   const anyClassPrepared = casterInfo.classes.some((c) => c.prepared);
 
+  if (!casterInfo.isCaster && slotResolution?.status !== "available") return <div className="p-3"><SlotTracker /></div>;
   if (!casterInfo.isCaster) {
     return (
       <div className="p-3 space-y-3">

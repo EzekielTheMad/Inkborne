@@ -101,6 +101,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
   const { character } = useCharacter();
   const {
     maxSlots,
+    slotResolution,
     slotState,
     pactSlotLevel,
     casterInfo,
@@ -113,7 +114,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
   const spellLevel = data.level ?? 0;
   const isCantrip = spellLevel === 0;
 
-  const slotOptions = isCantrip
+  const slotOptions = isCantrip || slotResolution?.status !== "available"
     ? []
     : getEligibleSlotOptions(spellLevel, maxSlots, slotState, pactSlotLevel);
 
@@ -134,7 +135,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     slotOptions.find((o) => o.key === selectedKey && o.free > 0) ?? null;
   const noSlotsAvailable = !isCantrip && !slotOptions.some((o) => o.free > 0);
   const canCast =
-    isCantrip || ritual || (selectedOption !== null && !noSlotsAvailable);
+    slotResolution?.status === "available" && (isCantrip || ritual || (selectedOption !== null && !noSlotsAvailable));
 
   // --- Preview at the currently-selected cast level ---
   const previewLevel = isCantrip
@@ -197,6 +198,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
   const body: ReactNode = outcome === null ? (
     /* ---------------- Configure pane ---------------- */
     <div className="space-y-4 text-sm">
+      {slotResolution?.status !== "available" && <p role="status" className="text-sm text-muted-foreground">Spell slots are unavailable. Reload the character or restore its saved class content before casting.</p>}
       {castError && <p role="alert" className="text-destructive">{castError}</p>}
       <p className="text-xs text-muted-foreground">{metaLine}</p>
 
