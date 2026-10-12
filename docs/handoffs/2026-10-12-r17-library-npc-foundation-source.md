@@ -215,3 +215,17 @@ preserved: 27 recorded identities, zero at cleanup, no browser acceptance.
 The harness now sets `resolveDir: root` for that module. Production components,
 fixtures, assertions and source guards are unchanged. Fresh build and browser
 acceptance on the corrected source are still pending.
+
+## Reviewed shared-source anchor preparation after companion integration
+
+Companion production `5cc9aad4ae1c875c915a36d7fed6966441e44e49` passed independent
+source review and 77 worker tests/typecheck/lint, then integrated as `2901bee`.
+Its additive shared registry/parser/catalog/presentation/detail changes require
+the existing NPC harness to advance its fixed source checkpoint to that exact
+reviewed commit. NPC schema/profile/row bytes are unchanged; explicit NPC effects
+fence and diagnostics remain. This two-line checkpoint/expected-receipt amendment
+keeps all eight required inputs, staged/raw/checkout/helper guards and assertions.
+It does not substitute current HEAD for reviewed source. Independent amendment
+review and fresh combined/build/NPC/companion browser reacceptance are pending.
+The monster harnesses use current approved root receipt/full transitive input
+binding with unchanged ancestor baseline, so no monster guard change is needed.
