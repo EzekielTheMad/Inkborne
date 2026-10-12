@@ -90,6 +90,30 @@ selected non-class pins and unchecked result intent; correction is in progress a
 that source is not integrated.
 These are implementation checkpoints, not complete milestone or beta acceptance.
 
+At clean `9ae5a65`, the root combined `npm.cmd run check` passed TypeScript,
+zero-warning lint and **247 files / 2,508 tests**. The gate observed 320 owned
+processes; two remained momentarily at command exit, and fresh readback found both
+gone with no owned listener. Exact source/log/process/cleanup receipts remain in
+`../verification/launch-20261012/`. No build/browser or live acceptance is inferred
+from this gate.
+
+After that gate completed, independently approved R09.2 source `512e02e`, corrected
+`fc3d0eb`, was integrated as `b698e2b`, `9d90077`. Its **98 focused tests** cover
+the service-internal schemas/planner and existing helpers, including selected
+race/subrace/subclass/background pin completeness and canonical result-intent
+tampering. Default-disabled modules have no current application/action/RPC route.
+Coherent locked snapshots, authority/access, monotonic writer fences, atomic roll
+receipts and account recovery remain unimplemented acceptance gates. This later
+source requires new combined acceptance.
+
+R12.3 source `c0ae7b1` plus docs `f8f5986` passed independent code review and
+59 focused tests/typecheck/lint; offline armor form UI is still in progress before
+integration. R21.1 inventory `1479b43` was integrated as `9ae5a65`; its reviewed
+single-source slot child is in development with explicit numbered pinned rows and
+an unavailable state propagated to cast/rest/print. The existing Arcane Recovery
+path is retained. R07.2 actual-schema role/create/award/copy fixture preparation
+has begun in isolation; no container or SQL execution is authorized or performed.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions
