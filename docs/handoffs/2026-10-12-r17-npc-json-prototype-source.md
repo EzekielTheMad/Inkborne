@@ -1,4 +1,4 @@
-# R17 NPC JSON local prototype — unverified source checkpoint
+# R17 NPC JSON local prototype — source and bounded verification
 
 2026-10-12. Approved bounded local plan831ca79 over proposed be9a603, owned
 r17-library-npc-worker/codex/r17-library-npc-plan-20261012. JSON is a provisional
@@ -180,3 +180,27 @@ the earlier259 failures. No repeat/typecheck/lint after this correction until
 independent review/release. Readback45captured identities, zero exact live task
 processes/listeners; heavy slot free. Source correction is untested at this
 checkpoint; no browser/build/full/SQL/provider/network activity is claimed.
+
+## Released correction verification — narrow complete, browser pending
+
+Independent review approved callback-only53bb0a4. No semantic test repeat was
+requested: the exact4file/80test PASS remains at a51060b. At clean
+131b0b113c0819eb08f80d79b829cf943f2c437c (docs-only over53bb, identical code/tests),
+`npm.cmd run typecheck` PASS and `npm.cmd run lint` PASS zero warnings. Receipts
+typecheck-after/lint-initial record that actual131 SHA; they are not relabeled as
+259 or a510 results. Production/source remains exact reviewed259, with only
+independently approved7f/53bb test corrections afterward. All8original approved
+production/admission raw hashes match final-production-hashes.json; codec raw
+SHA remains a404a56d75307bbdf9a498137c9b3d4f9a1ffb540a3d9085e582c61c27a1c4e9.
+
+Final readback60captured OS identities including wrappers, zero exact live task
+processes and task listeners; each gate has before/after resources and birth/
+parent/command/cwd/start/exit evidence. The lock is unchanged. Baseline manifest
+SHA remains2aa1f5ad799b46c228045ac6005cca7cd35aad2ee482519bd13c9bfa60704c49.
+All initial failure logs/receipts/restoration are retained, not replaced by green
+results. No production browser manifest, build, browser/server, full check,
+install/network/SQL/provider action was performed in this worker sequence.
+Heavy slot released immediately after zero readback; root owns integration/full/
+fresh build/explicit offline UI. This final checkpoint is docs-only over the
+tested131 code. Browser acceptance, human format decision and all app/durable
+import authority/activation remain pending; this is still a local prototype.
