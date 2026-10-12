@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { build } from "esbuild";
 import { chromium } from "playwright";
+import { validateMonsterBuildReceipt } from "./monster-production-receipt.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "test-results", "monsters-local");
@@ -36,7 +37,9 @@ assert.equal(digest(await fs.readFile(path.join(rootBuild, "BUILD_ID"))), manife
 assert.equal(manifest.buildReceipt.sourceCommit, currentRootHead);
 assert.ok(path.isAbsolute(manifest.buildReceipt.path), "Build receipt must have an explicit absolute path");
 assert.match(manifest.buildReceipt.sha256, /^[a-f0-9]{64}$/);
-assert.equal(digest(await fs.readFile(manifest.buildReceipt.path)), manifest.buildReceipt.sha256);
+const receiptBytes = await fs.readFile(manifest.buildReceipt.path);
+assert.equal(digest(receiptBytes), manifest.buildReceipt.sha256);
+validateMonsterBuildReceipt(JSON.parse(receiptBytes.toString("utf8").replace(/^\uFEFF/, "")), currentRootHead);
 assert.ok(Array.isArray(manifest.assets) && manifest.assets.length > 0);
 const assets = new Map();
 for (const entry of manifest.assets) {

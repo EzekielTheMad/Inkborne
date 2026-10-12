@@ -50,6 +50,16 @@ after the build, or any artifact/hash/path drifts, preflight refuses execution;
 do not relabel an old build. This conservative check supports the newly announced
 fixture-correction descendant while refusing the stale original build.
 
+Independent inspection of initial preparation `09f6af3` found that receipt hashing
+alone did not prove a successful clean-source build. The separate correction
+parses the hashed saved JSON and requires `gate: "build"`, numeric `exitCode: 0`,
+`sourceSha` exactly matching manifest/current root source, and explicit clean
+`sourceStatus` (`""` or `[]` only). Missing/null/dirty statuses, a check-only
+receipt, failure/string exit codes or mismatched source fail **before** asset
+serving, fixture compilation or browser startup. Pure source-only controls live
+in `tests/scripts/monster-production-receipt.test.ts`; they use synthetic JSON,
+not actual build outputs or runtime authority. Initial `09f6af3` is preserved.
+
 All compiled CSS paths must appear in the manifest; a selective/simplified
 stylesheet cannot pass. CSS URL references must resolve to manifest-backed local
 assets (data URIs excepted), with no traversal or remote URL. Verified asset bytes
