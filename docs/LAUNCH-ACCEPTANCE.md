@@ -531,6 +531,43 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### P1a combined local acceptance and next children — 2026-10-12 19:33 UTC
+
+Reviewed class-origin P1a source `7fb4dae` and correction `00dce154` are integrated
+as `bed0e24` / `477c20b`; tested handoff `4a955c1` as `1d02806`. All six source,
+fixture and test Git blobs match the exact reviewed correction. Proof is retained
+in ignored root `test-results/class-origin-integration-source-proof.json`.
+
+Worker semantic baseline replaced all three mutually coherent earlier model,
+schema and staged-SQL byte inputs while retaining corrected tests/fixtures:
+**27 invariant assertion failures / three positive controls passed**, with no
+constructor/collection substitute. All exact SHA256 bytes were restored in finally.
+Corrected **three files / 144 focused tests**, typecheck and lint passed. All 28
+recorded OS identities were absent, owned listeners zero. Additive receipts:
+`verification/r06-class-origin-p1a-20261012/manifest.json`, SHA256
+`5da96133711df7f4e3b2a97484aaf008fbb7111c90c617db2a80f383f2464d7d`.
+
+Clean integrated `1d028063b8bc5bf2e82bc4de54b80999f44862fa` passed
+`npm.cmd run check`: **324 files / 4,015 tests**, typecheck and zero-warning lint,
+four Vitest workers, 197.17 seconds. All 379 recorded identities were absent.
+Fresh synthetic production build passed; all 23 identities absent. New P1a modules
+have no application imports; no new UI behavior is claimed. NPC/ASI browser
+acceptance remains at `42abdbb`; print remains six exports / 33 pages at `7ff6185`.
+These models/static source tests do not execute SQL or prove PostgreSQL roles,
+native times, triggers, locks, concurrency, Auth or producer authority. All thirteen
+readiness flags remain false. No SQL, live write, deployment or publication.
+
+R17.2 source `5da83a6` is held for two response-contract fixes: reject unexpected
+idle responses as uncertain and cap total validation feedback across all stages.
+Remainder passed independent source review; gates and integration are pending.
+P1b.1 jointly protected genuine metadata revision plan proceeds without changing
+frozen kernel or P1a source. R18.1 template plan `fb2ac9a` passed root independent
+challenge against actual strict monster schema/renderer/registry. Its isolated
+`../r18-companion-worker`, branch `codex/r18-companion-foundation-20261012`, is based
+on `1d02806` with plan-only `eaec7be`; locked dependency installation is underway.
+This read-only template slice leaves instances, controller/lifecycle rules,
+transformations/summons and all R19 progression requirements open.
+
 ### R17.1 combined local acceptance — 2026-10-12 19:23 UTC
 
 Clean root `c18cf445b4ce7df24aa3e973330979f036f55c1e` passed

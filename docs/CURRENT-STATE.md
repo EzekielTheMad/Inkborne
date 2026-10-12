@@ -2,13 +2,15 @@
 
 ## Active execution — 2026-10-12 UTC
 
-Current local acceptance: `c18cf445` passed **322 files / 3,931 tests**, typecheck,
-lint and build. Later reviewed harness fix `42abdbb` passed fresh build, **14 NPC
-desktop/mobile controls / 18 screenshots** and **44 character ASI cases / 226
-assertions / 46 screenshots**. All owned process/port cleanup passed; data/Auth/
-action authority remains simulated. Private NPC authoring proceeds under reviewed
-plan `5bdb03e`; P1a `00dce154` is source-reviewed and undergoing model/static/type/
-lint gates. No SQL execution, hosted write, deployment or beta acceptance.
+Current local acceptance: `1d02806` passed **324 files / 4,015 tests**, typecheck,
+lint and build after reviewed P1a integration. NPC/ASI browser acceptance remains
+at `42abdbb`: **14 NPC controls / 18 screenshots** and **44 ASI cases / 226 assertions
+/ 46 screenshots**. All owned cleanup passed; data/Auth/action authority remains
+simulated. P1a worker 144 tests/type/lint and semantic-before controls passed;
+SQL is unexecuted/all readiness false. NPC authoring source `5da83a6` is held for
+idle-response and total-error-cap fixes. Reviewed companion template plan proceeds
+in isolated `r18-companion-worker`; P1b.1 revision plan proceeds. No hosted write,
+deployment or beta acceptance.
 
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.
