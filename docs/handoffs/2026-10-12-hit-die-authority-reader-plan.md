@@ -1,0 +1,11 @@
+# R09.3b planning handoff
+
+Source-only plan based on own clean `cbeb963` and root read-only `26e674e1ce10cf723698935e46c0a13b47e59d34`: [authority reader and writer plan](../specs/2026-10-12-hit-die-authority-reader-plan.md). No existing SQL, code, tests, package/environment files or other worktree edits accompany it.
+
+Inventory names actual coherent-reader gaps and latest sorted-source writer bodies. ASI owner confirmed required nullable feature_grant_id and complete full raw frozen-grant/count evidence; that unfinished implementation is a prerequisite and was not edited. Proposed next real child stages a transactional full graph reader, protected writer participation barrier, revision invalidation and actual revision-CAS state adapter, followed by finite existing writer-family closure. It does not claim opaque arrays, cache freshness, SQL row existence or separate REST locks establish authority.
+
+Independent challenge must decide the proposed coarse writer-guard/auth-prefix protocol and consistent mechanical projection order. Actual Auth user/session/profile mutation order, expiry config and grants remain G2 proof requirements. Ref/effect/inventory order has no recoverable guessed historical default. Account deletion has existing shared campaign/content/attribution NO ACTION/cascade questions beyond rolls; the plan enumerates them and flags genuine product decisions.
+
+Narrow lifetime remedy proposes trigger-only isolated lifecycle-role actor detachment on accepted rolls during real profile deletion, preserving all other row/receipt bytes and ordinary roll cascade semantics. It deliberately rejects caller flags, trigger depth and RLS-hidden profile absence as authority. Types, hydration, Activity, roll RLS, copy and every source profile-delete FK/blocker are inventoried. No broad shared-data delete/transfer is assumed.
+
+Only documentation/source inspection, collaborator messages and refreshed official Auth/locking documentation occurred. No install/tests/typecheck/lint/build/browser/PGlite/SQL/Docker/containers/Auth/provider/hosted/publication operation ran. Existing staged reader/gate remain unchanged and unavailable. `git diff --check` is the only local hygiene validation. Root must independently challenge the exact plan commit before any implementation; G1/G2 and lifecycle/privilege activation remain separately unapproved.
