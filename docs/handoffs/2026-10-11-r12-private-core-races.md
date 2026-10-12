@@ -29,12 +29,18 @@ Meaningful consumer negative control: using the actual canonical 2014 seed defin
 
 ## Browser and remaining acceptance
 
-**Browser pending:** root held this slot while R21 used Chrome. No race server, watcher or browser has been started. Prepared isolated command:
+**Browser passed:** after independent approval and root's exclusive UI-slot release, ran the isolated command on the unchanged approved source:
 
 ```text
 npm.cmd run test:e2e -- --config e2e/local-races/playwright.config.ts
 ```
 
-`scripts/verify-races-local.mjs` uses the real form/mapper/StatPreview with simulated actions and canonical synthetic pins, blocks remote page requests, and records desktop/mobile screenshots, process metadata, ports and cleanup in `test-results/races-local`. Until this command runs and its screenshots/cleanup are inspected, the form browser workflow is unverified.
+Result: **1 Playwright test / 16 behavioral checks passed** (5.5 seconds), installed Chrome, desktop 1280x900 and mobile 390x844. Each viewport verified fractional-speed rejection through the real mapper, pending duplicate-submit prevention and finite named controls, retained drafts/accessibly named validation errors, recoverable error/retry, canonical definition/snapshot parsing through the live evaluator and actual StatPreview, stale-edit lock/reload, latest expected-version submission, and legacy speed disabled/omitted from metadata submission. `pageErrors` and `blockedRemoteRequests` were empty.
+
+Inspected all four preserved screenshots: `test-results/races-local/{desktop,mobile}-{validation,conflict}.png`. Retained values, errors, explicit reload, disabled stale submit and responsive button layout are visible and readable without horizontal clipping. CSS was compiled from the existing globals by the helper, not obtained from a production Next build; final combined-build styling remains root's gate. The preserved `test-results/races-local/evidence.json` records the simulated boundary and process/port receipts; generated fixture/screenshots remain in this worker.
+
+Process receipt (2026-10-12 UTC): Playwright worker PID 43832, parent 49108, start 02:03:25.423; helper/server PID 58044, parent 43832, start 02:03:27.032, command `node scripts/verify-races-local.mjs`, this worktree, listening port 58857. Installed headless Chrome PID 32200, parent 58044, start 02:03:27.033, task profile `playwright_chromiumdev_profile-2KsYhS`; helper control port 58858. Before launch no suitable race worker/browser/server existed. After completion, exact PID/profile inspection found no remaining task processes and Windows listening-port inspection found neither port. The helper's own close checks both passed. No unrelated process was stopped. No production source fix was required by this browser run.
+
+`scripts/verify-races-local.mjs` uses real form controls/mapper/StatPreview and canonical synthetic pins; actions, saves, summaries and conflicts are simulated. This proves isolated browser interaction/recovery and bounded parser/consumer parity, not Next authentication/routing, real database persistence, concurrent PostgreSQL CAS, RLS, snapshot triggers or hosted character selection.
 
 No full check/build was authorized in this sibling; root owns combined gates and independent exact-SHA review. No live Supabase credentials, remote actions, SQL or migrations were used. Mock DAL tests do not establish real PostgreSQL/RLS/CAS/snapshot-trigger behavior. Remaining children must separately resolve scores/R06 parity, exact trait/subrace owner/system/entitlement/version validation and atomic graph pinning, advanced consumer mechanics, import and sharing.
