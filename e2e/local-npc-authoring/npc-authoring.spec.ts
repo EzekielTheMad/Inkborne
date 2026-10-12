@@ -2,10 +2,13 @@ import { expect, test } from "@playwright/test";
 import { execFileSync, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { npcOsIdentity } from "../../scripts/npc-process.mjs";
+import assert from "node:assert/strict";
+import { verifyNpcAuthoringHelpers } from "../../scripts/npc-authoring-production-inputs.mjs";
 
 test("actual private NPC form with guarded production assets and private cleanup", async () => {
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startTime: new Date().toISOString(), port: null }));
+  const helperProof = await verifyNpcAuthoringHelpers(process.cwd());
+  const { npcOsIdentity } = await import("../../scripts/npc-process.mjs");
   const child = spawn(process.execPath, [path.resolve("scripts/verify-npc-authoring-local.mjs")], {
     cwd: process.cwd(), windowsHide: true, stdio: ["pipe", "pipe", "pipe", "ipc"],
   });
@@ -50,11 +53,13 @@ test("actual private NPC form with guarded production assets and private cleanup
       });
       if (!ended && child.exitCode === null) {
         expect(identity, "Refuse forced cleanup without original OS birth/PID/parent/command").toBeDefined();
+        assert.deepEqual(await verifyNpcAuthoringHelpers(process.cwd()), helperProof);
         const fresh = npcOsIdentity(identity!.pid, identity!.parentPid);
         expect(fresh.birthUtc).toBe(identity!.birthUtc); expect(fresh.command).toBe(identity!.command);
         expect(fresh.command).toContain(path.resolve("scripts/verify-npc-authoring-local.mjs"));
         execFileSync("taskkill", ["/pid", String(identity!.pid), "/T", "/F"], { windowsHide: true });
       }
     }
+    assert.deepEqual(await verifyNpcAuthoringHelpers(process.cwd()), helperProof);
   }
 });

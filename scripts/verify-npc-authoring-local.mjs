@@ -7,12 +7,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { chromium } from "playwright";
-import { loadNpcAuthoringAssets, bindNpcAuthoringInputs } from "./npc-authoring-production-inputs.mjs";
+import { loadNpcAuthoringAssets, bindNpcAuthoringInputs, verifyNpcAuthoringHelpers } from "./npc-authoring-production-inputs.mjs";
 import { runNpcAuthoringCases } from "./npc-authoring-scenarios.mjs";
-import { npcOsIdentity, npcResources, assertNoOtherNpcRunner } from "./npc-process.mjs";
+
 
 const script = fileURLToPath(import.meta.url), root = path.resolve(path.dirname(script), "..");
 const output = path.join(root, "test-results/npc-authoring-local");
+const firstHelperProof = await verifyNpcAuthoringHelpers(root);
+const { npcOsIdentity, npcResources, assertNoOtherNpcRunner } = await import("./npc-process.mjs");
 assertNoOtherNpcRunner(script, process.pid);
 await fs.mkdir(output, { recursive: true });
 // Preserve historical failures/screenshots; never replace a prior evidence receipt.
@@ -28,6 +30,7 @@ const flag = process.argv.indexOf("--artifact-manifest");
 if (flag !== -1) assert.ok(process.argv[flag + 1], "Manifest argument required");
 const manifestPath = flag === -1 ? path.join(output, "production-artifacts.json") : path.resolve(process.argv[flag + 1]);
 const production = await loadNpcAuthoringAssets(root, manifestPath);
+assert.deepEqual(production.artifacts.authoringHelperDependencies, firstHelperProof);
 const captured = new Map();
 const bundle = await build({ entryPoints: [path.join(root, "e2e/local-npc-authoring/fixture.tsx")], absWorkingDir: root,
   outfile: path.join(output, "fixture.js"), bundle: true, metafile: true, platform: "browser", jsx: "automatic",
@@ -43,7 +46,7 @@ const bundle = await build({ entryPoints: [path.join(root, "e2e/local-npc-author
         if (!Object.hasOwn(stubs, args.path)) throw Error(`Unapproved live boundary: ${args.path}`);
         return { path: args.path, namespace: "npc-authoring-offline" };
       });
-      builder.onLoad({ filter: /.*/, namespace: "npc-authoring-offline" }, args => ({ loader: "js", contents: stubs[args.path] }));
+      builder.onLoad({ filter: /.*/, namespace: "npc-authoring-offline" }, args => ({ loader: "js", contents: stubs[args.path], resolveDir: root }));
     },
   }] });
 assert.ok(!Object.keys(bundle.metafile.outputs).some(file => file.endsWith(".css")), "Fallback/fixture CSS refused");
@@ -116,6 +119,7 @@ await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ liveSupa
   artifacts: production.artifacts, taskProcess, browserProcess, resourcesBefore, resourcesAfter: npcResources(), portClosed, browserPortClosed, browserExited,
   evidence, screenshots, fontEvidence, assetRequests, pageErrors, blockedRequests, unexpectedRequests, diagnostics, failure: failure?.message ?? null,
   limits: "Actual NpcForm, mapper and strict narrative schema with original fixture. Actions, Auth, writes, immutable-pin confirmation, router push and Homebrew link navigation are simulated. Native browser reset and reload execute; reload reads localStorage-modeled row. No SQL/RLS, catalog or story writes, persistence, sharing, DB concurrency, server page or authenticated Next shell acceptance. All actual project bytes/dependencies and approved source closure bound independently to current root; complete production CSS/fonts, no fallback styles." }, null, 2));
+assert.deepEqual(await verifyNpcAuthoringHelpers(root), firstHelperProof);
 finished = true; if (process.connected) process.disconnect();
 assert.ok(portClosed && browserPortClosed && browserExited, "Task-owned private resources must be gone");
 if (failure) throw failure;

@@ -14,11 +14,12 @@ function cleanFile(root, relative) {
   assert.equal(git(root, ["ls-files", "--error-unmatch", "--", relative]).toString().trim(), relative);
 }
 const harnessPaths = ["e2e/local-npc-authoring/fixture.tsx", "e2e/local-npc-authoring/playwright.config.ts", "e2e/local-npc-authoring/npc-authoring.spec.ts", "scripts/npc-authoring-production-inputs.mjs", "scripts/npc-authoring-scenarios.mjs", "scripts/verify-npc-authoring-local.mjs"];
-export async function loadNpcAuthoringAssets(root, manifestPath) {
+export async function verifyNpcAuthoringHelpers(root) {
   const rootCheckout = path.resolve(root, "../equipment-verification"), dependencies = [];
   // Independently bind executable inherited helpers before dynamic import/use.
   for (const relativePath of ["scripts/npc-process.mjs", "scripts/passive-feature-production-assets.mjs"]) {
-    const expected = git(root, ["rev-parse", `${npcAuthoringSourceCheckpoint}:${relativePath}`]).toString().trim();
+    const expected = relativePath === "scripts/npc-process.mjs" ? "0841bda7b9e785280e684030bf4fe900d81465e5" : "e4058f8a31cd911583a312e59fedcf4c3fd4adae";
+    assert.equal(git(root, ["rev-parse", `${npcAuthoringSourceCheckpoint}:${relativePath}`]).toString().trim(), expected);
     let actualBytes;
     const records = [];
     for (const [role, checkout] of [["worker", root], ["root", rootCheckout]]) {
@@ -39,10 +40,19 @@ export async function loadNpcAuthoringAssets(root, manifestPath) {
     }
     dependencies.push({ relativePath, expected, records });
   }
+  return dependencies;
+}
+export async function loadNpcAuthoringAssets(root, manifestPath) {
+  const rootCheckout = path.resolve(root, "../equipment-verification"), dependencies = await verifyNpcAuthoringHelpers(root);
   const assetHelper = await import("./passive-feature-production-assets.mjs"), result = await assetHelper.loadPassiveFeatureProductionAssets(root, manifestPath);
   result.projectInputPlugin = assetHelper.passiveFeatureProjectInputPlugin;
   result.artifacts.harnessSourceSha = git(root, ["rev-parse", "HEAD"]).toString().trim();
-  result.artifacts.harnessFiles = harnessPaths.map(relativePath => { cleanFile(root, relativePath); return { relativePath, gitBlobSha256: sha(git(root, ["show", `HEAD:${relativePath}`])) }; });
+  result.artifacts.harnessFiles = await Promise.all(harnessPaths.map(async relativePath => {
+    cleanFile(root, relativePath);
+    const bytes = await fs.readFile(path.join(root, relativePath));
+    assert.equal(sha(bytes), sha(git(root, ["cat-file", "--filters", `--path=${relativePath}`, `HEAD:${relativePath}`])));
+    return { relativePath, gitBlobSha256: sha(git(root, ["show", `HEAD:${relativePath}`])), executedSha256: sha(bytes) };
+  }));
   Object.assign(result.artifacts, { npcAuthoringSourceCheckpoint, authoringHelperDependencies: dependencies,
     authoringSourceFiles: await Promise.all(sourcePaths.map(async relativePath => {
       const expected = sha(git(root, ["show", `${npcAuthoringSourceCheckpoint}:${relativePath}`]));
@@ -82,6 +92,7 @@ export async function bindNpcAuthoringInputs(root, metafile, captured, artifacts
   for (const input of artifacts.authoringSourceFiles) for (const checkout of [root, rootCheckout]) {
     cleanFile(checkout, input.relativePath); assert.equal(sha(await fs.readFile(path.join(checkout, input.relativePath))), input.executedSha256);
   }
-  for (const input of artifacts.harnessFiles) { cleanFile(root, input.relativePath); assert.equal(sha(git(root, ["show", `HEAD:${input.relativePath}`])), input.gitBlobSha256); }
+  for (const input of artifacts.harnessFiles) { cleanFile(root, input.relativePath); assert.equal(sha(git(root, ["show", `HEAD:${input.relativePath}`])), input.gitBlobSha256); assert.equal(sha(await fs.readFile(path.join(root, input.relativePath))), input.executedSha256); }
+  assert.deepEqual(await verifyNpcAuthoringHelpers(root), artifacts.authoringHelperDependencies);
   return { bundledProjectInputs: projectInputs, syntheticInputs, metafileSha256: sha(JSON.stringify(metafile)) };
 }
