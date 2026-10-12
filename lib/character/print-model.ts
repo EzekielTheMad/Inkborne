@@ -38,6 +38,13 @@ function pin(id: string | null, version: number | null, definition: ParsedConten
   return `${definition.name} v${version}`;
 }
 
+function assertIdentity(row: { character_id?: string; content_definitions?: ParsedContentDefinition | null }, character: CharacterPrintInput["character"]): void {
+  if ((row.character_id !== undefined && row.character_id !== character.id) ||
+    (row.content_definitions?.system_id !== undefined && row.content_definitions.system_id !== character.system_id)) {
+    throw new Error("A saved content record belongs to another character or game system. Reload before printing.");
+  }
+}
+
 /** Snapshot only paper-safe mechanical fields. Never serialize the context,
  * character narrative, arbitrary JSON, DM notes, campaign pages or item notes. */
 export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = new Date().toISOString()): CharacterPrintModel {
@@ -48,6 +55,7 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
     ctx.rollPersistenceUncertain || ctx.pendingConcentrationCheck) {
     throw new Error("Finish saving and resolve pending play actions before printing. Reload if a save is uncertain.");
   }
+  for (const row of [...ctx.contentRefs, ...ctx.inventory, ...ctx.spells]) assertIdentity(row, character);
   for (const ref of ctx.contentRefs) pin(ref.content_id, ref.content_version, ref.content_definitions);
   const bonus = result.computed.proficiency_bonus ?? 0;
   const abilityMod = (slug: string) => result.stats[`${slug}_mod`] ?? Math.floor(((result.stats[slug] ?? 10) - 10) / 2);

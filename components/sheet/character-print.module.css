@@ -13,7 +13,7 @@
 .document tr { break-inside: avoid; }
 .document thead { display: table-header-group; }
 .document dl { margin: 0; }
-.document dl > div { display: grid; grid-template-columns: 40% 60%; border-bottom: 1px solid #ddd; padding: 1mm 0; break-inside: avoid; }
+.document dl > div { display: grid; grid-template-columns: 40% 60%; border-bottom: 1px solid #ddd; padding: .6mm 0; break-inside: avoid; }
 .document dt { font-weight: bold; }
 .document dd { margin: 0; }
 .details { font-size: 9pt; }

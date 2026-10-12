@@ -32,7 +32,14 @@ for source in files:
     text = "\n".join(page.extract_text() or "" for page in document.pages)
     assert "FORBIDDEN_" not in text, f"Private sentinel in {source}"
     assert "Back to character" not in text and "Choose Letter" not in text, f"Controls in {source}"
-    assert "23/38 (4 temporary)" in text and "Athletics" in text and "+10" in text
+    expected_hp = "23/38 (4 temporary)" if kind == "martial" else "23/32 (4 temporary)"
+    assert expected_hp in text and "Athletics" in text and "Arcana" in text
+    assert "Captured loaded sheet values and saved content versions" in text
+    if kind != "martial":
+        assert "wizard 3/5 d6" in text and "fighter" not in text
+        assert "DC 15; attack +7; intelligence" in text
+        assert "saving throw intelligence (proficient)" in text and "saving throw wisdom (proficient)" in text
+        assert "saving throw strength (proficient)" not in text
     assert "Source:" in text and "v3" in text
     if kind == "long":
         for index in range(1, 13):
