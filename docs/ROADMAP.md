@@ -1,5 +1,7 @@
 # Inkborne Roadmap
 
+> **Current project-wide execution (2026-10-12):** [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) is the entrypoint; [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) is the canonical milestone/requirement evidence ledger and completion gate. The October 11 local queue is a completed checkpoint, not project completion. Open rows/unknowns remain active; local source/SQL-file edits and offline work do not require invented approval. Actual runtime/live/security/publication operations retain their real boundaries.
+
 **Status:** Living draft. Update freely.
 **Owner:** Victor
 **Last updated:** 2026-10-02 (priority update; historical milestone records retained)

@@ -1,5 +1,7 @@
 # Inkborne — Game Plan & Working Handbook
 
+> **Current project-wide execution (2026-10-12):** [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) is the entrypoint; [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) is the canonical milestone/requirement evidence ledger and completion gate. The October 11 local queue is a completed checkpoint, not project completion. Open rows/unknowns remain active; local source/SQL-file edits and offline work do not require invented approval. Actual runtime/live/security/publication operations retain their real boundaries.
+
 **Last updated:** 2026-10-02 (current priority; historical milestone records retained)
 **Audience:** Any coding agent (Claude, Codex, etc.) or human picking up this project. This document is deliberately tool-agnostic and self-contained.
 **Companion docs:** [`ROADMAP.md`](ROADMAP.md) (milestone-level source of truth) · [`architecture/00-overview.md`](architecture/00-overview.md) (codebase map) · [`design-briefs/`](design-briefs/) (aesthetic direction)

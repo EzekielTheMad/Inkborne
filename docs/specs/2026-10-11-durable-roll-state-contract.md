@@ -1,5 +1,7 @@
 # D1 durable roll/state contract — proposal and current-gap evidence
 
+> **2026-10-12 continuation:** This is characterization/proposal evidence, not implemented durability. The [launch ledger](../LAUNCH-ACCEPTANCE.md) keeps implementation and acceptance open. Ordinary local code/SQL-file edits and offline tests may proceed within the selected requirement; actual runtime/live data/schema/security/persistent-credential operations require their applicable approvals.
+
 October 11, 2026. Source inspected: `56db57e46e93783356cd132240350784accf1f28`,
 branch `codex/durable-roll-contract`, clean sibling `d1-contract-worker` before this slice.
 This refines the [existing proposal](2026-10-02-durable-character-actions-proposal.md).

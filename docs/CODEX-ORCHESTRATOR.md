@@ -1,20 +1,22 @@
-# Inkborne Codex orchestration entrypoint
+# Inkborne project-wide Codex orchestrator
 
-Updated October 11, 2026. The authorized local queue is complete at [the final checkpoint](handoffs/2026-10-11-orchestrator-local-queue.md): core 2,292 tests/build/53 offline checks; independent M1 1,805 tests/build/12 offline checks. Only gated runtime/hosted/release lanes remain. This file owns the queue and operating rules. Product direction stays in [GAME-PLAN](GAME-PLAN.md) and [ROADMAP](ROADMAP.md); evidence stays in [CURRENT-STATE](CURRENT-STATE.md), [RELEASE-READINESS](RELEASE-READINESS.md) and their handoffs. Old approval quotes, counts and milestone wording are historical, not fresh authorization.
+Updated 2026-10-12 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. This handoff pass is documentation/planning only.
 
-## Start and claim sole ownership
+## Resume and ownership
 
-Use Main_PC and this resume directory:
+Main_PC resume directory:
 
 ```text
 C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification
 ```
 
-Branch `codex/equipment-executable-verification`; exact tested application checkpoint `ada6c9b8c51c8d674c6a76dbf4df1f9955ce5cdf`, based on local core `7b7f45bd9f64dbe847238ac108eaed9fa6bcdc32`. Equipment baseline `77e9a956` is historical; later commits integrate lint/durable-gap/selector/ability work. Closing documentation follows the tested application commit; read actual HEAD before editing. This worktree shares Git with `...\task-2\dev-candidate`, **not** original Git.
+Branch `codex/equipment-executable-verification`. Incoming clean docs HEAD `c5370eb60053a40506cfaf1f9449d9f632769d51`; exact tested core `ada6c9b8c51c8d674c6a76dbf4df1f9955ce5cdf`. This pass adds later docs-only commits; read actual HEAD. This worktree shares Git with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git.
 
-The registered original repository is `C:\Projects\Inkborne`; its root is an old backup branch with user changes, not the current app checkpoint. Read applicable checkout AGENTS/skills and the original root's AGENTS worktree/process conventions. Original `.agents` was empty at inspection. Relevant local history is in `C:\Users\kaios\.codex\memories\MEMORY.md` under Inkborne; treat it as context, not permission. Do not read credential files.
+Separate clean `..\m1-magic-item-worker`, branch `codex/m1-magic-item-revalidation`, belongs to original Git: tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Its full PR99-derived authoring slice and rarity fix are not integrated or published. Review/integrate locally first; do not equate a worker's tests with combined candidate acceptance.
 
-Refresh state before dispatch:
+Original registered root `C:\Projects\Inkborne` is the old backup checkout, not the tested candidate. Preserve all inherited branches and dirty/untracked work. Read applicable AGENTS/skills, original root AGENTS worktree/process conventions, the [closing handoff](handoffs/2026-10-11-orchestrator-local-queue.md) and [current inventory](handoffs/2026-10-12-launch-worktree-inventory.json). The original `.agents` was empty; inspect anew. Relevant local memory is historical context, not authority. No credential-file scanning/copying.
+
+Fresh-thread inspection:
 
 ```powershell
 git rev-parse --show-toplevel --git-common-dir HEAD
@@ -24,59 +26,51 @@ git worktree list --porcelain
 git --no-optional-locks -C C:\Projects\Inkborne worktree list --porcelain
 ```
 
-[Final inventory](handoffs/2026-10-11-orchestrator-final-worktree-inventory.json) records 31 checkouts; all 23 inherited HEAD/branch/status entries match discovery, and all five workers are clean/completed. The earlier [equipment inventory](handoffs/2026-10-11-worktree-inventory.json) is historical. Refresh every selected candidate; closing documentation follows the final snapshot. Root untracked directories remain directory entries, not flattened nested checkouts.
+Refresh status for every candidate, including the separate original Git worker. Inventory root untracked directories stay directory entries; never flatten active nested worktrees into a cleanup target. Preserve content-versioning auth-path permission warnings rather than assuming deliberate deletion. The previous owners are paused and observed task servers/workers remain stopped; claim sole integration ownership before dispatch. Do not interact with unrelated desktop tasks.
 
-Preserved dirty work includes root `AGENTS.md`, `.codex/`, two generated build directories and `worktrees/`; two importer-spec files; three alpha-readiness documents; and substantial equipment/content/parser/test/migration work under `.codex/worktrees/content-versioning-rls`. That last worktree also reported missing/permission-denied auth paths: investigate before treating reported deletions as intentional. Do not reset, stash, clean, overwrite or publish any of it. Original core at `...\2026-10-02\task\inkborne-core` is clean at `7b7f45b`. `dev-candidate` is clean/detached at `5c85e5f` (optional local dev-label patch, not deployed). `splash` is a separate clean repository at `0837d829c739ecf8b767005f78ad71aa11f5f0ea`; splash implementation is finished.
+## Persistent execution loop
 
-The sole orchestrator completed the local queue and stopped its owned work; no task workers/servers remain active. Retained worker branches are review artifacts. Other tasks and unrelated processes remain outside its ownership.
+1. Read the ledger, refreshed sources/SHAs/status and evidence. Resolve/batch S1-S5 scope choices and prepare G1-G5 concrete approval packages early. Follow the ledger's first actions: M1 local integration review, supported real-runtime plan, and missing documented requirements. Do not redo L1/A1/T1 or shipped #67/#98/compendium.
+2. Select the highest-priority **ready requirement or unaccepted evidence gap**, not merely an old task list. Write a bounded task with requirement IDs, owner/worktree/base/paths, preserved invariants, dependencies and measurable acceptance. Split bundles into child IDs and roll up evidence. If the queue empties, derive the next useful implementation/integration/defect/acceptance task from open ledger rows. Do not invent a new wishlist.
+3. Delegate self-contained tasks to workers in clean isolated branches/worktrees. One writer per worktree; one sole integration owner. Parallelize independent tasks; serialize dependent edits, integration, expensive checks and shared UI. Workers may formulate proposals and local code/SQL-file/tests within scope. Obtain independent read-only review for consequential changes; integrate only reviewed local commits. No shared stashes, destructive resets/cleanups or edits to another active worker.
+4. Verify narrow tests while iterating, then repository full gates/build and representative UI on exact source. Reproduce failures; distinguish code, harness, environment and model limits. Real browser->API->DB evidence is required where the requirement says so; offline mocks/PGlite do not accept full roles/triggers/concurrency/hosted flows.
+5. Commit logical local checkpoints and append the **ledger** progress/evidence record: requirement/owner/base/SHAs, command/results/artifacts, target/fixture budget/cleanup, limitations and next action. Update existing status links rather than create competing roadmaps. Reaccept combined candidates after integration; individual worker passes are not combined passes.
+6. Continue implementation, integration, defect resolution and acceptance across ready documented work. Blocked runtime/auth/publication lanes do not stop independent local work. Stop only for Victor's pause, verified agreed scope completion, or an actual unresolved scope/approval/access dependency affecting **all** remaining work. Context/host/budget interruption is a resumable checkpoint, not completion. Never stop because offline tests are green or the former queue ended.
 
-## Ready and blocked queue
+The ledger distinguishes finite all-milestone completion from a proposed staged public-beta boundary. PRD Daggerheart/public-visibility conflicts and print/PDF-export requirements are explicit decisions, not silent exclusions. M7 PDF importing is a different feature from character PDF export. No “launched” verdict until the ledger's actual launch gate passes; approved deferrals remain labeled deferred.
 
-Keep character-builder-to-play first. Preserve mechanics, narrative, campaigns and existing LegendKeeper use; no broad redesign or new sharing/effect/worldbuilding scope.
+## Authority and blockers
 
-| ID | Status | Bounded result / acceptance |
-| --- | --- | --- |
-| L1 | **Complete locally** | [Lint repair](handoffs/2026-10-11-l1-lint.md), worker `0f0f993`, integrated as `7e1c831`: all ten findings fixed without rule disables; full check 221 files / 2,231 tests, dummy build and 40 offline component checks passed. |
-| E1 | Local slice/proposal done; runtime lane blocked | [Equipment checkpoint](handoffs/2026-10-11-equipment-postgres-wasm.md): 45 SQL-WASM cases and copy alias fix. [Runtime proposal](specs/2026-10-11-equipment-runtime-proposal.md) separates provisioning, verified bind/resource plan, scratch SQL/fixtures/ephemeral credentials and hosted gates. Full migration-chain/grant/trigger replay, multi-connection races and rollback remain. Keep rollout default-off. |
-| A1 | **Complete locally; hosted acceptance blocked** | [PR101 integration](handoffs/2026-10-11-a1-ability-integration.md), worker `4922740`, integrated `ada6c9b`; core guards/types retained, independently reviewed. Exact PR head `794fd87849b715ee5497599409bc0c0d2f88c1d0`, base `6b8601f976d3ee121d11f2ec33c7383393024b91`. Fresh combined full check 2,292 tests/build/53 offline checks covers final wording and T1. No RPC reapplication. Actual owner/trigger/race/browser acceptance needs named accounts/fixtures approval. |
-| T1 | **Complete locally** | [Current-source reproduction](handoffs/2026-10-11-t1-e2e-drift.md), worker `370476a`, integrated as `6452fc8`. Repaired two Homebrew notices, mobile Spells multiplicity and ASI option provenance. Campaign heading/Level 4 path pass unchanged. Full check 223 files / 2,239 tests; 10 offline checks. Historical hosted timeout causes remain unproved. |
-| M1 | **Complete independently; hosted acceptance blocked** | [PR99 revalidation/fix](handoffs/2026-10-11-m1-magic-item-revalidation.md), tested source `3d61ff3747dbb04da55d9fb436753e71b1596d29`, documentation HEAD `6c740f0`. Native reset listener fixes reproduced Rarity loss after action validation. Final full check 1,805 tests/build/12 offline checks pass. Original PR99 `4cbd70bb` unchanged; fix is standalone, not in core/published. Actual owner/immutable-version/race/Library acceptance remains gated. |
-| D1 | Local characterization/proposal complete; schema implementation blocked | [One-command contract](specs/2026-10-11-durable-roll-state-contract.md) and [E1 runtime proposal](specs/2026-10-11-equipment-runtime-proposal.md), worker `4b3d9d3`, integrated `ad3af15`. Eight provider/current-SQL gap checks pass and are included in the final 2,292-test full gate. No durable schema/API implementation or service startup. |
-| R1 | Blocked deployment/access lane | Exact auth cutover prerequisites below. [PR80](https://github.com/EzekielTheMad/Inkborne/pull/80) provider UAT, admin-feedback UAT and Unraid backup/restore need access. Continue independent local work while they are blocked. |
+This document is not blanket permission for gated actions. Use the current human kickoff/scope and existing valid approvals. Ordinary local code/SQL-file edits, offline unit/PGlite/UI tests, planning, review and local commits within a selected requirement do **not** need invented confirmation. A proposal's old “approval required” wording concerns its actual runtime/live operation, not every edit to its text.
 
-Verified shipped: [#67 journey polish](https://github.com/EzekielTheMad/Inkborne/pull/67), [#98 canonical E2E fixture repair](https://github.com/EzekielTheMad/Inkborne/pull/98), #100 documentation hygiene; compendium #96/#97. Do not rebuild them. GitHub had zero open issues and draft/unmerged PRs #80/#99/#101 at inspection; recheck before publication. [Existing milestone](https://trello.com/c/kuytlqFp/13-select-and-deliver-inkbornes-next-playable-milestone) is context, not authority/current evidence.
+Actual live/shared data/schema/security/auth changes, runtime provisioning/install effects where approval is required, persistent credentials/access expansion, remote publication/PR merges/deployment/domain writes, paid actions and external messages require their real policy/user approvals. The ledger's G1-G5 packages name target/action/risk/limits/cleanup; finish preparatory local/read-only work so requests are concrete. Do not ask generic “approve deployment/database.” Reuse earlier authorization for the exact action; do not reinterpret an old receipt as a new allowance.
 
-## Verification facts and commands
+On a blocker, freeze only dependent work; record exact missing action/target/decision and smallest remedy, then continue unaffected work. Never bypass automatic review rejection with another path. No blanket migration pushes/`--include-all`, live history repair, secret copying/token extraction or protection disabling. Ten earlier hosted fixture allowances are exhausted; fresh target/accounts/attempt budget/cleanup must be explicitly selected. Record actual IDs before writes and delete only authorized run-owned resources.
 
-Fresh `ada6c9b` combined root gate: **226 files / 2,292 tests**, TypeScript/zero-warning lint, synthetic optimized build and **4 offline specs / 53 checks** pass. Independent M1: 198 files / 1,805 tests, build and 12 offline checks. [Final handoff](handoffs/2026-10-11-orchestrator-local-queue.md) indexes exact commands/logs/process receipts and limits. These are local acceptance, not release approval.
+Record owned PID/parent/cwd/command/port/start and container IDs for long-lived work. Stop only owned trees/resources, verify port closure, preserve failed/accepted evidence. No global process kills/Docker prune, unrelated UI or paid service creation. On handoff, report clean/dirty state and leave no surprise owned server/worker running.
 
-**Historical baseline:** at `77e9a956`, 73 focused tests, 2,230 separate full unit tests, build and 24 offline checks passed; `npm run check` stopped at ten inherited lint errors. L1 repaired them. PGlite remains synthetic/single-connection: full baseline/feature triggers/ASI-copy, live grants and concurrent locks are unverified. No hosted data/schema/auth changes occurred in this continuation.
+## Current validation and commands
 
-Node requirement is `>=22`; this checkpoint used installed 24.14.0. Use the lockfile and repository scripts:
+Latest core evidence remains `ada6c9b`: full check **226 files / 2,292 tests**, zero-warning lint/typecheck, dummy-config build, **43 core + 10 drift offline checks**. Standalone M1: **1,805 tests/build/12 offline checks**. [Closing handoff](handoffs/2026-10-11-orchestrator-local-queue.md) indexes exact logs/process receipts. No product checks were rerun in this documentation pass. Equipment gate is off; D1/E1 are characterization/proposals, not implemented full durable boundaries. Real baseline/grants/triggers/ASI-copy/multi-connection/rollback, actual auth/provider/admin/backup/domain and launch acceptance remain open.
+
+Use locked dependencies, repository scripts and relevant bundled Next docs. Node `>=22`; prior checkpoint used 24.14.0. For local verification:
 
 ```powershell
-npm test -- tests/supabase/starting-equipment-postgres.test.ts tests/supabase/starting-equipment-staged-contract.test.ts tests/app/starting-equipment-actions.test.ts tests/app/starting-equipment-page.test.ts
-npm run check
+npm.cmd run check
+# Build in a fresh process with synthetic values only; never save these to .env.
 $env:NEXT_PUBLIC_SUPABASE_URL='https://example.supabase.co'
 $env:NEXT_PUBLIC_SUPABASE_ANON_KEY='ci-placeholder'
 $env:SUPABASE_SERVICE_ROLE_KEY='ci-placeholder'
-npm run build
-npm run test:e2e -- --config e2e/local-equipment/playwright.config.ts
+$env:INKBORNE_ATOMIC_STARTING_EQUIPMENT='false'
+npm.cmd run build
+npm.cmd run test:e2e -- --config e2e/local-abilities/playwright.config.ts
+npm.cmd run test:e2e -- --config e2e/local-drift/playwright.config.ts
 ```
 
-Those values are synthetic. Use a fresh build process so they cannot become a live server configuration. Offline UI needs build CSS. **Default `npm run test:e2e` loads hosted config and can create/delete data; do not run it under local-only authority.** For a separately approved dev data target, use `npm run dev -- --hostname 127.0.0.1 --port <free-port>` with process-scoped config; otherwise use offline fixtures.
+M1's own [handoff](handoffs/2026-10-11-m1-magic-item-revalidation.md) specifies focused tests and `e2e/local-magic-items/playwright.config.ts`; run combined relevant gates after integration. Offline UI needs build CSS. **Default hosted E2E configuration may create/delete data: do not run it on an unapproved target.** A dev server may use `npm.cmd run dev -- --hostname 127.0.0.1 --port <free-port>` only with the appropriate approved data configuration; offline fixtures need no real credentials. No duplicate server per worktree.
 
-Logs are in sibling `..\verification\equipment-{postgres-focused,unit-suite,check,build,offline-ui}.log` (expand each name); browser evidence is `test-results\builder-local\evidence.json`. Preserve failures/receipts/generated evidence. Record PID/parent/cwd/command/port/start time for long-lived processes, stop only owned trees and verify ports close.
+Logs are sibling `..\verification\orchestrator-final-{check,build,core-ui,drift-ui}.log` and M1 logs named in its handoff. Preserve ignored `test-results` receipts. Fresh runtime discovery is narrow/read-only: Docker Linux engine was unavailable, Supabase/psql not PATH; no service was started. Treat that as a next actionable dependency, not a reason to stop forms, print, source integration or other ordinary local tasks.
 
-## Operating and approval loop
-
-Refresh HEAD/status/instructions, declare task owner/base/paths/acceptance, then assign one writer per clean isolated worktree/branch. Delegate self-contained tasks with invariants and prohibitions. Parallelize independent work only; serialize integration, expensive checks and shared UI as needed. Obtain read-only review for consequential changes. Do not edit active unrelated worktrees or interfere with Steam/other desktop tasks; coordinate sole UI ownership first.
-
-Run narrow tests, required full gates and representative UI; classify product/harness/environment failures and report exact tested source plus limits. Integrate only reviewed local results, commit logical checkpoints, append the progress log below and update existing evidence links. Continue ready independent tasks until the authorized queue is exhausted or Victor pauses it; blocked release work does not stop local progress.
-
-Local implementation/testing and local commits are authorized. **Remote pushes/publication, PR merges, deployments, migration/history changes, hosted fixture/data writes, database/auth/security settings, credentials/access expansion, new paid services and external messages need explicit approval.** No blanket migration push, forced `--include-all`, credential inspection/copying or protection disabling. The ten earlier hosted fixture allowances are exhausted and cleaned; never reuse/reset them.
-
-For actual approval, ownership or private-data blockers, stop dependent work and record exact operation/target/risk, concrete proposed diff/rollout, evidence and smallest decision. Continue unaffected work. Do not bypass automatic review rejection through another path. On handoff, checkpoint cleanly, preserve uncommitted work if any, and stop owned workers/servers.
 
 ## Precise blocked release lane
 
@@ -90,9 +84,10 @@ The deployment/DNS/session snapshot below is inherited from the prior worker, no
 
 Before apex cutover, verify owned Cloudflare zone/records and approved non-secret auth config; exact dev `/auth/callback`, `/auth/reset-password`, and `/auth/callback?next=%2Fsettings&linked=google` / Discord when enabled. Inspect Site URL and `.SiteURL`/`.RedirectTo` email behavior; accept actual dev-origin PKCE/session/login/sign-out/recovery through SSO with separately approved accounts. Prepare an app-capable production origin, request exact auth/security changes, and create/test new deployments as approved (env changes do not update old deployments). Preserve SSO/database access/unrelated DNS/email records. Prepare rollback to the previous apex app association before any domain move. **Do not blindly switch apex.**
 
-## Resumable progress log
 
-Append rows here; detailed bounded handoffs link from current-state, not competing roadmaps.
+## Archived bounded-queue progress (2026-10-11)
+
+Historical receipts below are preserved. New project-wide progress belongs in LAUNCH-ACCEPTANCE.md; old exhausted-queue conclusions are not a current stop instruction.
 
 | UTC date | Owner / source | Result | Next / blocker |
 | --- | --- | --- | --- |
@@ -103,6 +98,7 @@ Append rows here; detailed bounded handoffs link from current-state, not competi
 | 2026-10-11 | Sole orchestrator; `6452fc8` | T1 reviewed/integrated after 2,239-test full gate and 10 offline checks. PR101 independent read-only review approved; its full gates running. M1 real-action form regression prompted a scoped reviewed draft-retention repair. Read-only project metadata confirms Inkborne `ACTIVE_HEALTHY`. | Finish A1/M1 verification and final combined gate. Healthy metadata does not accept auth/trigger/concurrent behavior; no hosted writes. |
 | 2026-10-11 | Sole orchestrator; tested core `ada6c9b`; M1 source `3d61ff3` | Authorized local queue complete. Fresh combined 2,292-test full gate, build and 53 offline checks; independent M1 1,805/build/12 checks. [Closing handoff](handoffs/2026-10-11-orchestrator-local-queue.md). All 23 inherited checkouts unchanged; five workers clean/completed; observed task processes/ports closed. | Only runtime/hosted/publication/auth/domain/backup approval/access lanes remain. No push, PR merge, deployment, hosted mutation or credentials. |
 
-## Pasteable kickoff
 
-Act as Inkborne's sole Codex orchestrator on Main_PC. Start in `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification` and read `docs\CODEX-ORCHESTRATOR.md`, applicable AGENTS and the October 11 closing handoff/inventory. Refresh actual HEAD/status. L1/A1/T1 local work and D1/E1 proposals are complete; M1 is a separately tested PR99-derived branch. Do not rebuild them or invent new features. Reconcile the exact next approved runtime/hosted/publication lane, present concrete targets/dry-run/rollback/verification and request required approval. Preserve unrelated work and exhausted fixture journals. Do not push, merge PRs, deploy, apply migrations, mutate hosted data/auth/security or create credentials without explicit approval. Delegate only bounded approved work in isolated clean worktrees, record exact evidence, update this handoff and stop owned processes cleanly.
+## Pasteable project-wide kickoff
+
+Act as Inkborne's sole project-wide Codex orchestrator on Main_PC. Start in C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification. Read docs\CODEX-ORCHESTRATOR.md, docs\LAUNCH-ACCEPTANCE.md, applicable AGENTS/skills and linked checkpoints; refresh HEAD/worktree state. Own the full documented M1-M8/P0 launch program. Review/integrate the separate tested magic-item slice first, prepare the real-runtime plan and batch genuine scope/access approvals early. Delegate bounded ready work to isolated workers, implement/integrate/fix/retest, record exact evidence in the ledger, and derive the next useful task from open requirements when a queue empties. Continue independent work until agreed scope is actually accepted; green offline tests are not launch. Ordinary local code/SQL-file edits, offline tests and commits need no extra confirmation. Do not perform gated live data/schema/auth/security, persistent credential, public publication or paid actions without actual approval. Stop only for my pause, all-remaining-work blockers or verified scope completion; checkpoint cleanly for resume.

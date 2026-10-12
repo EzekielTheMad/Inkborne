@@ -1,6 +1,6 @@
 # Inkborne current work
 
-**Authorized local queue complete:** start with [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) and the [October 11 closing handoff](handoffs/2026-10-11-orchestrator-local-queue.md). Tested core `ada6c9b8c51c8d674c6a76dbf4df1f9955ce5cdf`: TypeScript/zero-warning lint, **226 files / 2,292 tests**, dummy build and **53 offline checks** pass. L1 ten findings fixed; A1 reviewed ability integration preserves core guards/types; T1 selectors repaired; D1/E1 characterization/proposals complete. M1 standalone PR99-derived rarity fix: **1,805 tests/build/12 checks**, source `3d61ff3`, not in core or published. All five workers completed/clean; original work preserved; observed owned processes/ports closed. Hosted/runtime/auth/release acceptance remains gated.
+**Project-wide continuation:** use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) and the single [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) ledger. The bounded local queue is complete, not the project. Current tested core `ada6c9b8c51c8d674c6a76dbf4df1f9955ce5cdf` has 2,292 tests/zero-warning lint/build and 43 core + 10 drift offline checks. Separate M1 `3d61ff3` / docs `6c740f0` has 1,805 tests/build/12 UI checks and is not integrated. Start its integration review and real-runtime enablement plan; continue ready documented milestone work while actual access/approval lanes are blocked. The 2026-10-12 handoff pass is documentation only; product/process state is unchanged.
 
 ## October 11 local continuation
 

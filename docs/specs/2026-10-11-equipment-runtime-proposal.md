@@ -1,5 +1,7 @@
 # E1 disposable Supabase runtime proposal — approval required
 
+> **2026-10-12 reconciliation:** Current tested core is `ada6c9b` and now includes the unchanged PR101 ability migration reference already applied remotely. The older missing-file/baseline statements below are historical. Use the [launch ledger](../LAUNCH-ACCEPTANCE.md) for the frozen candidate manifest and one concrete runtime/test approval package. Ordinary local source/SQL-file edits and offline tests are not separately gated; actual shared-runtime/live/security/persistent-credential effects retain their real boundaries.
+
 October 11, 2026. This is a proposed local runtime lane for the staged equipment
 transaction at inspected source `56db57e46e93783356cd132240350784accf1f28`.
 The [45-case executable WASM handoff](../handoffs/2026-10-11-equipment-postgres-wasm.md)

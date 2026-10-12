@@ -1,5 +1,7 @@
 # October 11 local orchestration checkpoint
 
+> **Historical bounded-queue close-out.** The 2026-10-12 project-wide [launch ledger](../LAUNCH-ACCEPTANCE.md) supersedes this receipt's exhausted-queue stopping conclusion. Preserve the evidence below; continue ready documented requirements under the new kickoff, without treating it as permission for gated operations.
+
 The authorized local queue is complete. Release, full database-runtime acceptance,
 hosted acceptance and domain/auth cutover remain blocked by the approvals/access
 listed in [CODEX-ORCHESTRATOR](../CODEX-ORCHESTRATOR.md). No remote publication or

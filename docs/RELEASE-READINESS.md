@@ -1,5 +1,7 @@
 # Release-readiness checklist
 
+> **Current project-wide execution (2026-10-12):** [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) is the entrypoint; [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) is the canonical milestone/requirement evidence ledger and completion gate. The October 11 local queue is a completed checkpoint, not project completion. Open rows/unknowns remain active; local source/SQL-file edits and offline work do not require invented approval. Actual runtime/live/security/publication operations retain their real boundaries.
+
 October 11 [local queue is complete](handoffs/2026-10-11-orchestrator-local-queue.md). Exact tested core `ada6c9b`: TypeScript/lint, **2,292 tests**, build and **53 offline checks** pass after L1/A1/T1/D1 integration. Independent M1 source `3d61ff3`: **1,805 tests**, build and 12 checks pass. [D1](specs/2026-10-11-durable-roll-state-contract.md) and [E1 runtime](specs/2026-10-11-equipment-runtime-proposal.md) define remaining approval boundaries. Full database/hosted/provider/domain/backup acceptance and release authority remain open. **Not release-ready.** The October 4 checklist below is historical; it does not constrain the completed directly authorized local queue or imply runtime/hosted approval.
 
 Equipment staging/integration is complete at [the local equipment checkpoint](handoffs/2026-10-04-equipment-atomic-local-staging.md). The old execution-review rejection is historical; PostgreSQL execution, hosted acceptance and rollout remain unapproved/unproved.
