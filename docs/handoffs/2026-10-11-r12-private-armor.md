@@ -14,12 +14,17 @@ Create/edit routes and Homebrew discovery/listing are included. Typed form recor
 - `npm.cmd test -- tests/lib/homebrew/armor-form.test.ts tests/components/library/armor-form.test.tsx tests/supabase/homebrew-armors-server.test.ts tests/app/homebrew-armor-actions.test.ts tests/app/homebrew-armor-pages.test.tsx tests/app/homebrew-page.test.tsx tests/inventory/armor-effects.test.ts`: 7 files / 59 tests passed.
 - `npm.cmd run typecheck`: passed.
 - `npm.cmd run lint`: passed.
+- `npm.cmd run test:e2e -- --config e2e/local-armors/playwright.config.ts`: 1 test / 16 desktop and mobile checks passed after root released the browser slot. No source changes were needed.
 - `git diff --cached --check`: passed before the source checkpoint.
 - Installed Next 16.3.8 server/client and mutation documentation was read; Supabase and React skill guidance followed. No schemas, provider logic, armor helpers, dependencies, migrations, SQL, credentials, remote writes, push, or deployment changed.
 
-The tests establish finite mapping, private query boundaries, expected-version conflict behavior, original raw metadata/effect retention, draft recovery, and canonical parser parity with the existing **body armor** helper's generated formula strings. They do not prove real database policy, trigger, evaluator, or browser acceptance.
+The tests establish finite mapping, private query boundaries, expected-version conflict behavior, original raw metadata/effect retention, draft recovery, and canonical parser parity with the existing **body armor** helper's generated formula strings. They do not prove real database policy, trigger, evaluator, or browser-to-server persistence.
 
-The isolated browser harness is prepared at `e2e/local-armors/playwright.config.ts` and `scripts/verify-armors-local.mjs`. It is **not run yet**, because root explicitly reserved the combined gate resource slot. Run `npm.cmd run test:e2e -- --config e2e/local-armors/playwright.config.ts` after root releases that slot. The planned harness uses the real form/mapper with simulated persistence, blocks remote requests, captures desktop/mobile screenshots and process/port receipts, and asserts cleanup. No development server/browser/listener was started for this checkpoint. Lint PID `44664` (parent `34472`, start `2026-10-12T01:18:04.545Z`) finished; other install/test/typecheck commands also completed.
+The isolated browser harness at `e2e/local-armors/playwright.config.ts` and `scripts/verify-armors-local.mjs` ran the real form/mapper with simulated persistence and blocked remote requests. Its 16 checks cover shield limitation disclosure, actual mapper rejection of fractional AC, pending submission, native-reset draft retention, recoverable save retry, stale conflict/reload, and tiny persisted cost/weight mapping. No page errors, remote requests, or horizontal overflow occurred.
+
+Evidence remains in `test-results/armors-local/evidence.json` and all four desktop/mobile validation/conflict PNGs in that directory. All screenshots were visually inspected. Styling came from compiled application globals; the harness will prefer production CSS when a combined build exists. No Next development server was started.
+
+Browser worker PID `54092` (parent `6840`, start `2026-10-12T01:21:35.258Z`), fixture server PID `42844` (parent `54092`, command `node scripts/verify-armors-local.mjs`, start `2026-10-12T01:21:36.682Z`, port `53775`), and Chrome PID `56412` (parent `42844`, start `2026-10-12T01:21:36.683Z`, control port `53776`) were recorded in the workspace above. The fixture/control ports were verified closed and those processes exited. Full Chrome command arguments are in the evidence receipt. Lint PID `44664` (parent `34472`, start `2026-10-12T01:18:04.545Z`) also finished; other install/test/typecheck commands completed.
 
 ## Observed consumer limitations and remaining acceptance
 
@@ -27,4 +32,4 @@ The isolated browser harness is prepared at `e2e/local-armors/playwright.config.
 
 Minimum Strength and stealth-disadvantage flags are stored armor details; this slice does not add movement or roll automation. The form states that limitation. Body helper/parser parity is narrower than full sheet AC acceptance.
 
-Actual Supabase owner/RLS denial, immutable version triggers, two-account/two-session concurrency, Library-to-character inventory discovery, pin-after-edit behavior, full body-armor AC evaluation, and shield mechanics remain unverified. Root owns independent review, integration, combined checks/build, browser-slot release, and later acceptance. Full R12 and sharing extensions remain open.
+Actual Supabase owner/RLS denial, immutable version triggers, two-account/two-session concurrency, Library-to-character inventory discovery, pin-after-edit behavior, full body-armor AC evaluation, and shield mechanics remain unverified. Root independently approved the source and initial handoff; root still owns integration, combined checks/build, production-CSS comparison, and later acceptance. Full R12 and sharing extensions remain open.
