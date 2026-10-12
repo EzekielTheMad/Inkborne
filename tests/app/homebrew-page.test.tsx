@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedArmors: vi.fn(),
   listOwnedRaces: vi.fn(),
   listOwnedMonsters: vi.fn(),
+  listOwnedTraits: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -25,6 +26,7 @@ vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
 }));
 vi.mock("@/lib/supabase/homebrew-races-server", () => ({ listOwnedHomebrewRaces: mocks.listOwnedRaces }));
 vi.mock("@/lib/supabase/homebrew-monsters-server", () => ({ listOwnedHomebrewMonsters: mocks.listOwnedMonsters }));
+vi.mock("@/lib/supabase/homebrew-traits-server", () => ({ listOwnedHomebrewTraits: mocks.listOwnedTraits }));
 vi.mock("@/lib/supabase/homebrew-armors-server", () => ({ listOwnedHomebrewArmors: mocks.listOwnedArmors }));
 vi.mock("@/lib/supabase/homebrew-weapons-server", () => ({ listOwnedHomebrewWeapons: mocks.listOwnedWeapons }));
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({ listOwnedHomebrewItems: mocks.listOwnedItems }));
@@ -58,6 +60,7 @@ describe("HomebrewPage", () => {
     mocks.listOwnedArmors.mockResolvedValue([]);
     mocks.listOwnedRaces.mockResolvedValue([]);
     mocks.listOwnedMonsters.mockResolvedValue([]);
+    mocks.listOwnedTraits.mockResolvedValue([]);
   });
 
   it("shows each authoring section with its versioned homebrew links", async () => {
@@ -269,5 +272,19 @@ describe("HomebrewPage", () => {
     render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByText("Your homebrew monsters could not be loaded.")).toBeVisible();
     expect(screen.getByText("Original Blade")).toBeVisible(); expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
+  });
+  it("discovers standalone private traits and their editable immutable version", async () => {
+    mocks.listOwnedTraits.mockResolvedValue([{ id: "33333333-3333-4333-8333-333333333333", name: "Lantern Memory", version: 2, data: { description: "Original synthetic memory." } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByRole("heading", { name: "My traits" })).toBeVisible();
+    expect(screen.getByText(/does not attach it to a race or character/)).toBeVisible();
+    expect(screen.getByRole("link", { name: /Lantern Memory/ })).toHaveAttribute("href", "/homebrew/traits/33333333-3333-4333-8333-333333333333/edit");
+    expect(screen.getByRole("link", { name: "Create trait" })).toHaveAttribute("href", "/homebrew/traits/new");
+  });
+  it("does not describe a failed trait list as an empty Homebrew catalog", async () => {
+    mocks.listOwnedTraits.mockRejectedValue(Error("Synthetic trait read failure"));
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Your homebrew traits could not be loaded.")).toBeVisible();
+    expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
 });

@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { listOwnedHomebrewBackgrounds } from "@/lib/supabase/homebrew-backgrounds-server";
 import { listOwnedHomebrewFeats } from "@/lib/supabase/homebrew-feats-server";
 import { listOwnedHomebrewRaces } from "@/lib/supabase/homebrew-races-server";
+import { listOwnedHomebrewTraits } from "@/lib/supabase/homebrew-traits-server";
 import { listOwnedHomebrewArmors } from "@/lib/supabase/homebrew-armors-server";
 import { listOwnedHomebrewWeapons } from "@/lib/supabase/homebrew-weapons-server";
 import { listOwnedHomebrewItems } from "@/lib/supabase/homebrew-items-server";
@@ -25,7 +26,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult, racesResult, monstersResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult, racesResult, monstersResult, traitsResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
     listOwnedHomebrewBackgrounds(),
@@ -35,12 +36,14 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     listOwnedHomebrewArmors(),
     listOwnedHomebrewRaces(),
     listOwnedHomebrewMonsters(),
+    listOwnedHomebrewTraits(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
   const backgrounds = backgroundsResult.status === "fulfilled" ? backgroundsResult.value : [];
   const races = racesResult.status === "fulfilled" ? racesResult.value : [];
   const monsters = monstersResult.status === "fulfilled" ? monstersResult.value : [];
+  const traits = traitsResult.status === "fulfilled" ? traitsResult.value : [];
   const armors = armorsResult.status === "fulfilled" ? armorsResult.value : [];
   const weapons = weaponsResult.status === "fulfilled" ? weaponsResult.value : [];
   const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
@@ -83,6 +86,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (monstersResult.status === "rejected") {
     console.error("[HomebrewPage] Failed to load owned homebrew monsters", monstersResult.reason);
   }
+  if (traitsResult.status === "rejected") console.error("[HomebrewPage] Failed to load owned homebrew traits", traitsResult.reason);
 
   const notice = typeof query.created === "string"
     ? "Private homebrew created."
@@ -98,6 +102,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && armors.length === 0
     && races.length === 0
     && monsters.length === 0
+    && traits.length === 0
     && spellsResult.status === "fulfilled"
     && featsResult.status === "fulfilled"
     && backgroundsResult.status === "fulfilled"
@@ -106,7 +111,8 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && weaponsResult.status === "fulfilled"
     && armorsResult.status === "fulfilled"
     && racesResult.status === "fulfilled"
-    && monstersResult.status === "fulfilled";
+    && monstersResult.status === "fulfilled"
+    && traitsResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -134,6 +140,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
           </Link>
           <Link href="/homebrew/races/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create race</Link>
           <Link href="/homebrew/monsters/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create monster</Link>
+          <Link href="/homebrew/traits/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create trait</Link>
           <Link href="/homebrew/armors/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create armor</Link>
           <Link href="/homebrew/weapons/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create weapon</Link>
           <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>
@@ -171,6 +178,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
             <Link href="/homebrew/feats/new" className={buttonVariants({ variant: "outline" })}>Create feat</Link>
             <Link href="/homebrew/backgrounds/new" className={buttonVariants({ variant: "outline" })}>Create background</Link>
             <Link href="/homebrew/races/new" className={buttonVariants({ variant: "outline" })}>Create race</Link>
+            <Link href="/homebrew/traits/new" className={buttonVariants({ variant: "outline" })}>Create trait</Link>
             <Link href="/homebrew/armors/new" className={buttonVariants({ variant: "outline" })}>Create armor</Link>
             <Link href="/homebrew/weapons/new" className={buttonVariants({ variant: "outline" })}>Create weapon</Link>
             <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>Create item</Link>
@@ -178,6 +186,21 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
           </div>
         </div>
       )}
+
+      {traitsResult.status === "rejected" ? <HomebrewLoadError label="traits" /> : traits.length > 0 ? (
+        <section aria-labelledby="owned-traits-heading" className="space-y-3">
+          <h2 id="owned-traits-heading" className="j-folio">My traits</h2>
+          <p className="text-xs text-muted-foreground">Standalone private traits. Creating one does not attach it to a race or character.</p>
+          <div className="grid gap-3 md:grid-cols-2">{traits.map(trait => (
+            <Link key={trait.id} href={`/homebrew/traits/${trait.id}/edit`} className="j-card-paper group p-5 transition-colors hover:border-accent/50">
+              <div className="flex items-start justify-between gap-3"><div className="min-w-0">
+                <h3 className="j-display break-words text-lg text-foreground group-hover:text-accent">{trait.name}</h3>
+                <p className="mt-1 line-clamp-2 break-words text-xs text-muted-foreground">{trait.data.description}</p>
+              </div><div className="flex shrink-0 gap-1.5"><Badge variant="outline">Private</Badge><Badge variant="secondary">v{trait.version}</Badge></div></div>
+            </Link>
+          ))}</div>
+        </section>
+      ) : null}
 
       {spellsResult.status === "rejected" ? (
         <HomebrewLoadError label="spells" />

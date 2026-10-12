@@ -1,0 +1,21 @@
+# R12 standalone private trait source: UNVERIFIED pre-gate checkpoint
+
+This source checkpoint is **unverified and not approved for integration**. Isolated `r12-trait-worker`, branch `codex/r12-private-traits`, base `2e20658bf1ea05cd5eba80ea8d6c9a62df38df74`; approved plan commits `3a4f216`, `29150bd`, `c229658`. Root requested a checkpoint/capacity release while serializing other workers' checks. Only owned trait files and the minimal Homebrew page/test addition are edited; no other worktree changes.
+
+Prepared source: named mapper controls with safe integer uses and PostgreSQL integer versions; primary resource eligibility computed from authenticated expected-version raw row; semantic control overlay preserves original absent/null/zero keys; owner/system/private active `trait` CAS; canonical known-field validation while retaining original raw data/effects/relations/extensions. New definitions have no relation/effect grants. CREATE explicitly generates a new identity, validates the actual returned matching envelope/data/version before confirmation, and treats missing/malformed/ambiguous/lost response as uncertain without retry. IDs are not idempotency receipts. Only a received validated saved state permits client navigation; uncertainty retains controlled/native-reset-protected draft and disables Create pending explicit local acknowledgement after checking Homebrew. Edit conflict/uncertainty requires reload. No authority derived from browser flags/result state/acknowledgement.
+
+Prepared form/actions/new/edit routes and Homebrew standalone discovery/list/error handling. Unsupported legacy primary arrays/dawn/day/incoherent values remain read-only; reverse relation arrays, extra counters, all raw effects and unknown nested keys stay unedited. Existing narrative effect text is retained when data description changes. No schema/provider/evaluator/SQL/dependency/import/sharing/relationship application work. No character/ref/version snapshot writes or automatic repin/backfill.
+
+Six new focused test files plus existing Homebrew page test are prepared, **not executed**: mapper bounds/blank/zero/locks/semantic absence; DAL scoped identity/CAS/auth/returned-row uncertainty/raw preservation; real TraitForm transport/native reset/explicit acknowledgement/confirmed navigation/locked fields; actions version guards/feedback; authenticated pages; actual canonical definition/snapshot -> resources/rest/Features consumers with original synthetic pins and simulated resource persistence callbacks. These fixtures do not prove real attachment, SQL triggers/RLS or hosted/provider behavior.
+
+When root releases the resource slot, use independent locked `npm.cmd ci --ignore-scripts`, then:
+
+```text
+npm.cmd test -- --maxWorkers=2 tests/lib/homebrew/trait-form.test.ts tests/supabase/homebrew-traits-server.test.ts tests/components/library/trait-form.test.tsx tests/app/homebrew-trait-actions.test.ts tests/app/homebrew-trait-pages.test.tsx tests/components/library/trait-consumer-parity.test.tsx tests/app/homebrew-page.test.tsx
+npm.cmd run typecheck
+npm.cmd run lint
+```
+
+No install, test, typecheck, lint, full check, build or browser ran in this worker. `node_modules` is absent. Only static source inspection and Git whitespace verification occurred, so compile/test/lint defects may remain. No failing-before runtime claim is made for unexecuted tests. Offline browser fixture/production asset receipt and actual desktop/mobile acceptance are still pending a separately released UI slot; no current browser completion claim. Root owns later combined gates and independent exact-source review.
+
+Read installed Next forms/server-actions/client-component docs via read-only `r06-race-parity-worker`; applied existing Supabase and React skill instructions. Supabase changelog was fetched read-only (web tool markdown fetch failed; PowerShell read succeeded), and official getUser/update documentation checked; no relevant package/SQL migration change applied. Official references: https://supabase.com/docs/reference/javascript/auth-getuser and https://supabase.com/docs/reference/javascript/update. No env/credentials, live SQL, hosted request or remote mutation. No server/browser/watcher/background process or port started by this source preparation; shared/user processes untouched.
