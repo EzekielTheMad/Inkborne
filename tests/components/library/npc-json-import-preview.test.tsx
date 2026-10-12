@@ -27,9 +27,10 @@ describe("actual read-only NPC profile local prototype, no route or commit", () 
     if ("personality" in data) expect(screen.getByText("Included empty object")).toBeInTheDocument();
     else expect(screen.getAllByText("Not supplied")).toHaveLength(6);
   });
-  it("labels prior source explicitly when a replacement is rejected, never claims current imported success", async () => {
+  it("labels prior source for changed/pending/rejected selection without claiming a file was rejected", async () => {
     render(<NpcJsonImportPreview review={await review()} retained />);
-    expect(screen.getByRole("status")).toHaveTextContent("Previous local preview retained; the new file was rejected");
+    expect(screen.getByRole("status")).toHaveTextContent("Previous local preview retained; it does not describe the selected file");
+    expect(screen.getByRole("status")).not.toHaveTextContent("was rejected");
     expect(screen.getByText("original.json")).toBeInTheDocument(); expect(screen.getByRole("status")).toHaveTextContent("Format choice remains provisional");
   });
 });

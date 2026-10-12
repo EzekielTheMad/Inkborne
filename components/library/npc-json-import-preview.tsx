@@ -5,7 +5,7 @@ import type { NpcJsonReview } from "@/lib/import/npc-json/types";
 export function NpcJsonImportPreview({ review, retained = false }: { review: NpcJsonReview; retained?: boolean }) {
   const { candidate, provenance } = review;
   return <section aria-label="Local NPC JSON review" className="j-card-paper min-w-0 space-y-6 p-5 [overflow-wrap:anywhere]">
-    <p role="status">{retained ? "Previous local preview retained; the new file was rejected." : "Validated local prototype preview."} Format choice remains provisional. Nothing was imported or saved.</p>
+    <p role="status">{retained ? "Previous local preview retained; it does not describe the selected file." : "Validated local prototype preview."} Format choice remains provisional. Nothing was imported or saved.</p>
     <h1 className="text-2xl font-semibold whitespace-pre-line">{candidate.name}</h1>
     <dl className="space-y-2 text-sm"><div><dt>Original file</dt><dd>{provenance.safeFilename}</dd></div>
       <div><dt>Original bytes</dt><dd>{provenance.sourceBytes}</dd></div><div><dt>SHA-256 of original bytes</dt><dd className="font-mono">{provenance.sourceSha256}</dd></div></dl>
