@@ -112,10 +112,10 @@ function App() {
   return <main className="mx-auto w-full max-w-[1440px] p-4 space-y-4">
     <h1 className="j-display text-2xl">Offline race calculation acceptance</h1>
     <p>Original synthetic pins and real builder components. Navigation, ability drafts and persistence are stubbed; writes are prohibited.</p>
-    <div className="grid gap-3 sm:grid-cols-2"><label>Fixture scenario<select className="block w-full border rounded bg-background p-2" value={scenario} onChange={event => setScenario(event.target.value as Scenario)}>
-      {scenarios.map(name => <option key={name}>{name}</option>)}</select></label>
-      <label>Fixture view<select className="block w-full border rounded bg-background p-2" value={view} onChange={event => setView(event.target.value as View)}>
-        {["Race", "Abilities", "Class", "Sheet notice"].map(name => <option key={name}>{name}</option>)}</select></label></div>
+    <div className="grid gap-3 sm:grid-cols-2"><div><label htmlFor="fixture-scenario">Fixture scenario</label><select id="fixture-scenario" className="block w-full border rounded bg-background p-2" value={scenario} onChange={event => setScenario(event.target.value as Scenario)}>
+      {scenarios.map(name => <option key={name}>{name}</option>)}</select></div>
+      <div><label htmlFor="fixture-view">Fixture view</label><select id="fixture-view" className="block w-full border rounded bg-background p-2" value={view} onChange={event => setView(event.target.value as View)}>
+        {["Race", "Abilities", "Class", "Sheet notice"].map(name => <option key={name}>{name}</option>)}</select></div></div>
     <p data-testid="live-reference">Parsed-pin live reference: STR {live.stats.strength}, CON {live.stats.constitution}, CHA {live.stats.charisma}.</p>
     {scenario === "raw-subrace" && <p data-testid="raw-disclosure">Raw-only subrace component compatibility; actual canonical parsing omits its scores. This is not hosted data or a new live scoring mode.</p>}
     <section aria-label={`Actual ${view}`} key={`${scenario}:${view}`} className="min-w-0">

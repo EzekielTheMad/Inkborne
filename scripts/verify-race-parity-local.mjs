@@ -118,6 +118,14 @@ try {
     const page = await context.newPage();
     page.on("pageerror", error => pageErrors.push(error.message));
     await page.goto(origin);
+    await fs.writeFile(path.join(output, `${size}-selector-diagnostic.json`), JSON.stringify({
+      labels: await page.getByRole("combobox").evaluateAll(nodes => nodes.map(node => ({ id: node.id, labels: [...node.labels].map(label => label.textContent), html: node.outerHTML }))),
+      comboboxes: await Promise.all((await page.getByRole("combobox").all()).map(node => node.ariaSnapshot())),
+      exactScenarioMatches: await page.getByLabel("Fixture scenario", { exact: true }).count(),
+      exactViewMatches: await page.getByLabel("Fixture view", { exact: true }).count(),
+    }, null, 2));
+    assert.equal(await page.getByLabel("Fixture scenario", { exact: true }).count(), 1);
+    assert.equal(await page.getByLabel("Fixture view", { exact: true }).count(), 1);
     assert.equal(await page.evaluate(() => window.innerWidth), viewport.width, "Fixture viewport must retain actual mobile CSS width");
     const loadedFonts = await page.evaluate(async fonts => {
       const results = [];
