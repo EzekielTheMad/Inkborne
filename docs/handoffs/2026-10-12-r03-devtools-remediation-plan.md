@@ -175,3 +175,89 @@ After independent challenge and root's resource release:
 Rollback is the scoped package/lock checkpoint before integration and a fresh
 `npm ci` from that lock, with the security implications of reverting fixed leaves
 reported explicitly. Root retains independent final review and launch acceptance.
+
+## Resolution stop and exact preservation amendment (challenge pending)
+
+The approved constraints were applied, then npm `11.9.0` ran
+`npm.cmd install --package-lock-only --ignore-scripts --no-audit --no-fund`.
+Shell PID 54772, parent 30200, worker cwd, UTC start
+`2026-10-12T02:09:58.6664376Z`, finish `2026-10-12T02:10:09.6581680Z`, exit zero.
+No node_modules directory or install scripts were created/run.
+
+Resolution also upgraded Vite `8.1.5 -> 8.3.4`, rolldown `1.1.5 -> 1.2.13`,
+OXC types `0.139.0 -> 0.153.0`, compiler platform bindings, nested LightningCSS
+`1.33.0`, picomatch `4.0.5 -> 4.0.7`, Chai `6.2.2 -> 6.3.0` and tinyrainbow
+`3.1.0 -> 3.2.0`. Browser data resolved above the needed floors. **Stopped before
+install/testing; this tree is rejected for scope, not accepted.** Exact full node
+before/after evidence is `verification/r03-devtools-plan/resolution-changes.json`;
+the retained rejected lock is `unexpected-resolution-lock.json`. Package/lock
+remain uncommitted review inputs, not a usable accepted checkpoint.
+
+Changed Vitest/mocker keep their `^6 || ^7 || ^8` Vite requirement; its new
+expect package retains Chai `^6.2.2` and tinyrainbow `^3.1.0`. These do not require
+the incidental increases. Rejected Vite `8.3.4` demands PostCSS `^8.5.29`, while
+the existing approved override is `8.5.23`; retaining old Vite avoids silently
+forcing an out-of-range compiler child. Additional Vitest optional coverage peer
+metadata is authored by patched `4.1.11`; no coverage packages were added.
+
+Body-parser `2.3.0` does require **type-is `^2.1.0`** and **content-type `^2.0.0`**.
+Their published minimums are `2.1.0` and `2.0.0`, Node >=18. Type-is `2.1.0` also
+requires content-type `^2`. Current Express can keep its already accepted type-is
+`2.0.1`/content-type `1.0.5`; scope the new helper tree inside patched body-parser.
+This supporting API-major child is explicitly required by the selected security
+patch; it is not an unrelated direct package upgrade or an invented override.
+
+The proposed replacement/additional override entries below accompany all the
+unchanged original security constraints. **Do not apply until the amendment
+challenge passes.** Registry metadata confirms these versions; the next npm
+resolution must prove the actual scoped tree and unchanged outside versions.
+
+```json
+{
+  "vite@^8.0.0": {
+    ".": "8.1.5",
+    "rolldown": { ".": "1.1.5", "@rolldown/pluginutils": "1.0.1" },
+    "lightningcss": "1.32.0",
+    "picomatch": "4.0.5",
+    "tinyglobby": "0.2.17"
+  },
+  "chai@^6.0.0": "6.2.2",
+  "tinyrainbow@^3.0.0": "3.1.0",
+  "caniuse-lite": "1.0.30001786",
+  "browserslist@^4.0.0": {
+    ".": "4.28.7",
+    "caniuse-lite": "1.0.30001806",
+    "electron-to-chromium": "1.5.393",
+    "node-releases": "2.0.51",
+    "baseline-browser-mapping": "2.11.28",
+    "update-browserslist-db": "1.2.3"
+  },
+  "type-is@^2.0.0": "2.0.1",
+  "body-parser@^2.0.0": {
+    ".": "2.3.0",
+    "content-type": "2.0.0",
+    "type-is": { ".": "2.1.0", "content-type": "2.0.0" }
+  },
+  "@humanfs/node@^0.16.0": {
+    ".": "0.16.8",
+    "@humanfs/core": { ".": "0.19.2", "@humanfs/types": "0.15.0" },
+    "@humanfs/types": "0.15.0"
+  }
+}
+```
+
+Rolldown `1.1.5` declares exact old OXC/binding versions, so restoring its actual
+package restores the corresponding optional platform family; do not manually
+splice/invent integrities. Global caniuse retains the already locked production
+Next dataset; Browserslist's more-specific scoped child uses its required new
+minimum. Global type-is retains the old Express helper while body-parser's scoped
+child uses its explicit new minimum. If npm does not implement this scoped result,
+stop rather than claim the intended tree was produced. No package aliases, forced
+peer violations, unsupported framework downgrade or broad compiler upgrade.
+
+After successful revised resolution, every node delta must be approved security
+family, necessary listed helper/data floor, patched Vitest authored metadata, or
+justified reparenting/deduplication with unchanged version/integrity. The eight
+unpatched braces-chain highs stay unresolved and unaccepted. Root coordinates
+install with other workers and owns final combined gates; current no-install hold
+remains until the actual revised diff is accepted.
