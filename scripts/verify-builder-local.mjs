@@ -14,6 +14,10 @@ import { chromium } from "playwright";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "test-results", "builder-local");
 await fs.mkdir(output, { recursive: true });
+const runStartedUtc = new Date().toISOString();
+await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({
+  simulated: true, liveSupabase: false, status: "running", runStartedUtc,
+}, null, 2));
 const stubs = {
   "next/navigation": `export function useRouter(){return {push:to=>window.dispatchEvent(new CustomEvent('fixture-navigation',{detail:to})),refresh:()=>{if(location.pathname==='/fresh-race')window.dispatchEvent(new Event('fixture-refresh'))}}}`,
   "@/lib/supabase/client": `export function createClient(){return {
@@ -56,7 +60,8 @@ await build({
       const character={id:'local-character',level:1,choices:{ability_method:'manual'},base_stats:{strength:10,dexterity:10}};
       window.fixture.abilitySaved={method:'manual',scores:{...character.base_stats}};
       window.fixture.authChange=null;
-      const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}]};
+      const schema={ability_scores:[{slug:'strength',name:'Strength',abbr:'STR'},{slug:'dexterity',name:'Dexterity',abbr:'DEX'}],
+        proficiency_levels:[],derived_stats:[],skills:[],resources:[],content_types:[],currencies:[],creation_steps:[],sheet_sections:[]};
       const human={id:'human',name:'Human',slug:'human',content_type:'race',data:{description:'Local simulated content only.'},effects:[],version:1,source:'srd'};
       const pinnedHuman={...human,name:'Pinned Human',data:{description:'Authorized pinned race description.',traits:['tool-training']},effects:[{type:'choice',choose:1,from:['skill-athletics'],grant_type:'proficiency',choice_id:'pinned-skill'}]};
       const pinnedTrait={...human,id:'tool-training',slug:'tool-training',name:'Pinned Tool Training',content_type:'trait',effects:[{type:'choice',choose:1,from:['tool-smith'],grant_type:'proficiency',choice_id:'tool-training'}]};
@@ -502,14 +507,16 @@ try {
 
   assert.deepEqual(errors, []);
   assert.deepEqual(blockedRequests, []);
-  await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));
+  await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, status: "passed", runStartedUtc, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));
   console.log(JSON.stringify({ passed: evidence.length, evidence, output }, null, 2));
 } catch (error) {
+  const failure = {
+    simulated: true, liveSupabase: false, status: "failed", runStartedUtc, error: String(error),
+    pageErrors: errors, blockedRemoteRequests: blockedRequests, completedChecks: evidence,
+  };
   await Promise.allSettled([
-    fs.writeFile(path.join(output, "failure.json"), JSON.stringify({
-      simulated: true, liveSupabase: false, error: String(error),
-      pageErrors: errors, blockedRemoteRequests: blockedRequests, completedChecks: evidence,
-    }, null, 2)),
+    fs.writeFile(path.join(output, "failure.json"), JSON.stringify(failure, null, 2)),
+    fs.writeFile(path.join(output, "evidence.json"), JSON.stringify(failure, null, 2)),
     ...(page ? [
       page.screenshot({ path: path.join(output, "failure.png"), fullPage: true }),
       page.content().then(html => fs.writeFile(path.join(output, "failure.html"), html)),
