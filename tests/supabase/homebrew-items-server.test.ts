@@ -303,7 +303,7 @@ describe("updateHomebrewItemRecord", () => {
       updateHomebrewItemRecord(ITEM_ID, 1, new FormData()),
     ).resolves.toEqual(row(2));
     expect(db.calls[1].operation).toBe("update");
-    expect(db.calls[1].payload).toEqual({ name: row().name, data, effects: [] });
+    expect(db.calls[1].payload).toEqual({ name: row().name, data });
     expectFilters(db.calls[1], [
       ["id", ITEM_ID],
       ["owner_id", USER_ID],
@@ -314,6 +314,22 @@ describe("updateHomebrewItemRecord", () => {
       ["is_retired", false],
       ["version", 1],
     ]);
+  });
+
+  it("preserves existing mechanical effects when saving ordinary item metadata", async () => {
+    const effects = [{ type: "mechanical", stat: "speed.walk", op: "add", value: 5 }];
+    const saved = { ...row(2), effects };
+    const db = makeClient([
+      { data: { id: SYSTEM_ID }, error: null },
+      { data: saved, error: null },
+    ]);
+    mocks.createClient.mockResolvedValue(db.client);
+    const input = new FormData();
+    input.set("effects", "[]");
+
+    await expect(updateHomebrewItemRecord(ITEM_ID, 1, input)).resolves.toEqual(saved);
+    expect(db.calls[1].payload).toEqual({ name: row().name, data });
+    expect(db.calls[1].payload).not.toHaveProperty("effects");
   });
 
   it("returns a friendly conflict without retrying a stale overwrite", async () => {

@@ -35,9 +35,22 @@ describe("ordinary item authoring", () => {
     expect(mapHomebrewItemFormData(form({ cost_quantity: "0", weight: "0" }))).toMatchObject({ success: true, data: { data: { cost: { quantity: 0 }, weight: 0 } } });
   });
 
-  it.each(["-1", "NaN", "Infinity", "1e309", "1e2", "0x10", "2 lb", "9007199254740992"])("rejects invalid numeric control %s", (value) => {
+  it.each(["-1", "-1e-7", "NaN", "Infinity", "1e309", "0x10", "2 lb", "9007199254740992"])("rejects invalid numeric control %s", (value) => {
     expect(mapHomebrewItemFormData(form({ weight: value, cost_quantity: value }))).toMatchObject({ success: false,
       fieldErrors: { weight: [expect.any(String)], cost_quantity: [expect.any(String)] } });
+  });
+
+  it("reloads accepted small decimal weight and cost through their serialized edit values", () => {
+    const created = mapHomebrewItemFormData(form({ weight: "0.0000001", cost_quantity: "0.0000001" }));
+    expect(created.success).toBe(true);
+    if (!created.success) throw new Error("Expected valid decimal item");
+    const reloaded = mapHomebrewItemFormData(form({
+      weight: String(created.data.data.weight),
+      cost_quantity: String(created.data.data.cost!.quantity),
+    }));
+    expect(reloaded).toEqual(created);
+    expect(mapHomebrewItemFormData(form({ weight: "1e2", cost_quantity: "1E+2" })))
+      .toMatchObject({ success: true, data: { data: { weight: 100, cost: { quantity: 100 } } } });
   });
 
   it("requires complete cost and bounds every text control", () => {

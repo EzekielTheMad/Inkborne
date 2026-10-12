@@ -2,11 +2,12 @@ import { z } from "zod";
 
 import { itemDataSchema, type ItemData } from "@/lib/schemas/content-types/item";
 
-// Blank means unspecified; otherwise accept finite, nonnegative decimal values.
+// Blank means unspecified. Decimal/scientific syntax also accepts the strings
+// produced by Number.toString when reloading very small saved quantities.
 const optionalNumber = z.string().trim().transform((value, context) => {
   if (value === "") return null;
   const number = Number(value);
-  if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(value) || !Number.isFinite(number) || number > Number.MAX_SAFE_INTEGER) {
+  if (!/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value) || !Number.isFinite(number) || number > Number.MAX_SAFE_INTEGER) {
     context.addIssue({ code: "custom", message: "Enter a finite, nonnegative decimal number." });
     return z.NEVER;
   }

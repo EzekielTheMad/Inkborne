@@ -4,8 +4,25 @@ import { describe, expect, it, vi } from "vitest";
 const actions = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn() }));
 vi.mock("@/app/(app)/homebrew/items/actions", () => ({ createHomebrewItem: actions.create, updateHomebrewItem: actions.update }));
 import { ItemForm } from "@/components/library/item-form";
+import { mapHomebrewItemFormData } from "@/lib/homebrew/item-form";
 
 describe("ItemForm", () => {
+  it("resubmits accepted small weight and cost unchanged from the edit form", async () => {
+    actions.update.mockImplementation(async (_previous, submitted: FormData) => {
+      const mapped = mapHomebrewItemFormData(submitted);
+      expect(mapped).toMatchObject({ success: true, data: { data: { weight: 0.0000001, cost: { quantity: 0.0000001, unit: "gp" } } } });
+      return { status: "error", message: "Simulated persistence failure after successful validation." };
+    });
+    render(<ItemForm mode="edit" initialValue={{ id: "11111111-1111-4111-8111-111111111111", name: "Lantern", version: 2,
+      data: { equipment_category: "Gear", description: "Travel lantern.", cost: { quantity: 0.0000001, unit: "gp" }, weight: 0.0000001 } }} />);
+    expect(screen.getByLabelText("Cost quantity")).toHaveValue("1e-7");
+    expect(screen.getByLabelText("Weight (lb.)")).toHaveValue("1e-7");
+    fireEvent.submit(screen.getByRole("button", { name: "Save new version" }).closest("form")!);
+    await screen.findByRole("alert");
+    const submitted = actions.update.mock.calls.at(-1)![1] as FormData;
+    expect(mapHomebrewItemFormData(submitted)).toMatchObject({ success: true, data: { data: { weight: 0.0000001, cost: { quantity: 0.0000001 } } } });
+  });
+
   it("offers finite ordinary equipment controls with optional cost and weight", () => {
     render(<ItemForm mode="create" />);
     expect(screen.getByLabelText("Name")).toBeRequired();

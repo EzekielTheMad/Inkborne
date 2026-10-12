@@ -292,8 +292,9 @@ export async function updateHomebrewItemRecord(
     .from("content_definitions")
     .update({
       name: parsed.data.name,
+      // All canonical item data fields are authored by the form. Effects are
+      // not represented by its controls and must remain untouched on edits.
       data: content.data as unknown as Json,
-      effects: [],
     })
     .eq("id", identity.data.id)
     .eq("owner_id", session.userId)
