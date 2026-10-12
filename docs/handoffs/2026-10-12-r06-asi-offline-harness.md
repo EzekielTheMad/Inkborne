@@ -59,6 +59,27 @@ Binding amendment retains base product anchors at exact `c37e5b3`; only named in
 
 Static actual working-byte comparison at root7a: character-context worker/root both SHA256 `ca50fff8736a2086faeb9976ae888150bbbdd8188d5c2827e43b0e937491eb6e`; state-writer both `b63f352fd90ed2672c68a2302e02d3228b5bb9dc1117f31cdc0c0b460158e4d0`; dependency lock both `7225aa9026eb747c5626204c9e5e5901809f95b33a1aacaba35cd139e86a2eb6`. No install/dependency edit occurred. Other root/worker production differences identified by static Git inventory are the separately owned C1 pure files, durable kernel/receipt and server content-refs; they are not hand-copied or accepted by a wildcard. Runtime metafile binding will still refuse any differing actual imported project bytes. No bundling/tests/type/lint/full/build/browser/runtime/SQL ran. Independent exact binding review, root's single fresh successful clean production build/manifest and explicit UI release remain required;44/46 are prepared counts only.
 
+## Second root browser failure: desktop preparation locator
+
+Root `df8c303` passed combined typecheck/lint and all 317 files / 3,885 tests with
+four workers, then a fresh production build. The ASI rerun completed twelve
+desktop cases / 71 recorded assertions, including the corrected native pending
+background and actual weapon crit controls. It then stopped before casting because
+the unscoped `Unprepare` title locator matched the desktop spell row and the hidden
+mobile row. Failure DOM/journals show no preparation/state/RNG/log write in that
+case; original failure evidence is preserved. Both private ports/browser closed
+and all 121 observed process identities were absent at gate readback.
+
+The actual `SheetPanel` renders its desktop `ContentTabs` in one
+`div.hidden.md:grid` and the separate native mobile sheet concurrently. The
+desktop helper now requires exactly one visible actual desktop grid and selects
+its requested tab and controls within that grid. Stats retain their original
+page scope because the stat ribbon is outside the grid; mobile panel scoping is
+unchanged. No arbitrary first-match fallback, fixture/product change, removed
+oracle or altered source/asset/network guard. This source correction awaits
+independent review and a fresh build-bound UI rerun; full 44-case acceptance is
+still open.
+
 ## First root browser failure: fieldset oracle correction, source only
 
 Root `c29c368080088f2ddffd0b0cefe05014b89d90dd` preserved its first actual ASI run:10 completed desktop scenarios/60 recorded assertions, then `background-reject` failed at the fieldset's `isDisabled()` assertion. Read-only inspection of root `test-results/asi-parity-local/failure-dom.json`, `failure.png` and `evidence.json` shows the actual fieldset has `disabled=""` and `aria-busy="true"`, saving and draft notices are present, the conditional preview is17, exactlyone background action is pending, navigation is empty and every side-effect journal is empty. The screenshot was inspected. Root receipt reports pageErrors/blockedRequests empty and both ports closed/browser exited. Original receipts/screenshots and sibling `verification/launch-20261012/asiparity.*` were not modified; root already preserves/archives subsequent runs.

@@ -22,8 +22,12 @@ async function actualSheetTab(page, size, name) {
     await mobile.locator(":scope > nav").getByRole("button", { name, exact: true }).click();
     return mobile.locator(":scope > div > section").nth(["Stats", "Skills", "Actions", "Spells", "Inventory", "Features", "Notes"].indexOf(name));
   }
-  if (name !== "Stats") await page.getByRole("button", { name, exact: true }).click();
-  return page;
+  if (name === "Stats") return page;
+  const desktop = page.locator("div.hidden.md\\:grid");
+  assert.equal(await desktop.count(), 1, "Exactly one actual desktop sheet grid must exist");
+  assert.equal(await desktop.isVisible(), true, "Desktop tab controls must be in the visible sheet grid");
+  await desktop.getByRole("button", { name, exact: true }).click();
+  return desktop;
 }
 async function evidenceChange(page) {
   const before = await read(page);
