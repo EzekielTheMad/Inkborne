@@ -111,7 +111,7 @@ describe("offline hit-die kernel model, not database atomicity", () => {
 describe("explicit microsecond parsing and conservative millisecond expiry", () => {
   it("keeps native fractions, floors evaluation and supports negative epoch/day rollover", () => {
     expect(projectNativeInstant(native)).toBe(instant);
-    expect(nativeInstantMicros("1969-12-31T23:59:59.999999Z")).toBe(-1n);
+    expect(nativeInstantMicros("1969-12-31T23:59:59.999999Z")).toBe(BigInt(-1));
     expect(projectNativeInstant("1969-12-31T23:59:59.999999Z")).toBe("1969-12-31T23:59:59.999Z");
     expect(projectNativeInstant("2026-10-12T23:59:59.999999Z")).toBe("2026-10-12T23:59:59.999Z");
   });

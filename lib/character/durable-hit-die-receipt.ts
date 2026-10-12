@@ -11,7 +11,7 @@ function receiptMicros(raw: string): bigint {
   const projected = raw.slice(0, 23) + "Z";
   const millis = Date.parse(projected);
   if (!Number.isFinite(millis) || new Date(millis).toISOString() !== projected) throw new Error("Invalid native receipt instant");
-  return BigInt(millis) * 1000n + BigInt(raw.slice(23, 26));
+  return BigInt(millis) * BigInt(1000) + BigInt(raw.slice(23, 26));
 }
 export const hitDieReceiptSchema = z.strictObject({
   contract_version: z.literal(1), canonical_version: z.literal(1),
@@ -42,7 +42,7 @@ export const hitDieReceiptSchema = z.strictObject({
       receipt.canonical_intent !== serializeHitDieIntent(receipt.request) ||
       receipt.request.dependency_fingerprint !== receipt.dependency_fingerprint ||
       receipt.before_revision !== receipt.request.expected_revision ||
-      BigInt(receipt.after_revision) !== BigInt(receipt.before_revision) + 1n ||
+      BigInt(receipt.after_revision) !== BigInt(receipt.before_revision) + BigInt(1) ||
       receipt.dependency_snapshot.character.id !== receipt.request.character_id ||
       receipt.dependency_snapshot.character.owner_id !== receipt.verified_actor_id ||
       receipt.dependency_snapshot.character.revision !== receipt.before_revision ||

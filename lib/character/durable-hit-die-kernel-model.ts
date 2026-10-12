@@ -24,7 +24,7 @@ export function nativeInstantMicros(raw: string): bigint {
   const milliseconds = raw.slice(0, 23) + "Z";
   const millis = Date.parse(milliseconds);
   if (!Number.isFinite(millis) || new Date(millis).toISOString() !== milliseconds) throw new Error("Unsupported native instant");
-  return BigInt(millis) * 1000n + BigInt(raw.slice(23, 26));
+  return BigInt(millis) * BigInt(1000) + BigInt(raw.slice(23, 26));
 }
 export function projectNativeInstant(raw: string): string {
   nativeInstantMicros(raw);
@@ -89,7 +89,7 @@ export function simulateHitDieCommit(store: HitDieModelStore, input: HitDieModel
     if (canonicalHitDieJson(recomputed) !== canonicalHitDieJson(candidate)) return refused("invalid");
     const receipt = hitDieReceiptSchema.parse({ contract_version: 1, canonical_version: 1, request, canonical_intent: input.canonicalIntent,
       verified_actor_id: input.actorId, dependency_snapshot: current, dependency_fingerprint: request.dependency_fingerprint,
-      before_revision: current.character.revision, after_revision: (BigInt(current.character.revision) + 1n).toString(), linked_roll_id: input.linkedRollId,
+      before_revision: current.character.revision, after_revision: (BigInt(current.character.revision) + BigInt(1)).toString(), linked_roll_id: input.linkedRollId,
       roll: candidate.roll, patch: candidate.patch, evaluated_at: evaluation, native_evaluated_at: input.nativeEvaluatedAt,
       accepted_at: input.nativeAcceptedAt, valid_until: deadline });
     const next = structuredClone(store);
