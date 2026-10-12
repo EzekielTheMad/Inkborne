@@ -224,3 +224,39 @@ UNKNOWN_ROLE_GRAPH, no projection exclusions, and original sources/effects/raw a
 and input remain unchanged. Product code and original frozen evidence are untouched.
 This amendment is source-only and UNRUN under parent's current heavy-slot hold;
 the previous 59/typecheck/lint receipts do not validate this amended test file.
+
+## Corrected test acceptance after reviewed narrow release
+
+Parent independently approved 726acea and released the sole narrow slot. All
+gates below ran on clean **726acea2e440ed0775a48e57d2ab38277f19e06b**:
+
+- `npm.cmd test -- tests/lib/character/class-role-effects.test.ts --maxWorkers=2`:
+  **60/60 passed**, one file, 2.00 seconds. This now separately proves strict
+  manifest unknown-ability rejection and canonically admitted unknown raw
+  declaration broader role unavailability, preserving original raw arrays.
+- `npm.cmd run typecheck`: **exit 0**.
+- `npm.cmd run lint`: **exit 0**, zero warnings allowed.
+
+This replaces the amendment's UNRUN status only; all predecessor failed/passing
+receipts and their corrected interpretation remain immutable. No product code
+changed in this amendment. No full check/build/browser/install/SQL/provider ran.
+P1 authenticated atomic producer/storage/fences and C2 actual consumers remain
+required; this is pure prerequisite validation, not runtime role repair.
+
+Additive frozen evidence:
+`C:/Users/kaios/Documents/Codex/2026-10-11/task-2/verification/r06-class-role-correction-20261012/manifest.json`
+SHA256 **5E47B33ED1922505FC557467F8B223BF9D13EF07AFCD2BE9DBCB846818FC275D**,
+15 hashed evidence files plus manifest. It binds the predecessor manifest hash,
+exact source/status, every command/result/stdout/stderr, captured OS birth/PID/
+parent/command ancestry/cwd and before/after resource/readback records. No new
+failure occurred during this corrected sequence; earlier failures remain in the
+separately bound predecessor evidence.
+
+Fresh cleanup at 17:46:03Z: owned Node processes 0, matching captured process
+identities 0, owned listeners 0, every gate remaining PID list empty. No process
+termination or server startup needed. Whole-host process count 473→433, working
+set 27,019,444,224→25,851,977,728 bytes, cumulative CPU
+17,327.234375→17,490.015625 seconds, listeners 42→42; snapshots do not attribute
+whole-host changes or peak usage to this task. Lock SHA256 unchanged at
+7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6.
+Heavy slot explicitly released; this tree remains frozen for parent integration.
