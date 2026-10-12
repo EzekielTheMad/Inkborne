@@ -12,6 +12,7 @@ import { listOwnedHomebrewWeapons } from "@/lib/supabase/homebrew-weapons-server
 import { listOwnedHomebrewItems } from "@/lib/supabase/homebrew-items-server";
 import { listOwnedHomebrewMagicItems } from "@/lib/supabase/homebrew-magic-items-server";
 import { listOwnedHomebrewSpells } from "@/lib/supabase/homebrew-spells-server";
+import { listOwnedHomebrewMonsters } from "@/lib/supabase/homebrew-monsters-server";
 import { createClient } from "@/lib/supabase/server";
 
 interface HomebrewPageProps {
@@ -24,7 +25,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult, racesResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult, racesResult, monstersResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
     listOwnedHomebrewBackgrounds(),
@@ -33,11 +34,13 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     listOwnedHomebrewWeapons(),
     listOwnedHomebrewArmors(),
     listOwnedHomebrewRaces(),
+    listOwnedHomebrewMonsters(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
   const backgrounds = backgroundsResult.status === "fulfilled" ? backgroundsResult.value : [];
   const races = racesResult.status === "fulfilled" ? racesResult.value : [];
+  const monsters = monstersResult.status === "fulfilled" ? monstersResult.value : [];
   const armors = armorsResult.status === "fulfilled" ? armorsResult.value : [];
   const weapons = weaponsResult.status === "fulfilled" ? weaponsResult.value : [];
   const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
@@ -77,6 +80,9 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (racesResult.status === "rejected") {
     console.error("[HomebrewPage] Failed to load owned homebrew races", racesResult.reason);
   }
+  if (monstersResult.status === "rejected") {
+    console.error("[HomebrewPage] Failed to load owned homebrew monsters", monstersResult.reason);
+  }
 
   const notice = typeof query.created === "string"
     ? "Private homebrew created."
@@ -91,6 +97,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && weapons.length === 0
     && armors.length === 0
     && races.length === 0
+    && monsters.length === 0
     && spellsResult.status === "fulfilled"
     && featsResult.status === "fulfilled"
     && backgroundsResult.status === "fulfilled"
@@ -98,7 +105,8 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && itemsResult.status === "fulfilled"
     && weaponsResult.status === "fulfilled"
     && armorsResult.status === "fulfilled"
-    && racesResult.status === "fulfilled";
+    && racesResult.status === "fulfilled"
+    && monstersResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -125,6 +133,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
             Create background
           </Link>
           <Link href="/homebrew/races/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create race</Link>
+          <Link href="/homebrew/monsters/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create monster</Link>
           <Link href="/homebrew/armors/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create armor</Link>
           <Link href="/homebrew/weapons/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create weapon</Link>
           <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>
@@ -406,6 +415,21 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
                 </div>
               </Link>
             ))}
+          </div>
+        </section>
+      ) : null}
+
+      {monstersResult.status === "rejected" ? <HomebrewLoadError label="monsters" /> : monsters.length > 0 ? (
+        <section aria-labelledby="owned-monsters-heading" className="space-y-3">
+          <h2 id="owned-monsters-heading" className="j-folio">My monsters</h2>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {monsters.map((monster) => <div key={monster.id} className="j-card-paper min-w-0 space-y-3 p-5">
+              <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="j-display text-lg [overflow-wrap:anywhere]">{monster.name}</h3>
+                <p className="text-xs text-muted-foreground">{monster.data.size} · {monster.data.creature_type}</p></div>
+                <div className="flex shrink-0 gap-1.5"><Badge variant="outline">Private</Badge><Badge variant="secondary">v{monster.version}</Badge></div></div>
+              <div className="flex gap-3 text-sm"><Link href={`/homebrew/monsters/${monster.id}/edit`} className="text-accent underline">Edit {monster.name}</Link>
+                <Link href={`/library/${monster.id}`} className="text-accent underline">View stat block</Link></div>
+            </div>)}
           </div>
         </section>
       ) : null}

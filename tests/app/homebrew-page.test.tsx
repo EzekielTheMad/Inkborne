@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedWeapons: vi.fn(),
   listOwnedArmors: vi.fn(),
   listOwnedRaces: vi.fn(),
+  listOwnedMonsters: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -23,6 +24,7 @@ vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
   listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
 }));
 vi.mock("@/lib/supabase/homebrew-races-server", () => ({ listOwnedHomebrewRaces: mocks.listOwnedRaces }));
+vi.mock("@/lib/supabase/homebrew-monsters-server", () => ({ listOwnedHomebrewMonsters: mocks.listOwnedMonsters }));
 vi.mock("@/lib/supabase/homebrew-armors-server", () => ({ listOwnedHomebrewArmors: mocks.listOwnedArmors }));
 vi.mock("@/lib/supabase/homebrew-weapons-server", () => ({ listOwnedHomebrewWeapons: mocks.listOwnedWeapons }));
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({ listOwnedHomebrewItems: mocks.listOwnedItems }));
@@ -55,6 +57,7 @@ describe("HomebrewPage", () => {
     mocks.listOwnedWeapons.mockResolvedValue([]);
     mocks.listOwnedArmors.mockResolvedValue([]);
     mocks.listOwnedRaces.mockResolvedValue([]);
+    mocks.listOwnedMonsters.mockResolvedValue([]);
   });
 
   it("shows each authoring section with its versioned homebrew links", async () => {
@@ -250,5 +253,21 @@ describe("HomebrewPage", () => {
     render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByText("Your homebrew races could not be loaded.")).toBeVisible();
     expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
+  });
+  it("discovers private monsters with canonical view and editable version", async () => {
+    mocks.listOwnedMonsters.mockResolvedValue([{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Original Kite", version: 2,
+      data: { size: "Small", creature_type: "construct" } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("My monsters")).toBeVisible(); expect(screen.getByText("Small · construct")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Edit Original Kite" })).toHaveAttribute("href", "/homebrew/monsters/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/edit");
+    expect(screen.getByRole("link", { name: "View stat block" })).toHaveAttribute("href", "/library/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    expect(screen.getByRole("link", { name: "Create monster" })).toHaveAttribute("href", "/homebrew/monsters/new");
+  });
+  it("isolates an unsupported monster/load failure from other authoring families", async () => {
+    mocks.listOwnedMonsters.mockRejectedValue(new Error("unsupported monster"));
+    mocks.listOwnedWeapons.mockResolvedValue([{ id: "weapon", name: "Original Blade", version: 1, data: { weapon_category: "Simple", weapon_range: "Melee", damage: { dice: "1d4", type: "slashing" } } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Your homebrew monsters could not be loaded.")).toBeVisible();
+    expect(screen.getByText("Original Blade")).toBeVisible(); expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
 });
