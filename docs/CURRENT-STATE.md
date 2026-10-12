@@ -4,11 +4,12 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Current source `ff39986`
-includes independently reviewed private magic-item and ordinary-item authoring,
-draft recovery and effects-preserving metadata edits. R11's pre-correction combined
-gate passed 230 files / 2,315 tests; final combined gates are pending the print and
-targeted security slices. See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
+on local branch `codex/launch-integration-20261011`. Product source `3bfc90b`
+includes reviewed private magic-item/ordinary-item authoring, effects-preserving
+metadata edits, print/PDF export, canonical weapon sheet/print calculations,
+patched production dependencies and local runtime preparation. R11's earlier
+combined gate passed 230 files / 2,315 tests; final combined gates are pending
+the active private-weapon and pure hit-die children. See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
 exact source, reviews and open evidence. Original checkouts remain preserved.
 
 Victor selected all included milestones before beta, PDF importing before beta,
@@ -18,14 +19,14 @@ remain explicit decisions. Durable gameplay starts with one trusted server roll
 and immutable lifetime receipt; deployment stays disabled until writer/database/
 recovery evidence passes.
 
-Print/PDF and dependency security workers are active in isolated worktrees; real
-runtime harness preparation continues separately. The [concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
+Private-weapon review, pure durable hit-die modeling and M6 inventory are active
+in isolated worktrees. The [concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
 is reviewable. G1 engine startup/image pulls were requested; no approval or runtime
 execution is inferred. G2 full SQL/fixture/ephemeral credential execution and G3-G5
 hosted/auth/publication/ops actions remain separately gated. No live or remote write
 has occurred in this continuation.
 
-**Project-wide continuation:** use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) and the single [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) ledger. The bounded local queue is complete, not the project. Current tested core `ada6c9b8c51c8d674c6a76dbf4df1f9955ce5cdf` has 2,292 tests/zero-warning lint/build and 43 core + 10 drift offline checks. Separate M1 `3d61ff3` / docs `6c740f0` has 1,805 tests/build/12 UI checks and is not integrated. Start its integration review and real-runtime enablement plan; continue ready documented milestone work while actual access/approval lanes are blocked. The 2026-10-12 handoff pass is documentation only; product/process state is unchanged.
+**Project-wide continuation:** use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) and the single [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) ledger. The bounded local queue is complete, not the project. Historical tested core `ada6c9b` and standalone M1 evidence remain indexed below. The magic-item slice is now reviewed/integrated locally; later local product changes require combined candidate acceptance. Continue ready documented milestone work while actual access/approval lanes are blocked.
 
 ## October 11 local continuation
 
