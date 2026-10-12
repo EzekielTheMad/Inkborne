@@ -2,16 +2,21 @@
 
 ## Active execution — 2026-10-12 UTC
 
-Current local acceptance: `414f49e` passed **333 files / 4,136 tests**, typecheck,
-lint and build after companion template integration. At that exact source,
+Current local acceptance: `d62667d` passed **335 files / 4,186 tests**, typecheck,
+zero-warning lint and build after reviewed P1b.1 joint revision integration.
+The six source/test blobs match reviewed `760101b`; frozen P1a/R09 sources remain
+unchanged. Worker focused acceptance is 194 tests, with four meaningful old-model
+identity failures and four positive controls. All 363 check and 24 build process
+identities exited; owned listener readbacks are empty. SQL remains unapplied,
+Auth unavailable and all 13 readiness families false. No application imports were
+added. At the preceding `414f49e` browser/print checkpoint,
 companion **22 cases / 22 screens**, NPC Library **14 / 18**, ASI **44 cases / 226
 assertions / 46 screens** and fresh **six print exports / 33 rendered pages** passed.
 Real assets/fonts and final source/helper closure verified; all unexpected errors
 and owned process/port readbacks empty. Private NPC authoring's 18/20 actual-form
 acceptance remains `10b06c8`, with unchanged eight production blobs. Auth/query/
-actions/CAS/persistence remain modeled, actual authority open. Reviewed P1b.1
-source/model correction `760101b` now owns focused/type/lint gates; SQL unexecuted,
-Auth unavailable/readiness false. Local strict NPC JSON codec/profile prototype
+actions/CAS/persistence remain modeled, actual authority open. Next P1b producer
+discovery proceeds read-only. Local strict NPC JSON codec/profile prototype
 proceeds under reviewed `fd10c13`; human format preference, app upload/commit and
 PDF matrix remain pending. Instances, companion mechanics and R19 remain open.
 

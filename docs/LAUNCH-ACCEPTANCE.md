@@ -531,6 +531,41 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### P1b.1 integrated joint revision local acceptance — 2026-10-12 20:27 UTC
+
+Reviewed source `27bb36a` and model correction `760101b` are integrated as
+`35c763e` / `25cf735`; tested worker handoff `22d826e` as `d62667d`.
+All six new source/schema/SQL/fixture/test Git blobs match exact reviewed
+`760101b`. The handoff has only the later tested receipt addition. Frozen P1a
+and R09 files remain unchanged; the sole added SQL stage is unapplied.
+
+Worker acceptance passed **five files / 194 tests**, typecheck and zero-warning
+lint. Meaningful BEFORE replaced only exact `27bb36a` model bytes: all four
+positive/ordinary controls passed, four selfconsistent actor/target identity
+controls failed because the old model admitted them. Exact restoration, unchanged
+SQL and final clean status were verified. All 30 OS process identities absent,
+owned listeners zero. Immutable evidence is in
+`verification/r06-class-origin-joint-20261012/manifest.json`, SHA256
+`6FF702F73ADCBC5EF188948A4976213181D77F677B704D765B9708B6C15B4CA9`.
+
+Clean root `d62667d2ab634ef0c6b37a931560a1817029cf5c` passed
+`npm.cmd run check`: **335 files / 4,186 tests**, 170.37 seconds, four workers,
+typecheck and zero-warning lint. All **363** recorded identities absent. Fresh
+`npm.cmd run build` passed at the same clean source; all **24** identities absent.
+Both owned listener readbacks are empty. Receipts remain in sibling
+`verification/launch-20261012/`. No new application import or browser behavior was
+introduced by this joint stage; preceding `414f49e` browser/print evidence below
+retains its exact source and simulated boundaries.
+
+Actual PostgreSQL syntax/effective ACL/RLS/trigger timing, native time, Auth,
+locks/concurrency/rollback remain unproved. No SQL/runtime/hosted action occurred.
+Auth remains unavailable, gates default false and all13 readiness families false.
+P1b actual already-first transaction producer, fresh/bootstrap, compiler, all-writer
+participation, copy/C1v2/C2 and R09 closure remain mandatory. Producer discovery
+continues read-only while the independently reviewed local NPC JSON prototype
+prepares its separate offline harness. Human import-format preference and PDF
+matrix remain pending; no app upload/durable import or beta acceptance is implied.
+
 ### R18.1 integrated template acceptance and regression gates — 2026-10-12 20:16 UTC
 
 Reviewed companion production `5cc9aad` is integrated as `2901bee`; harness
