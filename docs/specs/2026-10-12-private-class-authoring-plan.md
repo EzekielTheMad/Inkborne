@@ -201,8 +201,9 @@ confirmed changed save. Effects/snapshots/grants are never application writes.
 2. Reject invalid/nonfinite/zero/fraction/unsupported die, unconfirmed profile,
    extra effects/proficiencies/features/caster controls, duplicate/File controls,
    UTF-8 transport or aggregate data oversize. Assert zero attempted writes.
-   NEW completeness helper rejects19/21/duplicate levels, missing/null-confused
-   casting, any nonempty save/proficiency/feature/prerequisite array. Counterexample:
+   Conditional NEW completeness helper rejects19/21/duplicate levels, missing/null-confused
+   casting, invalid/duplicate/nonmember save subsets or declaration/effect disagreement,
+   and any nonempty general proficiency/feature/prerequisite array. Counterexample:
    sparse schema-valid class with top-levelnull but missing row casting is unavailable
    in actual slot resolver; complete rows must not be fabricated during edit.
 3. Imported synthetic class has all20 valid casting rows and distinct ordered
