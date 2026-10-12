@@ -86,7 +86,12 @@ conversion. Intent<=32KiB UTF8, unknown fields refuse. No actor, graph, clock, r
 source tuple, desired counter/HP/order, grant/classification or fresh flag input.
 
 After native Auth (currently denied), shared guard FOR UPDATE and current owned
-parent lock, lookup command by target/operation BEFORE any NEW-work gate. Match
+parent lock waits, recheck native current-owner/session/Auth context against the
+locked parent and current native time. Then lookup command by target/operation
+BEFORE ALL NEW-work origin/occurrence/history/source locks and gates. Immediately
+before returning any matching receipt, recheck that native current-owner/session/
+Auth context remains valid and native expiry is strictly later than clock_timestamp();
+equality is expired. No pre-wait Auth result or browser time can authorize replay. Match
 stored canonical intent exactly (JSON object key order immaterial; arrays significant).
 Same operation/changed intent conflicts; same operation/matching intent returns the
 ORIGINAL immutable receipt and status=replayed. Current ownership/session is required;
@@ -148,10 +153,11 @@ or legacy save_ rewrite is added here. C1/C2 still refuse unproved mechanics.
 ## Lock prefix and minimum actual privilege changes
 
 Reuse exact existing lock_character_writer_guard_v1() FOR UPDATE. After future Auth,
-lock current owned parent FOR UPDATE, then private origin/all retained occurrences
-by stable UUID; check receipt first. NEW work locks selected bootstrap/add-class
-receipt/journal records and sources. New authority-owned source helper uses existing
-R09 stable public prefix: definitions UUID, system, campaign, members UUID, shares
+lock current owned parent FOR UPDATE, recheck native current-owner/session/Auth
+and expiry after those waits, then lookup/recheck replay as specified above. Only
+NEW work locks private origin/all retained occurrences by stable UUID, selected
+bootstrap/add-class receipt/journal records and sources. New authority-owned source
+helper uses existing R09 stable public prefix: definitions UUID, system, campaign, members UUID, shares
 UUID, versions(content_id,version), then refs/inventory/spells/feature grants/spell
 grants each by UUID and existing projection order. Preserve semantic arrays separately.
 Re-read/count/project ALL rows after waits; no pre-lock callback plan is accepted.
@@ -174,7 +180,10 @@ as complete cutover/concurrency proof while nonparticipating writers still exist
 
 ## Actual transaction derivation and write sequence
 
-1. Auth/owner/receipt-first path above; NEW work validates intent/revisions/provenance.
+1. Auth/shared-guard/owned-parent waits, native current-owner/session/Auth recheck,
+   receipt lookup and immediate pre-return native expiry recheck (equality expired)
+   as above. Replay takes no NEW-work origin/occurrence/history/source locks. Only
+   NEW work then locks private history and validates intent/revisions/provenance.
 2. Class-owned private-input helper derives retained occurrence IDs/tuples and selected
    provenance from actual stored private rows. Authority helper independently uses
    that helper; never receives caller-asserted tuple arrays. Lock all source/access/
@@ -248,10 +257,19 @@ Prepared source/model positives: actual internally observed bootstrap/add-class 
 canonical original class/pins, level1/higher/already-first multiclass, exact3 proofs,
 one shared/class/order step and preserved unrelated arrays/raw snapshot/HP. Stored
 receipt replay bypasses changed retirement/share/version/current counters and emits
-zero new acceptance/event; changed intent conflicts. No fixture Auth boolean turns
+zero new acceptance/event; changed intent conflicts. Source-bound trace controls
+must prove receipt return precedes every NEW-work origin/occurrence/history/source
+lock or reader: even unavailable NEW history returns the original receipt under a
+still-valid native current-owner/session context, without receipt actor/time/revision
+rewrites. No fixture Auth boolean turns
 the unchanged entry into authenticated success; model positives are model_checked only.
 
-Negatives: bare actor/getUser/shape/service context; legacy/equipment-only header or
+Negatives: native session/Auth expiry or current-owner invalidation during guard/
+parent waits refuses even a matching committed receipt, including expiry equal to
+the immediate pre-return native instant; expiry after lookup but before return also
+refuses. These are source-bound semantic controls with valid pre-wait context and
+otherwise replayable receipts, not the unconditional unavailable-Auth constructor.
+Other negatives: bare actor/getUser/shape/service context; legacy/equipment-only header or
 array-derived occurrence; foreign/missing creation receipt, wrong original0 bootstrap,
 missing retained insertion proof/add-class receipt, wrong source/control pin/subclass
 parent, ambiguous/extra sources, foreign system, missing order/version, stale revisions,

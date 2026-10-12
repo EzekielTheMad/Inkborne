@@ -18,8 +18,12 @@ order, timestamp or equipment marker. Real fresh/add-class producers still missi
 NEW confirmation from copies stays unavailable until their separate actual lineage
 producer; historical operation replay still comes first under current-owner Auth.
 
-Receipt-first after unavailable-native Auth/guard/owned parent but before today's
-acquisition gates; original actor/time/intent preserved. New work checks both
+Receipt-first after unavailable-native Auth/guard/owned-parent waits and native
+current-owner/session/Auth recheck. Immediately before any matching receipt return,
+recheck native expiry/current context; equality expired. Lookup/replay precedes ALL
+NEW-work origin/occurrence/history/source locks and gates. Original actor/time/
+intent/revisions preserved; NEW provenance/acquisition/retirement/counter restrictions
+are bypassed on replay. New work checks both
 revisions/provenance/selection/pins/order, native time/expiry after waits, complete
 raw graph/retained immutable versions; no graph/actor/clock/proof from request.
 
@@ -45,7 +49,11 @@ closure. One writer; both original-owner families independently review before co
 
 Meaningful source-bound model negatives cover selfconsistent foreign/missing history,
 source/access drift after waits, native time, exact proof/receipt/order and replay;
-static missing-body controls are separate. ALL tests/runtime unrun in this docs turn.
+replay controls specifically cover valid pre-wait Auth expiring during lock waits or
+between lookup/return (equality refused), and original receipt return before any
+NEW-history/source lock/read even when that history is unavailable. These are
+semantic phase controls, not the unchanged unavailable-Auth constructor.
+Static missing-body controls are separate. ALL tests/runtime unrun in this docs turn.
 Auth unconditionally denied/all13false/default-off; bootstrap/compiler/all writers/
 copy/P1d/G2/C1v2/C2/NEW class remain explicit prerequisites. Freeze for independent
 plan challenge, not source implementation or production authority.
