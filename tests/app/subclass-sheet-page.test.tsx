@@ -33,7 +33,7 @@ function setup(role: "owner" | "dm" | "anonymous" | "unrelated") {
   const schema = { ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }], derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 2 }], skills: [], proficiency_levels: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
   vi.mocked(getCharacterWithSystem).mockResolvedValue(role === "unrelated" ? null : { ...input.character, user_id: subclassOwnerId, campaign_id: role === "dm" ? originalId(91) : null,
     level: 3, name: "Original Warden", base_stats: { intelligence: 14, charisma: 10, constitution: 10 }, state: { current_hp: 12 }, narrative: {}, narrative_rich: {}, game_systems: { id: input.character.system_id, name: "Original local system", schema_definition: schema } } as never);
-  vi.mocked(getCharacterContentRefSnapshot).mockResolvedValue({ refs: input.contentRefs, complete: true });
+  vi.mocked(getCharacterContentRefSnapshot).mockResolvedValue({ refs: input.contentRefs, complete: true, asiEvidence: { status: "unavailable", reason: "incomplete_evidence" } });
   const grants = [{ content_id: definition.id, content_version: 1, class_slug: "warden" }];
   vi.mocked(syncClassFeatureRefs).mockResolvedValue({ inserted: 0, deleted: 0 });
   vi.mocked(syncAlwaysPreparedSpells).mockResolvedValue({ inserted: 0, deleted: 0, activeGrants: grants });

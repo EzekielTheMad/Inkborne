@@ -126,8 +126,12 @@ export async function getCharacterContentRefSnapshot(
       supabase.from("character_feature_grants").select("id, character_id, controller_ref_id, controller_type, controller_slug, feature_content_id, feature_version, feature_slug, unlock_level, created_at", { count: "exact" }).eq("character_id", characterId),
     ]);
     const parsed = z.array(frozenFeatureGrantSchema).safeParse(grants.data);
-    if (complete && !identity.error && identity.data?.id === characterId && identity.data.game_systems?.slug === "dnd-5e-2014" && z.uuid().safeParse(identity.data.system_id).success && !grants.error && parsed.success && grants.count === parsed.data.length) {
-      asiEvidence = { status: "complete", character_id: characterId, system_id: identity.data.system_id, refs, grants: parsed.data };
+    const systemRelation = z.object({ slug: z.literal("dnd-5e-2014") });
+    const parsedIdentity = z.object({ id: z.literal(characterId), system_id: z.uuid(),
+      game_systems: z.union([systemRelation, z.tuple([systemRelation])]),
+    }).safeParse(identity.data);
+    if (complete && !identity.error && parsedIdentity.success && !grants.error && parsed.success && grants.count === parsed.data.length) {
+      asiEvidence = { status: "complete", character_id: characterId, system_id: parsedIdentity.data.system_id, refs, grants: parsed.data };
     }
   } catch { /* Failure stays explicitly unavailable, never confirmed empty grants. */ }
   return { refs, complete, asiEvidence };

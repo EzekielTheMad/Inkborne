@@ -41,9 +41,9 @@ describe("actual provider ASI acceptance and stale callbacks; persistence simula
     expect(buildCharacterPrintModel({ ...latest, isOwner: true, hasSheet: true, resources: [] }).abilities.find(entry => entry.name === "Strength")?.score).toBe(14);
     // Actual controls construct +2 requests; old stats-only lookups construct +0.
     fireEvent.click(screen.getByRole("button", { name: "Roll Strength saving throw" }));
-    fireEvent.click(screen.getByRole("button", { name: "Roll", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Roll" }));
     fireEvent.click(screen.getByRole("button", { name: "Roll Athletics check" }));
-    fireEvent.click(screen.getByRole("button", { name: "Roll", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Roll" }));
     expect(executeRoll).toHaveBeenCalledTimes(2); expect(insertRoll).toHaveBeenCalledTimes(2);
     expect(executeRoll).toHaveBeenNthCalledWith(1, expect.objectContaining({ expression: "1d20+2" }));
     expect(executeRoll).toHaveBeenNthCalledWith(2, expect.objectContaining({ expression: "1d20+2" }));

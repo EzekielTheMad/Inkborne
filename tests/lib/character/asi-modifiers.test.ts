@@ -20,7 +20,7 @@ describe("schema-backed finite ASI modifier admission", () => {
   it("reads authoritative computed formula rather than old stats-only zero or rederived normal value", () => {
     const { result } = fixture();
     expect(getConfirmedAbilityModifier(result, asiSchema, "strength")).toBe(2);
-    const schema = { ...asiSchema, derived_stats: asiSchema.derived_stats.map(entry => entry.slug === "strength_mod" ? { ...entry, formula: "strength" } : entry) };
+    const schema = { ...asiSchema, derived_stats: [...asiSchema.derived_stats.filter(entry => entry.slug !== "strength_mod"), { slug: "strength_mod", name: "Strength modifier", formula: "strength" }] };
     expect(getConfirmedAbilityModifier({ ...result, computed: { ...result.computed, strength_mod: 14 } }, schema, "strength")).toBe(14);
     const missing = { ...result, computed: { ...result.computed } }; delete missing.computed.strength_mod;
     expect(getConfirmedAbilityModifier(missing, schema, "strength")).toBeNull();

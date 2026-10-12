@@ -12,7 +12,7 @@ export function canonicalWeaponRef(kind: "melee" | "ranged" | "finesse"): Conten
   const weapon = variants[kind];
   return {
     id: weapon.id, character_id: "11111111-1111-4111-8111-111111111111", content_id: weapon.id,
-    content_version: 3, context: {}, choice_source: null, created_at: "2026-10-11",
+    content_version: 3, feature_grant_id: null, context: {}, choice_source: null, created_at: "2026-10-11",
     content_definitions: { id: weapon.id, system_id: "system", version: 3, name: weapon.name, slug: weapon.slug, content_type: "weapon", source: "homebrew", effects: [], data: weaponDataSchema.parse({ ...weapon, weight: 2, source_refs: [] }) },
   };
 }

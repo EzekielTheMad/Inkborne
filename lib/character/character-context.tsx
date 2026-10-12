@@ -601,7 +601,7 @@ export function CharacterProvider({
       spellAttackBonus,
       castingMathStatus,
     };
-  }, [castingSources, evalResult, schema.ability_scores, mechanics]);
+  }, [castingSources, evalResult, schema, mechanics]);
 
   // Compatibility aliases are usable only alongside the explicit resolution.
   const maxSlots = slotResolution.status === "available" ? slotResolution.maxSlots : {};

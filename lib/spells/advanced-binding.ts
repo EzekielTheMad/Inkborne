@@ -104,7 +104,7 @@ export function resolveAdvancedBinding(input: AdvancedBindingInput): AdvancedBin
   if (!controller || features.length !== 1) return unavailable("missing or ambiguous controller/derived feature");
   const feature = features[0], descriptor = parseArcanumFeatureSnapshot(feature.snapshot);
   if (descriptor.status !== "available" || feature.contentId !== grant.featureContentId || feature.contentVersion !== grant.featureVersion || feature.definition.slug !== grant.featureSlug) return unavailable("contradictory feature/grant/version or descriptor");
-  const contentRefs: ContentRefWithContent[] = refs.map(ref => ({ id: ref.refId, character_id: ref.characterId, content_id: ref.contentId, content_version: ref.contentVersion, context: {}, choice_source: null, created_at: ref.definition.version_created_at ?? "modeled", content_definitions: ref.definition }));
+  const contentRefs: ContentRefWithContent[] = refs.map(ref => ({ id: ref.refId, character_id: ref.characterId, content_id: ref.contentId, content_version: ref.contentVersion, feature_grant_id: ref.featureGrantId ?? null, context: {}, choice_source: null, created_at: ref.definition.version_created_at ?? "modeled", content_definitions: ref.definition }));
   const sources = resolveEffectiveCastingSources(input.character.classes, contentRefs, input.character);
   if (sources.status !== "available") return unavailable("invalid selected casting source");
   const source = sources.sources.find(candidate => candidate.classSlug === feature.definition.data.class);

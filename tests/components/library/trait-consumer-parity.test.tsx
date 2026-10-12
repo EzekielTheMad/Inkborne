@@ -17,7 +17,7 @@ function parsedRef(data: Record<string, unknown>): ContentRefWithContent {
   if (!definition || !pin) throw Error("Canonical synthetic trait pin must parse.");
   expect(pin.data).toEqual(definition.data);
   return { id: "44444444-4444-4444-8444-444444444444", character_id: "55555555-5555-4555-8555-555555555555", content_id: base.id, content_version: 1,
-    context: { source: "synthetic-test-only" }, choice_source: null, created_at: "2026-10-11T00:00:00Z", content_definitions: pin };
+    feature_grant_id: null, context: { source: "synthetic-test-only" }, choice_source: null, created_at: "2026-10-11T00:00:00Z", content_definitions: pin };
 }
 describe("canonical standalone trait consumer parity (synthetic pins, no attachment/persistence claim)", () => {
   it.each(["short rest", "long rest"])("actual parsed %s trait supplies scalar counter and real rest behavior", recovery => {

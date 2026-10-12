@@ -12,14 +12,14 @@ function snapshot(): HitDieSnapshot {
   return {
     contract_version: 1,
     character: { id: id(1), owner_id: id(2), system_id: id(3), campaign_id: null, archived: false,
-      revision: "9007199254740993", level: 1, base_stats: { constitution: 14, dexterity: 10 },
+      revision: "9007199254740993", level: 1, base_stats: { strength: 10, constitution: 14, dexterity: 10, intelligence: 10, wisdom: 10, charisma: 10 },
       choices: { classes: [{ slug: "fighter", level: 1 }], hp_rolls: {} }, state: { current_hp: 4, hit_dice_spent: { fighter: 0 } } },
     system: { id: id(3), slug: "dnd-5e-2014", expression_context: {}, schema_definition: {
-      ability_scores: [{slug:"constitution",name:"Constitution",abbr:"CON"}], proficiency_levels: [{slug:"none",name:"None",multiplier:0}],
+      ability_scores: ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"].map(slug => ({ slug, name: slug, abbr: slug.slice(0, 3) })), proficiency_levels: [{slug:"none",name:"None",multiplier:0}],
       derived_stats: [{slug:"armor_class",name:"Armor Class",base:10}], skills: [], resources: [], currencies: [],
       content_types: [{slug:"class",name:"Class"}], creation_steps: [{step:1,type:"class",label:"Class"}], sheet_sections: [{slug:"stats",label:"Stats"}],
     } }, campaign: null,
-    pins: [{ id:id(4),character_id:id(1),content_id:id(5),content_version:1,context:{},choice_source:null,
+    pins: [{ id:id(4),character_id:id(1),content_id:id(5),content_version:1,feature_grant_id:null,context:{},choice_source:null,
       resolved:{id:id(5),version:1,system_id:id(3),content_type:"class",slug:"fighter",name:"Fighter",data:{hit_die:10,spellcasting:null,multiclass:{prerequisites:[],proficiencies_gained:[]},saving_throws:[],starting_proficiencies:[],levels:Array.from({length:20},(_,i)=>({level:i+1,features:[],spellcasting:null})),source_refs:[]},effects:[],source:"srd",scope:"platform",owner_id:null} }],
     inventory: [], feature_grants: [], spell_grants: [], spells: [], access_rows: [],
   };
@@ -53,7 +53,7 @@ function selectedSnapshot(): HitDieSnapshot {
     {type:"background",slug:"gatekeeper",data:{feature:{name:"Gate watch",description:"The lantern keepers know you."}}},
   ];
   selections.forEach((selection,index) => {
-    s.pins.push({id:id(40+index),character_id:s.character.id,content_id:id(50+index),content_version:3,
+    s.pins.push({id:id(40+index),character_id:s.character.id,content_id:id(50+index),content_version:3,feature_grant_id:null,
       context:{source:selection.type,...(selection.type === "subclass" ? {class:"fighter"} : {})},
       choice_source:selection.type === "background" ? "choice:background" : null,
       resolved:{id:id(50+index),version:3,system_id:s.system.id,content_type:selection.type,slug:selection.slug,
@@ -70,7 +70,7 @@ describe("durable hit-die service-internal request and snapshot", () => {
     const { pin } = syntheticRacePin(mode);
     s.character.choices.race = pin.slug;
     s.pins.push({ id: id(70), character_id: s.character.id, content_id: id(71), content_version: pin.version,
-      context: { source: "race" }, choice_source: null,
+      feature_grant_id: null, context: { source: "race" }, choice_source: null,
       resolved: { ...pin, id: id(71), system_id: s.system.id } as unknown as HitDieSnapshot['pins'][number]['resolved'],
     });
     s.character.state.active_effects = [activeEffect()];

@@ -87,6 +87,6 @@ describe("R06.3 original earned immutable ASI contribution", () => {
     expect(resolveAbilityMechanics(f.character.base_stats, result, { ...asiSchema, ability_scores: [...asiSchema.ability_scores, asiSchema.ability_scores[0]] }).status).toBe("unavailable");
     const missing = { ...f.character.base_stats }; delete (missing as Partial<typeof missing>).constitution;
     expect(resolveAbilityMechanics(missing, result, asiSchema).status).toBe("unavailable");
-    expect(getConfirmedAbilityModifier({ ...result, computed: { ...result.computed, strength_mod: Number.NaN } }, asiSchema, "strength")).toBeNull();
+    expect(getConfirmedAbilityModifier({ ...result, computed: { ...result.computed, strength_mod: Number.NaN } }, { ...asiSchema, derived_stats: [...asiSchema.derived_stats, { slug: "strength_mod", name: "Strength modifier", formula: "strength" }] }, "strength")).toBeNull();
   });
 });

@@ -15,7 +15,7 @@ vi.mock("@/lib/supabase/rolls", () => ({ insertRoll: vi.fn(async () => {}) }));
 vi.mock("@/lib/supabase/spells", () => ({ addCharacterSpell: vi.fn(), updateCharacterSpell: vi.fn(async () => {}), removeCharacterSpell: vi.fn() }));
 vi.mock("@/lib/supabase/inventory", () => ({ addInventoryItem: vi.fn(), updateInventoryItem: vi.fn(), removeInventoryItem: vi.fn(), unequipAllArmor: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => { throw new Error("No hosted calls in original casting guard fixture"); } }));
-vi.mock("@/lib/dice/roller", async original => { const module = await original<typeof import("@/lib/dice/roller")>(); return { ...module, executeRoll: vi.fn(module.executeRoll) }; });
+vi.mock("@/lib/dice/roller", async original => { const originalDice = await original<typeof import("@/lib/dice/roller")>(); return { ...originalDice, executeRoll: vi.fn(originalDice.executeRoll) }; });
 let latest: ReturnType<typeof useCharacter> & ReturnType<typeof useSpells> & ReturnType<typeof useRolls>;
 function Probe() { const character = useCharacter(), spells = useSpells(), rolls = useRolls(); useEffect(() => { latest = { ...character, ...spells, ...rolls }; }); return null; }
 function originalCasting() {

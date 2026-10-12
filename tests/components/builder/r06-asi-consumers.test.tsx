@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AbilitiesStepClient } from "@/app/(app)/characters/[id]/builder/abilities/abilities-step-client";
 import { ClassStepClient } from "@/app/(app)/characters/[id]/builder/class/class-step-client";
@@ -26,6 +26,7 @@ describe("actual earned ASI consumers, simulated persistence only", () => {
     const barbarian = originalAsiPin("class", "barbarian", f.cls.data, asiId(90));
     const props = { characterId: f.character.id, character: f.character, classes: [f.cls, barbarian], subclasses: [], features: [f.feature], feats: [], spells: [], contentRefs: f.refs, schema: asiSchema };
     const view = render(<ClassStepClient {...props} asiEvidence={f.evidence} />);
+    fireEvent.click(screen.getByRole("button", { name: /Add a class/ }));
     expect(screen.getByText(/STR 13 · met/)).toBeInTheDocument(); expect(previewScore()).toBe("14");
     view.rerender(<ClassStepClient {...props} asiEvidence={{ status: "unavailable", reason: "incomplete_evidence" }} />);
     expect(screen.getByText(/Saved ability mechanics unavailable/)).toBeInTheDocument();
