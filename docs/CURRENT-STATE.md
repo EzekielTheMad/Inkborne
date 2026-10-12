@@ -4,7 +4,7 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source through `02c7b53`
+on local branch `codex/launch-integration-20261011`. Product source through `b4e308f`
 includes reviewed private magic-item/item/weapon/armor/core-race/trait/passive-feature/monster authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, exact selected subclass sources and per-acquisition casting math, explicit race-score
@@ -46,12 +46,22 @@ Private passive-feature source `6f43b57` and test-only corrections through
 `ff3e452` passed independent review and **145 focused tests**, typecheck and lint
 in its isolated worker, then integrated through `02c7b53`. Exact Homebrew seam
 review passed. Clean root `02c7b53` passed **302 files / 3,591 tests**, typecheck
-and zero-warning lint; recorded process/listener readback is empty. Fresh build
-and actual passive-feature form acceptance are next.
-The staged hit-die kernel is undergoing source review and model/static checks;
+and zero-warning lint; recorded process/listener readback is empty. Later clean
+`b4e308f` passed **305 files / 3,645 tests**, typecheck/lint and a synthetic build;
+its actual passive form passed **44 desktop/mobile checks** with production
+CSS/fonts and explicitly simulated actions/readback/navigation. Fresh slot five
+and casting six cases also passed. Broader core retained one fixture failure/two
+passes; independently reviewed harness-only `9fb0877` then passed all 27 original
+builder checks after supplying missing schema collections. All failures/readbacks
+are retained, with no owned processes/listeners. That later harness change awaits
+the next combined check; it is not canonical six-ability ASI acceptance.
+The staged hit-die kernel through `26e674e` passed independent correction review
+and **144 modeled/static tests**, typecheck/lint before combined acceptance;
 its dependency reader is deliberately unavailable and production stays disabled.
 Saved ASI consumer-parity plan `6fcd21e` passed independent challenge; its isolated
-worker is implementing the bounded actual-consumer repair.
+worker is implementing the bounded actual-consumer repair. New class authoring is
+blocked on verified original-primary-role provenance and precise starting-save
+grant occurrence classification; empty/edit-only classes cannot satisfy it.
 Development audit remains eight
 unpatched high findings / zero critical, production zero; no residual risk is
 accepted. Saved ASI parity remains a separate documented gap. The

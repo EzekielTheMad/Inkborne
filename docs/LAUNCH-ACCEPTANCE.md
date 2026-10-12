@@ -351,9 +351,9 @@ are synthetic placeholders; this is no hosted/provider acceptance.
 | R16 private monster authoring | Integrated through `6029274`; actual-form harness `1db182e` / `7a2479d` passed **28 checks / 12 screenshots** at `821eb1a`, desktop 1280x900 and mobile 390x844, exact production CSS/fonts and source hashes. Native over-limit input is verified before submit; rejected/malformed responses retain the draft. | Native Next error helper bytes are real, but action HTTP, auth, persistence and routing are simulated. Root inspected the mobile near-budget tail; the very long full-field screenshot was overview only. Actual RLS/CAS and supported importer/DM workflows remain open. |
 | R12 standalone traits | Integrated through `bc6a4b2`; actual-form harness `8496083` / `821eb1a` passed **28 checks / 16 screenshots** at the exact current build. Strong source/transitive-byte/lock guards and OS process-birth checks passed; mobile rejection/locked edit and desktop saved-ID navigation failure were inspected. | Simulated action/navigation/list/reload. Raw-effect preservation, uncertain CREATE acknowledgement and no duplicate reinsertion are locally covered; PostgreSQL ownership/version/CAS remain open. |
 | R21 advanced binding | Advisory source `ad73021` / `1a3acf4` includes 88 focused cases and is in the 3,461-test combined run. Exact captured feature/grant/controller provenance and native resource state are modeled. | No production parser/provider/CastChoice/UI/SQL consumer; Mystic Arcanum, Spell Mastery and Signature Spells are not accepted gameplay implementations. |
-| R12 passive feature authoring | Isolated `6f43b57`; test-only `48584ab` / `531e116` / `400d638`, handoff `ff3e452` independently approved. **Six files / 145 tests**, typecheck and lint passed. Earlier crypto-mock failures are preserved; package/lock unchanged. | Root integration and actual-form preparation are next. Standalone association is explicitly unverified; no feature application/grant/reference/mechanics or database acceptance is implied. |
-| R09 staged hit-die kernel | Approved finite plan `ade6a34` / `4003a45`; staged source `ec5b4d6` plus fixture-only `16a8d11` is under independent review and serialized narrow checks. | No SQL/PGlite execution. Default-off gate and deliberately unavailable production dependency reader prevent command acceptance. Complete writer/access participation, canonical/native clock proof, profile/character lifetime behavior and real PostgreSQL recovery acceptance remain mandatory. |
-| R06 saved ASI consumer parity | Plan `b172882` amended by `6fcd21e` is awaiting exact independent challenge. | No code yet. Required evidence DTO, nullable feat-grant provenance, durable fingerprint, six finite abilities and stale-callback/whole-rest side-effect guards precede implementation. |
+| R12 passive feature authoring | Approved source through `ff3e452` integrated through `02c7b53`; six files / 145 narrow tests. Reviewed actual-form harness `5fedd62` integrated as `b4e308f`; **44 checks / 44 screenshots** passed with that exact build's CSS/fonts. | Standalone association is explicitly unverified. Writes, navigation and readback are simulated; no feature application/grant/reference/mechanics or database acceptance is implied. |
+| R09 staged hit-die kernel | Plan `ade6a34` / `4003a45`, corrected source `859d3db` and handoff `cbeb963` independently approved; integrated through `26e674e`. **144 focused tests**, typecheck/lint passed, then combined `b4e308f` acceptance below. | No SQL/PGlite execution. Default-off gate and unavailable production dependency reader prevent acceptance. Next reader/writer plan `77c4af8` requires concrete token-expiry, graph/order/CAS and cascade-role amendments before implementation. Lifecycle and real PostgreSQL recovery remain open. |
+| R06 saved ASI consumer parity | Plan `b172882` / `6fcd21e` passed independent challenge; scoped implementation is underway in `../r06-asi-consumer-worker`. | Required evidence DTO, nullable feat-grant provenance, durable fingerprint, six finite abilities and stale-callback/whole-rest side-effect guards must pass exact source and actual-consumer acceptance. New class authoring additionally needs original-primary-role proof and precise starting-save grant classification; inventory `1cb0b47` is blocked, not an implementation approval. |
 
 Monster and trait harnesses recorded zero page errors, blocked/unexpected remote
 requests and cleanup leaks. Exact server/browser PID, birth, parent and command
@@ -391,6 +391,51 @@ serialized. Any root HEAD change makes the `821eb1a` browser build manifests sta
 rebuild and rebind before using them for later source. G1/PDF input/P1-P3 decisions
 remain unanswered. No engine start, image pull, container, SQL execution, hosted
 write, deployment or publication occurred in these gates.
+
+### Fresh combined and passive-form acceptance — 2026-10-12 UTC
+
+Clean `b4e308fe7c9b0279b25f42035603579afb67cebb` passed `npm.cmd run check`:
+**305 files / 3,645 tests**, typecheck, zero-warning lint, four workers and 153.57
+seconds test duration. Recorded identities: 368; process/listener readback empty.
+Its synthetic build passed in 28.3 seconds, 23 observed identities/readback empty.
+Build-ID SHA256:
+`2c48eb336d9111d1bf11338feb918be8899d9edba29142a90609178b82fb0b65`;
+build receipt SHA256:
+`fe47382609db75c23a4eb6d168b60ae7c230f98d3245c45fa022e7816b462acf`.
+
+The reviewed actual `PassiveFeatureForm` harness passed **44 checks / 44 screenshots**
+(22 cases per desktop 1280x900/mobile 390x844), one Playwright case in 28.4 seconds.
+Actual CSS/fonts, installed Next browser error helper, lock and bundled transitive
+project bytes are hash-bound. Native over-limit controlled/serialized 101-name
+rejection, pending/reset protection, actual rejected/missing/malformed responses,
+manual acknowledgement/relock, saved-ID navigation failure, immutable edit fields,
+raw metadata/effect preservation simulation, no-op and native conflict reload passed.
+Root inspected mobile basic/rejected/preserved-edit and desktop navigation-failure
+screenshots. Zero page errors, remote/unexpected requests or layout failures.
+Node 23088/parent 18696 birth `2026-10-12T16:25:21.0113460Z`, Chrome 13824;
+HTTP 65477/control 65478 closed and browser exited. Outer 38 identities/readback empty.
+Fixture auth/actions/CAS/readback/navigation remain simulated, not Server Actions
+HTTP, RLS, PostgreSQL, real attachment or authenticated application-shell acceptance.
+
+Five slot and six casting browser cases also passed at `b4e308f` with nineteen
+observed identities/readback empty for each gate. They retain simplified styling
+and simulated endpoint/state boundaries. Broader core run preserved **one failure /
+two passes**: builder Strength input never appeared, while seven play-save and nine
+casting-resource controls passed. Diagnostic-only `0eb1b81` reproduced the failure
+and captured `Cannot read properties of undefined (reading 'map')` with empty root
+DOM, zero completed checks and zero remote requests. The old inline synthetic
+schema omitted required `derived_stats`; current ability display calls the real
+evaluator. Original failed logs/DOM/screenshot and cleanup receipts are archived.
+
+Independently approved harness-only `9fb0877` supplies all eight missing system
+collections, preserves the original generic two-ability setup and **all 27 original
+assertions**, and marks receipts running/passed/failed with start time to prevent
+stale success reuse. Narrow builder rerun passed **27 controls**, zero page errors
+or remote requests, one Playwright case in 13.1 seconds, eighteen identities and
+empty cleanup. Production source was unchanged. This is generic editor/CAS proof,
+not canonical six-ability D&D/ASI evidence. A fresh combined check after this harness
+change remains due with the next source integration; do not call the original
+three-case core run green or all 43 controls one exact-source run.
 
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
