@@ -105,6 +105,47 @@ describe("standalone private trait persistence", () => {
     await updateHomebrewTraitRecord(ID, 1, input());
     expect(db.calls[2].payload?.data).toEqual({ description: original.data.description, custom: { unchanged: true } });
   });
+  it.each<Record<string, string>>([{ name: "Changed name" }, { description: "Changed description." }, { usages: "2", recovery: "long rest" }])("changed write %j cannot confirm the old version", async changes => {
+    const original = row({ description: "Original synthetic memory.", custom: { retained: true } }, 3);
+    const db = client([system, { data: original, error: null }, call => ({ data: { ...original, ...call.payload, version: 3 }, error: null })]);
+    expect(await updateHomebrewTraitRecord(ID, 3, input(changes))).toMatchObject({ status: "uncertain" });
+    expect(db.calls.filter(call => call.operation === "update")).toHaveLength(1);
+    expect(db.calls[2].payload).not.toHaveProperty("effects");
+  });
+  it("a genuine no-op can confirm the unchanged expected version without normalizing raw defaults", async () => {
+    const original = row({ description: "Original synthetic memory.", custom: { retained: true } }, 3);
+    const db = client([system, { data: original, error: null }, call => ({ data: { ...original, ...call.payload, version: 3 }, error: null })]);
+    expect(await updateHomebrewTraitRecord(ID, 3, input())).toMatchObject({ version: 3 });
+    expect(db.calls[2].payload).toEqual({ name: original.name, data: original.data });
+  });
+  it.each([
+    null, { type: "unknown-effect", value: 2 }, { type: "mechanical", stat: "strength", op: "add" },
+    { type: "mechanical", stat: "strength", op: "formula", expr: "" },
+    { type: "mechanical", stat: "strength", op: "add", value: 2, condition: { field: "rage_active", op: "eq", value: 100 } },
+    { type: "narrative", text: "" }, { type: "grant", stat: "language", value: "" },
+    { type: "choice", choose: 0, from: ["original"], grant_type: "language", choice_id: "original" },
+  ])("invalid original effect %j rejects metadata edit without mutation", async effect => {
+    const original = row(); original.effects = [{ type: "narrative", text: "Valid original entry." }, effect];
+    const before = structuredClone(original);
+    const db = client([system, { data: original, error: null }]);
+    expect(await updateHomebrewTraitRecord(ID, 1, input({ description: "Changed metadata." }))).toMatchObject({ status: "error" });
+    expect(db.calls.filter(call => call.operation === "update")).toHaveLength(0); expect(db.calls).toHaveLength(2);
+    expect(original).toEqual(before);
+  });
+  it("valid effect kinds retain original extension keys, nested condition keys and array order", async () => {
+    const original = row();
+    original.effects = [
+      { type: "narrative", text: "Original narrative intent.", extension: { retained: 1 } },
+      { type: "grant", stat: "language", value: "original-language", extension: { retained: 2 } },
+      { type: "choice", choose: 1, from: ["original-language"], grant_type: "language", choice_id: "original", extension: { retained: 3 } },
+      { type: "mechanical", stat: "strength", op: "add", value: 2, condition: { field: "rage_active", op: "eq", value: true, nested_extension: ["unchanged"] }, extension: { retained: 4 } },
+      { type: "mechanical", stat: "strength", op: "formula", expr: "strength + 2", extension: { retained: 5 } },
+    ];
+    const before = structuredClone(original);
+    const db = client([system, { data: original, error: null }, call => ({ data: { ...original, ...call.payload, version: 2 }, error: null })]);
+    expect(await updateHomebrewTraitRecord(ID, 1, input({ description: "New metadata only." }))).toMatchObject({ version: 2, effects: before.effects });
+    expect(db.calls[2].payload).not.toHaveProperty("effects"); expect(original).toEqual(before);
+  });
   it("stale CAS attempts one write and rereads only the exact private envelope", async () => {
     const original = row({}, 2); original.data = { description: "Original synthetic memory." };
     const db = client([system, { data: original, error: null }, { data: null, error: null }, { data: { ...original, version: 3 }, error: null }]);

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { homebrewTraitVersionSchema, inspectTraitResourceEditability, mapHomebrewTraitFormData, overlayTraitResourceControls,
   TRAIT_UNCERTAIN_MESSAGE, type HomebrewTraitActionState } from "@/lib/homebrew/trait-form";
 import { traitDataSchema, type TraitData } from "@/lib/schemas/content-types/trait";
+import { effectSchema } from "@/lib/schemas/effects";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,6 +29,9 @@ function parseRecord(value: unknown, userId: string, systemId: string): Homebrew
   const envelope = envelopeSchema.parse(value);
   if (envelope.owner_id !== userId || envelope.system_id !== systemId) throw Error("Unexpected trait ownership or system.");
   const data = traitDataSchema.parse(envelope.data);
+  // Validate canonical effect fields before admitting a row. Keep the original
+  // raw entries, including extensions/order; never persist stripped output.
+  z.array(effectSchema).parse(envelope.effects);
   return { ...envelope, data, resourceEditable: inspectTraitResourceEditability(envelope.data) };
 }
 async function session() {
@@ -121,6 +125,7 @@ export async function updateHomebrewTraitRecord(id: string, expectedVersion: num
   } catch { return failure("The trait could not be read. No update was attempted."); }
   let merged: Record<string, unknown>;
   let record: HomebrewTraitRecord;
+  let changed: boolean;
   try {
     record = parseRecord(existing, auth.userId, systemId);
     if (record.id !== id || record.version !== expectedVersion) return failure("The trait row did not match the requested version.");
@@ -130,6 +135,7 @@ export async function updateHomebrewTraitRecord(id: string, expectedVersion: num
     merged = parsed.data.resource ? overlayTraitResourceControls(raw, parsed.data.resource) : { ...raw };
     merged.description = parsed.data.description;
     traitDataSchema.parse(merged); // Validate known fields; never serialize stripped output.
+    changed = parsed.data.name !== record.name || !isDeepStrictEqual(merged, raw);
     record = { ...record, name: parsed.data.name };
   } catch { return failure("This trait contains unsupported data and could not be edited."); }
   try {
@@ -142,7 +148,7 @@ export async function updateHomebrewTraitRecord(id: string, expectedVersion: num
     if (!data) return await missingUpdate(auth.supabase, auth.userId, systemId, id);
     const saved = parseRecord(data, auth.userId, systemId);
     if (saved.id !== id || saved.slug !== record.slug || saved.name !== record.name
-      || ![expectedVersion, expectedVersion + 1].includes(saved.version)
+      || (saved.version !== expectedVersion + 1 && (changed || saved.version !== expectedVersion))
       || !isDeepStrictEqual(envelopeSchema.parse(data).data, merged) || !isDeepStrictEqual(saved.effects, record.effects)) return uncertain(false);
     return saved;
   } catch { return uncertain(false); }
