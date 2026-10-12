@@ -65,11 +65,91 @@ projection/truncation to make a graph fit. No schema change is made by this plan
 
 ## Concrete PostgreSQL dispatch and atomic ordering
 
-Proposed source installation order: reviewed R09 authority, reviewed P1a, then new
-UNAPPLIED `supabase/staged/class-origin-joint-revision.sql`. It is a staged source,
-not a migration, CLI invocation, or activation manifest. The joint file replaces
-the actual R09 revision function object under its original owner only after both
-dependencies exist. Frozen authority/kernel source files remain byte-identical.
+Proposed source installation order: UNCHANGED reviewed R09 authority, UNCHANGED
+reviewed P1a, then ONE new UNAPPLIED
+`supabase/staged/class-origin-joint-revision.sql`. No function or trigger referring
+to joint objects is added to either earlier base file. This corrects the5883d76
+definition-order HOLD: do not rely on deferred PL/pgSQL body validation, a later
+concatenation, or forward references to objects absent when a function is defined.
+The joint stage is one source transaction, not a migration or activation manifest.
+
+Single future source writer: the class-origin worker owns the ENTIRE new joint file.
+R09's authority-source owner independently reviews its R09 object family read-only;
+the class-origin reviewer reviews the P1 family. Root is sole integration writer.
+No two agents edit the joint file, and neither frozen base stage is edited. Every
+replacement retains the existing function's signature, original owner and fixed
+empty search_path; the joint stage closes all new/replaced function privileges in
+the same transaction before COMMIT.
+
+### Exact joint-stage object definition order
+
+These are proposed callable signatures/owners and a dependency sequence, not SQL
+execution. Existing public/private tables, base class shape/guard/finalizer functions,
+shared guard and R09 parent/order triggers already exist from the two unchanged bases.
+
+1. BEGIN; verify those exact prerequisite object signatures/owners/source manifest.
+   Create `private.class_origin_revision_events_v1` with native-only column CHECKs,
+   PK/unique constraints and FK to existing acceptance. No CHECK invokes a new function.
+   Assign `inkborne_hit_die_authority_owner`; enable RLS, revoke all caller privileges,
+   and create authority-owner row policies plus class-owner SELECT-only policy FIRST.
+   Define no dispatch/constraint trigger yet; this stage issues no event/parent DML.
+2. Define `private.class_origin_metadata_delta_v1(p_acceptance uuid) RETURNS jsonb`,
+   SECURITY DEFINER, owner `inkborne_class_origin_owner`. It validates actual stored
+   class metadata/consumed proofs and derives the bounded immutable candidate from
+   existing journal/receipt. It may read the already-created event table, but calls
+   only existing base helpers. It does not insert an event, bump a counter or authenticate.
+3. Define `private.class_origin_observed_revision_v1(p_acceptance uuid) RETURNS jsonb`,
+   same class owner/security. It calls step2, requires current observed event and exact
+   current parent/order, and returns its checked bounded proof. It does not require
+   finalized acceptance/inserted class receipt, so it can validate Boolean consumption
+   AFTER readback and BEFORE the outer producer inserts that receipt.
+4. Define `private.class_origin_assert_metadata_revision_v1(p_acceptance uuid) RETURNS void`,
+   same class owner/security. It calls step3 and adds finalized normal acceptance,
+   consumed Boolean and actual immutable class receipt correspondence for finalization.
+   Define `private.class_origin_consume_metadata_revision_v1(p_acceptance uuid) RETURNS void`,
+   same owner/security, calling step3 then changing ONLY Boolean false→true once on
+   that pending acceptance. Both callees are already defined. Neither invokes itself
+   or the finalizer recursively. Actual receipt insertion remains the outer producer.
+5. Define `private.class_origin_revision_event_guard_v1() RETURNS trigger`, SECURITY
+   DEFINER, authority owner. It uses existing tables and step2 to check INSERT pending,
+   immutable identity/snapshots, pending→assigned→observed and exact NEW observed
+   readback. It validates the NEW row directly; it must not call step3 during BEFORE
+   UPDATE to observed, when the stored row is still assigned. No role/GUC bypass.
+6. Define `private.apply_class_metadata_revision_v1(p_acceptance uuid) RETURNS void`,
+   SECURITY DEFINER, authority owner. Uses shared guard, step2, event table and step4
+   consumer; creates pending, performs one parent revision-only UPDATE, reads back
+   parent/order, stores observed and consumes Boolean. All named callees exist now.
+   The existing R09 trigger function object also exists; its replacement follows
+   before any runtime dispatch trigger is installed or any data can be mutated.
+7. Define `private.class_origin_revision_event_closure_v1() RETURNS trigger`, SECURITY
+   DEFINER, authority owner. Calls step4 assertion and existing P1a finalizer dispatch.
+   Deferred callbacks re-read the CURRENT event/acceptance by acceptance_id, not an
+   obsolete queued NEW.pending/assigned snapshot. Define
+   `private.class_origin_metadata_revision_dispatch_v1() RETURNS trigger`, SECURITY
+   DEFINER, class owner, calling steps2/6 against actual origin OLD/NEW plus stored
+   selected occurrence. All direct dependencies exist before these definitions.
+8. CREATE OR REPLACE `private.class_origin_acceptance_guard_v1() RETURNS trigger`
+   under ORIGINAL class owner, preserving every P1a predicate and adding step3 proof
+   requirement for Boolean false→true. This is the immediate consumption guard;
+   no second competing acceptance trigger is needed. CREATE OR REPLACE
+   `private.class_origin_finalize_transition_v1(p_acceptance uuid) RETURNS void`
+   under ORIGINAL class owner, adding step4 assertion without removing any original
+   normal finalizer predicate. Bootstrap finalizer/body/signature stays unchanged.
+9. CREATE OR REPLACE `private.hit_die_character_revision_v1() RETURNS trigger` under
+   ORIGINAL authority owner. Add the exact pending-event branch using the event table
+   and step2; preserve ordinary behavior when no event exists. Existing parent trigger
+   still points to this same signature/object; existing AFTER order-rebind function
+   and trigger are unchanged. No missing dependency or new trigger ordering is assumed.
+10. ONLY NOW create event BEFORE INSERT/UPDATE/DELETE guard trigger (step5), origin
+    AFTER UPDATE dispatch trigger (step7), and event AFTER INSERT/UPDATE constraint
+    trigger DEFERRABLE INITIALLY DEFERRED (step7). Existing acceptance/row-proof and
+    deferred triggers retain their names/objects and use the replaced functions.
+11. Close privileges in this transaction: reassert original owners/search_path,
+    revoke PUBLIC/anon/authenticated/service_role EXECUTE and table rights on every
+    new/replaced signature; grant only the precise internal role bridges below.
+    Assert no caller membership/CREATE/extra grants and unchanged Auth/gates/readiness.
+    COMMIT contains no data mutation. Later actual G2 must prove object/body/ACL/catalog
+    correspondence and trigger behavior; source ordering is not deployment evidence.
 
 The future trusted producer's outer sequence is frozen here, but that producer and
 its Auth/entitlement/order seeding are NOT delivered by this first child:
@@ -123,7 +203,7 @@ its Auth/entitlement/order seeding are NOT delivered by this first child:
 8. Authority helper stores observed parent/order and advances assigned→observed.
    It calls class-owned `class_origin_consume_metadata_revision_v1(acceptance_id)`;
    this checks exact observed event/current parent/order/proofs and changes the existing
-   P1a Boolean false→true ONCE. A new immediate consumption guard on acceptance UPDATE
+   P1a Boolean false→true ONCE. The replaced immediate acceptance guard on UPDATE
    rejects false→true without that observed event, or any bootstrap. No Boolean or
    current_user privilege acts as a substitute for the actual UPDATE/readback.
 9. The origin AFTER trigger returns; actual origin UPDATE completes. Outer producer
@@ -147,9 +227,9 @@ effective Auth/RI lock prefix or resolve unclosed external writers/concurrency.
 
 | Proposed source path/object | Sole writer / bounded change |
 | --- | --- |
-| NEW `supabase/staged/class-origin-joint-revision.sql` | Joint source owner assignment required from root. R09 owner writes/reviews replacement `private.hit_die_character_revision_v1` branch, `apply_class_metadata_revision_v1`, event table/guard/deferred closure and associated ACL/RLS. Existing guard/rebind/reader/state adapter/authority/kernel bytes untouched. |
-| Existing `supabase/staged/class-origin-producer.sql` | Class owner later adds actual origin AFTER dispatch, actual-metadata validator, observed-event Boolean consumer/immediate guard, and observed-event assertion in `class_origin_finalize_transition_v1`. No bootstrap function/body/initial0 changes, broad public grants or Auth replacement. Dependency on joint stage is explicit; deployment concatenation/order independently challenged. |
-| NEW `lib/character/class-origin-revision-event-schema.ts` and source-bound model/tests | Class owner, strict internal pending/assigned/observed DTO; model traces both REAL staged trigger/helper/finalizer bodies and actual phase dispatch. No app import/provider/evaluator/C1 DTO change. Existing P1 model/fixtures tests get only the necessary joint-event proof bridge after review. |
+| NEW `supabase/staged/class-origin-joint-revision.sql` | Class-origin worker is SOLE source writer. Joint file contains ALL new class/authority functions, event table/policies/guards, actual CREATE OR REPLACE P1/R09 objects and final dispatch/constraint triggers in the ordered transaction above. Both original-owner families require independent review; R09 reviewer never co-writes this file. |
+| Frozen `supabase/staged/class-origin-producer.sql` and R09 authority/kernel files | NO edits. Their byte hashes stay frozen. New class validators/consumer/dispatch and replacement guard/normal-finalizer are defined ONLY in the joint stage AFTER its event table exists. Bootstrap function/body/initial0, shared guard/rebind/reader/state source and Auth/gates stay unchanged. |
+| NEW `lib/character/class-origin-revision-event-schema.ts`, `class-origin-joint-revision-model.ts`, original joint fixtures and focused tests | Same sole worker, strict internal pending/assigned/observed DTO. Model traces effective function definitions from BOTH unchanged bases and the joint stage, including replacement precedence/actual phase dispatch. No app import/provider/evaluator/C1 DTO change; existing seven P1a paths remain unchanged. |
 | Actual R09 `hit_die_character_revision_v1` object | Same `inkborne_hit_die_authority_owner`, fixed empty search_path, no trigger rename/order manipulation. Replacement occurs in joint stage; original ordinary branch remains when no metadata event. Any R09 owner/object/grant drift requires renewed review, not opportunistic edits. |
 
 Event table RLS/private schema: revoke PUBLIC/anon/authenticated/service_role all;
@@ -166,7 +246,12 @@ Class role retains restrictive WITH CHECK(false) on parent: it cannot acquire a 
 counter/state UPDATE privilege. Class-owned Boolean consumer grants EXECUTE ONLY to
 authority owner; validator and consumer use exact receipt/xid/proof checks, not the
 grant itself as authorization. No broad authority DML to P1 journal/origin tables.
-Finalizer event assertion is callable only by internal owners as narrowly required.
+Authority role additionally gets EXECUTE only on the finalized class event assertion
+for its deferred closure. The observed-proof validator is called within class-owned
+functions and needs no cross-owner EXECUTE grant. Class validator and consumer read
+the event via explicit SELECT-only policy; no authority-owner broad
+P1 journal DML. New guard/dispatch trigger functions gain no callable caller grants.
+Finalizer event assertion is callable only by these internal owners as narrowly required.
 Function defaults are revoked in the same source transaction. ACL/ownership/proposed
 installation references need independent source review AND later real role/RLS proof.
 

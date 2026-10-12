@@ -23,11 +23,14 @@ and consumes pending proof/assigns old+1, existing AFTER rebind retains five arr
 helper readback observes actual row/order, then narrow class consumer sets P1a
 Boolean once. Immediate/deferred finalizers must retain/recheck observed event.
 
-Plan gives exact owners/ACL bridges and proposed touchset: NEW additive joint staged
-source replacing actual R09 revision function object under original owner, later
-bounded P1 source dispatch/validator/consumer/finalizer changes and strict event
-schema/source-bound model/fixtures/tests. Frozen authority/kernel files stay unchanged;
-joint helper/function ownership and source changes require root assignment and
+Plan gives exact owners/ACL bridges and proposed touchset: ONE new additive joint
+staged source contains all class/authority functions and replaces actual P1/R09
+function objects under their original owners. BOTH frozen authority/kernel AND P1a
+base files stay byte-identical; no later base definitions reference absent joint
+objects. Strict NEW event schema/source-bound joint model/fixtures/tests do not edit
+the seven original P1a paths. Class-origin worker is sole writer of the entire joint
+file; independent original-owner reviewers inspect both function families read-only.
+Joint helper/function ownership/source changes require root assignment and
 independent challenge BEFORE editing. No caller revision/actor/patch, no artificial
 timestamp/id/choices touch, no reorder/no-op/double bump/GUC/current_user bypass.
 
@@ -48,3 +51,23 @@ No code edits, SQL/PGlite execution, npm/install/tests/type/lint/build/browser,
 background processes, network/provider/hosted operations or live authority were
 performed. Static docs diff only; finite plan frozen for independent challenge.
 G2 is absent. P1b–d/C1v2/C2 remain prerequisites before NEW class authoring.
+
+## Definition-order correction after immutable5883d76 review HOLD
+
+Only these two docs changed. The plan now freezes callable signatures and a concrete
+single-transaction topological order: event table/native constraints/FK/owners/RLS/
+role policies first; class actual-delta and observed-proof validators; finalized-event
+assertion and Boolean consumer; authority event guard and revision helper; deferred
+event closure and origin AFTER dispatch functions. ONLY after their dependencies
+exist replace actual P1 acceptance guard/normal finalizer and R09 revision function
+under original owners; THEN install origin/event dispatch/constraint triggers and
+close every new/replaced ACL before COMMIT. Existing base/deferred/rebind/bootstrap
+trigger/function objects persist. No forward-body validation or future concatenation
+assumption, no two writers sharing a file, no edits to either frozen base stage.
+
+The observed validator intentionally permits pending acceptance/no inserted receipt
+for immediate Boolean consumption; separate finalized assertion requires actual
+receipt/finalized acceptance. BEFORE observed-phase event guard checks NEW directly,
+not a SELECT of the still-assigned stored event. Deferred callback checks current
+event by acceptance ID instead of stale queued trigger NEW phase. These specify
+dependency/timing contracts without SQL/runtime execution or authority activation.
