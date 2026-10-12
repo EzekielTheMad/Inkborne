@@ -15,7 +15,7 @@ the shipped character relationship feature and R16 monster work.
 | `supabase/migrations/00009_narrative_tools.sql`; `00055_character_timeline_relationships.sql`; `lib/supabase/database.types.ts`, `npcs`; `lib/types/narrative.ts` | Existing `npcs` rows require a character and creator. Name, TipTap description, relationship, visibility, portrait and arbitrary metadata are character narrative state; there is no content/version pin, campaign instance identity or revision/CAS column. |
 | `00055…`, `private.can_view_character_story_entry`; `app/(app)/characters/[id]/story-actions.ts`, `page.tsx`; `components/narrative/relationships-section.tsx` | Character owner writes; owner and current campaign DM read every entry, other current campaign members read only `campaign`. Unassigned entries are owner-only. Stored legacy `private` remains in SQL/types; page projects non-`campaign` to `dm_only`. Current actions allow `dm_only`/`campaign`, normalize invalid rich documents to empty and do not implement revision CAS. Do not inherit that normalization or claim CAS for new NPC writes. |
 | `supabase/migrations/20260722221534_atomic_background_selection.sql`, current captured `copy_character` | Copy inserts actor-created source NPC rows into destination with a new ID/character/creator, retained name/description/relationship/portrait/metadata and `dm_only` visibility. No new template/instance operation may change that behavior or broaden which source rows are copied. |
-| `lib/schemas/content.ts`; `lib/schemas/content-types/index.ts`; `lib/supabase/content-definitions-parser.ts`; `00003_content.sql`; `20260720171627_content_version_pinning_and_rls.sql` | Canonical definitions support generic text types, but no `npc` payload is registered. Current and exact immutable snapshot parsers reject unknown types. Generic authoring triggers manage initial version 1, changed name/data/effects/scope versions and self-contained snapshots; identity is immutable. |
+| `lib/schemas/content.ts`; `lib/schemas/content-types/index.ts`; `lib/supabase/content-definitions-parser.ts`; `lib/supabase/content-refs.ts`; `app/(app)/characters/[id]/page.tsx:262`; `00003_content.sql`; `20260720171627_content_version_pinning_and_rls.sql` | Canonical definitions support generic text types, but no `npc` payload is registered. Current and exact immutable snapshot parsers reject unknown types. If registered without an NPC-specific envelope constraint, generic valid effects pass: actual character page flatMaps all parsed ref effects before evaluate. Owner/system/content-use ref guards do not prohibit NPC type. A renderer-only promise cannot prevent mechanics leaking through refs. Generic authoring triggers manage initial version 1, changed name/data/effects/scope versions and self-contained snapshots; identity is immutable. |
 | `20260720173545_content_version_policy_performance.sql` | Catalog SELECT admits platform, actor-owned or actively campaign-shared entries. Snapshot access additionally admits actual existing character refs/inventory/spells. `can_use_content_version` is character-owner/system-bound. Neither a readable historical version nor this character-specific helper authorizes creating a campaign NPC. |
 | `lib/compendium/catalog.ts`, `presentation.ts`; `lib/supabase/compendium-server.ts`; `app/(app)/library/[id]/page.tsx`; `components/compendium/*` | Current category list lacks NPCs; authenticated Library uses published systems, active current definitions, 24-row pages, source/provenance/search filters and canonical parser. Detail is UUID-based and read-only. RLS, not a browser provenance filter, is the access boundary. |
 | `lib/supabase/homebrew-monsters-server.ts`; Homebrew page/form/action contracts | Existing private authoring pattern authenticates before writes, resolves exactly one published `dnd-5e-2014`, scopes owner/system/type/homebrew/personal/active, uses expected-version CAS, confirms returned data/version and preserves draft on uncertain saves. Reuse this pattern without a generic DAL rewrite. |
@@ -80,23 +80,45 @@ Every object strict, no unknown keys, nulls, coercion or defaults. Optional abse
 and explicit empty arrays remain distinguishable. A name-only template is usable;
 never invent a personality, stat block, default score, portrait or relationship.
 Aggregate parsed data budget 65,536 UTF-8 bytes via JSON serialization after
-bounded shape validation. Existing envelope/effect bounds remain inherited; this
+bounded shape validation. Other content types retain existing envelope/effect bounds; this
 does not silently impose new bounds on every content type. Wrap inherited long
 names in list/detail. New authoring later bounds names to 120.
 
 Register `npc` in the normal type registry so current definitions and immutable
-snapshots share validation. Existing canonical effect validation remains intact:
-valid envelope effects may be retained/read, but this narrative renderer neither
-executes them nor promises NPC/character mechanics. New private NPC creation in
-R17.2 emits `effects: []`; edits preserve original valid raw effects, order and
-extension keys. A future stat block child should use an optional exact version of
-an entitled `monster` definition and the shipped monster display, with separately
-challenged system/entitlement/reference handling. Do not duplicate its schema or
-add NPCs to character evaluator source collection in this child.
+snapshots share payload validation. **Narrative NPC envelopes must explicitly
+contain `effects: []`; immutable envelopes must explicitly contain
+`effects_snapshot: []`.** Enforce this at the canonical envelope/type boundary in
+`lib/supabase/content-definitions-parser.ts`, before a generic missing-effects
+default could manufacture acceptance. Missing/null/wrong-shape/nonempty effects
+are unavailable, including otherwise valid mechanical, narrative, proficiency
+grant and choice effects. Never strip effects, discard grant entries, or coerce a
+nonempty array into an accepted empty NPC. Preserve rejected raw data untouched;
+no cleanup, rewrite, repair/backfill or historical repin is authorized.
+
+Both `parseContentDefinition` and `parseContentVersionSnapshot` must enforce this
+rule (including their nested readers); no separate lax catalog or ref path. An
+unavailable NPC ref remains incomplete under the existing reader contract, not
+an accepted empty ref/document. This bounded parser constraint closes the actual
+flat effect collector path without an evaluator/provider/SQL rewrite or a global
+NPC-type ref insertion rule. Empty-effect NPCs are narrative-only and contribute
+no gameplay effects even if they are present in an authorized ref. Other content
+types and their valid effects remain unchanged.
+
+R17.2 authoring and every future NPC import/copy must require the same explicit
+empty-effects contract on source/raw read, derived write and returned current/
+immutable envelopes. Creation emits `effects: []`; metadata UPDATE omits effects
+and retains an existing explicit empty array. Effectful/malformed raw rows lock
+editing/import rather than being normalized or erased. Raw extensions in
+otherwise supported fields remain subject to the later raw-preservation rules;
+these do not relax the empty-effects boundary. A future stat block child should
+use an optional exact version of an entitled `monster` definition and the shipped
+monster display, with separately challenged system/entitlement/reference handling.
+Do not duplicate its schema or add NPCs to character evaluator source collection
+in this child.
 
 Minimal production touchset:
 
-- New `lib/schemas/content-types/npc.ts`, registry entry in `index.ts`.
+- New `lib/schemas/content-types/npc.ts`, registry entry in `index.ts`; NPC-only explicit empty-effects enforcement in `lib/supabase/content-definitions-parser.ts` for current and immutable envelopes.
 - `lib/compendium/catalog.ts`, `presentation.ts`; new
   `components/compendium/npc-profile.tsx` and bounded detail dispatch in
   `components/compendium/compendium-detail.tsx`.
@@ -112,8 +134,8 @@ Minimal production touchset:
 
 | Stage | Finite boundary before implementation/acceptance |
 | --- | --- |
-| R17.2 private authoring | New NPC mapper/form/server/actions/new/edit routes and minimal Homebrew family link/list. Own name, description, occupation and structured personality/relationship-idea controls only. Strict field/path/count/aggregate validation shared with schema. Auth-derived envelope; no browser owner/system/source/scope/slug/effects/version authority. Canonical published system `.single()` (zero/duplicate/error fail), owner/type/homebrew/personal/active filters in read AND update, integer expected_version 1..2,147,483,647, no overflow write. Read raw data/effects, validate without persisting stripped output, overlay only explicit authored changes, retain every untouched raw key and absence/empty value. Unsupported raw fields lock their controls or the edit rather than disappear. Changed write confirms same ID/envelope and expected+1 plus exact authored result; true no-op does not fake a new version. Stale one-write CAS yields scoped conflict/reload, not owner leak. Native reset, invalid-field focus, pending duplicate block, draft retention. Lost/malformed CREATE return is uncertain: retain draft, ask user to check owned Homebrew before an explicit new create; no automatic retry or false redirect. Generated IDs are not exactly-once protection. Confirmed save followed by navigation failure never reinserts. |
-| R17.3 template sharing/import/copy | Extend exact allowed-type sharing/revoke/list DTO/RPC only after independent authority contract; do not directly insert shares as a shortcut. Capture template copy as a new private owned definition with immutable source ID/version and bounded verified attribution/license metadata, preserving supported narrative/personality/story hooks and valid raw content, not foreign owner/visibility/share IDs/secrets/actual campaign links. Copy only original/authorized/licensed source material; import must have an explicitly supported observed format and rights-safe fixture (a strict v1 JSON upload is a reasonable first format; MPMB NPC mapping remains unsupported until an actual registry contract is evidenced). Shared static validator, preview/audit, finite repair/conflict choices, uncertainty/retry semantics and current entitlement at commit. No arbitrary uploaded code or copyrighted book-content copying. |
+| R17.2 private authoring | New NPC mapper/form/server/actions/new/edit routes and minimal Homebrew family link/list. Own name, description, occupation and structured personality/relationship-idea controls only. Strict field/path/count/aggregate validation shared with schema. Auth-derived envelope; no browser owner/system/source/scope/slug/effects/version authority. Canonical published system `.single()` (zero/duplicate/error fail), owner/type/homebrew/personal/active filters in read AND update, integer expected_version 1..2,147,483,647, no overflow write. Read raw data/effects; require explicit empty NPC effects before admitting an edit, then validate without persisting stripped output, overlay only explicit authored changes, retain every untouched raw key and absence/empty value. Never update effects; reject effectful/malformed rows without mutation. Unsupported raw fields lock their controls or the edit rather than disappear. Changed write confirms same ID/envelope and expected+1 plus exact authored result; true no-op does not fake a new version. Stale one-write CAS yields scoped conflict/reload, not owner leak. Native reset, invalid-field focus, pending duplicate block, draft retention. Lost/malformed CREATE return is uncertain: retain draft, ask user to check owned Homebrew before an explicit new create; no automatic retry or false redirect. Generated IDs are not exactly-once protection. Confirmed save followed by navigation failure never reinserts. |
+| R17.3 template sharing/import/copy | Extend exact allowed-type sharing/revoke/list DTO/RPC only after independent authority contract; do not directly insert shares as a shortcut. Capture template copy as a new private owned definition with immutable source ID/version and bounded verified attribution/license metadata, preserving supported narrative/personality/story hooks and valid raw content with explicit empty NPC effects, not foreign owner/visibility/share IDs/secrets/actual campaign links. Effectful/malformed NPC sources remain unavailable, never converted to empty-effects copies. Copy only original/authorized/licensed source material; import must have an explicitly supported observed format and rights-safe fixture (a strict v1 JSON upload is a reasonable first format; MPMB NPC mapping remains unsupported until an actual registry contract is evidenced). Shared static validator, preview/audit, finite repair/conflict choices, uncertainty/retry semantics and current entitlement at commit. No arbitrary uploaded code or copyrighted book-content copying. |
 | R17.4 DM instance/relationships | Separate proposed `campaign_npcs` storage, optional separate protected DM notes and relationship-link store; exact DDL/RPC/FK/lifecycle contract needs another challenge and G2. Required campaign/system/template ID+version pin, current revision, archive flag and dm_only/campaign projection. Authenticated current DM creates/edits/archive/CAS under campaign authority; new selection requires active currently entitled definition AND matching immutable snapshot/type/system. Historical snapshot readability is insufficient authority for a new instance. Original exact pin stays on existing instances after author edits/retirement/share revocation; any controlled historical read requires instance/campaign authorization, not widened generic version RLS. Players receive only shared projection, no template/DM secret union. Explicit owner-created character relationship attachment must preserve legacy character-owner writes and current story visibility; do not let a DM mutate player-owned rows. |
 | R17.5 lifecycle/copy/real acceptance | Freeze exact delete/retire/share-revoke/member-removal/campaign-transfer/account-deletion/source-copy policy and test it under real roles. Retire catalog sources rather than deleting pinned versions. Existing instances keep authorized historical display and label retired/unavailable source; new use fails. Exact pin FK/deletion guards must actually prevent dangling versions. Do not enable instance/template delete before that contract; archive instances initially. Cross-campaign copy requires actor current source+destination authority, destination system match and explicit selection, fresh private/dm_only destination, retained exact content provenance and permitted narrative only; no DM secrets/links/state transfer by default. Existing `copy_character` continues unchanged unless a later explicit attachment-copy contract extends it atomically and preserves every legacy behavior. |
 
@@ -130,7 +152,25 @@ R17.1 meaningful tests must pass actual definition and immutable snapshot parser
 with original v1/v2 NPC fixtures: edit current v2 without changing parsed v1;
 reject missing version, wrong/null/extra nested fields, oversized multibyte
 payload, invalid effects and malformed envelope; preserve absent/empty/ordered
-fields, valid effects without executing them, and existing monster behavior.
+fields and explicit empty effects, and retain existing monster/effect behavior.
+
+Negative controls must inject separately otherwise-valid stat modification
+(`mechanical`, strength/add/2), proficiency grant (`grant`, athletics/proficient),
+and choice grant (`choice`, choose 1 from [athletics, acrobatics],
+grant_type proficiency, choice_id npc-skill) into an otherwise valid NPC. Prove canonical current parser and
+immutable parser each reject every nonempty case without altering raw JSON.
+Include narrative effects and missing/null effects as further refusals. Pass
+the same exact snapshot through actual `parseContentRefWithContent` and
+`getCharacterContentRefSnapshot`: it must not become an accepted NPC ref, and
+completeness must be false. Exercise actual CharacterPage consumer with a
+legitimate canonical character fixture and complete read projection plus that
+recorded rejected NPC pin; assert unavailable/degraded admission and no stat,
+proficiency or choice contribution reaches its existing collector/evaluate
+path. A helper-only renderer test is insufficient. Positive empty-effects NPC
+current/snapshot/ref controls retain narrative profile and unchanged baseline;
+ordinary valid non-NPC effects still participate as before. No product engine
+change or SQL execution is necessary for this parser/actual-consumer acceptance.
+
 Exercise actual query category/type/system/active/provenance/pagination filters,
 UUID detail, denied/error vs successful empty reads, and published system lists.
 No mock test asserts a server role boundary it did not execute.

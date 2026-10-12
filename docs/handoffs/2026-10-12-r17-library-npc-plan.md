@@ -37,3 +37,22 @@ tests/typecheck/lint/full/build/browser, SQL/runtime/hosted writes or credential
 No long-running process/port was started, so no task-owned listener cleanup was
 needed. Root continues owning heavy/UI lanes. Plan requires independent challenge
 before implementation; it does not claim R17/M5/beta acceptance.
+
+## Independent-review amendment: enforce narrative-only envelopes
+
+Initial plan `ecf5ccf` allowed generic valid NPC effects and relied on the renderer
+not executing them. Independent review correctly identified the actual character
+page flat collector/evaluator path; ref insertion does not prohibit NPC type.
+The amended plan requires explicit `effects: []` / `effects_snapshot: []` at the
+canonical current AND immutable envelope/type boundary, before missing-value
+defaults. Reject all nonempty/malformed/missing effects unchanged; never strip or
+turn grants into accepted empty NPCs. Future authoring/import/copy must share this
+rule and refuse effectful source/edit rows without mutation.
+
+Required negatives are otherwise valid stat, proficiency and choice grants in
+both canonical parsers, actual ref reader (incomplete rather than accepted), and
+actual CharacterPage collector/evaluator consumer. Positive empty NPC narrative
+controls and ordinary non-NPC effect controls remain. This adds only the bounded
+canonical parser touchset to the first implementation child; no engine, SQL or
+legacy NPC narrative changes. Amendment is documentation only; independent
+re-review remains required before code. No gates or processes were started.
