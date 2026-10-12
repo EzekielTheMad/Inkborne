@@ -17,7 +17,7 @@ vi.mock("@/lib/supabase/feat-selection-server", () => ({
   setCharacterAsiChoiceRecord: mocks.setChoice,
 }));
 vi.mock("@/lib/supabase/feature-refs-server", () => ({ syncClassFeatureRefs: mocks.syncRefs }));
-vi.mock("@/lib/supabase/content-refs", () => ({ getContentRefsByCharacter: mocks.getRefs }));
+vi.mock("@/lib/supabase/content-refs", () => ({ getCharacterContentRefSnapshot: mocks.getRefs }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 
 import {
@@ -124,7 +124,7 @@ describe("character feat choice action", () => {
 });
 
 describe("existing class feature reconciliation action",()=>{
-  beforeEach(()=>{vi.clearAllMocks();mocks.getUser.mockResolvedValue({data:{user:{id:"owner"}}});mocks.syncRefs.mockResolvedValue({inserted:1,deleted:0});mocks.getRefs.mockResolvedValue([{content_id:"old-feature",content_version:1}]);});
+  beforeEach(()=>{vi.clearAllMocks();mocks.getUser.mockResolvedValue({data:{user:{id:"owner"}}});mocks.syncRefs.mockResolvedValue({inserted:1,deleted:0});mocks.getRefs.mockResolvedValue({refs:[{content_id:"old-feature",content_version:1}],complete:true,asiEvidence:{status:"unavailable",reason:"missing_evidence"}});});
   it("rejects unauthenticated and malformed calls without running the RPC",async()=>{
     await expect(reconcileClassFeatureRefsAction({characterId:"bad"})).resolves.toMatchObject({status:"error"});
     mocks.getUser.mockResolvedValueOnce({data:{user:null}});
@@ -132,9 +132,10 @@ describe("existing class feature reconciliation action",()=>{
     expect(mocks.syncRefs).not.toHaveBeenCalled();
   });
   it("calls existing owner-checked reconciliation before reading exact saved refs",async()=>{
-    await expect(reconcileClassFeatureRefsAction({characterId:input.characterId})).resolves.toEqual({status:"success",refs:[{content_id:"old-feature",content_version:1}]});
+    await expect(reconcileClassFeatureRefsAction({characterId:input.characterId})).resolves.toEqual({status:"success",refs:[{content_id:"old-feature",content_version:1}],asiEvidence:{status:"unavailable",reason:"missing_evidence"}});
     expect(mocks.syncRefs).toHaveBeenCalledWith(expect.anything(),{characterId:input.characterId});
     expect(mocks.syncRefs.mock.invocationCallOrder[0]).toBeLessThan(mocks.getRefs.mock.invocationCallOrder[0]);
+    expect(mocks.getRefs).toHaveBeenCalledWith(input.characterId,{fresh:true});
     expect(mocks.revalidatePath).toHaveBeenCalledWith(`/characters/${input.characterId}/builder`);
   });
   it("does not read refs or revalidate after an RPC error and permits retry",async()=>{

@@ -5,6 +5,7 @@ import { RaceStepClient } from "@/app/(app)/characters/[id]/builder/race/race-st
 import { ClassStepClient } from "@/app/(app)/characters/[id]/builder/class/class-step-client";
 import { BackgroundStepClient } from "@/app/(app)/characters/[id]/builder/background/background-step-client";
 import type { ContentEntry } from "@/components/builder/content-browser";
+import { asiId, asiInstant, asiSchema, originalAsiPin } from "../fixtures/r06-asi";
 
 const mocks = vi.hoisted(() => ({ mobile:false, reconcile: vi.fn(), update: vi.fn(), canonical: vi.fn(), insert: vi.fn(), remove: vi.fn(), refresh: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mocks.refresh, push: mocks.push }) }));
@@ -342,9 +343,11 @@ describe("builder choice error recovery with real selection controls", () => {
   });
 
   it.each(["free_choice", "average_only"] as const)("shows the sheet minimum HP gain under %s without changing raw values", async (hp_rule) => {
-    const cls:ContentEntry={...human,id:"wizard",slug:"wizard",name:"Wizard",content_type:"class",data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}};
-    const hero={...character,base_stats:{constitution:3},choices:{classes:[{slug:"wizard",level:1}]},campaigns:{hp_rule}};
-    render(<ClassStepClient characterId="char-1" character={hero} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>);
+    const cls=originalAsiPin("class","wizard",{hit_die:6,spellcasting:null,multiclass:{prerequisites:[],proficiencies_gained:[]},saving_throws:[],starting_proficiencies:[],levels:[{level:1,features:[],spellcasting:null},{level:2,features:[],spellcasting:null}]},asiId(60));
+    const hero={...character,system_id:asiId(2),base_stats:{strength:10,dexterity:10,constitution:3,intelligence:10,wisdom:10,charisma:10},choices:{classes:[{slug:"wizard",level:1}]},campaigns:{hp_rule}};
+    const refs=[{id:asiId(61),character_id:hero.id,content_id:cls.id,content_version:cls.version,feature_grant_id:null,context:{source:"class"},choice_source:null,created_at:asiInstant,content_definitions:cls}];
+    const evidence={status:"complete" as const,character_id:hero.id,system_id:hero.system_id,refs,grants:[]};
+    render(<ClassStepClient characterId="char-1" character={hero} classes={[cls]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={refs} asiEvidence={evidence} schema={asiSchema}/>);
     fireEvent.click(screen.getByRole("button",{name:/Level up Wizard to level 2/i}));
     if(hp_rule==="free_choice") {
       fireEvent.click(screen.getByRole("radio",{name:"Average (+1)"}));

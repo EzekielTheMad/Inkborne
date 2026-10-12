@@ -1051,6 +1051,7 @@ describe("ClassPickerPanel", () => {
     const onSelect = vi.fn();
     render(
       <ClassPickerPanel
+        mechanicsAvailable
         classes={TWELVE_CLASSES}
         resolvedStats={stats}
         selectedClasses={[]}
@@ -1123,6 +1124,7 @@ describe("ClassStepRail — multiclass picker", () => {
     );
     const props = {
       classes: allClasses,
+      mechanicsAvailable: true,
       subclasses: [],
       features: [],
       selectedClasses: [{ slug: "paladin", level: 3 }],
@@ -1912,6 +1914,7 @@ describe("ClassStepRail — level-up flow", () => {
 
   it("opening flow closes the multiclass picker if it was open", () => {
     setupForLevelUp({
+      mechanicsAvailable: true,
       resolvedStats: { strength: 14, dexterity: 14, constitution: 14, intelligence: 14, wisdom: 14, charisma: 14 },
     });
     // Open picker first
@@ -2257,6 +2260,7 @@ describe("ClassPickerSheet", () => {
     const onSelect = vi.fn();
     render(
       <ClassPickerSheet
+        mechanicsAvailable
         open={true}
         onOpenChange={vi.fn()}
         classes={TWELVE_CLASSES}

@@ -7,6 +7,7 @@ import { parseContentDefinition } from "@/lib/supabase/content-definitions-parse
 import { transformSubraceEntry } from "../../../scripts/transformers/races";
 import { syntheticRacePin, raceParityBase, raceParitySchema, evaluateSyntheticPin, pinnedRaceRef } from "../../fixtures/r06-race-parity";
 import type { Effect } from "@/lib/types/effects";
+import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 
 // Mock only navigation/persistence and the ability draft boundary. Calculators,
 // actual three builder clients, StatPreview and ClassStepRail stay real.
@@ -34,8 +35,17 @@ function abilityTotal(name: string) {
 }
 function character(pin: ReturnType<typeof syntheticRacePin>["pin"]) {
   return { id: "r06-synthetic-character", name: "Synthetic Character", level: 3,
+    system_id: pin.system_id,
     base_stats: raceParityBase, choices: { race: pin.slug, ability_method: "manual" as const },
   };
+}
+
+function classEvidence(saved: ReturnType<typeof character>, pin: ReturnType<typeof syntheticRacePin>["pin"], fighter: ReturnType<typeof classEntry>) {
+  const raceRef = { ...pinnedRaceRef(pin), character_id: saved.id, feature_grant_id: null, created_at: "2026-10-12T16:00:00Z" };
+  const classRef = { ...raceRef, id: "88888888-8888-4888-8888-888888888888", content_id: fighter.id, content_version: fighter.version,
+    context: { source: "class" }, content_definitions: fighter };
+  const refs = [raceRef, classRef] as ContentRefWithContent[];
+  return { refs, evidence: { status: "complete" as const, character_id: saved.id, system_id: pin.system_id, refs, grants: [] } };
 }
 function classEntry(slug: string, id: string) {
   const entry = parseContentDefinition({ id, system_id: "22222222-2222-4222-8222-222222222222", slug,
@@ -80,8 +90,9 @@ describe("R06.1 actual builder consumers of synthetic immutable race pins", () =
     const fighter = classEntry("fighter", "55555555-5555-4555-8555-555555555555");
     const barbarian = classEntry("barbarian", "66666666-6666-4666-8666-666666666666");
     const selected = { ...character(pin), choices: { ...character(pin).choices, classes: [{ slug: "fighter", level: 3 }] } };
+    const input = classEvidence(selected, pin, fighter);
     render(<ClassStepClient characterId={selected.id} character={selected} classes={[fighter, barbarian]} subclasses={[]} features={[]}
-      feats={[]} spells={[]} contentRefs={[pinnedRaceRef(pin), { ...pinnedRaceRef(pin), content_id: fighter.id, content_version: 1, content_definitions: fighter }]}
+      feats={[]} spells={[]} contentRefs={input.refs} asiEvidence={input.evidence}
       schema={raceParitySchema} />);
     const expected = evaluateSyntheticPin(pin);
     if (expected.stats.strength >= 13) expect(screen.getByRole("button", { name: /Add a class · 17 levels remaining/ })).not.toHaveAttribute("aria-disabled", "true");
@@ -135,9 +146,10 @@ describe("R06.1 actual builder consumers of synthetic immutable race pins", () =
     race.unmount();
     const fighter = classEntry("fighter", "55555555-5555-4555-8555-555555555555");
     const barbarian = classEntry("barbarian", "66666666-6666-4666-8666-666666666666");
+    const input = classEvidence(saved, pin, fighter);
     render(<ClassStepClient characterId={saved.id} character={{ ...saved, choices: { ...saved.choices, classes: [{ slug: "fighter", level: 3 }] } }}
       classes={[fighter, barbarian]} subclasses={[]} features={[]} feats={[]} spells={[]}
-      contentRefs={[pinnedRaceRef(pin), { ...pinnedRaceRef(pin), content_id: fighter.id, content_version: 1, content_definitions: fighter }]}
+      contentRefs={input.refs} asiEvidence={input.evidence}
       schema={raceParitySchema} />);
     expect(previewScore("STR")).toBe(String(expected));
     expect(expected).toBe(active ? 14 : 12);
@@ -145,7 +157,7 @@ describe("R06.1 actual builder consumers of synthetic immutable race pins", () =
       .toHaveAttribute(active ? "type" : "aria-disabled", active ? "button" : "true");
   });
 
-  it("preserves saved ASI builder contribution separately and exposes the unresolved R06.3 mismatch", () => {
+  it("retains unearned saved ASI attribution without accepting its addition to totals", () => {
     const { pin } = syntheticRacePin("imported");
     const saved = { ...character(pin), choices: { ...character(pin).choices, asi_choices: {
       "synthetic-asi": { mode: "asi" as const, allocations: [{ ability: "strength", amount: 2 }] },
@@ -153,10 +165,11 @@ describe("R06.1 actual builder consumers of synthetic immutable race pins", () =
     const before = JSON.stringify(saved.choices);
     render(<AbilitiesStepClient ownerId="r06-synthetic-owner" characterId={saved.id} character={saved}
       contentRefs={[pinnedRaceRef(pin)]} schema={raceParitySchema} />);
-    expect(abilityTotal("Strength")).toBe("14");
+    expect(abilityTotal("Strength")).toBe("12");
     expect(previewScore("STR")).toBe("12");
     expect(screen.getByText("Saved Ability Score Improvement")).toBeInTheDocument();
-    expect(screen.getByText(/Stats preview and live sheet currently omit that addition/)).toBeInTheDocument();
+    expect(screen.getByText(/Only earned, exact pinned occurrences participate in evaluation/)).toBeInTheDocument();
+    expect(screen.getByText(/Saved choice amounts are unverified evidence, not accepted totals/)).toBeInTheDocument();
     expect(evaluateSyntheticPin(pin).stats.strength).toBe(12);
     expect(JSON.stringify(saved.choices)).toBe(before);
   });

@@ -49,7 +49,7 @@ const row = {
 };
 const ref = {
   id, character_id: character, content_id: id, content_version: 1,
-  context: {}, choice_source: null, created_at: "2026-10-03T00:00:00Z",
+  context: {}, choice_source: null, feature_grant_id: null, created_at: "2026-10-03T00:00:00Z",
   content_versions: {
     content_id: id, version: 1, system_id_snapshot: id, content_type_snapshot: "class",
     slug_snapshot: row.slug, name_snapshot: row.name, data_snapshot: row.data,
@@ -60,10 +60,20 @@ const ref = {
 function response(data: unknown[], error: unknown = null) {
   const chain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(), limit: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-    then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data, error }).then(resolve); } };
-  const from = vi.fn(() => chain);
+    then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data, error, count: data.length }).then(resolve); } };
+  // Exact ASI identity/grant metadata are separate from the request-cached raw
+  // refs under test. An empty synthetic grant projection has an explicit count.
+  const identity = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { id: character, system_id: id, game_systems: { slug: "dnd-5e-2014" } }, error: null }) };
+  const grants = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+    then(resolve: (value: unknown) => unknown) { return Promise.resolve({ data: [], count: 0, error: null }).then(resolve); } };
+  const from = vi.fn((table: string) => table === "characters" ? identity : table === "character_feature_grants" ? grants : chain);
   vi.mocked(createClient).mockResolvedValue({ from, auth: { getUser: async () => ({ data: { user: { id: character } } }) } } as never);
   return { from, chain };
+}
+
+function expectRefReads(from: ReturnType<typeof response>["from"], count: number) {
+  expect(from.mock.calls.filter(([table]) => table === "character_content_refs")).toHaveLength(count);
 }
 
 describe("server request-scoped reads", () => {
@@ -77,11 +87,11 @@ describe("server request-scoped reads", () => {
       getContentRefsByCharacter(character, {}),
       getContentRefsByCharacter(character, { requireCompleteSnapshots: true }),
     ]);
-    expect(from).toHaveBeenCalledTimes(1);
+    expectRefReads(from, 1);
     expect(layout).toEqual(page);
     expect(layout[0].content_definitions.version).toBe(1);
     await getContentRefsByCharacter(id);
-    expect(from).toHaveBeenCalledTimes(2);
+    expectRefReads(from, 2);
   });
 
   it("deduplicates catalog requests by system and type", async () => {
@@ -98,7 +108,7 @@ describe("server request-scoped reads", () => {
     expect(await getContentRefsByCharacter(character)).toHaveLength(1);
     await expect(getContentRefsByCharacter(character, { requireCompleteSnapshots: true }))
       .rejects.toThrow("Saved character snapshots could not be read");
-    expect(from).toHaveBeenCalledTimes(1);
+    expectRefReads(from, 1);
   });
 
   it("does not share authorized data with a later request for another user", async () => {
@@ -111,7 +121,8 @@ describe("server request-scoped reads", () => {
     expect(await getContentByType(id, "class")).toEqual([]);
     expect(await getContentRefsByCharacter(character)).toEqual([]);
     expect(owner.from).toHaveBeenCalledTimes(1);
-    expect(viewer.from).toHaveBeenCalledTimes(2);
+    expectRefReads(viewer.from, 1);
+    expect(viewer.from.mock.calls.filter(([table]) => table === "content_definitions")).toHaveLength(1);
   });
 
   it("reloads changed pinned versions after refresh instead of retaining old snapshots", async () => {
@@ -122,7 +133,7 @@ describe("server request-scoped reads", () => {
       content_versions: { ...ref.content_versions, version: 2 } }]);
     expect((await getContentRefsByCharacter(character, { requireCompleteSnapshots: true }))
       [0].content_definitions.version).toBe(2);
-    expect(from).toHaveBeenCalledTimes(1);
+    expectRefReads(from, 1);
   });
 
   it("shares a failure within its request and recovers on a new request", async () => {
@@ -145,7 +156,7 @@ describe("server request-scoped reads", () => {
       content_versions: { ...ref.content_versions, version: 2 } }]);
     expect((await getContentRefsByCharacter(character, { fresh: true, requireCompleteSnapshots: true }))
       [0].content_definitions.version).toBe(2);
-    expect(from).toHaveBeenCalledTimes(1);
+    expectRefReads(from, 1);
   });
 
   it("the actual sheet rereads new feature pins after reconciliation in a primed request", async () => {
@@ -169,8 +180,8 @@ describe("server request-scoped reads", () => {
   it("shares completeness metadata with ordinary/strict readers without another query", async () => {
     const { from } = response([ref]);
     const [snapshot, refs] = await Promise.all([getCharacterContentRefSnapshot(character), getContentRefsByCharacter(character)]);
-    expect(snapshot).toEqual({ refs, complete: true });
-    expect(from).toHaveBeenCalledOnce();
+    expect(snapshot).toEqual({ refs, complete: true, asiEvidence: { status: "complete", character_id: character, system_id: id, refs, grants: [] } });
+    expectRefReads(from, 1);
   });
 
   it("retains a readable degraded sheet but disables printing after reconciliation cannot be confirmed", async () => {
@@ -214,7 +225,7 @@ describe("server request-scoped reads", () => {
     const { from } = response([]);
     await getContentRefsByCharacter(character);
     await getContentRefsByCharacter(character);
-    expect(from).toHaveBeenCalledTimes(2);
+    expectRefReads(from, 2);
   });
 });
 
