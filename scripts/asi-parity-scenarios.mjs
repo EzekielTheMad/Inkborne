@@ -6,6 +6,15 @@ const read = page => page.evaluate(() => structuredClone({ snapshot: window.asiH
   initialProjection: window.asiHarness.initialProjection, calls: window.asiHarness.calls, navigation: window.asiHarness.navigation,
   unexpectedCalls: window.asiHarness.unexpectedCalls, journal: window.asiHarness.journal }));
 const count = journal => ({ rng: journal.rngAttempts.length, log: journal.persistedRolls.length, state: journal.stateWrites.length, spell: journal.spellWrites.length, print: journal.printCalls.length });
+async function falseRefusal(page, action, previousLength) {
+  await page.waitForFunction(({ action, previousLength }) => {
+    const results = window.asiHarness.journal.probeResults;
+    return results.length > previousLength && results.at(-1).action === action;
+  }, { action, previousLength });
+  const result = (await read(page)).journal.probeResults.at(-1);
+  assert.deepEqual(result, { action, outcome: "refused", value: false }, "Ordinary rest refusal must be the actual false result, not success/throw");
+  await page.getByRole("complementary", { name: "Fixture controls" }).getByRole("alert").waitFor({ state: "detached" });
+}
 async function view(page, name) { await page.getByRole("button", { name: `View ${name}`, exact: true }).click(); }
 async function actualSheetTab(page, size, name) {
   if (size === "mobile") {
@@ -83,9 +92,16 @@ export async function executeAsiScenario(page, scenario, helpers) {
     const scope = await actualSheetTab(page, size, "Stats");
     await check("actual ability action disabled", async () => assert.equal(await scope.getByRole("button", { name: "Roll Strength check", exact: true }).isDisabled(), true));
     for (const name of ["Dependent roll probe", "Dependent relative HP probe", "Dependent whole-rest probe"]) {
+      const before = await read(page);
       await page.getByRole("button", { name, exact: true }).click();
-      await page.getByRole("complementary", { name: "Fixture controls" }).getByRole("alert").waitFor();
-      await check(`${name} refuses before native RNG/log/all DAL`, async () => assert.deepEqual(count((await read(page)).journal), { rng: 0, log: 0, state: 0, spell: 0, print: 0 }));
+      if (name === "Dependent whole-rest probe") await falseRefusal(page, name, before.journal.probeResults.length);
+      else await page.getByRole("complementary", { name: "Fixture controls" }).getByRole("alert").waitFor();
+      await check(`${name} refuses before native RNG/log/all DAL and preserves state/pins`, async () => {
+        const after = await read(page);
+        assert.deepEqual(count(after.journal), { rng: 0, log: 0, state: 0, spell: 0, print: 0 });
+        assert.deepEqual(after.snapshot.state, before.snapshot.state);
+        assert.deepEqual(after.projection.rawRefs, before.projection.rawRefs);
+      });
     }
   } else if (scenario === "cap-warning") {
     await check("historical earned contribution is retained without clamp", () => { assert.equal(initial.snapshot.stats.strength, 24); assert.deepEqual(initial.snapshot.mechanics, { status: "available", capUnverified: true }); });
@@ -150,8 +166,14 @@ export async function executeAsiScenario(page, scenario, helpers) {
     await check("captured actual print callback refuses window.print after evidence-only change", async () => assert.deepEqual(count((await read(page)).journal), count(before.journal)));
   } else if (scenario === "retained-rest") {
     await page.getByRole("button", { name: "Capture long-rest callback", exact: true }).click(); const before = await evidenceChange(page);
-    await page.getByRole("button", { name: "Invoke retained long rest", exact: true }).click(); await page.getByRole("complementary", { name: "Fixture controls" }).getByRole("alert").waitFor();
-    await check("retained actual whole-rest callback emits no partial patch/RNG/log", async () => assert.deepEqual(count((await read(page)).journal), count(before.journal)));
+    await page.getByRole("button", { name: "Invoke retained long rest", exact: true }).click();
+    await falseRefusal(page, "Invoke retained long rest", before.journal.probeResults.length);
+    await check("retained actual whole-rest callback returns false without partial patch/RNG/log/state/pin changes", async () => {
+      const after = await read(page);
+      assert.deepEqual(count(after.journal), count(before.journal));
+      assert.deepEqual(after.snapshot.state, before.snapshot.state);
+      assert.deepEqual(after.projection.rawRefs, before.projection.rawRefs);
+    });
   } else if (scenario === "ability-draft") {
     await view(page, "abilities"); const input = page.getByRole("spinbutton", { name: "Strength score", exact: true }); await keyboardReach(page, input);
     await input.fill("11"); await page.waitForFunction(() => !!window.asiHarness.rejectAbility);

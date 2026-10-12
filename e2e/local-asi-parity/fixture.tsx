@@ -23,14 +23,15 @@ const requested = new URLSearchParams(location.search).get("case");
 if (!scenarioNames.includes(requested as Scenario)) throw Error("Unknown finite ASI scenario");
 const scenario = requested as Scenario;
 type Model = ReturnType<typeof originalAsiFixture> & { spells: CharacterSpell[]; candidateBackground: ReturnType<typeof originalAsiPin> };
-type Journal = { rngAttempts: unknown[]; rollResults: unknown[]; persistedRolls: unknown[]; stateWrites: Array<{ characterId: string; patch: Record<string, unknown>; expected: unknown }>; spellWrites: unknown[]; printCalls: unknown[] };
+type Journal = { rngAttempts: unknown[]; rollResults: unknown[]; persistedRolls: unknown[]; stateWrites: Array<{ characterId: string; patch: Record<string, unknown>; expected: unknown }>; spellWrites: unknown[]; printCalls: unknown[];
+  probeResults: Array<{ action: string; outcome: "returned" | "refused" | "threw"; value?: unknown; error?: string }> };
 interface Harness {
   scenario: Scenario; calls: Array<{ name: string; args: unknown }>; navigation: unknown[]; unexpectedCalls: unknown[]; journal: Journal;
   snapshot?: Record<string, unknown>; projection?: unknown; initialProjection?: unknown; abilitySaved?: unknown;
   releaseAbility?: () => void; rejectAbility?: () => void; rejectBackground?: () => void;
 }
 declare global { interface Window { asiHarness: Harness } }
-window.asiHarness = { scenario, calls: [], navigation: [], unexpectedCalls: [], journal: { rngAttempts: [], rollResults: [], persistedRolls: [], stateWrites: [], spellWrites: [], printCalls: [] } };
+window.asiHarness = { scenario, calls: [], navigation: [], unexpectedCalls: [], journal: { rngAttempts: [], rollResults: [], persistedRolls: [], stateWrites: [], spellWrites: [], printCalls: [], probeResults: [] } };
 // Print is an explicit invocation boundary; the actual captured guard runs before it.
 window.print = () => { window.asiHarness.journal.printCalls.push({ at: new Date().toISOString(), simulatedPrintInvocation: true }); };
 
@@ -110,17 +111,29 @@ function Probe() {
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { window.asiHarness.snapshot = { stats: ctx.evalResult.stats, computed: ctx.evalResult.computed, mechanics: ctx.mechanics, maxHp: ctx.maxHp, state: state.state,
     source: "Actual mounted CharacterProvider result; persistence simulated" }; });
-  const attempt = async (fn: () => unknown) => { try { await fn(); setError(null); } catch (cause) { setError(cause instanceof Error ? cause.message : "Unconfirmed action refused"); } };
+  const attempt = async (action: string, fn: () => unknown) => {
+    try {
+      const value = await fn();
+      // Preserve the actual callback result. A false ordinary refusal is not
+      // success or a manufactured exception/alert in this fixture.
+      window.asiHarness.journal.probeResults.push({ action, outcome: value === false ? "refused" : "returned", value: structuredClone(value) });
+      setError(null);
+    } catch (cause) {
+      const error = cause instanceof Error ? cause.message : "Unconfirmed action refused";
+      window.asiHarness.journal.probeResults.push({ action, outcome: "threw", error });
+      setError(error);
+    }
+  };
   return <aside className="space-y-2 border p-3" aria-label="Fixture controls">
     <p>Fixture probes call the actual provider callbacks; they are not new product actions.</p>
     <div className="flex flex-wrap gap-2">
       <button onClick={() => { retained.current = rest.longRest; }}>Capture long-rest callback</button>
-      <button onClick={() => void attempt(() => { if (!retained.current) throw Error("Capture callback first"); return retained.current(); })}>Invoke retained long rest</button>
-      <button onClick={() => void attempt(() => state.patchActionState({ current_hp: 2 }))}>Dependent relative HP probe</button>
-      <button onClick={() => void attempt(() => rolls.roll({ kind: "check", label: "Original dependent probe", expression: "1d20+2" }, { abilities: ["strength"] }))}>Dependent roll probe</button>
-      <button onClick={() => void attempt(() => rest.longRest())}>Dependent whole-rest probe</button>
-      <button onClick={() => void attempt(() => rolls.roll({ kind: "custom", label: "Independent native die", expression: "1d6" }))}>Independent native die</button>
-      <button onClick={() => void attempt(() => state.patchConditionalState({ original_independent_toggle: true }))}>Independent toggle</button>
+      <button onClick={() => void attempt("Invoke retained long rest", () => { if (!retained.current) throw Error("Capture callback first"); return retained.current(); })}>Invoke retained long rest</button>
+      <button onClick={() => void attempt("Dependent relative HP probe", () => state.patchActionState({ current_hp: 2 }))}>Dependent relative HP probe</button>
+      <button onClick={() => void attempt("Dependent roll probe", () => rolls.roll({ kind: "check", label: "Original dependent probe", expression: "1d20+2" }, { abilities: ["strength"] }))}>Dependent roll probe</button>
+      <button onClick={() => void attempt("Dependent whole-rest probe", () => rest.longRest())}>Dependent whole-rest probe</button>
+      <button onClick={() => void attempt("Independent native die", () => rolls.roll({ kind: "custom", label: "Independent native die", expression: "1d6" }))}>Independent native die</button>
+      <button onClick={() => void attempt("Independent toggle", () => state.patchConditionalState({ original_independent_toggle: true }))}>Independent toggle</button>
     </div>
     {error ? <p role="alert">{error}</p> : null}
     <output aria-label="Actual live Strength">{ctx.evalResult.stats.strength}</output>{" "}
