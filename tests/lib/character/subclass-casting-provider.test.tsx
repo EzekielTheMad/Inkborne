@@ -68,7 +68,7 @@ beforeEach(() => {
 describe("actual provider subclass source", () => {
   it.each(["missing", "duplicate", "nonfinite"] as const)("correction-regression makes %s active caster math unavailable consistently in preparation, summary and print", async mathProblem => {
     const { target } = fixture({ prepared: true, mathProblem });
-    expect(spells.slotResolution.status).toBe("unavailable"); expect(rest.canLongRest).toBe(false);
+    expect(spells.slotResolution.status).toBe("available"); expect(rest.canLongRest).toBe(false);
     expect(spells.casterInfo).toMatchObject({ isCaster: true, castingMathStatus: "unavailable", spellDc: null, spellAttackBonus: null, classes: [{ maxPrepared: null, castingMath: { status: "unavailable" } }] });
     expect(screen.getByText(/Casting values and preparation are unavailable/)).toBeInTheDocument();
     expect(screen.queryByTitle("Prepare")).not.toBeInTheDocument(); expect(screen.queryByRole("button", { name: "Cast Prism Mark" })).not.toBeInTheDocument();

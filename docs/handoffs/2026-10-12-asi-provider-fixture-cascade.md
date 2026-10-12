@@ -46,9 +46,10 @@ counts are baseline observations, not post-change validation.
 ## Necessary refusal-oracle amendments
 
 The existing three invalid subclass math controls previously asserted available
-slots and an allowed whole long rest. The combined ASI contract now refuses both
-when six-ability math is missing/duplicate/nonfinite. These expectations become
-`unavailable` and `false`; all original no-cast/no-write/disabled-print controls
+slots and an allowed whole long rest. Slot resolution remains independently
+available from the frozen casting source graph. The combined ASI contract now
+refuses the whole long rest when six-ability math is missing/duplicate/nonfinite.
+The slot assertion stays `available`, and rest becomes `false`; all original no-cast/no-write/disabled-print controls
 remain. Duplicate math still duplicates INT, with a fresh array so it cannot
 poison later cases.
 
