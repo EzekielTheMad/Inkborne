@@ -4,7 +4,7 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source through `b2e45de`
+on local branch `codex/launch-integration-20261011`. Product source through `2467388`
 includes reviewed private magic-item/item/weapon/armor/core-race/trait/passive-feature/monster authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, exact selected subclass sources and per-acquisition casting math, explicit race-score
@@ -71,6 +71,18 @@ ASI browser acceptance is claimed. Recorded 365 process identities exited with
 empty process/listener readback. New class authoring is
 blocked on verified original-primary-role provenance and precise starting-save
 grant occurrence classification; empty/edit-only classes cannot satisfy it.
+Reviewed fixture completion and recovery fixes are now integrated: ordinary
+content-ref reads preserve their original query errors; derived actions reuse the
+writer's exact typed reload/pending/stale preflight; long rest retains its boolean
+refusal and one complete guarded patch. Root `5a46eab` passed **376 tests in 12
+files**, then `1fb0fcd` typecheck passed. Clean `7a68def` passed **221 tests in 15
+files**, including typed recovery, acquired casting, whole-rest/HP/roll/print and
+immutable-source controls. Failed intermediates are preserved; process/listener
+readbacks are empty. A fresh combined check/build and canonical browser run remain
+due. C1 pure class-role source through `7a68def` exactly matches reviewed worker
+`78ceecb`, whose corrected **60 tests**, typecheck and lint passed. It has no product
+imports: P1 authoritative provenance/commands/all writer fences and C2 actual save
+consumers still precede meaningful new class authoring.
 Development audit remains eight
 unpatched high findings / zero critical, production zero; no residual risk is
 accepted. Saved ASI actual-browser and database acceptance remain open. The

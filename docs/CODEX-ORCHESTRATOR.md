@@ -12,6 +12,15 @@ C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification
 
 Active branch `codex/launch-integration-20261011`. Read actual HEAD and the ledger's latest exact acceptance: `259bcd8` passed 305 files / 3,645 tests after the builder harness correction. Independently reviewed saved-ASI consumer source is integrated through `b2e45de`; fixture-only amendments through `f385002` passed 36 kernel controls. The fresh combined `f385002` check passed typecheck/lint but failed 168 tests in 24 files, with 3,546 passing and 14 unhandled errors. Preserve that failure and repair/classify older consumer fixtures before new combined acceptance. Actual canonical ASI browser preparation is underway; the earlier `b4e308f` build/forms are historical evidence, not an ASI acceptance. Incoming docs `c5370eb` and tested core `ada6c9b` are historical. This worktree shares Git with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git.
 
+Latest reviewed root source through `7a68def` includes the content-ref error-contract
+repair, canonical consumer fixtures and typed state-writer preflight/boolean rest
+repair. Root narrow receipts: **376 tests / 12 files** at `5a46eab`, typecheck at
+`1fb0fcd`, and **221 tests / 15 files** at `7a68def`, all with empty cleanup. C1
+pure prerequisite has reviewed 60-test worker acceptance and no application imports.
+Next: finish exact approved ASI harness freeze binding, run combined full/check/build
+and its canonical actual UI, then reaccept print. Continue ready P1 producer and R09
+earned-graph source work; neither lane is enabled or accepted as database authority.
+
 Separate `..\m1-magic-item-worker`, branch `codex/m1-magic-item-revalidation`, belongs to original Git: historical tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Its reviewed PR99-derived slice and rarity fix are now integrated locally; no publication occurred. Individual worker tests remain distinct from combined candidate acceptance.
 
 Original registered root `C:\Projects\Inkborne` is the old backup checkout, not the tested candidate. Preserve all inherited branches and dirty/untracked work. Read applicable AGENTS/skills, original root AGENTS worktree/process conventions, the [closing handoff](handoffs/2026-10-11-orchestrator-local-queue.md) and [current inventory](handoffs/2026-10-12-launch-worktree-inventory.json). The original `.agents` was empty; inspect anew. Relevant local memory is historical context, not authority. No credential-file scanning/copying.

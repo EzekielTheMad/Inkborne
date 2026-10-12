@@ -466,6 +466,71 @@ negative evidence. Product defects require separate failing-before corrections.
 Canonical actual ASI browser/source-asset binding and print reacceptance remain due.
 No SQL, engine, container, hosted write, deployment or publication occurred.
 
+### Reviewed fixture and recovery closure — 2026-10-12 UTC
+
+Root original content-ref query-error test exposed a product regression: a caught
+raw read error became an empty ordinary ref list. Reviewed `2dab2d6` retains the
+same original exception for ordinary readers while the explicit sheet snapshot
+reports incomplete/unavailable. Exact count and ordinary null-grant fixtures were
+completed without weakening that error identity or malformed-pin controls.
+
+Reviewed root fixture chain through `5a46eab` retains original request expressions,
+crit/riders, CAS/call-order, raw choices, anonymous denial and request-cache ref
+read assertions. Explicit finite mechanics requirements accompany existing roll
+requests; generic draft recovery selectors name the actual status text. The
+unearned saved-ASI negative now correctly leaves STR12 and its raw choice intact,
+rather than displaying an unaccepted STR14. Root's first targeted run preserved
+**369 passes / seven failures**; corrected `5a46eab` passed **12 files / 376 tests**
+in 24.60 seconds, eighteen identities/readback empty. A required fixture system-ID
+type guard followed at `1fb0fcd`; typecheck passed, seven identities/readback empty.
+
+Provider fixture chain `62a56c8` / `e136adb` / `609e7c5` / `60aed1c` / `8ff5a79`
+was independently reviewed and integrated through `b2e513b`. Complete original
+six-score/schema/ref models use the actual ASI resolver. Hydrated HP/temp defaults
+are distinct from unchanged raw CAS/absence controls; slot evidence stays available
+when only caster ability math is invalid. Worker failed runs retained **52 failed /
+146 passed / ten unhandled errors**, then **19 failed / 179 passed / zero errors**;
+two fixture failures were corrected and seventeen product/recovery assertions stayed
+unchanged. Worker typecheck/lint receipts retain their exact source limitations.
+
+Reviewed root `deb8909` reuses the state writer's original settled-state preflight
+for mechanics: exact stored typed reload error first, then pending/stale refusal,
+before RNG or computing a patch. Cast retains its read-only refusal. Long rest
+keeps unavailable/ordinary refusal as `Promise(false)` and validates every original
+CON/HP/temp/resource/die input inside the same single whole-patch action. Oracle
+correction `2dd3ecd` retains all no-RNG/log/DAL/raw-state assertions. Root intermediate
+recovery run retained **31 passes / eight old-fixture failures / one error** before
+provider fixture integration. Subsequent provider run retained **214 passes / seven
+failures**: three missing ordinary raw null-grant fields and four unavailable-message
+checks. Reviewed `2467388` changes only that fixture field and two explicit guidance
+prefixes; guard predicates and all behavioral assertions remain unchanged.
+
+Clean root `7a68def578f4f3221ee884c085eafbca3e293b8a` passed **15 files / 221 tests**
+in 25.39 seconds, 22 process identities and empty process/listener readback. This
+accepts the targeted local recovery/provider fixtures, not the next full/build/UI
+or database gate. The full `f385002` failure remains historical evidence.
+
+C1 pure class-role chain through worker `78ceecb` is integrated through `7a68def`;
+exact module/fixture/test/handoff hashes match independent review. Original scoped
+save-denial and extra-class-source failures were reproduced through byte-substitution
+controls with exact restoration. A later fixture aliasing mistake was retained and
+corrected: strict unknown manifest rejection differs from canonically admitted raw
+unknown class declarations, which require explicit graph denial. Final worker
+**60/60 tests**, typecheck and lint passed, lock unchanged/cleanup empty. No app
+imports, producer authority, C2 renderer/concentration/print integration or new
+class-authoring completion is claimed. P1 producer inventory/plan proceeds next.
+
+ASI offline harness `b7eed3f` and boolean-refusal compatibility `4848a7d` passed
+source review only: 44 desktop/mobile cases / 46 screenshots remain **unrun**.
+Final source anchor must bind approved `deb8909` character-context bytes and current
+transitive inputs, followed by clean full/check/build, asset binding and actual UI.
+R09 earned-authority plan `9ffa886` is reviewed/integrated as `6300764`; parent merge
+`0384e1c` supplies reviewed ASI dependencies to its isolated worker, with only the
+already reviewed neutral kernel fixture conflict resolved. Actual shared-validator
+binding and frozen spell/version-time/acquisition closure are source work in progress;
+Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
+hosted writes, deployment or publication occurred.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions
