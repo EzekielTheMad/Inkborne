@@ -91,8 +91,30 @@ describe("offline hit-die kernel model, not database atomicity", () => {
     const result = commit(); const input = prepared(); const read = readModelHitDieReceipt(result.store, id(2), input.request, input.canonicalIntent);
     if (read.status !== "replayed") throw new Error("Expected receipt");
     read.receipt.roll.total = 99; expect(result.store.receipts[0].roll.total).toBe(5);
-    for (const response of [{ status: "absent" }, { status: "inaccessible" }, {}, null, { status: "committed" }]) expect(interpretHitDieResponse(response, "lookup")).toBe("unresolved");
-    expect(interpretHitDieResponse({ status: "disabled" }, "commit")).toBe("rejected");
+    for (const response of [{ status: "absent" }, { status: "inaccessible" }, {}, null, { status: "committed" }]) expect(interpretHitDieResponse(response, "lookup", input.request)).toBe("unresolved");
+    expect(interpretHitDieResponse({ status: "disabled" }, "commit", input.request)).toBe("rejected");
+  });
+  it("accepts only a response correlated to the retained operation and canonical request", () => {
+    const input = prepared(); const accepted = commit();
+    expect(interpretHitDieResponse(accepted.response, "commit", input.request)).toBe("accepted");
+    const otherOperation = commit(store(), prepared(fixture(), id(7)));
+    expect(interpretHitDieResponse(otherOperation.response, "commit", input.request)).toBe("unresolved");
+    const advanced = fixture(); advanced.character.revision = "9007199254740995";
+    const otherIntent = commit(store(advanced), prepared(advanced));
+    expect(interpretHitDieResponse(otherIntent.response, "commit", input.request)).toBe("unresolved");
+    const otherCharacter = fixture(); otherCharacter.character.id = id(30); otherCharacter.pins[0].character_id = id(30);
+    const wrongCharacter = commit(store(otherCharacter), prepared(otherCharacter));
+    expect(interpretHitDieResponse(wrongCharacter.response, "commit", input.request)).toBe("unresolved");
+    expect(interpretHitDieResponse(accepted.response, "commit", { ...input.request, actor_id: id(2) })).toBe("unresolved");
+  });
+  it("lookup accepts correlated replay, never a committed status", () => {
+    const input = prepared(); const accepted = commit();
+    expect(interpretHitDieResponse(accepted.response, "lookup", input.request)).toBe("unresolved");
+    const replay = readModelHitDieReceipt(accepted.store, id(2), input.request, input.canonicalIntent);
+    expect(interpretHitDieResponse(replay, "lookup", input.request)).toBe("accepted");
+    const transferred = structuredClone(accepted.store); transferred.snapshot.character.owner_id = id(99);
+    const newOwnerReplay = readModelHitDieReceipt(transferred, id(99), input.request, input.canonicalIntent);
+    expect(interpretHitDieResponse(newOwnerReplay, "lookup", input.request)).toBe("accepted");
   });
   it.each([-2147483648, 2147483647])("INT4 boundary %s is supported", total => expect(acceptedRollTotalSchema.safeParse(total).success).toBe(true));
   it.each([-2147483649, 2147483648, 1.5, Infinity])("INT4 unsupported %s is refused", total => expect(acceptedRollTotalSchema.safeParse(total).success).toBe(false));
@@ -123,6 +145,14 @@ describe("explicit microsecond parsing and conservative millisecond expiry", () 
     const s = fixture(); s.character.state.active_effects = [expiry("2026-10-12T01:00:00.001Z")];
     const result = commit(store(s), { ...prepared(s), nativeAcceptedAt: `2026-10-12T01:00:00.${fraction}Z` });
     expect(result.response.status).toBe(status);
+  });
+  it.each([["000999", "invalid"], ["001000", "committed"], ["001001", "committed"]])("candidate check .001 versus native .%s produces %s", (fraction, status) => {
+    const s = store(); const before = JSON.stringify(s); const input = prepared();
+    if (input.candidate.status !== "planned") throw new Error("Expected candidate");
+    input.candidate.acceptance_checked_at = "2026-10-12T01:00:00.001Z";
+    input.nativeAcceptedAt = `2026-10-12T01:00:00.${fraction}Z`;
+    const result = commit(s, input); expect(result.response.status).toBe(status); expect(JSON.stringify(s)).toBe(before);
+    if (status === "invalid") { expect(result.store.receipts).toEqual([]); expect(result.store.rolls).toEqual([]); }
   });
   it("treats equality at evaluation as expired, null deadline as absent and future evaluation invalid", () => {
     const s = fixture(); s.character.state.active_effects = [expiry(instant)]; expect(supportedExpiryDeadline(s, instant)).toBe(null);
