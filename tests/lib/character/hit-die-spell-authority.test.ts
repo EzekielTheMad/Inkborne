@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+// Infrastructure marker only; both earned validators remain actual imports.
+vi.mock("server-only", () => ({}));
 import { validateFrozenSpellAuthority } from "@/lib/character/hit-die-spell-authority";
 import { canonicalHitDieJson } from "@/lib/character/durable-hit-die-canonical";
 import { authorityId, controllerCreatedAt, frozenSpellGraphFixture, rebuildAuthorityGraph, spellAuthorityInput } from "../../fixtures/hit-die-authority";
