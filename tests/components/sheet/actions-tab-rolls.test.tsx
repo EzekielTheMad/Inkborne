@@ -6,6 +6,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { RollRequest, RollResult } from "@/lib/dice/types";
+import { raceParitySchema } from "../../fixtures/r06-race-parity";
 
 const rollMock = vi.fn();
 
@@ -35,12 +36,12 @@ function seedNatural(natural: number) {
 }
 
 const character = { id: "char-1", choices: { classes: [] } } as unknown as CharacterWithSystem;
-const schema = { ability_scores: [], skills: [] } as unknown as SystemSchemaDefinition;
+const schema: SystemSchemaDefinition = raceParitySchema;
 
 // STR 16 (+3), proficient with simple weapons, prof +2 → mace hits at +5.
 const evalResult = {
-  stats: { strength: 16, dexterity: 12 },
-  computed: { proficiency_bonus: 2 },
+  stats: { strength: 16, dexterity: 12, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 },
+  computed: { proficiency_bonus: 2, strength_mod: 3, dexterity_mod: 1, constitution_mod: 0, intelligence_mod: 0, wisdom_mod: 0, charisma_mod: 0 },
   grants: [{ type: "grant", stat: "simple_weapons", value: "proficient" }],
 } as unknown as EvaluationResult;
 

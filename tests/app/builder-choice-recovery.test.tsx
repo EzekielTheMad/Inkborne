@@ -343,7 +343,7 @@ describe("builder choice error recovery with real selection controls", () => {
   });
 
   it.each(["free_choice", "average_only"] as const)("shows the sheet minimum HP gain under %s without changing raw values", async (hp_rule) => {
-    const cls=originalAsiPin("class","wizard",{hit_die:6,spellcasting:null,multiclass:{prerequisites:[],proficiencies_gained:[]},saving_throws:[],starting_proficiencies:[],levels:[{level:1,features:[],spellcasting:null},{level:2,features:[],spellcasting:null}]},asiId(60));
+    const cls={...originalAsiPin("class","wizard",{hit_die:6,spellcasting:null,multiclass:{prerequisites:[],proficiencies_gained:[]},saving_throws:[],starting_proficiencies:[],levels:[{level:1,features:[],spellcasting:null},{level:2,features:[],spellcasting:null}]},asiId(60)),name:"Wizard"};
     const hero={...character,system_id:asiId(2),base_stats:{strength:10,dexterity:10,constitution:3,intelligence:10,wisdom:10,charisma:10},choices:{classes:[{slug:"wizard",level:1}]},campaigns:{hp_rule}};
     const refs=[{id:asiId(61),character_id:hero.id,content_id:cls.id,content_version:cls.version,feature_grant_id:null,context:{source:"class"},choice_source:null,created_at:asiInstant,content_definitions:cls}];
     const evidence={status:"complete" as const,character_id:hero.id,system_id:hero.system_id,refs,grants:[]};

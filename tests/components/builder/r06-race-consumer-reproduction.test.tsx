@@ -167,7 +167,7 @@ describe("R06.1 actual builder consumers of synthetic immutable race pins", () =
       contentRefs={[pinnedRaceRef(pin)]} schema={raceParitySchema} />);
     expect(abilityTotal("Strength")).toBe("12");
     expect(previewScore("STR")).toBe("12");
-    expect(screen.getByText("Saved Ability Score Improvement")).toBeInTheDocument();
+    expect(screen.getByText(/Saved Ability Score Improvement allocations are shown for attribution/)).toBeInTheDocument();
     expect(screen.getByText(/Only earned, exact pinned occurrences participate in evaluation/)).toBeInTheDocument();
     expect(screen.getByText(/Saved choice amounts are unverified evidence, not accepted totals/)).toBeInTheDocument();
     expect(evaluateSyntheticPin(pin).stats.strength).toBe(12);
