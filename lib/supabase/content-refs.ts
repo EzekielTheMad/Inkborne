@@ -86,7 +86,7 @@ export async function getContentRefsByCharacter(
   characterId: string,
   options: { requireCompleteSnapshots?: boolean; fresh?: boolean } = {},
 ): Promise<ContentRefWithContent[]> {
-  const snapshot = await getCharacterContentRefSnapshot(characterId, options);
+  const snapshot = await readCharacterContentRefSnapshot(characterId, options, true);
   if (options.requireCompleteSnapshots && !snapshot.complete) {
     throw new Error("Saved character snapshots could not be read. Reload before editing.");
   }
@@ -100,11 +100,25 @@ export async function getCharacterContentRefSnapshot(
   characterId: string,
   options: { fresh?: boolean } = {},
 ): Promise<{ refs: ContentRefWithContent[]; complete: boolean; asiEvidence: AsiEvidence }> {
+  return readCharacterContentRefSnapshot(characterId, options);
+}
+
+async function readCharacterContentRefSnapshot(
+  characterId: string,
+  options: { fresh?: boolean } = {},
+  rejectReadErrors = false,
+): Promise<{ refs: ContentRefWithContent[]; complete: boolean; asiEvidence: AsiEvidence }> {
   // Reads after a write in the same render must bypass its earlier snapshot.
   let data: unknown[] = [];
   let complete = true;
   try { data = await (options.fresh ? readContentRefRows : readContentRefRowsForRequest)(characterId); }
-  catch { complete = false; }
+  catch (error) {
+    // Ordinary callers rely on query failures propagating, rather than an empty
+    // ref list being mistaken for a confirmed absence. The sheet snapshot keeps
+    // its explicit degraded-read contract.
+    if (rejectReadErrors) throw error;
+    complete = false;
+  }
 
   const refs: ContentRefWithContent[] = [];
   for (const row of data ?? []) {

@@ -44,6 +44,7 @@ const validRef = {
   character_id: "44444444-4444-4444-8444-444444444444",
   content_id: validDefinition.id,
   content_version: 1,
+  feature_grant_id: null,
   context: {},
   choice_source: null,
   created_at: "2026-05-19T00:00:00Z",
@@ -99,7 +100,7 @@ describe("parseContentRefWithContent", () => {
 describe("getContentRefsByCharacter", () => {
   it("returns parsed refs from a successful joined query", async () => {
     const { chain } = mockSupabase([validRef]);
-    chain.eq.mockResolvedValue({ data: [validRef], error: null });
+    chain.eq.mockResolvedValue({ data: [validRef], count: 1, error: null });
 
     const result = await getContentRefsByCharacter(validRef.character_id);
 
@@ -120,7 +121,7 @@ describe("getContentRefsByCharacter", () => {
       },
     };
     const { chain } = mockSupabase([validRef, badRef]);
-    chain.eq.mockResolvedValue({ data: [validRef, badRef], error: null });
+    chain.eq.mockResolvedValue({ data: [validRef, badRef], count: 2, error: null });
 
     const result = await getContentRefsByCharacter(validRef.character_id);
 
@@ -145,6 +146,10 @@ describe("getContentRefsByCharacter", () => {
     await expect(
       getContentRefsByCharacter(validRef.character_id),
     ).rejects.toBe(queryError);
+    // The sheet's explicit degraded result remains distinct from ordinary reads.
+    await expect(getCharacterContentRefSnapshot(validRef.character_id)).resolves.toMatchObject({
+      refs: [], complete: false, asiEvidence: { status: "unavailable" },
+    });
   });
 });
 
@@ -184,13 +189,13 @@ describe("removeContentRefsByChoiceSource", () => {
 
 describe("complete builder snapshot reads",()=>{
   it.each([null,{...validRef.content_versions,version:2},{...validRef.content_versions,content_id:"55555555-5555-4555-8555-555555555555"}])("rejects unreadable or mismatched recorded snapshots instead of treating them as absent",async(snapshot)=>{
-    const chain={select:vi.fn().mockReturnThis(),eq:vi.fn().mockResolvedValue({data:[validRef,{...validRef,id:"66666666-6666-4666-8666-666666666666",content_versions:snapshot}],error:null})};
+    const chain={select:vi.fn().mockReturnThis(),eq:vi.fn().mockResolvedValue({data:[validRef,{...validRef,id:"66666666-6666-4666-8666-666666666666",content_versions:snapshot}],count:2,error:null})};
     mockedCreateClient.mockResolvedValue({from:vi.fn().mockReturnValue(chain)} as never);
     await expect(getContentRefsByCharacter(validRef.character_id,{requireCompleteSnapshots:true})).rejects.toThrow("Saved character snapshots could not be read");
   });
   it("accepts the actual fresh-race contract with only a complete parent pin",async()=>{
     const race={...validRef,content_versions:{...validRef.content_versions,content_type_snapshot:"race",slug_snapshot:"human",name_snapshot:"Human",data_snapshot:{size:"Medium",speed:30,ability_bonuses:[],traits:["versatility"],subraces:[],languages:["common"],source_refs:[]}}};
-    const chain={select:vi.fn().mockReturnThis(),eq:vi.fn().mockResolvedValue({data:[race],error:null})};
+    const chain={select:vi.fn().mockReturnThis(),eq:vi.fn().mockResolvedValue({data:[race],count:1,error:null})};
     mockedCreateClient.mockResolvedValue({from:vi.fn().mockReturnValue(chain)} as never);
     const refs=await getContentRefsByCharacter(validRef.character_id,{requireCompleteSnapshots:true});
     expect(refs).toHaveLength(1);expect(refs[0].content_definitions.content_type).toBe("race");
@@ -200,14 +205,14 @@ describe("complete builder snapshot reads",()=>{
 describe("document snapshot completeness metadata", () => {
   it("marks every readable exact pin complete", async () => {
     const { chain } = mockSupabase([validRef]);
-    chain.eq.mockResolvedValue({ data: [validRef], error: null });
+    chain.eq.mockResolvedValue({ data: [validRef], count: 1, error: null });
     expect(await getCharacterContentRefSnapshot(validRef.character_id)).toMatchObject({ complete: true, refs: [{ id: validRef.id }] });
   });
   it.each([null, { ...validRef.content_versions, version: 2 }, { ...validRef.content_versions, content_id: "55555555-5555-4555-8555-555555555555" }, { ...validRef.content_versions, data_snapshot: { hit_die: "broken" } }])("reports unreadable/omitted/mismatched pins without breaking degraded sheet reads", async snapshot => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const rows = [validRef, { ...validRef, id: "66666666-6666-4666-8666-666666666666", content_versions: snapshot }];
     const { chain } = mockSupabase(rows);
-    chain.eq.mockResolvedValue({ data: rows, error: null });
+    chain.eq.mockResolvedValue({ data: rows, count: rows.length, error: null });
     const result = await getCharacterContentRefSnapshot(validRef.character_id);
     expect(result.complete).toBe(false);
     expect(result.refs[0].id).toBe(validRef.id);
