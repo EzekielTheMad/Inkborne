@@ -148,9 +148,10 @@ the sole narrow slot after independent source approval of ab73d7e. Final tested
 source is **e7744888ea9aed331a4bb47a96e179d80c63b7cf**, including two bounded
 post-review corrections requiring independent review before integration:
 
-- bc3bdaf: the unknown declared saving throw was correctly rejected by the actual
-  canonical class enum before classification. Preserve that invalid-evidence
-  regression separately; exercise broad UNKNOWN_ROLE_GRAPH with a canonically
+- bc3bdaf: an aliased fixture mutation changed both the raw class declaration and
+  manifest snapshot. The strict manifest ability enum rejected that evidence;
+  canonical class data itself accepts string declarations. Preserve the failed
+  receipt with this corrected interpretation; exercise broad UNKNOWN_ROLE_GRAPH with a canonically
   admitted raw `saving_throw_unknown-ability` proficiency grant. No classifier
   behavior or earlier passing assertions changed.
 - e774488: replace the incompatible Object.fromEntries Record assertion with six
@@ -168,7 +169,7 @@ escaping preserved literal quotes; its 349 skipped result is retained and provid
 no regression proof. The corrected finite coordinator uses cmd's verbatim argument
 mode. No frozen source, receipts or assertions were rewritten to make a baseline pass.
 
-Initial final-source focused run: 57 passed/1 failed, exposing the canonical fixture
+Initial final-source focused run: 57 passed/1 failed, exposing the aliased fixture
 issue above. Initial typecheck: exit 2, exposing the Record assertion issue. Those
 failed logs remain beside the successful logs. Final sequence on clean e774488:
 
@@ -204,3 +205,22 @@ task peak/resource attribution. Lock SHA256 stayed
 7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6.
 The sole heavy slot was explicitly released to parent; this worker is frozen for
 independent correction review and performs no further heavy or runtime work.
+
+## Source-only test/evidence correction after final review
+
+The 59-test receipt on e774488 remains immutable, but the former test title claiming
+canonical class admission rejects an unknown declared saving throw was inaccurate.
+Actual `lib/schemas/content-types/class.ts:51` uses `z.array(z.string())`.
+The original fixture's manifest saving_throws_snapshot shared the class declaration
+array, so push mutated BOTH arrays and the internal strict manifest enum rejected
+the evidence. This proves no closed canonical class ability vocabulary.
+
+The corrected explicit negative changes ONLY a cloned manifest snapshot to an
+unknown ability, checks the raw known declaration remains unchanged and canonically
+admitted, then expects invalid_evidence. A separate new positive-admission/negative-role
+control clones/replaces ONLY the raw class declaration array, retaining its known
+manifest snapshot. It asserts canonical parsing succeeds, all six save states carry
+UNKNOWN_ROLE_GRAPH, no projection exclusions, and original sources/effects/raw arrays
+and input remain unchanged. Product code and original frozen evidence are untouched.
+This amendment is source-only and UNRUN under parent's current heavy-slot hold;
+the previous 59/typecheck/lint receipts do not validate this amended test file.

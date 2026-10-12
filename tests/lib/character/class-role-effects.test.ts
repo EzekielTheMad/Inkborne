@@ -119,9 +119,23 @@ describe("C1 advisory class role classifier — no live producer, authorization 
   const value=classRoleFixture(),pin=secondary(value);pin.resolved.effects.push({type:"grant",stat:"saving_throw_unknown-ability",value:"proficient"});
   const model=result(value);expect(model.saveAvailability.wisdom.status).toBe("unavailable");expect(model.saveAvailability.wisdom.issues.some(issue=>issue.reason==="UNKNOWN_ROLE_GRAPH")).toBe(true);
  });
- it("canonical class admission rejects an unknown declared saving throw before role classification",()=>{
-  const value=classRoleFixture(),pin=secondary(value);(pin.resolved.data.saving_throws as string[]).push("unknown-ability");
-  const before=structuredClone(value);expect(collectClassRoleEffects(value).status).toBe("invalid_evidence");expect(value).toEqual(before);
+ it("strict occurrence manifest admission rejects an unknown snapshot ability without changing the raw class declaration",()=>{
+  const value=classRoleFixture(),pin=secondary(value);
+  const invalid={...value,manifests:value.manifests.map(manifest=>manifest.content_id===pin.content_id?
+   {...manifest,saving_throws_snapshot:[...manifest.saving_throws_snapshot,"unknown-ability"]}:manifest)};
+  const before=structuredClone(invalid);expect(pin.resolved.data.saving_throws).toEqual(["dexterity"]);
+  expect(parseContentDefinition({...pin.resolved})).not.toBeNull();
+  expect(collectClassRoleEffects(invalid).status).toBe("invalid_evidence");expect(invalid).toEqual(before);
+ });
+ it("an unknown raw class saving throw with a known manifest remains canonically admitted but broader role-unavailable",()=>{
+  const value=classRoleFixture(),pin=secondary(value),manifest=value.manifests.find(row=>row.content_id===pin.content_id)!;
+  pin.resolved.data.saving_throws=[...pin.resolved.data.saving_throws as string[],"unknown-ability"];
+  expect(manifest.saving_throws_snapshot).toEqual(["dexterity"]);expect(parseContentDefinition({...pin.resolved})).not.toBeNull();
+  const before=structuredClone(value),model=result(value);expect(model.status).toBe("unavailable");
+  for(const state of Object.values(model.saveAvailability)){expect(state.status).toBe("unavailable");expect(state.issues.some(issue=>issue.reason==="UNKNOWN_ROLE_GRAPH")).toBe(true);}
+  expect(model.excluded).toEqual([]);expect(model.originalSources).toEqual(before.sources);
+  expect(model.originalEffects).toEqual(before.sources.flatMap(source=>source.resolved.effects));
+  expect(model.evaluationEffects).toEqual(model.originalEffects);expect(value).toEqual(before);
  });
  it("active origin occurrences without their selected raw class graph remain explicitly broader unknown",()=>{
   const value=classRoleFixture();value.character.classes=[];value.sources=value.sources.filter(pin=>pin.resolved.content_type!=="class");
