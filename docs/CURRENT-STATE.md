@@ -4,13 +4,14 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source `85f8ee9`
-includes reviewed private magic-item/item/weapon/armor authoring, raw metadata and
+on local branch `codex/launch-integration-20261011`. Product source `1cf00ca`
+includes reviewed private magic-item/item/weapon/armor/core-race authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, default-disabled pure hit-die modeling, patched production
 dependencies and runtime fixture preparation. At `edac6d7`, combined check passed
 253 files / 2,605 tests, lint/typecheck, synthetic build and nine bounded offline
-configurations. Later slot/runtime preparation needs combined reacceptance.
+configurations. Fresh combined check at `1cf00ca` passed 263 files / 2,754 tests
+after two legacy fixture repairs; build/browser reacceptance is continuing.
 See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
 exact source, reviews and open evidence. Original checkouts remain preserved.
 
@@ -21,7 +22,7 @@ remain explicit decisions. Durable gameplay starts with one trusted server roll
 and immutable lifetime receipt; deployment stays disabled until writer/database/
 recovery evidence passes.
 
-Private core race browser acceptance, per-class casting planning and remaining
+Per-class casting implementation, race-score parity reproduction and remaining
 development dependency remediation are active in isolated worktrees. The
 [concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
 is reviewable. G1 engine startup/image pulls were requested; no approval or runtime

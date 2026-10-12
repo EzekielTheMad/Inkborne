@@ -134,9 +134,32 @@ feeds casting, trackers, acquisition, rests and print. Missing/ambiguous data st
 unavailable. Large pools use bounded dots and preserve numeric totals. The review
 correction passed 86 affected tests and five actual-provider offline browser cases
 with seven inspected desktop/mobile screenshots; persistence was simulated.
-R12.4 private core race source `bf3bfe3` and docs `3990882` passed independent
-review and 82 focused tests; its browser acceptance remains in progress before
-integration. New source after `edac6d7` still requires combined acceptance.
+R12.4 private core race source `bf3bfe3` passed independent review, 82 focused
+tests and 16 desktop/mobile real-form offline checks; four screenshots were
+inspected and worker ports/processes closed. Plan/source/docs were integrated as
+`400bf0b`, `97b2cde`, `41012a6`, `c77cdfd`. The drift harness gained one exact
+read-only race-list stub at `00ca346`.
+
+The first combined check at `00ca346` failed 11 tests in two inherited fixtures
+which lacked saved class pins. Root `1cf00ca` supplies explicit pinned progression
+and system identity; 21 affected tests and independent fixture review passed,
+without changing product fallback or unavailable assertions. A fresh full check
+at clean `1cf00ca` passed **263 files / 2,754 tests**, typecheck and zero-warning
+lint. Its PID-only process recorder briefly misclassified a reused PID as owned;
+the unrelated connector was not stopped. Delayed readback found the PID absent
+and no listener. Historical recorder process totals/cwd are limited evidence;
+the future recorder matches PID, creation time and live parent identity.
+Five actual-provider slot browser cases also passed on `1cf00ca`, with simulated
+persistence. New dependency/per-class ability work requires later combined gates.
+
+R21.1b per-class casting plan `69a8823` passed independent challenge with unique
+ability identity, finite derived math and forged-snapshot negative controls;
+implementation is in progress. R03.3 development dependency plan `91b4ff8` was
+independently approved, but initial lock resolution changed an unapproved compiler
+subtree. Installation stopped pending revised compatible preservation constraints.
+Eight unpatched braces-chain high findings remain open, without risk acceptance.
+R06.1 source-proven race-score representation reproduction/planning is underway;
+no evaluator, schema, historical pin or manual-effect correction is inferred.
 
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
