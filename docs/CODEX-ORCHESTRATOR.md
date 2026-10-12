@@ -20,8 +20,10 @@ and empty owned cleanup. Private NPC authoring18/20 remains `10b06c8`, unchanged
 production blobs. P1b.1 worker passed 194 focused tests/type/lint with semantic
 old-model identity failures retained. Next real private producer discovery is
 read-only; root has released the heavy slot after combined check/build.
-Reviewed JSON local codec/profile prototype plan `fd10c13` proceeds separately;
-format preference/app upload/durable commit and PDF matrix remain pending.
+Reviewed JSON local codec/profile `0f3ee66` / `101027b` and final-binding harness
+`2594379` are integrated through `d4fc0a7`, all 16 changed Git blobs equal approved
+source. Worker owns narrow gates; root full/build/browser gates remain pending.
+Format preference/app upload/durable commit and PDF matrix remain pending.
 Root owns serialized heavy slots. Continue ready source/review/gates. This worktree shares Git
 with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git. No live changes.
 

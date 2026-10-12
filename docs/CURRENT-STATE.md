@@ -16,9 +16,11 @@ Real assets/fonts and final source/helper closure verified; all unexpected error
 and owned process/port readbacks empty. Private NPC authoring's 18/20 actual-form
 acceptance remains `10b06c8`, with unchanged eight production blobs. Auth/query/
 actions/CAS/persistence remain modeled, actual authority open. Next P1b producer
-discovery proceeds read-only. Local strict NPC JSON codec/profile prototype
-proceeds under reviewed `fd10c13`; human format preference, app upload/commit and
-PDF matrix remain pending. Instances, companion mechanics and R19 remain open.
+plan proceeds separately. Reviewed local NPC JSON source `0f3ee66` / `101027b`
+and corrected harness `2594379` are integrated through `d4fc0a7`; all 16 changed
+Git blobs match the approved worker. Narrow/full/build/browser gates are pending.
+Human format preference, app upload/commit and PDF matrix remain pending.
+Instances, companion mechanics and R19 remain open.
 
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.

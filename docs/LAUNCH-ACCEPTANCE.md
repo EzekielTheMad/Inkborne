@@ -531,6 +531,33 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### Local NPC JSON prototype integrated, gates pending — 2026-10-12 20:36 UTC
+
+Reviewed local codec/review/profile source `0f3ee66`, meaningful unsafe-reader
+controls `7cdce9a`, initial harness `75e3563`, truthful retained-status correction
+`101027b` and final artifact-rebind correction `2594379` are integrated as
+`de26e09`, `be64bd4`, `073cb9b`, `9ce5d6b`, `d4fc0a7`. Independent review held
+the initial harness's final helper-only check, then approved complete fresh
+transitive/source/root/build/manifest/CSS/font/lock/runtime equality after teardown.
+All eight source inputs remain: changed preview component fixed at `101027b`,
+other seven fixed at `0f3ee66`; no moving-HEAD source fallback. Retained status
+now accurately covers changed, pending and rejected selections.
+
+All **16** changed Git blobs match approved `2594379`; ignored identity receipt
+is `test-results/npc-json-integration-source-proof.json`. This is source identity,
+not runtime acceptance. Worker exclusively owns narrow semantic-before/restored
+tests/typecheck/lint; root combined check/build and eight intended offline browser
+cases remain pending. No case count is accepted yet. Human format preference and
+PDF matrix remain unanswered. This provisional local reader/profile has no app
+upload route/action, persisted identity/version, staging/commit or import authority.
+
+Next finite plans proceed independently: P1b.2 genuine already-first confirmation
+producer and R13.1 ordinary-item campaign sharing. Discovery found an item-form
+stale-draft/version-prop mismatch that must be addressed by the sharing child.
+Existing item create/update uses parsed current-row responses, not NPC-style exact
+immutable snapshot confirmation; malformed/lost create acknowledgement recovery
+remains a separate R12 gap. No SQL/runtime/hosted operation or release occurred.
+
 ### P1b.1 integrated joint revision local acceptance — 2026-10-12 20:27 UTC
 
 Reviewed source `27bb36a` and model correction `760101b` are integrated as
