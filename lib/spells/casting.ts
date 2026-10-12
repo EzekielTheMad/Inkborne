@@ -1,3 +1,4 @@
+import type { ResolvedCastingProfile } from "./casting-ability";
 import type { CharacterState } from "@/lib/types/character";
 import type { Effect } from "@/lib/types/effects";
 import type { ActiveEffect } from "@/lib/types/active-effects";
@@ -93,13 +94,10 @@ export interface CastComputationInput {
   spell: CastSpellSource;
   choice: CastChoice;
   state: CharacterState;
-  casterInfo: CasterInfo;
-  /** Evaluated ability scores (evalResult.stats) — for `MOD` substitution. */
-  abilityScores: Record<string, number>;
+  /** Explicit per-source mathematical values; never the global sheet summary. */
+  castingProfile: ResolvedCastingProfile;
   /** Total character level — cantrip tier scaling (5/11/17). */
   characterLevel: number;
-  /** The class the spell was learned under (MOD uses its casting ability). */
-  classSlug?: string;
   /** Injectable clock / id generator (tests). */
   now?: Date;
   generateId?: BuildActiveEffectOptions["generateId"];
@@ -286,23 +284,6 @@ export function getDefaultSlotOption(options: SlotOption[]): SlotOption | null {
 // The cast computation
 // ---------------------------------------------------------------------------
 
-function abilityModFor(
-  casterInfo: CasterInfo,
-  abilityScores: Record<string, number>,
-  classSlug: string | undefined,
-): number {
-  const mod = (ability: string) =>
-    Math.floor(((abilityScores[ability] ?? 10) - 10) / 2);
-  const casterClass = classSlug
-    ? casterInfo.classes.find((c) => c.slug === classSlug)
-    : undefined;
-  if (casterClass) return mod(casterClass.ability);
-  // Fallback (feature-granted spells etc.): best mod across caster classes.
-  let best = 0;
-  for (const c of casterInfo.classes) best = Math.max(best, mod(c.ability));
-  return best;
-}
-
 function formatBonus(bonus: number): string {
   return bonus >= 0 ? `+${bonus}` : `${bonus}`;
 }
@@ -318,13 +299,12 @@ export function computeCastEffects(input: CastComputationInput): CastOutcome {
     spell,
     choice,
     state,
-    casterInfo,
-    abilityScores,
+    castingProfile,
     characterLevel,
-    classSlug,
     now,
     generateId,
   } = input;
+  if (!castingProfile || ![castingProfile.abilityModifier, castingProfile.spellAttackBonus, castingProfile.spellDc].every(Number.isFinite)) throw new Error("A resolved finite casting profile is required.");
   const data = spell.data;
   const spellLevel = data.level ?? 0;
 
@@ -363,14 +343,14 @@ export function computeCastEffects(input: CastComputationInput): CastOutcome {
 
   // --- Roll requests ---
   const rollRequests: RollRequest[] = [];
-  const mod = abilityModFor(casterInfo, abilityScores, classSlug);
+  const mod = castingProfile.abilityModifier;
   const meta = { spell_slug: spell.slug, slot_level: castLevel };
 
   if (data.attack_type === "melee" || data.attack_type === "ranged") {
     rollRequests.push({
       kind: "attack",
       label: `${spell.name} — Attack`,
-      expression: `1d20${formatBonus(casterInfo.spellAttackBonus)}`,
+      expression: `1d20${formatBonus(castingProfile.spellAttackBonus)}`,
       meta,
     });
   }
@@ -405,7 +385,7 @@ export function computeCastEffects(input: CastComputationInput): CastOutcome {
   const dcInfo: CastDcInfo | null = data.dc?.type
     ? {
         ability: data.dc.type,
-        dc: casterInfo.spellDc,
+        dc: castingProfile.spellDc,
         success: data.dc.success ?? "other",
       }
     : null;

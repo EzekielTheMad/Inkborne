@@ -1,7 +1,10 @@
 "use client";
 
+import { resolveCastingAbility, type CastingAbilityResolution } from "@/lib/spells/casting-ability";
+
 import {
   createContext,
+  useLayoutEffect,
   useCallback,
   useContext,
   useMemo,
@@ -203,6 +206,7 @@ export interface CharacterContextValue {
   addSpell: (payload: AddSpellPayload) => Promise<void>;
   updateSpell: (id: string, updates: SpellUpdate) => Promise<void>;
   removeSpell: (id: string) => Promise<void>;
+  getCastingAbility: (spell: CharacterSpell) => CastingAbilityResolution;
   castSpell: (spell: CharacterSpell, choice: CastChoice) => Promise<CastOutcome>;
   setConcentration: (spell: Omit<ConcentrationState, "started_at"> | null) => Promise<void>;
 
@@ -587,10 +591,26 @@ export function CharacterProvider({
   // Cast a spell: compute the full consequence (slot consumption +
   // concentration + active effects) as ONE atomic patch, apply it, and hand
   // back the roll requests the dialog's result pane offers (design §4.3).
+  const castingInputs = useMemo(() => ({
+    character: { id: character.id, system_id: character.system_id, choices: character.choices },
+    spells, contentRefs, abilities: schema.ability_scores,
+    abilityScores: evalResult.stats, proficiencyBonus: evalResult.computed.proficiency_bonus,
+  }), [character.id, character.system_id, character.choices, spells, contentRefs, schema.ability_scores, evalResult.stats, evalResult.computed.proficiency_bonus]);
+  // State may be unchanged while an acquisition, pin, evaluated ability or viewer
+  // changes. Reject callbacks from a previous committed source as well as state.
+  const castingSnapshot = useMemo(() => ({ inputs: castingInputs, isOwner, characterLevel: character.level }), [castingInputs, isOwner, character.level]);
+  const currentCastingSnapshot = useRef(castingSnapshot);
+  useLayoutEffect(() => { currentCastingSnapshot.current = castingSnapshot; }, [castingSnapshot]);
+  const getCastingAbility = useCallback((target: CharacterSpell) => resolveCastingAbility(target, castingInputs), [castingInputs]);
+
   const castSpell = useCallback(
     async (spell: CharacterSpell, choice: CastChoice): Promise<CastOutcome> => {
+      if (currentCastingSnapshot.current !== castingSnapshot) throw new Error("The saved casting source changed. Choose the spell again using its current loaded content before casting.");
+      if (!isOwner) throw new Error("This character is read-only. Only its owner can cast spells.");
       if (slotResolution.status !== "available") throw new Error(slotResolution.reason);
-      const source = castSourceFromCharacterSpell(spell);
+      const resolved = getCastingAbility(spell);
+      if (resolved.status !== "available") throw new Error(resolved.reason);
+      const source = castSourceFromCharacterSpell(resolved.spell);
       if (!source) {
         throw new Error(`Spell "${spell.name}" has no castable content data.`);
       }
@@ -599,15 +619,13 @@ export function CharacterProvider({
           spell: source,
           choice,
           state: confirmedState,
-          casterInfo,
-          abilityScores: (evalResult.stats ?? {}) as Record<string, number>,
+          castingProfile: resolved.profile,
           characterLevel: character.level,
-          classSlug: spell.class_slug,
         });
         return { patch: outcome.statePatch, result: outcome };
       }, { requireCurrent: true });
     },
-    [state, casterInfo, evalResult, character.level, patchState, slotResolution],
+    [state, isOwner, getCastingAbility, character.level, patchState, slotResolution, castingSnapshot],
   );
 
   // --- Rolls ---
@@ -754,6 +772,7 @@ export function CharacterProvider({
     updateSpell,
     removeSpell,
     castSpell,
+    getCastingAbility,
     setConcentration,
     pendingConcentrationCheck,
     requestConcentrationCheck,
@@ -861,6 +880,7 @@ export function useSpells() {
     updateSpell: ctx.updateSpell,
     removeSpell: ctx.removeSpell,
     castSpell: ctx.castSpell,
+    getCastingAbility: ctx.getCastingAbility,
     setConcentration: ctx.setConcentration,
   };
 }

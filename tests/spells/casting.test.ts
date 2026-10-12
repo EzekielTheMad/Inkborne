@@ -1,3 +1,5 @@
+import { castingAbilityFixture } from "../fixtures/casting-acquisitions";
+import { resolveCastingAbility } from "@/lib/spells/casting-ability";
 import { describe, it, expect } from "vitest";
 import {
   resolveAtSlotLevel,
@@ -44,11 +46,7 @@ function mkCasterInfo(overrides: Partial<CasterInfo> = {}): CasterInfo {
   };
 }
 
-const ABILITY_SCORES = {
-  intelligence: 16, // +3
-  wisdom: 14, // +2
-  charisma: 8, // -1
-};
+
 
 function mkSource(overrides: Partial<CastSpellSource> = {}): CastSpellSource {
   return {
@@ -378,10 +376,8 @@ function cast(
     spell: source,
     choice,
     state,
-    casterInfo: mkCasterInfo(),
-    abilityScores: ABILITY_SCORES,
+    castingProfile: { classSlug: "wizard", ability: "intelligence", abilityModifier: 3, spellDc: 13, spellAttackBonus: 5 },
     characterLevel: 3,
-    classSlug: "wizard",
     now: FIXED_NOW,
     generateId: nextId,
     ...extras,
@@ -389,6 +385,17 @@ function cast(
 }
 
 describe("computeCastEffects", () => {
+  it.each([[18, 10, "warlock"], [10, 18, "wizard"]] as const)("uses the acquisition class despite a stronger other class (%s/%s/%s)", (intelligence, charisma, classSlug) => {
+    const input = castingAbilityFixture(intelligence, charisma);
+    const row = input.spells.find(spell => spell.class_slug === classSlug)!;
+    const resolved = resolveCastingAbility(row, input);
+    if (resolved.status !== "available") throw new Error(resolved.reason);
+    const outcome = cast(mkSource({ data: { level: 1, duration: "Instantaneous", attack_type: "ranged", damage: { type: "force", dice_at_slot_level: { "1": "1d8 + MOD" } }, heal_at_slot_level: { "1": "1d4 + MOD" }, dc: { type: "dexterity", success: "half" } } }), { type: "slot", level: 1 }, {}, { castingProfile: resolved.profile });
+    expect(outcome.rollRequests.find(request => request.kind === "attack")?.expression).toBe("1d20+3");
+    expect(outcome.dcInfo?.dc).toBe(11);
+    expect(outcome.rollRequests.find(request => request.kind === "damage")?.expression).toBe("1d8 + 0");
+    expect(outcome.rollRequests.find(request => request.kind === "heal")?.expression).toBe("1d4 + 0");
+  });
   it("cantrip: no slot change, damage scaled by character level", () => {
     const fireBolt = mkSource({
       name: "Fire Bolt",
@@ -620,24 +627,8 @@ describe("computeCastEffects", () => {
         heal_at_slot_level: { "1": "1d8 + MOD", "2": "2d8 + MOD" },
       },
     });
-    const clericInfo = mkCasterInfo({
-      classes: [
-        {
-          slug: "cleric",
-          level: 3,
-          type: "full",
-          ability: "wisdom",
-          prepared: true,
-          cantripsKnown: 3,
-          spellsKnown: "all",
-          maxPrepared: 5,
-          ritualCasting: true,
-        },
-      ],
-    });
     const outcome = cast(cureWounds, { type: "slot", level: 2 }, {}, {
-      casterInfo: clericInfo,
-      classSlug: "cleric",
+      castingProfile: { classSlug: "cleric", ability: "wisdom", abilityModifier: 2, spellAttackBonus: 4, spellDc: 12 },
     });
     expect(outcome.rollRequests).toEqual([
       {
@@ -660,11 +651,8 @@ describe("computeCastEffects", () => {
         heal_at_slot_level: { "1": "1d8 + MOD" },
       },
     });
-    const weakInfo = mkCasterInfo({
-      classes: [{ ...mkCasterInfo().classes[0], ability: "charisma" }],
-    });
     const outcome = cast(cureWounds, { type: "slot", level: 1 }, {}, {
-      casterInfo: weakInfo,
+      castingProfile: { classSlug: "wizard", ability: "charisma", abilityModifier: -1, spellAttackBonus: 1, spellDc: 9 },
     });
     expect(outcome.rollRequests[0].expression).toBe("1d8 - 1");
   });

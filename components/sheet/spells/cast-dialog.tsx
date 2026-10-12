@@ -31,6 +31,7 @@ import {
   getDefaultSlotOption,
   isRitualEligible,
   resolveAtSlotLevel,
+  substituteMod,
   resolveCantripDie,
   type CastChoice,
   type CastOutcome,
@@ -99,7 +100,7 @@ export function CastDialog({ spell, castability, open, onClose }: CastDialogProp
 
 function CastDialogSession({ spell, castability, open, onClose }: CastDialogProps) {
   const isMobile = useIsMobile();
-  const { character } = useCharacter();
+  const { character, isOwner } = useCharacter();
   const {
     maxSlots,
     slotResolution,
@@ -108,10 +109,14 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     casterInfo,
     concentration,
     castSpell,
+    getCastingAbility,
   } = useSpells();
   const { roll } = useRolls();
 
-  const data = (spell.content_definitions?.data ?? {}) as CastSpellData;
+  const sourceResolution = getCastingAbility(spell);
+  const profile = sourceResolution.status === "available" ? sourceResolution.profile : null;
+  const resolvedSpell = sourceResolution.status === "available" ? sourceResolution.spell : spell;
+  const data = (resolvedSpell.content_definitions?.data ?? {}) as CastSpellData;
   const spellLevel = data.level ?? 0;
   const isCantrip = spellLevel === 0;
 
@@ -120,7 +125,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     : getEligibleSlotOptions(spellLevel, maxSlots, slotState, pactSlotLevel);
 
   const ritualEligible =
-    castability === "ritual-only" || isRitualEligible(spell, casterInfo);
+    castability === "ritual-only" || isRitualEligible(resolvedSpell, casterInfo);
 
   const [selectedKey, setSelectedKey] = useState<string | null>(
     () => getDefaultSlotOption(slotOptions)?.key ?? null,
@@ -136,7 +141,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     slotOptions.find((o) => o.key === selectedKey && o.free > 0) ?? null;
   const noSlotsAvailable = !isCantrip && !slotOptions.some((o) => o.free > 0);
   const canCast =
-    slotResolution?.status === "available" && (isCantrip || ritual || (selectedOption !== null && !noSlotsAvailable));
+    isOwner && profile !== null && slotResolution?.status === "available" && (isCantrip || ritual || (selectedOption !== null && !noSlotsAvailable));
 
   // --- Preview at the currently-selected cast level ---
   const previewLevel = isCantrip
@@ -144,14 +149,17 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     : ritual
       ? spellLevel
       : (selectedOption?.castLevel ?? spellLevel);
-  const previewDamage =
+  const previewDamageBase =
     resolveAtSlotLevel(data.damage?.dice_at_slot_level, previewLevel) ??
     (isCantrip
       ? resolveCantripDie(data.descriptionCantripDie, character.level)
       : null);
-  const previewHeal = isCantrip
+  const previewDamage = previewDamageBase && profile ? substituteMod(previewDamageBase, profile.abilityModifier) : previewDamageBase;
+  const previewHealBase = isCantrip
     ? null
     : resolveAtSlotLevel(data.heal_at_slot_level, previewLevel);
+
+  const previewHeal = previewHealBase && profile ? substituteMod(previewHealBase, profile.abilityModifier) : previewHealBase;
 
   const replacesConcentration =
     data.concentration === true && concentration !== null;
@@ -200,6 +208,8 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     /* ---------------- Configure pane ---------------- */
     <div className="space-y-4 text-sm">
       {slotResolution?.status !== "available" && <p role="status" className="text-sm text-muted-foreground">Spell slots are unavailable. Reload the character or restore its saved class content before casting.</p>}
+      {!isOwner && <p role="status" className="text-muted-foreground">This character is read-only. Only its owner can cast spells.</p>}
+      {sourceResolution.status !== "available" ? <p role="status" className="text-muted-foreground">{sourceResolution.reason}</p> : <p className="text-muted-foreground">Cast as {capitalize(profile!.classSlug.replace(/-/g, " "))} ({capitalize(profile!.ability)}).</p>}
       {castError && <p role="alert" className="text-destructive">{castError}</p>}
       <p className="text-xs text-muted-foreground">{metaLine}</p>
 
@@ -273,7 +283,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
       )}
 
       {/* On-cast preview */}
-      {(previewDamage || previewHeal || data.dc?.type || data.attack_type) && (
+      {profile && (previewDamage || previewHeal || data.dc?.type || data.attack_type) && (
         <div className="rounded-md border border-border bg-card/50 px-3 py-2 space-y-0.5 text-xs">
           <p className="font-medium text-muted-foreground uppercase tracking-wide text-[10px]">
             On cast
@@ -281,8 +291,8 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
           {data.attack_type && (
             <p>
               {capitalize(data.attack_type)} spell attack{" "}
-              {casterInfo.spellAttackBonus >= 0 ? "+" : ""}
-              {casterInfo.spellAttackBonus}
+              {profile.spellAttackBonus >= 0 ? "+" : ""}
+              {profile.spellAttackBonus}
             </p>
           )}
           {previewDamage && (
@@ -294,7 +304,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
           {previewHeal && <p>Heals {previewHeal.replace(/MOD/gi, "spellcasting mod")}</p>}
           {data.dc?.type && (
             <p>
-              {capitalize(data.dc.type)} save DC {casterInfo.spellDc}
+              {capitalize(data.dc.type)} save DC {profile.spellDc}
               {data.dc.success === "half" && " · half on success"}
               {data.dc.success === "none" && " · no effect on success"}
             </p>

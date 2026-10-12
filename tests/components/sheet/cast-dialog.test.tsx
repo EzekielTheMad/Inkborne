@@ -31,7 +31,7 @@ const viewport = vi.hoisted(() => ({ mobile: false }));
 vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => viewport.mobile }));
 
 vi.mock("@/lib/character/character-context", () => ({
-  useCharacter: () => ({ character: { id: "char-1", level: 3 } }),
+  useCharacter: () => ({ character: { id: "char-1", level: 3 }, isOwner: true }),
   useSpells: () => ({
     slotResolution: { status: "available", maxSlots: mockMaxSlots, pactSlotLevel: mockPactSlotLevel },
     maxSlots: mockMaxSlots,
@@ -40,6 +40,7 @@ vi.mock("@/lib/character/character-context", () => ({
     casterInfo: mockCasterInfo,
     concentration: mockConcentration,
     castSpell,
+    getCastingAbility: (spell: CharacterSpell) => ({ status: "available", spell, profile: { classSlug: spell.class_slug || "wizard", ability: "intelligence", abilityModifier: 3, spellDc: mockCasterInfo.spellDc, spellAttackBonus: mockCasterInfo.spellAttackBonus } }),
   }),
   useRolls: () => ({ roll }),
 }));

@@ -41,3 +41,7 @@ Update affected old fixtures with actual loaded acquisitions and exact pins rath
 ## Decisions for independent challenge
 
 Confirm the current-acquisition id/identity binding and strict unavailable policy; confirm the required mathematical input with the small static-preview adapter (rather than a legacy best-class compatibility fallback); and confirm the schema/evaluated-value validation while preserving existing known-source arithmetic. These are the concrete boundaries to approve or correct before implementation.
+
+Approved challenge refinements (2026-10-11): unique system ability slug, finite computed outputs, and same-identity forged-snapshot regression are mandatory. Root fixture-only repairs `1cf00ca` and `5ecb9a1` were safely cherry-picked into this worker as `1cb80ed` and `3703828`; preserve them when extending source-proof fixtures. Implementation is now authorized within this plan.
+
+Parent's execution refinement: a callback from a previous committed casting input must be rejected even when raw character state has not changed. Compare a local committed input identity covering acquisitions, exact class pins/choices, schema abilities, evaluated scores/proficiency and viewer status; keep the existing state writer. This is a React source freshness guard, not a database revision/permission proof. Narrative and notes do not form a new casting authority. The reviewed missing-row parser correction `3ceeb59` is preserved as `00f25a3`.

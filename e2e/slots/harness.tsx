@@ -35,7 +35,7 @@ function Surface() {
     {dialog === "rest" && <RestDialog open onClose={() => setDialog(null)} />}</>;
 }
 createRoot(document.getElementById("root")!).render(<CharacterProvider character={{ id: "local-character", user_id: "local-owner", system_id: "local-system", name: "Original Slot Fixture", game_systems: { id: "local-system", name: "Original Local Fixture System" }, level: choices.length * 3, choices: { classes: choices }, state, base_stats: {}, narrative: {} } as never}
-  schema={{ ability_scores: [], skills: [], derived_stats: [], proficiency_levels: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] } as never}
+  schema={{ ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }], skills: [], derived_stats: [{ slug: "proficiency_bonus", base: 2 }], proficiency_levels: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] } as never}
   contentRefs={kind === "unavailable" ? [] : validRefs} contentSnapshotsComplete initialState={state} initialInventory={[]} initialSpells={noncaster ? [] : [spell]}
-  classData={Object.fromEntries(validRefs.map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never} allEffects={[]} baseStatsWithLevel={{ level: choices.length * 3, intelligence: 10 }} structuredSources={{}}
+  classData={Object.fromEntries(validRefs.map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never} allEffects={[]} baseStatsWithLevel={{ level: choices.length * 3, intelligence: 10, charisma: 10 }} structuredSources={{}}
   isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Surface /></CharacterProvider>);

@@ -6,7 +6,7 @@ import { getMultiClassSlots } from "@/lib/spells/multiclass-slots";
  * Compute spell save DC: 8 + proficiency bonus + spellcasting ability mod.
  */
 export function computeSpellDc(
-  caster: CasterClass,
+  caster: Pick<CasterClass, "ability">,
   abilityScores: Record<string, number>,
   proficiencyBonus: number,
 ): number {
@@ -18,7 +18,7 @@ export function computeSpellDc(
  * Compute spell attack bonus: proficiency bonus + spellcasting ability mod.
  */
 export function computeSpellAttackBonus(
-  caster: CasterClass,
+  caster: Pick<CasterClass, "ability">,
   abilityScores: Record<string, number>,
   proficiencyBonus: number,
 ): number {

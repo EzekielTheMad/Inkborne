@@ -1,3 +1,4 @@
+import { stateCastingAcquisition } from "../../fixtures/casting-acquisitions";
 import { Activity, useEffect, useState } from "react";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -8,7 +9,6 @@ import { SlotTracker } from "@/components/sheet/spells/slot-tracker";
 import { ResourcesWidget } from "@/components/sheet/resources-widget";
 import { FeaturesTab } from "@/components/sheet/tabs/features-tab";
 import { insertRoll } from "@/lib/supabase/rolls";
-import type { CharacterSpell } from "@/lib/types/spells";
 import type { CharacterState } from "@/lib/types/character";
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
@@ -17,7 +17,7 @@ vi.mock("@/lib/supabase/inventory", () => ({ addInventoryItem: vi.fn(), updateIn
 vi.mock("@/lib/supabase/spells", () => ({ addCharacterSpell: vi.fn(), updateCharacterSpell: vi.fn(), removeCharacterSpell: vi.fn() }));
 vi.mock("@/lib/supabase/rolls", () => ({ insertRoll: vi.fn() }));
 
-const schema = { ability_scores: [], proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
+const schema = { ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }], proficiency_levels: [], derived_stats: [{ slug: "proficiency_bonus", base: 2 }], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
 const refs = [
   pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0]),
   pinnedSlotClass("fighter", 1, null, null),
@@ -44,7 +44,9 @@ function deferred() {
   const promise = new Promise<void>((yes) => { resolve = yes; });
   return { promise, resolve };
 }
-const spell = { id: "local-spell", name: "Local Focus", class_slug: "wizard", content_definitions: { id: "focus", slug: "focus", name: "Local Focus", data: { level: 1, duration: "1 minute", concentration: true, attack_type: "ranged" }, effects: [] } } as unknown as CharacterSpell;
+const spell = stateCastingAcquisition();
+const instant = stateCastingAcquisition("instant-focus", { level: 0, duration: "Instantaneous", concentration: false, ritual: true });
+const lasting = stateCastingAcquisition("lasting-focus", { level: 0, concentration: false });
 type Surface = "none" | "cast" | "widget" | "card" | "slots";
 function Probe({ label, surface }: { label: string; surface: Surface }) {
   const rest = useRest(); const saves = useCharacterState();
@@ -62,7 +64,7 @@ function Fixture({ raw, label = "sheet", surface = "none" }: { raw: CharacterSta
   return <CharacterProvider
     character={{ id: "local-character", system_id: "local-system", state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }] }, base_stats: {}, narrative: {} } as never}
     schema={schema as never} contentRefs={refs as never}
-    initialState={{ ...raw, temp_hp: 0 }} initialInventory={[]} initialSpells={[]}
+    initialState={{ ...raw, temp_hp: 0 }} initialInventory={[]} initialSpells={[spell, instant, lasting]}
     classData={{ wizard: { slug: "wizard", data: { hit_die: 6, spellcasting: { type: "full", ability: "intelligence" } } }, fighter: { slug: "fighter", data: { hit_die: 10 } } } as never}
     allEffects={[]} baseStatsWithLevel={{ level: 4, constitution: 10, intelligence: 10 }} structuredSources={{}}
     isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}
@@ -103,13 +105,11 @@ describe("explicit conditional casting and manual resource callers", () => {
 
   it("keeps instantaneous cantrip/ritual casts write-free but guards a lasting cantrip effect", async () => {
     stored = structuredClone(baseline); render(<Fixture raw={baseline} />);
-    const instant = { ...spell, content_definitions: { ...spell.content_definitions!, data: { level: 0, duration: "Instantaneous", ritual: true } } } as CharacterSpell;
     await act(async () => {
       await handles.sheet.spells.castSpell(instant, { type: "cantrip" });
       await handles.sheet.spells.castSpell(instant, { type: "ritual" });
     });
     expect(rpc).not.toHaveBeenCalled();
-    const lasting = { ...instant, content_definitions: { ...instant.content_definitions!, data: { level: 0, duration: "1 minute" } } } as CharacterSpell;
     await act(async () => { await handles.sheet.spells.castSpell(lasting, { type: "cantrip" }); });
     expect(rpc.mock.calls[0][0]).toBe("patch_character_state_if_current");
     expect(rpc.mock.calls[0][1].state_patch).not.toHaveProperty("spell_slots_used");

@@ -49,6 +49,7 @@ export function SpellHeader() {
           </span>
         </span>
       </div>
+      {casterInfo.classes.length > 1 && <p className="text-xs text-muted-foreground">Highest class save DC and attack shown above. Each cast uses its spell&apos;s class.</p>}
       <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1 flex-wrap">
         <span>
           Cantrips: {cantripsKnown}/{totalCantripsAllowed}

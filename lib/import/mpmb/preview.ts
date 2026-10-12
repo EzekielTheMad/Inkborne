@@ -10,7 +10,6 @@ import {
 } from "@/lib/spells/casting";
 import type { CharacterState } from "@/lib/types/character";
 import type { Effect } from "@/lib/types/effects";
-import type { CasterInfo } from "@/lib/types/spells";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 
 export const MPMB_PREVIEW_LEVELS = [1, 5, 11, 17] as const;
@@ -283,25 +282,6 @@ function previewFeat(
   };
 }
 
-function previewCasterInfo(level: number, castingAbility: string): CasterInfo {
-  return {
-    isCaster: true,
-    classes: [{
-      slug: "preview-caster",
-      level,
-      type: "full",
-      ability: castingAbility,
-      prepared: true,
-      cantripsKnown: 4,
-      spellsKnown: "all",
-      maxPrepared: 20,
-      ritualCasting: true,
-    }],
-    spellDc: 13,
-    spellAttackBonus: 5,
-  };
-}
-
 function previewSpell(
   schema: SystemSchemaDefinition,
   candidate: Extract<MpmbPreviewCandidate, { contentType: "spell" }>,
@@ -351,10 +331,9 @@ function previewSpell(
       spell,
       choice,
       state,
-      casterInfo: previewCasterInfo(characterLevel, castingAbility),
-      abilityScores,
+      // Explicit synthetic preview values, unchanged from the static fixture.
+      castingProfile: { classSlug: "preview-caster", ability: castingAbility, abilityModifier: Math.floor((abilityScores[castingAbility] - 10) / 2), spellDc: 13, spellAttackBonus: 5 },
       characterLevel,
-      classSlug: "preview-caster",
       now: FIXED_PREVIEW_TIME,
       generateId: () => "mpmb-preview-effect",
     });
