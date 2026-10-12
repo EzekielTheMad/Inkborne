@@ -1,4 +1,4 @@
-# R17.1 NPC Library source checkpoint — unverified
+# R17.1 NPC Library source and narrow gates — browser pending
 
 2026-10-12. Worker `r17-library-npc-worker`, branch
 `codex/r17-library-npc-plan-20261012`, product base `df8c303`; approved plan
@@ -142,3 +142,61 @@ query option `exact`. It is removed from the test; the name remains an exact
 string matcher, and the assertion is unchanged. No production behavior change.
 Receipt preserves that type failure separately. Focused profile recheck and
 sequential typecheck/lint follow this clean correction/anchor checkpoint.
+
+## Final narrow results and exact handoff
+
+Tested source: `7137fad54bc300ed051f1025877e6eb54eb26603` passed all 14 selected
+files / 215 tests; final `846860209041819deb27b1547c06a77720ad3037` changes only
+reviewed harness anchor strings, the staged-helper guard carried through `75d8600`,
+documentation and a test role-query type option. The affected profile tests were
+rechecked at final source: 1 file / 4 tests passed. Repository typecheck and
+zero-warning lint passed at clean `8468602`. No additional production correction
+beyond independently approved one-character profile fix `7137fad`.
+
+Exact package commands (the ignored ownership wrapper records arguments, cwd,
+source/status, PID/parent/command/OS birth and resources for each phase):
+
+```powershell
+npm.cmd ci --ignore-scripts --no-audit --no-fund
+npm.cmd test -- --maxWorkers=2 tests/schemas/npc.test.ts tests/lib/supabase/npc-parser.test.ts tests/components/compendium/npc-profile.test.tsx tests/app/npc-character-admission.test.tsx tests/app/library-npc-detail-page.test.tsx tests/lib/supabase/compendium-server.test.ts tests/app/library-page.test.tsx tests/lib/compendium/catalog.test.ts tests/lib/compendium/presentation.test.ts tests/lib/supabase/monster-parser.test.ts tests/lib/supabase/content-refs.test.ts tests/schemas/monster.test.ts tests/components/compendium/compendium-detail.test.tsx tests/components/compendium/compendium-browser.test.tsx
+npm.cmd test -- --maxWorkers=2 tests/components/compendium/npc-profile.test.tsx
+npm.cmd run typecheck
+npm.cmd run lint
+```
+
+Preserved ignored evidence: `test-results/r17-focused-gates/ci.*`, `baseline.*`,
+`baseline-inputs.json`, `baseline-restoration.json`, parser before/current binary
+bytes, `focused-initial.*`, `focused-after.*`, `typecheck-initial.*`,
+`profile-type-fix.*`, `typecheck-after.*`, `lint-initial.*`, and
+`final-readback.json`. Original failed initial focused run was 205 passing tests,
+one category assertion failure and three source parse-blocked suites; initial
+typecheck failed on the unsupported test option. None was deleted or relabeled.
+
+The meaningful before run used only exact old parser module from plan base
+`b4c55a55`, Git blob `4006598f7686a648fb2a320f49051e09318dadf3`, SHA256
+`9ae56e20e8008628e15bfb7b7f1db85518b7d0a601a4e0c08284847193d921a4`, with new
+NPC registry/schema/fixtures/test bytes retained. Actual CharacterPage consumer
+executed before fence assertions: effectful NPC pins were accepted/complete,
+mechanical STR16 vs ordinary accepted NPC STR14, proficiency grant present,
+choice/narrative effects collected. Nine substantive baseline failures; no missing
+module/import failure. Current parser SHA256
+`7c5050612cf395483ebfbbc98019adbe8d2371cf4246f5491435b19a112cc617` and all seven
+recorded source/lock input hashes restored in finally, clean source. After fence,
+rejected pins are incomplete/ASI-unavailable, STR12 under existing degraded-read
+contract, no NPC grant/effect contribution; positive empty NPC STR14 and ordinary
+non-NPC stat/proficiency effect STR16 controls remain intact.
+
+Final same-birth/exact-command readback included 95 recorded identities and all
+eight gate shells: zero remaining, zero owned listeners. No process was killed;
+none left running. Before/after process count/memory/CPU/listener snapshots are in
+receipts. Dependency lock unchanged at SHA256
+`7225aa9026eb747c5626204c9e5e5901809f95b33a1aacaba35cd139e86a2eb6`.
+Root's heavy slot was released immediately after lint/readback; this final edit
+is documentation only.
+
+Remaining: independent exact harness/source correction review; root combined
+check/fresh build and separately released offline UI run with production asset
+manifest. No browser screenshots/checks are claimed. Actual DB/RLS/privacy,
+entitlements/concurrency/copy/lifecycle remain G2; private NPC authoring, supported
+import/sharing and DM instances are separate required R17 children. This bounded
+read-only foundation does not complete R17, M5 or beta acceptance.
