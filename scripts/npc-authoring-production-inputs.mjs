@@ -39,8 +39,8 @@ export async function loadNpcAuthoringAssets(root, manifestPath) {
     }
     dependencies.push({ relativePath, expected, records });
   }
-  const module = await import("./passive-feature-production-assets.mjs"), result = await module.loadPassiveFeatureProductionAssets(root, manifestPath);
-  result.projectInputPlugin = module.passiveFeatureProjectInputPlugin;
+  const assetHelper = await import("./passive-feature-production-assets.mjs"), result = await assetHelper.loadPassiveFeatureProductionAssets(root, manifestPath);
+  result.projectInputPlugin = assetHelper.passiveFeatureProjectInputPlugin;
   result.artifacts.harnessSourceSha = git(root, ["rev-parse", "HEAD"]).toString().trim();
   result.artifacts.harnessFiles = harnessPaths.map(relativePath => { cleanFile(root, relativePath); return { relativePath, gitBlobSha256: sha(git(root, ["show", `HEAD:${relativePath}`])) }; });
   Object.assign(result.artifacts, { npcAuthoringSourceCheckpoint, authoringHelperDependencies: dependencies,
