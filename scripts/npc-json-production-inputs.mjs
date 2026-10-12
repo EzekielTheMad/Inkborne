@@ -4,6 +4,8 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 export const npcJsonSourceCheckpoint = "0f3ee6647f0b15f96a58c8d70a32c828b14a3476";
+export const npcJsonPreviewCheckpoint = "101027b5b5ae21cd05dcbf6979df9c626ba8aa71";
+const checkpointFor = relativePath => relativePath === "components/library/npc-json-import-preview.tsx" ? npcJsonPreviewCheckpoint : npcJsonSourceCheckpoint;
 const git = (root, args) => execFileSync("git", ["-C", root, ...args], { windowsHide: true });
 const sha = value => createHash("sha256").update(value).digest("hex");
 const required = ["lib/import/npc-json/types.ts", "lib/import/npc-json/codec.ts", "lib/import/npc-json/review.ts", "components/library/npc-json-import-preview.tsx", "components/compendium/npc-profile.tsx", "lib/schemas/content-types/npc.ts", "lib/homebrew/npc-form.ts"];
@@ -27,7 +29,7 @@ export async function verifyNpcJsonHelpers(root) {
     assert.equal(sha(raw), sha(await fs.readFile(path.join(rootCheckout, relativePath))));
     assert.equal(sha(raw), sha(git(root, ["cat-file", "--filters", `--path=${relativePath}`, `HEAD:${relativePath}`])));
     assert.equal(sha(git(root, ["show", `HEAD:${relativePath}`])), sha(git(rootCheckout, ["show", `HEAD:${relativePath}`])));
-    if (sourcePaths.includes(relativePath)) assert.equal(sha(git(root, ["show", `HEAD:${relativePath}`])), sha(git(root, ["show", `${npcJsonSourceCheckpoint}:${relativePath}`])));
+    if (sourcePaths.includes(relativePath)) assert.equal(sha(git(root, ["show", `HEAD:${relativePath}`])), sha(git(root, ["show", `${checkpointFor(relativePath)}:${relativePath}`])));
   }
   // Independently bind executable inherited helpers before dynamic import/use.
   for (const relativePath of ["scripts/npc-process.mjs", "scripts/passive-feature-production-assets.mjs"]) {
@@ -66,15 +68,23 @@ export async function loadNpcJsonAssets(root, manifestPath) {
     assert.equal(sha(bytes), sha(git(root, ["cat-file", "--filters", `--path=${relativePath}`, `HEAD:${relativePath}`])));
     return { relativePath, gitBlobSha256: sha(git(root, ["show", `HEAD:${relativePath}`])), executedSha256: sha(bytes) };
   }));
-  Object.assign(result.artifacts, { npcJsonSourceCheckpoint, jsonHelperDependencies: dependencies,
+  Object.assign(result.artifacts, { npcJsonSourceCheckpoint, npcJsonPreviewCheckpoint, jsonHelperDependencies: dependencies,
     jsonSourceFiles: await Promise.all(sourcePaths.map(async relativePath => {
-      const expected = sha(git(root, ["show", `${npcJsonSourceCheckpoint}:${relativePath}`]));
+      const sourceCheckpoint = checkpointFor(relativePath), expected = sha(git(root, ["show", `${sourceCheckpoint}:${relativePath}`]));
       for (const checkout of [root, rootCheckout]) { cleanFile(checkout, relativePath); assert.equal(sha(git(checkout, ["show", `HEAD:${relativePath}`])), expected); }
       const raw = await fs.readFile(path.join(root, relativePath));
       assert.equal(sha(raw), sha(await fs.readFile(path.join(rootCheckout, relativePath))));
-      assert.equal(sha(raw), sha(git(root, ["cat-file", "--filters", `--path=${relativePath}`, `${npcJsonSourceCheckpoint}:${relativePath}`])));
-      return { relativePath, gitBlobSha256: expected, executedSha256: sha(raw) };
+      assert.equal(sha(raw), sha(git(root, ["cat-file", "--filters", `--path=${relativePath}`, `${checkpointFor(relativePath)}:${relativePath}`])));
+      return { relativePath, sourceCheckpoint, gitBlobSha256: expected, executedSha256: sha(raw) };
     })) });
+  const lock = JSON.parse(await fs.readFile(path.join(root, "package-lock.json"), "utf8"));
+  result.artifacts.installedRuntime = { nodeVersion: process.version, packages: [] };
+  for (const name of ["esbuild", "next", "react", "react-dom", "playwright", "@playwright/test", "zod"]) {
+    const bytes = await fs.readFile(path.join(root, "node_modules", name, "package.json")), version = JSON.parse(bytes.toString("utf8")).version;
+    assert.equal(version, lock.packages[`node_modules/${name}`].version);
+    assert.equal(sha(bytes), sha(await fs.readFile(path.join(rootCheckout, "node_modules", name, "package.json"))));
+    result.artifacts.installedRuntime.packages.push({ name, version, packageJsonSha256: sha(bytes) });
+  }
   return result;
 }
 export async function bindNpcJsonInputs(root, metafile, captured, artifacts) {

@@ -37,9 +37,14 @@ export async function runNpcJsonCases({ browser, origin, root, inspect, setActiv
     assert.equal(await page.getByRole("region", { name: "Template relationship ideas", exact: true }).count(), 0);
     await inspect(page, size, "pair-empty"); evidence.push({ size, scenario: "valid pair and explicit empty groups", passed: true });
     await page.getByLabel("Hold result for offline timing control", { exact: true }).check();
-    await file(page, original, "pending.json"); await button(page).click();
+    await file(page, original, "pending.json");
+    assert.match(await page.getByRole("status").innerText(), /Previous local preview retained; it does not describe the selected file/);
+    assert.doesNotMatch(await page.getByRole("status").innerText(), /was rejected/);
+    await button(page).click();
     const fieldset = page.locator('fieldset[aria-busy="true"]'); await fieldset.waitFor();
     assert.equal(await fieldset.evaluate(node => node.disabled), true); assert.equal(await page.getByLabel("Original local JSON file", { exact: true }).isDisabled(), true);
+    assert.match(await page.getByRole("status").innerText(), /Previous local preview retained; it does not describe the selected file/);
+    assert.doesNotMatch(await page.getByRole("status").innerText(), /was rejected/);
     const reads = await page.evaluate(() => window.npcJsonHarness.reads); await page.locator("form").evaluate(form => form.requestSubmit());
     assert.equal(await page.evaluate(() => window.npcJsonHarness.reads), reads);
     await inspect(page, size, "pending");

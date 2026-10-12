@@ -106,3 +106,31 @@ is simulated or claimed. Counts remain intentions until actual execution.
 Static diff checks only for this harness preparation. No new gate/process/server
 has run. Freeze this source for independent review before any released narrow
 tests/typecheck/lint, full integration/build or explicit UI acceptance.
+
+## Review correction checkpoints — supersede75e, still unrun
+
+Test-only7cdce9a independently approved. Tiny product wording correction
+`101027b5b5ae21cd05dcbf6979df9c626ba8aa71` changes only retained-preview status
+and its focused component assertion: previous preview does not describe the
+selected file. It no longer falsely says changed/pending files were rejected.
+Generic provisional/no-import disclosure remains; codecs/review/core contracts
+are unchanged. Harness source keeps all eight required source paths: component
+alone binds that exact101027b checkpoint; every other path remains exact0f3ee.
+No arbitrary HEAD fallback. Existing pending case now asserts truthful retained
+status both after selection and while busy, without inflating case counts.
+
+The harness after teardown now performs a fresh complete loadNpcJsonAssets and
+bindNpcJsonInputs using the original metafile/captured map. It deep-compares the
+entire fresh artifact envelope with the proof used to render, including frozen
+root HEAD/source/node closure/transitives, lock/build receipt/BUILD_ID/all CSS/
+fonts/source classes and installed runtime package identities. Native node
+version plus seven installed package versions/raw package JSON hashes are
+recorded in initial/final proof; their bytes match root and versions match lock.
+`finalBindings` records and asserts exact complete equality; mismatch is saved
+as failure alongside original evidence and cleanup, not discarded or silently
+accepted. Port-closed/browser-exited checks and prior failure preservation remain.
+
+These are source-only amendments. No narrow/type/lint/build/browser baseline or
+acceptance has run. Earlier75e is preserved as an immutable superseded harness
+checkpoint. Independent exact review and explicit resource/UI release remain
+required; format decision and app/persistence activation remain pending.

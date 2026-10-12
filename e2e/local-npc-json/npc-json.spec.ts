@@ -26,6 +26,9 @@ test("provisional local NPC JSON profile with guarded production assets and priv
     expect(result.localOnly).toBe(true); expect(result.provisionalFormat).toBe(true); expect(result.simulatedAuth).toBe(false);
     expect(result.liveSupabase).toBe(false); expect(result.persistence).toBe("unavailable");
     expect(result.artifacts.npcJsonSourceCheckpoint).toBe("0f3ee6647f0b15f96a58c8d70a32c828b14a3476");
+    expect(result.artifacts.npcJsonPreviewCheckpoint).toBe("101027b5b5ae21cd05dcbf6979df9c626ba8aa71");
+    expect(result.finalBindings.matchedRenderedProof).toBe(true); expect(result.finalBindings.artifacts).toEqual(result.artifacts);
+    expect(result.artifacts.installedRuntime.packages).toHaveLength(7);
     expect(result.artifacts.sourceCommit).toBe(result.artifacts.currentRootHead);
     expect(result.artifacts.dependencyLockSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.artifacts.metafileSha256).toMatch(/^[a-f0-9]{64}$/);

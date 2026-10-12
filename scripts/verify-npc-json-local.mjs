@@ -105,11 +105,20 @@ try {
 const closed = target => target ? new Promise(resolve => { const socket = net.connect({ host: "127.0.0.1", port: target });
   socket.setTimeout(2_000, () => { socket.destroy(); resolve(false); }); socket.once("connect", () => { socket.destroy(); resolve(false); }); socket.once("error", error => resolve(error.code === "ECONNREFUSED")); }) : Promise.resolve(true);
 const portClosed = await closed(port), browserPortClosed = await closed(browserPort), browserExited = !browserServer || browserServer.process().exitCode !== null;
+let finalBindings;
+try {
+  const finalProduction = await loadNpcJsonAssets(root, manifestPath);
+  Object.assign(finalProduction.artifacts, await bindNpcJsonInputs(root, bundle.metafile, captured, finalProduction.artifacts));
+  assert.deepEqual(finalProduction.artifacts, production.artifacts, "Final complete production/source/runtime envelope differs from rendered proof");
+  finalBindings = { matchedRenderedProof: true, artifacts: finalProduction.artifacts };
+} catch (error) {
+  failure ??= error;
+  finalBindings = { matchedRenderedProof: false, failure: error.message };
+}
 await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ liveSupabase: false, persistence: "unavailable", simulatedAuth: false, localOnly: true, provisionalFormat: true,
-  artifacts: production.artifacts, taskProcess, browserProcess, resourcesBefore, resourcesAfter: npcResources(), portClosed, browserPortClosed, browserExited,
+  artifacts: production.artifacts, finalBindings, taskProcess, browserProcess, resourcesBefore, resourcesAfter: npcResources(), portClosed, browserPortClosed, browserExited,
   evidence, screenshots, fontEvidence, assetRequests, pageErrors, blockedRequests, unexpectedRequests, diagnostics, failure: failure?.message ?? null,
   limits: "Provisional local-only JSON codec/review DTO and read-only actualNpcProfile. Native files, original-byte hashing and Unicode/offset refusal are real. Optional local result-delay is a fixture timing model. No app route/upload action/chooser, Auth/provider/network, SQL/staging/commit/import/save/navigation, persistence/authority or human-format approval. Production CSS/fonts/full transitive bundle/static source and executable helpers are byte-bound; authenticated Next shell absent; no fallback styles." }, null, 2));
-assert.deepEqual(await verifyNpcJsonHelpers(root), firstHelperProof);
 finished = true; if (process.connected) process.disconnect();
 assert.ok(portClosed && browserPortClosed && browserExited, "Task-owned private resources must be gone");
 if (failure) throw failure;
