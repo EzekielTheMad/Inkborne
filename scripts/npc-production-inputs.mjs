@@ -17,15 +17,29 @@ function assertHeadWorkingTree(root, relativePath) {
 }
 const inheritedPath = "scripts/passive-feature-production-assets.mjs";
 const inheritedAnchor = "5fedd622", inheritedBlob = "e4058f8a31cd911583a312e59fedcf4c3fd4adae";
+function checkoutRepresentation(root) {
+  const options = {};
+  for (const key of ["core.autocrlf", "core.eol", "core.safecrlf", "core.attributesfile"]) {
+    try { options[key] = git(root, ["config", "--show-origin", "--get", key]).toString().trim(); }
+    catch (error) { if (error.status !== 1) throw error; options[key] = null; }
+  }
+  const attributes = git(root, ["check-attr", "text", "eol", "filter", "working-tree-encoding", "ident", "--", inheritedPath]).toString().trim();
+  assert.ok(attributes.includes(`${inheritedPath}: filter: unspecified`), "No executable checkout filter may supply inherited helper bytes");
+  assert.ok(attributes.includes(`${inheritedPath}: working-tree-encoding: unspecified`), "Unexpected helper checkout encoding");
+  return { options, attributes };
+}
 async function verifyInheritedHelper(root) {
   const rootCheckout = path.resolve(root, "../equipment-verification");
   assert.equal(git(rootCheckout, ["status", "--porcelain", "--untracked-files=no"]).toString().trim(), "", "Root must be frozen clean");
   assert.equal(git(root, ["rev-parse", `${inheritedAnchor}:${inheritedPath}`]).toString().trim(), inheritedBlob);
   const canonical = git(root, ["cat-file", "blob", inheritedBlob]);
-  let executedSha256;
+  let executedSha256, representation;
   for (const checkout of [root, rootCheckout]) {
     assertHeadWorkingTree(checkout, inheritedPath);
     assert.equal(git(checkout, ["rev-parse", `HEAD:${inheritedPath}`]).toString().trim(), inheritedBlob);
+    const currentRepresentation = checkoutRepresentation(checkout);
+    if (representation) assert.deepEqual(currentRepresentation, representation, "Inherited helper worker/root checkout configuration differs");
+    representation = currentRepresentation;
     const raw = await fs.readFile(path.join(checkout, inheritedPath));
     // This repository checks text out as CRLF. Bind actual executed bytes to
     // Git's reviewed-blob checkout, not a guessed newline-normalized string.
@@ -35,7 +49,7 @@ async function verifyInheritedHelper(root) {
     executedSha256 = sha(raw);
   }
   return { relativePath: inheritedPath, reviewedAnchor: inheritedAnchor, reviewedGitBlobOid: inheritedBlob,
-    canonicalBlobSha256: sha(canonical), executedSha256, checkoutRepresentation: "git cat-file --filters of reviewed blob; raw worker/root equality" };
+    canonicalBlobSha256: sha(canonical), executedSha256, representation, checkoutRepresentation: "git cat-file --filters of reviewed blob; raw worker/root equality" };
 }
 // Reuse the reviewed complete CSS/font/clean-build/lock/installed-runtime validator.
 export async function loadNpcProductionAssets(root, manifestPath) {

@@ -97,6 +97,10 @@ Git's checkout-filtered reviewed blob and each other. Both canonical LF blob has
 and executed CRLF byte hash are recorded as a separate inherited-helper receipt,
 rechecked after bundling. Six owned harness files remain separately receipted.
 No speculative newline normalization or reliance on the helper's self-check.
+Narrow non-sensitive `core.autocrlf`/`core.eol`/`core.safecrlf`/attributes-file
+origins and effective text/eol/filter/encoding/ident attributes are recorded,
+required identical across worker/root and rechecked; executable custom filters
+and unexpected encoding refuse. No broad configuration or environment dump.
 The shared-fixture browser check now asserts the actual visible `Campaign shared`
 badge rather than claiming it solely from escaped text.
 
