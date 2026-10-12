@@ -200,3 +200,18 @@ manifest. No browser screenshots/checks are claimed. Actual DB/RLS/privacy,
 entitlements/concurrency/copy/lifecycle remain G2; private NPC authoring, supported
 import/sharing and DM instances are separate required R17 children. This bounded
 read-only foundation does not complete R17, M5 or beta acceptance.
+
+## Root integration and first browser attempt
+
+Integrated root `c18cf445b4ce7df24aa3e973330979f036f55c1e` passed
+`npm.cmd run check`: 322 files, 3,931 tests, typecheck and zero-warning lint,
+with four Vitest workers. All 375 recorded process identities were absent at
+cleanup. Its production build passed; all 24 recorded identities were absent.
+
+The first offline NPC browser attempt failed before browser or HTTP launch:
+esbuild could not resolve React from the synthetic native-link module because
+its plugin result lacked a resolution directory. That failed receipt remains
+preserved: 27 recorded identities, zero at cleanup, no browser acceptance.
+The harness now sets `resolveDir: root` for that module. Production components,
+fixtures, assertions and source guards are unchanged. Fresh build and browser
+acceptance on the corrected source are still pending.

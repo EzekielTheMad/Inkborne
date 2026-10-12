@@ -36,7 +36,7 @@ const bundle = await build({ entryPoints: [path.join(root, "e2e/local-npcs/fixtu
         if (args.path !== "next/link") throw Error(`Unapproved live boundary: ${args.path}`);
         return { path: args.path, namespace: "npc-offline" };
       });
-      builder.onLoad({ filter: /.*/, namespace: "npc-offline" }, () => ({ loader: "js", contents: "import React from 'react';export default function Link(props){return React.createElement('a',props)}" }));
+      builder.onLoad({ filter: /.*/, namespace: "npc-offline" }, () => ({ loader: "js", resolveDir: root, contents: "import React from 'react';export default function Link(props){return React.createElement('a',props)}" }));
     },
   }] });
 assert.ok(!Object.keys(bundle.metafile.outputs).some(file => file.endsWith(".css")), "Fallback/fixture CSS refused");
