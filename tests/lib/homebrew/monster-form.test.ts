@@ -84,7 +84,8 @@ describe("raw-preserving monster edit intent", () => {
     expect(changedMonsterFields(before, draft)).toEqual(["creature_type"]);
   });
   it("allows explicit optional clear but rejects undeclared changes, required clear, invalid and duplicated intent", () => {
-    const { description: _description, ...cleared } = cinderlitKite;
+    const cleared = { ...cinderlitKite };
+    delete cleared.description;
     expect(mergeMonsterEdit(cinderlitKite, cleared, ["description"])).not.toHaveProperty("description");
     expect(() => mergeMonsterEdit(cinderlitKite, cleared, [])).toThrow();
     expect(() => mergeMonsterEdit(cinderlitKite, { ...cinderlitKite, speed: {} }, ["speed"])).toThrow();
