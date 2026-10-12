@@ -199,6 +199,91 @@ concrete schema fields/bounds/defaults before code. This child is read-only sche
 stat-block/Library foundation; authoring, import and DM campaign instances remain
 required later children, with real privacy/version acceptance still open.
 
+### Latest combined checkpoints — 2026-10-12 UTC
+
+R21.1b source `7209772` and scoped fixture correction `92e3045` were independently
+approved and integrated as `2d627f7` / `0b8ade1`. Casting uses the current loaded
+acquisition, exact class pin and validated per-class evaluated ability; dialog and
+execution share MOD/DC/attack math. The committed-input guard rejects stale local
+callbacks after source/math/viewer changes; it is not a database revision fence.
+The `0b8ade1` combined check passed **265 files / 2,799 tests**, typecheck and lint.
+
+R06.2 source `e6513b2`, precision correction `c2df697` and their frozen contract/
+reproduction were reviewed and integrated through `b4496ce`. Explicit effects/scores
+representation prevents duplicate new-import awards; unmarked legacy arithmetic
+and snapshots are retained with a visible ambiguity notice. Zero-only metadata
+does not show that notice. Saved ASI and raw-only subrace differences remain
+separately attributed and disclosed; they are not silently removed or repaired.
+The combined five-file evaluator/provider/durable-model run passed **143 tests**.
+
+R16.1 concrete contract `9d53f08` and read-only source `7e25581` were independently
+approved and integrated as `ca65bfb` / `cda325a`. Strict format-one declared monster
+data has a **65,536-byte validated-data** budget (not a transport/envelope cap),
+ordered entries and inert text; declared saves/attacks are not recalculated.
+Worker evidence was 12 files / 206 tests, typecheck and lint. No authoring/import/
+campaign instance or real permission/persistence acceptance follows from it.
+
+The first combined `cda325a` check failed all 12 legacy ability-save recovery
+cases because their partial system fixture omitted required schema collections.
+Root fixture-only `2e20658` completes typed empty collections; all original
+assertions remain, and the 12 focused cases pass. A first repeat then hit one
+five-second fixture-cleanup timeout; its 27-case file passes alone. A recorded
+four-worker repeat (`VITEST_MAX_WORKERS=4`, unchanged npm scripts) passed **274
+files / 3,023 tests**, typecheck and zero-warning lint on clean `2e20658`.
+Synthetic production build on that same clean SHA passed in 45 seconds.
+Both failed receipts remain in `../verification/launch-20261012/history/`;
+successful check/build owned-process and listener readbacks are empty.
+
+Root casting fixture repair `159441e` fixes absent optional CSS bundle output and
+uses an intercepted loopback document with real secure-context UUID APIs.
+The six actual provider/dialog behavior cases pass: strong/weak Wizard/Warlock
+math, preview/execution/roll agreement, slot/concentration/effect writes, and
+missing-source/viewer denial. Earlier setup and blank-origin failures are retained.
+Persistence is in-memory and styling simplified, so this is not production layout,
+server authority, RLS or durable-roll proof. Product was `2e20658` with the exact
+test repair subsequently committed as `159441e`; do not call that browser run a
+clean `2e20658` source run. Its final owned-process/port readback is empty.
+
+R06 browser source `2060a30` / `5b15ae3` / selector repair `4f84db1` was independently
+inspected and integrated as `29c7f1b` / `ba911f2` / `8999361` (handoff `6c42f2e`).
+It passed **80 checks / 16 inspected screenshots** with actual builder consumers,
+transformer/canonical pins/evaluator, `2e20658` production CSS and loaded hashed
+local fonts. All matrix assertions remain; wrapped-label setup failures were
+retained before explicit label association. Errors/remotes/unexpected writes were
+zero; exact HTTP/Chrome ports and processes closed. Draft, navigation, persistence,
+full sheet shell and canonical subrace-score support remain unproved. The mobile
+Class rail screenshot partly shows its existing horizontal-scroll Level Up label;
+rail interaction/accessibility remains an R25 acceptance task, not a proved defect.
+Receipts are in `../r06-race-parity-worker/test-results/race-parity-local/`.
+
+R16 browser preparation `09f6af3` / successful-clean-build guard `2ebf857` were
+reviewed and integrated as `c8777bc` / `e5263ec`; root ran all **17 receipt controls**.
+The first real mobile run found a Library implicit grid track expanding to 10,432
+px around the full long title, giving body width 10,448 at a 390 px viewport.
+Independently approved one-class source fix `688944c` adds only `grid-cols-1`,
+preserving sm/xl columns, card behavior, full data and assertions; integrated as
+`f88d421`. The unchanged-build-assets before/after browser proof passed **20 checks**,
+including 62,138-byte multibyte/unbroken data and the complete final rule.
+Mobile body width is 390; errors/remotes/writes are zero, owned processes/ports
+closed. Root inspected small/final mobile screenshots. Mocked auth/data/native
+routing and padded shell do not prove actual Next/RLS/persistence or full M5.
+Immutable failure/pass receipts and all original build asset bytes/hashes are in
+`../verification/r16-mobile-overflow/`. Later combined source needs new gates/build.
+
+R21.1c subclass implementation is in its isolated worker after an independently
+approved revised plan preserving shipped object-tier grants. Locked install passed
+(804 packages); all four canonical parser/slot/ability baseline regressions failed
+before as intended. Focused implementation checks are now released; full/build/UI
+and source acceptance remain pending. Private monster plan `4bb6def` / `3e382d5`
+passed independent challenge and is integrated as `96ed8f9` / `1f1d1ef`. Standalone
+trait plan `3a4f216` / `29150bd` / `c229658` also passed independent challenge,
+including PostgreSQL version bounds, unchanged raw resource absence/null/zero and
+uncertain CREATE response controls. Both are released for scoped local code,
+not accepted implementations; their isolated writers hold heavy gates while the
+subclass worker owns the focused-check slot. G1 remains unanswered; a fresh
+read-only Docker version request still cannot connect to the Linux-engine pipe.
+No daemon startup, image pull, SQL execution, hosted or publication action occurred.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions
@@ -261,7 +346,7 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R13 M4 | Cross-type sharing, Homebrew filters/search/sort, custom-content-type registry UI. [Homebrew domain](../lib/homebrew), roadmap M4. I=P/-/T=P/G=P/D=H subset/A=open. | Extend selected type contracts without weakening isolation; verify registry-defined fields/evaluator compatibility and explicit unsupported mechanics. Public sharing is S3/R26, not implied by campaign sharing. |
 | R14 M4 | MPMB upload/static parse, validation/repair, audit, keep-both/replace, mandatory calculation preview and exact-pin character exit. [Parser/mapping](../lib/import/mpmb), [parity spec](specs/2026-07-21-mpmb-representative-parity.md), [T1](handoffs/2026-10-11-t1-e2e-drift.md). I=P/T=offline+H/G=yes/D=H/A=supported cases H, current open. | Publish explicit supported type/fixture matrix; extend documented gaps only with original schema/source evidence. Unsupported effect-coupled/candidate-less cases fail closed. Current owner/isolation/stale-preview/replace/race/calculation and builder-to-cast parity on a real approved target. Field-level merge was deliberately out of scope. |
 | R15 M4 | Entitlement-aware encyclopedia for all authenticated players/DMs. [Compendium contract](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [Library tests](../tests/app/library-page.test.tsx). I=yes baseline/T=H+local/G=yes/D=H #96/#97/A=H, extensions open. | Platform/private/campaign visibility and legacy redirects/state preservation current UAT; every new M4/M5 type joins the same catalog rather than DM-only browsing. |
-| R16 M5 | Monster schema/read-only stat block/catalog foundation source `7e25581` is under exact review; 206 focused tests/typecheck/lint passed in isolation. [Design scope](specs/2026-10-12-monster-foundation-plan.md). I=P worker/T=local/G=-/D=-/A=open. | Integrate only reviewed source, then real desktop/mobile geometry and combined gates. Private authoring, supported import, DM campaign instances and actual owner/player/DM/privacy/version acceptance remain separate required children. |
+| R16 M5 | Reviewed monster schema/read-only stat block/catalog source is integrated; 206 focused tests and 20 offline geometry checks passed, including the mobile grid fix. [Design scope](specs/2026-10-12-monster-foundation-plan.md). I=P/T=local+offline/G=foundation/D=-/A=open. | Reaccept latest combined source/build; implement reviewed private authoring, supported import and DM campaign instances. Actual owner/player/DM/privacy/version acceptance remains separately required. |
 | R17 M5 | Library NPCs distinct from character-attached relationship records. [Roadmap](ROADMAP.md), [existing narrative](../components/narrative). I=character relationships only/T=H subset/G=foundation/D=H subset/A=library open. | Library identity/personality/relationships + entitlement discovery/import and campaign DM management. Preserve current character privacy/copy records; no silent repurposing/backfill. |
 | R18 M5 | Character-tied companions (mounts, beast forms, summons). [Roadmap](ROADMAP.md), [character domain](../lib/character). I=-/U/T=-/G=-/D=-/A=open. | Explicit hybrid schema/ownership/lifecycle; character and campaign linkage, supported stat blocks, transformations/summon dependencies, discovery and persistence/denial tests. Use existing effects contracts; spec uncertain rule semantics before coding. |
 | R19 M5 | Expert/Spellcaster/Warrior sidekicks. [Roadmap](ROADMAP.md), [builder domain](../lib/builder). I=-/U/T=-/G=-/D=-/A=open. | Simplified archetype/level schemas and render/build/play behavior; entitled catalog/DM use and isolation/level/progression tests. Do not equate generic full-PC code with accepted sidekick rules. |

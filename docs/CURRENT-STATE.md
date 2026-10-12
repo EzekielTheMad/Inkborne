@@ -4,35 +4,42 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source `0c37775`
+on local branch `codex/launch-integration-20261011`. Product source through `f88d421`
 includes reviewed private magic-item/item/weapon/armor/core-race authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
-single-source slots, default-disabled pure hit-die modeling, patched production
-dependencies and runtime fixture preparation. At `edac6d7`, combined check passed
-253 files / 2,605 tests, lint/typecheck, synthetic build and nine bounded offline
-configurations. Fresh combined check at `1cf00ca` passed 263 files / 2,754 tests
-after two legacy fixture repairs. Later canonical row-presence and development
-dependency patches need fresh combined gates; 43 core, 16 race and 10 drift
-offline checks passed after the harness repairs. Build reacceptance is continuing.
+single-source slots and per-acquisition casting math, explicit race-score
+representation, read-only monster schema/stat blocks/Library, default-disabled
+pure hit-die modeling, patched dependencies and runtime fixture preparation.
+Clean `2e20658` passed typecheck, zero-warning lint, **274 files / 3,023 tests**
+with four test workers, then a synthetic production build. Setup/fixture failures
+and one earlier five-second timeout are preserved and classified in the ledger.
+Six provider/dialog casting cases, 80 race parity checks and 20 monster geometry
+checks passed with explicit simulated-data/persistence boundaries. The mobile
+Library implicit grid overflow was reproduced and fixed; later harness/fix source
+has been integrated and awaits fresh combined check/build acceptance.
 See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
 exact source, reviews and open evidence. Original checkouts remain preserved.
 
 Victor selected all included milestones before beta, PDF importing before beta,
 and beta deferrals for Daggerheart/public publishing while retaining both in the
 total project backlog. P1-P3 dispositions and the first supported PDF input matrix
-remain explicit decisions. Durable gameplay starts with one trusted server roll
-and immutable lifetime receipt; deployment stays disabled until writer/database/
-recovery evidence passes.
+remain explicit decisions. The durable-gameplay contract uses one trusted server
+roll and immutable lifetime receipt; actual command/writer/database/recovery
+integration remains unimplemented and disabled.
 
-Per-class casting and race-score parity implementation, plus concrete monster
-schema design, are active in isolated worktrees. Development audit is now eight
+Subclass casting implementation is running focused checks in isolation. The
+independently approved private-monster and standalone trait authoring plans are
+released for scoped code. Trait CREATE uncertainty now has explicit retained-draft,
+check-Homebrew and no-automatic-retry acceptance controls.
+Development audit remains eight
 unpatched high findings / zero critical, production zero; no residual risk is
 accepted. Saved ASI parity remains a separate documented gap. The
 [concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
 is reviewable. G1 engine startup/image pulls were requested; no approval or runtime
 execution is inferred. G2 full SQL/fixture/ephemeral credential execution and G3-G5
 hosted/auth/publication/ops actions remain separately gated. No live or remote write
-has occurred in this continuation.
+has occurred in this continuation. A fresh read-only Docker request still finds
+the Linux-engine pipe unavailable; no startup or image pull was attempted.
 
 **Project-wide continuation:** use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) and the single [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) ledger. The bounded local queue is complete, not the project. Historical tested core `ada6c9b` and standalone M1 evidence remain indexed below. The magic-item slice is now reviewed/integrated locally; later local product changes require combined candidate acceptance. Continue ready documented milestone work while actual access/approval lanes are blocked.
 
