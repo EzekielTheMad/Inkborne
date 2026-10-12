@@ -50,6 +50,7 @@ export type Result = { code: number; stdout: string; stderr?: string };
 export type Transport = (command: Command) => Promise<Result>;
 type ProcessRecord = { pid: number; parentPid: number; cwd: string; executable: string; args: string[]; startedUTC: string; finishedUTC?: string };
 const processRecords: ProcessRecord[] = [];
+export const runtimeProcessRecords = () => structuredClone(processRecords);
 export type Journal = { manifestSha256: string; sourceSha: string; containerId: string; phase: "baseline" | "stage"; steps: { name: string; outcome: "passed" | "failed"; exitCode: number }[]; complete: boolean; audits: unknown[]; processes?: ProcessRecord[] };
 function refusal(message: string): never { throw new Error(`R07.1 refusal: ${message}`); }
 export const sha256 = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -106,7 +107,7 @@ function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) refusal("runtime object malformed");
   return value as Record<string, unknown>;
 }
-export async function verifyRuntime(transport: Transport, approval: RuntimeApproval) {
+export async function verifyRuntime(transport: Transport, approval: Pick<RuntimeApproval, "engineId" | "containerId" | "imageId" | "networkId">) {
   const engineId = parseJson(await checked(transport, docker(["info", "--format", "{{json .ID}}"]))) as string;
   if (engineId !== approval.engineId) refusal("wrong Docker daemon");
   const container = record(parseJson(await checked(transport, docker(["inspect", "--type", "container", "--format", inspectTemplate, approval.containerId]))));
@@ -136,10 +137,10 @@ export async function verifyRuntime(transport: Transport, approval: RuntimeAppro
         || ("source" in expected && ![normalize(expected.source), normalize(expected.source).replace(/^c:\//,"/run/desktop/mnt/host/c/")].includes(normalize(actual.Source)))) refusal("non-allowlisted writable/path/socket mount");
   }
 }
-function psql(approval: RuntimeApproval, sql: string) {
+export function psql(approval: Pick<RuntimeApproval, "containerId">, sql: string) {
   return docker(["exec", "-i", approval.containerId, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "postgres", "--dbname", "postgres", "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", "VERBOSITY=sqlstate", "--command", "SET statement_timeout='60s'; SET lock_timeout='5s';", "--file", "-"], sql, 120000);
 }
-async function auditCounts(transport: Transport, approval: RuntimeApproval, sql: string) {
+export async function auditCounts(transport: Transport, approval: Pick<RuntimeApproval, "containerId">, sql: string) {
   const audit = record(parseJson(await checked(transport, psql(approval, sql))));
   if (audit.database !== "postgres" || audit.actor !== "postgres" || !Array.isArray(audit.tables)) refusal("audit DB/role/table result malformed");
   const tables = audit.tables.map(record);
