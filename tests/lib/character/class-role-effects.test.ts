@@ -124,6 +124,26 @@ describe("C1 advisory class role classifier — no live producer, authorization 
   const model=result(value);expect(model.status).toBe("unavailable");expect(model.saveAvailability.wisdom.issues.some(issue=>issue.reason==="UNKNOWN_ROLE_GRAPH")).toBe(true);
   expect(model.excluded).toEqual([]);expect(model.evaluationEffects).toEqual(model.originalEffects);
  });
+ it.each(["independent-only","no-saves"] as const)("unselected extra class source with %s manifest cannot bypass graph denial",mode=>{
+  const value=classRoleFixture(), pin=structuredClone(secondary(value));pin.id=roleId(901);pin.content_id=roleId(902);pin.resolved.id=pin.content_id;
+  pin.resolved.slug="unselected-workshop-class";pin.resolved.name="Original unselected class";pin.resolved.data.saving_throws=[];
+  pin.resolved.effects=mode==="independent-only"?[{type:"grant",stat:"saving_throw_wisdom",value:"proficient",originalNotes:[2,1]}]:[];
+  value.sources.push(pin);value.manifests.push({schema_version:1,compiler_id:"class-save-occurrences-v1",content_id:pin.content_id,content_version:pin.content_version,
+   system_id:value.character.system_id,saving_throws_snapshot:[],effects_snapshot:structuredClone(pin.resolved.effects),occurrences:mode==="independent-only"?
+    [{effect_index:0,kind:"independent_save",ability:"wisdom",stat_slug:"saving_throw_wisdom",effect_snapshot:structuredClone(pin.resolved.effects[0])}]:[]});
+  const before=structuredClone(value),model=result(value);expect(model.status).toBe("unavailable");expect(model.role_state).toBe("unavailable");expect(model.excluded).toEqual([]);
+  for(const state of Object.values(model.saveAvailability)){expect(state.status).toBe("unavailable");expect(state.issues.some(issue=>issue.reason==="UNKNOWN_ROLE_GRAPH")).toBe(true);}
+  expect(model.originalSources).toEqual(before.sources);expect(model.originalEffects).toEqual(before.sources.flatMap(source=>source.resolved.effects));
+  expect(model.evaluationEffects).toEqual(model.originalEffects);expect(value).toEqual(before);
+ });
+ it("additional canonical nonclass independent source remains usable and ordered",()=>{
+  const value=classRoleFixture(), pin=structuredClone(value.sources.find(source=>source.resolved.content_type==="feat")!);
+  pin.id=roleId(903);pin.content_id=roleId(904);pin.resolved.id=pin.content_id;pin.resolved.slug="original-extra-practice";
+  pin.resolved.effects=[{type:"grant",stat:"saving_throw_intelligence",value:"proficient",orderedNotes:[2,1]}];value.sources.push(pin);
+  const before=structuredClone(value),model=result(value);expect(model.status).toBe("available");expect(model.saveAvailability.intelligence).toEqual({status:"available",issues:[]});
+  expect(save(value,model.evaluationEffects,"intelligence")).toBe(2);expect(model.evaluationEffects.at(-1)).toEqual(pin.resolved.effects[0]);
+  expect(model.originalSources).toEqual(before.sources);expect(model.originalEffects).toEqual(before.sources.flatMap(source=>source.resolved.effects));expect(value).toEqual(before);
+ });
  it("provisional A->remove->B/reorder/readback never seals an origin",()=>{
   const value=provisionalRoleFixture();expect(result(value).role_state).toBe("provisional");
   const removed=value.occurrences[0];removed.lifecycle="ended";removed.ended_at="2026-10-12T03:00:00Z";

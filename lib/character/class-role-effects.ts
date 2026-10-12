@@ -115,7 +115,13 @@ export function collectClassRoleEffects(input: unknown): ClassRoleCollection {
   const allAffected = new Set(analyses.flatMap(analysis => [...analysis.affected]));
   let reason = originReason(evidence);
   // Complete pin pairing first; missing/wrong actual raw graph cannot be made safe by a harmless substitute.
-  const missingGraph = evidence.occurrences.some(row => row.lifecycle !== "ended" && !character.classes.some(choice => choice.occurrence_id === row.id)) || character.classes.some(choice => {
+  const extraClassSource = analyses.some(({ pin }) => character.classes.filter(choice => {
+    const occurrence = evidence.occurrences.find(row => row.id === choice.occurrence_id);
+    return choice.slug === pin.resolved.slug && occurrence && occurrence.lifecycle !== "ended"
+      && occurrence.class_slug === choice.slug && occurrence.content_id === pin.content_id
+      && occurrence.content_version === pin.content_version && pin.context.source === "class";
+  }).length !== 1);
+  const missingGraph = extraClassSource || evidence.occurrences.some(row => row.lifecycle !== "ended" && !character.classes.some(choice => choice.occurrence_id === row.id)) || character.classes.some(choice => {
     const occurrence = evidence.occurrences.find(row => row.id === choice.occurrence_id);
     const pins = evidence.sources.filter(pin => pin.resolved.content_type === "class" && pin.resolved.slug === choice.slug);
     return !occurrence || occurrence.lifecycle === "ended" || (reason === null && occurrence.lifecycle !== "accepted")

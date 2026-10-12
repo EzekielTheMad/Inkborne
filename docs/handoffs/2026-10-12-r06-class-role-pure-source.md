@@ -122,3 +122,21 @@ and lifecycle cases are preserved. All corrections remain **UNRUN/UNVERIFIED**:
 no install/test/typecheck/lint/full/build/browser/SQL/PGlite/runtime operation due
 to root heavy hold. P1 authority/storage/fencing and C2 actual consumers are still
 required before any live repair or NEW class authoring claim.
+
+## Source-only exact reverse graph correction after f480d7e review
+
+Preserved05071d4/f480d7e immutable. Require EVERYraw class source to correspond
+to exactlyone selected occurrence with matching class slug/contentid/version,
+active lifecycle and class pin context, in addition to existing active-occurrence
+->choice and choice->exact-pin checks. An extra unselected class source now makes
+UNKNOWN_ROLE_GRAPH explicit even if its fully matched manifest contains only
+independent_save entries or no saving throws/effects at all. No empty affected
+set can turn a missing reverse binding into available. Broader deny is limited
+to this genuinely inconsistent class graph; complete graph with unrelated nonclass
+sources or narrowly invalid class ability manifests retains scoped availability.
+No raw grant is silently removed: original arrays preserved, projection has no
+exclusions when graph is unresolved. Prepared two unselected-class negative
+controls and an added nonclass independent positive control, with original ordered
+source/effect/metadata unchanged assertions. The previous scoped STR/WIS/DEX/INT
+and current unchanged flat-collector oracles remain. No tests/typecheck/lint or
+other heavy/runtime operations: root hold remains until reviewed release.
