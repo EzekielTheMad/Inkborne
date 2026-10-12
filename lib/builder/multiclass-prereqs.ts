@@ -58,7 +58,7 @@ export function evaluateMulticlassPrereq(
   classSlug: string,
   resolvedStats: Record<string, number>,
   selectedClasses: Array<{ slug: string }>,
-  mechanicsAvailable = true,
+  mechanicsAvailable = false,
 ): ClassPrereqResult {
   if (selectedClasses.some((c) => c.slug === classSlug)) {
     return {
@@ -128,7 +128,7 @@ export function multiclassPrereqsForAll(
   resolvedStats: Record<string, number>,
   selectedClasses: Array<{ slug: string }>,
   classes: ContentEntry[],
-  mechanicsAvailable = true,
+  mechanicsAvailable = false,
 ): ClassPrereqResult[] {
   return classes.map((c) => evaluateMulticlassPrereq(c.slug, resolvedStats, selectedClasses, mechanicsAvailable));
 }

@@ -14,6 +14,7 @@ interface ClassPickerSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   classes: ContentEntry[];
+  mechanicsAvailable?: boolean;
   resolvedStats: Record<string, number>;
   selectedClasses: Array<{ slug: string }>;
   levelsRemaining: number;
@@ -23,7 +24,7 @@ interface ClassPickerSheetProps {
 
 export function ClassPickerSheet(props: ClassPickerSheetProps) {
   const {
-    open, onOpenChange, classes, resolvedStats, selectedClasses, levelsRemaining,
+    open, onOpenChange, classes, resolvedStats, mechanicsAvailable, selectedClasses, levelsRemaining,
     onSelect, onCancel,
   } = props;
 
@@ -42,6 +43,7 @@ export function ClassPickerSheet(props: ClassPickerSheetProps) {
         <div className="overflow-y-auto px-4 pb-4">
           <ClassPickerPanel
             classes={classes}
+            mechanicsAvailable={mechanicsAvailable}
             resolvedStats={resolvedStats}
             selectedClasses={selectedClasses}
             levelsRemaining={levelsRemaining}

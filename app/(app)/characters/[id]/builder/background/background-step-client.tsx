@@ -38,6 +38,7 @@ interface BackgroundStepClientProps {
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
+    state?: Record<string, unknown>;
   };
   backgrounds: ContentEntry[];
   contentRefs: Array<{
@@ -537,6 +538,9 @@ export function BackgroundStepClient({
       {schema && (
         <div className="hidden lg:block">
           <StatPreview
+            state={character.state}
+            draft={isSavingBackground || hasDrafts || !!selectionError || missingSnapshot || conflictingPins || JSON.stringify(localChoices) !== JSON.stringify(character.choices) ||
+              (!!selectedOverride && (!pinnedBackground || selectedOverride.id !== pinnedBackground.id || selectedOverride.version !== pinnedBackground.version || JSON.stringify(selectedOverride.data) !== JSON.stringify(pinnedBackground.data) || JSON.stringify(selectedOverride.effects) !== JSON.stringify(pinnedBackground.effects)))}
             baseStats={character.base_stats ?? {}}
             effects={allEffects}
             schema={schema}

@@ -1,3 +1,4 @@
+// Pure numeric model controls explicitly assume admitted mechanics; no read/write authority proof.
 import { describe, expect, it } from "vitest";
 import { evaluate } from "@/lib/engine/evaluator";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
@@ -81,8 +82,8 @@ describe("R06.1 source-proven synthetic race-pin reproduction", () => {
     const classData = { "synthetic-test-class": { slug: "synthetic-test-class", data: { hit_die: 8 } } };
     expect(computeMaxHp(classes, classData, once.stats.constitution)).toBe(24);
     expect(computeMaxHp(classes, classData, dual.stats.constitution)).toBe(27);
-    expect(evaluateMulticlassPrereq("barbarian", once.stats, classes).state).toBe("not-met");
-    expect(evaluateMulticlassPrereq("barbarian", dual.stats, classes).state).toBe("met");
+    expect(evaluateMulticlassPrereq("barbarian", once.stats, classes, true).state).toBe("not-met");
+    expect(evaluateMulticlassPrereq("barbarian", dual.stats, classes, true).state).toBe("met");
   });
 
   it("a same-value feature effect is a separate source and continues to stack", () => {

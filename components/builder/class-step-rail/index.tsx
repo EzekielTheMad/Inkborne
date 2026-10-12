@@ -494,6 +494,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
               if (!next) setShowPicker(false);
             }}
             classes={classes}
+            mechanicsAvailable={mechanicsAvailable}
             resolvedStats={resolvedStats}
             selectedClasses={selectedClasses}
             levelsRemaining={levelsRemaining}
@@ -579,6 +580,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     mainPaneContent = (
       <ClassPickerPanel
         classes={classes}
+        mechanicsAvailable={mechanicsAvailable}
         resolvedStats={resolvedStats}
         selectedClasses={selectedClasses}
         levelsRemaining={levelsRemaining}

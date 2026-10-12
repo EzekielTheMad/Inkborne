@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CastDialog } from "@/components/sheet/spells/cast-dialog";
 import { CharacterProvider, useCharacter, useSpells, useRolls } from "@/lib/character/character-context";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import { originalAsiFixture, asiSchema } from "../../fixtures/r06-asi";
@@ -17,7 +18,7 @@ vi.mock("@/lib/supabase/inventory", () => ({ addInventoryItem: vi.fn(), updateIn
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => { throw new Error("No hosted calls in original casting guard fixture"); } }));
 vi.mock("@/lib/dice/roller", async original => { const originalDice = await original<typeof import("@/lib/dice/roller")>(); return { ...originalDice, executeRoll: vi.fn(originalDice.executeRoll) }; });
 let latest: ReturnType<typeof useCharacter> & ReturnType<typeof useSpells> & ReturnType<typeof useRolls>;
-function Probe() { const character = useCharacter(), spells = useSpells(), rolls = useRolls(); useEffect(() => { latest = { ...character, ...spells, ...rolls }; }); return null; }
+function Probe({ dialog = false }: { dialog?: boolean }) { const character = useCharacter(), spells = useSpells(), rolls = useRolls(); useEffect(() => { latest = { ...character, ...spells, ...rolls }; }); return dialog ? <CastDialog spell={spells.spells[0]} castability="full" open onClose={() => {}} /> : null; }
 function originalCasting() {
   const source = originalSubclassFixture(3), base = originalAsiFixture();
   const refs = [source.contentRefs[0], originalSubclass(originalSubclassData(true))];
@@ -27,12 +28,12 @@ function originalCasting() {
   const evidence: AsiEvidence = { status: "complete", character_id: character.id, system_id: character.system_id, refs, grants: [] };
   return { character, evidence, refs, spells };
 }
-function Fixture({ source, incomplete = false }: { source: ReturnType<typeof originalCasting>; incomplete?: boolean }) {
+function Fixture({ source, incomplete = false, dialog = false }: { dialog?: boolean; source: ReturnType<typeof originalCasting>; incomplete?: boolean }) {
   return <CharacterProvider character={source.character} schema={asiSchema} contentRefs={source.refs} contentSnapshotsComplete={!incomplete}
     initialState={source.character.state} initialSpells={source.spells} initialInventory={[]} classData={{ warden: { slug: "warden", data: { hit_die: 10 } } }}
     allEffects={source.refs.flatMap(ref => ref.content_definitions.effects)} baseStatsWithLevel={source.character.base_stats}
     structuredSources={buildCharacterStructuredSources(source.refs, 3, { character: source.character, evidence: incomplete ? { status: "unavailable", reason: "incomplete_evidence" } : source.evidence })}
-    isOwner isDm={false} hasSheet maxHp={24} primaryColor={null} onPrimaryColorChange={() => {}}><Probe /></CharacterProvider>;
+    isOwner isDm={false} hasSheet maxHp={24} primaryColor={null} onPrimaryColorChange={() => {}}><Probe dialog={dialog} /></CharacterProvider>;
 }
 beforeEach(() => vi.clearAllMocks()); afterEach(cleanup);
 describe("actual provider casting/preparation committed ASI mechanics, persistence simulated", () => {
@@ -49,6 +50,18 @@ describe("actual provider casting/preparation committed ASI mechanics, persisten
     await expect(retained.updateSpell(source.spells[0].id, { is_prepared: false })).rejects.toThrow(/changed/);
     await expect(retained.castSpell(source.spells[0], { type: "slot", level: 1 })).rejects.toThrow(/changed/);
     expect(executeRoll).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled(); expect(updateCharacterSpell).not.toHaveBeenCalled(); expect(updateCharacterState).not.toHaveBeenCalled();
+  });
+  it("actual retained CastDialog result refuses changed ability inputs before RNG/log after confirmed cast", async () => {
+    const source = originalCasting(), view = render(<Fixture source={source} dialog />);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Cast" })));
+    expect(screen.getByRole("button", { name: /Roll Attack/ })).toBeInTheDocument();
+    expect(updateCharacterState).toHaveBeenCalledTimes(1);
+    const changed = { ...source, character: { ...source.character, base_stats: { ...source.character.base_stats, intelligence: 18 } } };
+    view.rerender(<Fixture source={changed} dialog />);
+    vi.mocked(updateCharacterState).mockClear();
+    fireEvent.click(screen.getByRole("button", { name: /Roll Attack/ }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/changed/);
+    expect(executeRoll).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled(); expect(updateCharacterState).not.toHaveBeenCalled();
   });
   it("incomplete evidence refuses casting/preparation before DAL or RNG", async () => {
     const source = originalCasting(); render(<Fixture source={source} incomplete />);

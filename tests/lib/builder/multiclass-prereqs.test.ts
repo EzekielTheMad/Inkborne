@@ -1,3 +1,4 @@
+// Pure numeric model controls explicitly assume admitted mechanics; no read/write authority proof.
 import { describe, it, expect } from "vitest";
 import {
   MULTICLASS_PREREQ_TABLE,
@@ -41,13 +42,13 @@ describe("evaluateMulticlassPrereq", () => {
   };
 
   it("returns met when all `all` thresholds are hit", () => {
-    const result = evaluateMulticlassPrereq("paladin", stats13, []);
+    const result = evaluateMulticlassPrereq("paladin", stats13, [], true);
     expect(result.state).toBe("met");
     expect(result.line).toBe("STR 13 · met");
   });
 
   it("returns not-met when any `all` threshold misses", () => {
-    const result = evaluateMulticlassPrereq("paladin", { ...stats13, charisma: 12 }, []);
+    const result = evaluateMulticlassPrereq("paladin", { ...stats13, charisma: 12 }, [], true);
     expect(result.state).toBe("not-met");
     expect(result.line).toBe("CHA 13 · not met");
     expect(result.unmet).toEqual([
@@ -56,41 +57,45 @@ describe("evaluateMulticlassPrereq", () => {
   });
 
   it("lists multiple unmet abilities when several `all` thresholds miss", () => {
-    const result = evaluateMulticlassPrereq("paladin", stats10, []);
+    const result = evaluateMulticlassPrereq("paladin", stats10, [], true);
     expect(result.state).toBe("not-met");
     expect(result.line).toBe("STR 13 · not met");
     expect(result.unmet?.length).toBe(2);
   });
 
   it("returns met for Fighter when only one of the `any` thresholds is hit", () => {
-    const result = evaluateMulticlassPrereq("fighter", { ...stats10, dexterity: 13 }, []);
+    const result = evaluateMulticlassPrereq("fighter", { ...stats10, dexterity: 13 }, [], true);
     expect(result.state).toBe("met");
     expect(result.line).toBe("DEX 13 · met");
   });
 
   it("returns not-met for Fighter when neither `any` threshold is hit", () => {
-    const result = evaluateMulticlassPrereq("fighter", stats10, []);
+    const result = evaluateMulticlassPrereq("fighter", stats10, [], true);
     expect(result.state).toBe("not-met");
     expect(result.line).toBe("STR 13 or DEX 13 · not met");
   });
 
   it("returns already-in-build when selectedClasses contains the slug", () => {
-    const result = evaluateMulticlassPrereq("paladin", stats13, [{ slug: "paladin" }]);
+    const result = evaluateMulticlassPrereq("paladin", stats13, [{ slug: "paladin" }], true);
     expect(result.state).toBe("already-in-build");
     expect(result.line).toBe("Already in this build");
   });
 
   it("uses STR/DEX/CON/INT/WIS/CHA abbreviations in the line", () => {
-    expect(evaluateMulticlassPrereq("rogue", stats13, []).line).toBe("DEX 13 · met");
-    expect(evaluateMulticlassPrereq("wizard", stats13, []).line).toBe("INT 13 · met");
-    expect(evaluateMulticlassPrereq("cleric", stats13, []).line).toBe("WIS 13 · met");
-    expect(evaluateMulticlassPrereq("bard", stats13, []).line).toBe("CHA 13 · met");
-    expect(evaluateMulticlassPrereq("barbarian", stats13, []).line).toBe("STR 13 · met");
+    expect(evaluateMulticlassPrereq("rogue", stats13, [], true).line).toBe("DEX 13 · met");
+    expect(evaluateMulticlassPrereq("wizard", stats13, [], true).line).toBe("INT 13 · met");
+    expect(evaluateMulticlassPrereq("cleric", stats13, [], true).line).toBe("WIS 13 · met");
+    expect(evaluateMulticlassPrereq("bard", stats13, [], true).line).toBe("CHA 13 · met");
+    expect(evaluateMulticlassPrereq("barbarian", stats13, [], true).line).toBe("STR 13 · met");
   });
 
-  it("missing ability score (e.g. undefined) is treated as 0 (not met)", () => {
-    const result = evaluateMulticlassPrereq("paladin", {} as Record<string, number>, []);
-    expect(result.state).toBe("not-met");
+  it("missing ability score is unavailable rather than defaulted to0", () => {
+    const result = evaluateMulticlassPrereq("paladin", {} as Record<string, number>, [], true);
+    expect(result.state).toBe("unavailable");
+  });
+  it("omitted or false admission never authorizes an unselected candidate", () => {
+    expect(evaluateMulticlassPrereq("barbarian", stats13, []).state).toBe("unavailable");
+    expect(evaluateMulticlassPrereq("barbarian", stats13, [], false).state).toBe("unavailable");
   });
 });
 
@@ -105,7 +110,7 @@ describe("multiclassPrereqsForAll", () => {
       classEntry("barbarian", "Barbarian"),
       classEntry("wizard", "Wizard"),
     ];
-    const results = multiclassPrereqsForAll(stats, [], classes);
+    const results = multiclassPrereqsForAll(stats, [], classes, true);
     expect(results).toHaveLength(2);
     expect(results.map((r: ClassPrereqResult) => r.classSlug)).toEqual(["barbarian", "wizard"]);
   });
@@ -115,13 +120,13 @@ describe("multiclassPrereqsForAll", () => {
       classEntry("wizard", "Wizard"),
       classEntry("barbarian", "Barbarian"),
     ];
-    const results = multiclassPrereqsForAll(stats, [], classes);
+    const results = multiclassPrereqsForAll(stats, [], classes, true);
     expect(results.map((r) => r.classSlug)).toEqual(["wizard", "barbarian"]);
   });
 
   it("respects selectedClasses for the already-in-build state", () => {
     const classes = [classEntry("barbarian", "Barbarian")];
-    const results = multiclassPrereqsForAll(stats, [{ slug: "barbarian" }], classes);
+    const results = multiclassPrereqsForAll(stats, [{ slug: "barbarian" }], classes, true);
     expect(results[0].state).toBe("already-in-build");
   });
 });

@@ -7,6 +7,7 @@ import type { ContentEntry } from "@/components/builder/content-browser";
 
 interface ClassPickerPanelProps {
   classes: ContentEntry[];
+  mechanicsAvailable?: boolean;
   resolvedStats: Record<string, number>;
   selectedClasses: Array<{ slug: string }>;
   levelsRemaining: number;
@@ -18,13 +19,14 @@ interface ClassPickerPanelProps {
 export function ClassPickerPanel({
   classes,
   resolvedStats,
+  mechanicsAvailable = false,
   selectedClasses,
   levelsRemaining,
   onSelect,
   onCancel,
   chrome = "default",
 }: ClassPickerPanelProps) {
-  const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes);
+  const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes, mechanicsAvailable);
 
   return (
     <section
