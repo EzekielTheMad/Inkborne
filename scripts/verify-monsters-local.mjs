@@ -129,7 +129,7 @@ await build({
   } }],
 });
 
-const evidence = [], pageErrors = [], blockedRequests = [], unexpectedRequests = [], assetRequests = [];
+const evidence = [], pageErrors = [], blockedRequests = [], unexpectedRequests = [], assetRequests = [], layoutFailures = [], layoutSamples = [];
 let browser, browserServer, browserProcess, browserControlPort, activePage, failure;
 let stopping = false;
 process.on("message", message => {
@@ -170,7 +170,36 @@ async function keyboardActivate(page, locator) {
   throw new Error("Expected link was not keyboard reachable");
 }
 async function layout(page) {
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), true, "Horizontal body overflow");
+  const dimensions = await page.evaluate(() => {
+    const viewport = document.documentElement.clientWidth;
+    const details = node => {
+      const box = node.getBoundingClientRect(), css = getComputedStyle(node);
+      return { tag: node.tagName, className: node.className, text: node.textContent?.slice(0, 80),
+        left: box.left, right: box.right, width: box.width, height: box.height,
+        clientWidth: node.clientWidth, scrollWidth: node.scrollWidth,
+        display: css.display, minWidth: css.minWidth, widthRule: css.width,
+        whiteSpace: css.whiteSpace, overflowWrap: css.overflowWrap, overflowX: css.overflowX,
+        gridTemplateColumns: css.gridTemplateColumns, flexShrink: css.flexShrink };
+    };
+    const offenders = [...document.querySelectorAll('body *')].filter(node => {
+      const box = node.getBoundingClientRect(); return box.width > 0 && (box.right > viewport + 1 || box.left < -1);
+    }).map(node => ({ ...details(node), ancestors: Array.from((function* () {
+      for (let current = node.parentElement, count = 0; current && count < 5; current = current.parentElement, count++) yield details(current);
+    })()) })).sort((a, b) => b.right - a.right).slice(0, 30);
+    const resultsGrid = document.querySelector('a[href^="/library/"]')?.parentElement;
+    return { viewport, documentWidth: document.documentElement.scrollWidth, pathname: location.pathname,
+      resultsGrid: resultsGrid ? details(resultsGrid) : null, offenders };
+  });
+  layoutSamples.push({ viewport: dimensions.viewport, documentWidth: dimensions.documentWidth,
+    pathname: dimensions.pathname, resultsGrid: dimensions.resultsGrid });
+  if (dimensions.documentWidth > dimensions.viewport + 1) {
+    layoutFailures.push(dimensions);
+    console.log(JSON.stringify({ layoutFailure: { viewport: dimensions.viewport, documentWidth: dimensions.documentWidth,
+      pathname: dimensions.pathname, diagnosticFile: path.join(output, 'failure-layout.json'),
+      offenders: dimensions.offenders.slice(0, 3).map(({ tag, className, width, right, minWidth }) => ({ tag, className, width, right, minWidth })) } }));
+    await fs.writeFile(path.join(output, 'failure-layout.json'), JSON.stringify(dimensions, null, 2));
+  }
+  assert.equal(dimensions.documentWidth <= dimensions.viewport + 1, true, "Horizontal body overflow");
 }
 async function fonts(page) {
   return page.evaluate(async () => {
@@ -293,7 +322,7 @@ const browserExited = !browserServer || browserServer.process().exitCode !== nul
 await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ liveSupabase: false,
   auth: "mocked local account", persistence: "unavailable", routing: "native anchors/GET replacing Next navigation", appShell: "local padded wrapper, not authenticated application shell",
   artifacts, taskProcess, browserProcess, portClosed, browserPortClosed, browserExited,
-  evidence, pageErrors, blockedRequests, unexpectedRequests, assetRequests, failure: failure?.message ?? null }, null, 2));
+  evidence, pageErrors, blockedRequests, unexpectedRequests, assetRequests, layoutFailures, layoutSamples, failure: failure?.message ?? null }, null, 2));
 if (process.connected) process.disconnect();
 assert.equal(portClosed, true); assert.equal(browserPortClosed, true); assert.equal(browserExited, true);
 if (failure) throw failure;
