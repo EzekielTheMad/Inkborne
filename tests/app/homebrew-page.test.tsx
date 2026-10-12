@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedMagicItems: vi.fn(),
   listOwnedItems: vi.fn(),
   listOwnedWeapons: vi.fn(),
+  listOwnedArmors: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -20,6 +21,7 @@ vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
 vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
   listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
 }));
+vi.mock("@/lib/supabase/homebrew-armors-server", () => ({ listOwnedHomebrewArmors: mocks.listOwnedArmors }));
 vi.mock("@/lib/supabase/homebrew-weapons-server", () => ({ listOwnedHomebrewWeapons: mocks.listOwnedWeapons }));
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({ listOwnedHomebrewItems: mocks.listOwnedItems }));
 vi.mock("@/lib/supabase/homebrew-magic-items-server", () => ({
@@ -49,6 +51,7 @@ describe("HomebrewPage", () => {
     mocks.listOwnedMagicItems.mockResolvedValue([]);
     mocks.listOwnedItems.mockResolvedValue([]);
     mocks.listOwnedWeapons.mockResolvedValue([]);
+    mocks.listOwnedArmors.mockResolvedValue([]);
   });
 
   it("shows each authoring section with its versioned homebrew links", async () => {
@@ -157,6 +160,7 @@ describe("HomebrewPage", () => {
     expect(screen.getAllByRole("link", { name: "Create magic item" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create item" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create weapon" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Create armor" })).toHaveLength(2);
   });
 
   it("keeps available content visible when one content type fails to load", async () => {
@@ -209,6 +213,23 @@ describe("HomebrewPage", () => {
     mocks.listOwnedWeapons.mockRejectedValue(new Error("weapon read failed"));
     render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByText("Your homebrew weapons could not be loaded.")).toBeVisible();
+    expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
+  });
+
+  it("discovers private armor and its editable version", async () => {
+    mocks.listOwnedArmors.mockResolvedValue([{ id: "88888888-8888-4888-8888-888888888888", name: "Courier mail", version: 2,
+      data: { armor_category: "Medium", armor_class: { base: 14, dex_bonus: true, max_bonus: 2 } } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("My armor")).toBeVisible();
+    expect(screen.getByText("AC 14 + Dex (max +2)")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Courier mail/ })).toHaveAttribute("href", "/homebrew/armors/88888888-8888-4888-8888-888888888888/edit");
+    expect(screen.getByRole("link", { name: "Create armor" })).toHaveAttribute("href", "/homebrew/armors/new");
+  });
+
+  it("reports armor read failure separately from an empty catalog", async () => {
+    mocks.listOwnedArmors.mockRejectedValue(new Error("armor read failed"));
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Your homebrew armor could not be loaded.")).toBeVisible();
     expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
 });
