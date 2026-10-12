@@ -1,3 +1,4 @@
+import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
 import { useEffect, useState } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -43,15 +44,19 @@ function fixture(options: { level?: number; prepared?: boolean; viewer?: boolean
   const target = input.spells[0];
   const totalLevel = input.character.choices.classes.reduce((sum, entry) => sum + entry.level, 0);
   const raw = structuredClone(stored);
-  const schema = { ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }],
-    derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 2 }, { slug: "armor_class", name: "Armor class", base: 10 }],
+  const schema = { ability_scores: providerAbilities,
+    derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 2 }, { slug: "armor_class", name: "Armor class", base: 10 }, { slug: "initiative", name: "Initiative", base: 0 }],
     skills: [], proficiency_levels: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
   if (options.mathProblem === "missing") schema.ability_scores = schema.ability_scores.filter(ability => ability.slug !== "intelligence");
-  if (options.mathProblem === "duplicate") schema.ability_scores.push({ ...schema.ability_scores[0] });
-  const provider = () => <CharacterProvider character={{ ...input.character, user_id: subclassOwnerId, name: "Original Warden", level: totalLevel, state: raw, narrative: {}, base_stats: {}, game_systems: { id: input.character.system_id, name: "Original local system" } } as never}
+  if (options.mathProblem === "duplicate") schema.ability_scores = [...schema.ability_scores, { ...schema.ability_scores.find(ability => ability.slug === "intelligence")! }];
+  const baseStats = { ...providerBase, intelligence: options.mathProblem === "nonfinite" ? Infinity : 14, charisma: 20 };
+  const provider = () => {
+    const character = { ...input.character, user_id: subclassOwnerId, name: "Original Warden", level: totalLevel, state: raw, narrative: {}, base_stats: baseStats, game_systems: { id: input.character.system_id, name: "Original local system" } };
+    return <CharacterProvider character={character as never}
     schema={schema} contentRefs={input.contentRefs} contentSnapshotsComplete initialState={raw} initialInventory={[]} initialSpells={input.spells}
     classData={Object.fromEntries(input.contentRefs.filter(ref => ref.content_definitions.content_type === "class").map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
-    allEffects={[]} baseStatsWithLevel={{ level: totalLevel, intelligence: options.mathProblem === "nonfinite" ? Infinity : 14, charisma: 20 }} structuredSources={{}} isOwner={!options.viewer} isDm={!!options.viewer} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe target={target} /></CharacterProvider>;
+    allEffects={[]} baseStatsWithLevel={{ ...baseStats, level: totalLevel }} structuredSources={providerSources(character, input.contentRefs)} isOwner={!options.viewer} isDm={!!options.viewer} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe target={target} /></CharacterProvider>;
+  };
   const view = render(provider());
   return { input, target, refresh: () => view.rerender(provider()) };
 }
@@ -63,7 +68,7 @@ beforeEach(() => {
 describe("actual provider subclass source", () => {
   it.each(["missing", "duplicate", "nonfinite"] as const)("correction-regression makes %s active caster math unavailable consistently in preparation, summary and print", async mathProblem => {
     const { target } = fixture({ prepared: true, mathProblem });
-    expect(spells.slotResolution.status).toBe("available"); expect(rest.canLongRest).toBe(true);
+    expect(spells.slotResolution.status).toBe("unavailable"); expect(rest.canLongRest).toBe(false);
     expect(spells.casterInfo).toMatchObject({ isCaster: true, castingMathStatus: "unavailable", spellDc: null, spellAttackBonus: null, classes: [{ maxPrepared: null, castingMath: { status: "unavailable" } }] });
     expect(screen.getByText(/Casting values and preparation are unavailable/)).toBeInTheDocument();
     expect(screen.queryByTitle("Prepare")).not.toBeInTheDocument(); expect(screen.queryByRole("button", { name: "Cast Prism Mark" })).not.toBeInTheDocument();

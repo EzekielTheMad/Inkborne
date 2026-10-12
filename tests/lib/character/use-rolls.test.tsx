@@ -1,3 +1,4 @@
+import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
@@ -63,7 +64,7 @@ const mockCharacter = {
 } as unknown as CharacterWithSystem;
 
 const mockSchema = {
-  ability_scores: [],
+  ability_scores: providerAbilities,
   proficiency_levels: [],
   derived_stats: [],
   skills: [],
@@ -83,14 +84,15 @@ function renderWithProvider(
       character={mockCharacter}
       schema={mockSchema as never}
       contentRefs={[]}
+      contentSnapshotsComplete
       initialState={{} as never}
       initialInventory={[]}
       initialSpells={[]}
       initialRolls={initialRolls}
       classData={{} as never}
       allEffects={[]}
-      baseStatsWithLevel={{ level: 1 }}
-      structuredSources={{} as never}
+      baseStatsWithLevel={{ ...providerBase, level: 1 }}
+      structuredSources={providerSources(mockCharacter)}
       isOwner={true}
       isDm={false}
       hasSheet={true}
@@ -139,7 +141,7 @@ describe("useRolls()", () => {
               kind: "check",
               label: "Athletics Check",
               expression: "1d20+5",
-            });
+            }, { abilities: ["strength"] });
             // The result must be available synchronously.
             document.title = `total:${result.total}`;
           }}

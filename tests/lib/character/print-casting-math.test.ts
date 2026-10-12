@@ -9,7 +9,9 @@ describe("print uses the same validated casting math as execution", () => {
     if (problem === "duplicate") input.schema.ability_scores.push({ ...input.schema.ability_scores.find(ability => ability.slug === "intelligence")! });
     if (problem === "nonfinite") input.evalResult.stats.intelligence = Infinity;
     if (problem === "missing-proficiency") delete input.evalResult.computed.proficiency_bonus;
-    expect(() => buildCharacterPrintModel(input)).toThrow(/Casting values are unavailable/);
+    // Required math now refuses the snapshot before the caster-summary stage.
+    // The original no-output oracle remains: no invalid value reaches paper.
+    expect(() => buildCharacterPrintModel(input)).toThrow("Required saved mechanical values are unavailable");
   });
   it("uses evaluated ability scores rather than a divergent derived modifier", () => {
     const input = printFixture("caster"); input.evalResult.stats.intelligence_mod = 99;

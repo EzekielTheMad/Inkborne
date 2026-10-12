@@ -1,3 +1,4 @@
+import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { useEffect } from "react";
 import { act, render } from "@testing-library/react";
@@ -24,12 +25,14 @@ function Probe() {
   return null;
 }
 function Fixture() {
+  const character = { id: "local-character", system_id: "local-system", user_id: "local-owner", level: 2, state: baseline, choices: { classes: [{ slug: "fighter", level: 2 }] }, base_stats: providerBase, narrative: {} };
+  const refs = [pinnedSlotClass("fighter", 2, null, null)];
   return <CharacterProvider
-    character={{ id: "local-character", system_id: "local-system", user_id: "local-owner", state: baseline, choices: { classes: [{ slug: "fighter", level: 2 }] }, base_stats: {}, narrative: {} } as never}
-    schema={{ ability_scores: [], proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] } as never}
-    contentRefs={[pinnedSlotClass("fighter", 2, null, null)]} initialState={baseline} initialInventory={[]} initialSpells={[]}
+    character={character as never}
+    schema={{ ability_scores: providerAbilities, proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] } as never}
+    contentRefs={refs} contentSnapshotsComplete initialState={baseline} initialInventory={[]} initialSpells={[]}
     classData={{ fighter: { slug: "fighter", data: { hit_die: 10 } } } as never}
-    allEffects={[]} baseStatsWithLevel={{ level: 2, constitution: 10 }} structuredSources={{}}
+    allEffects={[]} baseStatsWithLevel={{ ...providerBase, level: 2 }} structuredSources={providerSources(character, refs)}
     isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}
   ><Probe /></CharacterProvider>;
 }

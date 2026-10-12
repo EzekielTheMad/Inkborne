@@ -1,3 +1,4 @@
+import { providerAbilities, providerSources } from "../../fixtures/provider-mechanics";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import {
@@ -6,6 +7,7 @@ import {
 } from "@/lib/character/character-context";
 import type { CharacterWithSystem } from "@/lib/types/character";
 import type { CharacterState } from "@/lib/types/character";
+import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 
 // Mock the supabase paths the provider imports.
 vi.mock("@/lib/sheet/update-state", () => ({
@@ -70,7 +72,7 @@ const mockCharacter = {
 } as unknown as CharacterWithSystem;
 
 const mockSchema = {
-  ability_scores: [],
+  ability_scores: providerAbilities,
   proficiency_levels: [],
   derived_stats: [],
   skills: [],
@@ -87,6 +89,7 @@ const classData = {
 } as never;
 
 const MAX_HP = 40;
+const contentRefs = [pinnedSlotClass("fighter", 3, null, null, "char-1", "system-1"), pinnedSlotClass("wizard", 2, null, null, "char-1", "system-1")];
 
 function renderWithProvider(
   Probe: React.ComponentType,
@@ -96,14 +99,15 @@ function renderWithProvider(
     <CharacterProvider
       character={mockCharacter}
       schema={mockSchema as never}
-      contentRefs={[]}
+      contentRefs={contentRefs}
+      contentSnapshotsComplete
       initialState={initialState as never}
       initialInventory={[]}
       initialSpells={[]}
       classData={classData}
       allEffects={[]}
       baseStatsWithLevel={{ ...mockCharacter.base_stats, level: 5 }}
-      structuredSources={{} as never}
+      structuredSources={providerSources(mockCharacter, contentRefs)}
       isOwner={true}
       isDm={false}
       hasSheet={true}

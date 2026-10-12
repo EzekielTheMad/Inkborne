@@ -1,14 +1,15 @@
 import type { CharacterPrintInput } from "@/lib/character/print-model";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { weaponDataSchema } from "@/lib/schemas/content-types/weapon";
+import { featureDataSchema } from "@/lib/schemas/content-types/feature";
 
 /** Original, rights-safe renderer fixtures. These model loaded evaluated values;
  * they do not establish rule-engine parity or live character hydration. */
 export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrintInput {
   const id = "11111111-1111-4111-8111-111111111111";
   const contentId = "22222222-2222-4222-8222-222222222222";
-  const definition = { id: contentId, system_id: "system", version: 3, name: "Lantern Step", slug: "lantern-step", content_type: "feature", source: "homebrew" as const, effects: [], data: { description: "Move quietly along a familiar route and guide your companions to shelter." } };
-  const ref = { feature_grant_id: null, id: "ref", character_id: id, content_id: contentId, content_version: 3, context: { dm_secret: "FORBIDDEN_CONTEXT" }, choice_source: null, created_at: "2026-10-11", content_definitions: definition } satisfies ContentRefWithContent;
+  const definition = { id: contentId, system_id: "system", version: 3, name: "Lantern Step", slug: "lantern-step", content_type: "feature", source: "homebrew" as const, effects: [], data: featureDataSchema.parse({ class: kind === "martial" ? "fighter" : "wizard", level: 1, description: "Move quietly along a familiar route and guide your companions to shelter.", feature_type: "passive" }) };
+  const ref = { feature_grant_id: null, id: "71111111-1111-4111-8111-111111111111", character_id: id, content_id: contentId, content_version: 3, context: { dm_secret: "FORBIDDEN_CONTEXT" }, choice_source: null, created_at: "2026-10-11", content_definitions: definition } satisfies ContentRefWithContent;
   const schema = {
     ability_scores: [{ slug: "strength", name: "Strength", abbr: "STR" }, { slug: "dexterity", name: "Dexterity", abbr: "DEX" }, { slug: "constitution", name: "Constitution", abbr: "CON" }, { slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "wisdom", name: "Wisdom", abbr: "WIS" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }],
     skills: [{ slug: "arcana", name: "Arcana", ability: "intelligence" }, { slug: "athletics", name: "Athletics", ability: "strength" }, { slug: "perception", name: "Perception", ability: "wisdom" }], proficiency_levels: [], derived_stats: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [],
@@ -26,7 +27,7 @@ export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrin
   ctx.inventory = [{ id: "item", character_id: id, content_id: null, content_version: null, name: "Courier's Rope", content_type: "equipment", quantity: 2, equipped: false, attuned: false, sort_order: 0, notes: "FORBIDDEN_ITEM_NOTE", custom_data: { weight: 5, description: "A sturdy rope marked at regular intervals.", secret: "FORBIDDEN_CUSTOM" }, created_at: "2026-10-11" }];
   if (kind === "martial") {
     const weapon = { ...definition, id: "33333333-3333-4333-8333-333333333333", name: "Roadwarden Blade", slug: "roadwarden-blade", content_type: "weapon", data: weaponDataSchema.parse({ weapon_category: "Martial", weapon_range: "Melee", damage: { dice: "1d8", type: "slashing" }, range: { normal: 5 }, properties: ["versatile"], two_handed_damage: { dice: "1d10", type: "slashing" }, weight: 3, source_refs: [] }) };
-    ctx.contentRefs.push({ ...ref, id: "weapon-ref", content_id: weapon.id, content_definitions: weapon });
+    ctx.contentRefs.push({ ...ref, id: "71111111-1111-4111-8111-111111111112", content_id: weapon.id, content_definitions: weapon });
     ctx.evalResult.grants.push({ type: "grant", stat: "martial_weapons", value: "proficient" });
     ctx.inventory.push({ ...ctx.inventory[0], id: "weapon-item", name: weapon.name, content_type: "weapon", quantity: 1, equipped: true, content_id: weapon.id, content_version: 3, content_definitions: weapon, custom_data: null });
   }
@@ -48,7 +49,7 @@ export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrin
     const paragraph = "Travelers mark safe paths with small lanterns. Follow the lights across the hillside, take shelter from the rain, and record the next landmark in your journal. ";
     ctx.contentRefs = Array.from({ length: 12 }, (_, index) => {
       const pinnedId = `55555555-5555-4555-8555-${String(index + 1).padStart(12, "0")}`;
-      return { ...ref, id: `ref-${index}`, content_id: pinnedId, content_definitions: { ...definition, id: pinnedId, name: `Road Lesson ${index + 1}`, data: { description: paragraph.repeat(index === 0 ? 50 : 3) + `FEATURE_END_${index + 1}` } } };
+      return { ...ref, id: `71111111-1111-4111-8111-${String(index + 1).padStart(12, "0")}`, content_id: pinnedId, content_definitions: { ...definition, id: pinnedId, name: `Road Lesson ${index + 1}`, data: { ...definition.data, description: paragraph.repeat(index === 0 ? 50 : 3) + `FEATURE_END_${index + 1}` } } };
     });
     ctx.inventory = Array.from({ length: 28 }, (_, index) => ({ ...ctx.inventory[0], id: `item-${index}`, name: `Travel Bundle ${index + 1}`, quantity: index + 1 }));
     ctx.spells = Array.from({ length: 14 }, (_, index) => {
@@ -56,5 +57,6 @@ export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrin
       return { ...ctx.spells[0], id: `spell-${index}`, content_id: pinnedId, name: `Lantern Pattern ${index + 1}`, content_definitions: { ...ctx.spells[0].content_definitions!, id: pinnedId, name: `Lantern Pattern ${index + 1}`, data: { ...ctx.spells[0].content_definitions!.data, description: paragraph.repeat(4) + `SPELL_END_${index + 1}` } } };
     });
   }
+  ctx.character.base_stats = Object.fromEntries(schema.ability_scores.map(ability => [ability.slug, ctx.evalResult.stats[ability.slug]]));
   return ctx;
 }

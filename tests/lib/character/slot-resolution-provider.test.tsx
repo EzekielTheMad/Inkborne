@@ -1,3 +1,4 @@
+import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
 import { useEffect } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -20,7 +21,7 @@ vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => false }));
 
 let spells: ReturnType<typeof useSpells>;
 let rest: ReturnType<typeof useRest>;
-const schema = { ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }], proficiency_levels: [], derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 2 }], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
+const schema = { ability_scores: providerAbilities, proficiency_levels: [], derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 2 }, { slug: "initiative", name: "Initiative", base: 0 }], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
 const cantrip = { id: "spell", name: "Original Spark", class_slug: "paladin", is_known: true, content_definitions: { slug: "original-spark", data: { level: 0, school: "evocation", components: [], range: "30 feet", casting_time: "1 action" } } } as unknown as CharacterSpell;
 function Probe({ dialogs }: { dialogs: boolean }) {
   const currentSpells = useSpells(), currentRest = useRest();
@@ -28,10 +29,12 @@ function Probe({ dialogs }: { dialogs: boolean }) {
   return <><SlotTracker /><CharacterPrintAction />{dialogs && <><RestDialog open onClose={() => {}} /><CastDialog open spell={cantrip} castability="full" onClose={() => {}} /></>}</>;
 }
 function fixture(refs: ContentRefWithContent[], choices = [{ slug: "paladin", level: 3 }], dialogs = false) {
-  return render(<CharacterProvider character={{ id: "local-character", system_id: "local-system", user_id: "owner", name: "Local Caster", level: 3, choices: { classes: choices }, state: {}, base_stats: {}, narrative: {} } as never}
+  const level = choices.reduce((sum, entry) => sum + entry.level, 0);
+  const character = { id: "local-character", system_id: "local-system", user_id: "owner", name: "Local Caster", level, choices: { classes: choices }, state: {}, base_stats: providerBase, narrative: {} };
+  return render(<CharacterProvider character={character as never}
     schema={schema as never} contentRefs={refs} contentSnapshotsComplete initialState={{ current_hp: 12, spell_slots_used: { "1": 1, pact: 1 } }} initialInventory={[]} initialSpells={[]}
     classData={Object.fromEntries(refs.map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
-    allEffects={[]} baseStatsWithLevel={{ level: 3, intelligence: 10, charisma: 10 }} structuredSources={{}} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe dialogs={dialogs} /></CharacterProvider>);
+    allEffects={[]} baseStatsWithLevel={{ ...providerBase, level }} structuredSources={providerSources(character, refs)} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe dialogs={dialogs} /></CharacterProvider>);
 }
 beforeEach(() => { vi.clearAllMocks(); });
 describe("real provider slot evidence and action guards", () => {

@@ -1,3 +1,4 @@
+import { providerAbilities, providerBase, providerSources, providerPassiveFeature } from "../../fixtures/provider-mechanics";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { Activity, useEffect, useRef } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -30,13 +31,13 @@ vi.mock("@/lib/supabase/inventory", () => ({ addInventoryItem: vi.fn(), updateIn
 vi.mock("@/lib/supabase/spells", () => ({ addCharacterSpell: vi.fn(), updateCharacterSpell: vi.fn(), removeCharacterSpell: vi.fn() }));
 vi.mock("@/lib/supabase/rolls", () => ({ insertRoll: vi.fn() }));
 
-const schema = { ability_scores: [], proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
+const schema = { ability_scores: providerAbilities, proficiency_levels: [], derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
 const refs = [
   pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0]),
   pinnedSlotClass("fighter", 1, null, null),
   pinnedSlotClass("barbarian", 1, null, null),
-  { content_definitions: { id: "ar", slug: "arcane-recovery", name: "Arcane Recovery", content_type: "feature", data: { class: "wizard", level: 1, usages: 1, recovery: "long rest" }, effects: [] } },
-  { content_definitions: { id: "wind", slug: "second-wind", name: "Second Wind", content_type: "feature", data: { class: "fighter", level: 1, usages: 3, recovery: "short rest" }, effects: [] } },
+  providerPassiveFeature(1, "arcane-recovery", "Arcane Recovery", "wizard", 1, "long rest"),
+  providerPassiveFeature(2, "second-wind", "Second Wind", "fighter", 3, "short rest"),
 ];
 type Handles = { rest: ReturnType<typeof useRest>; saves: ReturnType<typeof useCharacterState>; resources: ReturnType<typeof useResources>; spells: ReturnType<typeof useSpells>; effects: ReturnType<typeof useActiveEffects>; inventory: ReturnType<typeof useInventory>; concentration: ReturnType<typeof useConcentration> };
 let handles: Record<string, Handles>;
@@ -88,12 +89,13 @@ function Probe({ label, surface }: { label: string; surface: Surface }) {
   </>;
 }
 function Fixture({ raw, label = "sheet", surface = "none" }: { raw: CharacterState; label?: string; surface?: Surface }) {
+  const character = { id: "local-character", system_id: "local-system", user_id: "local-user", name: "Local Character", level: 5, state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }, { slug: "barbarian", level: 1 }] }, base_stats: providerBase, narrative: {} };
   return <CharacterProvider
-    character={{ id: "local-character", system_id: "local-system", user_id: "local-user", name: "Local Character", level: 4, state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }, { slug: "barbarian", level: 1 }] }, base_stats: {}, narrative: {} } as never}
-    schema={schema as never} contentRefs={refs as never}
+    character={character as never}
+    schema={schema as never} contentRefs={refs} contentSnapshotsComplete
     initialState={{ ...raw, temp_hp: 0 }} initialInventory={[]} initialSpells={[spell]}
     classData={{ wizard: { slug: "wizard", data: { hit_die: 6, spellcasting: { type: "full", ability: "intelligence" } } }, fighter: { slug: "fighter", data: { hit_die: 10 } }, barbarian: { slug: "barbarian", data: { hit_die: 12 } } } as never}
-    allEffects={[]} baseStatsWithLevel={{ level: 4, constitution: 10, intelligence: 10 }} structuredSources={{}}
+    allEffects={[]} baseStatsWithLevel={{ ...providerBase, level: 5 }} structuredSources={providerSources(character, refs)}
     isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}
   ><Probe label={label} surface={surface} /></CharacterProvider>;
 }

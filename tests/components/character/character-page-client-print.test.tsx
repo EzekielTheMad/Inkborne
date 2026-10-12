@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { printFixture } from "../../../e2e/print/fixtures";
 import { CharacterPageClient } from "@/components/character/character-page-client";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
+import { providerSources } from "../../fixtures/provider-mechanics";
 
 // Keep the real page client and provider; isolate the shell to the action under
 // test so unrelated editors do not invoke persistence.
@@ -14,9 +15,12 @@ vi.mock("@/components/character/character-shell", async () => {
 function renderPage(contentSnapshotsComplete: boolean | undefined) {
   const ctx = printFixture("martial");
   ctx.contentRefs.push(pinnedSlotClass("fighter", 5, null, null, ctx.character.id, ctx.character.system_id));
+  // This page-client boundary must use actual evaluated declared math, rather
+  // than the renderer fixture's preloaded output snapshot.
+  ctx.schema.derived_stats = [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }, { slug: "initiative", name: "Initiative", base: 1 }];
   return render(<CharacterPageClient character={ctx.character} schema={ctx.schema} evalResult={ctx.evalResult} contentRefs={ctx.contentRefs}
     contentSnapshotsComplete={contentSnapshotsComplete} initialState={ctx.state} maxHp={ctx.maxHp} allEffects={[]}
-    baseStatsWithLevel={{ ...ctx.evalResult.stats, level: 5 }} structuredSources={{ level: 5 }}
+    baseStatsWithLevel={{ ...ctx.character.base_stats, level: 5 }} structuredSources={providerSources(ctx.character, ctx.contentRefs)}
     isOwner isDm={false} hasSheet initialInventory={ctx.inventory} initialSpells={ctx.spells}
     classData={{ fighter: { slug: "fighter", data: { hit_die: 10 } } }} campaignPageBacklinks={[]} timelineEvents={[]} relationships={[]} />);
 }

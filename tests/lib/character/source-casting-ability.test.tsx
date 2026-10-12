@@ -1,3 +1,4 @@
+import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
 import { useEffect, useState } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -32,11 +33,15 @@ function Probe({ target }: { target: CharacterSpell }) {
 }
 function fixture(intelligence = 18, charisma = 10, options: { classSlug?: string; viewer?: boolean; missing?: boolean } = {}) {
   const input = castingAbilityFixture(intelligence, charisma), target = input.spells.find(row => row.class_slug === (options.classSlug ?? "warlock"))!;
-  let schema = { ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }], derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }], skills: [], proficiency_levels: [], resources: [], currencies: [], content_types: [], creation_steps: [], sheet_sections: [] };
-  const provider = () => <CharacterProvider character={{ ...input.character, name: "Original Multiclass Fixture", level: 6, state: structuredClone(stored), narrative: {}, base_stats: {} } as never}
-    schema={schema} contentRefs={input.contentRefs} initialState={structuredClone(stored)} initialInventory={[]} initialSpells={options.missing ? [] : [...input.spells]}
+  input.contentRefs = input.contentRefs.map((ref, index) => ({ ...ref, id: `c1111111-1111-4111-8111-${String(index + 1).padStart(12, "0")}`, feature_grant_id: null }));
+  let schema = { ability_scores: providerAbilities, derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }], skills: [], proficiency_levels: [], resources: [], currencies: [], content_types: [], creation_steps: [], sheet_sections: [] };
+  const provider = () => {
+    const character = { ...input.character, name: "Original Multiclass Fixture", level: 6, state: structuredClone(stored), narrative: {}, base_stats: { ...providerBase, intelligence, charisma } };
+    return <CharacterProvider character={character as never}
+    schema={schema} contentRefs={input.contentRefs} contentSnapshotsComplete initialState={structuredClone(stored)} initialInventory={[]} initialSpells={options.missing ? [] : [...input.spells]}
     classData={Object.fromEntries(input.contentRefs.map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
-    allEffects={[]} baseStatsWithLevel={{ level: 6, intelligence, charisma }} structuredSources={{}} isOwner={!options.viewer} isDm={!!options.viewer} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe target={target} /></CharacterProvider>;
+    allEffects={[]} baseStatsWithLevel={{ ...character.base_stats, level: 6 }} structuredSources={providerSources(character, input.contentRefs)} isOwner={!options.viewer} isDm={!!options.viewer} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe target={target} /></CharacterProvider>;
+  };
   const view = render(provider());
   return { target, input, refresh: (newIntelligence = intelligence, changeSchema?: "ability" | "proficiency") => { intelligence = newIntelligence; if (changeSchema === "ability") schema = { ...schema, ability_scores: schema.ability_scores.filter(ability => ability.slug !== "intelligence") }; if (changeSchema === "proficiency") schema = { ...schema, derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 4 }] }; view.rerender(provider()); }, makeViewer: () => { options.viewer = true; view.rerender(provider()); } };
 }
