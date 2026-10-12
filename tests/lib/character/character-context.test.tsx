@@ -134,7 +134,7 @@ function renderWithProvider(
       schema={mockSchema as never}
       contentRefs={refs}
       contentSnapshotsComplete={Object.hasOwn(overrides, "contentSnapshotsComplete") ? overrides.contentSnapshotsComplete : true}
-      initialState={overrides.initialState ?? ({} as never)}
+      initialState={{ current_hp: overrides.maxHp ?? 10, temp_hp: 0, ...overrides.initialState }}
       initialInventory={[]}
       initialSpells={overrides.initialSpells ?? []}
       classData={overrides.classData ?? ({} as never)}
@@ -160,11 +160,12 @@ describe("<CharacterProvider> public hook surface", () => {
 
   it.each(["imported", "declared-effects", "declared-scores", "dual"] as const)("live provider preserves %s race mode and baseline maxHP separately", mode => {
     const { pin } = syntheticRacePin(mode);
+    if (!pin.system_id) throw new Error("Original race pin must retain its system");
     const baseline = evaluateSyntheticPin(pin);
     const maximum = computeMaxHp([{ slug: "fighter", level: 3 }], { fighter: { slug: "fighter", data: { hit_die: 8 } } }, baseline.stats.constitution);
     const character = { ...mockCharacter, system_id: pin.system_id, level: 3, base_stats: raceParityBase };
     const refs = [{ ...pinnedRaceRef(pin), character_id: character.id, feature_grant_id: null, created_at: "2026-10-12T16:00:00.000Z" }] as ContentRefWithContent[];
-    const initial = { current_hp: 4, active_effects: [{ id: "r06-active", name: "Synthetic temporary CON", slug: "custom", source: "custom",
+    const initial = { current_hp: 4, temp_hp: 0, active_effects: [{ id: "r06-active", name: "Synthetic temporary CON", slug: "custom", source: "custom",
       content_id: null, effects: [{ type: "mechanical", stat: "constitution", op: "add", value: 2 }],
       duration: { type: "hours", value: 1 }, concentration: false, applied_at: "2026-10-12T01:00:00Z", expires_at: null,
     }] } as CharacterState;

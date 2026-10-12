@@ -101,7 +101,7 @@ function renderWithProvider(
       schema={mockSchema as never}
       contentRefs={contentRefs}
       contentSnapshotsComplete
-      initialState={initialState as never}
+      initialState={{ current_hp: MAX_HP, temp_hp: 0, ...initialState }}
       initialInventory={[]}
       initialSpells={[]}
       classData={classData}

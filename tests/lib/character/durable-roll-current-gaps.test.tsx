@@ -30,7 +30,7 @@ function Fixture() {
   return <CharacterProvider
     character={character as never}
     schema={{ ability_scores: providerAbilities, proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] } as never}
-    contentRefs={refs} contentSnapshotsComplete initialState={baseline} initialInventory={[]} initialSpells={[]}
+    contentRefs={refs} contentSnapshotsComplete initialState={{ ...baseline, temp_hp: 0 }} initialInventory={[]} initialSpells={[]}
     classData={{ fighter: { slug: "fighter", data: { hit_die: 10 } } } as never}
     allEffects={[]} baseStatsWithLevel={{ ...providerBase, level: 2 }} structuredSources={providerSources(character, refs)}
     isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}
@@ -53,14 +53,14 @@ describe("current durable roll gaps: real provider with simulated persistence", 
     await act(async () => { await expect(handles.rest.spendHitDie("fighter")).rejects.toThrow("Rejected state"); });
     expect(insertRoll).toHaveBeenCalledOnce();
     expect(handles.rolls.rolls).toHaveLength(1);
-    expect(handles.state.state).toEqual(baseline);
+    expect(handles.state.state).toEqual({ ...baseline, temp_hp: 0 });
   });
   it("confirms a hit-die state spend while its separate roll insertion remains pending", async () => {
     let finishInsert!: () => void;
     vi.mocked(insertRoll).mockReturnValueOnce(new Promise<void>(resolve => { finishInsert = resolve; }));
     render(<Fixture />);
     await act(async () => { expect((await handles.rest.spendHitDie("fighter"))?.total).toBe(3); });
-    expect(handles.state.state).toEqual({ current_hp: 13, hit_dice_spent: { fighter: 1 } });
+    expect(handles.state.state).toEqual({ current_hp: 13, temp_hp: 0, hit_dice_spent: { fighter: 1 } });
     expect(updateCharacterState).toHaveBeenCalledOnce();
     await act(async () => { finishInsert(); });
   });
@@ -73,7 +73,7 @@ describe("current durable roll gaps: real provider with simulated persistence", 
     render(<Fixture />);
     await act(async () => { await expect(handles.rest.spendHitDie("fighter")).rejects.toThrow("could not be confirmed"); });
     expect(stored).toEqual({ current_hp: 13, hit_dice_spent: { fighter: 1 } });
-    expect(handles.state.state).toEqual(baseline);
+    expect(handles.state.state).toEqual({ ...baseline, temp_hp: 0 });
     expect(handles.state.reloadRequired).toBe(true);
     await act(async () => { await expect(handles.rest.spendHitDie("fighter")).rejects.toThrow("could not be confirmed"); });
     expect(executeRoll).toHaveBeenCalledOnce();

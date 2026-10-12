@@ -124,7 +124,7 @@ describe("actual provider acquisition casting", () => {
     await act(async () => { outcome = await spells.castSpell(target, { type: "pact", level: 2 }); });
     const random = vi.spyOn(Math, "random").mockReturnValue(0.999);
     try {
-      await act(async () => { const rolling = rolls.rollWithPersistence(outcome.rollRequests[0]); expect(rolling.result.natural).toBe(20); await rolling.persistence; });
+      await act(async () => { const rolling = rolls.rollWithPersistence(outcome.rollRequests[0], { abilities: ["charisma"], computed: ["proficiency_bonus"] }); expect(rolling.result.natural).toBe(20); await rolling.persistence; });
       expect(insertRoll).toHaveBeenCalledWith("local-character", expect.objectContaining({ request: expect.objectContaining({ expression: "1d20+3" }), natural: 20, total: 23 }), { requireConfirmation: true });
     } finally { random.mockRestore(); }
   });

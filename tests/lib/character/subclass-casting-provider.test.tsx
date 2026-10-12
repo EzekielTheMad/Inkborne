@@ -53,7 +53,7 @@ function fixture(options: { level?: number; prepared?: boolean; viewer?: boolean
   const provider = () => {
     const character = { ...input.character, user_id: subclassOwnerId, name: "Original Warden", level: totalLevel, state: raw, narrative: {}, base_stats: baseStats, game_systems: { id: input.character.system_id, name: "Original local system" } };
     return <CharacterProvider character={character as never}
-    schema={schema} contentRefs={input.contentRefs} contentSnapshotsComplete initialState={raw} initialInventory={[]} initialSpells={input.spells}
+    schema={schema} contentRefs={input.contentRefs} contentSnapshotsComplete initialState={{ ...raw, temp_hp: 0 }} initialInventory={[]} initialSpells={input.spells}
     classData={Object.fromEntries(input.contentRefs.filter(ref => ref.content_definitions.content_type === "class").map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
     allEffects={[]} baseStatsWithLevel={{ ...baseStats, level: totalLevel }} structuredSources={providerSources(character, input.contentRefs)} isOwner={!options.viewer} isDm={!!options.viewer} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe target={target} /></CharacterProvider>;
   };
@@ -133,7 +133,7 @@ describe("actual provider subclass source", () => {
     const { target } = fixture();
     vi.mocked(updateCharacterState).mockRejectedValueOnce(new CharacterStateReloadError("Original fixture save could not be confirmed"));
     await act(async () => { await expect(spells.castSpell(target, { type: "slot", level: 1 })).rejects.toMatchObject({ requiresReload: true }); });
-    expect(saves.reloadRequired).toBe(true); expect(saves.state).toEqual(stored);
+    expect(saves.reloadRequired).toBe(true); expect(saves.state).toEqual({ ...stored, temp_hp: 0 });
     expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
     await expect(spells.castSpell(target, { type: "slot", level: 1 })).rejects.toMatchObject({ requiresReload: true });
     expect(updateCharacterState).toHaveBeenCalledTimes(1);
@@ -178,7 +178,7 @@ describe("actual provider subclass source", () => {
     await expect(spells.castSpell(target, { type: "slot", level: 1 })).rejects.toThrow(/unavailable/);
     await expect(spells.addSpell({ content_id: target.content_id, content_version: 2, class_slug: "warden", name: target.name })).rejects.toThrow(/unavailable/);
     expect(await rest.longRest()).toBe(false); expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
-    expect(updateCharacterState).not.toHaveBeenCalled(); expect(addCharacterSpell).not.toHaveBeenCalled(); expect(saves.state).toEqual(stored);
+    expect(updateCharacterState).not.toHaveBeenCalled(); expect(addCharacterSpell).not.toHaveBeenCalled(); expect(saves.state).toEqual({ ...stored, temp_hp: 0 });
   });
   it("rejects stale cast/add callbacks on a same-state subclass pin/ability change, then uses the updated source", async () => {
     const { input, target, refresh } = fixture(), oldCast = spells.castSpell, oldAdd = spells.addSpell;

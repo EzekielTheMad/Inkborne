@@ -32,7 +32,7 @@ function fixture(refs: ContentRefWithContent[], choices = [{ slug: "paladin", le
   const level = choices.reduce((sum, entry) => sum + entry.level, 0);
   const character = { id: "local-character", system_id: "local-system", user_id: "owner", name: "Local Caster", level, choices: { classes: choices }, state: {}, base_stats: providerBase, narrative: {} };
   return render(<CharacterProvider character={character as never}
-    schema={schema as never} contentRefs={refs} contentSnapshotsComplete initialState={{ current_hp: 12, spell_slots_used: { "1": 1, pact: 1 } }} initialInventory={[]} initialSpells={[]}
+    schema={schema as never} contentRefs={refs} contentSnapshotsComplete initialState={{ current_hp: 12, temp_hp: 0, spell_slots_used: { "1": 1, pact: 1 } }} initialInventory={[]} initialSpells={[]}
     classData={Object.fromEntries(refs.map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
     allEffects={[]} baseStatsWithLevel={{ ...providerBase, level }} structuredSources={providerSources(character, refs)} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe dialogs={dialogs} /></CharacterProvider>);
 }
