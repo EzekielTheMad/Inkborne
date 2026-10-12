@@ -2,15 +2,17 @@
 
 ## Active execution — 2026-10-12 UTC
 
-Current local acceptance: `1d02806` passed **324 files / 4,015 tests**, typecheck,
-lint and build after reviewed P1a integration. NPC/ASI browser acceptance remains
-at `42abdbb`: **14 NPC controls / 18 screenshots** and **44 ASI cases / 226 assertions
-/ 46 screenshots**. All owned cleanup passed; data/Auth/action authority remains
-simulated. P1a worker 144 tests/type/lint and semantic-before controls passed;
-SQL is unexecuted/all readiness false. NPC authoring source `5da83a6` is held for
-idle-response and total-error-cap fixes. Reviewed companion template plan proceeds
-in isolated `r18-companion-worker`; P1b.1 revision plan proceeds. No hosted write,
-deployment or beta acceptance.
+Current local acceptance: `10b06c8` passed **329 files / 4,079 tests**, typecheck,
+lint and build after private NPC authoring integration. Its actual-form browser
+gate passed **18 desktop/mobile cases / 20 screenshots** with real assets/fonts
+and empty error/network/owned-process/port cleanup. NPC Library and ASI acceptance
+remain at `42abdbb`: 14 NPC controls / 18 screens and 44 ASI cases / 226 assertions
+/ 46 screens. Auth/actions/CAS/persistence remain modeled; real authority is open.
+P1a source/model gates are integrated, SQL unexecuted/all readiness false.
+Reviewed P1b.1 additive revision plan proceeds through disabled source implementation.
+Companion source `5cc9aad` passed review and is undergoing focused/type/lint gates;
+its harness awaits final executed-byte/helper closure fixes. NPC imports, campaign
+instances, companion mechanics and R19 remain open. No hosted write or release.
 
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.

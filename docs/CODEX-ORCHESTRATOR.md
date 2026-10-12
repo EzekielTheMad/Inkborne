@@ -11,12 +11,13 @@ C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification
 ```
 
 Active branch `codex/launch-integration-20261011`. Verify actual HEAD/status before
-editing. Latest full check/build is `1d02806` (324 files / 4,015 tests) after P1a
-integration. NPC/ASI browser acceptance remains `42abdbb`. NPC authoring `5da83a6`
-is held for idle-response/total-error-cap corrections; await reviewed gates before
-integration. Companion template plan is independently approved in isolated
-`r18-companion-worker`; P1b.1 joint revision plan proceeds. Root owns serialized
-heavy slots. Continue ready source/review/gates. This worktree shares Git
+editing. Latest full check/build is `10b06c8` (329 files / 4,079 tests) after private
+NPC authoring integration; its actual-form browser gate passed 18 cases / 20 screens.
+NPC Library/ASI acceptance remains `42abdbb`. Companion source `5cc9aad` is reviewed
+and owns focused/type/lint gates in isolated `r18-companion-worker`; its harness
+awaits final executed-byte/helper closure correction. Reviewed P1b.1 plan is locally
+integrated through `5902fd5`; disabled additive source implementation proceeds.
+Root owns serialized heavy slots. Continue ready source/review/gates. This worktree shares Git
 with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git. No live changes.
 
 Earlier checkpoints below remain historical; their then-open failures were

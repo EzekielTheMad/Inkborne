@@ -531,6 +531,64 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### R17.2 private NPC local acceptance — 2026-10-12 19:52 UTC
+
+Reviewed worker product `5da83a6` / `1fc3620` is integrated as `c944668` /
+`1068b1d`; harness `64b7751` / `a30f203` / `48af0f6` as `2ed39e5` / `0e00d64` /
+`10b06c8`. All eight guarded production Git blobs match approved `1fc3620`;
+proof retained in `test-results/npc-authoring-integration-source-proof.json`.
+Private owner create/edit, structured narrative fields with presence/order/duplicates,
+strict raw preservation, eligible version CAS/no-op/MAX checks and exact returned
+immutable snapshot confirmation are included. Existing relationship/privacy/copy
+and gameplay semantics are unchanged.
+
+Initial source review held two finite response defects: unexpected idle response
+unlocked retry, and schema error paths plus identity/intent could exceed 100 keys.
+Reviewed correction rejects idle as uncertainty in both modes and reserves identity/
+intent within one total feedback bound. Meaningful old-mapper-only baseline kept
+new form/tests: **seven semantic failures / 47 positive controls** across three
+files; exact raw SHA256 bytes restored in finally. Corrected worker **seven files /
+95 tests**, typecheck and lint passed. Initial lint's reserved helper binding name
+was preserved and fixed by identifier-only `a30f203`. All 51 captured identities,
+including wrappers, absent at readback; owned listeners zero, lock unchanged.
+
+Harness review separately required `resolveDir: root` and independent immutable
+helper proof before dynamic process-helper import/use in both runner and wrapper.
+Reviewed `48af0f6` closes these and rechecks all six mounted harness bytes, inherited
+helpers, root/index/config/source closure and forced-cleanup proof. Earlier gate
+evidence stays scoped to `64b7751` / `a30f203`; the new guards were accepted by the
+following fresh combined and actual-browser gates.
+
+Clean `10b06c8401fb442e65e1af0e68b75617c1135061` passed
+`npm.cmd run check`: **329 files / 4,079 tests**, typecheck and zero-warning lint,
+four Vitest workers, 170.80 seconds, all 365 recorded identities absent. Fresh
+synthetic production build passed, all 23 identities absent. Asset bind checked
+actual generated HTML/root font classes, three CSS files and nineteen assets.
+`npm.cmd run test:e2e -- --config e2e/local-npc-authoring/playwright.config.ts`
+passed **18 desktop/mobile cases / 20 screenshots** in 50 seconds. Twenty real-font
+samples passed, page/blocked/unexpected errors zero, failure null. Native structured
+draft/reset/pending duplicate prevention, validation/focus, conflict, uncertain/idle
+create acknowledgment and edit reload lock, confirmed reference/plain navigation
+and no reinsert controls passed. Inspected representative mobile pending/uncertain
+and structured/mobile/desktop views: readable contained controls and retained draft.
+All 86 recorded identities absent; HTTP/CDP ports closed, Chrome exited.
+
+Actions/Auth/persistence/CAS/latest-row reload/navigation are explicitly modeled.
+No SQL, actor-role/RLS/concurrency/real snapshot-trigger or hosted acceptance is
+claimed. NPC import, campaign instances and actual authority remain required.
+Receipts/failures preserved in sibling `verification/launch-20261012/` and ignored
+worker/root `test-results/`; no live write, deployment or beta acceptance.
+
+P1b.1 plan `5883d76` initially held object-definition order; `4c62885` made one
+additive joint stage after unchanged bases, then held a redundant cross-owner
+finalizer call without EXECUTE. `4bd378b` removes that call without new grants;
+existing class-owned deferred triggers retain full closure. Amended plan passed
+independent review; disabled joint source implementation proceeds, SQL unexecuted.
+R18 production `5cc9aad` passed independent source review and now owns the released
+focused/model/type/lint slot. Its harness `ee3119e` is held for final mounted-byte/
+source/helper closure and fresh helper proof before forced cleanup. Instances,
+controller/lifecycle rules, transformations/summons and R19 remain open.
+
 ### P1a combined local acceptance and next children — 2026-10-12 19:33 UTC
 
 Reviewed class-origin P1a source `7fb4dae` and correction `00dce154` are integrated
@@ -851,7 +909,7 @@ Stage columns: **I** implemented source; **T** tested at stated boundary; **G** 
 | M2 visual implementation: R05 | yes / offline+H / yes / H / H, current open | [Journey references](design-briefs/design_handoff_journey_alpha/README.md), merged #67, current 53 offline checks. Preserve design; accept current desktop/mobile/tablet auth/dashboard/builder/sheet flows and accessibility rather than rebuild. |
 | M3 gameplay: R06-R09 | P / local+model+H / P / H / open | [Gameplay plan](specs/2026-07-15-m3-gameplay-foundations-plan.md), [durable gaps/contract](specs/2026-10-11-durable-roll-state-contract.md), [equipment evidence](handoffs/2026-10-11-equipment-postgres-wasm.md). Core play is present; atomic equipment/full-trigger/concurrency and durable roll/state outcomes remain. Fresh real builder-to-play acceptance required. |
 | M4 homebrew/import/compendium: R10-R15 | P / local+H / P / H subset / open | [Spell](specs/2026-07-20-m4-private-homebrew-spell.md), [feat](specs/2026-07-21-m4-private-homebrew-feat.md), [background](specs/2026-07-21-m4-background-authoring-sharing.md), [compendium](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [MPMB parity](specs/2026-07-21-mpmb-representative-parity.md). Remaining authoring families, magic-item integration, sharing/custom-type decisions and supported importer coverage; don't declare whole M4 shipped. |
-| M5 monsters/library NPCs/companions/sidekicks: R16-R19 | P / monsters local / P / - / open | [Roadmap M5](ROADMAP.md), [monster plan](specs/2026-10-12-monster-foundation-plan.md). Monster schema/catalog/private authoring and offline form acceptance are integrated; supported import, DM instances and real authority acceptance remain. Library NPCs, companions and sidekicks remain unimplemented; distinguish existing character relationships from library NPCs. |
+| M5 monsters/library NPCs/companions/sidekicks: R16-R19 | P / monster and NPC local / P / - / open | [Roadmap M5](ROADMAP.md), [monster plan](specs/2026-10-12-monster-foundation-plan.md), [NPC plan](specs/2026-10-12-private-npc-authoring-plan.md), [companion plan](specs/2026-10-12-companion-library-foundation-plan.md). Monster/NPC Library and private authoring are integrated with offline acceptance. Companion templates are reviewed isolated source; sidekicks remain unimplemented. Imports, DM instances and real authority remain; existing relationships retain their identity. |
 | M5.5 campaigns + narrative: R20 | foundation / local+H / yes / H / H, current open | [Campaign design](specs/2026-07-19-campaign-foundation-design.md), [backlinks](specs/2026-07-19-campaign-backlinks-design.md), [timeline/relationships](specs/2026-07-19-character-timeline-relationships.md). Reaccept real DM/player membership, private/shared content, copy/assignment and revision conflicts on candidate. Optional publishing/presence remain S3/S5 decisions. |
 | M6 advanced spellcasting: R21 | P / some local / P / H subset / open | [Arcane Recovery implementation](../lib/rest/arcane-recovery.ts), [its tests](../tests/rest/arcane-recovery.test.ts), roadmap M6. Recovery has code; inventory Mystic Arcanum, Spell Mastery, Signature Spells and Eldritch Knight/Arcane Trickster progression before adding missing UI/rules. |
 | M7 PDF import: R22 | -/U / - / - / - / open S4 | Roadmap M7 and [existing import architecture](../lib/import). Supported PDF extraction -> review/repair -> immutable commit -> calculation/character parity required. Keep provenance and unsupported-input errors; paid AI/provider choices are not implicit. |
@@ -879,8 +937,8 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R14 M4 | MPMB upload/static parse, validation/repair, audit, keep-both/replace, mandatory calculation preview and exact-pin character exit. [Parser/mapping](../lib/import/mpmb), [parity spec](specs/2026-07-21-mpmb-representative-parity.md), [T1](handoffs/2026-10-11-t1-e2e-drift.md). I=P/T=offline+H/G=yes/D=H/A=supported cases H, current open. | Publish explicit supported type/fixture matrix; extend documented gaps only with original schema/source evidence. Unsupported effect-coupled/candidate-less cases fail closed. Current owner/isolation/stale-preview/replace/race/calculation and builder-to-cast parity on a real approved target. Field-level merge was deliberately out of scope. |
 | R15 M4 | Entitlement-aware encyclopedia for all authenticated players/DMs. [Compendium contract](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [Library tests](../tests/app/library-page.test.tsx). I=yes baseline/T=H+local/G=yes/D=H #96/#97/A=H, extensions open. | Platform/private/campaign visibility and legacy redirects/state preservation current UAT; every new M4/M5 type joins the same catalog rather than DM-only browsing. |
 | R16 M5 | Reviewed monster schema/read-only stat block/catalog and private authoring are integrated. Foundation 206 focused/20 geometry controls plus authoring 127 focused/28 actual-form controls passed at their stated sources, including mobile grid and transport/recovery fixes. [Design scope](specs/2026-10-12-monster-foundation-plan.md). I=P/T=local+offline/G=P/D=-/A=open. | Supported import and DM campaign instances remain. Actual owner/player/DM/privacy/version/CAS acceptance and authenticated-shell geometry remain separately required; local action/persistence simulations do not fill them. |
-| R17 M5 | Strict narrative NPC schema, empty-effects fence and read-only Library/profile integrated; 215 worker tests, root 322-file check and 14 browser controls at stated SHAs. [Private authoring plan](specs/2026-10-12-private-npc-authoring-plan.md), [handoff](handoffs/2026-10-12-r17-library-npc-foundation-source.md). I=P/T=local+offline/G=P/D=-/A=open. | Private authoring proceeds; import, real entitlement/owner/version races and campaign DM instances remain. Preserve existing character relationship privacy/copy; no silent repurposing/backfill. |
-| R18 M5 | Character-tied companions (mounts, beast forms, summons). [Roadmap](ROADMAP.md), [character domain](../lib/character). I=-/U/T=-/G=-/D=-/A=open. | Explicit hybrid schema/ownership/lifecycle; character and campaign linkage, supported stat blocks, transformations/summon dependencies, discovery and persistence/denial tests. Use existing effects contracts; spec uncertain rule semantics before coding. |
+| R17 M5 | Strict narrative schema, effects fence, Library/profile and private create/edit integrated. Worker 95 authoring tests; root 329-file check plus 18 form cases/20 screens at `10b06c8`; Library 14 controls at `42abdbb`. [Authoring handoff](handoffs/2026-10-12-r17-private-npc-source.md). I=P/T=local+offline/G=P/D=-/A=open. | Import, real entitlements/owner/version races and campaign DM instances remain. Existing character relationship privacy/copy unchanged; simulations do not prove actual writes or authority. |
+| R18 M5 | Character-tied companions (mounts, beast forms, summons). [Foundation plan](specs/2026-10-12-companion-library-foundation-plan.md). I=isolated template source/T=gates running/G=source-reviewed/D=-/A=open. | Read-only templates do not complete hybrid ownership/lifecycle, character/campaign linkage, controller/copy/visibility, transformations or summon dependencies. Template guards and real role/persistence/denial acceptance remain; freeze rule contracts before automatic mechanics. |
 | R19 M5 | Expert/Spellcaster/Warrior sidekicks. [Roadmap](ROADMAP.md), [builder domain](../lib/builder). I=-/U/T=-/G=-/D=-/A=open. | Simplified archetype/level schemas and render/build/play behavior; entitled catalog/DM use and isolation/level/progression tests. Do not equate generic full-PC code with accepted sidekick rules. |
 | R20 PRD §6/§8; M5.5 | Campaign membership/roles/invites/assignment; rich backstory/personality, wiki/backlinks/timeline/relationships/secrets. [Campaign spec](specs/2026-07-19-campaign-foundation-design.md), [DM-note boundary](specs/2026-07-19-character-dm-notes-boundary.md), [narrative](../components/narrative). I=foundation/T=H+local/G=yes/D=H/A=current open. | One real DM/player campaign with linked characters/wiki; permitted read-only DM view, privacy, conflicting revisions, copy/leave/removal/invite rotation and portrait/storage permissions. Optional live presence/public wiki waits S3/S5. |
 | R21 M6 | Reviewed single-source slots and per-acquisition casting math are integrated; [M6 inventory](handoffs/2026-10-11-m6-advanced-spellcasting-inventory.md), [source casting](handoffs/2026-10-11-source-casting-ability.md). I=P/T=local+slots browser/G=P/D=H subset/A=open. | Subclass profile plan must preserve shipped object-tier grants; advanced exact selected-spell payment/usage choices and current real conflict/recovery acceptance remain. Retain Arcane Recovery; no duplicate counter or guessed subclass unlock. |
