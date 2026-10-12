@@ -59,6 +59,24 @@ Binding amendment retains base product anchors at exact `c37e5b3`; only named in
 
 Static actual working-byte comparison at root7a: character-context worker/root both SHA256 `ca50fff8736a2086faeb9976ae888150bbbdd8188d5c2827e43b0e937491eb6e`; state-writer both `b63f352fd90ed2672c68a2302e02d3228b5bb9dc1117f31cdc0c0b460158e4d0`; dependency lock both `7225aa9026eb747c5626204c9e5e5901809f95b33a1aacaba35cd139e86a2eb6`. No install/dependency edit occurred. Other root/worker production differences identified by static Git inventory are the separately owned C1 pure files, durable kernel/receipt and server content-refs; they are not hand-copied or accepted by a wildcard. Runtime metafile binding will still refuse any differing actual imported project bytes. No bundling/tests/type/lint/full/build/browser/runtime/SQL ran. Independent exact binding review, root's single fresh successful clean production build/manifest and explicit UI release remain required;44/46 are prepared counts only.
 
+## Third root browser failure: spell-row accessible name
+
+Fresh production-bound root `f6dc76a` preserved twelve completed desktop cases.
+The next cast/preparation case successfully toggled the actual spell twice;
+journal patches were exactly `is_prepared: false` then `true`. Casting itself
+never began: the test searched for exact accessible name `Cast`, while the actual
+`SpellRow` intentionally exposes `Cast ${spell.name}` (here
+`Cast Original original-prism`). The visible text is `Cast`, but its ARIA label
+disambiguates spells. This is a locator mismatch, not missing cast eligibility.
+RNG/log/state/print journals remained empty; the run closed both ports/browser
+and all 134 observed process identities were absent at readback.
+
+The scoped row selector now uses that exact original fixture spell name. The
+actual dialog's `Cast` button remains separately scoped by dialog role, and all
+slot/profile/roll/retained-result assertions are unchanged. No product, fixture,
+RNG, source-binding or asset guard change. Source review/fresh build-bound run
+remain required; 44-case acceptance is still open.
+
 ## Second root browser failure: desktop preparation locator
 
 Root `df8c303` passed combined typecheck/lint and all 317 files / 3,885 tests with

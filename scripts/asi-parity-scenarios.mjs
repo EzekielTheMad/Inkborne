@@ -210,7 +210,7 @@ export async function executeAsiScenario(page, scenario, helpers) {
       await scope.getByTitle("Prepare", { exact: true }).click(); await page.waitForFunction(() => window.asiHarness.journal.spellWrites.length === 2);
       await check("actual preparation toggles use confirmed shared scores", async () => assert.deepEqual((await read(page)).journal.spellWrites.map(write => write.patch.is_prepared), [false, true]));
     }
-    await scope.getByRole("button", { name: "Cast", exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: "Cast", exact: true }).click();
+    await scope.getByRole("button", { name: "Cast Original original-prism", exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: "Cast", exact: true }).click();
     await page.getByRole("button", { name: /Roll Attack/ }).waitFor();
     await check("actual cast result uses INT14/mod2 with one modeled slot patch", async () => { const data = await read(page); assert.equal(data.snapshot.stats.intelligence, 14); assert.equal(data.journal.stateWrites.length, 1); assert.ok((await page.getByRole("button", { name: /Roll Attack/ }).textContent()).includes("+4")); });
     if (scenario === "retained-cast") {
