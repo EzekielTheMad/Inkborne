@@ -92,6 +92,13 @@ describe("provisional local one-NPC JSON codec; no app upload or database proof"
     refusal(`{${Array.from({ length: 513 }, (_, index) => `"k${index}":0`).join(",")}}`, "MEMBER_LIMIT");
     for (const value of [0, -1, 9, NaN, Infinity]) expect(decodeNpcJson(input, "limit.json", { limits: { depth: value } }).success).toBe(false);
   });
+  it("accepts the actual valid candidate at each lowered reader boundary and refuses one below", () => {
+    const input = bytes(JSON.stringify(minimal)), exact = { bytes: input.length, depth: 3, nodes: 7, members: 6 };
+    expect(decodeNpcJson(input, "boundary.json", { limits: exact })).toMatchObject({ success: true, candidate: minimal });
+    for (const [key, code] of [["bytes", "BYTE_LIMIT"], ["depth", "DEPTH_LIMIT"], ["nodes", "NODE_LIMIT"], ["members", "MEMBER_LIMIT"]] as const) {
+      expect(decodeNpcJson(input, "boundary.json", { limits: { ...exact, [key]: exact[key] - 1 } })).toMatchObject({ success: false, diagnostics: [{ code }] });
+    }
+  });
   it("bounds diagnostics, preserves unknown/schema failures and original token locations", () => {
     const source = JSON.stringify({ ...minimal, data: { schema_version: 1, relationships: Array.from({ length: 100 }, () => ({ name: 0, relationship: 0 })) } });
     const result = decodeNpcJson(bytes(source), "many.json"); expect(result.success).toBe(false);
