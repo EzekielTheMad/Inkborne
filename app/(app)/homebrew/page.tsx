@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { listOwnedHomebrewBackgrounds } from "@/lib/supabase/homebrew-backgrounds-server";
 import { listOwnedHomebrewFeats } from "@/lib/supabase/homebrew-feats-server";
+import { listOwnedHomebrewRaces } from "@/lib/supabase/homebrew-races-server";
 import { listOwnedHomebrewArmors } from "@/lib/supabase/homebrew-armors-server";
 import { listOwnedHomebrewWeapons } from "@/lib/supabase/homebrew-weapons-server";
 import { listOwnedHomebrewItems } from "@/lib/supabase/homebrew-items-server";
@@ -23,7 +24,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult, racesResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
     listOwnedHomebrewBackgrounds(),
@@ -31,10 +32,12 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     listOwnedHomebrewItems(),
     listOwnedHomebrewWeapons(),
     listOwnedHomebrewArmors(),
+    listOwnedHomebrewRaces(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
   const backgrounds = backgroundsResult.status === "fulfilled" ? backgroundsResult.value : [];
+  const races = racesResult.status === "fulfilled" ? racesResult.value : [];
   const armors = armorsResult.status === "fulfilled" ? armorsResult.value : [];
   const weapons = weaponsResult.status === "fulfilled" ? weaponsResult.value : [];
   const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
@@ -71,6 +74,10 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     console.error("[HomebrewPage] Failed to load owned homebrew armor", armorsResult.reason);
   }
 
+  if (racesResult.status === "rejected") {
+    console.error("[HomebrewPage] Failed to load owned homebrew races", racesResult.reason);
+  }
+
   const notice = typeof query.created === "string"
     ? "Private homebrew created."
     : typeof query.updated === "string"
@@ -83,13 +90,15 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && items.length === 0
     && weapons.length === 0
     && armors.length === 0
+    && races.length === 0
     && spellsResult.status === "fulfilled"
     && featsResult.status === "fulfilled"
     && backgroundsResult.status === "fulfilled"
     && magicItemsResult.status === "fulfilled"
     && itemsResult.status === "fulfilled"
     && weaponsResult.status === "fulfilled"
-    && armorsResult.status === "fulfilled";
+    && armorsResult.status === "fulfilled"
+    && racesResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -115,6 +124,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
             <Plus className="size-4" />
             Create background
           </Link>
+          <Link href="/homebrew/races/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create race</Link>
           <Link href="/homebrew/armors/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create armor</Link>
           <Link href="/homebrew/weapons/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create weapon</Link>
           <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>
@@ -151,6 +161,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
             <Link href="/homebrew/spells/new" className={buttonVariants({ variant: "outline" })}>Create spell</Link>
             <Link href="/homebrew/feats/new" className={buttonVariants({ variant: "outline" })}>Create feat</Link>
             <Link href="/homebrew/backgrounds/new" className={buttonVariants({ variant: "outline" })}>Create background</Link>
+            <Link href="/homebrew/races/new" className={buttonVariants({ variant: "outline" })}>Create race</Link>
             <Link href="/homebrew/armors/new" className={buttonVariants({ variant: "outline" })}>Create armor</Link>
             <Link href="/homebrew/weapons/new" className={buttonVariants({ variant: "outline" })}>Create weapon</Link>
             <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>Create item</Link>
@@ -333,6 +344,32 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
                   <div className="flex shrink-0 gap-1.5">
                     <Badge variant="outline">Private</Badge>
                     <Badge variant="secondary">v{weapon.version}</Badge>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {racesResult.status === "rejected" ? (
+        <HomebrewLoadError label="races" />
+      ) : races.length > 0 ? (
+        <section aria-labelledby="owned-races-heading" className="space-y-3">
+          <h2 id="owned-races-heading" className="j-folio">My races</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {races.map((race) => (
+              <Link key={race.id} href={`/homebrew/races/${race.id}/edit`}
+                className="j-card-paper group p-5 transition-colors hover:border-accent/50">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="j-display truncate text-lg text-foreground group-hover:text-accent">{race.name}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{race.data.size} / Base speed: {race.data.speed} ft.</p>
+                    <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{race.data.size_description}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="secondary">v{race.version}</Badge>
                   </div>
                 </div>
               </Link>

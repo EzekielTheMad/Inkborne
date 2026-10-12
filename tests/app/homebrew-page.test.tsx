@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedItems: vi.fn(),
   listOwnedWeapons: vi.fn(),
   listOwnedArmors: vi.fn(),
+  listOwnedRaces: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -21,6 +22,7 @@ vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
 vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
   listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
 }));
+vi.mock("@/lib/supabase/homebrew-races-server", () => ({ listOwnedHomebrewRaces: mocks.listOwnedRaces }));
 vi.mock("@/lib/supabase/homebrew-armors-server", () => ({ listOwnedHomebrewArmors: mocks.listOwnedArmors }));
 vi.mock("@/lib/supabase/homebrew-weapons-server", () => ({ listOwnedHomebrewWeapons: mocks.listOwnedWeapons }));
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({ listOwnedHomebrewItems: mocks.listOwnedItems }));
@@ -52,6 +54,7 @@ describe("HomebrewPage", () => {
     mocks.listOwnedItems.mockResolvedValue([]);
     mocks.listOwnedWeapons.mockResolvedValue([]);
     mocks.listOwnedArmors.mockResolvedValue([]);
+    mocks.listOwnedRaces.mockResolvedValue([]);
   });
 
   it("shows each authoring section with its versioned homebrew links", async () => {
@@ -161,6 +164,7 @@ describe("HomebrewPage", () => {
     expect(screen.getAllByRole("link", { name: "Create item" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create weapon" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create armor" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Create race" })).toHaveLength(2);
   });
 
   it("keeps available content visible when one content type fails to load", async () => {
@@ -230,6 +234,21 @@ describe("HomebrewPage", () => {
     mocks.listOwnedArmors.mockRejectedValue(new Error("armor read failed"));
     render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByText("Your homebrew armor could not be loaded.")).toBeVisible();
+    expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
+  });
+  it("discovers private core races and their editable versions", async () => {
+    mocks.listOwnedRaces.mockResolvedValue([{ id: "99999999-9999-4999-8999-999999999999", name: "Aster Kin", version: 2,
+      data: { size: "Medium", speed: 40, size_description: "Original size notes." } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("My races")).toBeVisible();
+    expect(screen.getByText("Medium / Base speed: 40 ft.")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Aster Kin/ })).toHaveAttribute("href", "/homebrew/races/99999999-9999-4999-8999-999999999999/edit");
+    expect(screen.getByRole("link", { name: "Create race" })).toHaveAttribute("href", "/homebrew/races/new");
+  });
+  it("reports race read failure separately from an empty catalog", async () => {
+    mocks.listOwnedRaces.mockRejectedValue(new Error("race read failed"));
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Your homebrew races could not be loaded.")).toBeVisible();
     expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
 });
