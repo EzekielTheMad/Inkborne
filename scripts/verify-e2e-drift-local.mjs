@@ -23,6 +23,7 @@ const stubs = {
   "@/lib/supabase/homebrew-items-server": `export async function listOwnedHomebrewItems(){return []}`,
   "@/lib/supabase/homebrew-weapons-server": `export async function listOwnedHomebrewWeapons(){return []}`,
   "@/lib/supabase/homebrew-armors-server": `export async function listOwnedHomebrewArmors(){return []}`,
+  "@/lib/supabase/homebrew-races-server": `export async function listOwnedHomebrewRaces(){return []}`,
   "@/app/(app)/campaigns/actions": `export async function assignCharacterToCampaign(){throw Error('unexpected action')}export async function leaveCampaign(){throw Error('unexpected action')}export async function unassignCharacterFromCampaign(){throw Error('unexpected action')}`,
   "@/lib/supabase/character-client": `export async function updateCharacter(){throw Error('unexpected character write')}export async function updateCharacterAndReturn(){throw Error('unexpected character write')}`,
   "@/lib/supabase/content-refs-client": `export async function insertContentRef(){throw Error('unexpected pin write')}export async function removeContentRefById(){throw Error('unexpected pin write')}`,
