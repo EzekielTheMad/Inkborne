@@ -72,6 +72,9 @@ export interface CasterClass {
   maxPrepared: number;
   ritualCasting: boolean;
   focus?: string;
+  /** Resolved source list/own progression; aggregate slots are upcast capacity. */
+  spellList?: { class: string; level: [number, number] };
+  maxLearnableLevel?: number;
 }
 
 export interface CasterInfo {

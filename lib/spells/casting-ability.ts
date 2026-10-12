@@ -1,8 +1,9 @@
+import { resolveEffectiveCastingSources } from "./effective-sources";
 import type { CharacterWithSystem } from "@/lib/types/character";
 import type { AbilityScoreDefinition } from "@/lib/types/system";
 import type { CharacterSpell } from "@/lib/types/spells";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
-import { computeSpellAttackBonus, computeSpellDc, resolvePinnedSpellSlots } from "./helpers";
+import { computeSpellAttackBonus, computeSpellDc } from "./helpers";
 
 /** Mathematical inputs only. The provider resolves acquisition/pin authority. */
 export interface ResolvedCastingProfile {
@@ -13,7 +14,7 @@ export interface ResolvedCastingProfile {
   spellDc: number;
 }
 export type CastingAbilityResolution =
-  | { status: "available"; spell: CharacterSpell; profile: ResolvedCastingProfile; classPin: { contentId: string; version: number } }
+  | { status: "available"; spell: CharacterSpell; profile: ResolvedCastingProfile; classPin: { contentId: string; version: number }; subclassPin?: { contentId: string; version: number } }
   | { status: "unavailable"; reason: string };
 
 export interface CastingAbilityInput {
@@ -48,12 +49,11 @@ export function resolveCastingAbility(target: CharacterSpell, input: CastingAbil
   if (!Array.isArray(classes) || typeof spell.class_slug !== "string" || !spell.class_slug) return unavailable("missing acquisition class");
   const choices = classes.filter(choice => choice?.slug === spell.class_slug);
   if (choices.length !== 1) return unavailable("acquisition class is not uniquely selected");
-  // Reuse exact-pin/profile/numbered-row validation; do not infer casting unlocks.
-  if (resolvePinnedSpellSlots(choices, input.contentRefs, input.character).status !== "available") return unavailable("exact selected class profile is missing or invalid");
-  const ref = input.contentRefs.find(row => row.content_definitions?.content_type === "class" && row.content_definitions.slug === spell.class_slug)!;
-  const data = ref.content_definitions.data as { spellcasting: { ability: string } | null; levels: Array<{ level: number; spellcasting: unknown }> };
-  if (data.levels.find(row => row.level === choices[0].level)?.spellcasting === null || !data.spellcasting) return unavailable("selected class cannot cast at this level");
-  const ability = data.spellcasting.ability;
+  const sources = resolveEffectiveCastingSources(classes, input.contentRefs, input.character);
+  if (sources.status !== "available") return unavailable("exact selected casting profile is missing or invalid");
+  const source = sources.sources.find(entry => entry.classSlug === spell.class_slug);
+  if (!source?.active || !source.config) return unavailable("selected class cannot cast at this level");
+  const ability = source.config.ability;
   if (input.abilities.filter(entry => entry.slug === ability).length !== 1) return unavailable("casting ability is not uniquely defined by this system");
   const score = input.abilityScores[ability];
   if (typeof score !== "number" || !Number.isFinite(score) || typeof input.proficiencyBonus !== "number" || !Number.isFinite(input.proficiencyBonus)) return unavailable("evaluated casting values are missing or invalid");
@@ -61,5 +61,5 @@ export function resolveCastingAbility(target: CharacterSpell, input: CastingAbil
   const spellAttackBonus = computeSpellAttackBonus({ ability }, input.abilityScores, input.proficiencyBonus);
   const spellDc = computeSpellDc({ ability }, input.abilityScores, input.proficiencyBonus);
   if (![abilityModifier, spellAttackBonus, spellDc].every(Number.isFinite)) return unavailable("evaluated casting values overflow");
-  return { status: "available", spell, profile: { classSlug: spell.class_slug, ability, abilityModifier, spellAttackBonus, spellDc }, classPin: { contentId: ref.content_id, version: ref.content_version } };
+  return { status: "available", spell, profile: { classSlug: spell.class_slug, ability, abilityModifier, spellAttackBonus, spellDc }, classPin: source.parentPin, ...(source.subclassPin ? { subclassPin: source.subclassPin } : {}) };
 }

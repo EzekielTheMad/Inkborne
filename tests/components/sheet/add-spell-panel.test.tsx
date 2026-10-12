@@ -28,6 +28,8 @@ vi.mock("@/lib/character/character-context", () => ({
         spellsKnown: "all",
         maxPrepared: 2,
         ritualCasting: true,
+        spellList: { class: "wizard", level: [0, 9] },
+        maxLearnableLevel: 1,
       }],
       spellDc: 10,
       spellAttackBonus: 2,

@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveEffectiveCastingSources } from "@/lib/spells/effective-sources";
 import { resolveCastingAbility, type CastingAbilityResolution } from "@/lib/spells/casting-ability";
 
 import {
@@ -55,7 +56,6 @@ import {
   computeSpellDc,
   computeSpellAttackBonus,
   computeMaxPrepared,
-  resolvePinnedSpellSlots,
 } from "@/lib/spells/helpers";
 import {
   computeCastEffects,
@@ -430,18 +430,25 @@ export function CharacterProvider({
   // --- Spells ---
   const [spells, setSpells] = useState<CharacterSpell[]>(initialSpells);
 
-  const slotResolution = useMemo(() => resolvePinnedSpellSlots(
+  const castingSources = useMemo(() => resolveEffectiveCastingSources(
     character.choices?.classes ?? [], contentRefs, { id: character.id, system_id: character.system_id },
   ), [character.choices, character.id, character.system_id, contentRefs]);
+  const slotResolution = castingSources.status === "available" ? castingSources.slots : castingSources;
+  const addSourceSnapshot = useMemo(() => ({ castingSources, isOwner }), [castingSources, isOwner]);
+  const currentAddSourceSnapshot = useRef(addSourceSnapshot);
+  useLayoutEffect(() => { currentAddSourceSnapshot.current = addSourceSnapshot; }, [addSourceSnapshot]);
   const addSpell = useCallback(
     async (payload: AddSpellPayload) => {
+      if (currentAddSourceSnapshot.current !== addSourceSnapshot) throw new Error("The casting source changed. Choose the current casting class before adding spells.");
       if (slotResolution.status !== "available") throw new Error(slotResolution.reason);
+      if (!isOwner) throw new Error("This character is read-only. Only its owner can add spells.");
+      if (castingSources.status !== "available" || !castingSources.sources.some(source => source.classSlug === payload.class_slug && source.active)) throw new Error("The selected casting source is unavailable. Reload or choose a current casting class before adding spells.");
       const newSpell = await addCharacterSpell(character.id, payload);
       if (newSpell) {
         setSpells((prev) => [...prev, newSpell]);
       }
     },
-    [character.id, slotResolution],
+    [character.id, slotResolution, castingSources, isOwner, addSourceSnapshot],
   );
 
   const updateSpell = useCallback(
@@ -527,39 +534,20 @@ export function CharacterProvider({
 
   // --- Derived caster info ---
   const casterInfo = useMemo<CasterInfo>(() => {
-    const classChoices =
-      (character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string }> })
-        ?.classes ?? [];
-
     const profBonus = Number(evalResult.computed?.proficiency_bonus ?? 2);
     const abilityScores = (evalResult.stats ?? {}) as Record<string, number>;
-
     const classes: CasterClass[] = [];
-    for (const cls of classChoices) {
-      const cd = classData[cls.slug];
-      const sc = cd?.data?.spellcasting;
-      if (!sc || !sc.type) continue;
-
-      const ability = sc.ability ?? "intelligence";
-      const abilityMod = Math.floor(((abilityScores[ability] ?? 10) - 10) / 2);
-      const prepared = cd.data.spellcastingKnown?.prepared ?? false;
-      const cantripsArr = cd.data.spellcastingKnown?.cantrips ?? [];
-      const knownArr = cd.data.spellcastingKnown?.spells ?? "all";
-      const cantripsKnown = cantripsArr[cls.level - 1] ?? 0;
-      const spellsKnown: number | "all" =
-        knownArr === "all" ? "all" : knownArr[cls.level - 1] ?? 0;
-
-      classes.push({
-        slug: cls.slug,
-        level: cls.level,
-        type: sc.type,
-        ability,
-        prepared,
-        cantripsKnown,
-        spellsKnown,
-        maxPrepared: prepared ? computeMaxPrepared(cls.slug, cls.level, abilityMod) : 0,
-        ritualCasting: sc.ritual_casting ?? false,
-        focus: sc.focus,
+    if (castingSources.status === "available") for (const source of castingSources.sources) {
+      if (!source.active || !source.config) continue;
+      const sc = source.config;
+      const abilityMod = Math.floor(((abilityScores[sc.ability] ?? 10) - 10) / 2);
+      const maxPrepared = !source.prepared ? 0 : source.preparationRule === "parent"
+        ? computeMaxPrepared(source.classSlug, source.classLevel, abilityMod)
+        : Math.max(1, abilityMod + (source.preparationRule === "half-class-level-plus-ability" ? Math.floor(source.classLevel / 2) : source.classLevel));
+      classes.push({ slug: source.classSlug, level: source.classLevel, type: sc.type, ability: sc.ability,
+        prepared: source.prepared, cantripsKnown: source.cantripsKnown, spellsKnown: source.spellsKnown, maxPrepared,
+        ritualCasting: sc.ritual_casting ?? false, focus: sc.focus,
+        spellList: source.spellList, maxLearnableLevel: source.maxLearnableLevel,
       });
     }
 
@@ -579,7 +567,7 @@ export function CharacterProvider({
       spellDc,
       spellAttackBonus,
     };
-  }, [character.choices, classData, evalResult]);
+  }, [castingSources, evalResult]);
 
   // Compatibility aliases are usable only alongside the explicit resolution.
   const maxSlots = slotResolution.status === "available" ? slotResolution.maxSlots : {};

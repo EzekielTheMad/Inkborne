@@ -469,6 +469,8 @@ describe("<CharacterProvider> public hook surface", () => {
       id: "spell-1",
       character_id: "char-1",
       content_id: "magic-missile",
+      class_slug: "wizard",
+      content_version: 1,
       name: "Magic Missile",
       level: 1,
       always_prepared: false,
@@ -484,6 +486,8 @@ describe("<CharacterProvider> public hook surface", () => {
             onClick={() => {
               void addSpell({
                 content_id: "magic-missile",
+                class_slug: "wizard",
+                content_version: 1,
                 name: "Magic Missile",
                 level: 1,
               } as never);
@@ -493,7 +497,7 @@ describe("<CharacterProvider> public hook surface", () => {
         </div>
       );
     }
-    renderWithProvider(Probe);
+    renderWithProvider(Probe, { character: { ...mockCharacter, choices: { classes: [{ slug: "wizard", level: 1 }] } }, contentRefs: [pinnedSlotClass("wizard", 1, "full", [2, 0, 0, 0, 0, 0, 0, 0, 0], "char-1", "system-1")] });
     expect(screen.getByTestId("count").textContent).toBe("0");
     await act(async () => {
       screen.getByTestId("add").click();

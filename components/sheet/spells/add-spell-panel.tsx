@@ -37,32 +37,8 @@ const LEVEL_PILLS: Array<{ key: string; label: string; level: number }> = [
   { key: "9", label: "9th", level: 9 },
 ];
 
-/**
- * The highest spell level this character can actually cast.
- * Derived from maxSlots — returns the highest key with slots > 0.
- * Warlocks get their pact slot level. Non-casters get 0.
- * Cantrips (level 0) are always castable by casters who know them.
- */
-function getMaxCastableLevel(
-  maxSlots: Record<string, number | undefined>,
-  pactSlotLevel: number | null,
-): number {
-  // Full/half casters: highest slot key with count > 0
-  let maxLevel = 0;
-  for (let i = 9; i >= 1; i--) {
-    if ((maxSlots[String(i)] ?? 0) > 0) {
-      maxLevel = i;
-      break;
-    }
-  }
-  if ((maxSlots.pact ?? 0) > 0 && pactSlotLevel !== null) {
-    maxLevel = Math.max(maxLevel, pactSlotLevel);
-  }
-  return maxLevel;
-}
-
 export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps) {
-  const { casterInfo, maxSlots, pactSlotLevel, slotResolution, addSpell, removeSpell, spells } = useSpells();
+  const { casterInfo, slotResolution, addSpell, removeSpell, spells } = useSpells();
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [selectedClass, setSelectedClass] = useState<string | null>(
@@ -77,10 +53,12 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
   const searchRequest = useRef(0);
 
   const selectedCaster = casterInfo.classes.find((c) => c.slug === selectedClass);
-  const maxCastableLevel = useMemo(
-    () => getMaxCastableLevel(maxSlots as Record<string, number | undefined>, pactSlotLevel),
-    [maxSlots, pactSlotLevel],
-  );
+  // Learning uses this source's own pinned row/list; shared slots only upcast.
+  const listClass = selectedCaster?.spellList?.class ?? selectedClass;
+  const minLearnableLevel = selectedCaster?.spellList?.level[0] ?? 0;
+  const maxLearnableLevel = Math.min(selectedCaster?.maxLearnableLevel ?? 0, selectedCaster?.spellList?.level[1] ?? 9);
+
+  const sourceReady = !!selectedCaster && selectedCaster.maxLearnableLevel !== undefined;
 
   // Count cantrips already known for the selected class (for cap enforcement).
   const cantripsKnown = useMemo(() => {
@@ -135,16 +113,14 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
     setLoading(true);
     setSearchError(null);
     const opts: SearchSpellsOptions = {};
-    if (selectedClass) opts.classSlug = selectedClass;
+    if (listClass) opts.classSlug = listClass;
     if (selectedLevel != null) opts.level = selectedLevel;
     try {
       const data = await searchSpells(characterId, query, opts);
-      // Exclude spell levels above what this character can cast. Cantrips are
-      // always available to casters.
+      // A stronger multiclass pool does not grant higher-level learning.
       const filtered = data.filter((spell) => {
         const level = (spell.data?.level as number | undefined) ?? 0;
-        if (level === 0) return true;
-        return level <= maxCastableLevel;
+        return level >= minLearnableLevel && level <= maxLearnableLevel;
       });
       if (requestId === searchRequest.current) setResults(filtered);
     } catch (error) {
@@ -156,20 +132,22 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
     } finally {
       if (requestId === searchRequest.current) setLoading(false);
     }
-  }, [characterId, query, selectedClass, selectedLevel, maxCastableLevel]);
+  }, [characterId, query, listClass, selectedLevel, maxLearnableLevel, minLearnableLevel]);
 
   useEffect(() => {
-    if (!open || slotResolution?.status !== "available") return;
+    if (!open || !sourceReady || slotResolution?.status !== "available") return;
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(runSearch, 200);
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       searchRequest.current += 1;
     };
-  }, [runSearch, open, slotResolution]);
+  }, [runSearch, open, slotResolution, sourceReady]);
 
   if (!open) return null;
   if (slotResolution?.status !== "available") return <p role="status" className="text-sm text-muted-foreground">Spell choices are unavailable. Reload the character or restore its saved class content.</p>;
+
+  if (!sourceReady) return <p role="status" className="text-sm text-muted-foreground">Choose a current casting class or reload its saved content before adding spells.</p>;
 
   const handleAdd = async (spell: SpellSearchResult) => {
     if (!selectedClass || !selectedCaster) return;
@@ -266,7 +244,7 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
 
       <div className="flex flex-wrap gap-1">
         {LEVEL_PILLS.map((p) => {
-          const disabled = p.level > 0 && p.level > maxCastableLevel;
+          const disabled = p.level < minLearnableLevel || p.level > maxLearnableLevel;
           return (
             <button
               key={p.key}
@@ -284,7 +262,7 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
                     ? "bg-muted/20 text-muted-foreground/40 border-border/40 cursor-not-allowed line-through"
                     : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50",
               )}
-              title={disabled ? "You don't have slots for this level yet" : undefined}
+              title={disabled ? "This casting class cannot learn spells at this level yet" : undefined}
             >
               {p.label}
             </button>

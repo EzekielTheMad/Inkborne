@@ -67,10 +67,8 @@ export function SpellsTab() {
   }, [sortedSpells]);
 
   const hasAnySpells = spells.length > 0;
-  const anyClassPrepared = casterInfo.classes.some((c) => c.prepared);
 
-  if (!casterInfo.isCaster && slotResolution?.status !== "available") return <div className="p-3"><SlotTracker /></div>;
-  if (!casterInfo.isCaster) {
+  if (!casterInfo.isCaster && slotResolution?.status === "available") {
     return (
       <div className="p-3 space-y-3">
         <p className="text-sm font-medium">Spells</p>
@@ -85,14 +83,14 @@ export function SpellsTab() {
     <div className="p-3 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">Spells</p>
-        <Button
+        {slotResolution?.status === "available" && casterInfo.isCaster && <Button
           size="sm"
           variant="outline"
           onClick={() => setShowAddPanel((v) => !v)}
         >
           <Plus className="size-3.5 mr-1" />
           {showAddPanel ? "Close" : "Add Spell"}
-        </Button>
+        </Button>}
       </div>
 
       {showAddPanel && (
@@ -110,7 +108,7 @@ export function SpellsTab() {
         <SheetEmptyState
           hint={
             <>
-              Click <strong>+ Add Spell</strong> to get started.
+              {slotResolution?.status === "available" ? <>Click <strong>+ Add Spell</strong> to get started.</> : "Reload or restore saved class content to manage spells."}
             </>
           }
         >
@@ -128,12 +126,12 @@ export function SpellsTab() {
               </div>
               <div className="divide-y divide-border/30">
                 {group.spells.map((spell) => {
-                  const castability = getSpellCastability(spell, casterInfo);
+                  const castability = slotResolution?.status === "available" ? getSpellCastability(spell, casterInfo) : "none";
                   return (
                     <SpellRow
                       key={spell.id}
                       spell={spell}
-                      allowPrepareToggle={anyClassPrepared}
+                      allowPrepareToggle={slotResolution?.status === "available" && casterInfo.classes.some(caster => caster.slug === spell.class_slug && caster.prepared)}
                       castability={castability}
                       onTogglePrepared={() =>
                         updateSpell(spell.id, { is_prepared: !spell.is_prepared })
