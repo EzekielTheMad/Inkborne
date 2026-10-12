@@ -124,6 +124,7 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
     if (pool.spent >= pool.max) return reject("no_dice");
     if (!Number.isInteger(inputs.acceptedDieFace) || inputs.acceptedDieFace < 1 || inputs.acceptedDieFace > pool.die) return reject("invalid_mechanics");
     const modifier = getConfirmedAbilityModifier(live, schema, "constitution")!;
+    if (modifier !== Math.floor((live.stats.constitution - 10) / 2)) return reject("invalid_mechanics");
     const roll = executeRoll(buildHitDieRollRequest(pool, modifier), () => (inputs.acceptedDieFace - 0.5) / pool.die);
     roll.rolled_at = evaluation.data;
     return hitDiePlanResultSchema.parse({ status: "planned", request, canonical_intent: canonicalHitDieIntent(request), dependency_fingerprint: fingerprint,

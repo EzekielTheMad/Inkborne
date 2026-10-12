@@ -756,6 +756,8 @@ export function CharacterProvider({
       if (currentHp >= maxHp) return null;
 
       const conMod = getConfirmedAbilityModifier(evalResult, schema, "constitution")!;
+      // Keep the existing R09 hit-die protocol and result schema unchanged.
+      if (conMod !== Math.floor((evalResult.stats.constitution - 10) / 2)) throw new Error("The declared Constitution modifier is incompatible with the saved hit-die protocol.");
 
       return patchState.runAction(state, (confirmedState) => {
         // Refuse dependent work before rolling or logging a resource spend.

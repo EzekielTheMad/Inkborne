@@ -55,6 +55,13 @@ export function resolveCharacterAsiContributions(character: AsiCharacter, eviden
     for (const ref of refs) if (ref.feature_grant_id !== null) {
       const matches = grants.filter(grant => grant.id === ref.feature_grant_id);
       if (matches.length !== 1 || ref.content_definitions.content_type !== "feature" || ref.content_id !== matches[0].feature_content_id || ref.content_version !== matches[0].feature_version) return fail("invalid_evidence");
+      const grant = matches[0];
+      // Exact metadata enforced by the shipped derived-ref trigger/RPC; compare
+      // raw keys rather than accepting a stripped validator projection.
+      const context = { source: "class_feature", controller_type: grant.controller_type, controller_slug: grant.controller_slug, feature_slug: grant.feature_slug, feature_level: grant.unlock_level };
+      if (ref.choice_source !== `auto:feature-grant:${grant.id}` || !ref.context || typeof ref.context !== "object" || Array.isArray(ref.context)
+        || Object.keys(ref.context).length !== Object.keys(context).length
+        || Object.entries(context).some(([key, value]) => ref.context[key] !== value)) return fail("invalid_evidence");
     }
     const saved = character.choices.asi_choices;
     if (saved !== undefined && (saved === null || typeof saved !== "object" || Array.isArray(saved))) return fail("invalid_choice");
@@ -89,7 +96,7 @@ export function resolveCharacterAsiContributions(character: AsiCharacter, eviden
       if (featureRefs.length !== 1) return fail(featureRefs.length ? "ambiguous_occurrence" : "incomplete_evidence");
       const feature = featureRefs[0].content_definitions;
       if (feature.content_type !== "feature" || feature.id !== grant.feature_content_id || feature.version !== grant.feature_version || feature.slug !== key || feature.data.feature_type !== "asi"
-        || feature.data.class !== classes[classIndex].slug || (grant.controller_type === "subclass" && feature.data.subclass !== controller.slug)) return fail("invalid_evidence");
+        || feature.data.class !== classes[classIndex].slug || (grant.controller_type === "subclass" ? feature.data.subclass !== controller.slug : feature.data.subclass !== undefined && feature.data.subclass !== null)) return fail("invalid_evidence");
       if (choice.mode === "feat") {
         const featRefs = refs.filter(ref => ref.choice_source === `choice:asi:${grant.id}`);
         if (featRefs.length !== 1 || featRefs[0].feature_grant_id !== null || featRefs[0].content_id !== choice.featId || featRefs[0].content_version !== choice.featVersion || featRefs[0].content_definitions.content_type !== "feat") return fail("invalid_evidence");

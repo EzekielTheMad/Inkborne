@@ -24,9 +24,9 @@ function Probe() {
   useEffect(() => { latest = { ...character, ...state, ...rolls, ...rest, ...spells, ...inventory, ...resources, pendingConcentrationCheck: concentration.pendingCheck }; });
   return <><SavingThrows schema={character.schema} evalResult={character.evalResult} /><SkillsList schema={character.schema} evalResult={character.evalResult} /></>;
 }
-function Fixture({ fixture, incomplete = false }: { fixture: ReturnType<typeof originalAsiFixture>; incomplete?: boolean }) {
+function Fixture({ fixture, incomplete = false, testSchema = asiSchema }: { fixture: ReturnType<typeof originalAsiFixture>; incomplete?: boolean; testSchema?: typeof asiSchema }) {
   const { character, refs, cls, evidence } = fixture;
-  return <CharacterProvider character={character} schema={asiSchema} contentRefs={refs} contentSnapshotsComplete={!incomplete}
+  return <CharacterProvider character={character} schema={testSchema} contentRefs={refs} contentSnapshotsComplete={!incomplete}
     initialState={character.state} initialInventory={[]} initialSpells={[]} classData={{ [cls.slug]: { slug: cls.slug, data: cls.data } }}
     allEffects={refs.flatMap(ref => ref.content_definitions.effects)} baseStatsWithLevel={{ ...character.base_stats, level: 4 }}
     structuredSources={buildCharacterStructuredSources(refs, 4, { character, evidence: incomplete ? { status: "unavailable", reason: "incomplete_evidence" } : evidence })}
@@ -56,6 +56,14 @@ describe("actual provider ASI acceptance and stale callbacks; persistence simula
     await expect(retained.patchActionState({ current_hp: 4 })).rejects.toThrow(/changed/);
     expect(() => retained.longRest()).toThrow(/changed/);
     expect(() => buildCharacterPrintModel({ ...retained, isOwner: true, hasSheet: true, resources: [] })).toThrow(/changed/);
+    expect(executeRoll).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled(); expect(updateCharacterState).not.toHaveBeenCalled();
+  });
+  it("review regression finite nonlinear CON modifier refuses live hit dice before RNG/log/DAL", async () => {
+    const f = originalAsiFixture({ mode: "asi", allocations: [{ ability: "constitution", amount: 2 }] });
+    const schema = { ...asiSchema, derived_stats: [...asiSchema.derived_stats.filter(entry => entry.slug !== "constitution_mod"), { slug: "constitution_mod", name: "Nonlinear CON modifier control", formula: "constitution" }] };
+    render(<Fixture fixture={f} testSchema={schema} />);
+    expect(latest.evalResult.stats.constitution).toBe(16); expect(latest.evalResult.computed.constitution_mod).toBe(16);
+    await expect(latest.spendHitDie(f.cls.slug)).rejects.toThrow(/hit.die|protocol/i);
     expect(executeRoll).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled(); expect(updateCharacterState).not.toHaveBeenCalled();
   });
   it("incomplete evidence blocks whole long rest/relative HP/derived rolls, but independent custom dice and toggles remain usable", async () => {

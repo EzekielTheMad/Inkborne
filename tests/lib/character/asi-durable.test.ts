@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
+import { executeRoll } from "@/lib/dice/roller";
+vi.mock("@/lib/dice/roller", async original => { const dice = await original<typeof import("@/lib/dice/roller")>(); return { ...dice, executeRoll: vi.fn(dice.executeRoll) }; });
 import { originalAsiFixture, asiSchema, asiId, asiInstant } from "../../fixtures/r06-asi";
 import { hitDieSnapshotSchema } from "@/lib/character/durable-hit-die-schema";
 import { hitDieDependencyFingerprint, planDurableHitDie } from "@/lib/character/durable-hit-die";
@@ -26,6 +28,15 @@ describe("actual captured durable ASI input and raw-preserving fingerprint", () 
     const incomplete = captured(); delete (incomplete.pins[0] as Partial<typeof incomplete.pins[number]>).feature_grant_id;
     expect(() => hitDieSnapshotSchema.parse(incomplete)).toThrow();
     expect(JSON.stringify(snapshot)).toContain('"original_extension"'); expect(before).toContain('"feature_grant_id"');
+  });
+  it("review regression finite nonlinear CON modifier rejects durable hit dice before roll construction", () => {
+    vi.mocked(executeRoll).mockClear();
+    const raw = captured();
+    raw.system.schema_definition.derived_stats = [...asiSchema.derived_stats.filter(entry => entry.slug !== "constitution_mod"), { slug: "constitution_mod", name: "Nonlinear CON modifier control", formula: "constitution" }];
+    const result = planDurableHitDie(raw, { contract_version: 1, character_id: raw.character.id, operation_id: asiId(90), command: "spend_hit_die", class_slug: raw.character.choices.classes![0].slug,
+      expected_revision: "3", dependency_fingerprint: hitDieDependencyFingerprint(raw) }, { enabled: true, evaluationInstant: asiInstant, acceptanceInstant: asiInstant, acceptedDieFace: 3 });
+    expect(result).toEqual({ status: "rejected", reason: "invalid_mechanics" });
+    expect(executeRoll).not.toHaveBeenCalled();
   });
   it("actual durable plan includes permanent CON16/maxHP35 and preserves accepted-face/raw-roll inputs", () => {
     const raw = captured(), before = JSON.stringify(raw), classSlug = raw.character.choices.classes![0].slug;

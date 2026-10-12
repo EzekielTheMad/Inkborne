@@ -59,6 +59,7 @@ describe("R06.3 original earned immutable ASI contribution", () => {
     f.feature.data.subclass = sub.slug;
     f.character.choices.classes![0].subclass = sub.slug;
     f.grant.controller_ref_id = asiId(86); f.grant.controller_type = "subclass"; f.grant.controller_slug = sub.slug;
+    f.refs[1].context.controller_type = "subclass"; f.refs[1].context.controller_slug = sub.slug;
     expect(evaluateFixture(f).stats.strength).toBe(14);
     delete f.character.choices.classes![0].subclass;
     expect(resolveCharacterAsiContributions(f.character, f.evidence).status).toBe("unavailable");
@@ -75,6 +76,18 @@ describe("R06.3 original earned immutable ASI contribution", () => {
     if (kind === "forged-context") { f.refs[1].feature_grant_id = null; f.refs[1].context = { feature_grant_id: f.grant.id }; }
     if (kind === "duplicate-ability") f.character.choices.asi_choices![f.feature.slug] = { mode: "asi", allocations: [{ ability: "strength", amount: 1 }, { ability: "strength", amount: 1 }] };
     if (kind === "invalid-allocation") f.character.choices.asi_choices![f.feature.slug] = { mode: "asi", allocations: [{ ability: "strength", amount: Number.NaN }] };
+    const before = JSON.stringify(f);
+    expect(resolveCharacterAsiContributions(f.character, f.evidence).status).toBe("unavailable");
+    expect(JSON.stringify(f)).toBe(before);
+  });
+  it.each(["foreign-subclass", "missing-source", "wrong-context", "extra-context"])("review regression exact derived occurrence %s", kind => {
+    const f = originalAsiFixture();
+    f.refs[1].choice_source = `auto:feature-grant:${f.grant.id}`;
+    f.refs[1].context = { source: "class_feature", controller_type: f.grant.controller_type, controller_slug: f.grant.controller_slug, feature_slug: f.grant.feature_slug, feature_level: f.grant.unlock_level };
+    if (kind === "foreign-subclass") f.feature.data.subclass = "foreign-unselected-subclass";
+    if (kind === "missing-source") f.refs[1].choice_source = null;
+    if (kind === "wrong-context") f.refs[1].context.controller_slug = "foreign-controller";
+    if (kind === "extra-context") f.refs[1].context.browser_authority = true;
     const before = JSON.stringify(f);
     expect(resolveCharacterAsiContributions(f.character, f.evidence).status).toBe("unavailable");
     expect(JSON.stringify(f)).toBe(before);
