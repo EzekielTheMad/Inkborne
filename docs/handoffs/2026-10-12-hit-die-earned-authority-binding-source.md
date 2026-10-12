@@ -1,4 +1,37 @@
-# R09.3b2 earned-authority binding — UNVERIFIED SOURCE
+# R09.3b2 earned-authority binding — local boundary verified, G2 pending
+
+## Released narrow acceptance — 2026-10-12 UTC
+
+Reviewed product source `f9891e47eee4d1c03addf2d8ef731cce4d831778`; sole correction `d1bd508d8685d95ec7ad6a8e21ac86f863f777f1` adds test-only `vi.mock("server-only")` infrastructure marker isolation to the standalone helper suite. Actual shared ASI/spell validator imports, assertions, manifests, minimum unlock, native times, provenance/access contracts and production source are unchanged. Parent independently approved the exact marker-only correction. Root integrated the reviewed source chain through `46f0e38`; root combined/UI acceptance is separately owned and not claimed from this worker's narrow evidence.
+
+Receipt directory: `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\verification\r09-binding-20261012`. Audited `run-gate.ps1` captures each root PID, actual PID birth/parent ancestry/command/workspace/start/listeners, SHA/status, output/result, resources and post-exit identity readback. No executable-name killing or other-worktree cleanup occurred.
+
+| Run | Exact source | Result | Root PID / observed process identities | Final owned processes/listeners |
+|---|---|---|---|---|
+| Meaningful old product | HEAD f989 with only authority module restored to exact base0384 blob | **3 expected failures**,52 skipped; v2 neutral/real ASI/full frozen-spell received consumer controls returned invalid_graph rather than accepted projection |16744 /8|0/0|
+| First narrow |f989,clean|**1 suite collection failed**,4 files/139 tests passed; helper suite reached transitive server-only marker before collecting assertions |23068 /11|0/0|
+| Corrected narrow |d1bd,clean|**5 files/185 tests passed**; Vitest duration5.33s|38756 /12|0/0|
+| Repository typecheck |d1bd,clean|PASS|12664 /7|0/0|
+| Repository lint |d1bd,clean|PASS,zero warnings|22036 /6|0/0|
+
+Commands, sequential in the owned worktree only:
+
+```text
+npm.cmd test -- tests/lib/character/hit-die-authority.test.ts --maxWorkers=2 -t "accepts the complete v2 received fixture|accepts a real shared ASI occurrence|accepts complete raw frozen spell provenance"
+npm.cmd test -- tests/lib/character/hit-die-authority.test.ts tests/lib/character/hit-die-spell-authority.test.ts tests/supabase/hit-die-authority-staged-contract.test.ts tests/lib/character/durable-hit-die.test.ts tests/lib/character/asi-contributions.test.ts --maxWorkers=2
+npm.cmd run typecheck
+npm.cmd run lint
+```
+
+The old-product reproduction changes **only** `lib/character/hit-die-authority.ts` to base `0384e1c75f3cf38b81585dea16356b760e166a4e` blob `594df0eb9da0268fc4e114ccff8e2af030ceb4e5`; f989 test blob `4f468984f6d144d0729db0baaf828e554955f1a0` and fixture blob `222bf508da0b8a355e9714a535de95c005f91d91` remain unchanged. `baseline-source-identity.json` discloses HEAD versus worktree source scope. A finally block restored exact saved bytes: before/after SHA256 `0C4DF6946752FAB908BFE671D76E5F7562AE28D8B284FBC5AA7420F4F05A1AEF`, git blob `287ead49f9c1536b102eb92e4615a5d05a6b2726`, both equality flags true in `baseline-restoration.json`, restored18:18:42.1804138Z. This is substantive received-response assertion failure, not missing-module/compile/import failure.
+
+Preserve first collection-failed receipts at `history/focused-20261012T181848`; preserve the separate expected-failure baseline receipts at directory root. Final focused/type/lint receipts use d1bd and zero remaining identities. Final independent workspace readback18:21:30.6160821Z found no owned node/cmd/esbuild process or listener. Heavy slot released immediately after lint; no task-owned background work remains.
+
+Machine-wide resources changed baseline-before455 processes/27,455,078,400 working-set bytes/22,231.859375 cumulative CPU seconds/10,708,640KiB free RAM to lint-after465/27,984,097,280/22,699.671875/10,421,548KiB; global listening endpoints stayed45 throughout. Each gate has its own before/after resource receipt. These aggregate values include unrelated work and sampling/runner processes; only the identity readbacks establish owned cleanup. No leak or attribution claim is inferred from global totals.
+
+No install, full check, build, browser, actual SQL/PGlite/scratch/database/container/provider/Auth/Storage/hosted/runtime operation ran. Only released offline/static/client-boundary tests and repository typecheck/lint. **Production Auth remains unconditionally unavailable and all thirteen readiness families remain false**; no reader/app gate, producer/fence/lifecycle/cutover activation accompanies acceptance. Actual PostgreSQL/RLS/roles/coherence/lineage/order/access/RI/provider/concurrency/lifetime/Storage acceptance remains G2 and separate policy work. The original unverified source checkpoint below is preserved as historical context, not the current local gate status.
+
+## Original source-only checkpoint — preserved
 
 Approved plan `9ffa8862392c72ea1432ce7448180e4d1b2c0096`. Parent dependency merge base `0384e1c75f3cf38b81585dea16356b760e166a4e` integrated reviewed root `b2e513` and approved actual ASI implementation. Parent resolved the sole kernel fixture add/add to its exact reviewed neutral SIX/null-grant source; this worker did not modify that fixture, ASI/C1/root files or another worktree. Original blocked `5367243`, reviewed-unready correction `6662133`, old accepted kernel/failure evidence and plan checkpoints remain preserved.
 
