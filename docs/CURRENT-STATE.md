@@ -29,6 +29,13 @@ assertion; investigation and the remaining desktop/mobile cases are open. Failed
 evidence is preserved and owned process/port readback is empty. This is local
 component/model evidence; no database authority, hosted acceptance or release.
 
+Later clean `df8c303` passed **317 files / 3,885 tests**, typecheck/lint and build.
+Its ASI UI rerun passed twelve desktop cases before a preparation locator collision
+between visible desktop and hidden mobile controls. The scoped harness correction
+passed independent review; complete UI and later combined acceptance remain open.
+P1a class-provenance admission/finalizer source and R17 narrative NPC Library source
+are in isolated workers. No SQL execution, hosted write or publication occurred.
+
 Victor selected all included milestones before beta, PDF importing before beta,
 and beta deferrals for Daggerheart/public publishing while retaining both in the
 total project backlog. P1-P3 dispositions and the first supported PDF input matrix

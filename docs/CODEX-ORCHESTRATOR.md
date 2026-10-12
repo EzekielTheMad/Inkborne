@@ -23,7 +23,12 @@ pages passed text/privacy/margin/layout QA. The first production-bound ASI UI ru
 completed ten desktop scenarios, then failed a pending-background fieldset-disabled
 assertion; preserve its failure evidence and investigate before claiming 44-case
 acceptance. Next: review the scoped correction, rebuild/rebind and complete the UI.
-Continue ready P1 producer and R09
+Later clean `df8c303` passed **317 files / 3,885 tests**, typecheck/lint and a fresh
+build. Preserve its earlier unbounded two-timeout run and unchanged 20-test narrow
+pass. Second ASI UI reached twelve desktop cases, then a desktop/hidden-mobile
+preparation locator collision; reviewed scope correction and a complete rerun
+are next. P1a private admission/finalizer source and R17 narrative NPC Library
+source proceed independently in assigned workers. Continue ready P1 producer and R09
 earned-graph source work; neither lane is enabled or accepted as database authority.
 
 Separate `..\m1-magic-item-worker`, branch `codex/m1-magic-item-revalidation`, belongs to original Git: historical tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Its reviewed PR99-derived slice and rarity fix are now integrated locally; no publication occurred. Individual worker tests remain distinct from combined candidate acceptance.

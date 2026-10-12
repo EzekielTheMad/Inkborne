@@ -531,6 +531,44 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### Latest combined gates and continued UI iteration — 2026-10-12 18:34 UTC
+
+Clean `df8c303dbb92275c1649311e165d492e31c43df1` passed typecheck, zero-warning
+lint and **317 files / 3,885 tests** with four workers in 176.02 seconds; 362
+observed identities/readback empty. Its fresh synthetic production build passed,
+23 identities/readback empty. Earlier same-source full run omitted the established
+worker limit: **315 files / 3,883 tests passed, two tests failed**, no unhandled
+errors, 458 identities/readback empty. Failures were a five-second actual-client
+bundle timeout and a missing asynchronous monster form response. Both original
+tests passed unchanged in the two-worker focused reproduction (**20/20**, 11.75
+seconds, nine identities/readback empty). The four-worker full rerun then passed.
+Failed receipts are retained in external history; runner now defaults check gates
+to four workers when unset. No production or test oracle change was made for
+these resource-sensitive failures.
+
+ASI rerun at `df8c303` passed **twelve desktop cases / 71 assertions**, including
+native fieldset/descendant disabling, no pending duplicate/navigation, rejected
+background recovery and actual weapon crit. Casting preparation stopped before
+any write: an unscoped title locator matched both desktop and hidden mobile
+Unprepare buttons. Failure DOM/screenshot/journals and build/source/font hashes
+are preserved; private ports/browser closed, 121 identities/readback empty.
+Root `b231e9a` scopes actual desktop tab controls to the unique visible sheet grid,
+retaining StatRibbon and native mobile scopes, all original assertions and source
+guards. Independent exact review approved it; fresh build-bound UI is next.
+**44-case/46-screen acceptance remains open**. Full check is accepted at `df8c303`,
+not this later harness iteration; repeat combined acceptance after source freeze.
+
+R17 library NPC plan `ecf5ccf` initially failed independent review because generic
+record effects would reach the existing character evaluator. Amendment `b4c55a55`
+passed review: narrative NPC current/immutable envelopes require explicit empty
+effects before defaulting; malformed/nonempty evidence is rejected intact. Bounded
+schema/canonical parser/category/profile and actual parser/ref/character/UI controls
+proceed in new isolated `r17-library-npc-worker`, branch
+`codex/r17-library-npc-plan-20261012`, base `df8c303`. Existing character relationship
+privacy/copy remains intact. Private authoring, import/sharing, campaign DM instances,
+lifecycle, exact-pin deletion and G2 remain later children. No hosted catalog rows,
+schema or runtime were changed. P1a additive source remains in progress separately.
+
 ### Latest integration awaiting fresh combined gates — 2026-10-12 18:23 UTC
 
 Independent P1 amendment review approved `cf69b854`; original plan `48d9256` and
