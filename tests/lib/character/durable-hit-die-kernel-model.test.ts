@@ -15,7 +15,7 @@ function fixture(): HitDieSnapshot {
     system: { id: id(3), slug: "dnd-5e-2014", expression_context: {}, schema_definition: {
       ability_scores: [{ slug: "constitution", name: "Constitution", abbr: "CON" }], proficiency_levels: [{ slug: "none", name: "None", multiplier: 0 }], derived_stats: [], skills: [], resources: [], currencies: [],
       content_types: [{ slug: "class", name: "Class" }], creation_steps: [{ step: 1, type: "class", label: "Class" }], sheet_sections: [{ slug: "stats", label: "Stats" }] } }, campaign: null,
-    pins: [{ id: id(4), character_id: id(1), content_id: id(5), content_version: 1, context: {}, choice_source: null,
+    pins: [{ id: id(4), character_id: id(1), content_id: id(5), content_version: 1, context: {}, choice_source: null, feature_grant_id: null,
       resolved: { id: id(5), version: 1, system_id: id(3), content_type: "class", slug: "fighter", name: "Fighter",
         data: { hit_die: 10, spellcasting: null, multiclass: { prerequisites: [], proficiencies_gained: [] }, saving_throws: [], starting_proficiencies: [],
           levels: Array.from({ length: 20 }, (_, i) => ({ level: i + 1, features: [], spellcasting: null })), source_refs: [] },
