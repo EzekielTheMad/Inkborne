@@ -4,12 +4,12 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source through `bc6a4b2`
+on local branch `codex/launch-integration-20261011`. Product source through `821eb1a`
 includes reviewed private magic-item/item/weapon/armor/core-race/trait/monster authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, exact selected subclass sources and per-acquisition casting math, explicit race-score
 representation, read-only monster schema/stat blocks/Library, default-disabled
-pure hit-die modeling, patched dependencies and runtime fixture preparation.
+pure hit-die modeling, advisory advanced-spell binding models, patched dependencies and runtime fixture preparation.
 Clean `2e20658` passed typecheck, zero-warning lint, **274 files / 3,023 tests**
 with four test workers, then a synthetic production build. Setup/fixture failures
 and one earlier five-second timeout are preserved and classified in the ledger.
@@ -35,11 +35,19 @@ are integrated through `bc6a4b2` after 128 narrow tests. Both families' Homebrew
 integration seam passed independent review. Clean combined `bc6a4b2` passed
 **295 files / 3,369 tests**, typecheck and zero-warning lint with four workers;
 its nine subclass provider/cast/rest/print offline browser cases also passed.
-Processes/listeners closed. Fresh production build and current-CSS form/PDF
-acceptance remain pending. Actual form browser
-harnesses are being prepared with current production CSS/fonts and explicit
-simulated action boundaries. Trait CREATE uncertainty retains the draft and
+Later clean `821eb1a` passed **297 files / 3,461 tests**, typecheck, zero-warning
+lint and a synthetic production build. Actual monster and trait forms each
+passed **28 desktop/mobile checks** with that exact build's CSS/fonts and hashed
+source. Actions, navigation and persistence remain simulated. Six character
+print cases at `9943f51` generated 33 A4/Letter pages; text, margins, privacy and
+rendered layout checks passed. All owned processes/listeners closed. Trait CREATE uncertainty retains the draft and
 requires checking Homebrew before an explicitly acknowledged further create.
+Private passive-feature source `6f43b57` and test-only corrections through
+`ff3e452` passed independent review and **145 focused tests**, typecheck and lint
+in its isolated worker. Integration and actual-form acceptance are next.
+The staged hit-die kernel is undergoing source review and model/static checks;
+its dependency reader is deliberately unavailable and production stays disabled.
+Saved ASI consumer-parity plan amendments are awaiting challenge before code.
 Development audit remains eight
 unpatched high findings / zero critical, production zero; no residual risk is
 accepted. Saved ASI parity remains a separate documented gap. The

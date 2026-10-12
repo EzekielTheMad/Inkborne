@@ -284,7 +284,7 @@ subclass worker owns the focused-check slot. G1 remains unanswered; a fresh
 read-only Docker version request still cannot connect to the Linux-engine pipe.
 No daemon startup, image pull, SQL execution, hosted or publication action occurred.
 
-### Current review / resource queue
+### Historical review / resource queue before `bc6a4b2`
 
 | Child / isolated owner | Source and observed local evidence | Current gate / next action |
 | --- | --- | --- |
@@ -329,7 +329,49 @@ Root inspected the original third-caster preview. Styling is intentionally
 simplified and persistence modeled; this is behavior proof, not production
 geometry, database authority or multi-session freshness. Both gate readbacks
 have zero owned processes/listeners. New production build/current-CSS form and
-PDF/browser acceptance remain open. All runtime/hosted/publication gates are unchanged.
+PDF/browser acceptance remain open at that historical checkpoint. All runtime/hosted/publication gates are unchanged.
+
+### Current source and review queue — 2026-10-12 UTC
+
+Clean root `821eb1aec1ffb26ae1101f1ebad01f41cae33867` passed repository
+`npm.cmd run check`: **297 files / 3,461 tests**, typecheck and zero-warning lint
+with four workers. The expected temporary-Git guard tests emit pathspec/line-ending
+diagnostics while their assertions pass. The exact source also passed the synthetic
+production build. Build-ID SHA256 is
+`3dde33efae8631679fd42c215e9e099e9cf9e86ee8040a922f63ff4d12828992`;
+successful build receipt SHA256 is
+`338362fd5655f861fb36d7562014e3d8a690d31424cc2a96b65462f88d0fc5cf`.
+Receipts and process readbacks are retained under
+`../verification/launch-20261012` outside the integration checkout. Build credentials
+are synthetic placeholders; this is no hosted/provider acceptance.
+
+| Child / isolated owner | Reviewed source and local evidence | Remaining acceptance |
+| --- | --- | --- |
+| R21 subclass casting | Integrated `a6d7efb` / `a41e186`; combined check plus nine offline provider/cast/rest/print cases passed at `bc6a4b2`. | Actual database/session authority and concurrent freshness remain open; browser styling was intentionally simplified. |
+| R16 private monster authoring | Integrated through `6029274`; actual-form harness `1db182e` / `7a2479d` passed **28 checks / 12 screenshots** at `821eb1a`, desktop 1280x900 and mobile 390x844, exact production CSS/fonts and source hashes. Native over-limit input is verified before submit; rejected/malformed responses retain the draft. | Native Next error helper bytes are real, but action HTTP, auth, persistence and routing are simulated. Root inspected the mobile near-budget tail; the very long full-field screenshot was overview only. Actual RLS/CAS and supported importer/DM workflows remain open. |
+| R12 standalone traits | Integrated through `bc6a4b2`; actual-form harness `8496083` / `821eb1a` passed **28 checks / 16 screenshots** at the exact current build. Strong source/transitive-byte/lock guards and OS process-birth checks passed; mobile rejection/locked edit and desktop saved-ID navigation failure were inspected. | Simulated action/navigation/list/reload. Raw-effect preservation, uncertain CREATE acknowledgement and no duplicate reinsertion are locally covered; PostgreSQL ownership/version/CAS remain open. |
+| R21 advanced binding | Advisory source `ad73021` / `1a3acf4` includes 88 focused cases and is in the 3,461-test combined run. Exact captured feature/grant/controller provenance and native resource state are modeled. | No production parser/provider/CastChoice/UI/SQL consumer; Mystic Arcanum, Spell Mastery and Signature Spells are not accepted gameplay implementations. |
+| R12 passive feature authoring | Isolated `6f43b57`; test-only `48584ab` / `531e116` / `400d638`, handoff `ff3e452` independently approved. **Six files / 145 tests**, typecheck and lint passed. Earlier crypto-mock failures are preserved; package/lock unchanged. | Root integration and actual-form preparation are next. Standalone association is explicitly unverified; no feature application/grant/reference/mechanics or database acceptance is implied. |
+| R09 staged hit-die kernel | Approved finite plan `ade6a34` / `4003a45`; staged source `ec5b4d6` plus fixture-only `16a8d11` is under independent review and serialized narrow checks. | No SQL/PGlite execution. Default-off gate and deliberately unavailable production dependency reader prevent command acceptance. Complete writer/access participation, canonical/native clock proof, profile/character lifetime behavior and real PostgreSQL recovery acceptance remain mandatory. |
+| R06 saved ASI consumer parity | Plan `b172882` amended by `6fcd21e` is awaiting exact independent challenge. | No code yet. Required evidence DTO, nullable feat-grant provenance, durable fingerprint, six finite abilities and stale-callback/whole-rest side-effect guards precede implementation. |
+
+Monster and trait harnesses recorded zero page errors, blocked/unexpected remote
+requests and cleanup leaks. Exact server/browser PID, birth, parent and command
+receipts are retained; each listener closed. These are local real-component proofs
+with stated simulated boundaries, not a running authenticated Next application.
+
+Six print cases at clean `9943f51` generated **33 pages** (A4/Letter caster,
+martial and long-content pairs). All pages rendered at 90 DPI; privacy exclusions,
+end markers, dimensions and at least 20-point text margins passed. Root inspected
+all six contact sheets plus the full caster A4 first page. Print uses its own
+production print CSS module and a context shim, so global production-font/provider
+acceptance remains open. Python/render child process readbacks are empty.
+
+The sole root writer continues approved integration while expensive checks remain
+serialized. Any root HEAD change makes the `821eb1a` browser build manifests stale;
+rebuild and rebind before using them for later source. G1/PDF input/P1-P3 decisions
+remain unanswered. No engine start, image pull, container, SQL execution, hosted
+write, deployment or publication occurred in these gates.
 
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
