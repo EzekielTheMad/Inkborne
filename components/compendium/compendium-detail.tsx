@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { MonsterStatBlock } from "@/components/compendium/monster-stat-block";
 import { NpcProfile } from "@/components/compendium/npc-profile";
+import { CompanionProfile } from "@/components/compendium/companion-profile";
 import { monsterDataSchema } from "@/lib/schemas/content-types/monster";
 import { npcDataSchema } from "@/lib/schemas/content-types/npc";
+import { companionDataSchema } from "@/lib/schemas/content-types/companion";
 import {
   getCompendiumEntryDescription,
   getCompendiumEntryEyebrow,
@@ -30,7 +32,9 @@ export function CompendiumDetail({ entry, userId, returnHref }: CompendiumDetail
   const monster = isMonster ? monsterDataSchema.safeParse(entry.data) : null;
   const isNpc = entry.content_type === "npc";
   const npc = isNpc ? npcDataSchema.safeParse(entry.data) : null;
-  const hasStructuredProfile = isMonster || isNpc;
+  const isCompanion = entry.content_type === "companion";
+  const companion = isCompanion ? companionDataSchema.safeParse(entry.data) : null;
+  const hasStructuredProfile = isMonster || isNpc || isCompanion;
 
   return (
     <article className="mx-auto w-full max-w-5xl space-y-6 pb-12">
@@ -56,14 +60,15 @@ export function CompendiumDetail({ entry, userId, returnHref }: CompendiumDetail
 
         <div className="grid gap-8 px-6 py-7 sm:px-9 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <div className={hasStructuredProfile ? "min-w-0 space-y-8 [overflow-wrap:anywhere]" : "space-y-8"}>
-            {(isMonster && (!monster?.success || monster.data.description === undefined)) || (isNpc && (!npc?.success || npc.data.description === undefined)) ? null : <section aria-labelledby="entry-description-heading">
+            {(isMonster && (!monster?.success || monster.data.description === undefined)) || (isNpc && (!npc?.success || npc.data.description === undefined)) || (isCompanion && (!companion?.success || companion.data.stat_block.description === undefined)) ? null : <section aria-labelledby="entry-description-heading">
               <h2 id="entry-description-heading" className="j-folio">Description</h2>
               <div className="mt-3 whitespace-pre-line text-sm leading-7 text-foreground/90">
                 {getCompendiumEntryDescription(entry)}
               </div>
             </section>}
             {isMonster ? monster?.success ? <MonsterStatBlock data={monster.data} /> : <p className="text-sm">Stat block unavailable.</p>
-              : isNpc ? npc?.success ? <NpcProfile data={npc.data} /> : <p className="text-sm">NPC profile unavailable.</p> : <ExtendedRules entry={entry} />}
+              : isNpc ? npc?.success ? <NpcProfile data={npc.data} /> : <p className="text-sm">NPC profile unavailable.</p>
+              : isCompanion ? <CompanionProfile data={entry.data} /> : <ExtendedRules entry={entry} />}
           </div>
 
           <aside aria-label="Rule details" className={hasStructuredProfile ? "min-w-0 rounded-lg border border-border bg-muted/25 p-5 [overflow-wrap:anywhere]" : "rounded-lg border border-border bg-muted/25 p-5"}>
@@ -87,7 +92,7 @@ export function CompendiumDetail({ entry, userId, returnHref }: CompendiumDetail
       </header>
 
       <p className="text-center text-xs text-muted-foreground">
-        {isMonster ? "This stat block is read-only." : isNpc ? "This NPC narrative template is read-only." : "This view is read-only. Manage content you own from Homebrew."}
+        {isMonster ? "This stat block is read-only." : isNpc ? "This NPC narrative template is read-only." : isCompanion ? "This companion stat template is read-only." : "This view is read-only. Manage content you own from Homebrew."}
       </p>
     </article>
   );

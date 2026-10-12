@@ -68,6 +68,12 @@ export const COMPENDIUM_CATEGORIES = {
     description: "Narrative templates, personalities, and relationship ideas.",
     contentTypes: ["npc"],
   },
+  companions: {
+    label: "Companions",
+    singular: "Companion",
+    description: "Declared mount, beast form, and summon stat templates.",
+    contentTypes: ["companion"],
+  },
 } as const;
 
 export type CompendiumCategory = keyof typeof COMPENDIUM_CATEGORIES;

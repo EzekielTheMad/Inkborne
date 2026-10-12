@@ -30,6 +30,7 @@ export interface ParsedContentDefinition<
 }
 
 const contentDefinitionIdSchema = z.string().uuid();
+const companionVersionSchema = z.number().int().min(1).max(2_147_483_647);
 
 const contentVersionSnapshotSchema = z.object({
   content_id: z.string().uuid(),
@@ -63,6 +64,12 @@ export function parseContentDefinition(
   if (npcEnvelope?.content_type === "npc" &&
     (!Array.isArray(npcEnvelope.effects) || npcEnvelope.effects.length !== 0)) {
     console.error("[content-definitions] NPC envelope requires explicit empty effects");
+    return null;
+  }
+  const companionEnvelope = raw as { content_type?: unknown; effects?: unknown; version?: unknown } | null;
+  if (companionEnvelope?.content_type === "companion" &&
+    (!Array.isArray(companionEnvelope.effects) || companionEnvelope.effects.length !== 0 || !companionVersionSchema.safeParse(companionEnvelope.version).success)) {
+    console.error("[content-definitions] Companion template requires explicit empty effects and a bounded version");
     return null;
   }
   const envelope = contentDefinitionSchema.safeParse(raw);
@@ -169,6 +176,12 @@ export function parseContentVersionSnapshot(
   if (npcSnapshot?.content_type_snapshot === "npc" &&
     (!Array.isArray(npcSnapshot.effects_snapshot) || npcSnapshot.effects_snapshot.length !== 0)) {
     console.error("[content-versions] NPC snapshot requires explicit empty effects");
+    return null;
+  }
+  const companionSnapshot = raw as { content_type_snapshot?: unknown; effects_snapshot?: unknown; version?: unknown } | null;
+  if (companionSnapshot?.content_type_snapshot === "companion" &&
+    (!Array.isArray(companionSnapshot.effects_snapshot) || companionSnapshot.effects_snapshot.length !== 0 || !companionVersionSchema.safeParse(companionSnapshot.version).success)) {
+    console.error("[content-versions] Companion template requires explicit empty effects and a bounded version");
     return null;
   }
   const snapshot = contentVersionSnapshotSchema.safeParse(raw);

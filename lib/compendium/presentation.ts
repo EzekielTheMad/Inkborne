@@ -1,4 +1,5 @@
 import type { CompendiumEntry } from "@/lib/compendium/types";
+import { companionDataSchema, COMPANION_ROLE_LABELS } from "@/lib/schemas/content-types/companion";
 
 export interface CompendiumFact {
   label: string;
@@ -57,6 +58,10 @@ function spellScalingText(value: unknown, damageType?: unknown): string | null {
 
 export function getCompendiumEntryDescription(entry: CompendiumEntry): string {
   const data = entry.data;
+  if (entry.content_type === "companion") {
+    const parsed = companionDataSchema.safeParse(data);
+    return parsed.success ? text(parsed.data.stat_block.description) ?? "Companion stat template." : "Companion template unavailable.";
+  }
   const direct = text(data.description) ?? text(data.descriptionFull);
   if (direct) return direct;
   if (entry.content_type === "monster") return "Monster stat block.";
@@ -101,6 +106,15 @@ export function getCompendiumEntryFacts(entry: CompendiumEntry): CompendiumFact[
   };
 
   switch (entry.content_type) {
+    case "companion": {
+      const parsed = companionDataSchema.safeParse(data);
+      if (parsed.success) {
+        add("Template role", COMPANION_ROLE_LABELS[parsed.data.role]);
+        add("Size", parsed.data.stat_block.size);
+        add("Creature type", parsed.data.stat_block.creature_type);
+      }
+      break;
+    }
     case "npc":
       add("Occupation", text(data.occupation));
       break;
@@ -220,6 +234,10 @@ export function getCompendiumEntryFacts(entry: CompendiumEntry): CompendiumFact[
 }
 
 export function getCompendiumEntryEyebrow(entry: CompendiumEntry): string {
+  if (entry.content_type === "companion") {
+    const parsed = companionDataSchema.safeParse(entry.data);
+    return parsed.success ? COMPANION_ROLE_LABELS[parsed.data.role] : "Companion template";
+  }
   if (entry.content_type === "npc") return "NPC narrative template";
   if (entry.content_type === "monster") {
     const challenge = text(record(entry.data.challenge)?.rating);
