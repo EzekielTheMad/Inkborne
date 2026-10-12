@@ -1,6 +1,6 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-12 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. This handoff pass is documentation/planning only.
+Updated 2026-10-12 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
 
 ## Resume and ownership
 
@@ -10,9 +10,9 @@ Main_PC resume directory:
 C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification
 ```
 
-Branch `codex/equipment-executable-verification`. Incoming clean docs HEAD `c5370eb60053a40506cfaf1f9449d9f632769d51`; exact tested core `ada6c9b8c51c8d674c6a76dbf4df1f9955ce5cdf`. This pass adds later docs-only commits; read actual HEAD. This worktree shares Git with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git.
+Active branch `codex/launch-integration-20261011`. Read actual HEAD and the ledger's latest exact acceptance: combined product `b4e308f` passed 305 files / 3,645 tests and build, with 44 passive-form checks; later harness-only `9fb0877` fixes the reproduced builder fixture failure and awaits the next combined check. Incoming docs `c5370eb` and tested core `ada6c9b` are historical. This worktree shares Git with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git.
 
-Separate clean `..\m1-magic-item-worker`, branch `codex/m1-magic-item-revalidation`, belongs to original Git: tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Its full PR99-derived authoring slice and rarity fix are not integrated or published. Review/integrate locally first; do not equate a worker's tests with combined candidate acceptance.
+Separate `..\m1-magic-item-worker`, branch `codex/m1-magic-item-revalidation`, belongs to original Git: historical tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Its reviewed PR99-derived slice and rarity fix are now integrated locally; no publication occurred. Individual worker tests remain distinct from combined candidate acceptance.
 
 Original registered root `C:\Projects\Inkborne` is the old backup checkout, not the tested candidate. Preserve all inherited branches and dirty/untracked work. Read applicable AGENTS/skills, original root AGENTS worktree/process conventions, the [closing handoff](handoffs/2026-10-11-orchestrator-local-queue.md) and [current inventory](handoffs/2026-10-12-launch-worktree-inventory.json). The original `.agents` was empty; inspect anew. Relevant local memory is historical context, not authority. No credential-file scanning/copying.
 
@@ -51,7 +51,7 @@ Record owned PID/parent/cwd/command/port/start and container IDs for long-lived 
 
 ## Current validation and commands
 
-Latest core evidence remains `ada6c9b`: full check **226 files / 2,292 tests**, zero-warning lint/typecheck, dummy-config build, **43 core + 10 drift offline checks**. Standalone M1: **1,805 tests/build/12 offline checks**. [Closing handoff](handoffs/2026-10-11-orchestrator-local-queue.md) indexes exact logs/process receipts. No product checks were rerun in this documentation pass. Equipment gate is off; D1/E1 are characterization/proposals, not implemented full durable boundaries. Real baseline/grants/triggers/ASI-copy/multi-connection/rollback, actual auth/provider/admin/backup/domain and launch acceptance remain open.
+Historical core `ada6c9b` passed **226 files / 2,292 tests**, dummy build and **43 core + 10 drift offline checks**. Standalone M1's 1,805 tests/build/12 offline checks are also historical. Current combined and real-component receipts, preserved failures and limitations are in the ledger. Equipment and durable command gates remain off. Full database roles/triggers/concurrency/recovery, actual auth/provider/admin/backup/domain and launch acceptance remain open.
 
 Use locked dependencies, repository scripts and relevant bundled Next docs. Node `>=22`; prior checkpoint used 24.14.0. For local verification:
 
