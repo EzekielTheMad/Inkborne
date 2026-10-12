@@ -1,4 +1,4 @@
-# R12.6a private standalone passive features — UNVERIFIED source checkpoint
+# R12.6a private standalone passive features — narrow local gates passed
 
 Approved plan `docs/specs/2026-10-12-private-passive-feature-plan.md`; isolated
 `r12-passive-feature-worker`, branch `codex/r12-passive-features`, clean starting
@@ -59,9 +59,9 @@ public sharing or dependency change. A descriptive class string is not immutable
 manifest/character authority. Existing `feature-refs-server.ts` and its
 `sync_character_feature_refs` RPC remain untouched.
 
-## Prepared meaningful tests and honest gate state
+## Meaningful tests and honest gate state
 
-Prepared six-file narrow set: pure mapper/response; actual-mapper mocked DAL;
+Six-file narrow set: pure mapper/response; actual-mapper mocked DAL;
 mounted actual React form; actions; pages; existing Homebrew integration. Original
 canonical synthetic fixtures live in `tests/fixtures/passive-features.ts` and
 exercise raw choice/per-level/weapon data/extensions and ordered raw effect extras
@@ -72,20 +72,42 @@ raw absence/order, owner/private/system predicates, lost/malformed results,
 next-version confirmation, no-op/exhausted limit, stale CAS/no retry, manual check
 ack, pending duplicate, native reset and saved-navigation failure.
 
-**No install, tests, typecheck, lint, build, browser, live runtime, SQL or provider
-operation has run in this worker.** No node_modules, environment files or secrets
-were copied. Root's form-browser QA owns the heavy/UI slot. Source writing and
-diff inspection are not validation; checkpoint is unaccepted/unverified until a
-released locked install and narrow gates, independent review, root combined check/
-synthetic build and actual form browser acceptance complete.
-
-After root resource release, proposed narrow command:
+Root released the serialized narrow slot after independent source approval of
+`6f43b57b574faaeb7536aad4ded592cb1bb1e449`. On clean tested source
+`400d6380eaacfaa7baa9ee4b733acc68ac0cc952`, the following commands passed:
 
 ```text
+npm.cmd ci --ignore-scripts --no-audit --no-fund
 npm.cmd test -- tests/lib/homebrew/passive-feature-form.test.ts tests/supabase/homebrew-passive-features-server.test.ts tests/components/library/passive-feature-form.test.tsx tests/app/homebrew-passive-feature-actions.test.ts tests/app/homebrew-passive-feature-pages.test.tsx tests/app/homebrew-page.test.tsx --maxWorkers=2
 npm.cmd run typecheck
 npm.cmd run lint
 ```
+
+Locked install added 804 packages in this worker only, without copying any
+node_modules, environment files or secrets. Package/lock were unchanged; lockfile
+SHA256 remains `7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6`.
+The final focused run passed **6 files / 145 tests**, typecheck passed and lint
+passed with zero warnings. Production source is unchanged from approved `6f43b57`.
+Three separate test-only corrections (`48584ab`, `531e116`, `400d638`) preserve
+real crypto exports while controlling both named/default UUID interop and typing
+the optional Vitest default export. The initial missing-default suite-load failure,
+the subsequent real/default UUID correlation failure (144 passed / 1 failed), and
+the test-mock-only TS2339 failure are retained; no assertion or product guard was
+weakened. Create now additionally asserts one UUID call and exact INSERT payload
+before the unchanged saved-result assertion.
+
+Immutable logs, commands, source/status receipts, actual PID/parent/command/OS
+CreationDate process metadata, before/after resources and SHA256 manifest are at
+`C:/Users/kaios/Documents/Codex/2026-10-11/task-2/verification/r12-passive-feature-20261012`.
+Every recorded gate exited, with remaining captured PIDs empty. Fresh readback
+matched actual OS birth plus PID and command: **0 owned Node processes, 0 captured
+gate processes, 0 owned listeners**. Shared process count changed 387 to 395,
+working set 22,849,712,128 to 25,043,447,808 bytes, cumulative shared CPU 26,145.53
+to 26,840.39 seconds; total listeners stayed 41. Those shared deltas include other
+desktop/agent activity and do not establish a worker leak. No force cleanup or
+server/browser startup was needed. The heavy slot was explicitly released after
+this readback. Root owns independent correction review, combined checks/build and
+the representative browser gate; none of those broader gates ran in this worker.
 
 Actual signed-in owner/foreign/signed-out writes, deployed RLS/grants, concurrent
 PostgreSQL CAS and historical snapshot trigger behavior remain runtime acceptance,
