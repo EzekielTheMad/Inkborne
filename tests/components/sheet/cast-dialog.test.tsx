@@ -42,7 +42,9 @@ vi.mock("@/lib/character/character-context", () => ({
     castSpell,
     getCastingAbility: (spell: CharacterSpell) => ({ status: "available", spell, profile: { classSlug: spell.class_slug || "wizard", ability: "intelligence", abilityModifier: 3, spellDc: mockCasterInfo.spellDc, spellAttackBonus: mockCasterInfo.spellAttackBonus } }),
   }),
-  useRolls: () => ({ roll }),
+  // This component fixture injects confirmed mechanics; real admission is tested
+  // by asi-casting-guards and the canonical provider/browser fixtures.
+  useRolls: () => ({ roll, assertMechanics: vi.fn() }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -462,6 +464,7 @@ describe("CastDialog — result pane", () => {
     fireEvent.click(screen.getByRole("button", { name: /Roll Damage/ }));
     expect(roll).toHaveBeenCalledWith(
       expect.objectContaining({ kind: "damage", expression: "3d6" }),
+      { abilities: ["intelligence"], computed: ["proficiency_bonus"], values: [3, 13, 5] },
     );
     expect(screen.getByText("→ 11")).toBeInTheDocument();
   });
@@ -477,6 +480,7 @@ describe("CastDialog — result pane", () => {
     fireEvent.click(screen.getByRole("button", { name: "Advantage" }));
     expect(roll).toHaveBeenCalledWith(
       expect.objectContaining({ mode: "advantage" }),
+      { abilities: ["intelligence"], computed: ["proficiency_bonus"], values: [3, 13, 5] },
     );
   });
 
@@ -496,6 +500,7 @@ describe("CastDialog — result pane", () => {
     fireEvent.click(screen.getByRole("button", { name: /Roll Damage/ }));
     expect(roll).toHaveBeenLastCalledWith(
       expect.objectContaining({ kind: "damage", crit: true }),
+      { abilities: ["intelligence"], computed: ["proficiency_bonus"], values: [3, 13, 5] },
     );
   });
 

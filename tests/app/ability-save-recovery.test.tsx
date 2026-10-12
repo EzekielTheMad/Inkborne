@@ -107,7 +107,7 @@ describe("ability-score save recovery", () => {
     await screen.findByRole("alert");
     expect(strength).toHaveValue(18);
     fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Changes save automatically."));
+    await waitFor(() => expect(screen.getByText("Changes save automatically.")).toHaveAttribute("role", "status"));
     expect(persist).toHaveBeenLastCalledWith("char-1", { method: "manual", scores: { strength: 18, dexterity: 10 } }, { method: "manual", scores: { strength: 16, dexterity: 10 } });
   });
 
@@ -181,7 +181,7 @@ describe("ability-score save recovery", () => {
     expect(persist.mock.calls.map(([id]) => id)).toEqual(["char-1", "char-1", "char-1"]);
     expect(persist.mock.calls[2][2]).toEqual({ method: "manual", scores: { strength: 18 } });
     expect(screen.getByRole("spinbutton", { name: "Strength score" })).toHaveValue(20);
-    expect(screen.getByRole("status")).toHaveTextContent("Changes save automatically.");
+    expect(screen.getByText("Changes save automatically.")).toHaveAttribute("role", "status");
   });
 
   it("recovers a draft after a cached route hides the editor during a save", async () => {
@@ -196,7 +196,7 @@ describe("ability-score save recovery", () => {
     await screen.findByRole("alert");
     expect(screen.getByRole("spinbutton", { name: "Strength score" })).toHaveValue(18);
     fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Changes save automatically."));
+    await waitFor(() => expect(screen.getByText("Changes save automatically.")).toHaveAttribute("role", "status"));
     expect(persist).toHaveBeenCalledTimes(2);
     expect(persist.mock.calls[1]).toEqual(persist.mock.calls[0]);
   });
@@ -211,7 +211,7 @@ describe("ability-score save recovery", () => {
     view.rerender(<Activity mode="visible">{editor}</Activity>);
     expect(screen.getByRole("button", { name: "Next: Background" })).toBeDisabled();
     await act(async () => first.resolve());
-    expect(screen.getByRole("status")).toHaveTextContent("Changes save automatically.");
+    expect(screen.getByText("Changes save automatically.")).toHaveAttribute("role", "status");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(persist).toHaveBeenCalledTimes(1);
   });

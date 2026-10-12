@@ -8,7 +8,8 @@ const rollMock = vi.fn();
 let mockActiveEffects: ActiveEffect[] = [];
 
 vi.mock("@/lib/character/character-context", () => ({
-  useRolls: () => ({ rolls: [], roll: rollMock }),
+  // Caller-supplied confirmed mechanics for request/rider component tests.
+  useRolls: () => ({ rolls: [], roll: rollMock, assertMechanics: vi.fn(), mechanics: { status: "available" } }),
   useActiveEffects: () => ({
     activeEffects: mockActiveEffects,
     applyEffect: vi.fn(),
@@ -74,7 +75,7 @@ describe("caller-owned guarded roll requests", () => {
 describe("<RollPopover> — d20 kinds", () => {
   function renderCheck(props: Partial<React.ComponentProps<typeof RollPopover>> = {}) {
     return render(
-      <RollPopover kind="check" label="Athletics Check" modifier={5} {...props}>
+      <RollPopover kind="check" label="Athletics Check" modifier={5} mechanicsRequirement={{ values: [5] }} {...props}>
         +5
       </RollPopover>,
     );
@@ -101,7 +102,7 @@ describe("<RollPopover> — d20 kinds", () => {
       kind: "check",
       label: "Athletics Check",
       expression: "1d20+5",
-    });
+    }, { values: [5] });
   });
 
   it("Advantage / Disadvantage set the request mode", async () => {
@@ -110,12 +111,14 @@ describe("<RollPopover> — d20 kinds", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Advantage" }));
     expect(rollMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ expression: "1d20+5", mode: "advantage" }),
+      { values: [5] },
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Roll Athletics Check" }));
     fireEvent.click(await screen.findByRole("button", { name: "Disadvantage" }));
     expect(rollMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ mode: "disadvantage" }),
+      { values: [5] },
     );
   });
 
@@ -132,7 +135,7 @@ describe("<RollPopover> — d20 kinds", () => {
   it("appends matching active-effect dice (Bless on an attack) with breakdown meta", async () => {
     mockActiveEffects = [mkBlessEffect("roll_attack")];
     render(
-      <RollPopover kind="attack" label="Mace — Attack" modifier={7}>
+      <RollPopover kind="attack" label="Mace — Attack" modifier={7} mechanicsRequirement={{ values: [7] }}>
         +7
       </RollPopover>,
     );
@@ -146,7 +149,7 @@ describe("<RollPopover> — d20 kinds", () => {
       label: "Mace — Attack",
       expression: "1d20+7+1d4",
       meta: { roll_modifiers: [{ name: "Bless", dice: "1d4" }] },
-    });
+    }, { values: [7] });
   });
 
   it("ignores non-matching riders (an attack rider does not touch a skill check)", async () => {
@@ -158,7 +161,7 @@ describe("<RollPopover> — d20 kinds", () => {
       kind: "check",
       label: "Athletics Check",
       expression: "1d20+5",
-    });
+    }, { values: [5] });
   });
 
   it("applies save riders to death saves (RAW: death saves are saving throws)", async () => {
@@ -172,6 +175,7 @@ describe("<RollPopover> — d20 kinds", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Roll" }));
     expect(rollMock).toHaveBeenCalledWith(
       expect.objectContaining({ kind: "death_save", expression: "1d20+1d4" }),
+      undefined,
     );
   });
 });
@@ -196,7 +200,7 @@ describe("<RollPopover> — immediate kinds", () => {
       kind: "damage",
       label: "Mace — Damage",
       expression: "1d6+3",
-    });
+    }, undefined);
     expect(onResult).toHaveBeenCalled();
     // No adv/dis choice for damage.
     expect(screen.queryByRole("button", { name: "Advantage" })).not.toBeInTheDocument();
@@ -221,7 +225,7 @@ describe("<RollPopover> — immediate kinds", () => {
       expression: "1d6+3",
       crit: true,
       meta: { damage_type: "bludgeoning" },
-    });
+    }, undefined);
   });
 
   it("respects disabled", () => {

@@ -5,6 +5,7 @@ import type { PendingConcentrationCheck } from "@/lib/active-effects/concentrati
 import type { ActiveEffect } from "@/lib/types/active-effects";
 import type { ConcentrationState } from "@/lib/types/spells";
 import type { RollRequest } from "@/lib/dice/types";
+import { raceParitySchema } from "../../fixtures/r06-race-parity";
 
 // ---------------------------------------------------------------------------
 // Context mocks
@@ -30,7 +31,7 @@ const roll = vi.fn((request: RollRequest) => ({
 // CON 14 (+2), proficiency +3, proficient in CON saves → save modifier +5.
 const mockEvalResult = {
   stats: { constitution: 14, constitution_mod: 2 },
-  computed: { proficiency_bonus: 3 },
+  computed: { proficiency_bonus: 3, constitution_mod: 2 },
   grants: [
     { type: "grant", stat: "saving_throw_constitution", value: "proficient" },
   ],
@@ -45,9 +46,10 @@ vi.mock("@/lib/character/character-context", () => ({
     resolveCheck,
     dropPatch: {},
   }),
-  useCharacter: () => ({ evalResult: mockEvalResult }),
+  useCharacter: () => ({ evalResult: mockEvalResult, schema: raceParitySchema }),
   useCharacterState: () => ({ state: {}, patchState: { runAction: async (_state: unknown, compute: () => { result: unknown }) => compute().result } }),
-  useRolls: () => ({ rolls: [], roll }),
+  // Positive component fixture injects mechanics; provider refusal is separate.
+  useRolls: () => ({ rolls: [], roll, assertMechanics: vi.fn() }),
   useActiveEffects: () => ({ activeEffects: mockActiveEffects }),
 }));
 

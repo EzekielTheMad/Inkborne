@@ -7,7 +7,8 @@ import type { RollRequest, RollResult } from "@/lib/dice/types";
 
 const mocks = vi.hoisted(() => ({ roll: vi.fn(), natural: 12 }));
 vi.mock("@/lib/character/character-context", () => ({
-  useRolls: () => ({ rolls: [], roll: mocks.roll }),
+  // Confirmed component input; actual provider admission has separate coverage.
+  useRolls: () => ({ rolls: [], roll: mocks.roll, assertMechanics: vi.fn(), mechanics: { status: "available" } }),
   useActiveEffects: () => ({ activeEffects: [] }),
 }));
 
@@ -29,15 +30,15 @@ describe("actual ActionsTab with canonical parsed weapon data", () => {
     expect(screen.getByRole("button", { name: "Roll Ridge Bow damage" })).toHaveTextContent("1d8 +4 piercing");
     fireEvent.click(screen.getByRole("button", { name: "Roll Ridge Bow attack" }));
     fireEvent.click(await screen.findByRole("button", { name: "Roll" }));
-    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "attack", label: "Ridge Bow — Attack", expression: "1d20+4" });
+    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "attack", label: "Ridge Bow — Attack", expression: "1d20+4" }, { abilities: ["dexterity"], computed: ["proficiency_bonus"], values: [4] });
     fireEvent.click(screen.getByRole("button", { name: "Roll Ridge Bow damage" }));
-    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "damage", label: "Ridge Bow — Damage", expression: "1d8+4", meta: { damage_type: "piercing" } });
+    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "damage", label: "Ridge Bow — Damage", expression: "1d8+4", meta: { damage_type: "piercing" } }, { abilities: ["dexterity"], values: [4] });
   });
   it("uses STR and the matching simple category for canonical melee", () => {
     setup("melee");
     expect(screen.getByRole("button", { name: "Roll Trail Mallet attack" })).toHaveTextContent("+4");
     fireEvent.click(screen.getByRole("button", { name: "Roll Trail Mallet damage" }));
-    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "damage", label: "Trail Mallet — Damage", expression: "1d6+1", meta: { damage_type: "bludgeoning" } });
+    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "damage", label: "Trail Mallet — Damage", expression: "1d6+1", meta: { damage_type: "bludgeoning" } }, { abilities: ["strength"], values: [4] });
   });
   it("uses the stronger finesse ability and preserves one-shot crit arming", async () => {
     mocks.natural = 20; setup("finesse");
@@ -45,7 +46,7 @@ describe("actual ActionsTab with canonical parsed weapon data", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Roll" }));
     expect(screen.getByText("Crit!")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Roll Courier Needle damage" }));
-    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "damage", label: "Courier Needle — Damage", expression: "1d8+4", crit: true, meta: { damage_type: "piercing" } });
+    expect(mocks.roll).toHaveBeenLastCalledWith({ kind: "damage", label: "Courier Needle — Damage", expression: "1d8+4", crit: true, meta: { damage_type: "piercing" } }, { abilities: ["strength", "dexterity"], values: [4] });
     expect(screen.queryByText("Crit!")).toBeNull();
   });
   it("keeps missing canonical damage unavailable and disables its roll", () => {

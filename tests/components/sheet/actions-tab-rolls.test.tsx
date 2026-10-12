@@ -10,7 +10,8 @@ import type { RollRequest, RollResult } from "@/lib/dice/types";
 const rollMock = vi.fn();
 
 vi.mock("@/lib/character/character-context", () => ({
-  useRolls: () => ({ rolls: [], roll: rollMock }),
+  // Confirmed component input; these tests retain the exact request/crit oracle.
+  useRolls: () => ({ rolls: [], roll: rollMock, assertMechanics: vi.fn(), mechanics: { status: "available" } }),
   useActiveEffects: () => ({
     activeEffects: [],
     applyEffect: vi.fn(),
@@ -104,7 +105,7 @@ describe("<ActionsTab> — attack rolls", () => {
       kind: "attack",
       label: "Mace — Attack",
       expression: "1d20+5",
-    });
+    }, { abilities: ["strength"], computed: ["proficiency_bonus"], values: [5] });
   });
 
   it("rolls damage immediately with dice + ability modifier and the damage type in meta", () => {
@@ -116,7 +117,7 @@ describe("<ActionsTab> — attack rolls", () => {
       label: "Mace — Damage",
       expression: "1d6+3",
       meta: { damage_type: "bludgeoning" },
-    });
+    }, { abilities: ["strength"], values: [5] });
   });
 });
 
@@ -134,6 +135,7 @@ describe("<ActionsTab> — attack → damage crit chain", () => {
         expression: "1d6+3",
         crit: true,
       }),
+      { abilities: ["strength"], values: [5] },
     );
   });
 
