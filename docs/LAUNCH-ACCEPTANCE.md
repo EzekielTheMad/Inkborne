@@ -1,5 +1,63 @@
 # Inkborne project-wide acceptance ledger
 
+## Active continuation — 2026-10-12 UTC
+
+The human requested execution of the attached kickoff. The sole integration owner
+resumed the clean recorded worktree at `628283318394f08992d7fc397390119611cc03ab`
+and created local branch `codex/launch-integration-20261011` in that same worktree.
+The original root and all inherited workers remain preserved. Fresh remote readback
+found main `6b8601f976d3ee121d11f2ec33c7383393024b91`; PR99 and PR101 remain open
+drafts at their recorded heads. No remote publication or live change is authorized.
+
+R11's independent review found no blocking issue. Its exact three source commits
+(`6bbd17d`, `4cbd70b`, `3d61ff3`) were cherry-picked as `82bfdb1`, `fb6f14c`,
+`72fb420`. Current database types, lockfile, equipment, ability and state paths were
+preserved. The combined focused run passed **8 files / 46 tests** at `72fb420`.
+Full/build/browser validation is in progress; actual database acceptance remains open.
+Nonsecret receipts are in sibling `verification/launch-20261012/`.
+
+Victor answered the scope and durable-gameplay questions on 2026-10-12 UTC:
+
+| Decision | Explicit human answer / disposition |
+| --- | --- |
+| S1 | **Wait for every included milestone before beta.** Beta is not a staged midpoint for included milestones. |
+| S2 / R24 | **Defer Daggerheart from first beta; retain project backlog.** This is a beta deferral, not removal from the total documented project. |
+| S3 / R26 | **Defer public publishing from first beta; retain project backlog.** Private and campaign sharing continue; public licensing/visibility/moderation still need a later contract. |
+| S4 / R22 | **Include PDF importing before beta.** First supported layout/content matrix is being requested; print/export R23 continues independently. |
+| S5 | No blanket P1-P3 disposition was given. Individual ambitions remain visible and require selected contracts or explicit dated dispositions. |
+| R09 product policies | Human delegated choice to the orchestrator: **"whichever is the best long term option"**. Adopt one hit-die command first, trusted server-generated accepted roll, immutable receipts for the character lifetime, and account-scoped operation-ID recovery surviving reload and clearing on sign-out/account change. Local implementation stays disabled until writer participation, database and browser recovery acceptance pass. |
+
+Independent R12.1 review blocked initial `889afdf` for effects erasure and small
+decimal create/edit roundtrip failure. Both were corrected at `c2b7132` and the
+independent exact-source reviewer approved. The inherited R11 editor had the same
+effects erasure; root corrected it at `861cab6`, with a failing-before regression
+and **3 files / 21 focused tests** passing after. The independent reviewer approved
+that fix. Real database/version acceptance is still open.
+
+| Child requirement | Owner / isolated branch / base | Bounded acceptance and remaining boundary |
+| --- | --- | --- |
+| R12.1 — ordinary private item authoring (R12) | Item worker, `../r12-item-worker`, `codex/r12-private-item`, base `72fb420` | Existing item schema fields only; authenticated private create/edit, finite validation, constrained expected-version conflicts, draft retention, Homebrew discovery, exact-pin consumer compatibility. Focused/full/build/offline real-form evidence; real two-owner/snapshot/race acceptance stays open for approved runtime. Other R12 families remain open. |
+| R23.1 — print / Save as PDF (R23) | Print worker, `../r23-print-worker`, `codex/r23-character-print`, base `72fb420` | Current confirmed evaluated values and immutable pins; strict printable allowlist excluding DM notes/secrets; martial/caster/long-content fixtures at Letter/A4, complete readable lists/page breaks, no editing controls/clipping. Rendered PDFs and layout inspection; real approved-account data acceptance stays open. Fillable standard PDF remains separate P2 scope. |
+
+Runtime discovery still finds the Docker Linux engine unavailable and no Supabase or
+psql executable on PATH. The preparation lane is resolving a minimal official,
+digest-pinned PostgreSQL plus Auth/Storage migration bootstrap with no host ports;
+no runtime was started, image pulled, credential created or SQL executed.
+
+The concrete [G1/G2 runtime plan](specs/2026-10-12-equipment-runtime-plan.md)
+and [digest-pinned Compose](specs/2026-10-12-equipment-runtime.compose.yaml)
+are prepared. G1 permission was requested for one shared-engine startup and three
+exact image pulls/metadata reads only; the full runtime/SQL/fixtures/ephemeral
+credential package remains separate G2 preparation. Unanswered G1 is not approval.
+
+R03.1 security preparation found **11 production dependency issues** in the current
+lockfile (one critical, eight high, two moderate). Official Next.js advisories were
+verified. A bounded isolated worker is applying Next/ESLint `16.3.8`, coherent
+Tiptap `3.30.5`, compatible editor/image/transitive fixes and patched existing
+overrides; its first updated production-only audit reports zero issues. It is not
+yet reviewed/integrated/accepted. Inherited development-tool findings remain
+explicit; no blanket audit fix, major downgrade or unrelated cleanup was selected.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. This planning pass changes no product, runtime, database or hosting.
 
 ## Finite scope and decisions

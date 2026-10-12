@@ -1,5 +1,15 @@
 # D1 durable roll/state contract — proposal and current-gap evidence
 
+> **2026-10-12 human decision:** When asked about trusted server-generated rolls,
+> character-lifetime immutable receipts and account-scoped reload recovery,
+> Victor delegated the choice: "whichever is the best long term option".
+> The orchestrator adopts those product policies for the first hit-die command.
+> Ordinary local source/SQL-file implementation is within kickoff scope; keep the
+> command default-off. Writer/fence review, scratch G2 execution, real recovery,
+> and any hosted/release approval remain required. The older product-policy
+> approval wording below is historical; it does not require asking Victor again
+> for these selected policies.
+
 > **2026-10-12 continuation:** This is characterization/proposal evidence, not implemented durability. The [launch ledger](../LAUNCH-ACCEPTANCE.md) keeps implementation and acceptance open. Ordinary local code/SQL-file edits and offline tests may proceed within the selected requirement; actual runtime/live data/schema/security/persistent-credential operations require their applicable approvals.
 
 October 11, 2026. Source inspected: `56db57e46e93783356cd132240350784accf1f28`,

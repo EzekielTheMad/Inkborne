@@ -1,0 +1,93 @@
+# Proposed scratch-only E1 runtime. No approval is implied by this file.
+# G1 permits no containers; G2 is a separate frozen-source/test approval.
+# Render with COMPOSE_DISABLE_ENV_FILE=true and explicit nonsecret placeholders.
+# Set --project-directory to the exact approved equipment-runtime scratch path.
+name: inkborne-equipment-e1-20261011
+services:
+  db:
+    image: supabase/postgres@sha256:06ddc7962e11ab0f4f0334fd05671e97c30ea202f6e6a7113800bd3d6e416108
+    platform: linux/amd64
+    container_name: inkborne-equipment-e1-20261011-db
+    restart: 'no'
+    cpus: 1.0
+    mem_limit: 1g
+    pids_limit: 256
+    environment:
+      POSTGRES_PASSWORD: ${E1_PG_PASSWORD:?ephemeral scratch password required}
+      PGPASSWORD: ${E1_PG_PASSWORD:?ephemeral scratch password required}
+      JWT_SECRET: ${E1_JWT_SECRET:?ephemeral scratch JWT secret required}
+      POSTGRES_DB: postgres
+    command: ['postgres', '-c', 'config_file=/etc/postgresql/postgresql.conf', '-c', 'log_statement=none', '-c', 'log_min_error_statement=panic']
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/postgresql/data
+      - type: volume
+        source: db-config
+        target: /etc/postgresql-custom
+      - type: bind
+        source: ./bootstrap/99-roles.sql
+        target: /docker-entrypoint-initdb.d/init-scripts/99-roles.sql
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./sql
+        target: /e1-sql
+        read_only: true
+        bind:
+          create_host_path: false
+    networks: [e1]
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres', '-h', 'localhost']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  auth-migrate:
+    image: supabase/gotrue@sha256:c0c25187a6b835e65a6f6e6c6b39d090e832d40e6de5186f2c038e0411944232
+    platform: linux/amd64
+    container_name: inkborne-equipment-e1-20261011-auth-migrate
+    restart: 'no'
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
+    command: ['auth', 'migrate']
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${E1_PG_PASSWORD:?ephemeral scratch password required}@db:5432/postgres
+      GOTRUE_JWT_SECRET: ${E1_JWT_SECRET:?ephemeral scratch JWT secret required}
+      API_EXTERNAL_URL: http://localhost:9999
+      GOTRUE_SITE_URL: http://localhost
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [e1]
+  storage-migrate:
+    image: supabase/storage-api@sha256:f1546fac6d1c7e345428ac904bfaa7be7cecd50a1f549fe1cf38c628a7b15c85
+    platform: linux/amd64
+    container_name: inkborne-equipment-e1-20261011-storage-migrate
+    restart: 'no'
+    cpus: 1.0
+    mem_limit: 512m
+    pids_limit: 128
+    command: ['node', 'dist/scripts/migrate-call.js']
+    environment:
+      DATABASE_URL: postgres://supabase_storage_admin:${E1_PG_PASSWORD:?ephemeral scratch password required}@db:5432/postgres
+      AUTH_JWT_SECRET: ${E1_JWT_SECRET:?ephemeral scratch JWT secret required}
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /tmp/e1-storage
+      DB_ALLOW_MIGRATION_REFRESH: 'false'
+      S3_PROTOCOL_ENABLED: 'false'
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [e1]
+networks:
+  e1:
+    name: inkborne-equipment-e1-20261011-net
+    internal: true
+volumes:
+  db-data:
+    name: inkborne-equipment-e1-20261011-db-data
+  db-config:
+    name: inkborne-equipment-e1-20261011-db-config
