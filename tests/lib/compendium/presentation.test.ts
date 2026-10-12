@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   getCompendiumEntryDescription,
   getCompendiumEntryFacts,
+  getCompendiumEntryEyebrow,
 } from "@/lib/compendium/presentation";
 import {
   getCompendiumProvenance,
   type CompendiumEntry,
 } from "@/lib/compendium/types";
+import { cinderlitKite, monsterEnvelope } from "@/tests/fixtures/monsters";
 
 function entry(overrides: Partial<CompendiumEntry>): CompendiumEntry {
   return {
@@ -27,6 +29,19 @@ function entry(overrides: Partial<CompendiumEntry>): CompendiumEntry {
 }
 
 describe("compendium presentation", () => {
+  it("uses monster declared statistics and interface copy without fabricated data", () => {
+    const monster = monsterEnvelope();
+    expect(getCompendiumEntryEyebrow(monster)).toBe("Monster · Small construct");
+    expect(getCompendiumEntryFacts(monster)).toEqual([
+      { label: "Size", value: "Small" }, { label: "Type", value: "construct" },
+      { label: "Armor Class", value: "12" }, { label: "Hit Points", value: "18" },
+    ]);
+    expect(getCompendiumEntryDescription(monster)).toBe(cinderlitKite.description);
+    delete monster.data.description;
+    expect(getCompendiumEntryDescription(monster)).toBe("Monster stat block.");
+    expect(getCompendiumEntryFacts({ ...monster, data: { ...monster.data, armor_class: { value: 0 }, challenge: { rating: "1/2", experience_points: 0 } } }))
+      .toContainEqual({ label: "Armor Class", value: "0" });
+  });
   it("derives provenance from the authenticated viewer, not shared scope alone", () => {
     const owned = entry({
       source: "homebrew",

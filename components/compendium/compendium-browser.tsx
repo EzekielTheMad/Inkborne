@@ -308,7 +308,7 @@ function CategoryFilters({ query }: { query: CompendiumQuery }) {
     );
   }
 
-  if (query.category === "races") {
+  if (query.category === "races" || query.category === "monsters") {
     return (
       <Field label="Size" htmlFor="library-size">
         <select id="library-size" name="size" defaultValue={query.size ?? ""} className={filterFieldClassName}>

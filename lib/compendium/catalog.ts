@@ -56,6 +56,12 @@ export const COMPENDIUM_CATEGORIES = {
     description: "Armor class, strength requirements, and stealth rules.",
     contentTypes: ["armor"],
   },
+  monsters: {
+    label: "Monsters",
+    singular: "Monster",
+    description: "Creature stat blocks, actions, and traits.",
+    contentTypes: ["monster"],
+  },
 } as const;
 
 export type CompendiumCategory = keyof typeof COMPENDIUM_CATEGORIES;

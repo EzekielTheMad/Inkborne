@@ -82,7 +82,7 @@ export async function listCompendiumEntries(
         .eq("content_type", "magic_item")
         .filter("data->>requires_attunement", "eq", "false");
     }
-  } else if (query.category === "races" && query.size) {
+  } else if ((query.category === "races" || query.category === "monsters") && query.size) {
     request = request.filter("data->>size", "eq", query.size);
   } else if (query.category === "weapons") {
     if (query.weaponCategory) {

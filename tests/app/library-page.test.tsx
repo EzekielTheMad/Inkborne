@@ -24,6 +24,18 @@ import LibraryPage from "@/app/(app)/library/page";
 const systemId = "22222222-2222-4222-8222-222222222222";
 
 describe("LibraryPage", () => {
+  it("retains authentication and the same published-system query for monsters", async () => {
+    render(await LibraryPage({ searchParams: Promise.resolve({ category: "monsters", system: systemId, size: "Small" }) }));
+    expect(mocks.listEntries).toHaveBeenCalledWith(expect.objectContaining({ category: "monsters", system: systemId, size: "Small" }), "user-id");
+    expect(screen.getByRole("heading", { level: 2, name: "Monsters" })).toBeVisible();
+  });
+  it("redirects a signed-out monster page before querying content (mocked auth)", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    mocks.redirect.mockImplementation(() => { throw new Error("Synthetic redirect"); });
+    await expect(LibraryPage({ searchParams: Promise.resolve({ category: "monsters" }) })).rejects.toThrow("Synthetic redirect");
+    expect(mocks.redirect).toHaveBeenCalledWith("/login");
+    expect(mocks.listEntries).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     mocks.getUser.mockReset();
     mocks.listSystems.mockReset();

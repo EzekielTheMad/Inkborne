@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { CompendiumBrowser } from "@/components/compendium/compendium-browser";
 import { parseCompendiumQuery } from "@/lib/compendium/catalog";
 import type { CompendiumEntry } from "@/lib/compendium/types";
+import { monsterEnvelope } from "@/tests/fixtures/monsters";
 
 const systemId = "22222222-2222-4222-8222-222222222222";
 const userId = "33333333-3333-4333-8333-333333333333";
@@ -30,6 +31,16 @@ function spell(overrides: Partial<CompendiumEntry>): CompendiumEntry {
 }
 
 describe("CompendiumBrowser", () => {
+  it("uses the same category navigation, size filter and return link for monsters", () => {
+    const query = { ...parseCompendiumQuery({ category: "monsters", system: systemId, size: "Small", q: "kite" }), system: systemId };
+    render(<CompendiumBrowser systems={[{ id: systemId, name: "Synthetic 5e", slug: "fixture", versionLabel: "2014" }]}
+      query={query} result={{ entries: [monsterEnvelope()], total: 1, page: 1, pageSize: 24 }} userId={userId} />);
+    expect(screen.getByRole("link", { name: "Monsters" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByLabelText("Size")).toHaveValue("Small");
+    expect(screen.queryByLabelText("Spell level")).toBeNull();
+    expect(screen.getByRole("link", { name: /Cinderlit Kite/ })).toHaveAttribute("href",
+      `/library/${monsterEnvelope().id}?returnTo=${encodeURIComponent(`/library?system=${systemId}&category=monsters&q=kite&size=Small`)}`);
+  });
   it("shows the same accessible catalog with provenance and Homebrew separated", () => {
     const entries = [
       spell({}),
@@ -80,7 +91,7 @@ describe("CompendiumBrowser", () => {
     expect(screen.getByLabelText("Ritual only")).toBeVisible();
   });
 
-  it("keeps all eight initial categories reachable on narrow layouts", () => {
+  it("keeps existing categories and the new monster category reachable on narrow layouts", () => {
     const query = {
       ...parseCompendiumQuery({ category: "items", system: systemId }),
       system: systemId,
@@ -100,6 +111,7 @@ describe("CompendiumBrowser", () => {
     expect(screen.getAllByRole("link", { current: false }).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Species / Races" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Armor" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Monsters" })).toBeVisible();
     expect(screen.getByLabelText("Rarity")).toBeVisible();
     expect(screen.getByLabelText("Magic item attunement")).toBeVisible();
     expect(screen.getByText("No matching rules")).toBeVisible();

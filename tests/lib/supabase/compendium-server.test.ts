@@ -28,6 +28,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import { parseCompendiumQuery } from "@/lib/compendium/catalog";
+import { monsterEnvelope } from "@/tests/fixtures/monsters";
 import {
   getCompendiumEntry,
   listCompendiumEntries,
@@ -68,6 +69,37 @@ describe("compendium server boundary", () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks.chain)) mock.mockClear();
     mocks.from.mockClear();
+  });
+
+  it.each(["all", "mine", "shared", "srd"])("queries canonical monsters with fixed filters and %s provenance (mocked transport)", async (provenance) => {
+    const row = monsterEnvelope();
+    const returned = provenance === "srd" ? { ...row, source: "srd", scope: "platform", owner_id: null }
+      : provenance === "shared" ? { ...row, scope: "shared", owner_id: "44444444-4444-4444-8444-444444444444" } : row;
+    mocks.chain.range.mockResolvedValue({ data: [returned], error: null, count: 1 });
+    const query = parseCompendiumQuery({ category: "monsters", system: systemId, provenance,
+      size: "Small", q: "kite", page: "2", sort: "name-desc", school: "evocation", level: "2" });
+    const result = await listCompendiumEntries(query, userId);
+    expect(mocks.from).toHaveBeenCalledWith("content_definitions");
+    expect(mocks.chain.in).toHaveBeenCalledWith("content_type", ["monster"]);
+    expect(mocks.chain.eq).toHaveBeenCalledWith("system_id", systemId);
+    expect(mocks.chain.eq).toHaveBeenCalledWith("is_retired", false);
+    expect(mocks.chain.filter.mock.calls).toEqual([["data->>size", "eq", "Small"]]);
+    expect(mocks.chain.ilike).toHaveBeenCalledWith("name", "%kite%");
+    expect(mocks.chain.order.mock.calls).toEqual([["name", { ascending: false }], ["id"]]);
+    expect(mocks.chain.range).toHaveBeenCalledWith(24, 47);
+    if (provenance === "mine") expect(mocks.chain.eq).toHaveBeenCalledWith("owner_id", userId);
+    if (provenance === "shared") expect(mocks.chain.neq).toHaveBeenCalledWith("owner_id", userId);
+    if (provenance === "srd") expect(mocks.chain.eq).toHaveBeenCalledWith("source", "srd");
+    expect(result.entries[0]).toMatchObject({ content_type: "monster", data: row.data });
+    expect(mocks.chain).not.toHaveProperty("or");
+  });
+
+  it("preserves monster query failures and null detail without inventing authorized rows", async () => {
+    const error = { code: "42501", message: "Synthetic denial" };
+    mocks.chain.range.mockResolvedValue({ data: null, error, count: null });
+    await expect(listCompendiumEntries(parseCompendiumQuery({ category: "monsters", system: systemId }), userId)).rejects.toBe(error);
+    mocks.chain.maybeSingle.mockResolvedValue({ data: null, error: null });
+    expect(await getCompendiumEntry(monsterEnvelope().id)).toBeNull();
   });
 
   it("queries only current, RLS-visible definitions with bounded pagination", async () => {
