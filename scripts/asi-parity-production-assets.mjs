@@ -15,7 +15,16 @@ export function validateAsiBuildReceipt(receipt, expectedSourceSha) {
   assert.equal(clean, true, "Build receipt must record clean source status");
 }
 export const approvedAsiSource = "c37e5b37945b7b0b9ec1cd69a007333c74985555";
-export const asiSourcePaths = ["lib/character/asi-contributions.ts", "lib/character/ability-mechanics.ts", "lib/character/character-context.tsx", "lib/character/structured-sources.ts", "lib/engine/evaluator.ts", "components/character/sheet-panel.tsx", "components/sheet/spells/cast-dialog.tsx", "components/sheet/tabs/actions-tab.tsx", "components/sheet/character-print-action.tsx", "components/builder/class-step-rail/class-picker-panel.tsx", "app/(app)/characters/[id]/builder/abilities/abilities-step-client.tsx", "app/(app)/characters/[id]/builder/background/background-step-client.tsx"];
+export const approvedAsiRecoverySource = "deb89090594bdc23b5e9d0f2cd93e74cebcc850e";
+export const approvedAsiGuidanceSource = "2467388727bd446b75abef4433fe049df421fd80";
+// Every changed dependency is tied to its independently reviewed immutable
+// source and captured Git object, not whichever root HEAD happens to exist.
+export const asiReviewedDependencyBindings = {
+  "lib/character/character-context.tsx": { sourceCommit: approvedAsiRecoverySource, gitBlobOid: "8817c16d6c8ee99d69f5e6fdd8185f7e933e2e67" },
+  "lib/character/state-writer.ts": { sourceCommit: approvedAsiRecoverySource, gitBlobOid: "9676dd56f2920a0d0c9460acef6369a0f6598986" },
+  "lib/character/ability-mechanics.ts": { sourceCommit: approvedAsiGuidanceSource, gitBlobOid: "e567861e71ef197a4d326312298606738c0a787b" },
+};
+export const asiSourcePaths = ["lib/character/asi-contributions.ts", "lib/character/ability-mechanics.ts", "lib/character/character-context.tsx", "lib/character/state-writer.ts", "lib/character/structured-sources.ts", "lib/engine/evaluator.ts", "components/character/sheet-panel.tsx", "components/sheet/spells/cast-dialog.tsx", "components/sheet/tabs/actions-tab.tsx", "components/sheet/character-print-action.tsx", "components/builder/class-step-rail/class-picker-panel.tsx", "app/(app)/characters/[id]/builder/abilities/abilities-step-client.tsx", "app/(app)/characters/[id]/builder/background/background-step-client.tsx"];
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
 const readJson = bytes => JSON.parse(bytes.toString("utf8").replace(/^\uFEFF/, ""));
 const gitText = (root, args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", windowsHide: true }).trim();
@@ -90,7 +99,7 @@ export async function bindAsiProjectInputs(root, metafile, captured, artifacts) 
     assert.equal(digest(workerBlob), digest(rootBlob), `Bundled input HEAD differs from root: ${relativePath}`);
     bundledProjectInputs.push(receipt);
   }
-  for (const required of ["lib/character/asi-contributions.ts", "lib/character/character-context.tsx", "lib/engine/evaluator.ts", "lib/schemas/content-types/feature.ts", "components/character/sheet-panel.tsx", "components/sheet/spells/cast-dialog.tsx", "components/sheet/character-print.module.css"]) {
+  for (const required of ["lib/character/asi-contributions.ts", "lib/character/character-context.tsx", "lib/character/state-writer.ts", "lib/engine/evaluator.ts", "lib/schemas/content-types/feature.ts", "components/character/sheet-panel.tsx", "components/sheet/spells/cast-dialog.tsx", "components/sheet/character-print.module.css"]) {
     assert.ok(bundledProjectInputs.some(entry => entry.relativePath === required), `Missing actual required bundled input: ${required}`);
   }
   for (const relativePath of ["package-lock.json", "package.json", "tsconfig.json"]) {
@@ -138,13 +147,17 @@ export async function loadAsiProductionAssets(root, manifestPath) {
   }
   // Cherry-picks need not retain ancestry. Match exact approved Git blobs instead.
   const sourceFiles = asiSourcePaths.map(relativePath => {
-    const expected = execFileSync("git", ["-C", root, "show", `${approvedAsiSource}:${relativePath}`], { windowsHide: true });
+    const binding = asiReviewedDependencyBindings[relativePath];
+    const expectedSourceCommit = binding?.sourceCommit ?? approvedAsiSource;
+    const expectedBlobOid = gitText(root, ["rev-parse", `${expectedSourceCommit}:${relativePath}`]);
+    if (binding) assert.equal(expectedBlobOid, binding.gitBlobOid, `Captured reviewed dependency blob drift: ${relativePath}`);
+    const expected = execFileSync("git", ["-C", root, "show", `${expectedSourceCommit}:${relativePath}`], { windowsHide: true });
     const actual = execFileSync("git", ["-C", rootCheckout, "show", `${currentRootHead}:${relativePath}`], { windowsHide: true });
     assert.equal(digest(actual), digest(expected), `Root build lacks approved asi source: ${relativePath}`);
     assertHeadWorkingTree(root, relativePath);
     const workerHead = execFileSync("git", ["-C", root, "show", `HEAD:${relativePath}`], { windowsHide: true });
     assert.equal(digest(workerHead), digest(expected), `Worker asi source drift: ${relativePath}`);
-    return { relativePath, gitBlobSha256: digest(actual) };
+    return { relativePath, expectedSourceCommit, expectedBlobOid, gitBlobSha256: digest(actual) };
   });
   assert.ok(Array.isArray(manifest.assets) && manifest.assets.length > 0);
   const assets = new Map();
@@ -180,7 +193,8 @@ export async function loadAsiProductionAssets(root, manifestPath) {
     assert.ok(assets.has(resolved.pathname), `Missing compiled CSS resource: ${resolved.pathname}`);
   }
   return { assets, cssUrls, htmlClassName: manifest.htmlClassName,
-    artifacts: { ...manifest, currentRootHead, approvedAsiSource, sourceFiles, manifestPath, manifestSha256: digest(manifestBytes) } };
+    artifacts: { ...manifest, currentRootHead, approvedAsiSource, approvedAsiRecoverySource, approvedAsiGuidanceSource,
+      asiReviewedDependencyBindings, sourceFiles, manifestPath, manifestSha256: digest(manifestBytes) } };
 }
 
 

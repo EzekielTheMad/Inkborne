@@ -37,6 +37,15 @@ test("actual earned ASI consumers satisfy bounded offline controls with verified
     expect(result.liveSupabase).toBe(false); expect(result.simulatedActions).toBe(true); expect(result.simulatedNavigation).toBe(true);
     expect(result.artifacts.sourceCommit).toBe(result.artifacts.currentRootHead);
     expect(result.artifacts.approvedAsiSource).toBe("c37e5b37945b7b0b9ec1cd69a007333c74985555");
+    expect(result.artifacts.approvedAsiRecoverySource).toBe("deb89090594bdc23b5e9d0f2cd93e74cebcc850e");
+    expect(result.artifacts.approvedAsiGuidanceSource).toBe("2467388727bd446b75abef4433fe049df421fd80");
+    for (const [relativePath, expectedBlobOid] of [
+      ["lib/character/character-context.tsx", "8817c16d6c8ee99d69f5e6fdd8185f7e933e2e67"],
+      ["lib/character/state-writer.ts", "9676dd56f2920a0d0c9460acef6369a0f6598986"],
+      ["lib/character/ability-mechanics.ts", "e567861e71ef197a4d326312298606738c0a787b"],
+    ]) {
+      expect(result.artifacts.sourceFiles.find((input: { relativePath: string }) => input.relativePath === relativePath).expectedBlobOid).toBe(expectedBlobOid);
+    }
     expect(result.artifacts.dependencyLockSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.artifacts.harnessSourceSha).toMatch(/^[a-f0-9]{40}$/);
     expect(result.artifacts.harnessFiles).toHaveLength(6);
@@ -46,7 +55,7 @@ test("actual earned ASI consumers satisfy bounded offline controls with verified
     expect(result.artifacts.actualNextNavigationInputs.some((input: { relativePath: string }) => input.relativePath.endsWith("/unstable-rethrow.browser.js"))).toBe(true);
     expect(result.taskProcess.birthUtc).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
     expect(result.browserProcess.birthUtc).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
-    for (const relativePath of ["lib/character/asi-contributions.ts", "lib/character/character-context.tsx", "lib/engine/evaluator.ts", "lib/schemas/content-types/feature.ts", "components/character/sheet-panel.tsx", "components/sheet/character-print.module.css"]) {
+    for (const relativePath of ["lib/character/asi-contributions.ts", "lib/character/character-context.tsx", "lib/character/state-writer.ts", "lib/engine/evaluator.ts", "lib/schemas/content-types/feature.ts", "components/character/sheet-panel.tsx", "components/sheet/character-print.module.css"]) {
       expect(result.artifacts.bundledProjectInputs.some((input: { relativePath: string; sha256: string }) => input.relativePath === relativePath && /^[a-f0-9]{64}$/.test(input.sha256))).toBe(true);
     }
     expect(result.evidence).toHaveLength(44); expect(result.screenshots).toHaveLength(46);
