@@ -47,3 +47,9 @@ ROLLBACK;
 -- admin/owner counts agree under effective RLS, and UPDATE of even its granted
 -- key/no-op value fails. The representative system test alone does not prove
 -- those policies, immutable-version triggers or provider/RI roles.
+-- R09.3b2 graph-v2 source adds native content_versions.created_at metadata.
+-- Later G2 must compare EVERY required immutable tuple/time against admin
+-- counts, including inactive grants, through the actual locked reader; as-of
+-- equality/+1microsecond, materializer/copy lineage and selection-version
+-- precedence need actual rows. Direct metadata queries cannot certify the
+-- unavailable reader, historical winning candidate/access or writer fences.

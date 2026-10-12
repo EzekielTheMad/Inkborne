@@ -1,4 +1,4 @@
--- R09.3b1 SOURCE ONLY. Apply AFTER the reviewed staged hit-die kernel, only in
+-- R09.3b2 SOURCE ONLY. Apply AFTER the reviewed staged hit-die kernel, only in
 -- explicitly authorized G2. Never a migration or automatically executed.
 -- Auth is UNCONDITIONALLY unavailable, all 13 readiness families false.
 -- No lifecycle/cutover/client route or new order producer is enabled here.
@@ -130,7 +130,7 @@ $$;
 CREATE FUNCTION private.read_locked_hit_die_graph_v1(p_character_id uuid, p_verified_context jsonb) RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SET search_path = '' AS $$
 DECLARE c public.characters%ROWTYPE; system_row public.game_systems%ROWTYPE; campaign_row public.campaigns%ROWTYPE; ordering private.character_projection_order_v1%ROWTYPE;
-  pins jsonb; inventory jsonb; spells jsonb; features jsonb; spell_grants jsonb; versions jsonb; access_rows jsonb; metadata jsonb; snapshot jsonb; counts jsonb;
+  pins jsonb; inventory jsonb; spells jsonb; features jsonb; spell_grants jsonb; versions jsonb; version_times jsonb; access_rows jsonb; metadata jsonb; snapshot jsonb; counts jsonb;
   n_pins bigint; n_inventory bigint; n_spells bigint; n_features bigint; n_spell_grants bigint; n_versions bigint; domain text; rows jsonb; entry jsonb;
   selected_content_id uuid; selected_content_version integer; native_clock timestamptz;
 BEGIN
@@ -204,9 +204,17 @@ BEGIN
     SELECT spell.content_id,spell.content_version FROM public.character_spells AS spell WHERE spell.character_id = c.id AND spell.content_id IS NOT NULL UNION
     SELECT feature.feature_content_id,feature.feature_version FROM public.character_feature_grants AS feature WHERE feature.character_id = c.id UNION
     SELECT grant_row.spell_content_id,grant_row.spell_version FROM public.character_spell_grants AS grant_row WHERE grant_row.character_id = c.id)
-    SELECT pg_catalog.count(*), COALESCE(pg_catalog.jsonb_agg(private.hit_die_version_dto_v1(v) ORDER BY required.content_id,required.content_version), '[]'::jsonb)
-    INTO n_versions, versions FROM required LEFT JOIN public.content_versions v ON v.content_id = required.content_id AND v.version = required.content_version;
+    SELECT pg_catalog.count(*), COALESCE(pg_catalog.jsonb_agg(private.hit_die_version_dto_v1(v) ORDER BY required.content_id,required.content_version), '[]'::jsonb),
+      COALESCE(pg_catalog.jsonb_agg(CASE WHEN v.content_id IS NULL THEN NULL ELSE pg_catalog.jsonb_build_object(
+        'content_id',v.content_id,'content_version',v.version,'created_at',private.hit_die_native_v1(v.created_at)) END ORDER BY required.content_id,required.content_version), '[]'::jsonb)
+    INTO n_versions, versions, version_times FROM required LEFT JOIN public.content_versions v ON v.content_id = required.content_id AND v.version = required.content_version;
+  -- Version-time metadata has the same independently counted LEFT JOIN closure,
+  -- including inactive grants. Never grant/ref creation or current catalog time.
+  -- Immutability/materializer lineage and writer fences still require G2.
   IF EXISTS (SELECT 1 FROM pg_catalog.jsonb_array_elements(versions) AS version_entry(value) WHERE version_entry.value = 'null'::jsonb OR version_entry.value->>'system_id' IS DISTINCT FROM c.system_id::text)
+    THEN RETURN '{"status":"unready","reason":"incomplete_graph"}'::jsonb; END IF;
+  IF pg_catalog.jsonb_array_length(versions) <> n_versions OR pg_catalog.jsonb_array_length(version_times) <> n_versions
+    OR EXISTS (SELECT 1 FROM pg_catalog.jsonb_array_elements(version_times) AS time_entry(value) WHERE time_entry.value = 'null'::jsonb)
     THEN RETURN '{"status":"unready","reason":"incomplete_graph"}'::jsonb; END IF;
   access_rows := pg_catalog.jsonb_build_array(p_verified_context - 'context_version' || '{"kind":"verified_session"}'::jsonb,
     pg_catalog.jsonb_build_object('kind','current_owner','character_id',c.id,'owner_id',c.user_id,'system_id',c.system_id,'campaign_id',c.campaign_id,'archived',c.archived));
@@ -239,15 +247,17 @@ BEGIN
   native_clock := pg_catalog.clock_timestamp();
   IF native_clock >= (p_verified_context->>'jwt_expires_at')::timestamptz THEN RETURN '{"status":"inaccessible"}'::jsonb; END IF;
   PERFORM private.hit_die_deadline_v1(c.state,native_clock); -- rejects unsupported stored expiry profile, never rounds it
-  RETURN pg_catalog.jsonb_build_object('status','complete','graph_version',1,'readiness',pg_catalog.jsonb_build_object('protocol_version',1,'writers_complete',true,'auth_complete',true,'order_complete',true),
+  -- Structural v2 is consumed by real JS ASI/spell validators. SQL does not
+  -- claim their acceptance or historical catalog/access winner reconstruction.
+  RETURN pg_catalog.jsonb_build_object('status','complete','graph_version',2,'readiness',pg_catalog.jsonb_build_object('protocol_version',1,'writers_complete',true,'auth_complete',true,'order_complete',true),
     'counts',counts,'order',pg_catalog.jsonb_build_object('producer_version',1,'character_id',c.id,'producer_revision',ordering.producer_revision::text,
-      'pins',ordering.pins,'inventory',ordering.inventory,'spells',ordering.spells,'feature_grants',ordering.feature_grants,'spell_grants',ordering.spell_grants),'versions',versions,'snapshot',snapshot);
+      'pins',ordering.pins,'inventory',ordering.inventory,'spells',ordering.spells,'feature_grants',ordering.feature_grants,'spell_grants',ordering.spell_grants),'versions',versions,'version_times',version_times,'snapshot',snapshot);
 EXCEPTION WHEN invalid_text_representation OR invalid_parameter_value OR numeric_value_out_of_range THEN RETURN '{"status":"unready","reason":"invalid_graph"}'::jsonb;
 END $$;
 
 CREATE FUNCTION public.read_hit_die_graph_v1(p_verified_context jsonb,p_character_id uuid) RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = '' AS $$
-DECLARE message text;
+DECLARE message text; graph jsonb;
 BEGIN
   IF p_character_id IS NULL OR NOT private.hit_die_context_shape_v1(p_verified_context) THEN RETURN '{"status":"unready","reason":"invalid_graph"}'::jsonb; END IF;
   BEGIN PERFORM private.require_verified_hit_die_auth_v1(p_verified_context);
@@ -255,7 +265,10 @@ BEGIN
     IF message = 'auth_unavailable' THEN RETURN '{"status":"unready","reason":"auth_unavailable"}'::jsonb; ELSE RAISE; END IF;
   END;
   PERFORM private.lock_character_writer_guard_v1();
-  RETURN private.read_locked_hit_die_graph_v1(p_character_id,p_verified_context);
+  graph := private.read_locked_hit_die_graph_v1(p_character_id,p_verified_context);
+  IF graph->>'status' = 'complete' AND graph->'graph_version' IS DISTINCT FROM '2'::jsonb
+    THEN RETURN '{"status":"unready","reason":"schema_unready"}'::jsonb; END IF;
+  RETURN graph;
 END $$;
 
 CREATE FUNCTION private.read_locked_hit_die_dependencies_v2(p_verified_context jsonb,p_character_id uuid) RETURNS jsonb
@@ -265,7 +278,8 @@ BEGIN
   -- Signature evolution is explicit: no sessionless legacy reader can call the
   -- new authoritative projection. The verified-context command is a later child.
   graph := public.read_hit_die_graph_v1(p_verified_context,p_character_id);
-  IF graph->>'status' <> 'complete' THEN RAISE EXCEPTION 'Verified dependency graph unavailable' USING ERRCODE = 'P0001'; END IF;
+  IF graph->>'status' IS DISTINCT FROM 'complete' OR graph->'graph_version' IS DISTINCT FROM '2'::jsonb
+    THEN RAISE EXCEPTION 'Verified dependency graph unavailable' USING ERRCODE = 'P0001'; END IF;
   RETURN graph->'snapshot';
 END $$;
 
@@ -309,6 +323,7 @@ BEGIN
   PERFORM private.lock_character_writer_guard_v1();
   graph := private.read_locked_hit_die_graph_v1(p_character_id,p_verified_context);
   IF graph->>'status' <> 'complete' THEN RETURN graph; END IF;
+  IF graph->'graph_version' IS DISTINCT FROM '2'::jsonb THEN RETURN '{"status":"unready","reason":"schema_unready"}'::jsonb; END IF;
   SELECT target.* INTO c FROM public.characters AS target WHERE target.id = p_character_id AND target.user_id = (p_verified_context->>'actor_id')::uuid FOR UPDATE;
   IF NOT FOUND THEN RETURN '{"status":"inaccessible"}'::jsonb; END IF;
   IF pg_catalog.clock_timestamp() >= (p_verified_context->>'jwt_expires_at')::timestamptz THEN RETURN '{"status":"inaccessible"}'::jsonb; END IF;

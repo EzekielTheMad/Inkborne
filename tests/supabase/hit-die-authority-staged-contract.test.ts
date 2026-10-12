@@ -50,12 +50,26 @@ describe("authority source-only contracts; no PostgreSQL/roles/concurrency proof
     expect(sql.match(/AS RESTRICTIVE FOR UPDATE TO inkborne_hit_die_authority_owner USING \(true\) WITH CHECK \(false\)/g)).toHaveLength(6);
     expect(sql).not.toMatch(/GRANT UPDATE ON public\.(content_definitions|game_systems|campaigns|campaign_members|content_shares|content_versions)/);
   });
-  it("avoids local tuple/SQL-column ambiguity and never labels earned authority complete from field presence",()=>{
+  it("avoids local tuple/SQL-column ambiguity and invokes real earned validators, never field-presence completion",()=>{
     expect(reader).toContain("selected_content_id uuid; selected_content_version integer");
     expect(reader).not.toContain("SELECT content_id"); expect(reader).not.toContain("WHERE character_id");
     const authority=readFileSync("lib/character/hit-die-authority.ts","utf8");
     expect(authority).not.toContain('"feature_grant_id" in hitDieSnapshotSchema.shape.pins.element.shape');
     expect(authority).toContain('return unready("schema_unready")');
-    expect(authority).toContain("UNCONDITIONALLY unavailable until root binds the actual approved shared");
+    expect(authority).toContain('import { frozenFeatureGrantSchema, resolveCharacterAsiContributions, type AsiEvidence } from "./asi-contributions"');
+    expect(authority).toContain('resolveCharacterAsiContributions(c, evidence).status !== "available"');
+    expect(authority).toContain("validateFrozenSpellAuthority({ character:");
+    expect(authority).toContain('spells.status !== "available"');
+    expect(authority).not.toContain("fixtureReaderEnabled");
+  });
+  it("projects v2 native immutable times from the same full LEFT JOIN/count closure outside canonical snapshot",()=>{
+    expect(reader).toContain("INTO n_versions, versions, version_times FROM required LEFT JOIN public.content_versions");
+    expect(reader).toContain("'content_id',v.content_id,'content_version',v.version,'created_at',private.hit_die_native_v1(v.created_at)");
+    expect(reader).toContain("pg_catalog.jsonb_array_length(version_times) <> n_versions");
+    expect(reader).toContain("'graph_version',2"); expect(reader).toContain("'version_times',version_times,'snapshot',snapshot");
+    const snapshot = reader.slice(reader.indexOf("snapshot :="), reader.indexOf("counts :="));
+    expect(snapshot).not.toContain("version_times"); expect(snapshot).toContain("'contract_version',1");
+    expect(sql.match(/graph->'graph_version' IS DISTINCT FROM '2'::jsonb/g)).toHaveLength(3);
+    expect(reader).not.toMatch(/JOIN public\.content_definitions[^;]*created_at|digest\(|jsonb::text/);
   });
 });

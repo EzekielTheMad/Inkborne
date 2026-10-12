@@ -4,6 +4,9 @@ import { actionRevisionSchema, hitDieSnapshotSchema, MAX_ACTION_REVISION } from 
 import { canonicalHitDieJson } from "./durable-hit-die-canonical";
 import { nativeInstantMicros } from "./durable-hit-die-kernel-model";
 import { nativeHitDieInstantSchema } from "./durable-hit-die-receipt";
+import { frozenFeatureGrantSchema, resolveCharacterAsiContributions, type AsiEvidence } from "./asi-contributions";
+import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import { authoritySpellSchema, authorityVersionTimeSchema, frozenSpellGrantSchema, validateFrozenSpellAuthority } from "./hit-die-spell-authority";
 
 export const HIT_DIE_WRITER_FAMILIES = ["auth", "order", "state", "character_choices", "refs", "feature_grants", "spell_grants", "inventory", "spells", "shared_rules_access", "version_identity", "copy_award", "lifecycle"] as const;
 export const HIT_DIE_ORDER_DOMAINS = ["pins", "inventory", "spells", "feature_grants", "spell_grants"] as const;
@@ -36,39 +39,31 @@ const proofSchema = z.discriminatedUnion("kind", [
 const definitionSchema = hitDieSnapshotSchema.shape.pins.element.shape.resolved;
 const featureGrantSchema = z.object({ id: z.uuid(), character_id: z.uuid(), controller_ref_id: z.uuid(), controller_type: z.enum(["class", "subclass"]), controller_slug: z.string().min(1),
   feature_content_id: z.uuid(), feature_version: z.number().int().min(1).max(2147483647), feature_slug: z.string().min(1), unlock_level: z.number().int().min(1).max(20), created_at: nativeInstant }).catchall(z.json());
-const spellGrantSchema = z.object({ id: z.uuid(), character_id: z.uuid(), controller_ref_id: z.uuid(), controller_type: z.enum(["class", "subclass"]), controller_slug: z.string().min(1), class_slug: z.string().min(1),
-  spell_content_id: z.uuid(), spell_version: z.number().int().min(1).max(2147483647), spell_slug: z.string().min(1), spell_name: z.string().min(1), unlock_level: z.number().int().min(1).max(20), created_at: nativeInstant }).catchall(z.json());
-const spellRowSchema = z.object({ id: z.uuid(), character_id: z.uuid(), content_id: z.uuid().nullable(), content_version: z.number().int().min(1).max(2147483647).nullable(),
-  name: z.string(), class_slug: z.string().min(1), is_known: z.boolean(), is_prepared: z.boolean(), always_prepared: z.boolean(), in_spellbook: z.boolean(), source: z.string(), custom_data: jsonObject.nullable(),
-  created_at: nativeInstant, resolved: definitionSchema.nullable() }).catchall(z.json()).superRefine((spell,ctx)=>{
-    if (spell.content_id === null ? spell.content_version !== null || spell.resolved !== null : !spell.resolved || spell.content_version === null ||
-      spell.resolved.id !== spell.content_id || spell.resolved.version !== spell.content_version || spell.resolved.content_type !== "spell") {
-      ctx.addIssue({code:"custom",message:"Custom spell source must be absent; pinned spell source must match exactly"});
-    }
-  });
-// Adjacent graph DTO preserves required nullable grant identity without editing
-// ASI-owned shared schemas. Actual completeness refuses until they integrate.
+// Full raw extensions are retained; presence alone is never earned authority.
 const authoritySnapshotSchema = hitDieSnapshotSchema.safeExtend({
-  pins: z.array(hitDieSnapshotSchema.shape.pins.element.safeExtend({ feature_grant_id: z.uuid().nullable() })),
-  feature_grants: z.array(featureGrantSchema), spell_grants: z.array(spellGrantSchema), spells: z.array(spellRowSchema), access_rows: z.array(proofSchema),
+  feature_grants: z.array(featureGrantSchema), spell_grants: z.array(frozenSpellGrantSchema), spells: z.array(authoritySpellSchema), access_rows: z.array(proofSchema),
 });
+const completeGraphFields = { status: z.literal("complete"), readiness: z.strictObject({ protocol_version: z.literal(1), writers_complete: z.literal(true), auth_complete: z.literal(true), order_complete: z.literal(true) }),
+  counts: countsSchema, order: hitDieGraphOrderSchema, versions: z.array(definitionSchema), snapshot: authoritySnapshotSchema };
 export const hitDieGraphResponseSchema = z.union([
   z.strictObject({ status: z.literal("inaccessible") }),
   z.strictObject({ status: z.literal("unready"), reason: hitDieUnreadyReasonSchema }),
-  z.strictObject({ status: z.literal("complete"), graph_version: z.literal(1), readiness: z.strictObject({ protocol_version: z.literal(1), writers_complete: z.literal(true), auth_complete: z.literal(true), order_complete: z.literal(true) }),
-    counts: countsSchema, order: hitDieGraphOrderSchema, versions: z.array(definitionSchema), snapshot: authoritySnapshotSchema }),
+  z.strictObject({ ...completeGraphFields, graph_version: z.literal(1) }),
+  z.strictObject({ ...completeGraphFields, graph_version: z.literal(2), version_times: z.array(authorityVersionTimeSchema) }),
 ]);
 export type HitDieGraphResponse = z.infer<typeof hitDieGraphResponseSchema>;
 const unready = (reason: z.infer<typeof hitDieUnreadyReasonSchema>): HitDieGraphResponse => ({ status: "unready", reason });
 
-/** Validates an authoritative service RPC response, never supplies authority to
- * SQL. The shared ASI schema is an explicit integration prerequisite. */
+/** Validates the actual service RPC projection using real earned validators.
+ * A structural response never proves historical materializer lineage, current
+ * access, Auth or writer fences. Production Auth and all13 gates remain unready. */
 export function validateHitDieGraph(raw: unknown, rawContext: unknown, characterId: string): HitDieGraphResponse {
   const context = verifiedHitDieContextSchema.safeParse(rawContext);
   const parsed = hitDieGraphResponseSchema.safeParse(raw);
   if (!context.success || !z.uuid().safeParse(characterId).success || !parsed.success) return unready("invalid_graph");
   const result = parsed.data;
   if (result.status !== "complete") return result;
+  if (result.graph_version !== 2) return unready("schema_unready");
   const s = result.snapshot, c = s.character;
   if (c.id !== characterId || c.owner_id !== context.data.actor_id || result.order.character_id !== c.id || result.order.producer_revision !== c.revision) return unready("invalid_graph");
   const session = s.access_rows[0], owner = s.access_rows[1];
@@ -111,7 +106,7 @@ export function validateHitDieGraph(raw: unknown, rawContext: unknown, character
       if (!manifest.length || Math.min(...manifest) !== feature.unlock_level) return unready("invalid_graph");
       if (derived.some(pin => pin.content_id !== feature.feature_content_id || pin.content_version !== feature.feature_version || pin.resolved.slug !== feature.feature_slug || pin.resolved.content_type !== "feature")) return unready("invalid_graph");
     } else {
-      const spell = spellGrantSchema.parse(grant), definition = wanted.get(`${spell.spell_content_id}:${spell.spell_version}`);
+      const spell = frozenSpellGrantSchema.parse(grant), definition = wanted.get(`${spell.spell_content_id}:${spell.spell_version}`);
       if (!definition || definition.content_type !== "spell" || definition.slug !== spell.spell_slug || spell.class_slug !== cls.slug) return unready("invalid_graph");
     }
   }
@@ -125,13 +120,18 @@ export function validateHitDieGraph(raw: unknown, rawContext: unknown, character
   const metadata = s.access_rows.slice(accessIndex);
   const keys = metadata.map(row => "id" in row ? `${row.kind}:${row.id}` : "");
   if (keys.some((key, i) => !key || (i > 0 && key <= keys[i - 1])) || metadata.some(row => (row.kind !== "campaign_member" && row.kind !== "content_share") || row.campaign_id !== c.campaign_id || (row.kind === "campaign_member" && row.user_id !== c.owner_id))) return unready("invalid_graph");
-  // UNCONDITIONALLY unavailable until root binds the actual approved shared
-  // resolveCharacterAsiContributions(character, complete raw refs/grants) AND
-  // an adequate frozen spell-manifest/unlock/acquisition validator. A column,
-  // typed grant/count or module presence cannot authorize earned mechanics.
-  // No injected flag/test callback/fake positive validator substitutes here.
-  // Real negative ASI/spell-source controls await that dependency integration.
-  return unready("schema_unready");
+  // Same adapter as the approved durable planner. "captured" is compatibility
+  // metadata only, never an instant or the frozen spell resolution cutoff.
+  const refs = s.pins.map(pin => ({ ...pin, created_at: "captured", content_definitions: pin.resolved })) as unknown as ContentRefWithContent[];
+  const evidence: AsiEvidence = { status: "complete", character_id: c.id, system_id: c.system_id, refs,
+    grants: s.feature_grants.map(grant => frozenFeatureGrantSchema.parse(grant)) };
+  if (resolveCharacterAsiContributions(c, evidence).status !== "available") return unready("schema_unready");
+  const spells = validateFrozenSpellAuthority({ character: { id: c.id, system_id: c.system_id, level: c.level, choices: c.choices },
+    pins: s.pins, grants: s.spell_grants, spells: s.spells, versions: result.versions, versionTimes: result.version_times });
+  if (spells.status !== "available") return unready("schema_unready");
+  // Validation derives no effects/overlays into S and never reorders raw rows.
+  // The downstream planner already invokes the shared ASI effect consumer.
+  return result;
 }
 
 export const inspirationPatchSchema = z.strictObject({ inspiration: z.boolean() });
