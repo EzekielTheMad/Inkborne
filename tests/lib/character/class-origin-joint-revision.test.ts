@@ -4,6 +4,7 @@ import { parseClassOriginRevisionEvent, classOriginRevisionEventSchema, boundedC
 import { classDataSchema } from "@/lib/schemas/content-types/class";
 import { classOriginJointFixture, classOriginJointSources } from "@/tests/fixtures/class-origin-joint-revision";
 import { classOriginBootstrapFixture, classOriginCopiedFixture, refreshClassOriginFixtureProofs } from "@/tests/fixtures/class-origin-command";
+import { classOriginAcceptanceSchema, classOriginGraphSchema } from "@/lib/character/class-origin-command-schema";
 import { roleId } from "@/tests/fixtures/class-role-effects";
 
 const sources = classOriginJointSources(), model = createClassOriginJointRevisionModel(sources);
@@ -75,6 +76,40 @@ describe("P1b.1 actual-source-bound joint phases only, no SQL/Auth/writer accept
     if (mode === "extra") event.current_user = "inkborne_hit_die_authority_owner";
     expect(model.assignForTest(proof.acceptance, event, proof.actualBefore, proof.actualAfter.parent, "900").status).toBe("model_rejected");
   });
+  it.each(["receipt-actor", "receipt-target", "origin-target", "occurrence-target"] as const)(
+    "selfconsistent %s expected/observed/proof graph refuses at protected identity invariant", mode => {
+      const fixture = classOriginJointFixture(), j = fixture.acceptance, receipt = j.receipt;
+      if (receipt.receipt_kind !== "class_transition" || receipt.canonical_intent.command !== "confirm_origin" || !receipt.confirmation) throw Error("Confirmation fixture required");
+      const foreign = roleId(999);
+      if (mode === "receipt-actor") receipt.verified_actor_id = foreign;
+      if (mode === "receipt-target") {
+        receipt.target_character_id = foreign; receipt.canonical_intent.character_id = foreign;
+        receipt.confirmation.canonical_intent.character_id = foreign;
+        j.expected_graph.origin.role_proof = { kind: "confirmation", receipt: structuredClone(receipt.confirmation) };
+      }
+      if (mode === "origin-target") {
+        j.before_origin.character_id = foreign;
+        j.transitions.find(row => row.relation_key === "origin")!.before_row!.character_id = foreign;
+        j.expected_graph.origin.character_id = foreign;
+      }
+      if (mode === "occurrence-target") {
+        j.expected_graph.occurrences[0].character_id = foreign;
+        j.transitions.find(row => row.relation_key === "occurrence")!.before_row!.character_id = foreign;
+      }
+      refreshClassOriginFixtureProofs(j);
+      const actual = structuredClone(j.expected_graph);
+      actual.parent = structuredClone(j.before_parent); actual.order.producer_revision = "0";
+      // Every metadata row and expected proof agrees with observation; only the
+      // legitimate phase counter/order delta is normalized for this comparison.
+      expect({ ...actual, parent: j.expected_graph.parent, order: j.expected_graph.order }).toEqual(j.expected_graph);
+      expect(classOriginAcceptanceSchema.safeParse(j).success).toBe(true); expect(classOriginGraphSchema.safeParse(actual).success).toBe(true);
+      const originProof = j.transitions.find(row => row.relation_key === "origin")!, occurrenceProof = j.transitions.find(row => row.relation_key === "occurrence")!;
+      expect(originProof.after_row).toEqual(actual.origin); expect(occurrenceProof.after_row).toEqual(actual.occurrences[0]);
+      expect(j.planned_transitions).toEqual(j.transitions.map(({ relation_key, row_key, before_row, after_row }) => ({ relation_key, row_key, before_row, after_row })));
+      const result = model.emitForTest(j, actual, "900");
+      expect(result.status).toBe("model_rejected");
+      if (result.status === "model_rejected") expect(result.reason).toBe(mode.startsWith("receipt-") ? "receipt_protected_identity_mismatch" : "stored_metadata_target_mismatch");
+    });
   it("no phase skip/reuse/Boolean-before-observation or missing order rebind passes", () => {
     const proof = phases();
     expect(model.observeForTest(proof.acceptance, proof.emitted.event, proof.actualAfter, proof.actualAfter.parent, "900").status).toBe("model_rejected");
@@ -114,7 +149,8 @@ describe("P1b.1 actual-source-bound joint phases only, no SQL/Auth/writer accept
     expect(parseClassOriginRevisionEvent({ ...proof.emitted.event, before_parent: { ...proof.emitted.event.before_parent, notes: "x".repeat(4 * 1024 * 1024) }, expected_after_parent: { ...proof.emitted.event.expected_after_parent, notes: "x".repeat(4 * 1024 * 1024) } })).toBeNull();
   });
   it("models actual source dependencies and refuses detached critical predicates separately from semantic before", () => {
-    for (const predicate of ["origin_proof.after_row IS DISTINCT FROM origin_json", "RETURNING * INTO after_row", "event.observed_order IS DISTINCT FROM order_json", "SET phase='assigned'", "private.class_origin_observed_revision_v1(NEW.acceptance_id)"]) {
+    for (const predicate of ["origin_proof.after_row IS DISTINCT FROM origin_json", "RETURNING * INTO after_row", "event.observed_order IS DISTINCT FROM order_json", "SET phase='assigned'", "private.class_origin_observed_revision_v1(NEW.acceptance_id)",
+      "j.receipt->>'verified_actor_id' IS DISTINCT FROM c.user_id::text", "j.receipt#>>'{canonical_intent,character_id}' IS DISTINCT FROM c.id::text", "WHERE id=selected AND character_id=c.id"]) {
       expect(() => createClassOriginJointRevisionModel({ ...sources, joint: sources.joint!.replace(predicate, "removed_predicate") })).toThrow();
     }
     expect(() => createClassOriginJointRevisionModel({ ...sources, joint: sources.joint!.replace("NEW.action_revision := OLD.action_revision + 1", "NEW.action_revision := OLD.action_revision + 2") })).toThrow();

@@ -81,3 +81,26 @@ P1c copy/multihop/refs/materializers/pruners/reconciliation/all writers; R09 ful
 writer/RI/Auth/lifecycle/G2 closure; C1v2 bridge and C2 actual save/concentration/
 print/UI consumers stay mandatory before NEW class authoring. No live repair,
 historical legacy save_ rewrite, grant removal, milestone or product completion claim.
+
+## Source-only model correspondence correction after immutable27bb36a review
+
+Both actual class SQL and original R09 authority family source reviews approved the
+454-line stage. The single remaining HOLD was advisory phase-model identity parity.
+Corrected ONLY the new model, its focused tests and this handoff; approved SQL,
+new schema/fixtures/static test and all frozen P1a/R09 files stay unchanged.
+
+`metadataDelta` explicitly binds receipt verified actor/target/canonical character
+to protected acceptance actor/target BEFORE other metadata checks. Actual origin
+and selected occurrence, including consumed proof BEFORE and AFTER character IDs,
+must match that target. These mirror existing SQL's actor/target predicates, actual
+row SELECT scope and frozen tuple comparison; model factory additionally binds those
+actual unchanged critical SQL tokens. No SQL predicate/grant/owner was rewritten.
+
+Prepared four selfconsistent receipt-foreign-actor, receipt-foreign-target with rebuilt
+confirmation/header, foreign-origin and foreign-occurrence controls. Expected and
+observed metadata match, planned/consumed proofs are rebuilt and match actual rows;
+schema admission remains positive. Refusal must be specifically
+receipt_protected_identity_mismatch or stored_metadata_target_mismatch, never generic
+graph mismatch or constructor/collection failure. Source-removal controls bind the
+actual SQL predicates separately. These tests remain UNRUN under root heavy hold.
+Static diff only; Auth/readiness/default-off/bootstrap0 and all runtime/G2 gaps remain.

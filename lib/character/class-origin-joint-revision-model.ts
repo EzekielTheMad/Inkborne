@@ -22,6 +22,8 @@ function metadataDelta(acceptance: ClassOriginAcceptance, actual: ClassOriginGra
     || acceptance.receipt.receipt_kind !== "class_transition" || acceptance.receipt.canonical_intent.command !== "confirm_origin") return "exact_metadata_acceptance_required";
   const j = acceptance, receipt = j.receipt;
   if (receipt.receipt_kind !== "class_transition" || receipt.canonical_intent.command !== "confirm_origin") return "exact_metadata_acceptance_required";
+  if (receipt.verified_actor_id !== j.verified_actor_id || receipt.target_character_id !== j.target_character_id
+    || receipt.canonical_intent.character_id !== j.target_character_id) return "receipt_protected_identity_mismatch";
   const selected = receipt.canonical_intent.fields.selected_occurrence_id;
   if (actual.parent.id !== j.target_character_id || actual.parent.user_id !== j.verified_actor_id || actual.parent.system_id !== j.before_parent.system_id
     || !same(j.expected_graph.parent, { ...j.before_parent, action_revision: receipt.after_action_revision })
@@ -31,6 +33,10 @@ function metadataDelta(acceptance: ClassOriginAcceptance, actual: ClassOriginGra
   const proofs = j.transitions.filter(row => row.relation_key === "occurrence" && same(row.row_key, [selected]) && row.consumed);
   const occurrence = actual.occurrences.find(row => row.id === selected), before = proofs[0]?.before_row;
   const header = actual.origin;
+  if (header.character_id !== j.target_character_id || j.before_origin.character_id !== j.target_character_id
+    || origins[0]?.before_row?.character_id !== j.target_character_id || origins[0]?.after_row?.character_id !== j.target_character_id
+    || occurrence?.character_id !== j.target_character_id || before?.character_id !== j.target_character_id
+    || proofs[0]?.after_row?.character_id !== j.target_character_id) return "stored_metadata_target_mismatch";
   if (origins.length !== 1 || !same(origins[0].before_row, j.before_origin) || !same(origins[0].after_row, header)
     || j.before_origin.origin_status !== "draft" || j.before_origin.origin_occurrence_id !== null || j.before_origin.role_proof !== null
     || header.origin_status !== "recorded" || header.origin_occurrence_id !== selected || header.system_id !== actual.parent.system_id
@@ -76,7 +82,9 @@ export function createClassOriginJointRevisionModel(sources: ClassOriginJointSou
     || !rebind.includes("SET producer_revision = NEW.action_revision") || rebind.includes("INSERT INTO")) throw Error("Actual frozen authority unavailable");
   if (sources.joint !== null) {
     const checks: Record<string, string[]> = {
-      "private.class_origin_metadata_delta_v1": ["occurrence_proof.after_row IS DISTINCT FROM pg_catalog.to_jsonb(occurrence)", "origin_proof.after_row IS DISTINCT FROM origin_json", "Consumed selected occurrence required"],
+      "private.class_origin_metadata_delta_v1": ["occurrence_proof.after_row IS DISTINCT FROM pg_catalog.to_jsonb(occurrence)", "origin_proof.after_row IS DISTINCT FROM origin_json", "Consumed selected occurrence required",
+        "j.receipt->>'target_character_id' IS DISTINCT FROM c.id::text", "j.receipt->>'verified_actor_id' IS DISTINCT FROM c.user_id::text",
+        "j.receipt#>>'{canonical_intent,character_id}' IS DISTINCT FROM c.id::text", "WHERE character_id=c.id", "WHERE id=selected AND character_id=c.id", "'id','character_id','system_id'"],
       "private.class_origin_observed_revision_v1": ["event.phase<>'observed'", "event.observed_parent IS DISTINCT FROM parent_json", "event.observed_order IS DISTINCT FROM order_json"],
       "private.class_origin_assert_metadata_revision_v1": ["NOT j.finalized", "NOT j.revision_transition_consumed", "receipt=j.receipt"],
       "private.class_origin_consume_metadata_revision_v1": ["SET revision_transition_consumed=true", "NOT finalized AND NOT revision_transition_consumed", "changed<>1"],
