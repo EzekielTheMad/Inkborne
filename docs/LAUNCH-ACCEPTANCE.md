@@ -299,6 +299,38 @@ plans and evidence updates. Reviewed subclass source is now integrated through
 `a41e186`; its later combined check/build is still pending. All three workers
 reported no owned processes/listeners before the resumed serialized gate sequence.
 
+### Accepted local integration checkpoint — 2026-10-12 UTC
+
+Private monster original/correction sequence was independently approved and
+integrated as `2c4a704` / `e1f378e` / `664037d` / `14287f2` / `c075564` / `6029274`.
+Exact correction `7765abf` passed 28 response/form controls and the full bounded
+seven-file **127-test** authoring set, typecheck/lint; its final owned process/port
+readback is empty. Actual framework error helpers remain real in the correction.
+Actual form browser preparation is separate; no DB or hosted acceptance follows.
+
+Trait `a7fb204` / `8df6ee7`, correction `fcb3c239` and tested handoff `7d7ae1c` were
+independently approved and integrated as `d9d8bc0` / `146baa7` / `baf3079` / `bc6a4b2`.
+The original-DAL/new-regression baseline reproduced **11 failures / 39 passes**:
+three changed-write old-version false confirmations and eight malformed-effect
+write admissions. The corrected exact source passes **50 DAL tests**, then
+**7 files / 128 tests**, typecheck and zero-warning lint. Source was restored
+byte-for-byte after the bounded baseline and all receipts retained; no owned
+process/listener remained. The Homebrew monster/trait integration conflict was
+resolved preserving both families, tuple positions, independent load failures,
+empty-state conditions and every prior test; exact root `bc6a4b2` seam review passed.
+
+Clean combined `bc6a4b28046b31db04c809aaf045ea2c53fe83c8` passed unchanged
+`npm.cmd run check` with recorded four-worker limit: **295 files / 3,369 tests**,
+typecheck and zero-warning lint. No source repair was needed. Its nine-case actual
+provider/subclass/cast/rest/print offline browser also passed, with native secure
+crypto and no remote requests. The original third/prepared/inactive/missing,
+full/half/Pact grant inheritance, viewer and multiclass assertions are retained.
+Root inspected the original third-caster preview. Styling is intentionally
+simplified and persistence modeled; this is behavior proof, not production
+geometry, database authority or multi-session freshness. Both gate readbacks
+have zero owned processes/listeners. New production build/current-CSS form and
+PDF/browser acceptance remain open. All runtime/hosted/publication gates are unchanged.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions

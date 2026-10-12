@@ -56,6 +56,27 @@ uncertainty requires reload. Confirmed saved identity permits client navigation;
 navigation failure cannot reinsert. Preserve actual framework navigation errors
 where the action boundary uses them.
 
+### Frozen controls and side-effect limits
+
+Name: nonblank, at most 100 characters; description: nonblank, at most 20,000
+characters, with original submitted text retained. New class/subclass slugs:
+at most 100 ASCII characters matching `[a-z0-9]+(?:-[a-z0-9]+)*`; blank optional
+subclass means explicit null. Existing association values remain read-only and
+byte-for-byte preserved, including values outside the new-entry vocabulary.
+Gain level uses decimal whole-number syntax and range 1–20. Relevant named
+control strings together must be at most 131,072 UTF-8 bytes before parsing;
+missing, repeated, file-valued or extra submitted association/authority controls
+are rejected with bounded errors. Name/description-only edit accepts no new
+association/type/level/effects controls. Identity/version use the existing UUID
+and PostgreSQL integer boundaries. Do not trim away description text to fit caps.
+
+Mutation tests must reject any RPC or write outside `content_definitions` and
+assert no character, content-ref, grant, acquisition, inventory or snapshot write.
+Confirm CREATE writes only the private definition with explicit passive fields;
+new snapshot creation is the existing database trigger's responsibility, not a
+second application write. Inspect actual returned identity/version/data before
+confirmation. Model tests are not proof that deployed triggers behave this way.
+
 ## Ownership and acceptance after challenge
 
 Use a separate clean worker based on the accepted combined source. Own only new

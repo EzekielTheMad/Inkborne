@@ -4,8 +4,8 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source through `a41e186`
-includes reviewed private magic-item/item/weapon/armor/core-race authoring, raw metadata and
+on local branch `codex/launch-integration-20261011`. Product source through `bc6a4b2`
+includes reviewed private magic-item/item/weapon/armor/core-race/trait/monster authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, exact selected subclass sources and per-acquisition casting math, explicit race-score
 representation, read-only monster schema/stat blocks/Library, default-disabled
@@ -28,13 +28,15 @@ roll and immutable lifetime receipt; actual command/writer/database/recovery
 integration remains unimplemented and disabled.
 
 Subclass implementation and its stale-result/shared-math corrections passed
-independent source review and are integrated as `a6d7efb` / `a41e186`; browser and
-fresh combined gates remain open. Private-monster authoring passed 106 initial
-tests; its reviewed transport issue now has a prepared correction with 127
-regression tests, typecheck/lint passing, awaiting independent re-review.
-Standalone trait authoring passed 115 initial tests but review found version
-confirmation and effect-validation defects; the separate correction is running
-narrow gates. Both authoring slices remain unintegrated. Actual form browser
+independent source review and are integrated as `a6d7efb` / `a41e186`. Private
+monster authoring and its 127-test transport correction are integrated through
+`6029274`; trait authoring and independently reviewed version/effect correction
+are integrated through `bc6a4b2` after 128 narrow tests. Both families' Homebrew
+integration seam passed independent review. Clean combined `bc6a4b2` passed
+**295 files / 3,369 tests**, typecheck and zero-warning lint with four workers;
+its nine subclass provider/cast/rest/print offline browser cases also passed.
+Processes/listeners closed. Fresh production build and current-CSS form/PDF
+acceptance remain pending. Actual form browser
 harnesses are being prepared with current production CSS/fonts and explicit
 simulated action boundaries. Trait CREATE uncertainty retains the draft and
 requires checking Homebrew before an explicitly acknowledged further create.
