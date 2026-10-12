@@ -53,8 +53,12 @@ initially-deferred closure remain armed. No producer manual parent counter write
 The new model binds actual staged critical bodies, composes the accepted joint
 phase model and base finalizers, and derives its own receipt/proofs from injected
 stored rows. It cannot authenticate, execute SQL, establish historical native
-producer lineage, apply grants or enable consumers. Constructor/body removal
-controls are separate from semantic missing-provenance/expiry/access/receipt cases.
+producer lineage, apply grants or enable consumers. Constructor/token/body-removal
+controls are STATIC source binding, separate from semantic missing-provenance/
+expiry/access/receipt cases; they are not semantic before or native SQL proof.
+An impossible provisional occurrence with nonnull ended_at is injected admission
+input, not a production repair: unchanged P1a lifecycle constraints already reject
+that stored combination. No PostgreSQL reproduction or constraint failure is claimed.
 Original canonical class/effect fixtures cover level1/higher/multiclass, current
 catalog v2 while preserving v1, replay-before-missing-history, current ownership,
 native expiry after waits, changed intent, retirement/dual entitlement, shared
@@ -76,3 +80,9 @@ Ephemeral row locks do not replace future persisted/all-writer/phantom fences.
 Freeze for independent class-family AND original R09-family source review before
 any gates or integration; root remains sole integrator. No task-owned background
 process was started or left running during source preparation.
+
+Review correction over immutable bdc9086: replay SELECT now aliases its table and
+qualifies command.receipt/character_id/operation_id, avoiding the local receipt
+variable collision under default plpgsql.variable_conflict=error. Model/static
+guards require that exact qualified lookup. No other SQL bodies/privileges/proofs
+changed; correction gates and SQL execution remain unrun under the heavy hold.

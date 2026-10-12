@@ -321,7 +321,8 @@ DECLARE c public.characters%ROWTYPE; origin private.character_class_origin_v1%RO
   -- Native verifier must re-evaluate the same session/config after waits; it still denies.
   PERFORM private.require_class_origin_auth_v1(p_verified_context);
   IF pg_catalog.clock_timestamp()>=(p_verified_context->>'jwt_expires_at')::timestamptz THEN RAISE EXCEPTION 'native_auth_expired' USING ERRCODE='42501'; END IF;
-  SELECT receipt INTO previous FROM private.character_class_commands_v1 WHERE character_id=c.id AND operation_id=(p_intent->>'operation_id')::uuid;
+  SELECT command.receipt INTO previous FROM private.character_class_commands_v1 AS command
+    WHERE command.character_id=c.id AND command.operation_id=(p_intent->>'operation_id')::uuid;
   IF FOUND THEN
     IF previous->'canonical_intent' IS DISTINCT FROM p_intent THEN RAISE EXCEPTION 'operation_intent_conflict' USING ERRCODE='23505'; END IF;
     PERFORM private.require_class_origin_auth_v1(p_verified_context);

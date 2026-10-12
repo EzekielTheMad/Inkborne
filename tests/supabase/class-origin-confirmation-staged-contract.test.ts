@@ -18,7 +18,10 @@ describe("P1b.2 unapplied staged source/ACL contract only; no SQL engine", () =>
     expect(sql).not.toContain("CREATE OR REPLACE FUNCTION"); expect(sql).not.toMatch(/CREATE (?:TABLE|ROLE)/);
   });
   it("native after-wait and immediate pre-return checks precede all new-history/source reads", () => {
-    const entry = body("confirm_already_first_class_origin_v1"), lookup = entry.indexOf("SELECT receipt INTO previous"), replay = entry.indexOf("'status','replayed'");
+    const entry = body("confirm_already_first_class_origin_v1"), lookup = entry.indexOf("SELECT command.receipt INTO previous"), replay = entry.indexOf("'status','replayed'");
+    expect(entry).toContain("SELECT command.receipt INTO previous FROM private.character_class_commands_v1 AS command");
+    expect(entry).toContain("WHERE command.character_id=c.id AND command.operation_id=(p_intent->>'operation_id')::uuid");
+    expect(entry).not.toContain("SELECT receipt INTO previous");
     expect(entry.indexOf("require_class_origin_auth_v1")).toBeLessThan(entry.indexOf("lock_character_writer_guard_v1"));
     const guard = entry.indexOf("lock_character_writer_guard_v1"), parent = entry.indexOf("FOR UPDATE", guard), afterWaitAuth = entry.indexOf("require_class_origin_auth_v1", parent);
     expect(afterWaitAuth).toBeGreaterThan(parent); expect(afterWaitAuth).toBeLessThan(lookup);
@@ -91,7 +94,8 @@ describe("P1b.2 unapplied staged source/ACL contract only; no SQL engine", () =>
     expect(createClassConfirmationProducerModel(sources).traceEntryForTest()).toMatchObject({ status: "model_refused", reason: "auth_unavailable" });
   });
   it("constructor guards bind actual staged critical bodies, separately from semantic evidence", () => {
-    for (const token of ["SELECT receipt INTO previous", "new_acceptance:=pg_catalog.gen_random_uuid()", "historical_consumption_mismatch", "NOT definition.is_retired"]) {
+    for (const token of ["SELECT command.receipt INTO previous", "WHERE command.character_id=c.id AND command.operation_id=(p_intent->>'operation_id')::uuid",
+      "new_acceptance:=pg_catalog.gen_random_uuid()", "historical_consumption_mismatch", "NOT definition.is_retired"]) {
       expect(() => createClassConfirmationProducerModel({ ...sources, confirmation: sql.replace(token, "REMOVED_CRITICAL_BODY") })).toThrow("Actual producer critical path changed");
     }
   });
