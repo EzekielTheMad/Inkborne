@@ -40,7 +40,12 @@ const spellGrantSchema = z.object({ id: z.uuid(), character_id: z.uuid(), contro
   spell_content_id: z.uuid(), spell_version: z.number().int().min(1).max(2147483647), spell_slug: z.string().min(1), spell_name: z.string().min(1), unlock_level: z.number().int().min(1).max(20), created_at: nativeInstant }).catchall(z.json());
 const spellRowSchema = z.object({ id: z.uuid(), character_id: z.uuid(), content_id: z.uuid().nullable(), content_version: z.number().int().min(1).max(2147483647).nullable(),
   name: z.string(), class_slug: z.string().min(1), is_known: z.boolean(), is_prepared: z.boolean(), always_prepared: z.boolean(), in_spellbook: z.boolean(), source: z.string(), custom_data: jsonObject.nullable(),
-  created_at: nativeInstant, resolved: definitionSchema.nullable() }).catchall(z.json());
+  created_at: nativeInstant, resolved: definitionSchema.nullable() }).catchall(z.json()).superRefine((spell,ctx)=>{
+    if (spell.content_id === null ? spell.content_version !== null || spell.resolved !== null : !spell.resolved || spell.content_version === null ||
+      spell.resolved.id !== spell.content_id || spell.resolved.version !== spell.content_version || spell.resolved.content_type !== "spell") {
+      ctx.addIssue({code:"custom",message:"Custom spell source must be absent; pinned spell source must match exactly"});
+    }
+  });
 // Adjacent graph DTO preserves required nullable grant identity without editing
 // ASI-owned shared schemas. Actual completeness refuses until they integrate.
 const authoritySnapshotSchema = hitDieSnapshotSchema.safeExtend({
@@ -120,10 +125,13 @@ export function validateHitDieGraph(raw: unknown, rawContext: unknown, character
   const metadata = s.access_rows.slice(accessIndex);
   const keys = metadata.map(row => "id" in row ? `${row.kind}:${row.id}` : "");
   if (keys.some((key, i) => !key || (i > 0 && key <= keys[i - 1])) || metadata.some(row => (row.kind !== "campaign_member" && row.kind !== "content_share") || row.campaign_id !== c.campaign_id || (row.kind === "campaign_member" && row.user_id !== c.owner_id))) return unready("invalid_graph");
-  // This worker intentionally does not replace ASI schema/earned-choice logic.
-  if (!("feature_grant_id" in hitDieSnapshotSchema.shape.pins.element.shape)) return unready("schema_unready");
-  if (!hitDieSnapshotSchema.safeParse(s).success) return unready("schema_unready");
-  return result;
+  // UNCONDITIONALLY unavailable until root binds the actual approved shared
+  // resolveCharacterAsiContributions(character, complete raw refs/grants) AND
+  // an adequate frozen spell-manifest/unlock/acquisition validator. A column,
+  // typed grant/count or module presence cannot authorize earned mechanics.
+  // No injected flag/test callback/fake positive validator substitutes here.
+  // Real negative ASI/spell-source controls await that dependency integration.
+  return unready("schema_unready");
 }
 
 export const inspirationPatchSchema = z.strictObject({ inspiration: z.boolean() });

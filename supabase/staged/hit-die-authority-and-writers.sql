@@ -19,8 +19,8 @@ CREATE TABLE private.character_writer_readiness_v1 (
   ready boolean NOT NULL DEFAULT false,
   reviewed_objects jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (pg_catalog.jsonb_typeof(reviewed_objects) = 'object')
 );
-INSERT INTO private.character_writer_readiness_v1(family) SELECT value FROM pg_catalog.unnest(ARRAY[
-  'auth','order','state','character_choices','refs','feature_grants','spell_grants','inventory','spells','shared_rules_access','version_identity','copy_award','lifecycle']) value;
+INSERT INTO private.character_writer_readiness_v1(family) SELECT family_entry.value FROM pg_catalog.unnest(ARRAY[
+  'auth','order','state','character_choices','refs','feature_grants','spell_grants','inventory','spells','shared_rules_access','version_identity','copy_award','lifecycle']) AS family_entry(value);
 CREATE TABLE private.character_projection_order_v1 (
   character_id uuid PRIMARY KEY REFERENCES public.characters(id) ON DELETE CASCADE,
   producer_version integer NOT NULL CHECK (producer_version = 1),
@@ -57,6 +57,24 @@ CREATE POLICY hit_die_authority_inventory_read ON public.character_inventory FOR
 CREATE POLICY hit_die_authority_spell_read ON public.character_spells FOR SELECT TO inkborne_hit_die_authority_owner USING (true);
 CREATE POLICY hit_die_authority_feature_grant_read ON public.character_feature_grants FOR SELECT TO inkborne_hit_die_authority_owner USING (true);
 CREATE POLICY hit_die_authority_spell_grant_read ON public.character_spell_grants FOR SELECT TO inkborne_hit_die_authority_owner USING (true);
+-- PG17 SELECT FOR SHARE requires UPDATE privilege on at least one column AND
+-- UPDATE USING visibility. Give only the immutable key, with both permissive
+-- lock visibility and restrictive WITH CHECK(false) to reject actual UPDATE.
+-- No caller membership/UPDATE grant; effective lock/RLS semantics remain G2.
+GRANT UPDATE(id) ON public.content_definitions, public.game_systems, public.campaigns, public.campaign_members, public.content_shares TO inkborne_hit_die_authority_owner;
+GRANT UPDATE(content_id) ON public.content_versions TO inkborne_hit_die_authority_owner;
+CREATE POLICY hit_die_definition_lock ON public.content_definitions FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_definition_no_mutation ON public.content_definitions AS RESTRICTIVE FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_system_lock ON public.game_systems FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_system_no_mutation ON public.game_systems AS RESTRICTIVE FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_campaign_lock ON public.campaigns FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_campaign_no_mutation ON public.campaigns AS RESTRICTIVE FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_member_lock ON public.campaign_members FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_member_no_mutation ON public.campaign_members AS RESTRICTIVE FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_share_lock ON public.content_shares FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_share_no_mutation ON public.content_shares AS RESTRICTIVE FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_version_lock ON public.content_versions FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
+CREATE POLICY hit_die_version_no_mutation ON public.content_versions AS RESTRICTIVE FOR UPDATE TO inkborne_hit_die_authority_owner USING (true) WITH CHECK (false);
 GRANT EXECUTE ON FUNCTION private.hit_die_exact_keys_v1(jsonb,text[]), private.hit_die_native_v1(timestamptz), private.hit_die_millis_v1(timestamptz), private.hit_die_deadline_v1(jsonb,timestamptz) TO inkborne_hit_die_authority_owner;
 
 CREATE FUNCTION private.require_verified_hit_die_auth_v1(p_verified_context jsonb) RETURNS void
@@ -84,29 +102,29 @@ END $$;
 CREATE FUNCTION private.lock_character_writer_guard_v1() RETURNS void
 LANGUAGE plpgsql VOLATILE SET search_path = '' AS $$
 BEGIN
-  PERFORM singleton FROM private.character_writer_guard_v1 WHERE singleton FOR UPDATE;
+  PERFORM guard_row.singleton FROM private.character_writer_guard_v1 AS guard_row WHERE guard_row.singleton FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'writers_unready' USING ERRCODE = 'P0001'; END IF;
 END $$;
 CREATE FUNCTION private.hit_die_writers_ready_v1() RETURNS boolean
 LANGUAGE sql VOLATILE SET search_path = '' AS $$
-  SELECT pg_catalog.count(*) = 13 AND COALESCE(pg_catalog.bool_and(protocol_version = 1 AND ready AND reviewed_objects <> '{}'::jsonb), false)
-    FROM private.character_writer_readiness_v1
+  SELECT pg_catalog.count(*) = 13 AND COALESCE(pg_catalog.bool_and(readiness.protocol_version = 1 AND readiness.ready AND readiness.reviewed_objects <> '{}'::jsonb), false)
+    FROM private.character_writer_readiness_v1 AS readiness
 $$;
 CREATE FUNCTION private.hit_die_order_matches_v1(ids uuid[], rows jsonb) RETURNS boolean
 LANGUAGE sql IMMUTABLE SET search_path = '' AS $$
   SELECT ids IS NOT NULL AND pg_catalog.jsonb_typeof(rows) = 'array'
     AND (pg_catalog.cardinality(ids) = 0 OR pg_catalog.array_ndims(ids) = 1)
     AND pg_catalog.cardinality(ids) = pg_catalog.jsonb_array_length(rows)
-    AND (SELECT pg_catalog.count(DISTINCT value) FROM pg_catalog.unnest(ids) value) = pg_catalog.cardinality(ids)
+    AND (SELECT pg_catalog.count(DISTINCT id_entry.value) FROM pg_catalog.unnest(ids) AS id_entry(value)) = pg_catalog.cardinality(ids)
     AND NOT EXISTS (SELECT 1 FROM pg_catalog.unnest(ids) WITH ORDINALITY item(id, position)
       WHERE item.id IS NULL OR rows->(item.position::integer - 1)->>'id' IS DISTINCT FROM item.id::text)
 $$;
-CREATE FUNCTION private.hit_die_version_dto_v1(value public.content_versions) RETURNS jsonb
+CREATE FUNCTION private.hit_die_version_dto_v1(p_version_row public.content_versions) RETURNS jsonb
 LANGUAGE sql STABLE SET search_path = '' AS $$
-  SELECT CASE WHEN value.content_id IS NULL THEN NULL ELSE pg_catalog.jsonb_build_object(
-    'id',value.content_id,'version',value.version,'system_id',value.system_id_snapshot,'content_type',value.content_type_snapshot,
-    'slug',value.slug_snapshot,'name',value.name_snapshot,'data',value.data_snapshot,'effects',value.effects_snapshot,
-    'source',value.source_snapshot,'scope',value.scope_snapshot,'owner_id',value.owner_id_snapshot) END
+  SELECT CASE WHEN (p_version_row).content_id IS NULL THEN NULL ELSE pg_catalog.jsonb_build_object(
+    'id',(p_version_row).content_id,'version',(p_version_row).version,'system_id',(p_version_row).system_id_snapshot,'content_type',(p_version_row).content_type_snapshot,
+    'slug',(p_version_row).slug_snapshot,'name',(p_version_row).name_snapshot,'data',(p_version_row).data_snapshot,'effects',(p_version_row).effects_snapshot,
+    'source',(p_version_row).source_snapshot,'scope',(p_version_row).scope_snapshot,'owner_id',(p_version_row).owner_id_snapshot) END
 $$;
 
 CREATE FUNCTION private.read_locked_hit_die_graph_v1(p_character_id uuid, p_verified_context jsonb) RETURNS jsonb
@@ -114,45 +132,47 @@ LANGUAGE plpgsql VOLATILE SET search_path = '' AS $$
 DECLARE c public.characters%ROWTYPE; system_row public.game_systems%ROWTYPE; campaign_row public.campaigns%ROWTYPE; ordering private.character_projection_order_v1%ROWTYPE;
   pins jsonb; inventory jsonb; spells jsonb; features jsonb; spell_grants jsonb; versions jsonb; access_rows jsonb; metadata jsonb; snapshot jsonb; counts jsonb;
   n_pins bigint; n_inventory bigint; n_spells bigint; n_features bigint; n_spell_grants bigint; n_versions bigint; domain text; rows jsonb; entry jsonb;
-  content_id uuid; content_version integer; native_clock timestamptz;
+  selected_content_id uuid; selected_content_version integer; native_clock timestamptz;
 BEGIN
   -- Caller has established auth prefix and writer guard in this transaction.
   IF NOT private.hit_die_writers_ready_v1() THEN RETURN '{"status":"unready","reason":"writers_unready"}'::jsonb; END IF;
-  SELECT * INTO c FROM public.characters WHERE id = p_character_id AND user_id = (p_verified_context->>'actor_id')::uuid FOR UPDATE;
+  SELECT target.* INTO c FROM public.characters AS target WHERE target.id = p_character_id AND target.user_id = (p_verified_context->>'actor_id')::uuid FOR UPDATE;
   IF NOT FOUND THEN RETURN '{"status":"inaccessible"}'::jsonb; END IF;
-  SELECT * INTO ordering FROM private.character_projection_order_v1 WHERE character_id = c.id;
+  SELECT order_row.* INTO ordering FROM private.character_projection_order_v1 AS order_row WHERE order_row.character_id = c.id;
   IF NOT FOUND OR ordering.producer_version <> 1 OR ordering.producer_revision <> c.action_revision THEN RETURN '{"status":"unready","reason":"legacy_order_unproven"}'::jsonb; END IF;
   -- Lock acquisition sorts stable IDs; projection below uses ONLY proved order.
   PERFORM d.id FROM public.content_definitions d WHERE d.id IN (
-    SELECT content_id FROM public.character_content_refs WHERE character_id = c.id UNION
-    SELECT content_id FROM public.character_inventory WHERE character_id = c.id UNION
-    SELECT content_id FROM public.character_spells WHERE character_id = c.id UNION
-    SELECT feature_content_id FROM public.character_feature_grants WHERE character_id = c.id UNION
-    SELECT spell_content_id FROM public.character_spell_grants WHERE character_id = c.id) ORDER BY d.id FOR SHARE;
-  SELECT * INTO system_row FROM public.game_systems WHERE id = c.system_id FOR SHARE;
+    SELECT ref.content_id FROM public.character_content_refs AS ref WHERE ref.character_id = c.id UNION
+    SELECT item.content_id FROM public.character_inventory AS item WHERE item.character_id = c.id UNION
+    SELECT spell.content_id FROM public.character_spells AS spell WHERE spell.character_id = c.id UNION
+    SELECT feature.feature_content_id FROM public.character_feature_grants AS feature WHERE feature.character_id = c.id UNION
+    SELECT grant_row.spell_content_id FROM public.character_spell_grants AS grant_row WHERE grant_row.character_id = c.id) ORDER BY d.id FOR SHARE;
+  SELECT system_source.* INTO system_row FROM public.game_systems AS system_source WHERE system_source.id = c.system_id FOR SHARE;
   IF NOT FOUND OR system_row.slug <> 'dnd-5e-2014' OR system_row.expression_context IS DISTINCT FROM '{}'::jsonb THEN RETURN '{"status":"unready","reason":"schema_unready"}'::jsonb; END IF;
   IF c.campaign_id IS NOT NULL THEN
-    SELECT * INTO campaign_row FROM public.campaigns WHERE id = c.campaign_id FOR SHARE;
+    SELECT campaign_source.* INTO campaign_row FROM public.campaigns AS campaign_source WHERE campaign_source.id = c.campaign_id FOR SHARE;
     IF NOT FOUND OR campaign_row.system_id <> c.system_id THEN RETURN '{"status":"unready","reason":"incomplete_graph"}'::jsonb; END IF;
-    PERFORM id FROM public.campaign_members WHERE campaign_id = c.campaign_id AND user_id = c.user_id ORDER BY id FOR SHARE;
-    PERFORM id FROM public.content_shares WHERE campaign_id = c.campaign_id AND content_id IN (
-      SELECT content_id FROM public.character_content_refs WHERE character_id = c.id UNION SELECT content_id FROM public.character_inventory WHERE character_id = c.id UNION
-      SELECT content_id FROM public.character_spells WHERE character_id = c.id UNION SELECT feature_content_id FROM public.character_feature_grants WHERE character_id = c.id UNION
-      SELECT spell_content_id FROM public.character_spell_grants WHERE character_id = c.id) ORDER BY id FOR SHARE;
+    PERFORM member.id FROM public.campaign_members AS member WHERE member.campaign_id = c.campaign_id AND member.user_id = c.user_id ORDER BY member.id FOR SHARE;
+    PERFORM share.id FROM public.content_shares AS share WHERE share.campaign_id = c.campaign_id AND share.content_id IN (
+      SELECT ref.content_id FROM public.character_content_refs AS ref WHERE ref.character_id = c.id UNION SELECT item.content_id FROM public.character_inventory AS item WHERE item.character_id = c.id UNION
+      SELECT spell.content_id FROM public.character_spells AS spell WHERE spell.character_id = c.id UNION SELECT feature.feature_content_id FROM public.character_feature_grants AS feature WHERE feature.character_id = c.id UNION
+      SELECT grant_row.spell_content_id FROM public.character_spell_grants AS grant_row WHERE grant_row.character_id = c.id) ORDER BY share.id FOR SHARE;
   END IF;
   PERFORM v.content_id FROM public.content_versions v WHERE (v.content_id,v.version) IN (
-    SELECT content_id,content_version FROM public.character_content_refs WHERE character_id = c.id UNION
-    SELECT content_id,content_version FROM public.character_inventory WHERE character_id = c.id AND content_id IS NOT NULL UNION
-    SELECT content_id,content_version FROM public.character_spells WHERE character_id = c.id AND content_id IS NOT NULL UNION
-    SELECT feature_content_id,feature_version FROM public.character_feature_grants WHERE character_id = c.id UNION
-    SELECT spell_content_id,spell_version FROM public.character_spell_grants WHERE character_id = c.id) ORDER BY v.content_id,v.version FOR SHARE;
+    SELECT ref.content_id,ref.content_version FROM public.character_content_refs AS ref WHERE ref.character_id = c.id UNION
+    SELECT item.content_id,item.content_version FROM public.character_inventory AS item WHERE item.character_id = c.id AND item.content_id IS NOT NULL UNION
+    SELECT spell.content_id,spell.content_version FROM public.character_spells AS spell WHERE spell.character_id = c.id AND spell.content_id IS NOT NULL UNION
+    SELECT feature.feature_content_id,feature.feature_version FROM public.character_feature_grants AS feature WHERE feature.character_id = c.id UNION
+    SELECT grant_row.spell_content_id,grant_row.spell_version FROM public.character_spell_grants AS grant_row WHERE grant_row.character_id = c.id) ORDER BY v.content_id,v.version FOR SHARE;
   -- Raw counts BEFORE version joins and before order projection. Never count
   -- just a successful inner join, drop a bad row or page a Data API response.
-  SELECT pg_catalog.count(*) INTO n_pins FROM public.character_content_refs WHERE character_id = c.id;
-  SELECT pg_catalog.count(*) INTO n_inventory FROM public.character_inventory WHERE character_id = c.id;
-  SELECT pg_catalog.count(*) INTO n_spells FROM public.character_spells WHERE character_id = c.id;
-  SELECT pg_catalog.count(*) INTO n_features FROM public.character_feature_grants WHERE character_id = c.id;
-  SELECT pg_catalog.count(*) INTO n_spell_grants FROM public.character_spell_grants WHERE character_id = c.id;
+  SELECT pg_catalog.count(*) INTO n_pins FROM public.character_content_refs AS ref WHERE ref.character_id = c.id;
+  SELECT pg_catalog.count(*) INTO n_inventory FROM public.character_inventory AS item WHERE item.character_id = c.id;
+  SELECT pg_catalog.count(*) INTO n_spells FROM public.character_spells AS spell WHERE spell.character_id = c.id;
+  SELECT pg_catalog.count(*) INTO n_features FROM public.character_feature_grants AS feature WHERE feature.character_id = c.id;
+  SELECT pg_catalog.count(*) INTO n_spell_grants FROM public.character_spell_grants AS grant_row WHERE grant_row.character_id = c.id;
+  IF EXISTS (SELECT 1 FROM public.character_spells AS custom_spell WHERE custom_spell.character_id = c.id
+    AND custom_spell.content_id IS NULL AND custom_spell.content_version IS NOT NULL) THEN RETURN '{"status":"unready","reason":"invalid_graph"}'::jsonb; END IF;
   SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('id',r.id,'character_id',r.character_id,'content_id',r.content_id,
     'content_version',r.content_version,'context',r.context,'choice_source',r.choice_source,'feature_grant_id',r.feature_grant_id,'resolved',private.hit_die_version_dto_v1(v)) ORDER BY ordered.position), '[]'::jsonb)
     INTO pins FROM pg_catalog.unnest(ordering.pins) WITH ORDINALITY ordered(id,position)
@@ -179,35 +199,35 @@ BEGIN
     OR NOT private.hit_die_order_matches_v1(ordering.spells,spells) OR NOT private.hit_die_order_matches_v1(ordering.feature_grants,features)
     OR NOT private.hit_die_order_matches_v1(ordering.spell_grants,spell_grants) THEN RETURN '{"status":"unready","reason":"incomplete_graph"}'::jsonb; END IF;
   WITH required AS (
-    SELECT content_id,content_version FROM public.character_content_refs WHERE character_id = c.id UNION
-    SELECT content_id,content_version FROM public.character_inventory WHERE character_id = c.id AND content_id IS NOT NULL UNION
-    SELECT content_id,content_version FROM public.character_spells WHERE character_id = c.id AND content_id IS NOT NULL UNION
-    SELECT feature_content_id,feature_version FROM public.character_feature_grants WHERE character_id = c.id UNION
-    SELECT spell_content_id,spell_version FROM public.character_spell_grants WHERE character_id = c.id)
+    SELECT ref.content_id,ref.content_version FROM public.character_content_refs AS ref WHERE ref.character_id = c.id UNION
+    SELECT item.content_id,item.content_version FROM public.character_inventory AS item WHERE item.character_id = c.id AND item.content_id IS NOT NULL UNION
+    SELECT spell.content_id,spell.content_version FROM public.character_spells AS spell WHERE spell.character_id = c.id AND spell.content_id IS NOT NULL UNION
+    SELECT feature.feature_content_id,feature.feature_version FROM public.character_feature_grants AS feature WHERE feature.character_id = c.id UNION
+    SELECT grant_row.spell_content_id,grant_row.spell_version FROM public.character_spell_grants AS grant_row WHERE grant_row.character_id = c.id)
     SELECT pg_catalog.count(*), COALESCE(pg_catalog.jsonb_agg(private.hit_die_version_dto_v1(v) ORDER BY required.content_id,required.content_version), '[]'::jsonb)
     INTO n_versions, versions FROM required LEFT JOIN public.content_versions v ON v.content_id = required.content_id AND v.version = required.content_version;
-  IF EXISTS (SELECT 1 FROM pg_catalog.jsonb_array_elements(versions) value WHERE value = 'null'::jsonb OR value->>'system_id' IS DISTINCT FROM c.system_id::text)
+  IF EXISTS (SELECT 1 FROM pg_catalog.jsonb_array_elements(versions) AS version_entry(value) WHERE version_entry.value = 'null'::jsonb OR version_entry.value->>'system_id' IS DISTINCT FROM c.system_id::text)
     THEN RETURN '{"status":"unready","reason":"incomplete_graph"}'::jsonb; END IF;
   access_rows := pg_catalog.jsonb_build_array(p_verified_context - 'context_version' || '{"kind":"verified_session"}'::jsonb,
     pg_catalog.jsonb_build_object('kind','current_owner','character_id',c.id,'owner_id',c.user_id,'system_id',c.system_id,'campaign_id',c.campaign_id,'archived',c.archived));
   FOREACH domain IN ARRAY ARRAY['pin','inventory','spell','feature_grant','spell_grant'] LOOP
     rows := CASE domain WHEN 'pin' THEN pins WHEN 'inventory' THEN inventory WHEN 'spell' THEN spells WHEN 'feature_grant' THEN features ELSE spell_grants END;
-    FOR entry IN SELECT value FROM pg_catalog.jsonb_array_elements(rows) LOOP
-      content_id := CASE domain WHEN 'feature_grant' THEN (entry->>'feature_content_id')::uuid WHEN 'spell_grant' THEN (entry->>'spell_content_id')::uuid ELSE (entry->>'content_id')::uuid END;
-      content_version := CASE domain WHEN 'feature_grant' THEN (entry->>'feature_version')::integer WHEN 'spell_grant' THEN (entry->>'spell_version')::integer ELSE (entry->>'content_version')::integer END;
-      IF content_id IS NOT NULL THEN access_rows := access_rows || pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_object('kind','pinned_continuity','domain',domain,'row_id',entry->>'id','content_id',content_id,'content_version',content_version)); END IF;
+    FOR entry IN SELECT row_entry.value FROM pg_catalog.jsonb_array_elements(rows) AS row_entry(value) LOOP
+      selected_content_id := CASE domain WHEN 'feature_grant' THEN (entry->>'feature_content_id')::uuid WHEN 'spell_grant' THEN (entry->>'spell_content_id')::uuid ELSE (entry->>'content_id')::uuid END;
+      selected_content_version := CASE domain WHEN 'feature_grant' THEN (entry->>'feature_version')::integer WHEN 'spell_grant' THEN (entry->>'spell_version')::integer ELSE (entry->>'content_version')::integer END;
+      IF selected_content_id IS NOT NULL THEN access_rows := access_rows || pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_object('kind','pinned_continuity','domain',domain,'row_id',entry->>'id','content_id',selected_content_id,'content_version',selected_content_version)); END IF;
     END LOOP;
   END LOOP;
   IF c.campaign_id IS NOT NULL THEN
     access_rows := access_rows || pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_object('kind','campaign','id',campaign_row.id,'system_id',campaign_row.system_id,'owner_id',campaign_row.owner_id,'hp_rule',campaign_row.hp_rule));
-    SELECT COALESCE(pg_catalog.jsonb_agg(value ORDER BY kind,id), '[]'::jsonb) INTO metadata FROM (
+    SELECT COALESCE(pg_catalog.jsonb_agg(selected.value ORDER BY selected.kind,selected.id), '[]'::jsonb) INTO metadata FROM (
       SELECT 'campaign_member' kind,m.id,pg_catalog.jsonb_build_object('kind','campaign_member','id',m.id,'campaign_id',m.campaign_id,'user_id',m.user_id,'role',m.role) value
         FROM public.campaign_members m WHERE m.campaign_id = c.campaign_id AND m.user_id = c.user_id UNION ALL
       SELECT 'content_share',s.id,pg_catalog.jsonb_build_object('kind','content_share','id',s.id,'content_id',s.content_id,'campaign_id',s.campaign_id,'shared_by',s.shared_by)
         FROM public.content_shares s WHERE s.campaign_id = c.campaign_id AND s.content_id IN (
-          SELECT content_id FROM public.character_content_refs WHERE character_id = c.id UNION SELECT content_id FROM public.character_inventory WHERE character_id = c.id UNION
-          SELECT content_id FROM public.character_spells WHERE character_id = c.id UNION SELECT feature_content_id FROM public.character_feature_grants WHERE character_id = c.id UNION
-          SELECT spell_content_id FROM public.character_spell_grants WHERE character_id = c.id)) selected;
+          SELECT ref.content_id FROM public.character_content_refs AS ref WHERE ref.character_id = c.id UNION SELECT item.content_id FROM public.character_inventory AS item WHERE item.character_id = c.id UNION
+          SELECT spell.content_id FROM public.character_spells AS spell WHERE spell.character_id = c.id UNION SELECT feature.feature_content_id FROM public.character_feature_grants AS feature WHERE feature.character_id = c.id UNION
+          SELECT grant_row.spell_content_id FROM public.character_spell_grants AS grant_row WHERE grant_row.character_id = c.id)) selected;
     access_rows := access_rows || metadata;
   END IF;
   snapshot := pg_catalog.jsonb_build_object('contract_version',1,'character',pg_catalog.jsonb_build_object('id',c.id,'owner_id',c.user_id,'system_id',c.system_id,'campaign_id',c.campaign_id,
@@ -266,7 +286,7 @@ CREATE FUNCTION private.hit_die_order_revision_rebind_v1() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 BEGIN
   IF NEW.action_revision IS DISTINCT FROM OLD.action_revision THEN
-    UPDATE private.character_projection_order_v1 SET producer_revision = NEW.action_revision WHERE character_id = NEW.id;
+    UPDATE private.character_projection_order_v1 AS order_row SET producer_revision = NEW.action_revision WHERE order_row.character_id = NEW.id;
   END IF;
   -- No domain array UPDATE, order synthesis or legacy row INSERT.
   RETURN NEW;
@@ -289,7 +309,7 @@ BEGIN
   PERFORM private.lock_character_writer_guard_v1();
   graph := private.read_locked_hit_die_graph_v1(p_character_id,p_verified_context);
   IF graph->>'status' <> 'complete' THEN RETURN graph; END IF;
-  SELECT * INTO c FROM public.characters WHERE id = p_character_id AND user_id = (p_verified_context->>'actor_id')::uuid FOR UPDATE;
+  SELECT target.* INTO c FROM public.characters AS target WHERE target.id = p_character_id AND target.user_id = (p_verified_context->>'actor_id')::uuid FOR UPDATE;
   IF NOT FOUND THEN RETURN '{"status":"inaccessible"}'::jsonb; END IF;
   IF pg_catalog.clock_timestamp() >= (p_verified_context->>'jwt_expires_at')::timestamptz THEN RETURN '{"status":"inaccessible"}'::jsonb; END IF;
   IF c.action_revision <> expected THEN RETURN pg_catalog.jsonb_build_object('status','conflict','character_id',c.id,'state',c.state,'revision',c.action_revision::text); END IF;
@@ -299,10 +319,10 @@ BEGIN
   -- Native JWT acceptance check immediately before the only UPDATE. Auth seam
   -- later rechecks actual session/config after waits; no guessed auth SQL here.
   IF pg_catalog.clock_timestamp() >= (p_verified_context->>'jwt_expires_at')::timestamptz THEN RETURN '{"status":"inaccessible"}'::jsonb; END IF;
-  UPDATE public.characters SET state = next_state WHERE id = c.id RETURNING * INTO c;
+  UPDATE public.characters AS target SET state = next_state WHERE target.id = c.id RETURNING target.* INTO c;
   -- Character trigger advances once; same-transaction AFTER trigger rebinds
   -- producer_revision ONLY, keeping every semantic ID array unchanged.
-  SELECT * INTO ordering FROM private.character_projection_order_v1 WHERE character_id = c.id;
+  SELECT order_row.* INTO ordering FROM private.character_projection_order_v1 AS order_row WHERE order_row.character_id = c.id;
   IF NOT FOUND OR ordering.producer_revision <> c.action_revision OR c.action_revision <> expected + 1 THEN
     RAISE EXCEPTION 'Atomic order/revision rebinding failed' USING ERRCODE = '23514'; END IF;
   RETURN pg_catalog.jsonb_build_object('status','applied','character_id',c.id,'state',c.state,'revision',c.action_revision::text);

@@ -3,7 +3,6 @@ vi.mock("server-only", () => ({}));
 import { allHitDieWritersReady, HIT_DIE_WRITER_FAMILIES, hitDieGraphOrderSchema, hitDieGraphResponseSchema, inspirationPatchSchema,
   readHitDieAuthorityGraph, saveInspirationAtRevision, verifiedHitDieContextSchema } from "@/lib/character/hit-die-authority";
 import { validateHitDieGraph } from "@/lib/character/hit-die-authority";
-import { hitDieSnapshotSchema } from "@/lib/character/durable-hit-die-schema";
 const id = (n: number) => `11111111-1111-4111-8111-${String(n).padStart(12,"0")}`;
 const context = { context_version: 1, actor_id: id(1), session_id: id(2), jwt_expires_at: "2026-10-12T23:59:59.000000Z" };
 const revision = "9007199254740993";
@@ -43,10 +42,13 @@ describe("service-internal authority contracts; no provider/database execution",
     expect(hitDieGraphResponseSchema.safeParse({ status:"complete", graph_version:1, snapshot:{} }).success).toBe(false);
     expect(hitDieGraphResponseSchema.safeParse({ status:"unready",reason:"auth_unavailable",rows:[] }).success).toBe(false);
   });
-  it("requires the shared required-grant schema integration, never treats absence as complete", () => {
-    const response=validateHitDieGraph(graphFixture(),context,id(3));
-    expect(response.status).toBe("feature_grant_id" in hitDieSnapshotSchema.shape.pins.element.shape ? "complete" : "unready");
-    if (!("feature_grant_id" in hitDieSnapshotSchema.shape.pins.element.shape)) expect(response).toEqual({status:"unready",reason:"schema_unready"});
+  it("keeps earned ASI and spell authority unconditionally unready, regardless of column/schema presence", () => {
+    expect(validateHitDieGraph(graphFixture(),context,id(3))).toEqual({status:"unready",reason:"schema_unready"});
+  });
+  it.each(["version","resolved"])("rejects custom spell forged %s even before unavailable earned authority", fault=>{
+    const graph=graphFixture(); const spell={id:id(9),character_id:id(3),content_id:null,content_version:fault==="version"?1:null,name:"Custom",class_slug:"fighter",is_known:true,is_prepared:false,always_prepared:false,in_spellbook:false,source:"selection",custom_data:null,created_at:"2026-10-12T01:00:00.000000Z",resolved:fault==="resolved"?graph.versions[0]:null};
+    const forged={...graph,counts:{...graph.counts,spells:"1"},order:{...graph.order,spells:[id(9)]},snapshot:{...graph.snapshot,spells:[spell]}};
+    expect(validateHitDieGraph(forged,context,id(3))).toEqual({status:"unready",reason:"invalid_graph"});
   });
   it.each(["raw_count","missing_row","wrong_order","missing_version","missing_grant_count"])("rejects actual incomplete graph %s before schema readiness", fault=>{
     const graph=graphFixture();
