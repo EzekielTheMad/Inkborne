@@ -106,6 +106,7 @@ const mockSchema = {
 } as unknown;
 
 interface ProbeProps {
+  contentSnapshotsComplete?: boolean;
   maxHp?: number;
   initialState?: CharacterState;
   primaryColor?: string | null;
@@ -124,6 +125,7 @@ function renderWithProvider(
       character={overrides.character ?? mockCharacter}
       schema={mockSchema as never}
       contentRefs={overrides.contentRefs ?? []}
+      contentSnapshotsComplete={overrides.contentSnapshotsComplete}
       initialState={overrides.initialState ?? ({} as never)}
       initialInventory={[]}
       initialSpells={[]}
@@ -154,6 +156,14 @@ function renderWithProvider(
 describe("<CharacterProvider> public hook surface", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it.each([undefined, false, true])("exposes explicit content completeness for print; omission defaults false (%s)", contentSnapshotsComplete => {
+    function Probe() {
+      return <p>{String(useCharacter().contentSnapshotsComplete)}</p>;
+    }
+    renderWithProvider(Probe, { contentSnapshotsComplete });
+    expect(screen.getByText(String(contentSnapshotsComplete === true))).toBeVisible();
   });
 
   it("keeps the actual effect editor draft through a rejected provider save and confirms retry once", async () => {

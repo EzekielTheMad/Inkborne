@@ -1,0 +1,30 @@
+.preview { position: fixed; inset: 0; z-index: 100; overflow: auto; background: #e8e7e4; color: #151515; }
+.toolbar { position: sticky; top: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 20px; background: white; border-bottom: 1px solid #aaa; z-index: 1; }
+.toolbar button { border: 1px solid #333; border-radius: 4px; padding: 8px 12px; cursor: pointer; }
+.toolbar p { flex: 1; min-width: 180px; font: 14px Arial, sans-serif; }
+.document { width: min(100%, 190mm); margin: 20px auto; padding: 12mm; box-sizing: border-box; background: white; color: #151515; font: 10pt/1.45 Arial, sans-serif; overflow-wrap: anywhere; }
+.document h1 { font-size: 25pt; line-height: 1.15; margin: 4mm 0; }
+.document h2 { font-size: 13pt; padding-bottom: 2mm; border-bottom: 1px solid #444; margin: 5mm 0 2mm; break-after: avoid; }
+.document h3 { font-size: 11pt; margin: 3mm 0 1mm; break-after: avoid; }
+.document p { margin: 1mm 0 2mm; orphans: 3; widows: 3; }
+.document article { margin: 0 0 3mm; break-inside: avoid; }
+.document table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.document th, .document td { text-align: left; padding: 1.5mm 2mm; border-bottom: 1px solid #bbb; }
+.document tr { break-inside: avoid; }
+.document thead { display: table-header-group; }
+.document dl { margin: 0; }
+.document dl > div { display: grid; grid-template-columns: 40% 60%; border-bottom: 1px solid #ddd; padding: 1mm 0; break-inside: avoid; }
+.document dt { font-weight: bold; }
+.document dd { margin: 0; }
+.details { font-size: 9pt; }
+.description { white-space: pre-wrap; }
+.source { font-size: 8pt; color: #444; break-before: avoid; }
+.brand { font-size: 8pt; letter-spacing: 1px; }
+@media print {
+  @page { size: auto; margin: 12mm; }
+  :global(body):has(> .preview) { display: block !important; height: auto !important; overflow: visible !important; background: white !important; }
+  :global(body):has(> .preview) > :not(.preview) { display: none !important; }
+  .preview { position: static; inset: auto; overflow: visible; background: white; }
+  .toolbar { display: none; }
+  .document { width: 100%; max-width: none; margin: 0; padding: 0; }
+}

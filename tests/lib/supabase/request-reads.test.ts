@@ -13,6 +13,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("@/components/character/character-page-client", () => ({ CharacterPageClient: () => null }));
 vi.mock("@/lib/supabase/characters", () => ({ getCharacterWithSystem: vi.fn() }));
 vi.mock("@/lib/supabase/feature-refs-server", () => ({ syncClassFeatureRefs: vi.fn() }));
+vi.mock("@/lib/supabase/errors", () => ({ reportServerError: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/lib/supabase/spells-server", () => ({ syncAlwaysPreparedSpells: async () => ({ inserted: 0, deleted: 0, activeGrants: [] }), applyActiveSpellGrantOverlays: (rows: unknown[]) => rows }));
 vi.mock("@/lib/engine/evaluator", () => ({ evaluate: () => ({ stats: {} }) }));
 import CharacterPage from "@/app/(app)/characters/[id]/page";
@@ -21,7 +22,7 @@ import { syncClassFeatureRefs } from "@/lib/supabase/feature-refs-server";
 import * as React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getContentByType } from "@/lib/supabase/content-definitions";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getContentRefsByCharacter, getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 
 const internals = (React as unknown as {
   __SERVER_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE: {
@@ -161,7 +162,51 @@ describe("server request-scoped reads", () => {
     });
     const view = await CharacterPage({ params: Promise.resolve({ id: character }) });
     expect(view.props.contentRefs[0].content_definitions.version).toBe(2);
+    expect(view.props.contentSnapshotsComplete).toBe(true);
     expect(syncClassFeatureRefs).toHaveBeenCalledOnce();
+  });
+
+  it("shares completeness metadata with ordinary/strict readers without another query", async () => {
+    const { from } = response([ref]);
+    const [snapshot, refs] = await Promise.all([getCharacterContentRefSnapshot(character), getContentRefsByCharacter(character)]);
+    expect(snapshot).toEqual({ refs, complete: true });
+    expect(from).toHaveBeenCalledOnce();
+  });
+
+  it("retains a readable degraded sheet but disables printing after reconciliation cannot be confirmed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    response([ref]);
+    vi.mocked(getCharacterWithSystem).mockResolvedValue({ id: character, user_id: character, campaign_id: null, level: 1, choices: { classes: [] }, base_stats: {}, state: {}, game_systems: { schema_definition: { stats: [], derived_stats: [] } } } as never);
+    vi.mocked(syncClassFeatureRefs).mockRejectedValue(new Error("fixture reconciliation failure"));
+    const view = await CharacterPage({ params: Promise.resolve({ id: character }) });
+    expect(view.props.contentSnapshotsComplete).toBe(false);
+    expect(view.props.contentRefs[0].content_definitions.version).toBe(1);
+  });
+
+  it.each([null, { ...ref.content_versions, version: 2 }, { ...ref.content_versions, data_snapshot: { hit_die: "broken" } }])("the actual sheet preserves incomplete-read status through the client boundary", async contentVersion => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    response([ref, { ...ref, content_versions: contentVersion }]);
+    vi.mocked(getCharacterWithSystem).mockResolvedValue({ id: character, user_id: character, campaign_id: null, level: 1, choices: { classes: [] }, base_stats: {}, state: {}, game_systems: { schema_definition: { stats: [], derived_stats: [] } } } as never);
+    vi.mocked(syncClassFeatureRefs).mockResolvedValue({ inserted: 0, deleted: 0 } as never);
+    const view = await CharacterPage({ params: Promise.resolve({ id: character }) });
+    expect(view.props.contentSnapshotsComplete).toBe(false);
+    expect(view.props.contentRefs[0].content_definitions.version).toBe(1);
+  });
+
+  it("the sheet refuses anonymous access before character or content reads", async () => {
+    const from = vi.fn();
+    vi.mocked(createClient).mockResolvedValue({ from, auth: { getUser: async () => ({ data: { user: null } }) } } as never);
+    vi.mocked(getCharacterWithSystem).mockClear();
+    await expect(CharacterPage({ params: Promise.resolve({ id: character }) })).rejects.toThrow("NEXT_REDIRECT");
+    expect(getCharacterWithSystem).not.toHaveBeenCalled();
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it("the sheet refuses an inaccessible unrelated user's character", async () => {
+    const { from } = response([]);
+    vi.mocked(getCharacterWithSystem).mockResolvedValue(null);
+    await expect(CharacterPage({ params: Promise.resolve({ id: character }) })).rejects.toThrow();
+    expect(from).not.toHaveBeenCalled();
   });
 
   it("does not memoize outside a server render context", async () => {

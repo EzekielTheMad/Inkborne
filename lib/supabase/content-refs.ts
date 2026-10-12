@@ -82,23 +82,35 @@ export async function getContentRefsByCharacter(
   characterId: string,
   options: { requireCompleteSnapshots?: boolean; fresh?: boolean } = {},
 ): Promise<ContentRefWithContent[]> {
+  const snapshot = await getCharacterContentRefSnapshot(characterId, options);
+  if (options.requireCompleteSnapshots && !snapshot.complete) {
+    throw new Error("Saved character snapshots could not be read. Reload before editing.");
+  }
+  return snapshot.refs;
+}
+
+/** Retain the existing sheet's degraded display while explicitly reporting
+ * unreadable or mismatched recorded pins to consumers that need a complete
+ * document. Shares the same request-scoped raw read; performs no extra query. */
+export async function getCharacterContentRefSnapshot(
+  characterId: string,
+  options: { fresh?: boolean } = {},
+): Promise<{ refs: ContentRefWithContent[]; complete: boolean }> {
   // Reads after a write in the same render must bypass its earlier snapshot.
   const data = await (options.fresh ? readContentRefRows : readContentRefRowsForRequest)(characterId);
 
   const refs: ContentRefWithContent[] = [];
+  let complete = true;
   for (const row of data ?? []) {
     const ref = parseContentRefWithContent(row);
-    // Builder validation must distinguish never-recorded dependencies from
-    // recorded but unreadable/mismatched snapshots. Preserve the existing
-    // omission contract for other readers; opted-in builder reads fail closed.
-    if (options.requireCompleteSnapshots && (ref === null ||
+    if (ref === null ||
       ref.content_id !== ref.content_definitions.id ||
-      ref.content_version !== ref.content_definitions.version)) {
-      throw new Error("Saved character snapshots could not be read. Reload before editing.");
+      ref.content_version !== ref.content_definitions.version) {
+      complete = false;
     }
     if (ref !== null) refs.push(ref);
   }
-  return refs;
+  return { refs, complete };
 }
 
 export async function addContentRef(params: {

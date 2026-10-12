@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { getCharacterWithSystem } from "@/lib/supabase/characters";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { parseNestedContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
 import { evaluate } from "@/lib/engine/evaluator";
 import type { StructuredSources } from "@/lib/engine/evaluator";
@@ -70,7 +70,7 @@ export default async function CharacterPage({ params }: PageProps) {
   }
 
   // Fetch content refs for sheet evaluation
-  let contentRefs = await getContentRefsByCharacter(id);
+  let { refs: contentRefs, complete: contentSnapshotsComplete } = await getCharacterContentRefSnapshot(id);
 
   // Fetch inventory
   const { data: inventoryRowsRaw, error: inventoryError } = await supabase
@@ -119,9 +119,12 @@ export default async function CharacterPage({ params }: PageProps) {
         classChoices,
       });
       if (syncResult.inserted > 0 || syncResult.deleted > 0) {
-        contentRefs = await getContentRefsByCharacter(id, { fresh: true });
+        const freshSnapshot = await getCharacterContentRefSnapshot(id, { fresh: true });
+        contentRefs = freshSnapshot.refs;
+        contentSnapshotsComplete = freshSnapshot.complete;
       }
     } catch (error) {
+      contentSnapshotsComplete = false;
       const syncError = error instanceof Error ? error : new Error(String(error));
       console.error("[CharacterPage] Failed to sync class feature refs:", syncError);
       await reportServerError({
@@ -169,6 +172,7 @@ export default async function CharacterPage({ params }: PageProps) {
         })) as CharacterSpell[];
       }
     } catch (error) {
+      contentSnapshotsComplete = false;
       const syncError = error instanceof Error ? error : new Error(String(error));
       console.error("[CharacterPage] Failed to sync feature-granted spells:", syncError);
       await reportServerError({
@@ -285,6 +289,7 @@ export default async function CharacterPage({ params }: PageProps) {
       schema={schema}
       evalResult={evalResult}
       contentRefs={contentRefs}
+      contentSnapshotsComplete={contentSnapshotsComplete}
       initialState={initialState}
       maxHp={maxHp}
       allEffects={allEffects}

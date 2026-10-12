@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   addContentRef,
   getContentRefsByCharacter,
+  getCharacterContentRefSnapshot,
   parseContentRefWithContent,
   removeContentRefsByChoiceSource,
 } from "@/lib/supabase/content-refs";
@@ -193,5 +194,25 @@ describe("complete builder snapshot reads",()=>{
     mockedCreateClient.mockResolvedValue({from:vi.fn().mockReturnValue(chain)} as never);
     const refs=await getContentRefsByCharacter(validRef.character_id,{requireCompleteSnapshots:true});
     expect(refs).toHaveLength(1);expect(refs[0].content_definitions.content_type).toBe("race");
+  });
+});
+
+describe("document snapshot completeness metadata", () => {
+  it("marks every readable exact pin complete", async () => {
+    const { chain } = mockSupabase([validRef]);
+    chain.eq.mockResolvedValue({ data: [validRef], error: null });
+    expect(await getCharacterContentRefSnapshot(validRef.character_id)).toMatchObject({ complete: true, refs: [{ id: validRef.id }] });
+  });
+  it.each([null, { ...validRef.content_versions, version: 2 }, { ...validRef.content_versions, content_id: "55555555-5555-4555-8555-555555555555" }, { ...validRef.content_versions, data_snapshot: { hit_die: "broken" } }])("reports unreadable/omitted/mismatched pins without breaking degraded sheet reads", async snapshot => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const rows = [validRef, { ...validRef, id: "66666666-6666-4666-8666-666666666666", content_versions: snapshot }];
+    const { chain } = mockSupabase(rows);
+    chain.eq.mockResolvedValue({ data: rows, error: null });
+    const result = await getCharacterContentRefSnapshot(validRef.character_id);
+    expect(result.complete).toBe(false);
+    expect(result.refs[0].id).toBe(validRef.id);
+    expect(await getContentRefsByCharacter(validRef.character_id)).toEqual(result.refs);
+    await expect(getContentRefsByCharacter(validRef.character_id, { requireCompleteSnapshots: true })).rejects.toThrow("Saved character snapshots could not be read");
+    errorSpy.mockRestore();
   });
 });

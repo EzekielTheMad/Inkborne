@@ -24,6 +24,7 @@ interface CharacterPageClientProps {
   schema: SystemSchemaDefinition;
   evalResult: EvaluationResult;
   contentRefs: ContentRefWithContent[];
+  contentSnapshotsComplete?: boolean;
   initialState: CharacterState;
   maxHp: number;
   allEffects: Effect[];
@@ -46,6 +47,7 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
     character,
     schema,
     contentRefs,
+    contentSnapshotsComplete,
     initialState,
     maxHp,
     allEffects,
@@ -74,6 +76,7 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
         character={character}
         schema={schema}
         contentRefs={contentRefs}
+        contentSnapshotsComplete={contentSnapshotsComplete}
         initialState={initialState}
         initialInventory={initialInventory}
         allEffects={allEffects}

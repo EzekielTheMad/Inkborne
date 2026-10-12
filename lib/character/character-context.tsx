@@ -150,6 +150,7 @@ export interface CharacterContextValue {
   character: CharacterWithSystem;
   schema: SystemSchemaDefinition;
   contentRefs: ContentRefWithContent[];
+  contentSnapshotsComplete: boolean;
   isOwner: boolean;
   isDm: boolean;
   hasSheet: boolean;
@@ -234,6 +235,8 @@ export interface CharacterProviderProps {
   character: CharacterWithSystem;
   schema: SystemSchemaDefinition;
   contentRefs: ContentRefWithContent[];
+  /** True only when the server read every recorded ref and its exact pin. */
+  contentSnapshotsComplete?: boolean;
   initialState: CharacterState;
   initialInventory: InventoryItem[];
   initialSpells: CharacterSpell[];
@@ -256,6 +259,7 @@ export function CharacterProvider({
   character,
   schema,
   contentRefs,
+  contentSnapshotsComplete = false,
   initialState,
   initialInventory,
   initialSpells,
@@ -731,6 +735,7 @@ export function CharacterProvider({
     character,
     schema,
     contentRefs,
+    contentSnapshotsComplete,
     isOwner,
     isDm,
     hasSheet,
@@ -818,6 +823,7 @@ export function useCharacter() {
     character: ctx.character,
     schema: ctx.schema,
     contentRefs: ctx.contentRefs,
+    contentSnapshotsComplete: ctx.contentSnapshotsComplete,
     isOwner: ctx.isOwner,
     isDm: ctx.isDm,
     hasSheet: ctx.hasSheet,
