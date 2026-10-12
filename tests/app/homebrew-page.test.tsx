@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedFeats: vi.fn(),
   listOwnedBackgrounds: vi.fn(),
   listOwnedMagicItems: vi.fn(),
+  listOwnedItems: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -18,6 +19,7 @@ vi.mock("@/lib/supabase/homebrew-feats-server", () => ({
 vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
   listOwnedHomebrewBackgrounds: mocks.listOwnedBackgrounds,
 }));
+vi.mock("@/lib/supabase/homebrew-items-server", () => ({ listOwnedHomebrewItems: mocks.listOwnedItems }));
 vi.mock("@/lib/supabase/homebrew-magic-items-server", () => ({
   listOwnedHomebrewMagicItems: mocks.listOwnedMagicItems,
 }));
@@ -43,6 +45,7 @@ describe("HomebrewPage", () => {
     mocks.listOwnedFeats.mockResolvedValue([]);
     mocks.listOwnedBackgrounds.mockResolvedValue([]);
     mocks.listOwnedMagicItems.mockResolvedValue([]);
+    mocks.listOwnedItems.mockResolvedValue([]);
   });
 
   it("shows each authoring section with its versioned homebrew links", async () => {
@@ -149,6 +152,7 @@ describe("HomebrewPage", () => {
     expect(screen.getAllByRole("link", { name: "Create feat" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create background" })).toHaveLength(2);
     expect(screen.getAllByRole("link", { name: "Create magic item" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Create item" })).toHaveLength(2);
   });
 
   it("keeps available content visible when one content type fails to load", async () => {
@@ -167,5 +171,22 @@ describe("HomebrewPage", () => {
 
     expect(screen.getByText("Your homebrew spells could not be loaded.")).toBeVisible();
     expect(screen.getByText("Fleet Adept")).toBeVisible();
+  });
+
+  it("discovers private ordinary items and their editable version", async () => {
+    mocks.listOwnedItems.mockResolvedValue([{ id: "66666666-6666-4666-8666-666666666666", name: "Folding Lantern", version: 2,
+      data: { equipment_category: "Adventuring Gear", description: "A hinged lantern.", cost: { quantity: 2.5, unit: "gp" }, weight: 1.25 } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("My items")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Folding Lantern/ })).toHaveAttribute("href", "/homebrew/items/66666666-6666-4666-8666-666666666666/edit");
+    expect(screen.getByRole("link", { name: /Folding Lantern/ })).toHaveTextContent("Privatev2");
+    expect(screen.getByRole("link", { name: "Create item" })).toHaveAttribute("href", "/homebrew/items/new");
+  });
+
+  it("shows item read failure separately from empty content", async () => {
+    mocks.listOwnedItems.mockRejectedValue(new Error("item read failed"));
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Your homebrew items could not be loaded.")).toBeVisible();
+    expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
 });

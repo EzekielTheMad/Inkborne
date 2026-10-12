@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { listOwnedHomebrewBackgrounds } from "@/lib/supabase/homebrew-backgrounds-server";
 import { listOwnedHomebrewFeats } from "@/lib/supabase/homebrew-feats-server";
+import { listOwnedHomebrewItems } from "@/lib/supabase/homebrew-items-server";
 import { listOwnedHomebrewMagicItems } from "@/lib/supabase/homebrew-magic-items-server";
 import { listOwnedHomebrewSpells } from "@/lib/supabase/homebrew-spells-server";
 import { createClient } from "@/lib/supabase/server";
@@ -20,15 +21,17 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult, backgroundsResult, magicItemsResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
     listOwnedHomebrewBackgrounds(),
     listOwnedHomebrewMagicItems(),
+    listOwnedHomebrewItems(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
   const backgrounds = backgroundsResult.status === "fulfilled" ? backgroundsResult.value : [];
+  const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
   const magicItems = magicItemsResult.status === "fulfilled" ? magicItemsResult.value : [];
 
   if (spellsResult.status === "rejected") {
@@ -50,6 +53,10 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     );
   }
 
+  if (itemsResult.status === "rejected") {
+    console.error("[HomebrewPage] Failed to load owned homebrew items", itemsResult.reason);
+  }
+
   const notice = typeof query.created === "string"
     ? "Private homebrew created."
     : typeof query.updated === "string"
@@ -59,10 +66,12 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && feats.length === 0
     && backgrounds.length === 0
     && magicItems.length === 0
+    && items.length === 0
     && spellsResult.status === "fulfilled"
     && featsResult.status === "fulfilled"
     && backgroundsResult.status === "fulfilled"
-    && magicItemsResult.status === "fulfilled";
+    && magicItemsResult.status === "fulfilled"
+    && itemsResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -87,6 +96,10 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
           <Link href="/homebrew/backgrounds/new" className={buttonVariants({ variant: "outline" })}>
             <Plus className="size-4" />
             Create background
+          </Link>
+          <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>
+            <Plus className="size-4" />
+            Create item
           </Link>
           <Link href="/homebrew/magic-items/new" className={buttonVariants({ variant: "outline" })}>
             <Plus className="size-4" />
@@ -118,6 +131,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
             <Link href="/homebrew/spells/new" className={buttonVariants({ variant: "outline" })}>Create spell</Link>
             <Link href="/homebrew/feats/new" className={buttonVariants({ variant: "outline" })}>Create feat</Link>
             <Link href="/homebrew/backgrounds/new" className={buttonVariants({ variant: "outline" })}>Create background</Link>
+            <Link href="/homebrew/items/new" className={buttonVariants({ variant: "outline" })}>Create item</Link>
             <Link href="/homebrew/magic-items/new" className={buttonVariants({ variant: "outline" })}>Create magic item</Link>
           </div>
         </div>
@@ -246,6 +260,32 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
                       {skill.replaceAll("-", " ")}
                     </span>
                   ))}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {itemsResult.status === "rejected" ? (
+        <HomebrewLoadError label="items" />
+      ) : items.length > 0 ? (
+        <section aria-labelledby="owned-items-heading" className="space-y-3">
+          <h2 id="owned-items-heading" className="j-folio">My items</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {items.map((item) => (
+              <Link key={item.id} href={`/homebrew/items/${item.id}/edit`}
+                className="j-card-paper group p-5 transition-colors hover:border-accent/50">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="j-display truncate text-lg text-foreground group-hover:text-accent">{item.name}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.data.equipment_category}</p>
+                    <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{item.data.description}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="secondary">v{item.version}</Badge>
+                  </div>
                 </div>
               </Link>
             ))}
