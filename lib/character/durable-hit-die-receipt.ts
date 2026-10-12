@@ -59,10 +59,21 @@ export const hitDieKernelResponseSchema = z.union([
 export type HitDieKernelResponse = z.infer<typeof hitDieKernelResponseSchema>;
 
 /** Receipt absence/access loss never cancels an in-flight commit. No retry IDs. */
-export function interpretHitDieResponse(raw: unknown, source: "lookup" | "commit"): "accepted" | "rejected" | "unresolved" {
+export function interpretHitDieResponse(raw: unknown, source: "lookup" | "commit", expectedRequest: unknown): "accepted" | "rejected" | "unresolved" {
+  const expected = hitDieRequestSchema.safeParse(expectedRequest);
+  if (!expected.success) return "unresolved";
   const parsed = hitDieKernelResponseSchema.safeParse(raw);
   if (!parsed.success) return "unresolved";
-  if (parsed.data.status === "committed" || parsed.data.status === "replayed") return "accepted";
+  if (parsed.data.status === "committed" || parsed.data.status === "replayed") {
+    if (source === "lookup" && parsed.data.status === "committed") return "unresolved";
+    const receipt = parsed.data.receipt;
+    // This binds the result to the retained pending operation. The receipt's
+    // historical actor remains historical after an authorized owner transfer.
+    if (receipt.request.operation_id !== expected.data.operation_id ||
+      serializeHitDieIntent(receipt.request) !== serializeHitDieIntent(expected.data) ||
+      receipt.canonical_intent !== serializeHitDieIntent(expected.data)) return "unresolved";
+    return "accepted";
+  }
   if (source === "lookup" || parsed.data.status === "inaccessible" || parsed.data.status === "absent") return "unresolved";
   return "rejected";
 }

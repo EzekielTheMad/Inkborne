@@ -78,7 +78,8 @@ export function simulateHitDieCommit(store: HitDieModelStore, input: HitDieModel
       !acceptedRollTotalSchema.safeParse(candidate.roll.total).success || !z.uuid().safeParse(input.linkedRollId).success) return refused("invalid");
     const evaluation = projectNativeInstant(input.nativeEvaluatedAt);
     const accepted = nativeInstantMicros(input.nativeAcceptedAt);
-    if (evaluation !== candidate.evaluated_at || accepted < nativeInstantMicros(input.nativeEvaluatedAt)) return refused("invalid");
+    const checked = nativeInstantMicros(millisExpiry(candidate.acceptance_checked_at).slice(0, -1) + "000Z");
+    if (evaluation !== candidate.evaluated_at || accepted < nativeInstantMicros(input.nativeEvaluatedAt) || checked > accepted) return refused("invalid");
     const deadline = supportedExpiryDeadline(current, evaluation);
     if (deadline !== candidate.valid_until) return refused("invalid");
     if (deadline !== null && accepted >= nativeInstantMicros(deadline.slice(0, -1) + "000Z")) return refused("expired");
