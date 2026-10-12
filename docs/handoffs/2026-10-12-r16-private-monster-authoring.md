@@ -92,7 +92,7 @@ pins, import content or complete R16/M5. No hosted/SQL G2 authority is inferred.
 Rollback is a local revert of this additive authoring slice; accepted read-only
 monster foundation and any existing content/snapshot rows are not changed by it.
 
-## Independent-review transport correction (prepared, validation held)
+## Independent-review transport correction (local validation complete)
 
 Predecessor `f460679` remains immutable and unaccepted pending this correction.
 Only the client response boundary changes: `monster-action-response.ts` awaits
@@ -116,6 +116,27 @@ changed groups through the real mapper and check one invocation/no automatic
 retry. Helper controls use actual installed `redirect`/`notFound` exceptions,
 including nested causes and a misleading incomplete-digest rejection control.
 Static TypeScript/TSX syntax parsing of the four correction files reports zero
-syntax diagnostics; `git diff --check` passes. No correction tests/typecheck/lint
-have run yet: root's serialized R23 correction currently owns the heavy slot.
-Earlier green receipts describe the predecessor only, not this pending source.
+syntax diagnostics; `git diff --check` passes. After R23 released its slot, exact
+clean correction source **`7765abf39edee7dd141345e75a24a58b68b895ae`** passed:
+
+- `npm.cmd test -- tests/lib/homebrew/monster-action-response.test.ts tests/components/library/monster-form.test.tsx --maxWorkers=2`
+  — **2 files / 28 tests**, 27.45 seconds.
+- The earlier six-file authoring command with additional
+  `tests/lib/homebrew/monster-action-response.test.ts` and `--maxWorkers=2`
+  — **7 files / 127 tests**, 10.63 seconds.
+- `npm.cmd run typecheck` and `npm.cmd run lint` — **exit 0, no lint warnings**.
+
+All four correction gates passed on their first run; no correction failure receipt
+exists or is implied. Predecessor failure/success receipts stay preserved and
+separate. New `transport-*.process.json`, `transport-*.result.json` and logs in
+`test-results/r16-authoring-local` record exact clean source/commands/PIDs/parents/
+creation times/cwd/results, with a separate frozen external copy in
+`../verification/r16-private-authoring-transport-20261012`. UTC
+`2026-10-12T15:00:53Z` readback: **0 owned Node processes, 0 captured gate PIDs,
+0 captured gate listeners**; no process was stopped. Shared process count
+378→371, working-set bytes 22,152,192,000→22,000,918,528, cumulative CPU seconds
+21,079.234375→21,365.078125, listeners **41→41**; shared totals include unrelated
+machine activity. Heavy slot released. No install/full check/build/browser/runtime
+operation ran. Genuine Next exception classification is tested here; actual
+framework browser navigation, transport loss and authenticated persistence still
+need the separately reviewed/released runtime/browser acceptance.
