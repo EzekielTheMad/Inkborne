@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import postcss from "postcss";
 
 export const offlineRaceParityStubs = {
   "next/navigation": `const router={push:path=>window.fixture.navigation.push(path),refresh:()=>window.fixture.navigation.push('refresh')};export const useRouter=()=>router;`,
@@ -55,8 +56,45 @@ export async function loadProductionStyles(receiptPath) {
   }
   await visit(staticRoot);
   if (!styles.length) throw Error("Root production build contains no CSS; no globals fallback is allowed.");
-  const fontClasses = [...new Set(styles.flatMap(style => [...style.css.matchAll(/\.([A-Za-z_][\w-]*)\s*\{[^{}]*--font-(?:marcellus|eb-garamond)\s*:/g)].map(match => match[1])))];
-  return { buildRoot, sourceSha: receipt.sourceSha, buildId, staticRoot, styles, fontClasses };
+  const fonts = [];
+  const unquote = value => value.trim().replace(/^['"]|['"]$/g, "");
+  for (const variable of ["--font-marcellus", "--font-eb-garamond"]) {
+    const declarations = [];
+    for (const style of styles) postcss.parse(style.css).walkDecls(variable, declaration => {
+      const selector = declaration.parent.selector;
+      if (!/^\.[A-Za-z_][\w-]*$/.test(selector ?? "")) throw Error(`Unexpected production font selector: ${selector}`);
+      declarations.push({ className: selector.slice(1), family: unquote(declaration.value.split(",")[0]) });
+    });
+    const unique = [...new Map(declarations.map(entry => [JSON.stringify(entry), entry])).values()];
+    if (unique.length !== 1) throw Error(`Expected one generated production class for ${variable}.`);
+    const font = { variable, ...unique[0], faces: [] };
+    for (const style of styles) {
+      const faces = [];
+      postcss.parse(style.css).walkAtRules("font-face", rule => {
+        const values = Object.fromEntries(rule.nodes.filter(node => node.type === "decl").map(node => [node.prop, node.value]));
+        if (unquote(values["font-family"] ?? "") === font.family) faces.push(values);
+      });
+      for (const face of faces) {
+        const sources = [...(face.src ?? "").matchAll(/url\(\s*(['"]?)(.*?)\1\s*\)/g)];
+        if (!sources.length) throw Error(`Expected local production font asset for ${font.family}.`);
+        for (const source of sources) {
+          const url = new URL(source[2], `http://offline.invalid/_next/static/${style.relativePath}`);
+          if (url.origin !== "http://offline.invalid" || url.search || url.hash) throw Error("Remote or ambiguous production font asset refused.");
+          const file = await staticAssetPath(staticRoot, url.pathname);
+          if (!file || !/\.(?:woff2?|ttf|otf)$/.test(file)) throw Error("Missing contained production font asset.");
+          const bytes = await fs.readFile(file);
+          font.faces.push({ family: font.family, style: face["font-style"] ?? "normal", weight: face["font-weight"] ?? "normal",
+            requestPath: url.pathname, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") });
+        }
+      }
+    }
+    if (!font.faces.some(face => face.style === "normal") || (variable === "--font-eb-garamond" && !font.faces.some(face => face.style === "italic"))) {
+      throw Error(`Expected production FontFaces missing for ${variable}.`);
+    }
+    fonts.push(font);
+  }
+  const fontClasses = fonts.map(font => font.className);
+  return { buildRoot, sourceSha: receipt.sourceSha, buildId, staticRoot, styles, fontClasses, fonts };
 }
 
 export async function staticAssetPath(staticRoot, requestPath) {
