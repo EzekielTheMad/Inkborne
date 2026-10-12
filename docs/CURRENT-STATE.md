@@ -41,6 +41,12 @@ actual database/hosted acceptance remains open. Latest full is still `df8c303`;
 repeat after the next source freeze. P1a class-provenance admission/finalizer source and R17 narrative NPC Library source
 are in isolated workers. No SQL execution, hosted write or publication occurred.
 
+R17.1 narrative NPC Library source is now integrated through `640be46`: canonical
+explicit-empty-effects validation protects the actual character collector, with
+215 focused worker tests and reviewed type/lint corrections. Existing character
+NPC relationships/privacy/copy are unchanged. Combined full/build/NPC browser and
+ASI reacceptance are next; NPC authoring/instances/G2 remain separate open work.
+
 Victor selected all included milestones before beta, PDF importing before beta,
 and beta deferrals for Daggerheart/public publishing while retaining both in the
 total project backlog. P1-P3 dispositions and the first supported PDF input matrix

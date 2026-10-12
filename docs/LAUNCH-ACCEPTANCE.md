@@ -531,6 +531,49 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### R17.1 reviewed local integration — 2026-10-12 19:02 UTC
+
+R17 plan/source/harness chain through worker `fa8aa7b` is integrated locally as
+`c99c8ab` / `3775a52` / `b3d4e3f` / `f533628` / `998f03a` / `368d7d4` /
+`9307fee` / `4bfd55c` / `4447614` / `307e381` / `640be46`. All production and
+harness amendments passed independent exact source review. This adds strict v1
+narrative NPC schema, canonical current/snapshot empty-effects fence, read-only
+NPC Library category/detail/profile and original fixtures. Existing character
+relationship rows/privacy/copy are unchanged; no seed/catalog insert, authoring,
+sharing/import writer, campaign instance or database migration is included.
+
+Meaningful worker baseline substituted only the exact old canonical parser while
+retaining registered NPC/schema/new test bytes. **Nine tests failed / nine passed**;
+actual CharacterPage evaluated an otherwise valid effectful NPC as STR16 and
+accepted/collected stat, proficiency, choice and narrative effects. Empty NPC14
+and ordinary non-NPC16 controls passed. The correction rejects that raw evidence
+and preserves it unavailable. Exact source/input hashes were restored and clean.
+The baseline command omitted npm's forwarding separator, so both targeted files
+ran fully; no claim is made that its name filter or worker argument was forwarded.
+
+Initial focused run preserved three collection failures from one missing JSX
+array bracket and one old category-list assertion (**205 passed / one failed**).
+Reviewed one-character profile repair and explicit NPC category/URI expectation
+retain all prior monster coverage. Corrected worker **14 files / 215 tests** passed
+at `7137fad`; profile **four tests**, typecheck and zero-warning lint passed at
+`8468602`. The initial typecheck's unsupported role-query option is preserved;
+removing that option keeps exact string-name matching and the aria-current oracle.
+Locked CI installed 804 packages with scripts/audit/fund disabled, no lock change.
+All 95 recorded verification identities, including gate shells, were absent at
+final readback, with no owned listener. Receipts remain in the worker's ignored
+`test-results/r17-focused-gates`; its final handoff records precise source scopes.
+
+NPC browser preparation (14 grouped receipts / 18 screenshots) remains **unrun**.
+Its inherited executable asset helper is independently bound to reviewed Git OID,
+actual checkout-filtered/raw bytes, root equality and explicit staged/unstaged/
+unmerged/index proofs before dynamic import and after bundling. Current/immutable
+NPC source binds exact reviewed `7137fad`, not arbitrary HEAD. Actual visible
+Campaign shared badge is required before recording that simulated provenance.
+Fresh root full check/build, NPC UI and ASI reacceptance follow this integration;
+worker gates do not accept the combined candidate. P1a source review found five
+finite closure/admission defects; corrections remain isolated and unintegrated,
+Auth unavailable/all readiness false. No SQL execution, hosted write or publication.
+
 ### Canonical ASI UI acceptance — 2026-10-12 18:47 UTC
 
 Clean root `7ff61851440581710cc6de1dfe1900e6c820ead9` passed a fresh synthetic
