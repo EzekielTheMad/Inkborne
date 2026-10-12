@@ -3,6 +3,7 @@ import { effectSchema } from "@/lib/schemas/effects";
 import { activeEffectSchema } from "@/lib/schemas/active-effects";
 import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
 import { getContentTypeSchema } from "@/lib/schemas/content-types";
+import { serializeHitDieIntent } from "@/lib/character/durable-hit-die-canonical";
 
 export const HIT_DIE_CONTRACT_VERSION = 1 as const;
 export const MAX_ACTION_REVISION = "9223372036854775807" as const;
@@ -50,6 +51,7 @@ const classesSchema = z.array(z.strictObject({
 })).min(1);
 const choicesSchema = z.object({
   classes: classesSchema,
+  race: slugSchema.optional(), subrace: slugSchema.optional(), background: slugSchema.optional(),
   hp_rolls: z.record(z.string(), z.strictObject({ method: z.enum(["average", "rolled", "manual"]), value: z.number().int().positive() })),
 }).catchall(z.json());
 const stateSchema = jsonObject.superRefine((state, context) => {
@@ -99,6 +101,33 @@ export const hitDieSnapshotSchema = z.strictObject({
     if (pin.character_id !== character.id || pin.content_id !== pin.resolved.id || pin.content_version !== pin.resolved.version || pin.resolved.system_id !== character.system_id) fail("Resolved pin identity/version mismatch");
     if (pin.resolved.content_type === "class" && !classSlugs.includes(pin.resolved.slug)) fail("Unselected class pin");
   }
+  // Match existing builder exactSavedPin contracts and parent_* relationships.
+  // Neither current catalog visibility nor context display metadata supplies
+  // selection authority: only these persisted choice keys select these pins.
+  const selectedSubclasses = character.choices.classes.flatMap(cls => cls.subclass ? [cls.subclass] : []);
+  const selections = {
+    race: character.choices.race ? [character.choices.race] : [],
+    subrace: character.choices.subrace ? [character.choices.subrace] : [],
+    subclass: selectedSubclasses,
+    background: character.choices.background ? [character.choices.background] : [],
+  };
+  for (const [type, slugs] of Object.entries(selections)) {
+    const pins = snapshot.pins.filter(pin => pin.resolved.content_type === type);
+    if (pins.length !== slugs.length || new Set(slugs).size !== slugs.length ||
+      slugs.some(slug => pins.filter(pin => pin.resolved.slug === slug).length !== 1)) {
+      fail(`Selected ${type} pins unresolved/ambiguous or unselected`);
+    }
+  }
+  if (character.choices.subrace) {
+    const subrace = snapshot.pins.find(pin => pin.resolved.content_type === "subrace" && pin.resolved.slug === character.choices.subrace);
+    if (!character.choices.race || subrace?.resolved.data.parent_race !== character.choices.race) fail("Selected subrace parent mismatch");
+  }
+  for (const cls of character.choices.classes) {
+    if (cls.subclass) {
+      const subclass = snapshot.pins.find(pin => pin.resolved.content_type === "subclass" && pin.resolved.slug === cls.subclass);
+      if (subclass?.resolved.data.parent_class !== cls.slug) fail("Selected subclass parent mismatch");
+    }
+  }
   for (const cls of character.choices.classes) {
     const matching = snapshot.pins.filter(pin => pin.resolved.content_type === "class" && pin.resolved.slug === cls.slug);
     if (matching.length !== 1 || !z.number().int().min(1).max(1000).safeParse(matching[0]?.resolved.data.hit_die).success) fail("Class pin or explicit hit die unresolved/ambiguous");
@@ -144,6 +173,7 @@ export const hitDiePlanResultSchema = z.discriminatedUnion("status", [
   const modifier = Math.floor((result.live_constitution - 10) / 2);
   const suffix = modifier > 0 ? `+${modifier}` : modifier < 0 ? `${modifier}` : "";
   if (face > group.sides || group.kept[0] !== face || result.roll.modifier !== modifier || result.roll.total !== face + modifier ||
+    result.canonical_intent !== serializeHitDieIntent(result.request) ||
     result.roll.request.expression !== `1d${group.sides}${suffix}` || result.roll.request.meta.class_slug !== result.request.class_slug ||
     result.roll.request.meta.con_mod !== modifier || result.roll.rolled_at !== result.evaluated_at || result.dependency_fingerprint !== result.request.dependency_fingerprint ||
     result.patch.current_hp > result.max_hp || Date.parse(result.acceptance_checked_at) < Date.parse(result.evaluated_at) ||

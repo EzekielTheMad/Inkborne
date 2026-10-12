@@ -39,6 +39,28 @@ function activeEffect(expiresAt: string | null = null) {
   return { id:id(20),name:"Constitution boon",slug:"custom",source:"custom",content_id:null,
     effects:[{type:"mechanical",stat:"constitution",op:"add",value:4}],duration:{type:"hours",value:1},concentration:false,applied_at:instant,expires_at:expiresAt };
 }
+function selectedSnapshot(): HitDieSnapshot {
+  const s = snapshot();
+  s.character.choices.race = "elf";
+  s.character.choices.subrace = "wood-elf";
+  s.character.choices.classes[0].subclass = "lantern-vanguard";
+  s.character.choices.background = "gatekeeper";
+  const selections: Array<{type:"race"|"subrace"|"subclass"|"background";slug:string;data:HitDieSnapshot['pins'][number]['resolved']['data']}> = [
+    {type:"race",slug:"elf",data:{size:"Medium",speed:30,scores:[0,0,2,0,0,0],source_refs:[]}},
+    {type:"subrace",slug:"wood-elf",data:{parent_race:"elf"}},
+    {type:"subclass",slug:"lantern-vanguard",data:{parent_class:"fighter",levels:[{level:1,features:[]}]}},
+    {type:"background",slug:"gatekeeper",data:{feature:{name:"Gate watch",description:"The lantern keepers know you."}}},
+  ];
+  selections.forEach((selection,index) => {
+    s.pins.push({id:id(40+index),character_id:s.character.id,content_id:id(50+index),content_version:3,
+      context:{source:selection.type,...(selection.type === "subclass" ? {class:"fighter"} : {})},
+      choice_source:selection.type === "background" ? "choice:background" : null,
+      resolved:{id:id(50+index),version:3,system_id:s.system.id,content_type:selection.type,slug:selection.slug,
+        name:selection.slug,data:selection.data,effects:[{type:"mechanical",stat:"constitution",op:"add",value:1}],
+        source:"homebrew",scope:"shared",owner_id:id(99)} });
+  });
+  return s;
+}
 
 describe("durable hit-die service-internal request and snapshot", () => {
   it("stays disabled by default even with an invalid snapshot and supplied die face", () => {
@@ -103,6 +125,51 @@ describe("durable hit-die service-internal request and snapshot", () => {
     expect(planDurableHitDie(s,{...r,dependency_fingerprint:"0".repeat(64)},{enabled:true,evaluationInstant:instant,acceptanceInstant:instant,acceptedDieFace:3})).toEqual({status:"rejected",reason:"stale_snapshot"});
     expect(planDurableHitDie(s,{...r,character_id:id(99)},{enabled:true,evaluationInstant:instant,acceptanceInstant:instant,acceptedDieFace:3})).toEqual({status:"rejected",reason:"identity_changed"});
   });
+  it("keeps uniquely selected historical race/subrace/subclass/background mechanics", () => {
+    const s = selectedSnapshot();
+    // No current share/access row: this model checks pinned identity, not new-use
+    // visibility. The future resolver still owns authorized historical continuity.
+    expect(hitDieSnapshotSchema.safeParse(s).success).toBe(true);
+    expect(planned(s)).toMatchObject({baseline_constitution:20,live_constitution:20,max_hp:15,roll:{modifier:5,total:8},patch:{current_hp:12}});
+  });
+  it.each(["race","subrace","subclass","background"] as const)("refuses omitted selected %s pin", type => {
+    const s = selectedSnapshot(); const r = request(s);
+    s.pins = s.pins.filter(pin => pin.resolved.content_type !== type);
+    expect(hitDieSnapshotSchema.safeParse(s).success).toBe(false);
+    expect(planDurableHitDie(s,r,{enabled:true,evaluationInstant:instant,acceptanceInstant:instant,acceptedDieFace:3})).toEqual({status:"rejected",reason:"invalid_snapshot"});
+  });
+  it.each(["race","subrace","subclass","background"] as const)("refuses mismatched, duplicate, or unselected %s pins", type => {
+    for (const mutation of ["slug","type","system","version","duplicate","unselected"]) {
+      const s = selectedSnapshot(); const pin = s.pins.find(candidate => candidate.resolved.content_type === type)!;
+      if (mutation === "slug") pin.resolved.slug = "other-selection";
+      if (mutation === "type") pin.resolved.content_type = "trait";
+      if (mutation === "system") pin.resolved.system_id = id(98);
+      if (mutation === "version") pin.content_version = 4;
+      if (mutation === "duplicate") s.pins.push({...pin,id:id(98)});
+      if (mutation === "unselected") {
+        if (type === "subclass") delete s.character.choices.classes[0].subclass;
+        else delete s.character.choices[type];
+      }
+      expect(hitDieSnapshotSchema.safeParse(s).success,`${type}/${mutation}`).toBe(false);
+    }
+  });
+  it("rejects selected subrace without race and wrong selected parent relationships", () => {
+    const orphan = selectedSnapshot(); delete orphan.character.choices.race;
+    orphan.pins = orphan.pins.filter(pin => pin.resolved.content_type !== "race");
+    expect(hitDieSnapshotSchema.safeParse(orphan).success).toBe(false);
+    for (const type of ["subrace","subclass"] as const) {
+      const s = selectedSnapshot(); const pin = s.pins.find(candidate => candidate.resolved.content_type === type)!;
+      pin.resolved.data[type === "subrace" ? "parent_race" : "parent_class"] = "other-parent";
+      expect(hitDieSnapshotSchema.safeParse(s).success).toBe(false);
+    }
+  });
+  it("accepts optional selections when absent only if their selection pins are absent", () => {
+    expect(hitDieSnapshotSchema.safeParse(snapshot()).success).toBe(true);
+    for (const type of ["race","subrace","subclass","background"] as const) {
+      const s = snapshot(); s.pins.push(selectedSnapshot().pins.find(pin => pin.resolved.content_type === type)!);
+      expect(hitDieSnapshotSchema.safeParse(s).success).toBe(false);
+    }
+  });
 });
 
 describe("actual evaluator and existing hit-die math parity", () => {
@@ -113,6 +180,18 @@ describe("actual evaluator and existing hit-die math parity", () => {
     expect(result.patch).toEqual(spendHitDiePatch(s.character.state,"fighter",5,12));
     expect(hitDiePlanResultSchema.safeParse(result).success).toBe(true);
     expect(hitDiePlanResultSchema.safeParse({...result,roll:{...result.roll,total:99}}).success).toBe(false);
+  });
+  it("validates exact canonical intent against the unchanged request", () => {
+    const result = planned();
+    expect(hitDiePlanResultSchema.safeParse(result).success).toBe(true);
+    const intent = JSON.parse(result.canonical_intent);
+    for (const changed of [{class_slug:"wizard"},{expected_revision:"0"},{character_id:id(98)},{dependency_fingerprint:"f".repeat(64)},{command:"other"},{contract_version:2},{canonical_version:2}]) {
+      const canonical_intent = canonicalHitDieJson({...intent,...changed});
+      expect(hitDiePlanResultSchema.safeParse({...result,canonical_intent}).success).toBe(false);
+    }
+    for (const canonical_intent of ["arbitrary","{}",` ${result.canonical_intent}`,JSON.stringify({...intent,operation_id:id(98)})]) {
+      expect(hitDiePlanResultSchema.safeParse({...result,canonical_intent}).success).toBe(false);
+    }
   });
   it("preserves baseline max HP vs active-effect Constitution and ignores campaign HP override", () => {
     const s = snapshot(); s.character.level = 2; s.character.choices.classes[0].level = 2;

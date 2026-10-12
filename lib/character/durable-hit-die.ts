@@ -12,37 +12,22 @@ import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
 import type { Effect } from "@/lib/types/effects";
 import type { ActiveEffect } from "@/lib/types/active-effects";
 import type { CharacterState } from "@/lib/types/character";
+import { HIT_DIE_CANONICAL_VERSION, canonicalHitDieJson, serializeHitDieIntent } from "@/lib/character/durable-hit-die-canonical";
+export { canonicalHitDieJson } from "@/lib/character/durable-hit-die-canonical";
 import {
-  HIT_DIE_CONTRACT_VERSION, MAX_ACTION_REVISION, hitDieRequestSchema, hitDieSnapshotSchema,
+  MAX_ACTION_REVISION, hitDieRequestSchema, hitDieSnapshotSchema,
   hitDiePlanResultSchema, instantSchema, hpRuleSchema,
   type HitDieSnapshot, type HitDieRequest, type HitDiePlanResult,
 } from "@/lib/character/durable-hit-die-schema";
 
-/** Version 1: object keys sorted; arrays kept in source order; finite JSON only.
- * No array/ref/effect sorting: future shared ordering is an enablement prerequisite. */
-export function canonicalHitDieJson(value: unknown): string {
-  const json = z.json().parse(value);
-  function ordered(entry: typeof json): typeof json {
-    if (Array.isArray(entry)) return entry.map(ordered);
-    if (entry !== null && typeof entry === "object") {
-      return Object.fromEntries(Object.keys(entry).sort().map(key => [key, ordered(entry[key])]));
-    }
-    return entry;
-  }
-  return JSON.stringify(ordered(json));
-}
-
 export function hitDieDependencyFingerprint(rawSnapshot: unknown): string {
   const snapshot = hitDieSnapshotSchema.parse(rawSnapshot);
-  return createHash("sha256").update(canonicalHitDieJson({ canonical_version: HIT_DIE_CONTRACT_VERSION, snapshot })).digest("hex");
+  return createHash("sha256").update(canonicalHitDieJson({ canonical_version: HIT_DIE_CANONICAL_VERSION, snapshot })).digest("hex");
 }
 
 export function canonicalHitDieIntent(rawRequest: unknown): string {
   const request = hitDieRequestSchema.parse(rawRequest);
-  return canonicalHitDieJson({ canonical_version: HIT_DIE_CONTRACT_VERSION,
-    contract_version: request.contract_version, character_id: request.character_id,
-    command: request.command, class_slug: request.class_slug,
-    expected_revision: request.expected_revision, dependency_fingerprint: request.dependency_fingerprint });
+  return serializeHitDieIntent(request);
 }
 
 /** Comparison only, not a receipt lookup or replay authorization. */
