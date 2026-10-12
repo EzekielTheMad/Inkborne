@@ -10,10 +10,10 @@ const instant = "2026-10-12T01:00:00.000Z";
 const native = "2026-10-12T01:00:00.000999Z";
 function fixture(): HitDieSnapshot {
   return { contract_version: 1, character: { id: id(1), owner_id: id(2), system_id: id(3), campaign_id: null, archived: false,
-    revision: "9007199254740993", level: 1, base_stats: { constitution: 14 }, choices: { classes: [{ slug: "fighter", level: 1 }], hp_rolls: {} },
+    revision: "9007199254740993", level: 1, base_stats: { strength: 10, dexterity: 10, constitution: 14, intelligence: 10, wisdom: 10, charisma: 10 }, choices: { classes: [{ slug: "fighter", level: 1 }], hp_rolls: {} },
     state: { current_hp: 0, hit_dice_spent: { fighter: 0, custom_pool: 2 }, death_saves: { successes: 1, failures: 2 }, quick_notes: "retain" } },
     system: { id: id(3), slug: "dnd-5e-2014", expression_context: {}, schema_definition: {
-      ability_scores: [{ slug: "constitution", name: "Constitution", abbr: "CON" }], proficiency_levels: [{ slug: "none", name: "None", multiplier: 0 }], derived_stats: [], skills: [], resources: [], currencies: [],
+      ability_scores: ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"].map(slug => ({ slug, name: slug, abbr: slug.slice(0, 3) })), proficiency_levels: [{ slug: "none", name: "None", multiplier: 0 }], derived_stats: [], skills: [], resources: [], currencies: [],
       content_types: [{ slug: "class", name: "Class" }], creation_steps: [{ step: 1, type: "class", label: "Class" }], sheet_sections: [{ slug: "stats", label: "Stats" }] } }, campaign: null,
     pins: [{ id: id(4), character_id: id(1), content_id: id(5), content_version: 1, context: {}, choice_source: null, feature_grant_id: null,
       resolved: { id: id(5), version: 1, system_id: id(3), content_type: "class", slug: "fighter", name: "Fighter",
