@@ -110,3 +110,22 @@ zero remaining exact processes/listeners. No lock/dependency edits. Receipt/logs
 are ignored `test-results/r17-focused-gates/ci.*`; core failing-before and focused
 gates follow this separate correction freeze. Existing claims above describe the
 earlier source-only checkpoints, not completed test/browser acceptance.
+
+The next finite review correction separately checks staged-vs-HEAD and
+working-vs-index diffs, rejects unmerged entries, and records/rechecks actual
+stage-0 helper index OIDs with HEAD OIDs against the reviewed blob. This closes
+the net-diff case where a modified index is hidden by a working file restored to
+HEAD. The protected helper itself remains unchanged.
+
+Observed core gates through `7137fad`: baseline exact old-parser substitution
+produced nine substantive failures / nine passes in two files, with actual page
+STR16, athletics grant and accepted/complete effectful NPC refs; current parser
+bytes and all seven recorded inputs restored exactly in finally. The initial
+14-file run retained one stale-category failure plus three suites blocked by a
+missing profile bracket (205 passes). One bracket/category assertion correction
+is separate `7137fad`; subsequent 14 files / 215 tests pass with explicitly
+forwarded `--maxWorkers=2`, zero task-owned processes/listeners remaining. The
+baseline npm filter/worker flags were not forwarded, so both selected files ran
+fully; only two files could run concurrently. Original receipts were preserved,
+not relabeled. Typecheck/lint follow this clean harness-stage-guard checkpoint;
+no browser/full/build/DB acceptance has run.

@@ -12,7 +12,11 @@ const required = ["lib/schemas/content-types/npc.ts", "lib/schemas/content-types
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const git = (root, args) => execFileSync("git", ["-C", root, ...args], { windowsHide: true });
 function assertHeadWorkingTree(root, relativePath) {
-  assert.equal(git(root, ["diff", "HEAD", "--", relativePath]).toString().trim(), "", `HEAD/index/working drift: ${relativePath}`);
+  // Net HEAD-to-working comparison alone misses a changed index whose working
+  // file was restored to HEAD. Admit neither staged nor unstaged substitutions.
+  assert.equal(git(root, ["diff", "--cached", "HEAD", "--", relativePath]).toString().trim(), "", `Staged input drift: ${relativePath}`);
+  assert.equal(git(root, ["diff", "--", relativePath]).toString().trim(), "", `Working input drift: ${relativePath}`);
+  assert.equal(git(root, ["ls-files", "--unmerged", "--", relativePath]).toString().trim(), "", `Unmerged input: ${relativePath}`);
   assert.equal(git(root, ["ls-files", "--error-unmatch", "--", relativePath]).toString().trim(), relativePath);
 }
 const inheritedPath = "scripts/passive-feature-production-assets.mjs";
@@ -34,9 +38,13 @@ async function verifyInheritedHelper(root) {
   assert.equal(git(root, ["rev-parse", `${inheritedAnchor}:${inheritedPath}`]).toString().trim(), inheritedBlob);
   const canonical = git(root, ["cat-file", "blob", inheritedBlob]);
   let executedSha256, representation;
-  for (const checkout of [root, rootCheckout]) {
+  const checkoutIdentities = [];
+  for (const [role, checkout] of [["worker", root], ["root", rootCheckout]]) {
     assertHeadWorkingTree(checkout, inheritedPath);
-    assert.equal(git(checkout, ["rev-parse", `HEAD:${inheritedPath}`]).toString().trim(), inheritedBlob);
+    const headBlobOid = git(checkout, ["rev-parse", `HEAD:${inheritedPath}`]).toString().trim();
+    const indexBlobOid = git(checkout, ["rev-parse", `:${inheritedPath}`]).toString().trim();
+    assert.equal(headBlobOid, inheritedBlob); assert.equal(indexBlobOid, inheritedBlob);
+    checkoutIdentities.push({ role, headBlobOid, indexBlobOid });
     const currentRepresentation = checkoutRepresentation(checkout);
     if (representation) assert.deepEqual(currentRepresentation, representation, "Inherited helper worker/root checkout configuration differs");
     representation = currentRepresentation;
@@ -49,7 +57,8 @@ async function verifyInheritedHelper(root) {
     executedSha256 = sha(raw);
   }
   return { relativePath: inheritedPath, reviewedAnchor: inheritedAnchor, reviewedGitBlobOid: inheritedBlob,
-    canonicalBlobSha256: sha(canonical), executedSha256, representation, checkoutRepresentation: "git cat-file --filters of reviewed blob; raw worker/root equality" };
+    canonicalBlobSha256: sha(canonical), executedSha256, representation, checkoutIdentities,
+    checkoutRepresentation: "git cat-file --filters of reviewed blob; raw worker/root equality" };
 }
 // Reuse the reviewed complete CSS/font/clean-build/lock/installed-runtime validator.
 export async function loadNpcProductionAssets(root, manifestPath) {
