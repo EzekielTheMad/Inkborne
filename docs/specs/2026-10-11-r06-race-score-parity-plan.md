@@ -1,6 +1,6 @@
 # R06.1 race-score parity: reproduced defect and bounded repair proposal
 
-Plan v1 for independent challenge. Base `1cf00caf45adb0ed3a439cf0db5b2928d370701a`, branch `codex/r06-race-parity`, isolated `r06-race-parity-worker`. This child adds original synthetic reproduction tests and this plan/handoff only. No product, evaluator, schema, SQL, provider, dependency or remote mutation is authorized here.
+Original R06.1 reproduction/plan v1: `7403cb0` / `ac258f2`, base `1cf00caf45adb0ed3a439cf0db5b2928d370701a`, branch `codex/r06-race-parity`, isolated `r06-race-parity-worker`. That checkpoint changed only tests/fixtures and documents. The independently approved R06.2 contract freeze below governs the subsequent bounded product implementation; the original findings/rationale remain as historical evidence.
 
 ## Approved R06.2 contract freeze (before implementation)
 
@@ -13,6 +13,8 @@ The independent challenge and root compatibility decision approved the following
 - Visible ambiguity means the **first race** has an absent declaration, a canonical scores array and at least one mechanical effect on one of the six canonical ability targets (including conditional/formula effects). Matching values, currently inactive conditions and zero score entries do not prove duplicate intent. Race/Class/Abilities and live sheet show that both representations are retained and their overlapping intent is unspecified; explicit modes and single representations do not display this legacy notice.
 - Abilities totals use actual evaluation, not the old blanket scores/effects preference. Source attribution can identify contributing content and state that manual/conditional/formula effects are included according to current evaluation; it must not invent a numeric per-source breakdown or ignore conditions/formulas. Current subrace effects participate as before, but enriched subrace scores remain outside the first-race structured contract.
 - SQL remains static-supported-subset only: its existing preference/exclusion, subrace score handling and lack of conditional/formula evaluation can still differ. No SQL edit or server parity claim. Browser/full/build stay held until root resource release; focused tests with two workers, typecheck/lint and exact-source independent review are authorized.
+- Root's bounded ASI refinement: preserve the existing saved-ASI attribution and displayed total contribution as a separately labelled builder contribution. Race/manual/conditional/formula content totals and sidebar share the evaluator; the saved ASI addition is not synthesized into live effects or removed from the old displayed total. Adjacent live/sidebar-versus-ASI mismatch is explicitly open as **R06.3**, with a regression control. Saved choices stay unchanged; no ASI/SQL policy expansion. Race parity claims compare identical state and exclude that separately disclosed ASI discrepancy.
+- Root's subrace compatibility control: when the broad Abilities component input supplies a valid six-slot **scores-only subrace** extension (no mechanical ability-target effect), preserve its former displayed contribution separately and label the live/sidebar omission. Canonical subrace parsing currently strips this extension and the collector excludes it; neither path is expanded. Actual transformed subraces with ordinary effects stay effect-driven. Dual scored subrace plus manual/conditional/formula effects needs a separate nonlinear attribution/compatibility policy; report it rather than guess duplicate intent or silently promise parity. This adjacent gap is **R06.4**, not part of first-race repair acceptance.
 
 ## Proven reproduction
 
@@ -36,7 +38,7 @@ Negative controls rule out inferred deduplication: a scores-only race plus an in
 - `private.character_ability_scores` in `20260721221108_feat_selection_and_campaign_revocation.sql` uses exact version snapshots. **Static read only:** it sums six-slot race/subrace scores and excludes all additive effects from those scored refs. Other refs' numeric additive ability effects contribute without testing their conditions; formulas are outside this helper. Its dual/score-only/effects-only once-only result is inferred from the SQL, not runtime-verified. It must not be reported as successful PostgreSQL parity.
 - CharacterPage evaluates baseline content with structured sources before `computeMaxHp`. CharacterProvider adds equipped/active effects for live stats. The durable hit-die model follows the same separate baseline/live paths. A score policy change must cover these consumers together and preserve their distinction, class-order HP rules, saved raw die rolls, minimum per-level HP and expected-version/receipt guards.
 
-## Recommendation and smallest safe sequence
+## Original v1 recommendation (open alternatives superseded by the approved freeze)
 
 Do not suppress all race ability effects, prefer scores globally, or match numerical values to erase duplicates. Each fails the manual/conditional/formula controls. Use an **explicit versioned representation contract** at the content source boundary before flattening:
 

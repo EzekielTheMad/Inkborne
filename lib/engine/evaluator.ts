@@ -9,6 +9,7 @@ import type { SpeedData, VisionEntry, SavetxtData } from "@/lib/schemas/content-
 import { sortEffectsByPriority } from "@/lib/engine/effects";
 import { parseExpression } from "@/lib/engine/parser";
 import { checkCondition } from "@/lib/engine/conditions";
+import { resolveRaceAbilityContributions, type RaceAbilityData } from "@/lib/engine/race-ability-scores";
 
 // ---------------------------------------------------------------------------
 // Structured data types for Phase 1 mechanical aggregation
@@ -16,8 +17,7 @@ import { checkCondition } from "@/lib/engine/conditions";
 
 /** Structured data sourced from content ref JSONB `data` fields (race, features, class). */
 export interface StructuredSources {
-  raceData?: {
-    scores?: number[];
+  raceData?: RaceAbilityData & {
     speed_detail?: SpeedData;
     speed?: number;
     vision?: VisionEntry[];
@@ -58,8 +58,6 @@ export interface EvaluationResult {
 // ---------------------------------------------------------------------------
 // Structured data aggregation
 // ---------------------------------------------------------------------------
-
-const ABILITY_SLUGS = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"];
 
 function collectStructuredData(sources?: StructuredSources): {
   speed: SpeedData;
@@ -143,25 +141,6 @@ function collectStructuredData(sources?: StructuredSources): {
   return { speed, vision, dmgres, savetxt, attacks, improvements };
 }
 
-/**
- * Generate mechanical effects from race ability score bonuses.
- * Converts the [STR, DEX, CON, INT, WIS, CHA] array into add effects.
- */
-function raceScoreEffects(scores: number[]): MechanicalEffect[] {
-  const effects: MechanicalEffect[] = [];
-  for (let i = 0; i < scores.length && i < ABILITY_SLUGS.length; i++) {
-    if (scores[i] !== 0) {
-      effects.push({
-        type: "mechanical",
-        stat: ABILITY_SLUGS[i],
-        op: "add",
-        value: scores[i],
-      });
-    }
-  }
-  return effects;
-}
-
 // ---------------------------------------------------------------------------
 // Core evaluation pipeline
 // ---------------------------------------------------------------------------
@@ -184,11 +163,9 @@ export function evaluate(
   sources?: StructuredSources,
   state?: Record<string, unknown>,
 ): EvaluationResult {
-  // 0. Prepend race score bonus effects if available
-  const allEffects = [...effects];
-  if (sources?.raceData?.scores) {
-    allEffects.unshift(...raceScoreEffects(sources.raceData.scores));
-  }
+  // Resolve the first structured race's contribution once. Original effects
+  // retain their order; explicit effects mode never adds display scores again.
+  const allEffects = [...resolveRaceAbilityContributions(sources?.raceData), ...effects];
 
   // 1. Separate effects by type
   const mechanical: MechanicalEffect[] = [];

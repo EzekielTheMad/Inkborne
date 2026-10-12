@@ -7,18 +7,21 @@ import { transformSubraceEntry } from "../../../scripts/transformers/races";
 import { parseContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
 import { syntheticApiRace, transformedRace, syntheticRacePin, raceParityBase, raceParitySchema, evaluateSyntheticPin, isAbilityAdd, pinnedRaceRef } from "../../fixtures/r06-race-parity";
 
-// Characterization only: these assertions expose CURRENT divergence, not an
-// accepted arithmetic rule. Desired scores are base + one original API bonus.
+// The original dual fixture retains historical arithmetic; newly imported
+// content uses the approved once-only contract without rewriting old pins.
 describe("R06.1 source-proven synthetic race-pin reproduction", () => {
-  it("the actual transformer itself writes the same original bonus twice, without enrichment", () => {
+  it("the actual new transformer declares effects-only; explicit legacy pins retain both representations", () => {
     expect(syntheticApiRace.ability_bonuses.map(item => item.bonus)).toEqual([2, 2]);
-    expect(transformedRace.data.scores).toEqual([2, 0, 2, 0, 0, 0]);
+    expect(transformedRace.data.scores).toBeUndefined();
+    expect(transformedRace.data.ability_score_representation).toEqual({ version: 1, mode: "effects" });
     expect(transformedRace.effects.filter(isAbilityAdd)).toEqual([
       { type: "mechanical", stat: "strength", op: "add", value: 2 },
       { type: "mechanical", stat: "constitution", op: "add", value: 2 },
     ]);
     const { definition, pin } = syntheticRacePin();
     expect(pin.data).toEqual(definition.data);
+    expect(pin.data.scores).toEqual([2, 0, 2, 0, 0, 0]);
+    expect(pin.data.ability_score_representation).toBeUndefined();
     expect(pin.effects).toEqual(definition.effects);
     const live = evaluateSyntheticPin(pin);
     const preview = evaluate(raceParityBase, pin.effects, raceParitySchema);
@@ -29,6 +32,9 @@ describe("R06.1 source-proven synthetic race-pin reproduction", () => {
     // Separate existing string-size-to-numeric defect, never a proposed fix.
     expect(pin.data.size).toBe("Medium");
     expect(live.stats.size).toBe(0);
+    const imported = syntheticRacePin("imported").pin;
+    expect(evaluateSyntheticPin(imported).stats).toMatchObject({ strength: 12, constitution: 14 });
+    expect(imported.data.scores).toBeUndefined();
   });
 
   it.each(["scores-only", "effects-only"] as const)("unambiguous %s input contributes the original bonus once live", mode => {

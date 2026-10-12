@@ -15,6 +15,8 @@ import { ContentBrowser, type ContentEntry } from "@/components/builder/content-
 import { ClassPreviewModal } from "@/components/builder/class-preview-modal";
 import { ClassStepRail } from "@/components/builder/class-step-rail";
 import { StatPreview } from "@/components/builder/stat-preview";
+import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
+import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import type {
   CharacterChoices,
   AsiChoice,
@@ -41,6 +43,7 @@ interface ClassStepClientProps {
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
+    state?: Record<string, unknown>;
   };
   classes: ContentEntry[];
   subclasses: ContentEntry[];
@@ -179,8 +182,8 @@ export function ClassStepClient({
   const resolvedStats = useMemo(() => {
     if (!schema) return character.base_stats ?? {};
     const baseWithLevel = { ...(character.base_stats ?? {}), level: localLevel };
-    return evaluate(baseWithLevel, allEffects, schema).stats;
-  }, [character.base_stats, localLevel, allEffects, schema]);
+    return evaluate(baseWithLevel, allEffects, schema, buildCharacterStructuredSources(contentRefs, localLevel), character.state).stats;
+  }, [character.base_stats, character.state, localLevel, allEffects, schema, contentRefs]);
 
   function beginSave() {
     if (saveBusy.current) {
@@ -578,6 +581,7 @@ export function ClassStepClient({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <fieldset disabled={saving} aria-busy={saving} className="space-y-6 min-w-0 border-0 p-0">
+        <RaceAbilityNotice contentRefs={contentRefs} />
         <h2 className="text-xl font-semibold">Class</h2>
         {saving && <p role="status" className="text-sm text-muted-foreground">Saving this class change. Please wait.</p>}
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
@@ -666,6 +670,8 @@ export function ClassStepClient({
             effects={allEffects}
             schema={schema}
             level={localLevel}
+            sources={buildCharacterStructuredSources(contentRefs, localLevel)}
+            state={character.state}
           />
         </div>
       )}

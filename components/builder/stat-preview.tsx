@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { evaluate } from "@/lib/engine/evaluator";
+import { evaluate, type StructuredSources } from "@/lib/engine/evaluator";
 import { Separator } from "@/components/ui/separator";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
@@ -11,6 +11,8 @@ interface StatPreviewProps {
   effects: Effect[];
   schema: SystemSchemaDefinition;
   level: number;
+  sources?: StructuredSources;
+  state?: Record<string, unknown>;
 }
 
 export function StatPreview({
@@ -18,11 +20,13 @@ export function StatPreview({
   effects,
   schema,
   level,
+  sources,
+  state,
 }: StatPreviewProps) {
   const result = useMemo(() => {
     const statsWithLevel = { ...baseStats, level };
-    return evaluate(statsWithLevel, effects, schema);
-  }, [baseStats, effects, schema, level]);
+    return evaluate(statsWithLevel, effects, schema, sources, state);
+  }, [baseStats, effects, schema, level, sources, state]);
 
   const hasStats = Object.keys(baseStats).length > 0;
 

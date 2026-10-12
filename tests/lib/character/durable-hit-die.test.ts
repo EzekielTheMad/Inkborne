@@ -4,6 +4,7 @@ import { canonicalHitDieJson, canonicalHitDieIntent, hitDieDependencyFingerprint
 import { actionRevisionSchema, hitDieRequestSchema, hitDieSnapshotSchema, hitDiePlanResultSchema, type HitDieSnapshot } from "@/lib/character/durable-hit-die-schema";
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { spendHitDiePatch } from "@/lib/hit-dice/helpers";
+import { syntheticRacePin } from "../../fixtures/r06-race-parity";
 
 const id = (last: number) => `11111111-1111-4111-8111-${String(last).padStart(12, "0")}`;
 const instant = "2026-10-12T01:00:00.000Z";
@@ -63,6 +64,32 @@ function selectedSnapshot(): HitDieSnapshot {
 }
 
 describe("durable hit-die service-internal request and snapshot", () => {
+  it.each(["imported", "declared-effects", "declared-scores", "dual"] as const)("uses %s race representation for baseline HP and separate live CON", mode => {
+    const s = snapshot();
+    s.character.base_stats.constitution = 12;
+    const { pin } = syntheticRacePin(mode);
+    s.character.choices.race = pin.slug;
+    s.pins.push({ id: id(70), character_id: s.character.id, content_id: id(71), content_version: pin.version,
+      context: { source: "race" }, choice_source: null,
+      resolved: { ...pin, id: id(71), system_id: s.system.id } as unknown as HitDieSnapshot['pins'][number]['resolved'],
+    });
+    s.character.state.active_effects = [activeEffect()];
+    const before = JSON.stringify(s);
+    const once = mode === "imported" || mode === "declared-effects";
+    expect(planned(s)).toMatchObject({ baseline_constitution: once ? 14 : 16,
+      live_constitution: once ? 18 : 20, max_hp: once ? 12 : 13 });
+    expect(JSON.stringify(s)).toBe(before);
+    if (pin.data.scores !== undefined) {
+      const reinterpreted = structuredClone(s);
+      reinterpreted.pins[1].resolved.data.ability_score_representation = { version: 1, mode: once ? "scores" : "effects" };
+      expect(planDurableHitDie(reinterpreted, request(s), { enabled: true, evaluationInstant: instant,
+        acceptanceInstant: instant, acceptedDieFace: 3 })).toEqual({ status: "rejected", reason: "stale_snapshot" });
+    }
+    const changed = structuredClone(s);
+    changed.pins[1].resolved.data.ability_score_representation = { version: 2, mode: "effects" };
+    expect(planDurableHitDie(changed, request(s), { enabled: true, evaluationInstant: instant,
+      acceptanceInstant: instant, acceptedDieFace: 3 })).toEqual({ status: "rejected", reason: "invalid_snapshot" });
+  });
   it("stays disabled by default even with an invalid snapshot and supplied die face", () => {
     expect(planDurableHitDie(null, null, {evaluationInstant:instant,acceptanceInstant:instant,acceptedDieFace:20})).toEqual({status:"disabled"});
   });

@@ -29,14 +29,34 @@ export const raceParityBase = {
   wisdom: 10, charisma: 10, level: 3, hit_die_total: 18, spellcasting_ability: 10,
 };
 export const transformedRace = transformRaceEntry(syntheticApiRace);
+// Frozen original transformer output captured by R06.1 at 7403cb0. Never
+// regenerate a historical dual pin using the new import representation.
+const legacyTransformedRace = {
+  content_type: "race", slug: syntheticApiRace.index, name: syntheticApiRace.name,
+  data: { size: "Medium", speed: 35, speed_detail: { walk: 35 }, scores: [2, 0, 2, 0, 0, 0],
+    age_description: syntheticApiRace.age, alignment_description: syntheticApiRace.alignment,
+    size_description: syntheticApiRace.size_description, language_description: syntheticApiRace.language_desc,
+    traits: [], subraces: [], languages: [], weaponProfs: [], armorProfs: [], toolProfs: [],
+  },
+  effects: [
+    { type: "mechanical", stat: "strength", op: "add", value: 2 },
+    { type: "mechanical", stat: "constitution", op: "add", value: 2 },
+    { type: "mechanical", stat: "movement_speed", op: "set", value: 35 },
+    { type: "mechanical", stat: "size", op: "set", value: "Medium" },
+  ] as Effect[],
+};
 export const isAbilityAdd = (effect: Effect) => effect.type === "mechanical" && effect.op === "add"
   && raceParitySchema.ability_scores.some(ability => ability.slug === effect.stat);
 
-export function syntheticRacePin(representation: "dual" | "scores-only" | "effects-only" = "dual", extra: Effect[] = [], version = 1) {
-  const data = { ...transformedRace.data };
+export function syntheticRacePin(representation: "dual" | "scores-only" | "effects-only" | "imported" | "declared-effects" | "declared-scores" = "dual", extra: Effect[] = [], version = 1) {
+  const source = representation === "imported" ? transformedRace : legacyTransformedRace;
+  const data: Record<string, unknown> = { ...source.data };
   if (representation === "effects-only") delete data.scores;
-  const effects = [...(representation === "scores-only" ? transformedRace.effects.filter(effect => !isAbilityAdd(effect)) : transformedRace.effects), ...extra];
-  const raw = { ...transformedRace, data, effects,
+  if (representation === "declared-effects" || representation === "declared-scores") {
+    data.ability_score_representation = { version: 1, mode: representation === "declared-effects" ? "effects" : "scores" };
+  }
+  const effects = [...(representation === "scores-only" ? source.effects.filter(effect => !isAbilityAdd(effect)) : source.effects), ...extra];
+  const raw = { ...source, data, effects,
     id: "11111111-1111-4111-8111-111111111111", system_id: "22222222-2222-4222-8222-222222222222",
     version, source: "srd", scope: "platform", owner_id: null,
   };

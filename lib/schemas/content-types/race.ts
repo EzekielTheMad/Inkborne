@@ -8,6 +8,11 @@ import {
   sourceRefsSchema,
 } from "./mechanical";
 
+export const abilityScoreRepresentationSchema = z.object({
+  version: z.literal(1),
+  mode: z.enum(["effects", "scores"]),
+}).strict();
+
 export const raceDataSchema = z.object({
   size: z.enum(CREATURE_SIZES),
   speed: z.number().int().positive(),
@@ -20,6 +25,7 @@ export const raceDataSchema = z.object({
   languages: z.array(z.string()).default([]),
   // Phase 1 mechanical fields
   scores: abilityScoreArraySchema.optional(),
+  ability_score_representation: abilityScoreRepresentationSchema.optional(),
   scorestxt: z.string().optional(),
   speed_detail: speedSchema.optional(),
   vision: z.array(visionEntrySchema).default([]),
@@ -31,5 +37,9 @@ export const raceDataSchema = z.object({
   armorProfs: z.array(z.string()).default([]),
   toolProfs: z.array(z.string()).default([]),
   source_refs: sourceRefsSchema,
+}).superRefine((data, context) => {
+  if (data.ability_score_representation?.mode === "scores" && data.scores === undefined) {
+    context.addIssue({ code: "custom", path: ["scores"], message: "Scores representation requires six ability bonuses." });
+  }
 });
 export type RaceData = z.infer<typeof raceDataSchema>;

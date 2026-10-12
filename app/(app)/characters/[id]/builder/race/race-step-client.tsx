@@ -19,6 +19,8 @@ import { ContentBrowser, type ContentEntry } from "@/components/builder/content-
 import { ContentPreview } from "@/components/builder/content-preview";
 import { ChoiceSelector } from "@/components/builder/choice-selector";
 import { StatPreview } from "@/components/builder/stat-preview";
+import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
+import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
@@ -48,6 +50,7 @@ interface RaceStepClientProps {
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
+    state?: Record<string, unknown>;
   };
   races: ContentEntry[];
   subraces: ContentEntry[];
@@ -335,6 +338,7 @@ export function RaceStepClient({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <fieldset disabled={isSaving || conflictingPins} aria-busy={isSaving} className="min-w-0 space-y-6 border-0 p-0">
+        <RaceAbilityNotice contentRefs={contentRefs} />
         <h2 className="text-xl font-semibold">{raceTypeLabel}</h2>
         {conflictingPins && <p role="alert" className="text-sm text-destructive">Multiple snapshots are saved or their IDs/versions conflict for this race, subrace or trait. Reload and check the saved references before making changes.</p>}
         {unpinnedTraits.length > 0 && <p role="status" className="text-sm text-muted-foreground">Trait versions were not recorded by race selection. Unpinned trait choices use current catalog content; existing saved trait snapshots stay unchanged.</p>}
@@ -616,6 +620,8 @@ export function RaceStepClient({
             effects={allEffects}
             schema={schema}
             level={character.level}
+            sources={buildCharacterStructuredSources(contentRefs, character.level)}
+            state={character.state}
           />
         </div>
       )}

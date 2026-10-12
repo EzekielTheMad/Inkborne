@@ -18,6 +18,7 @@ import { MobileSheet } from "@/components/sheet/mobile-sheet";
 import { ResourcesWidget } from "@/components/sheet/resources-widget";
 import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
 import { CharacterPrintAction } from "@/components/sheet/character-print-action";
+import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
 import type { HPConcentrationProps } from "@/components/sheet/hp-tracker";
 import {
   useCharacter,
@@ -86,6 +87,7 @@ export function SheetPanel() {
 
   return (
     <>
+      <div className="px-4"><RaceAbilityNotice contentRefs={contentRefs} /></div>
       <CharacterPrintAction />
       <div className="hidden md:block px-4 py-3 border-b border-border">
         <StatRibbon

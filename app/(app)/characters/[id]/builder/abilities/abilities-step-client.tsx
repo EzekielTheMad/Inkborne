@@ -13,6 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { StatPreview } from "@/components/builder/stat-preview";
+import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
+import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
+import { evaluate } from "@/lib/engine/evaluator";
+import { abilityScoreArraySchema } from "@/lib/schemas/content-types/mechanical";
+import { RACE_ABILITY_SLUGS } from "@/lib/engine/race-ability-scores";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
@@ -27,6 +32,7 @@ interface AbilitiesStepClientProps {
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
+    state?: Record<string, unknown>;
   };
   contentRefs: Array<{
     id: string;
@@ -95,54 +101,14 @@ function AbilitiesEditor({
     (ref) => ref.content_definitions?.effects ?? [],
   );
 
-  // Compute per-ability bonuses with source attribution
+  const structuredSources = buildCharacterStructuredSources(contentRefs, character.level);
+  const evaluated = schema ? evaluate({ ...scores, level: character.level }, allEffects, schema, structuredSources, character.state) : null;
+
+  // Preserve the existing saved ASI display contribution separately. It is not
+  // synthesized into live effects by this race repair (R06.3 remains open).
   interface BonusEntry { source: string; value: number }
-  const abilityBonuses = useMemo(() => {
+  const asiBonuses = useMemo(() => {
     const bonuses: Record<string, BonusEntry[]> = {};
-
-    // From content refs (race, subrace, class features, etc.)
-    for (const ref of contentRefs) {
-      const contentType = ref.content_definitions?.content_type;
-      const contentName = ref.content_definitions?.name;
-      const label =
-        contentType === "race" || contentType === "subrace"
-          ? contentName ?? "Race"
-          : contentType === "class"
-            ? contentName ?? "Class"
-            : contentName ?? "Feature";
-
-      // Prefer enriched scores array for races/subraces (avoids double-counting with mechanical effects)
-      const scoresArr = ref.content_definitions?.data?.scores as number[] | undefined;
-      const hasEnrichedScores = Array.isArray(scoresArr) && scoresArr.length === 6 &&
-        (contentType === "race" || contentType === "subrace");
-
-      if (hasEnrichedScores) {
-        const slugs = abilities.map((a) => a.slug);
-        for (let i = 0; i < Math.min(scoresArr!.length, slugs.length); i++) {
-          if (scoresArr![i] !== 0) {
-            const slug = slugs[i];
-            if (!bonuses[slug]) bonuses[slug] = [];
-            bonuses[slug].push({ source: label, value: scoresArr![i] });
-          }
-        }
-      } else {
-        // Fall back to mechanical effects for non-race content or races without enriched scores
-        for (const effect of ref.content_definitions?.effects ?? []) {
-          if (
-            effect.type === "mechanical" &&
-            effect.op === "add" &&
-            abilities.some((a) => a.slug === effect.stat)
-          ) {
-            const val = typeof effect.value === "number" ? effect.value : 0;
-            if (val !== 0) {
-              if (!bonuses[effect.stat]) bonuses[effect.stat] = [];
-              bonuses[effect.stat].push({ source: label, value: val });
-            }
-          }
-        }
-      }
-    }
-
     // From ASI choices
     const asiChoices = character.choices?.asi_choices ?? {};
     for (const asiChoice of Object.values(asiChoices)) {
@@ -151,23 +117,33 @@ function AbilitiesEditor({
           if (alloc.amount !== 0) {
             const slug = alloc.ability;
             if (!bonuses[slug]) bonuses[slug] = [];
-            bonuses[slug].push({ source: "Ability Score Improvement", value: alloc.amount });
+            bonuses[slug].push({ source: "Saved Ability Score Improvement", value: alloc.amount });
           }
         }
       }
     }
 
     return bonuses;
-  }, [contentRefs, abilities, character.choices?.asi_choices]);
+  }, [character.choices?.asi_choices]);
 
-  // Total racial/other bonuses per ability (for score calculation)
-  const racialBonuses = useMemo(() => {
-    const totals: Record<string, number> = {};
-    for (const [slug, entries] of Object.entries(abilityBonuses)) {
-      totals[slug] = entries.reduce((sum, e) => sum + e.value, 0);
+  // Preserve the former displayed contribution only for unambiguous supplied
+  // subrace scores-only extensions; canonical parsing/live source expansion is
+  // a separate gate. Never remove an effect to infer this compatibility case.
+  const subraceBonuses: Record<string, BonusEntry[]> = {};
+  const dualSubraceNames: string[] = [];
+  for (const ref of contentRefs) {
+    const definition = ref.content_definitions;
+    if (definition.content_type !== "subrace") continue;
+    const stored = abilityScoreArraySchema.safeParse(definition.data.scores);
+    if (!stored.success) continue;
+    if (definition.effects.some(effect => effect.type === "mechanical" && RACE_ABILITY_SLUGS.some(slug => slug === effect.stat))) {
+      dualSubraceNames.push(definition.name);
+      continue;
     }
-    return totals;
-  }, [abilityBonuses]);
+    stored.data.forEach((value, index) => {
+      if (value !== 0) (subraceBonuses[RACE_ABILITY_SLUGS[index]] ??= []).push({ source: `Saved subrace bonus: ${definition.name}`, value });
+    });
+  }
 
   // Point buy points remaining
   const pointsUsed = useMemo(() => {
@@ -222,6 +198,21 @@ function AbilitiesEditor({
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6">
         <h2 className="text-xl font-semibold">Ability Scores</h2>
+        <RaceAbilityNotice contentRefs={contentRefs} />
+        <p className="text-sm text-muted-foreground">Totals include race and content effects; conditions follow the saved character state.
+          Content considered: {contentRefs.map(ref => ref.content_definitions.name).join(", ") || "none"}.</p>
+        {Object.keys(asiBonuses).length > 0 && <p role="status" className="text-sm text-muted-foreground">
+          Saved Ability Score Improvement choices are added to these totals separately. The Stats preview and live sheet
+          currently omit that addition.
+        </p>}
+        {Object.keys(subraceBonuses).length > 0 && <p role="status" className="text-sm text-muted-foreground">
+          Saved subrace score bonuses remain a separate builder contribution. The Stats preview and live sheet omit
+          those score-only bonuses; subrace calculation parity remains unresolved.
+        </p>}
+        {dualSubraceNames.length > 0 && <p role="status" className="text-sm text-muted-foreground">
+          Subrace score data and ability effects overlap for {dualSubraceNames.join(", ")}. Evaluated content includes the effects;
+          the former score-preferred display differs. Resolving that subrace representation remains separate from race totals.
+        </p>}
         {navigationGuard.notice && <p role="alert" className="text-sm text-destructive">{hasConflict
           ? "Reload the saved ability scores before editing again. This draft has not been saved."
           : navigationGuard.notice}</p>}
@@ -291,8 +282,9 @@ function AbilitiesEditor({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {abilities.map((ability) => {
             const base = currentScores[ability.slug] ?? 0;
-            const bonus = racialBonuses[ability.slug] ?? 0;
-            const total = base + bonus;
+            const contentTotal = evaluated?.stats[ability.slug] ?? base;
+            const displayContributions = [...(asiBonuses[ability.slug] ?? []), ...(subraceBonuses[ability.slug] ?? [])];
+            const total = contentTotal + displayContributions.reduce((sum, entry) => sum + entry.value, 0);
             const mod = Math.floor((total - 10) / 2);
 
             return (
@@ -393,7 +385,8 @@ function AbilitiesEditor({
                       <span className="text-muted-foreground">Base Score</span>
                       <span className="font-medium">{base || "--"}</span>
                     </div>
-                    {(abilityBonuses[ability.slug] ?? []).map((entry, i) => (
+                    <div className="flex justify-between"><span>Evaluated content total</span><span>{contentTotal}</span></div>
+                    {displayContributions.map((entry, i) => (
                       <div key={i} className="flex justify-between">
                         <span className="text-muted-foreground">{entry.source}</span>
                         <span className="font-medium text-accent">
@@ -449,6 +442,8 @@ function AbilitiesEditor({
             effects={allEffects}
             schema={schema}
             level={character.level}
+            sources={structuredSources}
+            state={character.state}
           />
         </div>
       )}

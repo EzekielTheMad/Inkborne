@@ -39,8 +39,6 @@ function categorizeProficiency(index: string): "weapon" | "armor" | "tool" | "ot
   return "other";
 }
 
-const ABILITY_ORDER = ["str", "dex", "con", "int", "wis", "cha"];
-
 export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
   const effects: Effect[] = [];
 
@@ -72,13 +70,6 @@ export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
     effects.push(buildChoiceEffect(opts.choose, options, "language", `${apiRace.index}-language-choice`));
   }
 
-  // Build scores array [STR, DEX, CON, INT, WIS, CHA] from ability_bonuses
-  const scores = [0, 0, 0, 0, 0, 0];
-  for (const bonus of apiRace.ability_bonuses) {
-    const idx = ABILITY_ORDER.indexOf(bonus.ability_score.index);
-    if (idx >= 0) scores[idx] = bonus.bonus;
-  }
-
   // Categorize starting proficiencies
   const weaponProfs: string[] = [];
   const armorProfs: string[] = [];
@@ -97,7 +88,7 @@ export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
     size: apiRace.size,
     speed: apiRace.speed,
     speed_detail: { walk: apiRace.speed },
-    scores: scores.some((s) => s !== 0) ? scores : undefined,
+    ability_score_representation: { version: 1, mode: "effects" },
     age_description: apiRace.age,
     alignment_description: apiRace.alignment,
     size_description: apiRace.size_description,
