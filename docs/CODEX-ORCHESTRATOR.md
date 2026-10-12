@@ -32,8 +32,18 @@ ASI UI: **44 desktop/mobile cases / 226 assertions / 46 screenshots**, real
 production assets/fonts, explicit simulated boundaries and empty cleanup. Fresh
 six print exports / 33 rendered pages also passed. Latest full remains `df8c303`;
 repeat combined acceptance after next source freeze. P1a private admission/finalizer source and R17 narrative NPC Library
-source proceed independently in assigned workers. Continue ready P1 producer and R09
-earned-graph source work; neither lane is enabled or accepted as database authority.
+source proceed independently in assigned workers. Neither lane is enabled or
+accepted as database authority.
+
+Later clean `c18cf445` passed **322 files / 3,931 tests**, typecheck/lint and build
+after NPC integration. Preserved NPC prebundle failure was corrected by reviewed
+one-line harness `42abdbb`, which passed fresh build, **14 NPC desktop/mobile
+controls / 18 screenshots**, then **44 ASI cases / 226 assertions / 46 screenshots**.
+Real font/assets, unexpected-error checks and owned process/port cleanup passed;
+Auth/query/action/CAS/navigation remain expressly modeled. Latest full remains
+`c18cf445`; repeat after next source integration. R17.2 plan `5bdb03e` is reviewed,
+private authoring proceeds. P1a `00dce154` is source-reviewed and owns the released
+narrow/model/static/type/lint slot. No SQL or live acceptance is claimed.
 
 Separate `..\m1-magic-item-worker`, branch `codex/m1-magic-item-revalidation`, belongs to original Git: historical tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Its reviewed PR99-derived slice and rarity fix are now integrated locally; no publication occurred. Individual worker tests remain distinct from combined candidate acceptance.
 

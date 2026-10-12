@@ -531,6 +531,47 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### R17.1 combined local acceptance — 2026-10-12 19:23 UTC
+
+Clean root `c18cf445b4ce7df24aa3e973330979f036f55c1e` passed
+`npm.cmd run check`: **322 files / 3,931 tests**, typecheck and zero-warning lint,
+with four Vitest workers. All 375 recorded process identities were absent at
+cleanup. Its synthetic production build passed with 24 identities, none left.
+
+First NPC UI attempt failed before browser/HTTP launch: the synthetic native-link
+module omitted React's resolution directory (27 identities, empty cleanup).
+Independently reviewed harness-only `42abdbb` sets `resolveDir: root`; product,
+fixtures, assertions and guards are unchanged. Its fresh build passed (24
+identities, empty cleanup). Asset binds verified actual generated HTML/font
+classes, three CSS files and nineteen assets before each browser gate.
+
+`npm.cmd run test:e2e -- --config e2e/local-npcs/playwright.config.ts` passed
+**14 desktop/mobile grouped controls / 18 screenshots** in 48.2 seconds. All 18
+font samples loaded real required production FontFaces. Keyboard/detail/search,
+minimal/absent fields, maximum content/final-hook reachability, escaped text,
+exact simulated shared badge and empty/malformed/denied reads passed. Two exact
+expected parser diagnostics, zero other page/network/unexpected-request errors.
+Inspected mobile Library/profile/long-bottom and desktop escaped screenshots:
+contained readable text and reachable end. Auth/entitlement/query responses and
+Next links remain modeled; no database, write, sharing or authenticated-shell
+acceptance. All 73 recorded identities absent; HTTP/CDP closed, Chrome exited.
+
+At the same `42abdbb`, existing earned-ASI consumers were reaccepted after the NPC
+parser integration: **44 desktop/mobile cases / 226 assertions / 46 screenshots**,
+44 loaded-font samples, zero page/network/unexpected-boundary errors. Existing
+Auth/action/CAS/navigation/print simulation and native RNG limits remain. All 175
+recorded identities absent; HTTP/CDP closed, Chrome exited. Print source is
+unchanged since six exports / 33 rendered pages at `7ff6185`; no new PDF run is
+claimed. Receipts and failure archives remain in sibling
+`verification/launch-20261012/` and ignored root `test-results/`.
+
+Latest full check is `c18cf445`; later executable change is the one-line reviewed
+NPC harness fix. Repeat combined acceptance after next source integration.
+Reviewed R17.2 plan `293c3d1` is integrated as `5bdb03e`; private NPC authoring
+proceeds in its worker. P1a `00dce154` passed independent source review of five
+closure defects and now owns the released semantic-before/focused/type/lint slot.
+SQL unexecuted, Auth unavailable/all readiness false. No live write or publication.
+
 ### R17.1 reviewed local integration — 2026-10-12 19:02 UTC
 
 R17 plan/source/harness chain through worker `fa8aa7b` is integrated locally as
@@ -801,7 +842,7 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R14 M4 | MPMB upload/static parse, validation/repair, audit, keep-both/replace, mandatory calculation preview and exact-pin character exit. [Parser/mapping](../lib/import/mpmb), [parity spec](specs/2026-07-21-mpmb-representative-parity.md), [T1](handoffs/2026-10-11-t1-e2e-drift.md). I=P/T=offline+H/G=yes/D=H/A=supported cases H, current open. | Publish explicit supported type/fixture matrix; extend documented gaps only with original schema/source evidence. Unsupported effect-coupled/candidate-less cases fail closed. Current owner/isolation/stale-preview/replace/race/calculation and builder-to-cast parity on a real approved target. Field-level merge was deliberately out of scope. |
 | R15 M4 | Entitlement-aware encyclopedia for all authenticated players/DMs. [Compendium contract](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [Library tests](../tests/app/library-page.test.tsx). I=yes baseline/T=H+local/G=yes/D=H #96/#97/A=H, extensions open. | Platform/private/campaign visibility and legacy redirects/state preservation current UAT; every new M4/M5 type joins the same catalog rather than DM-only browsing. |
 | R16 M5 | Reviewed monster schema/read-only stat block/catalog and private authoring are integrated. Foundation 206 focused/20 geometry controls plus authoring 127 focused/28 actual-form controls passed at their stated sources, including mobile grid and transport/recovery fixes. [Design scope](specs/2026-10-12-monster-foundation-plan.md). I=P/T=local+offline/G=P/D=-/A=open. | Supported import and DM campaign instances remain. Actual owner/player/DM/privacy/version/CAS acceptance and authenticated-shell geometry remain separately required; local action/persistence simulations do not fill them. |
-| R17 M5 | Library NPCs distinct from character-attached relationship records. [Roadmap](ROADMAP.md), [existing narrative](../components/narrative). I=character relationships only/T=H subset/G=foundation/D=H subset/A=library open. | Library identity/personality/relationships + entitlement discovery/import and campaign DM management. Preserve current character privacy/copy records; no silent repurposing/backfill. |
+| R17 M5 | Strict narrative NPC schema, empty-effects fence and read-only Library/profile integrated; 215 worker tests, root 322-file check and 14 browser controls at stated SHAs. [Private authoring plan](specs/2026-10-12-private-npc-authoring-plan.md), [handoff](handoffs/2026-10-12-r17-library-npc-foundation-source.md). I=P/T=local+offline/G=P/D=-/A=open. | Private authoring proceeds; import, real entitlement/owner/version races and campaign DM instances remain. Preserve existing character relationship privacy/copy; no silent repurposing/backfill. |
 | R18 M5 | Character-tied companions (mounts, beast forms, summons). [Roadmap](ROADMAP.md), [character domain](../lib/character). I=-/U/T=-/G=-/D=-/A=open. | Explicit hybrid schema/ownership/lifecycle; character and campaign linkage, supported stat blocks, transformations/summon dependencies, discovery and persistence/denial tests. Use existing effects contracts; spec uncertain rule semantics before coding. |
 | R19 M5 | Expert/Spellcaster/Warrior sidekicks. [Roadmap](ROADMAP.md), [builder domain](../lib/builder). I=-/U/T=-/G=-/D=-/A=open. | Simplified archetype/level schemas and render/build/play behavior; entitled catalog/DM use and isolation/level/progression tests. Do not equate generic full-PC code with accepted sidekick rules. |
 | R20 PRD §6/§8; M5.5 | Campaign membership/roles/invites/assignment; rich backstory/personality, wiki/backlinks/timeline/relationships/secrets. [Campaign spec](specs/2026-07-19-campaign-foundation-design.md), [DM-note boundary](specs/2026-07-19-character-dm-notes-boundary.md), [narrative](../components/narrative). I=foundation/T=H+local/G=yes/D=H/A=current open. | One real DM/player campaign with linked characters/wiki; permitted read-only DM view, privacy, conflicting revisions, copy/leave/removal/invite rotation and portrait/storage permissions. Optional live presence/public wiki waits S3/S5. |

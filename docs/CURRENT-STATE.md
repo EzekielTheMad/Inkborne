@@ -44,8 +44,16 @@ are in isolated workers. No SQL execution, hosted write or publication occurred.
 R17.1 narrative NPC Library source is now integrated through `640be46`: canonical
 explicit-empty-effects validation protects the actual character collector, with
 215 focused worker tests and reviewed type/lint corrections. Existing character
-NPC relationships/privacy/copy are unchanged. Combined full/build/NPC browser and
-ASI reacceptance are next; NPC authoring/instances/G2 remain separate open work.
+NPC relationships/privacy/copy are unchanged. Clean `c18cf445` then passed
+combined check: **322 files / 3,931 tests**, typecheck/lint and build, empty cleanup.
+Reviewed one-line native-link resolution fix `42abdbb` passed fresh build,
+**14 NPC desktop/mobile controls / 18 screenshots**, then **44 ASI cases / 226
+assertions / 46 screenshots** after the parser change. Production fonts/assets
+verified, other page/network errors zero, all owned process/port readbacks empty.
+Original NPC prebundle failure preserved. Latest full remains `c18cf445`; repeat
+after next source integration. R17.2 plan `5bdb03e` passed independent review and
+private authoring proceeds; import/instances/G2 remain open. P1a `00dce154` passed
+source review and proceeds through released model/static/type/lint gates. No SQL.
 
 Victor selected all included milestones before beta, PDF importing before beta,
 and beta deferrals for Daggerheart/public publishing while retaining both in the
