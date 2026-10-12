@@ -161,6 +161,44 @@ Eight unpatched braces-chain high findings remain open, without risk acceptance.
 R06.1 source-proven race-score representation reproduction/planning is underway;
 no evaluator, schema, historical pin or manual-effect correction is inferred.
 
+R21's canonical-parser child `3ceeb59` preserves absent level casting data instead
+of turning it into explicit `null`. Two actual-snapshot regressions failed before;
+four files / 98 focused tests and typecheck passed after, and independent source
+review approved. Explicit inactive rows and normal importer output are preserved.
+Root `5ecb9a1` also repaired two older offline recovery harnesses with exact class
+pins; the fresh combined **43 core**, **16 race**, and **10 drift** checks passed.
+These gates retained simulated persistence and closed their owned processes/ports.
+
+R03.3 reviewed source `2b23ed9`, plans `91b4ff8`/`3e8e7a4`, was integrated as
+`e718032`, `199371b`, `0c37775`. The final npm-generated diff changes 30 package
+nodes plus root metadata, adds four required development helpers, and changes no
+production-node metadata. Vitest and its companions are coherent at `4.1.11`;
+the original Vite/Rolldown/OXC/Next/Tiptap/shadcn families are preserved. Worker
+installed validation passed 101 tests, 11 offline probes, typecheck and lint.
+Audit now reports **eight high / zero critical**, all in the unpatched braces
+chain, and **zero production findings**. These remaining risks are unaccepted.
+Six unchanged optional WASM entries are reported extraneous, with no invalid
+ranges. Root's fresh locked install passed: 804 packages in 47 seconds, no owned
+process or listener remaining. New source still requires combined gates/build.
+
+R06.1 source `7403cb0`, handoff `ac258f2`, reproduced the actual transformer and
+canonical-pin defect in 24 characterization tests: original STR12/CON14 becomes
+live STR14/CON16 and max HP27 instead of24. Actual builder consumers differ;
+manual, conditional, formula and separate-source controls reject blanket dedup.
+Independent review approved explicit parsed representation modes and a new
+effects-only importer, while retaining unmarked legacy live arithmetic visibly.
+R06.2 is implementing this bounded contract in isolation. Historical correction,
+SQL parity, size and subrace expansion remain open. Adjacent **R06.3 saved ASI
+parity** is also open: Abilities displays allocations not synthesized by the live
+evaluator. Its existing attribution/value will be preserved and disclosed, rather
+than silently removed by this race repair.
+
+The [R16.1 monster foundation plan](specs/2026-10-12-monster-foundation-plan.md)
+at `9d103d5` passed independent design-scope challenge. A worker is finalizing
+concrete schema fields/bounds/defaults before code. This child is read-only schema/
+stat-block/Library foundation; authoring, import and DM campaign instances remain
+required later children, with real privacy/version acceptance still open.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions

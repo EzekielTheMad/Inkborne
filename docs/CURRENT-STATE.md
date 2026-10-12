@@ -4,14 +4,16 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source `1cf00ca`
+on local branch `codex/launch-integration-20261011`. Product source `0c37775`
 includes reviewed private magic-item/item/weapon/armor/core-race authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, default-disabled pure hit-die modeling, patched production
 dependencies and runtime fixture preparation. At `edac6d7`, combined check passed
 253 files / 2,605 tests, lint/typecheck, synthetic build and nine bounded offline
 configurations. Fresh combined check at `1cf00ca` passed 263 files / 2,754 tests
-after two legacy fixture repairs; build/browser reacceptance is continuing.
+after two legacy fixture repairs. Later canonical row-presence and development
+dependency patches need fresh combined gates; 43 core, 16 race and 10 drift
+offline checks passed after the harness repairs. Build reacceptance is continuing.
 See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
 exact source, reviews and open evidence. Original checkouts remain preserved.
 
@@ -22,8 +24,10 @@ remain explicit decisions. Durable gameplay starts with one trusted server roll
 and immutable lifetime receipt; deployment stays disabled until writer/database/
 recovery evidence passes.
 
-Per-class casting implementation, race-score parity reproduction and remaining
-development dependency remediation are active in isolated worktrees. The
+Per-class casting and race-score parity implementation, plus concrete monster
+schema design, are active in isolated worktrees. Development audit is now eight
+unpatched high findings / zero critical, production zero; no residual risk is
+accepted. Saved ASI parity remains a separate documented gap. The
 [concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
 is reviewable. G1 engine startup/image pulls were requested; no approval or runtime
 execution is inferred. G2 full SQL/fixture/ephemeral credential execution and G3-G5
