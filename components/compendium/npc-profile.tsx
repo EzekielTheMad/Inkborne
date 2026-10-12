@@ -4,7 +4,7 @@ const listFields = [
   ["personality_traits", "Personality traits"], ["ideals", "Ideals"],
   ["bonds", "Bonds"], ["flaws", "Flaws"],
 ] as const;
-const textFields = [["motivation", "Motivation"], ["mannerisms", "Mannerisms"], ["fear", "Fear"] as const;
+const textFields = [["motivation", "Motivation"], ["mannerisms", "Mannerisms"], ["fear", "Fear"]] as const;
 
 /** Already validated narrative data. No lookup, effects, private state or HTML. */
 export function NpcProfile({ data }: { data: NpcData }) {

@@ -8,11 +8,13 @@ import {
 } from "@/lib/compendium/catalog";
 
 describe("compendium catalog query", () => {
-  it("adds only monsters and retains its bounded size-aware return query", () => {
-    expect(COMPENDIUM_CATEGORY_KEYS).toEqual(["classes", "races", "backgrounds", "feats", "spells", "items", "weapons", "armor", "monsters"]);
+  it("adds narrative NPCs and retains the monster bounded size-aware return query", () => {
+    expect(COMPENDIUM_CATEGORY_KEYS).toEqual(["classes", "races", "backgrounds", "feats", "spells", "items", "weapons", "armor", "monsters", "npcs"]);
     const query = parseCompendiumQuery({ category: "monsters", system: "system-fixture", size: "Small", q: "kite", provenance: "mine", sort: "newest", page: "2" });
     expect(compendiumHref(query)).toBe("/library?system=system-fixture&category=monsters&q=kite&provenance=mine&sort=newest&page=2&size=Small");
     expect(resetCategoryFilters(query, "spells")).toMatchObject({ size: null, page: 1, q: "kite", system: "system-fixture", provenance: "mine", sort: "newest" });
+    expect(compendiumHref(parseCompendiumQuery({ category: "npcs", system: "system-fixture", q: "bridge", provenance: "mine" })))
+      .toBe("/library?system=system-fixture&category=npcs&q=bridge&provenance=mine");
   });
   it("normalizes untrusted URL values into bounded filters", () => {
     const query = parseCompendiumQuery({
