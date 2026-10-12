@@ -34,6 +34,7 @@ function abilityTotal(name: string) {
   return within(card).getByText("Total").nextElementSibling!.textContent;
 }
 function character(pin: ReturnType<typeof syntheticRacePin>["pin"]) {
+  if (!pin.system_id) throw new Error("Synthetic immutable race pin must retain its system identity");
   return { id: "r06-synthetic-character", name: "Synthetic Character", level: 3,
     system_id: pin.system_id,
     base_stats: raceParityBase, choices: { race: pin.slug, ability_method: "manual" as const },
@@ -45,7 +46,7 @@ function classEvidence(saved: ReturnType<typeof character>, pin: ReturnType<type
   const classRef = { ...raceRef, id: "88888888-8888-4888-8888-888888888888", content_id: fighter.id, content_version: fighter.version,
     context: { source: "class" }, content_definitions: fighter };
   const refs = [raceRef, classRef] as ContentRefWithContent[];
-  return { refs, evidence: { status: "complete" as const, character_id: saved.id, system_id: pin.system_id, refs, grants: [] } };
+  return { refs, evidence: { status: "complete" as const, character_id: saved.id, system_id: saved.system_id, refs, grants: [] } };
 }
 function classEntry(slug: string, id: string) {
   const entry = parseContentDefinition({ id, system_id: "22222222-2222-4222-8222-222222222222", slug,
