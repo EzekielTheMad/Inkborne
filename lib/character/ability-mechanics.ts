@@ -10,8 +10,8 @@ export function hasShippedAbilityDefinitions(schema: SystemSchemaDefinition): bo
 }
 export function resolveAbilityMechanics(base: Record<string, number>, result: EvaluationResult, schema: SystemSchemaDefinition, permanent = result): AbilityMechanics {
   if (result.asi?.status !== "available") return unavailable("Saved ASI evidence is unavailable. Reload or restore its exact class feature pins.");
-  if (!hasShippedAbilityDefinitions(schema)) return unavailable("The six saved ability definitions are missing or ambiguous.");
-  if (!RACE_ABILITY_SLUGS.every(slug => Object.hasOwn(base, slug) && Number.isFinite(base[slug]) && Object.hasOwn(result.stats, slug) && Number.isFinite(result.stats[slug]))) return unavailable("Complete finite saved ability scores are required. Draft defaults are not confirmed mechanics.");
+  if (!hasShippedAbilityDefinitions(schema)) return unavailable("Saved mechanics are unavailable. The six saved ability definitions are missing or ambiguous.");
+  if (!RACE_ABILITY_SLUGS.every(slug => Object.hasOwn(base, slug) && Number.isFinite(base[slug]) && Object.hasOwn(result.stats, slug) && Number.isFinite(result.stats[slug]))) return unavailable("Saved mechanics are unavailable. Complete finite saved ability scores are required. Draft defaults are not confirmed mechanics.");
   return { status: "available", capUnverified: result.asi.allocations.some(entry => permanent.stats[entry.ability] > 20) };
 }
 /** Declared formulas are authoritative: a missing/nonfinite computed result cannot fallback. */

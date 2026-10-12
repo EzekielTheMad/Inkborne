@@ -11,7 +11,7 @@ export function originalSnapshot(slug: string, contentType: string, data: Record
 }
 export function rawOriginalRef(snapshot: ReturnType<typeof originalSnapshot>) {
   return { id: originalId(Number.parseInt(snapshot.content_id.slice(-12), 16) + 1000), character_id: subclassCharacterId, content_id: snapshot.content_id, content_version: snapshot.version,
-    context: {}, choice_source: null, created_at: createdAt, content_versions: snapshot };
+    context: {}, choice_source: null, feature_grant_id: null, created_at: createdAt, content_versions: snapshot };
 }
 export function originalRef(snapshot: ReturnType<typeof originalSnapshot>): ContentRefWithContent {
   const parsed = parseContentVersionSnapshot(snapshot);
