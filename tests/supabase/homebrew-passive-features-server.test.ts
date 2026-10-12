@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ createClient: vi.fn(), uuid: vi.fn() }));
 vi.mock("server-only", () => ({}));
-vi.mock("node:crypto", () => ({ randomUUID: mocks.uuid }));
+vi.mock("node:crypto", async (importOriginal) => ({
+  ...await importOriginal<typeof import("node:crypto")>(),
+  randomUUID: mocks.uuid,
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 import { createHomebrewPassiveFeatureRecord, getOwnedHomebrewPassiveFeature, listOwnedHomebrewPassiveFeatures, updateHomebrewPassiveFeatureRecord } from "@/lib/supabase/homebrew-passive-features-server";
 import { FEATURE_VERSION_MAX } from "@/lib/homebrew/passive-feature-form";
