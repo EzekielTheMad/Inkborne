@@ -91,3 +91,31 @@ pins, import content or complete R16/M5. No hosted/SQL G2 authority is inferred.
 
 Rollback is a local revert of this additive authoring slice; accepted read-only
 monster foundation and any existing content/snapshot rows are not changed by it.
+
+## Independent-review transport correction (prepared, validation held)
+
+Predecessor `f460679` remains immutable and unaccepted pending this correction.
+Only the client response boundary changes: `monster-action-response.ts` awaits
+the action, validates bounded resolved idle/error/conflict state, and turns an
+ordinary rejection or missing/malformed result into retained-draft uncertainty
+with an explicit Check Homebrew link. It does not retry, infer rollback, claim
+creation idempotency or invent a successful result. Existing controlled values,
+significant row order/edit intent and native-reset prevention remain unchanged.
+
+Installed Next 16.3.8 `server-actions.md`, `redirect.md` and `unstable_rethrow.md`
+were read, along with the installed browser implementation. `unstable_rethrow`
+is called first in catch so actual redirect/not-found/bailout exceptions (also
+inside causes) propagate to Next, rather than be mistaken for a lost transport.
+Existing confirmed-save server redirects and page/action authentication stay
+unchanged. The wrapper requires hydrated client execution; it does not claim a
+new progressive-enhancement/no-JavaScript guarantee for this controlled form.
+
+Added mounted-form regressions invoke actual rejected/missing/malformed action
+Promises, retain values and ordered duplicate rows after native reset, validate
+changed groups through the real mapper and check one invocation/no automatic
+retry. Helper controls use actual installed `redirect`/`notFound` exceptions,
+including nested causes and a misleading incomplete-digest rejection control.
+Static TypeScript/TSX syntax parsing of the four correction files reports zero
+syntax diagnostics; `git diff --check` passes. No correction tests/typecheck/lint
+have run yet: root's serialized R23 correction currently owns the heavy slot.
+Earlier green receipts describe the predecessor only, not this pending source.

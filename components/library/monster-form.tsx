@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MONSTER_CONTROLS, monsterDataToDraft, monsterDraftToData, newMonsterDraft, type MonsterControl, type MonsterDraft, type MonsterDraftObject, type MonsterDraftRow } from "@/lib/homebrew/monster-draft";
 import { changedMonsterFields, monsterNameSchema, type MonsterFormState } from "@/lib/homebrew/monster-form";
+import { guardMonsterActionResponse, MONSTER_ACTION_UNCERTAIN_MESSAGE } from "@/lib/homebrew/monster-action-response";
 import { monsterDataSchema, type MonsterData } from "@/lib/schemas/content-types/monster";
 
 const initialState: MonsterFormState = { status: "idle" };
@@ -79,7 +80,8 @@ function focusError(form: HTMLFormElement | null, key: string) {
   else node?.querySelector<HTMLElement>("input,select,textarea,button")?.focus();
 }
 export function MonsterForm({ mode, initialValue }: MonsterFormProps) {
-  const [state, action, pending] = useActionState(mode === "create" ? createHomebrewMonster : updateHomebrewMonster, initialState);
+  const [state, action, pending] = useActionState((previous: MonsterFormState, input: FormData) =>
+    guardMonsterActionResponse(() => (mode === "create" ? createHomebrewMonster : updateHomebrewMonster)(previous, input)), initialState);
   const [name, setName] = useState(initialValue?.name ?? "");
   const [draft, setDraft] = useState(() => monsterDataToDraft(initialValue?.data));
   const [attempted, setAttempted] = useState(false);
@@ -123,6 +125,7 @@ export function MonsterForm({ mode, initialValue }: MonsterFormProps) {
       </details>)}
     </fieldset>
     {state.message ? <p role={state.status === "idle" ? "status" : "alert"} className="text-sm [overflow-wrap:anywhere]">{state.message}</p> : null}
+    {state.message === MONSTER_ACTION_UNCERTAIN_MESSAGE ? <p className="text-sm"><Link href="/homebrew" className="text-accent underline">Check Homebrew</Link> before another save; this response does not establish whether the earlier save committed.</p> : null}
     {attempted && Object.keys(errors).length ? <div role="alert" className="text-sm text-destructive">Check the highlighted fields. {Object.entries(errors).map(([key, messages]) => <p key={key}>{key.replaceAll("_", " ")}: {messages.join(" ")}</p>)}</div> : null}
     <details className="min-w-0"><summary className="cursor-pointer text-sm font-medium">Stat block preview</summary>
       {parsed.success && parsedName.success ? <div className="mt-4"><h2 className="j-display mb-3 text-xl [overflow-wrap:anywhere]">{name}</h2><MonsterStatBlock data={parsed.data} /></div> : <p className="mt-3 text-sm text-muted-foreground">Enter valid required values to preview the stat block.</p>}

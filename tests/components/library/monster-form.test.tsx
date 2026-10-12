@@ -1,9 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const actions = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn() }));
 vi.mock("@/app/(app)/homebrew/monsters/actions", () => ({ createHomebrewMonster: actions.create, updateHomebrewMonster: actions.update }));
 import { MonsterForm } from "@/components/library/monster-form";
 import { mapHomebrewMonsterFormData } from "@/lib/homebrew/monster-form";
+import { MONSTER_ACTION_UNCERTAIN_MESSAGE } from "@/lib/homebrew/monster-action-response";
 import { cinderlitKite, lanternReefRegent } from "@/tests/fixtures/monsters";
 const initial = { id: "33333333-3333-4333-8333-333333333333", name: "Original Kite", version: 1, data: cinderlitKite };
 beforeEach(() => { vi.clearAllMocks(); actions.update.mockResolvedValue({ status: "idle", message: "No changes to save." }); });
@@ -82,5 +83,47 @@ describe("normal structured MonsterForm", () => {
     expect(actions.update).toHaveBeenCalledTimes(1); expect(screen.getByLabelText("Creature type")).toBeDisabled();
     await act(async () => finish({ status: "idle", message: "No changes to save." }));
     expect(screen.getByLabelText("Creature type")).toHaveValue("construct");
+  });
+  it.each([{ response: undefined }, { response: null }, { response: { status: "saved", id: "unknown" } },
+    { response: { status: "error", message: "Malformed", fieldErrors: { name: "bad" } } }])("retains real edited controls/order/intent after missing or malformed result $response", async ({ response }) => {
+    actions.update.mockResolvedValue(response);
+    render(<MonsterForm mode="edit" initialValue={{ ...initial, data: { ...cinderlitKite, traits: [{ name: "Echo", description: "First." }, { name: "Echo", description: "Second." }] } }} />);
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Retained Kite" } });
+    fireEvent.change(screen.getByLabelText("Creature type"), { target: { value: "lantern construct" } });
+    fireEvent.click(screen.getByRole("button", { name: "Move Traits 2 up" }));
+    submit(); await screen.findByText(MONSTER_ACTION_UNCERTAIN_MESSAGE);
+    const form = screen.getByRole("button", { name: "Save new version" }).closest("form")!;
+    fireEvent.reset(form);
+    expect(screen.getByLabelText("Name")).toHaveValue("Retained Kite");
+    expect(screen.getByLabelText("Creature type")).toHaveValue("lantern construct");
+    const parsed = mapHomebrewMonsterFormData(new FormData(form), "edit");
+    expect(parsed).toMatchObject({ success: true, value: { changedFields: ["creature_type", "traits"], data: { traits: [{ name: "Echo", description: "Second." }, { name: "Echo", description: "First." }] } } });
+    expect(screen.getByRole("link", { name: "Check Homebrew" })).toHaveAttribute("href", "/homebrew");
+    expect(screen.queryByText(/saved successfully/i)).not.toBeInTheDocument();
+    expect(actions.update).toHaveBeenCalledTimes(1);
+  });
+  it.each([{ mode: "create" as const }, { mode: "edit" as const }])("retains $mode draft when the actual action Promise rejects without retry", async ({ mode }) => {
+    const action = mode === "create" ? actions.create : actions.update;
+    action.mockRejectedValue(new Error("Untrusted lost-response details."));
+    render(<MonsterForm mode={mode} initialValue={mode === "edit" ? initial : undefined} />);
+    if (mode === "create") {
+      for (const [label, value] of [["Name", "Original Lantern"], ["Creature type", "construct"], ["Size", "Small"], ["Declared AC", "12"], ["Declared HP average", "18"],
+        ["Strength score", "8"], ["Dexterity score", "12"], ["Constitution score", "10"], ["Intelligence score", "6"], ["Wisdom score", "10"], ["Charisma score", "9"], ["Walk (ft.) (optional)", "0"]]) {
+        fireEvent.change(screen.getByLabelText(label), { target: { value } });
+      }
+    }
+    fireEvent.click(screen.getByLabelText("Include traits"));
+    fireEvent.click(screen.getByRole("button", { name: "Add trait" }));
+    const traits = within(screen.getByRole("group", { name: "Traits" }));
+    fireEvent.change(traits.getByLabelText("Entry name"), { target: { value: "Original echo" } });
+    fireEvent.change(traits.getByLabelText("Entry description"), { target: { value: "A retained original trait." } });
+    const form = screen.getByRole("button", { name: mode === "create" ? "Create private monster" : "Save new version" }).closest("form")!;
+    fireEvent.submit(form); await screen.findByText(MONSTER_ACTION_UNCERTAIN_MESSAGE);
+    fireEvent.reset(form);
+    expect(traits.getByLabelText("Entry description")).toHaveValue("A retained original trait.");
+    expect(mapHomebrewMonsterFormData(new FormData(form), mode)).toMatchObject({ success: true, value: { data: { traits: [{ name: "Original echo", description: "A retained original trait." }] } } });
+    expect(screen.getByRole("link", { name: "Check Homebrew" })).toBeVisible();
+    expect(screen.queryByText("Untrusted lost-response details.")).not.toBeInTheDocument();
+    expect(action).toHaveBeenCalledTimes(1);
   });
 });
