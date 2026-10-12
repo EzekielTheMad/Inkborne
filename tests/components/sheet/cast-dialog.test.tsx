@@ -1,3 +1,5 @@
+import { classDataSchema } from "@/lib/schemas/content-types/class";
+import { resolveSpellSlots } from "@/lib/spells/helpers";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { Activity, useState } from "react";
@@ -162,6 +164,19 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("CastDialog - configure pane", () => {
+  it("shows a canonical large slot pool numerically without allocating readonly dots", async () => {
+    const data = classDataSchema.parse({ hit_die: 6, spellcasting: { type: "full", ability: "intelligence" },
+      multiclass: { prerequisites: [], proficiencies_gained: [] }, saving_throws: [], starting_proficiencies: [],
+      levels: [{ level: 1, features: [], spellcasting: { spell_slots: [4294967296, 0, 0, 0, 0, 0, 0, 0, 0] } }] });
+    const resolution = resolveSpellSlots([{ slug: "original", level: 1 }], { original: data });
+    if (resolution.status !== "available") throw new Error(resolution.reason);
+    mockMaxSlots = resolution.maxSlots;
+    renderDialog();
+    expect(screen.getByText("4294967296/4294967296")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cast" }));
+    await waitFor(() => expect(castSpell).toHaveBeenCalledOnce());
+    expect(castSpell.mock.calls[0][1]).toEqual({ type: "slot", level: 1 });
+  });
   it("shows a cast failure settled while Activity is hidden and allows explicit retry", async () => {
     let rejectSave!: (error: Error) => void;
     castSpell.mockReturnValueOnce(new Promise<CastOutcome>((_, reject) => { rejectSave = reject; }));

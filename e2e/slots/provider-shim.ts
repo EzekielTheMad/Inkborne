@@ -1,5 +1,5 @@
 import type { CharacterState } from "@/lib/types/character";
-declare global { interface Window { __slotKind: "half" | "pact" | "unavailable" | "noncaster"; __slotStored: CharacterState; __slotWrites: Partial<CharacterState>[] } }
+declare global { interface Window { __slotKind: "half" | "pact" | "unavailable" | "noncaster" | "large"; __slotStored: CharacterState; __slotWrites: Partial<CharacterState>[] } }
 /** In-memory conditional persistence only; no server, session or database. */
 export async function updateCharacterState(_id: string, patch: Partial<CharacterState>, expected?: CharacterState) {
   if (expected && JSON.stringify(expected) !== JSON.stringify(window.__slotStored)) throw new Error("Fixture conflict");

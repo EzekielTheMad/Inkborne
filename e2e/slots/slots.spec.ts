@@ -12,11 +12,12 @@ test.beforeAll(async () => {
   javascript = result.outputFiles.find(file => file.path.endsWith(".js"))!.text;
   css = result.outputFiles.find(file => file.path.endsWith(".css"))!.text;
 });
-for (const kind of ["half", "pact", "unavailable", "noncaster"] as const) test(`${kind} actual provider slot controls`, async ({ page }, info) => {
+for (const kind of ["half", "pact", "unavailable", "noncaster", "large"] as const) test(`${kind} actual provider slot controls`, async ({ page }, info) => {
   await page.setContent('<html><body><div id="root"></div></body></html>');
   await page.addStyleTag({ content: css + `
     /* Isolated fixture dialog positioning; app Tailwind is intentionally omitted. */
     body { font-family: sans-serif; padding: 16px; }
+    output { display: block; overflow-wrap: anywhere; }
     [data-slot="dialog-overlay"] { position: fixed; inset: 0; z-index: 50; background: #0003; }
     [data-slot="dialog-content"] { position: fixed; z-index: 51; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 560px; max-height: 85vh; overflow: auto; background: white; border: 1px solid #888; padding: 20px; }
   ` });
@@ -24,7 +25,26 @@ for (const kind of ["half", "pact", "unavailable", "noncaster"] as const) test(`
   await page.addScriptTag({ content: javascript });
   const unresolved = kind === "unavailable";
   await expect(page.getByLabel("Slot resolution")).toContainText(unresolved ? "unavailable" : "available");
-  if (kind === "half" || kind === "pact") {
+  if (kind === "large") {
+    await expect(page.getByText("4294967295/4294967296", { exact: true })).toBeVisible();
+    await page.screenshot({ path: info.outputPath("large-desktop-counter.png"), fullPage: true });
+    await page.setViewportSize({ width: 375, height: 812 });
+    await expect(page.getByText("4294967295/4294967296", { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: info.outputPath("large-mobile-counter.png"), fullPage: true });
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await expect(page.getByRole("button", { name: "Mark 1st slot used" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Restore 1st slot" })).toHaveCount(1);
+    await page.getByRole("button", { name: "Mark 1st slot used" }).click();
+    await expect.poll(() => page.evaluate(() => window.__slotStored.spell_slots_used?.["1"])).toBe(2);
+    await page.getByRole("button", { name: "Print / Save PDF", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: "Print preview" })).toContainText("4294967294/4294967296 remaining");
+    await page.getByRole("button", { name: "Back to character" }).click();
+    await page.getByRole("button", { name: "Open cast" }).click();
+    await page.getByRole("button", { name: "Cast", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.__slotWrites.length)).toBe(2);
+    expect(await page.evaluate(() => window.__slotStored.spell_slots_used?.["1"])).toBe(3);
+  } else if (kind === "half" || kind === "pact") {
     await expect(page.getByText("2/3", { exact: true })).toBeVisible();
     if (kind === "pact") await expect(page.getByText("2/2", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Print / Save PDF", exact: true }).click();

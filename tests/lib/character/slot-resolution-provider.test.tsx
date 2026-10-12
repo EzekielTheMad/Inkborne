@@ -6,6 +6,7 @@ import { SlotTracker } from "@/components/sheet/spells/slot-tracker";
 import { RestDialog } from "@/components/sheet/rest-dialog";
 import { CharacterPrintAction } from "@/components/sheet/character-print-action";
 import { CastDialog } from "@/components/sheet/spells/cast-dialog";
+import { addCharacterSpell } from "@/lib/supabase/spells";
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
@@ -68,6 +69,8 @@ describe("real provider slot evidence and action guards", () => {
     await expect(spells.castSpell(cantrip, { type: "cantrip" })).rejects.toThrow(/unavailable/);
     await expect(rest.shortRest()).resolves.toBe(false);
     await expect(rest.longRest()).resolves.toBe(false);
+    await expect(spells.addSpell({ content_id: "spell-pin", content_version: 1, name: "Original", class_slug: "paladin" })).rejects.toThrow(/unavailable/);
+    expect(addCharacterSpell).not.toHaveBeenCalled();
     expect(updateCharacterState).not.toHaveBeenCalled();
   });
 });

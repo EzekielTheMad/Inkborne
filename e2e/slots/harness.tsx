@@ -1,3 +1,4 @@
+import { classDataSchema } from "@/lib/schemas/content-types/class";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { CharacterProvider, useSpells } from "@/lib/character/character-context";
@@ -13,9 +14,16 @@ import "./provider-shim";
 const kind = window.__slotKind;
 const noncaster = kind === "noncaster";
 const baseRef = pinnedSlotClass(noncaster ? "fighter" : "paladin", 3, noncaster ? null : "half", noncaster ? null : [3, 0, 0, 0, 0, 0, 0, 0, 0]);
+if (kind === "large") {
+  baseRef.content_definitions.slug = "local-caster";
+  baseRef.content_definitions.name = "Original Large Pool Caster";
+  baseRef.content_definitions.data = classDataSchema.parse({ hit_die: 6, spellcasting: { type: "full", ability: "intelligence" },
+    multiclass: { prerequisites: [], proficiencies_gained: [] }, saving_throws: [], starting_proficiencies: [],
+    levels: [{ level: 3, features: [], spellcasting: { spell_slots: [4294967296, 0, 0, 0, 0, 0, 0, 0, 0] } }] });
+}
 const validRefs = kind === "pact" ? [baseRef, pinnedSlotClass("local-pact", 3, "pact", [0, 2, 0, 0, 0, 0, 0, 0, 0])] : [baseRef];
 const choices = validRefs.map(ref => ({ slug: ref.content_definitions.slug, level: 3 }));
-const spell = { id: "original-light", character_id: "local-character", content_id: "light-content", content_version: 1, name: "Original Signal", class_slug: "paladin", is_known: true, is_prepared: true, source: "selection", content_definitions: { id: "light-content", version: 1, system_id: "local-system", slug: "original-signal", name: "Original Signal", content_type: "spell", data: spellDataSchema.parse({ level: 1, school: "illusion", casting_time: "1 action", range: "30 feet", components: ["V"], duration: "Instantaneous", concentration: false, ritual: false, description: "An original temporary signal for offline testing." }) } } as unknown as CharacterSpell;
+const spell = { id: "original-light", character_id: "local-character", content_id: "light-content", content_version: 1, name: "Original Signal", class_slug: baseRef.content_definitions.slug, is_known: true, is_prepared: true, source: "selection", content_definitions: { id: "light-content", version: 1, system_id: "local-system", slug: "original-signal", name: "Original Signal", content_type: "spell", data: spellDataSchema.parse({ level: 1, school: "illusion", casting_time: "1 action", range: "30 feet", components: ["V"], duration: "Instantaneous", concentration: false, ritual: false, description: "An original temporary signal for offline testing." }) } } as unknown as CharacterSpell;
 const state = { current_hp: 12, spell_slots_used: noncaster ? {} : { "1": 1 } };
 window.__slotStored = state; window.__slotWrites = [];
 function Surface() {

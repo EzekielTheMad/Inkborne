@@ -66,6 +66,7 @@ function capitalize(value: string): string {
 
 /** ●●○ free/used dots for a slot-picker button. */
 function SlotDots({ total, free }: { total: number; free: number }) {
+  if (total > 12) return <span className="tabular-nums text-muted-foreground">{free}/{total}</span>;
   return (
     <span aria-hidden className="flex gap-0.5">
       {Array.from({ length: total }).map((_, i) => (

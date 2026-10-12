@@ -1,15 +1,19 @@
+import { classDataSchema } from "@/lib/schemas/content-types/class";
+import { resolveSpellSlots } from "@/lib/spells/helpers";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { SlotTracker } from "@/components/sheet/spells/slot-tracker";
 import type { MaxSlotsByLevel, SpellSlotsUsed } from "@/lib/types/spells";
 import type { CharacterState } from "@/lib/types/character";
 
 const patchState = vi.fn<(patch: Partial<CharacterState>) => Promise<void>>();
 
+let mockIsOwner = true;
 let mockMaxSlots: MaxSlotsByLevel = {};
 let mockSlotState: SpellSlotsUsed = {};
 
 vi.mock("@/lib/character/character-context", () => ({
+  useCharacter: () => ({ isOwner: mockIsOwner }),
   useSpells: () => ({ slotResolution: { status: "available", maxSlots: mockMaxSlots, pactSlotLevel: null },
     maxSlots: mockMaxSlots, slotState: mockSlotState }),
   useCharacterState: () => ({
@@ -23,12 +27,58 @@ vi.mock("@/lib/character/character-context", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockIsOwner = true;
   patchState.mockResolvedValue(undefined);
   mockMaxSlots = { "1": 3, "2": 2 };
   mockSlotState = { "1": 1 };
 });
 
+function canonicalLargePool() {
+  const data = classDataSchema.parse({ hit_die: 6, spellcasting: { type: "full", ability: "intelligence" },
+    multiclass: { prerequisites: [], proficiencies_gained: [] }, saving_throws: [], starting_proficiencies: [],
+    levels: [{ level: 1, features: [], spellcasting: { spell_slots: [4294967296, 0, 0, 0, 0, 0, 0, 0, 0] } }] });
+  const result = resolveSpellSlots([{ slug: "local-caster", level: 1 }], { "local-caster": data });
+  expect(result.status).toBe("available");
+  if (result.status !== "available") throw new Error(result.reason);
+  mockMaxSlots = result.maxSlots; mockSlotState = {};
+}
+
 describe("SlotTracker", () => {
+  it("renders an actual-canonical large pool without allocating one dot per slot", () => {
+    canonicalLargePool(); render(<SlotTracker />);
+    expect(screen.getByText("4294967296/4294967296")).toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Mark 1st slot used" }));
+    expect(patchState).toHaveBeenCalledWith({ spell_slots_used: { "1": 1 } });
+  });
+  it("keeps a large exhausted pool's full count and only offers restoration", () => {
+    canonicalLargePool(); mockSlotState = { "1": 4294967296 }; render(<SlotTracker />);
+    expect(screen.getByText("0/4294967296")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mark 1st slot used" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Restore 1st slot" }));
+    expect(patchState).toHaveBeenCalledWith({ spell_slots_used: { "1": 4294967295 } });
+  });
+  it("shows a read-only large count with disabled controls", () => {
+    canonicalLargePool(); mockIsOwner = false; mockSlotState = { "1": 1 }; render(<SlotTracker />);
+    expect(screen.getByText("4294967295/4294967296")).toBeInTheDocument();
+    for (const button of screen.getAllByRole("button")) expect(button).toBeDisabled();
+    expect(patchState).not.toHaveBeenCalled();
+  });
+  it("disables both large-pool steps until the current save settles", async () => {
+    canonicalLargePool(); let finish!: () => void;
+    patchState.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    render(<SlotTracker />); fireEvent.click(screen.getByRole("button", { name: "Mark 1st slot used" }));
+    for (const button of screen.getAllByRole("button")) expect(button).toBeDisabled();
+    await act(async () => finish());
+    expect(screen.getByRole("button", { name: "Mark 1st slot used" })).toBeEnabled();
+  });
+  it("keeps ordinary dot controls read-only for viewers", () => {
+    mockIsOwner = false; render(<SlotTracker />);
+    expect(screen.getAllByRole("button")).toHaveLength(5);
+    for (const button of screen.getAllByRole("button")) expect(button).toBeDisabled();
+    expect(patchState).not.toHaveBeenCalled();
+  });
+
   it("renders nothing without slots", () => {
     mockMaxSlots = {};
     const { container } = render(<SlotTracker />);

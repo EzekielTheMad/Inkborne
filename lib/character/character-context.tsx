@@ -426,14 +426,18 @@ export function CharacterProvider({
   // --- Spells ---
   const [spells, setSpells] = useState<CharacterSpell[]>(initialSpells);
 
+  const slotResolution = useMemo(() => resolvePinnedSpellSlots(
+    character.choices?.classes ?? [], contentRefs, { id: character.id, system_id: character.system_id },
+  ), [character.choices, character.id, character.system_id, contentRefs]);
   const addSpell = useCallback(
     async (payload: AddSpellPayload) => {
+      if (slotResolution.status !== "available") throw new Error(slotResolution.reason);
       const newSpell = await addCharacterSpell(character.id, payload);
       if (newSpell) {
         setSpells((prev) => [...prev, newSpell]);
       }
     },
-    [character.id],
+    [character.id, slotResolution],
   );
 
   const updateSpell = useCallback(
@@ -573,9 +577,6 @@ export function CharacterProvider({
     };
   }, [character.choices, classData, evalResult]);
 
-  const slotResolution = useMemo(() => resolvePinnedSpellSlots(
-    character.choices?.classes ?? [], contentRefs, { id: character.id, system_id: character.system_id },
-  ), [character.choices, character.id, character.system_id, contentRefs]);
   // Compatibility aliases are usable only alongside the explicit resolution.
   const maxSlots = slotResolution.status === "available" ? slotResolution.maxSlots : {};
   const pactSlotLevel = slotResolution.status === "available" ? slotResolution.pactSlotLevel : null;
