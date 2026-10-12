@@ -17,8 +17,13 @@ repair, canonical consumer fixtures and typed state-writer preflight/boolean res
 repair. Root narrow receipts: **376 tests / 12 files** at `5a46eab`, typecheck at
 `1fb0fcd`, and **221 tests / 15 files** at `7a68def`, all with empty cleanup. C1
 pure prerequisite has reviewed 60-test worker acceptance and no application imports.
-Next: finish exact approved ASI harness freeze binding, run combined full/check/build
-and its canonical actual UI, then reaccept print. Continue ready P1 producer and R09
+Latest clean `c29c368` passed the combined check (**314 files / 3,775 tests**),
+typecheck/lint and synthetic production build. Fresh six print exports / 33 rendered
+pages passed text/privacy/margin/layout QA. The first production-bound ASI UI run
+completed ten desktop scenarios, then failed a pending-background fieldset-disabled
+assertion; preserve its failure evidence and investigate before claiming 44-case
+acceptance. Next: review the scoped correction, rebuild/rebind and complete the UI.
+Continue ready P1 producer and R09
 earned-graph source work; neither lane is enabled or accepted as database authority.
 
 Separate `..\m1-magic-item-worker`, branch `codex/m1-magic-item-revalidation`, belongs to original Git: historical tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Its reviewed PR99-derived slice and rarity fix are now integrated locally; no publication occurred. Individual worker tests remain distinct from combined candidate acceptance.

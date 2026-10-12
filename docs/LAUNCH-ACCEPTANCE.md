@@ -531,6 +531,54 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### Combined acceptance and first canonical UI run — 2026-10-12 18:17 UTC
+
+Independently reviewed ASI harness freeze `dddff0d`, including actual recovery and
+guidance blob bindings, is integrated as `c887238` / `9965d8d` / `c29c368`.
+Clean root `c29c368080088f2ddffd0b0cefe05014b89d90dd` passed `npm.cmd run check`:
+typecheck, zero-warning lint, **314 files / 3,775 tests** with four workers
+(175.10 seconds). The synthetic production build passed in 35.34 seconds.
+Check observed 371 process identities; build observed 24; both readbacks were empty.
+These replace the historical full-suite failure as current local suite evidence.
+
+Root-only ASI asset binding verified actual generated login HTML font classes,
+three production CSS files, nineteen assets and exact clean build/source receipts.
+The first `npm.cmd run test:e2e -- --config e2e/local-asi-parity/playwright.config.ts`
+run preserved **ten completed desktop scenarios / sixty assertions**, then failed
+at pending background selection: Playwright's fieldset `isDisabled()` returned
+false while the actual page showed saving and a draft notice. This is under
+investigation; no full 44-case acceptance is claimed. Original failure screenshot,
+DOM, journals, source/asset/font hashes and ten-case evidence remain in ignored
+`test-results/asi-parity-local`; external gate receipts are in sibling
+`verification/launch-20261012/asiparity.*`. The runner closed its private HTTP and
+browser control ports/browser; all 124 observed process identities were absent
+at gate readback. No RNG/log/state/spell/print writes occurred in the failed
+background scenario. Next: independently review the cause/correction, rebuild
+and rebind the changed exact source, then complete desktop/mobile cases.
+
+At the same clean `c29c368`, `npm.cmd run test:e2e -- --config e2e/print/playwright.config.ts`
+passed **six exports** in 5.1 seconds, twenty identities/readback empty. Fresh
+Letter/A4 martial, caster and long-content PDFs contain **33 pages** (2/2/12/13/2/2).
+Bundled pypdf/pdfplumber/Poppler checked privacy, complete end markers, page sizes
+and at least twenty-point margins, rendered every page, and produced six contact
+sheets. Root visually inspected all six sheets and a full caster page: readable
+tables/lists, deliberate page breaks, no clipping. PDF hashes, QA script hash,
+recorded renderer PIDs/parent/command/cwd/observed starts and empty PID readback
+are in `test-results/character-print/qa-*.json`. OS birth was not captured for
+the short QA renderer jobs. These are loaded-value/context-shim print fixtures,
+with locally bundled print CSS; no atomic/latest database snapshot, live account,
+native print dialog or other browser-engine acceptance is claimed.
+
+R09 worker frozen `f9891e4` earned-graph/shared-ASI/spell/version-time binding is
+independently approved as disabled staged source only and is not integrated.
+Focused actual-consumer/model controls and typecheck/lint are next; SQL/Auth
+authority is untested, Auth remains unavailable and all thirteen readiness
+families false. P1 producer plan `48d9256` is held for a joint metadata-only
+revision bump, distinct INSERT/bootstrap revision/finalizer contract, and explicit
+copy-of-copy original-confirmation versus immediate-copy lineage. These ordinary
+source refinements continue independently of G1/G2. No SQL/runtime, hosted writes,
+deployment, remote publication or new approval occurred.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions

@@ -20,6 +20,15 @@ has been integrated and awaits fresh combined check/build acceptance.
 See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
 exact source, reviews and open evidence. Original checkouts remain preserved.
 
+Latest clean combined candidate `c29c368` passed **314 files / 3,775 tests**,
+typecheck, zero-warning lint and the synthetic production build. Fresh print
+reacceptance passed six exports and 33 rendered Letter/A4 pages, with privacy,
+complete lists, margins and visual checks. The first canonical ASI browser run
+passed ten desktop scenarios, then failed the pending-background fieldset-disabled
+assertion; investigation and the remaining desktop/mobile cases are open. Failed
+evidence is preserved and owned process/port readback is empty. This is local
+component/model evidence; no database authority, hosted acceptance or release.
+
 Victor selected all included milestones before beta, PDF importing before beta,
 and beta deferrals for Daggerheart/public publishing while retaining both in the
 total project backlog. P1-P3 dispositions and the first supported PDF input matrix
