@@ -126,12 +126,14 @@ export function SpellsTab() {
               </div>
               <div className="divide-y divide-border/30">
                 {group.spells.map((spell) => {
-                  const castability = slotResolution?.status === "available" ? getSpellCastability(spell, casterInfo) : "none";
+                  const caster = casterInfo.classes.find(caster => caster.slug === spell.class_slug);
+                  const validMath = caster?.castingMath?.status !== "unavailable";
+                  const castability = slotResolution?.status === "available" && validMath ? getSpellCastability(spell, casterInfo) : "none";
                   return (
                     <SpellRow
                       key={spell.id}
                       spell={spell}
-                      allowPrepareToggle={slotResolution?.status === "available" && casterInfo.classes.some(caster => caster.slug === spell.class_slug && caster.prepared)}
+                      allowPrepareToggle={slotResolution?.status === "available" && validMath && !!caster?.prepared}
                       castability={castability}
                       onTogglePrepared={() =>
                         updateSpell(spell.id, { is_prepared: !spell.is_prepared })

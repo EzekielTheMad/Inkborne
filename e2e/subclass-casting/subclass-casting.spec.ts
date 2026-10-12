@@ -9,13 +9,17 @@ test.beforeAll(async () => {
   const shim = path.resolve("e2e/subclass-casting/provider-shim.ts");
   const aliases = Object.fromEntries(["@/lib/sheet/update-state", "@/lib/supabase/client", "@/lib/supabase/inventory", "@/lib/supabase/spells", "@/lib/supabase/rolls"].map(name => [name, shim]));
   const result = await build({ entryPoints: [path.resolve("e2e/subclass-casting/harness.tsx")], bundle: true, write: false, outdir: "test-results/r21-subclass/browser/bundle", jsx: "automatic", loader: { ".css": "local-css" }, alias: { ...aliases, "@": path.resolve(".") }, define: { "process.env.NODE_ENV": '"production"' } });
-  javascript = result.outputFiles.find(file => file.path.endsWith(".js"))!.text; css = result.outputFiles.find(file => file.path.endsWith(".css"))!.text;
+  javascript = result.outputFiles.find(file => file.path.endsWith(".js"))!.text; css = result.outputFiles.find(file => file.path.endsWith(".css"))?.text ?? "";
 });
 for (const kind of ["third", "prepared", "inactive", "missing", "grant-full", "grant-half", "grant-pact", "viewer", "multiclass"] as const) test(`${kind} effective subclass source`, async ({ page }, info) => {
   const errors: string[] = [], remote: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.route("**/*", route => { remote.push(route.request().url()); return route.abort(); });
-  await page.setContent('<html><body><div id="root"></div></body></html>');
+  // Secure intercepted loopback document, matching reviewed root159441e.
+  // Native crypto remains real; no HTTP server/provider is contacted.
+  await page.route("http://127.0.0.1/subclass-fixture", route => route.fulfill({ contentType: "text/html", body: '<html><body><div id="root"></div></body></html>' }));
+  await page.goto("http://127.0.0.1/subclass-fixture");
+  expect(await page.evaluate(() => isSecureContext && typeof crypto.randomUUID === "function")).toBe(true);
   await page.addStyleTag({ content: css + `
     /* Fixture positions only; compiled app Tailwind intentionally omitted. */
     body { font-family: sans-serif; padding: 16px; } output { display: block; overflow-wrap: anywhere; }

@@ -43,11 +43,12 @@ export function CharacterPrintAction() {
     return () => { document.removeEventListener("keydown", onKeyDown); document.title = previousTitle; trigger?.focus(); };
   }, [model]);
   if (!ctx.isOwner || !ctx.hasSheet) return null;
-  const busy = ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending || ctx.rollPersistenceUncertain || !!ctx.pendingConcentrationCheck || !ctx.contentSnapshotsComplete || ctx.slotResolution?.status !== "available";
+  const mathUnavailable = ctx.casterInfo.castingMathStatus === "unavailable";
+  const busy = ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending || ctx.rollPersistenceUncertain || !!ctx.pendingConcentrationCheck || !ctx.contentSnapshotsComplete || ctx.slotResolution?.status !== "available" || mathUnavailable;
   return <>
     <div className="flex flex-wrap items-center justify-end gap-2 border-b border-border px-4 py-2">
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
-      {busy ? <p className="text-xs text-muted-foreground">{ctx.slotResolution?.status !== "available" ? "Spell slots are unavailable. Reload or restore saved class content before printing." : !ctx.contentSnapshotsComplete ? "Saved content is incomplete. Reload before printing." : "Finish saving and resolve pending play actions to print."}</p> : null}
+      {busy ? <p className="text-xs text-muted-foreground">{ctx.slotResolution?.status !== "available" ? "Spell slots are unavailable. Reload or restore saved class content before printing." : mathUnavailable ? "Casting values are unavailable. Reload or restore saved ability/class content before printing." : !ctx.contentSnapshotsComplete ? "Saved content is incomplete. Reload before printing." : "Finish saving and resolve pending play actions to print."}</p> : null}
       <Button ref={triggerRef} variant="outline" size="sm" disabled={busy} onClick={() => {
         try { setModel(buildCharacterPrintModel(ctx)); setError(null); }
         catch (cause) { setError(cause instanceof Error ? cause.message : "The character could not be prepared for printing."); }

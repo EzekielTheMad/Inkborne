@@ -1,6 +1,7 @@
 "use client";
 
 import { resolveEffectiveCastingSources } from "@/lib/spells/effective-sources";
+import { resolveCastingMath } from "@/lib/spells/casting-math";
 import { resolveCastingAbility, type CastingAbilityResolution } from "@/lib/spells/casting-ability";
 
 import {
@@ -53,8 +54,6 @@ import {
   removeCharacterSpell,
 } from "@/lib/supabase/spells";
 import {
-  computeSpellDc,
-  computeSpellAttackBonus,
   computeMaxPrepared,
 } from "@/lib/spells/helpers";
 import {
@@ -534,40 +533,38 @@ export function CharacterProvider({
 
   // --- Derived caster info ---
   const casterInfo = useMemo<CasterInfo>(() => {
-    const profBonus = Number(evalResult.computed?.proficiency_bonus ?? 2);
+    const profBonus = evalResult.computed.proficiency_bonus;
     const abilityScores = (evalResult.stats ?? {}) as Record<string, number>;
     const classes: CasterClass[] = [];
     if (castingSources.status === "available") for (const source of castingSources.sources) {
       if (!source.active || !source.config) continue;
       const sc = source.config;
-      const abilityMod = Math.floor(((abilityScores[sc.ability] ?? 10) - 10) / 2);
-      const maxPrepared = !source.prepared ? 0 : source.preparationRule === "parent"
-        ? computeMaxPrepared(source.classSlug, source.classLevel, abilityMod)
-        : Math.max(1, abilityMod + (source.preparationRule === "half-class-level-plus-ability" ? Math.floor(source.classLevel / 2) : source.classLevel));
+      const castingMath = resolveCastingMath(sc.ability, schema.ability_scores, abilityScores, profBonus);
+      const maxPrepared = castingMath.status !== "available" ? null : !source.prepared ? 0 : source.preparationRule === "parent"
+        ? computeMaxPrepared(source.classSlug, source.classLevel, castingMath.abilityModifier)
+        : Math.max(1, castingMath.abilityModifier + (source.preparationRule === "half-class-level-plus-ability" ? Math.floor(source.classLevel / 2) : source.classLevel));
       classes.push({ slug: source.classSlug, level: source.classLevel, type: sc.type, ability: sc.ability,
         prepared: source.prepared, cantripsKnown: source.cantripsKnown, spellsKnown: source.spellsKnown, maxPrepared,
         ritualCasting: sc.ritual_casting ?? false, focus: sc.focus,
         spellList: source.spellList, maxLearnableLevel: source.maxLearnableLevel,
+        castingMath, sourceKey: JSON.stringify(source),
       });
     }
 
     // Spell DC and attack: highest across classes
-    let spellDc = 0;
-    let spellAttackBonus = 0;
-    for (const c of classes) {
-      const dc = computeSpellDc(c, abilityScores, profBonus);
-      const atk = computeSpellAttackBonus(c, abilityScores, profBonus);
-      if (dc > spellDc) spellDc = dc;
-      if (atk > spellAttackBonus) spellAttackBonus = atk;
-    }
+    const castingMathStatus = castingSources.status !== "available" || classes.some(c => c.castingMath?.status !== "available") ? "unavailable" : "available";
+    const finiteProfiles = classes.flatMap(c => c.castingMath?.status === "available" ? [c.castingMath] : []);
+    const spellDc = castingMathStatus === "unavailable" ? null : finiteProfiles.length ? Math.max(...finiteProfiles.map(math => math.spellDc)) : 0;
+    const spellAttackBonus = castingMathStatus === "unavailable" ? null : finiteProfiles.length ? Math.max(...finiteProfiles.map(math => math.spellAttackBonus)) : 0;
 
     return {
       isCaster: classes.length > 0,
       classes,
       spellDc,
       spellAttackBonus,
+      castingMathStatus,
     };
-  }, [castingSources, evalResult]);
+  }, [castingSources, evalResult, schema.ability_scores]);
 
   // Compatibility aliases are usable only alongside the explicit resolution.
   const maxSlots = slotResolution.status === "available" ? slotResolution.maxSlots : {};

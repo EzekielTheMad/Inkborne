@@ -3,6 +3,7 @@ import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions
 import { formatModifier, getSaveModifier, getSkillModifier } from "@/lib/sheet/helpers";
 import { getWeaponAttack, getWeaponDisplay } from "@/lib/sheet/weapon-attack";
 import { getItemData } from "@/lib/inventory/helpers";
+import { resolveCastingMath } from "@/lib/spells/casting-math";
 
 export interface PrintEntry { name: string; details: string; description: string; pin: string }
 export type CharacterPrintInput = Pick<CharacterContextValue,
@@ -53,6 +54,8 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
   if (!ctx.isOwner || !ctx.hasSheet) throw new Error("Print is available for your completed character sheets.");
   const resolution = ctx.slotResolution;
   if (resolution?.status !== "available") throw new Error("Spell slots are unavailable. Reload the character or restore its saved class content before printing.");
+  const castingProfiles = ctx.casterInfo.classes.map(caster => resolveCastingMath(caster.ability, schema.ability_scores, result.stats, result.computed.proficiency_bonus));
+  if (ctx.casterInfo.castingMathStatus === "unavailable" || castingProfiles.some(math => math.status !== "available")) throw new Error("Casting values are unavailable. Reload or restore the saved ability/class content before printing.");
   if (!ctx.contentSnapshotsComplete) throw new Error("A saved content version is unavailable. Reload the character before printing.");
   if (ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending ||
     ctx.rollPersistenceUncertain || ctx.pendingConcentrationCheck) {
@@ -94,7 +97,10 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
     { name: "Concentration", value: ctx.concentration?.spell_name ?? "None" },
     { name: "Active effects", value: (state.active_effects ?? []).map(effect => `${effect.name} (${effect.duration.type}${"value" in effect.duration ? ` ${effect.duration.value}` : ""})`).join(", ") || "None" },
     ...ctx.resources.map(resource => ({ name: resource.name, value: `${Math.max(0, Math.min(resource.max, resource.max - (state.feature_uses?.[resource.slug] ?? 0)))}/${resource.max}; ${resource.recovery} rest` })),
-    ...ctx.casterInfo.classes.map(caster => ({ name: `${label(caster.slug)} spellcasting`, value: `DC ${8 + bonus + abilityMod(caster.ability)}; attack ${formatModifier(bonus + abilityMod(caster.ability))}; ${label(caster.ability)}` })),
+    ...ctx.casterInfo.classes.flatMap((caster, index) => {
+      const math = castingProfiles[index];
+      return math.status === "available" ? [{ name: `${label(caster.slug)} spellcasting`, value: `DC ${math.spellDc}; attack ${formatModifier(math.spellAttackBonus)}; ${label(caster.ability)}` }] : [];
+    }),
     ...slots,
   ];
   return {

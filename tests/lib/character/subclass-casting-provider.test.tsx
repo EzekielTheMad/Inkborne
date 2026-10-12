@@ -8,7 +8,7 @@ import { CharacterPrintAction } from "@/components/sheet/character-print-action"
 import { updateCharacterState } from "@/lib/sheet/update-state";
 import { addCharacterSpell, searchSpells } from "@/lib/supabase/spells";
 import { CharacterStateReloadError } from "@/lib/character/state-save-error";
-import { originalId, originalParent, originalRef, originalSnapshot, originalSubclass, originalSubclassData, originalSubclassFixture, subclassOwnerId } from "../../fixtures/subclass-casting";
+import { originalGrantData, originalId, originalParent, originalRef, originalSnapshot, originalSubclass, originalSubclassData, originalSubclassFixture, subclassOwnerId } from "../../fixtures/subclass-casting";
 import type { CharacterState } from "@/lib/types/character";
 import type { CharacterSpell } from "@/lib/types/spells";
 
@@ -26,9 +26,10 @@ function Probe({ target }: { target: CharacterSpell }) {
   useEffect(() => { spells = s; rest = r; saves = c; resources = resource; }, [s, r, c, resource]);
   return <><SpellsTab /><CharacterPrintAction /><button onClick={() => setOpen(true)}>Inspect source cast</button><CastDialog open={open} spell={target} castability="full" onClose={() => setOpen(false)} /></>;
 }
-function fixture(options: { level?: number; prepared?: boolean; viewer?: boolean; missing?: boolean; multiclass?: boolean; recovery?: "wizard" | "warden"; preparationRule?: "class-level-plus-ability" | "half-class-level-plus-ability" } = {}) {
+function fixture(options: { level?: number; prepared?: boolean; viewer?: boolean; missing?: boolean; multiclass?: boolean; recovery?: "wizard" | "warden"; inherit?: "full" | "half" | "pact"; mathProblem?: "missing" | "duplicate" | "nonfinite"; preparationRule?: "class-level-plus-ability" | "half-class-level-plus-ability" } = {}) {
   const input = originalSubclassFixture(options.level ?? 3);
   if (options.prepared) { const data = originalSubclassData(true); if (options.preparationRule) data.preparation_rule = options.preparationRule; input.contentRefs[1] = originalSubclass(data); }
+  if (options.inherit) input.contentRefs = [originalParent("warden", options.inherit, options.inherit === "pact" ? [0, 2, 0, 0, 0, 0, 0, 0, 0] : [3, 0, 0, 0, 0, 0, 0, 0, 0]), originalSubclass(originalGrantData())];
   if (options.multiclass) {
     input.character.choices.classes.push({ slug: "original-full", level: 5 });
     input.contentRefs.push(originalParent("original-full", "full", [4, 3, 2, 0, 0, 0, 0, 0, 0], 11));
@@ -45,10 +46,12 @@ function fixture(options: { level?: number; prepared?: boolean; viewer?: boolean
   const schema = { ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }],
     derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 2 }, { slug: "armor_class", name: "Armor class", base: 10 }],
     skills: [], proficiency_levels: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
+  if (options.mathProblem === "missing") schema.ability_scores = schema.ability_scores.filter(ability => ability.slug !== "intelligence");
+  if (options.mathProblem === "duplicate") schema.ability_scores.push({ ...schema.ability_scores[0] });
   const provider = () => <CharacterProvider character={{ ...input.character, user_id: subclassOwnerId, name: "Original Warden", level: totalLevel, state: raw, narrative: {}, base_stats: {}, game_systems: { id: input.character.system_id, name: "Original local system" } } as never}
     schema={schema} contentRefs={input.contentRefs} contentSnapshotsComplete initialState={raw} initialInventory={[]} initialSpells={input.spells}
     classData={Object.fromEntries(input.contentRefs.filter(ref => ref.content_definitions.content_type === "class").map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
-    allEffects={[]} baseStatsWithLevel={{ level: totalLevel, intelligence: 14, charisma: 20 }} structuredSources={{}} isOwner={!options.viewer} isDm={!!options.viewer} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe target={target} /></CharacterProvider>;
+    allEffects={[]} baseStatsWithLevel={{ level: totalLevel, intelligence: options.mathProblem === "nonfinite" ? Infinity : 14, charisma: 20 }} structuredSources={{}} isOwner={!options.viewer} isDm={!!options.viewer} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe target={target} /></CharacterProvider>;
   const view = render(provider());
   return { input, target, refresh: () => view.rerender(provider()) };
 }
@@ -58,6 +61,21 @@ beforeEach(() => {
   vi.mocked(addCharacterSpell).mockReset(); vi.mocked(searchSpells).mockReset().mockResolvedValue([]);
 });
 describe("actual provider subclass source", () => {
+  it.each(["missing", "duplicate", "nonfinite"] as const)("correction-regression makes %s active caster math unavailable consistently in preparation, summary and print", async mathProblem => {
+    const { target } = fixture({ prepared: true, mathProblem });
+    expect(spells.slotResolution.status).toBe("available"); expect(rest.canLongRest).toBe(true);
+    expect(spells.casterInfo).toMatchObject({ isCaster: true, castingMathStatus: "unavailable", spellDc: null, spellAttackBonus: null, classes: [{ maxPrepared: null, castingMath: { status: "unavailable" } }] });
+    expect(screen.getByText(/Casting values and preparation are unavailable/)).toBeInTheDocument();
+    expect(screen.queryByTitle("Prepare")).not.toBeInTheDocument(); expect(screen.queryByRole("button", { name: "Cast Prism Mark" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
+    await expect(spells.castSpell(target, { type: "slot", level: 1 })).rejects.toThrow(/unavailable/);
+    expect(updateCharacterState).not.toHaveBeenCalled();
+  });
+  it.each(["full", "half", "pact"] as const)("keeps valid inherited %s source summary and printed math", async inherit => {
+    fixture({ inherit }); expect(spells.casterInfo).toMatchObject({ castingMathStatus: "available", spellDc: 15, spellAttackBonus: 7 });
+    fireEvent.click(screen.getByRole("button", { name: "Print / Save PDF" }));
+    expect(screen.getByRole("dialog", { name: "Print preview" })).toHaveTextContent("DC 15; attack +7; charisma");
+  });
   it("agrees on source counts, slots, preview math, one conditional cast and print pins", async () => {
     const { target } = fixture();
     expect(spells.casterInfo.classes).toMatchObject([{ slug: "warden", ability: "intelligence", type: "third", prepared: false, cantripsKnown: 2, spellsKnown: 3, maxLearnableLevel: 1 }]);
@@ -143,6 +161,7 @@ describe("actual provider subclass source", () => {
   });
   it.each([1, 2])("keeps explicit inactive level %s noncasting and eligible for ordinary rest", async level => {
     fixture({ level }); expect(spells.casterInfo.isCaster).toBe(false); expect(spells.slotResolution.status).toBe("available");
+    expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeEnabled(); expect(spells.casterInfo.castingMathStatus).toBe("available");
     expect(screen.getByText("This character cannot cast spells.")).toBeInTheDocument(); expect(rest.canLongRest).toBe(true);
     await act(async () => { expect(await rest.longRest()).toBe(true); }); expect(stored.current_hp).toBe(20);
   });

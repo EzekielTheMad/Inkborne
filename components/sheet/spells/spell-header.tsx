@@ -5,6 +5,7 @@ import { useSpells } from "@/lib/character/character-context";
 export function SpellHeader() {
   const { casterInfo, spells } = useSpells();
   if (!casterInfo.isCaster) return null;
+  if (casterInfo.castingMathStatus === "unavailable" || casterInfo.spellDc === null || casterInfo.spellAttackBonus === null) return <p role="status" className="text-sm text-muted-foreground">Casting values and preparation are unavailable. Reload or restore the saved ability/class content.</p>;
 
   const cantripsKnown = spells.filter(
     (s) => (s.content_definitions?.data?.level ?? 1) === 0,
@@ -20,7 +21,7 @@ export function SpellHeader() {
     0,
   );
   const totalPrepared = casterInfo.classes.reduce(
-    (sum, c) => sum + (c.prepared ? c.maxPrepared : 0),
+    (sum, c) => sum + (c.prepared ? c.maxPrepared ?? 0 : 0),
     0,
   );
   // Known casters (not prepared, not wizard): sum spells-known cap across classes.

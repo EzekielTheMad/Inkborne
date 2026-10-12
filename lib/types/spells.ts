@@ -3,6 +3,7 @@
  */
 
 import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions-parser";
+import type { CastingMathResolution } from "@/lib/spells/casting-math";
 
 export interface CharacterSpell {
   id: string;
@@ -69,19 +70,22 @@ export interface CasterClass {
   prepared: boolean;
   cantripsKnown: number;
   spellsKnown: number | "all";
-  maxPrepared: number;
+  maxPrepared: number | null;
   ritualCasting: boolean;
   focus?: string;
   /** Resolved source list/own progression; aggregate slots are upcast capacity. */
   spellList?: { class: string; level: [number, number] };
   maxLearnableLevel?: number;
+  castingMath?: CastingMathResolution;
+  sourceKey?: string;
 }
 
 export interface CasterInfo {
   isCaster: boolean;
   classes: CasterClass[];
-  spellDc: number;
-  spellAttackBonus: number;
+  spellDc: number | null;
+  spellAttackBonus: number | null;
+  castingMathStatus?: "available" | "unavailable";
 }
 
 export interface AddSpellPayload {

@@ -3,7 +3,7 @@ import type { CharacterWithSystem } from "@/lib/types/character";
 import type { AbilityScoreDefinition } from "@/lib/types/system";
 import type { CharacterSpell } from "@/lib/types/spells";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
-import { computeSpellAttackBonus, computeSpellDc } from "./helpers";
+import { resolveCastingMath } from "./casting-math";
 
 /** Mathematical inputs only. The provider resolves acquisition/pin authority. */
 export interface ResolvedCastingProfile {
@@ -54,12 +54,7 @@ export function resolveCastingAbility(target: CharacterSpell, input: CastingAbil
   const source = sources.sources.find(entry => entry.classSlug === spell.class_slug);
   if (!source?.active || !source.config) return unavailable("selected class cannot cast at this level");
   const ability = source.config.ability;
-  if (input.abilities.filter(entry => entry.slug === ability).length !== 1) return unavailable("casting ability is not uniquely defined by this system");
-  const score = input.abilityScores[ability];
-  if (typeof score !== "number" || !Number.isFinite(score) || typeof input.proficiencyBonus !== "number" || !Number.isFinite(input.proficiencyBonus)) return unavailable("evaluated casting values are missing or invalid");
-  const abilityModifier = Math.floor((score - 10) / 2);
-  const spellAttackBonus = computeSpellAttackBonus({ ability }, input.abilityScores, input.proficiencyBonus);
-  const spellDc = computeSpellDc({ ability }, input.abilityScores, input.proficiencyBonus);
-  if (![abilityModifier, spellAttackBonus, spellDc].every(Number.isFinite)) return unavailable("evaluated casting values overflow");
-  return { status: "available", spell, profile: { classSlug: spell.class_slug, ability, abilityModifier, spellAttackBonus, spellDc }, classPin: source.parentPin, ...(source.subclassPin ? { subclassPin: source.subclassPin } : {}) };
+  const math = resolveCastingMath(ability, input.abilities, input.abilityScores, input.proficiencyBonus);
+  if (math.status !== "available") return unavailable(math.reason);
+  return { status: "available", spell, profile: { classSlug: spell.class_slug, ability, abilityModifier: math.abilityModifier, spellAttackBonus: math.spellAttackBonus, spellDc: math.spellDc }, classPin: source.parentPin, ...(source.subclassPin ? { subclassPin: source.subclassPin } : {}) };
 }

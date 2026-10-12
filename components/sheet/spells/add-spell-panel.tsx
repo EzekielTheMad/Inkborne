@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Search, X, Plus, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
   const [selectedClass, setSelectedClass] = useState<string | null>(
     casterInfo.classes[0]?.slug ?? null,
   );
-  const [results, setResults] = useState<SpellSearchResult[]>([]);
+  const [batch, setBatch] = useState<{ generation: object; requestId: number; results: SpellSearchResult[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -58,7 +58,13 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
   const minLearnableLevel = selectedCaster?.spellList?.level[0] ?? 0;
   const maxLearnableLevel = Math.min(selectedCaster?.maxLearnableLevel ?? 0, selectedCaster?.spellList?.level[1] ?? 9);
 
-  const sourceReady = !!selectedCaster && selectedCaster.maxLearnableLevel !== undefined;
+  const sourceReady = !!selectedCaster && selectedCaster.maxLearnableLevel !== undefined && selectedCaster.castingMath?.status !== "unavailable" &&
+    Number.isInteger(minLearnableLevel) && Number.isInteger(maxLearnableLevel) && minLearnableLevel >= 0 && maxLearnableLevel <= 9 && minLearnableLevel <= maxLearnableLevel;
+  const sourceKey = JSON.stringify([characterId, selectedClass, listClass, minLearnableLevel, maxLearnableLevel, selectedCaster?.sourceKey, selectedCaster?.ability, selectedCaster?.prepared, selectedCaster?.cantripsKnown, selectedCaster?.spellsKnown, selectedLevel, query, open, sourceReady, slotResolution?.status]);
+  const generation = useMemo(() => ({ sourceKey }), [sourceKey]);
+  const currentGeneration = useRef(generation);
+  useLayoutEffect(() => { currentGeneration.current = generation; }, [generation]);
+  const results = batch?.generation === generation && batch.requestId === searchRequest.current ? batch.results : [];
 
   // Count cantrips already known for the selected class (for cap enforcement).
   const cantripsKnown = useMemo(() => {
@@ -122,17 +128,17 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
         const level = (spell.data?.level as number | undefined) ?? 0;
         return level >= minLearnableLevel && level <= maxLearnableLevel;
       });
-      if (requestId === searchRequest.current) setResults(filtered);
+      if (requestId === searchRequest.current && currentGeneration.current === generation) setBatch({ generation, requestId, results: filtered });
     } catch (error) {
       console.error("[AddSpellPanel] Search failed:", error);
-      if (requestId === searchRequest.current) {
-        setResults([]);
+      if (requestId === searchRequest.current && currentGeneration.current === generation) {
+        setBatch(null);
         setSearchError("Spells could not be loaded. Please try again.");
       }
     } finally {
       if (requestId === searchRequest.current) setLoading(false);
     }
-  }, [characterId, query, listClass, selectedLevel, maxLearnableLevel, minLearnableLevel]);
+  }, [characterId, query, listClass, selectedLevel, maxLearnableLevel, minLearnableLevel, generation]);
 
   useEffect(() => {
     if (!open || !sourceReady || slotResolution?.status !== "available") return;
@@ -142,7 +148,7 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       searchRequest.current += 1;
     };
-  }, [runSearch, open, slotResolution, sourceReady]);
+  }, [runSearch, open, slotResolution?.status, sourceReady]);
 
   if (!open) return null;
   if (slotResolution?.status !== "available") return <p role="status" className="text-sm text-muted-foreground">Spell choices are unavailable. Reload the character or restore its saved class content.</p>;
@@ -150,8 +156,10 @@ export function AddSpellPanel({ open, onClose, characterId }: AddSpellPanelProps
   if (!sourceReady) return <p role="status" className="text-sm text-muted-foreground">Choose a current casting class or reload its saved content before adding spells.</p>;
 
   const handleAdd = async (spell: SpellSearchResult) => {
-    if (!selectedClass || !selectedCaster) return;
-    const level = (spell.data?.level as number | undefined) ?? 0;
+    if (!selectedClass || !selectedCaster || !sourceReady || currentGeneration.current !== generation ||
+      batch?.generation !== generation || batch.requestId !== searchRequest.current || !results.includes(spell)) return;
+    const level = spell.data?.level;
+    if (typeof level !== "number" || !Number.isInteger(level) || level < minLearnableLevel || level > maxLearnableLevel) return;
 
     // Cantrip cap — shouldn't reach here because the button is disabled when at cap,
     // but guard against concurrent state changes.

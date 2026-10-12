@@ -20,7 +20,7 @@ vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => false }));
 
 let spells: ReturnType<typeof useSpells>;
 let rest: ReturnType<typeof useRest>;
-const schema = { ability_scores: [], proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
+const schema = { ability_scores: [{ slug: "intelligence", name: "Intelligence", abbr: "INT" }, { slug: "charisma", name: "Charisma", abbr: "CHA" }], proficiency_levels: [], derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 2 }], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
 const cantrip = { id: "spell", name: "Original Spark", class_slug: "paladin", is_known: true, content_definitions: { slug: "original-spark", data: { level: 0, school: "evocation", components: [], range: "30 feet", casting_time: "1 action" } } } as unknown as CharacterSpell;
 function Probe({ dialogs }: { dialogs: boolean }) {
   const currentSpells = useSpells(), currentRest = useRest();
@@ -31,7 +31,7 @@ function fixture(refs: ContentRefWithContent[], choices = [{ slug: "paladin", le
   return render(<CharacterProvider character={{ id: "local-character", system_id: "local-system", user_id: "owner", name: "Local Caster", level: 3, choices: { classes: choices }, state: {}, base_stats: {}, narrative: {} } as never}
     schema={schema as never} contentRefs={refs} contentSnapshotsComplete initialState={{ current_hp: 12, spell_slots_used: { "1": 1, pact: 1 } }} initialInventory={[]} initialSpells={[]}
     classData={Object.fromEntries(refs.map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
-    allEffects={[]} baseStatsWithLevel={{ level: 3, intelligence: 10 }} structuredSources={{}} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe dialogs={dialogs} /></CharacterProvider>);
+    allEffects={[]} baseStatsWithLevel={{ level: 3, intelligence: 10, charisma: 10 }} structuredSources={{}} isOwner isDm={false} hasSheet maxHp={20} primaryColor={null} onPrimaryColorChange={() => {}}><Probe dialogs={dialogs} /></CharacterProvider>);
 }
 beforeEach(() => { vi.clearAllMocks(); });
 describe("real provider slot evidence and action guards", () => {
