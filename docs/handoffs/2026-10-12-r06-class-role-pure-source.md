@@ -1,4 +1,4 @@
-# R06 C1 class-role model — UNVERIFIED pure source checkpoint
+# R06 C1 class-role model — pure source checkpoint and narrow validation
 
 Owned `r12-passive-feature-worker`, branch `codex/r12-passive-features`, clean
 predecessor87e3a30126bff988e19481fcc8e4b93b9a81783d. Implements ONLYthe independently
@@ -140,3 +140,67 @@ controls and an added nonclass independent positive control, with original order
 source/effect/metadata unchanged assertions. The previous scoped STR/WIS/DEX/INT
 and current unchanged flat-collector oracles remain. No tests/typecheck/lint or
 other heavy/runtime operations: root hold remains until reviewed release.
+
+## Authorized narrow validation — 2026-10-12
+
+The earlier UNVERIFIED notes above are preserved checkpoint history. Parent released
+the sole narrow slot after independent source approval of ab73d7e. Final tested
+source is **e7744888ea9aed331a4bb47a96e179d80c63b7cf**, including two bounded
+post-review corrections requiring independent review before integration:
+
+- bc3bdaf: the unknown declared saving throw was correctly rejected by the actual
+  canonical class enum before classification. Preserve that invalid-evidence
+  regression separately; exercise broad UNKNOWN_ROLE_GRAPH with a canonically
+  admitted raw `saving_throw_unknown-ability` proficiency grant. No classifier
+  behavior or earlier passing assertions changed.
+- e774488: replace the incompatible Object.fromEntries Record assertion with six
+  explicit typed availability entries. Each still owns a distinct empty issues
+  array; no role/projection behavior changed. The ES2017 target remains unchanged.
+
+Meaningful failed-before controls temporarily substituted ONLY the two owned pure
+module files with exact binary `git show` bytes, keeping current test assertions.
+Both substitutions restored approved source bytes in a finally block, verified
+SHA256 equality and clean Git status before the next gate. Original 05071d4 failed
+all six selected scoped/reverse-graph controls (52 skipped); f480d7e failed both
+extra unselected class controls (56 skipped), receiving available where unavailable
+was required. The first 050 attempt selected zero tests because Node's cmd argument
+escaping preserved literal quotes; its 349 skipped result is retained and provides
+no regression proof. The corrected finite coordinator uses cmd's verbatim argument
+mode. No frozen source, receipts or assertions were rewritten to make a baseline pass.
+
+Initial final-source focused run: 57 passed/1 failed, exposing the canonical fixture
+issue above. Initial typecheck: exit 2, exposing the Record assertion issue. Those
+failed logs remain beside the successful logs. Final sequence on clean e774488:
+
+- `npm.cmd test -- tests/lib/character/class-role-effects.test.ts --maxWorkers=2`:
+  **59/59 passed**, one file, 1.89 seconds.
+- `npm.cmd run typecheck`: **exit 0**.
+- `npm.cmd run lint`: **exit 0**, zero warnings allowed by the existing script.
+
+No install, dependency change, full check, build, browser, SQL, PGlite, live provider
+or app integration ran. Parent owns later combined gates. Pure tests include the
+unchanged flat collector's secondary-save leak and only the advisory projection's
+correction; they do not establish a live repair, authenticated receipt or writer
+fence. P1 real atomic producer/storage/receipt/current-owner/access/writer fences and
+C2 actual save/concentration/print consumers remain required before NEW class
+creation or runtime acceptance. Internal evidence is a claimed advisory DTO, not
+authorization or proven stored provenance.
+
+Frozen external evidence (50 hashed files plus manifest):
+`C:/Users/kaios/Documents/Codex/2026-10-11/task-2/verification/r06-class-role-20261012/manifest.json`
+SHA256 **543D12F78AC5B856BE90D382186BFED8CCBBA33885591897699589A4C68D67E6**.
+Includes every failed/successful stdout/stderr/result, exact substitution/restore
+hashes, source/status, outer helper, command, cwd, actual OS CreationDate, PID,
+parent PID and command ancestry capture, plus before/after resources. Short-lived
+descendants starting after the helper's initial snapshot are not claimed individually
+captured; fresh final worktree Node and exact captured-identity readback is zero.
+
+Final fresh cleanup readback at 17:32:19Z: owned Node processes 0, matching captured
+PID/birth/parent/command processes 0, owned listeners 0. Every gate's remaining PID
+readback is empty; no process kill or server startup was needed. Whole-host processes
+475→434, working set 28,611,670,016→25,703,030,784 bytes, cumulative CPU
+14,766.5→15,314.4375 seconds, listeners 42→42. These whole-host snapshots are not
+task peak/resource attribution. Lock SHA256 stayed
+7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6.
+The sole heavy slot was explicitly released to parent; this worker is frozen for
+independent correction review and performs no further heavy or runtime work.
