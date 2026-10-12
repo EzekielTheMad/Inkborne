@@ -531,6 +531,79 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### R18.1 integrated template acceptance and regression gates — 2026-10-12 20:16 UTC
+
+Reviewed companion production `5cc9aad` is integrated as `2901bee`; harness
+`ee3119e` / `74414e0` as `c266a8e` / `414f49e`. The fixed NPC shared-source
+checkpoint amendment `fe236db` passed independent review: exact approved `5cc9aad`,
+all eight bindings retained, unchanged NPC schema/profile/row, five reviewed
+additive companion registry/parser/catalog/presentation/detail changes. Existing
+monster guards use approved root/full transitive receipt binding and were unchanged.
+
+Worker old-parser-only baseline retained new companion registry/schema/tests and
+ran real ref reader/CharacterPage before assertions: **four semantic failures /
+four positive controls / three filtered skips**. All effectful rows were accepted/
+collected and complete; mechanical STR16, other grant/choice/narrative controls STR14,
+actual athletics grant retained. Empty-role/ordinary-effect positives passed. The
+new fence rejects intact/incomplete and yields the existing degraded STR12 behavior.
+Exact 8,667-byte parser restored, SHA256
+`f38653f869724148878f5ad8fd7626f45bd5b92514febc386e8a146a8e98e700`.
+Corrected **six files / 77 tests**, typecheck and zero-warning lint passed at
+`ee3119e`; all 33 recorded OS identities absent and owned listeners zero. Resource
+and exact source/command/restoration receipts remain in sibling
+`verification/r18-companion-20261012/`. New final guards `74414e0` were initially
+source-only and then verified by the following combined and browser gates.
+
+Clean `414f49ef30899e382405607edb8eef1ddad9c5e2` passed
+`npm.cmd run check`: **333 files / 4,136 tests**, typecheck/lint, four workers,
+167.01 seconds, all 370 recorded identities absent. Fresh synthetic build passed,
+all 24 identities absent. Each browser bind checked generated HTML/font classes,
+three CSS files, nineteen assets and exact clean build/root/lock inputs.
+
+- Companion explicit offline config passed **22 desktop/mobile cases / 22 screens**
+  and 22 real-font samples. All three descriptive roles, exact stat display, absence,
+  keyboard/search, long final-action reachability, escaped text/shared badge and
+  empty/malformed/denied cases passed. Final mounted six-harness/helper/source/build/
+  asset rebind passed after teardown; page/network errors zero. Inspected mobile
+  mount/long-bottom/escaped and desktop beast profile: contained readable content.
+  All 180 identities absent; HTTP/CDP closed, Chrome exited.
+- NPC Library rerun passed **14 controls / 18 screens**, 44.8 seconds, same exact
+  source/real asset binding and zero unexpected errors; all 75 identities absent,
+  owned ports closed and browser exited.
+- Earned-ASI consumers passed **44 cases / 226 assertions / 46 screens**, 1.9 minutes,
+  unchanged native-RNG/simulated accepted-critical policy and zero unexpected
+  errors; all 164 identities absent, HTTP/CDP closed and browser exited.
+- Fresh print gate passed **six Letter/A4 exports** in five seconds, all 24
+  identities absent. Independent text/privacy/end-marker/margin/dimension checks
+  and 90-DPI rendering passed **33 pages**. Current caster A4 and long Letter
+  contact sheets inspected; print product/layout is unchanged since prior full
+  six-fixture inspection. All seven QA/renderer PIDs absent; original QA receipts
+  record observed start, not OS birth, and no process was killed.
+
+All Auth/entitlement/query/action/CAS/navigation/print-invocation boundaries remain
+explicit simulations; print uses loaded values, not an atomic/latest DB snapshot.
+No SQL, actor-role/RLS/native triggers/locks/concurrency/actual instance or mechanics
+acceptance is claimed. R18 templates do not complete character/campaign/controller/
+lifecycle/transform/summon requirements; R19 remains open.
+
+P1b.1 SQL source `27bb36a` passed class and original R09-owner reviews. One phase-model
+identity mismatch was corrected at `760101b`: protected receipt and actual origin/
+occurrence actor/target bindings, with matching rebuilt graph/proof negatives. SQL
+and all frozen bases unchanged. Correction passed independent review; focused/
+semantic-before/type/lint gates now own the sole released heavy slot. Auth remains
+unavailable/readiness false/no app imports; no SQL execution.
+
+Import discovery confirms current MPMB parser, mapping, persisted format/type and
+preview contracts are SourceList/SpellsList/FeatsList and spell/feat-only. No observed
+creature/NPC registry is supported. Optional human JSON-versus-evidenced-MPMB format
+preference was requested and remains unanswered. Reviewed local prototype plan
+`831ca79` is integrated as `fd10c13` after proposed `c96df74`: bounded strict UTF-8
+NPC JSON codec and read-only profile review only, rejecting decoded NUL/unpaired
+surrogates under the [PostgreSQL 17 JSONB string rules](https://www.postgresql.org/docs/17/datatype-json.html). This is a local working assumption,
+not human format approval. App route/link/upload/stage/commit and durable acceptance
+remain later format/review/G2 gates; PDF input matrix remains independently pending.
+No deployment, publication or beta acceptance occurred.
+
 ### R17.2 private NPC local acceptance — 2026-10-12 19:52 UTC
 
 Reviewed worker product `5da83a6` / `1fc3620` is integrated as `c944668` /

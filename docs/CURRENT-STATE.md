@@ -2,17 +2,18 @@
 
 ## Active execution — 2026-10-12 UTC
 
-Current local acceptance: `10b06c8` passed **329 files / 4,079 tests**, typecheck,
-lint and build after private NPC authoring integration. Its actual-form browser
-gate passed **18 desktop/mobile cases / 20 screenshots** with real assets/fonts
-and empty error/network/owned-process/port cleanup. NPC Library and ASI acceptance
-remain at `42abdbb`: 14 NPC controls / 18 screens and 44 ASI cases / 226 assertions
-/ 46 screens. Auth/actions/CAS/persistence remain modeled; real authority is open.
-P1a source/model gates are integrated, SQL unexecuted/all readiness false.
-Reviewed P1b.1 additive revision plan proceeds through disabled source implementation.
-Companion source `5cc9aad` passed review and is undergoing focused/type/lint gates;
-its harness awaits final executed-byte/helper closure fixes. NPC imports, campaign
-instances, companion mechanics and R19 remain open. No hosted write or release.
+Current local acceptance: `414f49e` passed **333 files / 4,136 tests**, typecheck,
+lint and build after companion template integration. At that exact source,
+companion **22 cases / 22 screens**, NPC Library **14 / 18**, ASI **44 cases / 226
+assertions / 46 screens** and fresh **six print exports / 33 rendered pages** passed.
+Real assets/fonts and final source/helper closure verified; all unexpected errors
+and owned process/port readbacks empty. Private NPC authoring's 18/20 actual-form
+acceptance remains `10b06c8`, with unchanged eight production blobs. Auth/query/
+actions/CAS/persistence remain modeled, actual authority open. Reviewed P1b.1
+source/model correction `760101b` now owns focused/type/lint gates; SQL unexecuted,
+Auth unavailable/readiness false. Local strict NPC JSON codec/profile prototype
+proceeds under reviewed `fd10c13`; human format preference, app upload/commit and
+PDF matrix remain pending. Instances, companion mechanics and R19 remain open.
 
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.
