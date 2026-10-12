@@ -385,7 +385,8 @@ describe("<CharacterProvider> public hook surface", () => {
         </button>
       );
     }
-    renderWithProvider(Probe);
+    // Absolute state writes remain independently usable with an absent HP field.
+    renderWithProvider(Probe, { initialState: { current_hp: undefined } });
     expect(screen.getByTestId("apply").textContent).toBe("null");
     await act(async () => {
       screen.getByTestId("apply").click();
@@ -409,7 +410,7 @@ describe("<CharacterProvider> public hook surface", () => {
         </button>
       );
     }
-    renderWithProvider(Probe);
+    renderWithProvider(Probe, { initialState: { current_hp: undefined } });
     await act(async () => {
       screen.getByTestId("apply").click();
     });
