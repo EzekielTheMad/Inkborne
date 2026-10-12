@@ -10,13 +10,19 @@ test.beforeAll(async () => {
   const aliases = Object.fromEntries(["@/lib/sheet/update-state", "@/lib/supabase/client", "@/lib/supabase/inventory", "@/lib/supabase/spells", "@/lib/supabase/rolls"].map(name => [name, shim]));
   const result = await build({ entryPoints: [path.resolve("e2e/casting-ability/harness.tsx")], bundle: true, write: false, outdir: "test-results/r21-ability/browser/bundle", jsx: "automatic", loader: { ".css": "local-css" }, alias: { ...aliases, "@": path.resolve(".") }, define: { "process.env.NODE_ENV": '"production"' } });
   javascript = result.outputFiles.find(file => file.path.endsWith(".js"))!.text;
-  css = result.outputFiles.find(file => file.path.endsWith(".css"))!.text;
+  css = result.outputFiles.find(file => file.path.endsWith(".css"))?.text ?? "";
 });
 for (const kind of ["int-wizard", "int-warlock", "cha-wizard", "cha-warlock", "missing", "viewer"] as const) test(`${kind} actual provider casting`, async ({ page }, info) => {
   const errors: string[] = [], remote: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.route("**/*", route => { remote.push(route.request().url()); return route.abort(); });
-  await page.setContent('<html><body><div id="root"></div></body></html>');
+  // Intercepted loopback document supplies the secure context required by the
+  // actual active-effect UUID generator. No HTTP server/provider is contacted.
+  await page.route("http://127.0.0.1/casting-fixture", route => route.fulfill({
+    contentType: "text/html", body: '<html><body><div id="root"></div></body></html>',
+  }));
+  await page.goto("http://127.0.0.1/casting-fixture");
+  expect(await page.evaluate(() => isSecureContext)).toBe(true);
   await page.addStyleTag({ content: css + `
     /* Offline fixture positioning; compiled app Tailwind intentionally omitted. */
     body { font-family: sans-serif; padding: 16px; } output { display: block; overflow-wrap: anywhere; }
@@ -45,6 +51,7 @@ for (const kind of ["int-wizard", "int-warlock", "cha-wizard", "cha-warlock", "m
         await expect(dialog).toContainText(`2d8 + ${bonus - 3}`);
       }
       await page.screenshot({ path: info.outputPath(`${kind}-preview.png`), fullPage: true });
+      expect(await page.evaluate(() => typeof crypto.randomUUID)).toBe("function");
       await dialog.getByRole("button", { name: "Cast", exact: true }).click();
       await expect(dialog.getByRole("button", { name: "Done", exact: true })).toBeVisible();
       expect(await page.evaluate(() => window.__castingWrites.length)).toBe(1);
