@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedRaces: vi.fn(),
   listOwnedMonsters: vi.fn(),
   listOwnedTraits: vi.fn(),
+  listOwnedFeatures: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -27,6 +28,7 @@ vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
 vi.mock("@/lib/supabase/homebrew-races-server", () => ({ listOwnedHomebrewRaces: mocks.listOwnedRaces }));
 vi.mock("@/lib/supabase/homebrew-monsters-server", () => ({ listOwnedHomebrewMonsters: mocks.listOwnedMonsters }));
 vi.mock("@/lib/supabase/homebrew-traits-server", () => ({ listOwnedHomebrewTraits: mocks.listOwnedTraits }));
+vi.mock("@/lib/supabase/homebrew-passive-features-server", () => ({ listOwnedHomebrewPassiveFeatures: mocks.listOwnedFeatures }));
 vi.mock("@/lib/supabase/homebrew-armors-server", () => ({ listOwnedHomebrewArmors: mocks.listOwnedArmors }));
 vi.mock("@/lib/supabase/homebrew-weapons-server", () => ({ listOwnedHomebrewWeapons: mocks.listOwnedWeapons }));
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({ listOwnedHomebrewItems: mocks.listOwnedItems }));
@@ -49,6 +51,20 @@ const spellData = {
 };
 
 describe("HomebrewPage", () => {
+  it("discovers standalone private features with unverified association and exact edit link", async () => {
+    mocks.listOwnedFeatures.mockResolvedValue([{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Original Cadence", version: 2, data: { class: "unverified-workshop", level: 3, description: "Original standalone note." } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("My standalone features")).toBeVisible(); expect(screen.getByText("Unverified class: unverified-workshop · Gain level 3")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Original Cadence/ })).toHaveAttribute("href", "/homebrew/features/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/edit");
+    expect(screen.getByRole("link", { name: "Create passive feature" })).toHaveAttribute("href", "/homebrew/features/new");
+    expect(screen.getByText(/They are not attached to a class or granted to a character here/)).toBeVisible();
+  });
+  it("isolates invalid feature/load failure and preserves other families", async () => {
+    mocks.listOwnedFeatures.mockRejectedValue(new Error("Invalid known feature data."));
+    mocks.listOwnedWeapons.mockResolvedValue([{ id: "weapon", name: "Original Blade", version: 1, data: { weapon_category: "Simple", weapon_range: "Melee", damage: { dice: "1d4", type: "slashing" } } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) })); expect(screen.getByText("Your homebrew features could not be loaded.")).toBeVisible();
+    expect(screen.getByText("Original Blade")).toBeVisible(); expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
+  });
   beforeEach(() => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null });
     mocks.listOwnedSpells.mockResolvedValue([]);
@@ -61,6 +77,7 @@ describe("HomebrewPage", () => {
     mocks.listOwnedRaces.mockResolvedValue([]);
     mocks.listOwnedMonsters.mockResolvedValue([]);
     mocks.listOwnedTraits.mockResolvedValue([]);
+    mocks.listOwnedFeatures.mockResolvedValue([]);
   });
 
   it("shows each authoring section with its versioned homebrew links", async () => {
