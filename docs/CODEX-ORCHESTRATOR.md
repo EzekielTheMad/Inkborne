@@ -27,7 +27,11 @@ Later clean `df8c303` passed **317 files / 3,885 tests**, typecheck/lint and a f
 build. Preserve its earlier unbounded two-timeout run and unchanged 20-test narrow
 pass. Second ASI UI reached twelve desktop cases, then a desktop/hidden-mobile
 preparation locator collision; reviewed scope correction and a complete rerun
-are next. P1a private admission/finalizer source and R17 narrative NPC Library
+were corrected by independent review. Clean `7ff6185` then passed the canonical
+ASI UI: **44 desktop/mobile cases / 226 assertions / 46 screenshots**, real
+production assets/fonts, explicit simulated boundaries and empty cleanup. Fresh
+six print exports / 33 rendered pages also passed. Latest full remains `df8c303`;
+repeat combined acceptance after next source freeze. P1a private admission/finalizer source and R17 narrative NPC Library
 source proceed independently in assigned workers. Continue ready P1 producer and R09
 earned-graph source work; neither lane is enabled or accepted as database authority.
 

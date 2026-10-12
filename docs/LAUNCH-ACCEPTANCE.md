@@ -531,6 +531,56 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### Canonical ASI UI acceptance — 2026-10-12 18:47 UTC
+
+Clean root `7ff61851440581710cc6de1dfe1900e6c820ead9` passed a fresh synthetic
+production build, then `npm.cmd run test:e2e -- --config e2e/local-asi-parity/playwright.config.ts`:
+**44 desktop/mobile cases / 226 recorded assertions / 46 screenshots** in 1.9
+minutes. All 44 font receipts record real loaded production faces; compiled CSS,
+actual generated HTML font classes, Next navigation rethrow, exact reviewed
+dependency blobs and every bundled project input/lock/build/source were bound.
+Page errors, blocked remote requests, unexpected requests/calls and failure are
+empty. One private Chrome/HTTP/control-port run closed both ports/browser; all
+163 observed process identities were absent at gate readback. Original three
+failed attempts remain archived with their source/status and failure artifacts.
+
+Independent root corrections `b231e9a`, `ddc4ecf` and `7ff6185` address desktop versus
+hidden-mobile control scoping, the actual named spell Cast button, and native
+pending ability-navigation refusal. Product, fixture/RNG, immutable data and
+original gameplay/draft/recovery expectations are unchanged. Native pending
+background controls, explicit ability retry/remount, real crit dice, permanent
+versus temporary CON/HP, preparation/casting/rest and retained callback/print
+refusals all passed in both viewports. Independent dice/toggle remain usable when
+dependent ASI evidence is unavailable. Root inspected six representative actual
+desktop/mobile cast, class prerequisite, unavailable sheet, draft and print preview
+screens; controls/text were readable within the tested layouts.
+
+Auth, inbound counts/grants, transport/CAS/navigation/print invocation and one
+named accepted critical result are explicitly simulated. Actual native RNG runs
+first and its original result is retained; no injected RNG or mechanical calculator
+substitution. This does not accept real ServerAction HTTP, SQL/RLS/atomic snapshots,
+historical lineage/writer authority, hosted accounts or the complete app shell.
+C1 class role/save-prefix producer/consumer work remains open. Print-preview
+screens do not prove full PDF page layout or native dialog behavior.
+
+At the same `7ff6185`, fresh print gate passed **six A4/Letter exports** in 5.6
+seconds (nineteen identities/readback empty). pypdf/pdfplumber/Poppler verified
+privacy, complete long-list markers, dimensions/margins and rendered all **33
+pages**. Current caster and long-Letter contact sheets were visually checked;
+all six sheets had been inspected at unchanged print-product `c29c368`. Fresh
+PDF/script hashes and recorded renderer/QA process metadata are retained, with
+empty PID readback. These remain loaded context-shim print fixtures and local
+print CSS, not a latest atomic database snapshot or other-engine acceptance.
+
+Latest full combined gate remains **317 files / 3,885 tests** at `df8c303`; the
+later harness source has exact review/build/actual UI acceptance. Repeat full
+combined acceptance after the next integrated source freeze before finishing.
+R17 core `4c077c6` passed independent source review; harness `346c5b6` is under
+separate review. Its isolated worker now owns serialized locked installation,
+meaningful failing-before/parser/ref/character controls, focused tests/type/lint.
+P1a private staged source is still being prepared without SQL execution. No
+deployment, hosted write, runtime provision or publication occurred.
+
 ### Latest combined gates and continued UI iteration — 2026-10-12 18:34 UTC
 
 Clean `df8c303dbb92275c1649311e165d492e31c43df1` passed typecheck, zero-warning

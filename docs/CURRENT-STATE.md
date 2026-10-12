@@ -33,7 +33,12 @@ Later clean `df8c303` passed **317 files / 3,885 tests**, typecheck/lint and bui
 Its ASI UI rerun passed twelve desktop cases before a preparation locator collision
 between visible desktop and hidden mobile controls. The scoped harness correction
 passed independent review; complete UI and later combined acceptance remain open.
-P1a class-provenance admission/finalizer source and R17 narrative NPC Library source
+Subsequent clean `7ff6185` passed a fresh build and the canonical ASI browser gate:
+**44 desktop/mobile cases / 226 assertions / 46 screenshots**, verified production
+fonts/assets and empty error/network/owned cleanup. Fresh six print exports / 33
+rendered pages passed privacy/text/margin checks. Auth/transport/CAS are simulated;
+actual database/hosted acceptance remains open. Latest full is still `df8c303`;
+repeat after the next source freeze. P1a class-provenance admission/finalizer source and R17 narrative NPC Library source
 are in isolated workers. No SQL execution, hosted write or publication occurred.
 
 Victor selected all included milestones before beta, PDF importing before beta,
