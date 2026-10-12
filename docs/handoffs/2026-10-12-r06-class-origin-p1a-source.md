@@ -1,4 +1,8 @@
-# R06/R12 P1a — UNVERIFIED disabled staged source checkpoint
+# R06/R12 P1a — disabled staged source, local model gates verified
+
+The initial sections retain the source-only checkpoints and their historical
+UNRUN status. The final section records released local gates on corrected source
+00dce15437561c824491063d877bfcc10184aafb. SQL/runtime authority remains unverified.
 
 Own `r12-passive-feature-worker`, branch `codex/r12-passive-features`, clean approved
 plan predecessor cf69b854a1c0a7777ce1ad1b4cdf71e9ab4a1141. Parent approved only
@@ -114,3 +118,49 @@ gates and separately authorized real SQL acceptance. Auth always denied, private
 gate remains CHECK(NOT enabled), all13 shared readiness families untouched/false.
 No shared R09 source, actual producer, writer/materializer, renderer/C1 bridge or
 product file edited. Joint metadata bump and all P1b–d/G2/C2 obligations remain open.
+
+## Released narrow verification on 00dce15437561c824491063d877bfcc10184aafb
+
+Parent independently approved all five correction groups and released one exclusive
+heavy slot. No install, dependency/source change, full check, build, browser, SQL,
+PGlite, hosted/provider or network operation was run in this sequence.
+
+- Semantic-before control substituted byte-exact 7fb4dae727292e17487f8626362bd208ebd52588
+  model, schema AND staged SQL as one coherent predecessor, retaining corrected
+  tests/fixtures. `npm.cmd test -- tests/lib/character/class-origin-command-model.test.ts
+  --maxWorkers=2 --testNamePattern="original schema-valid class fixture|already-first
+  only-class|canonical subclass parent_class|confirmation refuses selfconsistent|
+  retained ended occurrence|every required|recorded copy refuses|copy root|foreign
+  selfconsistent|creation receipt .* mismatch" --reporter=json
+  --outputFile=test-results/r06-class-origin-p1a-local/baseline-vitest.json` exited1
+  as expected: 27 named semantic assertions failed, while the unchanged canonical
+  class/level1/level7 controls passed. Model construction succeeded and all suites
+  collected assertions; no missing-body/factory compatibility error was counted as
+  an invariant failure. The complete JSON report and failure messages are retained.
+  Try/finally restored all three working files byte-for-byte, verified SHA256 and
+  clean status, and final readback repeated the exact restore hashes.
+- Restored `npm.cmd test -- tests/lib/character/class-origin-command-model.test.ts
+  tests/supabase/class-origin-staged-contract.test.ts
+  tests/lib/character/class-role-effects.test.ts --maxWorkers=2`: **3 files,
+  144 tests PASS**, exit0, 3.40s reported test duration.
+- `npm.cmd run typecheck`: PASS, exit0.
+- `npm.cmd run lint`: PASS, exit0, existing script with max-warnings0.
+
+Evidence is retained separately at
+`C:\Users\kaios\Documents\Codex\2026-10-11\task-2\verification\r06-class-origin-p1a-20261012`.
+`manifest.json` SHA256:
+`5DA96133711DF7F4E3B2A97484AAF008FBB7111C90C617DB2A80F383F2464D7D`.
+It binds exact source SHA/status, source/fixture/test/package/lock byte hashes,
+commands/results, baseline blob/substitution/restore and positive/failed semantic
+controls. Per-gate receipts preserve stdout/stderr, actual OS PID/birth/parent/
+command/CWD, CPU/memory/process/listener snapshots before and after. Final repeated
+readback found **all 28 observed process identities absent**, owned listeners0;
+no kill or cleanup exception was needed. The exclusive heavy slot was released.
+
+No product correction was necessary after these gates. This is local pure-model,
+TypeScript and static-source evidence only: SQL parsing/application, native trigger
+timing, effective ACL/RLS, trusted Auth, lock/commit faults, joint revision bump,
+actual producers/all writers/materializer, C1 bridge and C2 consumer integration
+remain unproved. Auth still always raises unavailable; gate stays false, all13
+shared readiness families untouched/false, staged SQL unapplied. P1b–d/G2/C2 and
+NEW class prerequisites remain open; no live repair or availability is asserted.
