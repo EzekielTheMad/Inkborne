@@ -84,3 +84,41 @@ rollback/concurrency/RLS/replay tests. C2 still requires actual sheet/builder/li
 provider/save/concentration/print availability and parity integration. NEW class
 creator waits for P1+C2; no empty-class or edit-only substitute and no R12/M4 closure.
 Root remains sole integration writer; no runtime or release risk acceptance here.
+
+## Source-only correction after independent review of05071d4
+
+Original05071d4 source checkpoint remains immutable. Reviewer identified two
+finite blockers: three bigint literals incompatible with unchanged ES2017 target,
+and overbroad all-six save denial on any origin/manifest problem. Corrected only
+the new C1 schema/module/tests and this handoff; no product or existing tests changed.
+
+Bigint values now use BigInt(decimalstring)/BigInt(1), retaining exact arithmetic,
+boundary and replay correspondence. tsconfig remains ES2017. No compile result is
+claimed until released typecheck. Availability now derives affected abilities
+from full original class declarations/candidate occurrences and exact matched
+manifest starting-save indices; proven independent class-level indices do not
+become role-sensitive by tuple matching. Manifest failure blocks only abilities
+named by its actual raw class declarations/candidates, not forged manifest claims.
+Draft/legacy/unconfirmed origin blocks the union of known affected class abilities,
+leaving unrelated known race/feat/feature/class-level save actions available.
+Same-ability ambiguity may still deny, while raw independent grant stays ordered.
+
+Missing/wrong/duplicate selected exact class graph, active occurrences with no
+selection, or unmappable role-sensitive ability evidence explicitly reports
+UNKNOWN_ROLE_GRAPH and can conservatively mark all six unavailable. This is a
+genuine incomplete graph distinction, not a default global denial on a missing
+origin header with otherwise complete raw sources. No harmless replacement pin
+or unsupported ability is guessed into certainty. Existing secondary projection
+still requires complete origin/pin proof, and unrelated valid secondary manifest
+can exclude its starting index while a primary STR manifest alone is unavailable.
+
+Prepared regressions would fail under05071d4's overbroad policy: unclassifiedSTR
+class candidate with independentWIS race; badprimarySTR manifest with validDEX
+secondary classification/exclusion; unrelated independent class-levelINT during
+draft/legacy; raw arrays and extra metadata remain unchanged and in original
+order. Same-ability ambiguity and genuinely missing/unknown graph denial controls
+remain. Existing actual flat-collector failed-before save oracle/replay/identity
+and lifecycle cases are preserved. All corrections remain **UNRUN/UNVERIFIED**:
+no install/test/typecheck/lint/full/build/browser/SQL/PGlite/runtime operation due
+to root heavy hold. P1 authority/storage/fencing and C2 actual consumers are still
+required before any live repair or NEW class authoring claim.

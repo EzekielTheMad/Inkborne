@@ -56,19 +56,73 @@ describe("C1 advisory class role classifier — no live producer, authorization 
   expect(result(value).status).toBe("available");value.manifests[0].effects_snapshot.reverse();expect(result(value).status).toBe("unavailable");
  });
  it.each([
-  {name:"missing manifest",change:(v:ClassRoleEvidence)=>{v.manifests=[];}},
-  {name:"duplicate manifest",change:(v:ClassRoleEvidence)=>{v.manifests.push(structuredClone(v.manifests[0]));}},
-  {name:"duplicate index",change:(v:ClassRoleEvidence)=>{v.manifests[1].occurrences[1].effect_index=0;}},
-  {name:"unclassified identical grant",change:(v:ClassRoleEvidence)=>{v.manifests[1].occurrences.pop();}},
-  {name:"wrong kind/declaration",change:(v:ClassRoleEvidence)=>{v.manifests[1].occurrences[0].kind="independent_save";}},
-  {name:"wrong version",change:(v:ClassRoleEvidence)=>{v.manifests[0].content_version=2;}},
-  {name:"wrong system",change:(v:ClassRoleEvidence)=>{v.manifests[0].system_id=roleId(99);}},
-  {name:"raw extension changed",change:(v:ClassRoleEvidence)=>{v.manifests[0].effects_snapshot[0].extra=[1,2];}},
-  {name:"wrong raw paired value",change:(v:ClassRoleEvidence)=>{v.manifests[0].occurrences[0].effect_snapshot.value="expertise";}},
-  {name:"basic compiler cannot claim independent grant",change:(v:ClassRoleEvidence)=>{v.manifests[1].compiler_id="private-basic-class-v1";}},
- ])("refuses $name without tuple-based guessing or raw rewrites",({change})=>{
+  {name:"missing manifest",affected:["strength","dexterity"] as const,change:(v:ClassRoleEvidence)=>{v.manifests=[];}},
+  {name:"duplicate manifest",affected:["strength"] as const,change:(v:ClassRoleEvidence)=>{v.manifests.push(structuredClone(v.manifests[0]));}},
+  {name:"duplicate index",affected:["dexterity"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[1].occurrences[1].effect_index=0;}},
+  {name:"unclassified identical grant",affected:["dexterity"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[1].occurrences.pop();}},
+  {name:"wrong kind/declaration",affected:["dexterity"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[1].occurrences[0].kind="independent_save";}},
+  {name:"wrong version",affected:["strength"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[0].content_version=2;}},
+  {name:"wrong system",affected:["strength"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[0].system_id=roleId(99);}},
+  {name:"raw extension changed",affected:["strength"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[0].effects_snapshot[0].extra=[1,2];}},
+  {name:"wrong raw paired value",affected:["strength"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[0].occurrences[0].effect_snapshot.value="expertise";}},
+  {name:"basic compiler cannot claim independent grant",affected:["dexterity"] as const,change:(v:ClassRoleEvidence)=>{v.manifests[1].compiler_id="private-basic-class-v1";}},
+ ])("refuses $name without tuple-based guessing or raw rewrites",({change,affected})=>{
   const value=classRoleFixture();change(value);const before=structuredClone(value),model=result(value);expect(model.status).toBe("unavailable");
-  expect(model.saveAvailability.dexterity.status).toBe("unavailable");expect(model.originalSources).toEqual(before.sources);expect(value).toEqual(before);
+  for(const ability of affected)expect(model.saveAvailability[ability].status).toBe("unavailable");
+  expect(model.saveAvailability.wisdom.status).toBe("available");expect(save(value,model.evaluationEffects,"wisdom")).toBe(2);
+  expect(model.originalSources).toEqual(before.sources);expect(model.originalEffects).toEqual(before.sources.flatMap(pin=>pin.resolved.effects));expect(value).toEqual(before);
+ });
+ it.each(["draft","legacy","invalid-primary-manifest"] as const)("%s only blocks affected class saves, leaving independent unrelated saves usable",mode=>{
+  const value=mode==="draft"?provisionalRoleFixture():classRoleFixture();
+  if(mode==="legacy")value.origin=null;
+  if(mode==="invalid-primary-manifest")value.manifests=value.manifests.filter(row=>row.content_id!==value.occurrences[0].content_id);
+  const before=structuredClone(value),model=result(value);
+  expect(model.saveAvailability.strength.status).toBe("unavailable");
+  for(const ability of ["wisdom","constitution","charisma"] as const){expect(model.saveAvailability[ability]).toEqual({status:"available",issues:[]});expect(save(value,model.evaluationEffects,ability)).toBe(2);}
+  expect(model.originalSources).toEqual(before.sources);expect(model.originalEffects).toEqual(before.sources.flatMap(pin=>pin.resolved.effects));expect(value).toEqual(before);
+  const independent=before.sources.filter(pin=>pin.resolved.content_type!=="class").flatMap(pin=>pin.resolved.effects);
+  expect(model.evaluationEffects.filter(effect=>["saving_throw_wisdom","saving_throw_constitution","saving_throw_charisma"].includes(String(effect.stat)))).toEqual(independent);
+  if(mode!=="invalid-primary-manifest"){expect(model.excluded).toEqual([]);expect(model.evaluationEffects).toEqual(model.originalEffects);}
+ });
+ it("an unclassified STR candidate does not overblock known WIS race or valid DEX secondary classification",()=>{
+  const value=classRoleFixture();leakOnly(value);value.manifests=value.manifests.filter(row=>row.content_id!==value.occurrences[0].content_id);
+  const before=structuredClone(value),model=result(value);
+  expect(model.saveAvailability.strength.status).toBe("unavailable");expect(model.saveAvailability.dexterity).toEqual({status:"available",issues:[]});
+  expect(model.saveAvailability.wisdom).toEqual({status:"available",issues:[]});expect(save(value,model.evaluationEffects)).toBe(0);expect(save(value,model.evaluationEffects,"wisdom")).toBe(2);
+  expect(model.excluded).toEqual([{source_id:secondary(value).id,effect_index:0,occurrence_id:value.occurrences[1].id}]);
+  expect(model.evaluationEffects).toEqual(before.sources.flatMap(pin=>pin.resolved.effects.filter((_effect,index)=>pin.id!==secondary(value).id||index!==0)));
+  expect(model.originalEffects).toEqual(before.sources.flatMap(pin=>pin.resolved.effects));expect(value).toEqual(before);
+ });
+ it.each(["draft","legacy"] as const)("%s preserves a proven unrelated independent class-level save",mode=>{
+  const value=mode==="draft"?provisionalRoleFixture():classRoleFixture();if(mode==="legacy")value.origin=null;
+  const pin=secondary(value), manifest=value.manifests.find(row=>row.content_id===pin.content_id)!;
+  const effect={type:"grant",stat:"saving_throw_intelligence",value:"proficient",originalOrder:[2,1]};pin.resolved.effects.push(effect);
+  manifest.effects_snapshot=structuredClone(pin.resolved.effects);manifest.occurrences.push({effect_index:2,kind:"independent_save",ability:"intelligence",stat_slug:effect.stat,effect_snapshot:structuredClone(effect)});
+  const before=structuredClone(value),model=result(value);expect(model.saveAvailability.intelligence).toEqual({status:"available",issues:[]});
+  expect(save(value,model.evaluationEffects,"intelligence")).toBe(2);expect(model.evaluationEffects).toEqual(model.originalEffects);
+  expect(model.originalSources).toEqual(before.sources);expect(value).toEqual(before);
+ });
+ it("same-ability ambiguity can deny STR even while the independent STR grant remains raw and ordered",()=>{
+  const value=classRoleFixture(),feat=value.sources.find(pin=>pin.resolved.content_type==="feat")!;
+  feat.resolved.effects.push({type:"grant",stat:"saving_throw_strength",value:"proficient",extra:{retain:true}});value.manifests=value.manifests.filter(row=>row.content_id!==value.occurrences[0].content_id);
+  const before=structuredClone(value),model=result(value);expect(model.saveAvailability.strength.status).toBe("unavailable");
+  expect(model.evaluationEffects.filter(effect=>effect.stat==="saving_throw_strength")).toEqual(before.sources.flatMap(pin=>pin.resolved.effects.filter(effect=>effect.stat==="saving_throw_strength")));
+  expect(model.saveAvailability.wisdom.status).toBe("available");expect(model.originalEffects).toEqual(before.sources.flatMap(pin=>pin.resolved.effects));
+ });
+ it("a genuinely missing exact class graph reports explicit broader unknown scope, without guessing harmless declarations",()=>{
+  const value=classRoleFixture();value.sources=value.sources.filter(pin=>pin.content_id!==value.occurrences[0].content_id);
+  const before=structuredClone(value),model=result(value);expect(model.excluded).toEqual([]);
+  for(const state of Object.values(model.saveAvailability)){expect(state.status).toBe("unavailable");expect(state.issues.some(issue=>issue.reason==="UNKNOWN_ROLE_GRAPH")).toBe(true);}
+  expect(model.evaluationEffects).toEqual(model.originalEffects);expect(model.originalSources).toEqual(before.sources);expect(value).toEqual(before);
+ });
+ it("unmappable role-sensitive raw ability evidence is broader unknown, not falsely admitted as unrelated",()=>{
+  const value=classRoleFixture(),pin=secondary(value);(pin.resolved.data.saving_throws as string[]).push("unknown-ability");
+  const model=result(value);expect(model.saveAvailability.wisdom.status).toBe("unavailable");expect(model.saveAvailability.wisdom.issues.some(issue=>issue.reason==="UNKNOWN_ROLE_GRAPH")).toBe(true);
+ });
+ it("active origin occurrences without their selected raw class graph remain explicitly broader unknown",()=>{
+  const value=classRoleFixture();value.character.classes=[];value.sources=value.sources.filter(pin=>pin.resolved.content_type!=="class");
+  const model=result(value);expect(model.status).toBe("unavailable");expect(model.saveAvailability.wisdom.issues.some(issue=>issue.reason==="UNKNOWN_ROLE_GRAPH")).toBe(true);
+  expect(model.excluded).toEqual([]);expect(model.evaluationEffects).toEqual(model.originalEffects);
  });
  it("provisional A->remove->B/reorder/readback never seals an origin",()=>{
   const value=provisionalRoleFixture();expect(result(value).role_state).toBe("provisional");

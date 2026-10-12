@@ -7,7 +7,7 @@ import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
 export const CLASS_ROLE_ABILITIES = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as const;
 export type ClassRoleAbility = typeof CLASS_ROLE_ABILITIES[number];
 export const classRoleRevisionSchema = z.string().regex(/^(0|[1-9]\d{0,18})$/)
-  .refine(value => /^(0|[1-9]\d{0,18})$/.test(value) && BigInt(value) <= 9223372036854775807n, "PostgreSQL bigint revision exceeded");
+  .refine(value => /^(0|[1-9]\d{0,18})$/.test(value) && BigInt(value) <= BigInt("9223372036854775807"), "PostgreSQL bigint revision exceeded");
 const version = z.number().int().min(1).max(2147483647);
 const slug = z.string().min(1).max(200);
 const rawObject = z.record(z.string(), z.unknown());
