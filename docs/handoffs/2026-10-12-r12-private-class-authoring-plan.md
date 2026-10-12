@@ -58,3 +58,16 @@ legacy save_ missing participation is separate. P1 logical command/revision
 receipt shape, ordinary-owner apply_character_class_command, exact fenced
 transaction marker/closure and replay semantics are now frozen for challenge;
 no executableSQL or table mutation is authorized.
+
+Amendment B corrects lifecycle: first autosaved class click never seals origin.
+Genuine fresh/draft marker is atomic with new-character creation; preconfirmation
+select/remove/revise/reorder/reload/copy remains provisional. Explicit class-builder
+Confirm starting class UI + confirmStartingClassAction + guarded confirm_origin
+RPC alone seals exact selected occurrence and origin; lost-response replay/current
+owner/stale/direct-write controls specified. Legacy missing proof cannot confirm;
+recorded copy retains origin; draft copy remains provisional; removal/respec remains
+conservatively role-unavailable, no reseal. Renderer key exactly saving_throw_ plus
+six unique published ability slugs, proficient multiplier1/currentfinitePB; no
+nonexistent six derived-save definitions. Legacy save_ raw is separate/unavailable.
+C1pure ->P1authority/fences ->C2real integration required before NEWcreator. Docs
+only; no implementation/heavy/SQL/runtime operation. Ready for exact rechallenge.

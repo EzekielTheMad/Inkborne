@@ -239,7 +239,7 @@ R06 evidence-first prerequisite, independently challenged before implementation:
    Use schema-valid renderer grants `saving_throw_strength` and `saving_throw_dexterity` for this failing-before control. Current sheet/builder flattening gives both class grants to evaluator; under
    actual getSaveModifier with canonical2014 proficiency bonus2, dexterity save receives+2 despite belonging
    only to the secondary class. Expected role-correct dexterity save has no class
-   proficiency bonus. Use actual published2014 derived-stat/config keys, not a
+   proficiency bonus. Use actual published2014 published ability/proficient keys and actual renderer contract; do not require six absent derived-save definitions, not a
    replacement synthetic calculator. Separate fixture gives dexterity grant from
    an independent feat/race: that grant must survive filtering. No unrun test is
    represented as a reproduced PASS/FAIL in this planning child.
@@ -339,8 +339,7 @@ staged SQL or runtime work. No new-class or edit-only workaround is authorized.
 
 Starting saving proficiencies belong to the proven class occurrence taken at
 character level1. UI order never changes that origin. New authoritative character
-creation starts `origin_status:unselected`; first trusted class acquisition seals
-one origin. Existing characters without such creation proof are LEGACY_UNAVAILABLE,
+creation atomically starts `origin_status:draft` with fresh creation provenance; autosaved selections remain provisional. ONLY explicit starting-class confirmation seals one origin. Existing characters without such creation proof are LEGACY_UNAVAILABLE,
 even if they currently have one class or an empty class array. Do not infer from
 array position, level, reference date, equipment marker, HP roll absence or name.
 
@@ -360,15 +359,15 @@ not total-sheet failure, zero-valued proficiency or silently reassigned primary 
 ### Proposed additive storage (names/fields frozen for challenge, no DDL now)
 
 1. `character_class_origins`: character_id PK/FKcharacter; system_id; schema_version1;
-   origin_status enum unselected/recorded/legacy_unavailable; origin_occurrence_id
+   origin_status enum draft/recorded/legacy_unavailable; origin_occurrence_id
    nullableUUID (present ONLYrecorded), initialization_operation_id UUID; created_at.
    command_revision bigint0..9223372036854775807 starts0. No client DML. Initialize only inside trusted NEWcharacter/copy transaction.
-   One unselected->recorded or ->legacy_unavailable transition; thereafter identity
+   One draft->recorded or ->legacy_unavailable transition; thereafter identity
    immutable. Do not add origin evidence automatically to historical characters.
 2. `character_class_occurrences`: id serverUUIDPK, character_id/system_id;
    content_id/content_version compositeFK immutable content_versions; class_slug
-   verified from snapshot, acquired_character_level integer1..20,
-   acquisition_operation_id UUID, acquired_at, ended_at nullable. Content/character/
+   verified from snapshot, acquired_character_level nullable integer1..20 (null while provisional or creation-plan secondary),
+   acquisition_operation_id nullableUUID, selected_at, accepted_at nullable, ended_at nullable; lifecycle provisional/accepted/ended. No acquired history before explicit acceptance. Content/character/
    system/acquisition identity is immutable; only active->ended once via guarded
    removal. Unique active class slug per character; no timestamp-order inference.
    `choices.classes[].occurrence_id` links the SAME occurrence and exact pin; this
@@ -445,15 +444,15 @@ Only after C1 source review, producer/fence P1 is planned against exact writers:
 
 | Existing source writer at b4e308f | Required fence/adapter before enabling |
 | --- | --- |
-| `characters/new/actions.ts:createCharacter`, `lib/supabase/characters.ts:createCharacter`, staged create_character_with_starting_grant | Trusted transaction creates explicit unselected origin header only for genuinely new character; incoming nonempty classes/origin metadata rejected unless reviewed privileged import/copy. Legacy INSERT cannot mint proof implicitly. |
-| `class-step-client.tsx:handleSelectClass` choices write then insertContentRef | Replace separate steps with ordinary-owner atomic class-acquisition RPC, validating freshness/access/pin/occurrence and sealing origin only from authoritative unselected status. Server creates UUID; origin acquisition always characterlevel1; later occurrences record actual acquisition level. No browser primary flag. |
+| `characters/new/actions.ts:createCharacter`, `lib/supabase/characters.ts:createCharacter`, staged create_character_with_starting_grant | Trusted transaction creates explicit draft origin header only for genuinely new character; incoming nonempty classes/origin metadata rejected unless reviewed privileged import/copy. Legacy INSERT cannot mint proof implicitly. |
+| `class-step-client.tsx:handleSelectClass` choices write then insertContentRef | Replace separate steps with ordinary-owner atomic class-acquisition RPC, validating freshness/access/pin/occurrence with provisional selection under authoritative draft status. Server creates UUID; only explicit confirmation seals starting origin at characterlevel1; preconfirmation selections carry no inferred acquisition history. No browser primary flag. |
 | handleLevelChange/handleConfirmLevelUp and handleSubclassSelect | Guarded same-identity occurrence patch under character lock; preserve origin/pin identity. Subclass exact parent/version provenance unchanged. Level changes cannot rewrite acquisition history. |
 | handleRemoveClass + content-ref deletion | Atomic end-occurrence/choice/ref update; originating removal computes unavailable, never elects next class. Reinsert same slug gets NEWsecondary occurrence when origin exists; closed origin remains closed. |
 | handleHpRollChange/handleChoiceSelect/handleFightingStyleSelect, race/background/equipment whole-choice updates | Existing nonclass writes may pass only if their class-occurrence/pin identity is unchanged from locked current row. Stale whole-choice writes conflict/reload rather than restore class metadata; no ASIwriter architecture change. |
 | `character-client.ts:updateCharacter/updateCharacterAndReturn`, `characters.ts:updateCharacter`, direct PostgREST UPDATEchoices | Database fence rejects protected class membership/origin/occurrence mutations outside guarded routines, including reorder with omitted UUID, deleted original metadata and ABArestore. Nonclass patch must not overwrite class subtree. |
 | `content-refs-client.ts:insertContentRef/removeContentRefById`, `content-refs.ts:addContentRef/removeContentRef/removeContentRefsByChoiceSource`, direct INSERT/UPDATE/DELETE/reparent class refs | Character-row lock plus class occurrence/pin fence; no unassociated class pin can establish role or bypass transaction. Nonclass refs retain existing behavior. Missing association is unavailable, never latest-catalog repair. |
 | `class/actions.ts:reconcileClassFeatureRefsAction`, feature-refs-server syncClassFeatureRefs, DB sync_character_feature_refs | Restore earned FEATURErefs from existing manifests only; no origin creation/reclassification/class-pin swap. Cannot repair a lost class origin through latest catalog. |
-| latest copy_character in20260722221534_atomic_background_selection.sql + staged starting-equipment copy | Copy exact evidence and remap occurrence/ref IDs atomically. Proven active origin remains same original pin/version; ended/unavailable/legacy remains unavailable. Copies do not initialize a new starting class by target array order. Existing feature/ASI/spell grants/history and equipment provenance unaffected. Both SQL definitions must share reviewed role adapter before staged gate. |
+| latest copy_character in20260722221534_atomic_background_selection.sql + staged starting-equipment copy | Copy exact evidence and remap occurrence/ref IDs atomically. Proven active origin remains same original pin/version; ended/unavailable/legacy remains unavailable. Copies do not initialize a sealed starting class by target array order. Existing feature/ASI/spell grants/history and equipment provenance unaffected. Both SQL definitions must share reviewed role adapter before staged gate. |
 | Existing ability/ASI/background RPCs and source promotion/import/admin writes | Fence only protected class identity when their merged row changes it; do not rewrite their independent action contract. Current MPMBspell/feat importer creates no classes; future class imports need authoritative classification metadata or explicit unavailable. Backup/restore must restore origin/occurrences/manifests together, never infer omitted metadata after restore. |
 
 P1 request contract: characterId, operationId UUID, operation add/set-level/
@@ -507,8 +506,7 @@ write. Receipts persist for character lifetime, protected from ordinary DML.
 Proposed routine `public.apply_character_class_command` is ordinary authenticated,
 derives actor from auth.uid(), verifies actual owner and system, then locks the
 character+origin header and relevant occurrence/pin/manifest rows in stable UUID
-order. First selection requires genuine new unselected header, exactclass manifest
-admission and acquisition at characterlevel1; later selection never elects origin.
+order. Explicit confirm_origin requires genuine fresh draft header, exact selected provisional pin/manifest and current owner/freshness; autosaved selection never elects origin. Confirmation accepts the chosen starting occurrence at characterlevel1.
 It patches ONLY current locked choices.classes subtree/required level and related
 exact refs; preserve other choice keys/ASI history subject to EXISTING legitimate
 level-pruning triggers. Guarded routines create command acceptance marker/planned
@@ -535,3 +533,97 @@ original acquisition identity/provenance; it never changes source header/receipt
 Origin removed/unavailable state is preserved even if copied current choices now
 start with a different active class. A restored partial backup with no provenance
 returns unavailable; no automatic historical attestations or current-array repairs.
+
+## Amendment B — explicit starting-class confirmation, not autosave acceptance
+
+Supersedes any earlier statement that a first saved selection seals origin.
+Actual `characters/new/actions.ts:createCharacter` immediately opens editable
+builder; `ClassStepClient.handleSelectClass` autosaves choices/pin, removal/revision
+is normal, and Previous/Next/overview navigation has no creation-finalize event.
+
+Fresh provenance header is created INthe authoritative new-character transaction:
+`origin_status:draft`, `creation_provenance:new_character|fresh_draft_copy`,
+`creation_operation_id:serverUUID`, optional `source_draft_operation_id` only for
+trusted provisional-copy lineage, schema_version1, command_revision0. Creation
+marker cannot be added later by client/direct INSERT/reload/restore. Legacy row
+with absent proof stays LEGACY_UNAVAILABLE even if empty or one-class. Origin
+occurrence is null until confirmation. Draft occurrence rows have lifecycle
+provisional, selected_at and exact pin identity; acquired_character_level,
+acquisition_operation_id and accepted_at are null. Provisional choices are not
+historical acquisitions. Removed provisional rows are retained ended evidence;
+selecting a replacement creates a fresh provisional occurrence. No zero-grant
+placeholder class or automatic confirmation is added.
+
+Concrete UI in class builder, next to existing Class heading before ClassStepRail:
+new `components/builder/starting-class-confirmation.tsx` section, six-field-free
+starting-class selection from currently saved provisional class occurrences,
+one radio per actual name/version/pin, blank selection initially, summary and
+button **Confirm starting class**. Copy states that class picks auto-save as drafts;
+confirmation fixes starting saving proficiencies, and later removal/replacement
+makes role-dependent saves unavailable. User deliberately chooses the starting
+occurrence, not an inferred first item. Show explicit order/HP consequence:
+confirmed starting class will occupy the first class position for the existing HP
+contract, preserving all other draft classes in relative order. This is part of
+explicit reviewed confirmation intent, never a background array reassignment.
+Other builder steps/navigation/reloads do not confirm or require guessed class role.
+Legacy/unavailable rows show reason with no confirmation control or reseal path.
+Confirmed rows show immutable chosen identity/version; button cannot repeat with
+new identity. Pending duplicate guard, lost/rejected/malformed result uncertainty,
+manual reload and receipt replay use actual guarded response patterns; no auto retry.
+
+Concrete action `confirmStartingClassAction` in existing builder/class/actions.ts
+calls proposed public.apply_character_class_command with op `confirm_origin`,
+characterId, operationId, expectedRevision and selected provisional occurrenceId.
+This ID is REQUESTselection only: DB derives actor, validates fresh draft provenance,
+current owner/published2014 system, exactly one selected provisional occurrence,
+matching exact entitled immutable pin/manifest, revision and explicit confirm intent.
+Under the same locked transaction it seals header, accepts chosen origin occurrence
+at characterlevel1, accepts remaining planned classes as secondary creation-plan
+occurrences (no invented acquisition levels), and performs only the explicitly
+confirmed class ordering adjustment. Never seal merely on class-select/level/subclass
+write, opening sheet, equipment award, array ordering, timestamp or copy.
+Wrong/missing/stale/foreign/ended/nonselected occurrence refuses without partial
+seal. Same operation+intent replays immutable confirmation after owner check;
+changed intent or different-origin confirmation after sealed header rejects.
+For a sealed character, reorder cannot move the accepted origin out of its first
+HP position while active; this preserves current HP contract and never defines
+origin from array order. Origin removal retains the already frozen conservative
+ORIGIN_REMOVED_UNAVAILABLE policy, without reseal or automatic privileges transfer.
+
+Draft copy: source with genuine draft provenance produces a target fresh_draft_copy
+header and remapped PROVISIONAL occurrences, no origin; both copies may independently
+revise/confirm their own drafts. Copy of recorded origin remaps/preserves recorded
+origin and its ended/unavailable state, never turns it into editable fresh evidence.
+Legacy copy stays legacy unavailable. Partial backup/restore missing marker or
+manifest stays unavailable; no new draft status from sparse saved data. Fresh
+provisional saves/readbacks can display declared choices/HP/other independent
+mechanics, but role-dependent starting saving grants remain DRAFT_UNCONFIRMED until
+this action commits. Known independent class-level/feat/race/feature grants remain
+ordered and intact; only affected role-dependent save values/actions are unavailable.
+
+Exact renderer compiler key is `saving_throw_` + validated ability slug. Require
+exactly six UNIQUE published2014 ability definitions with the expected slug set,
+one proficient proficiency definition with multiplier1, and actual current finite
+computed proficiency bonus at the save consumer. NO six matching derived_stats
+membership requirement: seed does not have those six save definitions. Do not
+invent them, calculate replacement PB or fall back to zero. `save_<ability>` is a
+separate legacy raw namespace, unavailable until its explicitly attested compiler
+and consumer participation are reviewed; no silent prefix rewrite/alias. Starting
+versus independent occurrence classification still requires the exact manifest
+pairing; stat spelling alone never classifies role.
+
+Finite lifecycle controls to add to C1/P1/C2 tests before enabling: newchar marker
+atomically present; selectA->removeA->selectB, revise levels/subclass, reorder,
+reload/open sheet/overview and draft copy ALL leave origin unsealed; B confirmed
+explicitly with no A privilege retained; no preconfirmation role-dependent saves;
+wrong/stale/duplicate confirm never partially seals; confirmation lost response
+replays same identity; postconfirm remove/reinsert/respec becomes unavailable;
+recorded copy preserves identity and draft copy stays independently provisional;
+legacy empty/singleclass marker absence cannot confirm; direct choices/ref/origin
+writes cannot inject or reseal marker. Independent known grants survive draft and
+unavailable states. Extra/duplicate/missing ability definitions, multiplier other
+than1, nonfinite current PB and legacy-prefix mismatches fail exact renderer-key
+admission. Actual save renderer/CON concentration/print handle unavailable state
+consistently. Pure C1 is neither a live role fix nor NEWclass completion; P1 storage
+and ALL writer fences plus C2 actual integration are required first. No code/SQL/
+heavy/runtime operation is authorized by this amendment.
