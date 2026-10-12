@@ -4,10 +4,10 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source through `f88d421`
+on local branch `codex/launch-integration-20261011`. Product source through `a41e186`
 includes reviewed private magic-item/item/weapon/armor/core-race authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
-single-source slots and per-acquisition casting math, explicit race-score
+single-source slots, exact selected subclass sources and per-acquisition casting math, explicit race-score
 representation, read-only monster schema/stat blocks/Library, default-disabled
 pure hit-die modeling, patched dependencies and runtime fixture preparation.
 Clean `2e20658` passed typecheck, zero-warning lint, **274 files / 3,023 tests**
@@ -27,10 +27,17 @@ remain explicit decisions. The durable-gameplay contract uses one trusted server
 roll and immutable lifetime receipt; actual command/writer/database/recovery
 integration remains unimplemented and disabled.
 
-Subclass casting implementation is running focused checks in isolation. The
-independently approved private-monster and standalone trait authoring plans are
-released for scoped code. Trait CREATE uncertainty now has explicit retained-draft,
-check-Homebrew and no-automatic-retry acceptance controls.
+Subclass implementation and its stale-result/shared-math corrections passed
+independent source review and are integrated as `a6d7efb` / `a41e186`; browser and
+fresh combined gates remain open. Private-monster authoring passed 106 initial
+tests; its reviewed transport issue now has a prepared correction with 127
+regression tests, typecheck/lint passing, awaiting independent re-review.
+Standalone trait authoring passed 115 initial tests but review found version
+confirmation and effect-validation defects; the separate correction is running
+narrow gates. Both authoring slices remain unintegrated. Actual form browser
+harnesses are being prepared with current production CSS/fonts and explicit
+simulated action boundaries. Trait CREATE uncertainty retains the draft and
+requires checking Homebrew before an explicitly acknowledged further create.
 Development audit remains eight
 unpatched high findings / zero critical, production zero; no residual risk is
 accepted. Saved ASI parity remains a separate documented gap. The
