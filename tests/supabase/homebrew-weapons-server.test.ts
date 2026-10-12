@@ -298,6 +298,35 @@ describe("updateHomebrewWeaponRecord", () => {
     expect(db.calls[2].payload).toEqual({ name: "New name", data: merged });
   });
 
+  it("retains raw lore and nested custom metadata while ignoring forged browser replacements", async () => {
+    const actualMapper = await vi.importActual<typeof import("@/lib/homebrew/weapon-form")>("@/lib/homebrew/weapon-form");
+    mocks.mapForm.mockImplementation(actualMapper.mapHomebrewWeaponFormData);
+    const rawData = {
+      ...data, ability: 2, monkweapon: true, ammo: "arrow", baseWeapon: "longsword",
+      source_refs: [{ book: "Private Tome", page: 12 }], properties: ["versatile", "custom-imported-property"],
+      description: "Lore imported from the original source.",
+      custom_metadata: { maker: "Original smith", history: [{ year: 42, note: "Recovered intact" }], active: true },
+    };
+    const effects = [{ type: "mechanical", stat: "speed.walk", op: "add", value: 5 }];
+    const db = makeClient([{ data: { id: SYSTEM_ID }, error: null }, { data: { ...row(), data: rawData, effects }, error: null },
+      { data: { ...row(2), name: "Renamed blade", data: rawData, effects }, error: null }]);
+    mocks.createClient.mockResolvedValue(db.client);
+    const input = new FormData();
+    for (const [key, value] of Object.entries({ name: "Renamed blade", weapon_category: "Martial", weapon_range: "Melee",
+      cost_quantity: "15", cost_unit: "gp", weight: "2.5", damage_dice: "1d8", damage_type: "slashing",
+      two_handed_damage_dice: "1d10", two_handed_damage_type: "slashing", description: "Forged lore",
+      custom_metadata: '{"maker":"Attacker"}', ability: "6", monkweapon: "false", ammo: "bolt", baseWeapon: "dagger",
+      source_refs: "[]", effects: "[]", data: '{"description":"Injected payload"}' })) input.set(key, value);
+    input.append("properties", "versatile");
+
+    const result = await updateHomebrewWeaponRecord(ITEM_ID, 1, input);
+    expect(result).toMatchObject({ version: 2, name: "Renamed blade", effects });
+    expect(db.calls[2].payload).toEqual({ name: "Renamed blade", data: rawData });
+    expect(db.calls[2].payload).not.toHaveProperty("effects");
+    // Raw metadata remains internal, rather than entering the form's typed DTO.
+    expect(result).not.toHaveProperty("data.custom_metadata");
+  });
+
   it("rejects signed-out and malformed identities before a table read", async () => {
     const signedOut = makeClient([], false); mocks.createClient.mockResolvedValue(signedOut.client);
     await expect(updateHomebrewWeaponRecord(ITEM_ID, 1, new FormData())).resolves.toMatchObject({ status: "error" });

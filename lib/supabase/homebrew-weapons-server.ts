@@ -306,13 +306,18 @@ export async function updateHomebrewWeaponRecord(
     .maybeSingle();
   if (readError) return databaseMutationFailure(readError);
   if (!existing) return classifyMissingUpdate(session.supabase, session.userId, context.systemId, identity.data.id);
-  let mergedData: WeaponData;
+  let mergedData: Record<string, unknown>;
   try {
     const currentData = parseRecord(existing).data;
-    mergedData = weaponDataSchema.parse({
-      ...currentData, ...parsed.data.data,
+    // The canonical parser strips unrecognized keys for the public form DTO.
+    // Persistence must retain the original owned JSON, including imported lore
+    // and custom metadata. Browser input can overlay only validated core keys.
+    const rawData = z.record(z.string(), z.unknown()).parse(existing.data);
+    mergedData = {
+      ...rawData, ...parsed.data.data,
       properties: [...parsed.data.data.properties, ...currentData.properties.filter((property) => !WEAPON_PROPERTIES.some((known) => known === property))],
-    });
+    };
+    weaponDataSchema.parse(mergedData); // Validate known fields without serializing stripped output.
   } catch {
     return failure("This weapon contains unsupported data and could not be edited.");
   }
