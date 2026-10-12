@@ -1,0 +1,17 @@
+{
+  "format": "inkborne-npc",
+  "format_version": 1,
+  "name": "  Original Bell Keeper  ",
+  "data": {
+    "schema_version": 1,
+    "description": "An original keeper checks the bell beside a bridge. <script>window.compromised=true</script>",
+    "occupation": "  Original bridge attendant  ",
+    "personality": {
+      "personality_traits": ["Counts original footsteps.", "Counts original footsteps."],
+      "ideals": [],
+      "motivation": "Keep the original bell working. constructor is an ordinary narrative word."
+    },
+    "relationships": [{ "name": "Original Bell Maker", "relationship": "An original acquaintance" }]
+  },
+  "effects": []
+}
