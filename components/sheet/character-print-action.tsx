@@ -26,6 +26,7 @@ export function CharacterPrintAction() {
   useEffect(() => {
     if (!model) return;
     const previousTitle = document.title;
+    const trigger = triggerRef.current;
     document.title = `${model.name} - Inkborne Character Sheet`;
     closeRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
@@ -39,7 +40,7 @@ export function CharacterPrintAction() {
       }
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => { document.removeEventListener("keydown", onKeyDown); document.title = previousTitle; triggerRef.current?.focus(); };
+    return () => { document.removeEventListener("keydown", onKeyDown); document.title = previousTitle; trigger?.focus(); };
   }, [model]);
   if (!ctx.isOwner || !ctx.hasSheet) return null;
   const busy = ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending || ctx.rollPersistenceUncertain || !!ctx.pendingConcentrationCheck || !ctx.contentSnapshotsComplete;
