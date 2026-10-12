@@ -1,8 +1,9 @@
 # ASI provider and print fixture cascade (source preparation)
 
 Base: `a76c917363ac33655e1a2930b6fa905ed85b4595` on `codex/asi-fixture-cascade-20261012`.
-Status: **UNVERIFIED source only**. No dependency install, typecheck, lint, tests,
-build, browser, SQL, hosted hydration, or runtime was performed in this lane.
+Status: **Partially verified fixtures; product recovery regressions remain**.
+The parent released the sole heavy slot for locked installation, focused tests,
+typecheck and lint. No full check, build, browser, SQL or hosted hydration ran.
 
 The integration failure baseline is preserved in root's
 `verification/launch-20261012/check.{stdout,stderr,result}` at `f385`:
@@ -64,7 +65,53 @@ retained. Read-only/stale casting guidance assertions remain unchanged pending
 runtime classification, because guard precedence may expose a product wording
 contract rather than a fixture problem.
 
-## Required verification after heavy-slot release
+## Local verification and remaining failures
+
+External receipts: sibling `verification/asi-fixture-cascade-20261012`. The
+adapted root gate records before/after resources and exact OS birth, PID,
+ancestry, command, workspace and owned listening ports. Earlier failed receipts
+are archived under `history`; no failed run was removed.
+
+- `npm.cmd ci --ignore-scripts --no-audit --no-fund`: 804 locked packages,
+  success; four observed OS identities, zero survivors/listeners.
+- First 15-file focused run at `e136adbe32a2b9118e60ed7b38bcda4fa7c69784`:
+  52 failed / 146 passed, ten unhandled errors; 22 observed identities,
+  cleanup zero. Positive HP fixtures still lacked finite hydrated temp HP.
+- `609e7c5be725137ee18d8c9e7cd5bd3d3a286ba2` adds finite HP VIEW defaults,
+  preserving each original `character.state` raw CAS baseline. Exact UI-state
+  equality checks include the explicit synthesized temp HP; stored/raw expected
+  state assertions remain unchanged. The separate deterministic acquired-attack
+  pipeline supplies the actual CHA/PB requirement without changing its request,
+  RNG, log, or persistence assertions.
+- Second 15-file focused run at clean `609e7c5`: 19 failed / 179 passed,
+  zero unhandled errors, 21 observed identities, cleanup zero. All eight passing
+  suites plus the remaining passing cases retain their original behaviors.
+- Initial typecheck had two optional race-pin system-ID errors; an explicit
+  fixture guard corrected these. Clean `609e7c5` typecheck passed, six observed
+  identities, cleanup zero.
+- Zero-warning full npm lint passed, seven observed identities, cleanup zero.
+  Its receipt records `e136adb` with the six dirty fixture files whose source
+  was subsequently committed unchanged at `609e7c5`; no clean-head lint claim
+  is made for later changes.
+
+`60aed1ce0e4d0966f4e0d54528d1700b3985e7a5` corrects two fixture conflicts with
+HP view hydration: absolute-write tests explicitly supply an absent HP field,
+retaining the original null display, patch, rollback and raw `{}` assertions.
+These two corrections have not been rerun. The other 17 failures remain:
+
+- `assertMechanics` precedes writer recovery and substitutes generic errors for
+  the original typed `CharacterStateReloadError` (`requiresReload: true`).
+- Pending/viewer/invalid math refusals now produce different guidance from the
+  original saving/changed/read-only/unavailable contracts.
+- Invalid class-ref slot cases' `longRest` throws synchronously from ASI math
+  before its original `false`-result guard/catch.
+
+These product failures are reported to root. No stale, viewer, typed recovery,
+no-RNG, log, DAL, raw baseline, or invalid-slot rest oracle was weakened to make
+the run green. The clean current fixture head needs focused acceptance after
+root's reviewed product repair, then final typecheck/lint.
+
+## Required remaining verification
 
 Run the eleven owned test files with two workers, then relevant shared-fixture
 consumers (including existing print model/weapon cases and conditional short
