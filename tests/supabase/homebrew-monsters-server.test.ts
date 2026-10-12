@@ -37,7 +37,7 @@ function form(edit = false, data: unknown = cinderlitKite, changed: string[] = [
   if (edit) { input.set("id", ID); input.set("expected_version", "1"); input.set("changed_fields", JSON.stringify(changed)); }
   return input;
 }
-const privateFilters: [string, unknown][] = [["owner_id", OWNER], ["system_id", SYSTEM], ["source", "homebrew"], ["content_type", "monster"], ["scope", "personal"], ["is_retired", false]];
+const privateFilters: [string, unknown][] = [["owner_id", OWNER], ["system_id", SYSTEM], ["content_type", "monster"], ["source", "homebrew"], ["scope", "personal"], ["is_retired", false]];
 beforeEach(() => vi.clearAllMocks());
 describe("private monster DAL (mocked query proof only)", () => {
   it("creates a server-derived version-free private envelope and confirms canonical data", async () => {
@@ -84,7 +84,7 @@ describe("private monster DAL (mocked query proof only)", () => {
     expect(raw.effects[0]).toHaveProperty("extraMetadata", { label: "retain me" });
     expect(db.calls.every((call) => call.table !== "content_versions")).toBe(true);
   });
-  it.each([[], ["description"]])("equal declared intent performs no UPDATE and no false version", async (intent) => {
+  it.each([{ intent: [] }, { intent: ["description"] }])("equal declared intent performs no UPDATE and no false version", async ({ intent }) => {
     const db = database([ok({ id: SYSTEM }), ok(row())]);
     expect(await updateHomebrewMonsterRecord(form(true, cinderlitKite, intent))).toEqual({ status: "idle", message: "No changes to save." });
     expect(db.calls.some((call) => call.operation === "update")).toBe(false);
