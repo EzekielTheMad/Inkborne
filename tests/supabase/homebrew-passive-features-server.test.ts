@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ createClient: vi.fn(), uuid: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("node:crypto", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:crypto")>();
-  return { ...actual, default: { ...actual.default, randomUUID: mocks.uuid }, randomUUID: mocks.uuid };
+  const actual = await importOriginal<typeof import("node:crypto") & { default?: typeof import("node:crypto") }>();
+  return { ...actual, default: { ...(actual.default ?? actual), randomUUID: mocks.uuid }, randomUUID: mocks.uuid };
 });
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 import { createHomebrewPassiveFeatureRecord, getOwnedHomebrewPassiveFeature, listOwnedHomebrewPassiveFeatures, updateHomebrewPassiveFeatureRecord } from "@/lib/supabase/homebrew-passive-features-server";
