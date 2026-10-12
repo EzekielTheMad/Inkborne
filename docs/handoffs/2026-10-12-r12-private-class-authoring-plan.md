@@ -37,3 +37,24 @@ No install/tests/typecheck/lint/build/browser/server/SQL/provider operation for
 this docs child. Static reads/writing/Git diff only. Independent plan challenge
 before any implementation; root owns integration and runtime acceptance. Existing
 approved passive product and harness untouched. No risk/launch acceptance implied.
+
+Amendment A freezes the proposed immutable origin/occurrence/version-manifest
+metadata shape and unselected->recorded producer, exact missing/legacy/removed
+unavailable behavior, conservative no-reassignment removal/respec policy, and
+exact0-based save-grant occurrence pairing. Matching save stat/value is not proof;
+duplicate/class-level grants require explicit trusted classification. Independent
+ordered effects and raw history survive. Pure collector C1, authoritative producer/
+writer fencing P1 and availability wiring C2 are separate reviewed checkpoints;
+NEW class creator waits for all. Actual class, fullchoice, ref, reconciliation,
+copy/stage/import/restore writers are mapped; SQL/replay implementation remains a
+required separate P1 artifact/gate. Docs only: no new live tables/RPC/migration or
+runtime operations, and no existing ASI action changes.
+
+Source namespace gap additionally recorded: transformer save_<ability> differs
+from actual sheet/concentration/print exact saving_throw_<ability>. No legacy
+rewrite/alias is assumed. New compiler must bind actual published+consumer keys,
+and secondary leakage control uses renderer-key grants with real getSaveModifier;
+legacy save_ missing participation is separate. P1 logical command/revision
+receipt shape, ordinary-owner apply_character_class_command, exact fenced
+transaction marker/closure and replay semantics are now frozen for challenge;
+no executableSQL or table mutation is authorized.

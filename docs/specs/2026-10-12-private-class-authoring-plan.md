@@ -236,8 +236,8 @@ R06 evidence-first prerequisite, independently challenged before implementation:
 
 1. Reproduce the current leak with two original exact class pins: primary save
    strength grant, secondary save dexterity grant, base abilities10 and totallevel2.
-   Current sheet/builder flattening gives both class grants to evaluator; under
-   canonical2014 proficiency bonus2, dexterity save receives+2 despite belonging
+   Use schema-valid renderer grants `saving_throw_strength` and `saving_throw_dexterity` for this failing-before control. Current sheet/builder flattening gives both class grants to evaluator; under
+   actual getSaveModifier with canonical2014 proficiency bonus2, dexterity save receives+2 despite belonging
    only to the secondary class. Expected role-correct dexterity save has no class
    proficiency bonus. Use actual published2014 derived-stat/config keys, not a
    replacement synthetic calculator. Separate fixture gives dexterity grant from
@@ -291,7 +291,7 @@ R06 evidence-first prerequisite, independently challenged before implementation:
    appropriate runtime approval; this docs task does not choose a new live schema.
 7. Collector after authoritative proof: pure provenance-aware reference collection
    filters ONLY class-definition starting save grants from secondary roles, with
-   exact published six-ability/save_<ability>/proficient membership. Preserve raw
+   exact published six-ability/declared manifest stat_slug/proficient membership against the actual published+renderer save-key contract. Preserve raw
    definitions, relative effect order and independent race/feat/feature grants,
    narrative/mechanical effects and action consumers. Do not add a grant conditional
    format or modify generic evaluator. Role-unresolved output must be typed and
@@ -328,3 +328,210 @@ or automatic migration. Disable/remove create link/routes on a failing consumer
 contract rather than enabling a partial mechanics compiler. Rollback is source
 revert only; never delete authored rows or rewrite immutable pins/versions. This
 plan does not approve hosted operations, stage SQL, public publishing or beta.
+
+## R06 amendment A — frozen origin producer, occurrence classifier and legacy behavior
+
+This supersedes the earlier open storage/role questions for the FIRST proposed
+contract. It remains docs-only and needs independent rechallenge before source,
+staged SQL or runtime work. No new-class or edit-only workaround is authorized.
+
+### Role policy and exact unavailable states
+
+Starting saving proficiencies belong to the proven class occurrence taken at
+character level1. UI order never changes that origin. New authoritative character
+creation starts `origin_status:unselected`; first trusted class acquisition seals
+one origin. Existing characters without such creation proof are LEGACY_UNAVAILABLE,
+even if they currently have one class or an empty class array. Do not infer from
+array position, level, reference date, equipment marker, HP roll absence or name.
+
+Removing the origin occurrence, replacing its definition/version as a respec,
+or removing/reinserting the same slug closes that occurrence permanently for
+this first contract. Starting-save role becomes ORIGIN_REMOVED_UNAVAILABLE;
+no automatic retention, reassignment or reactivation. Secondary removal/reorder
+leaves a still-active origin unchanged. No respec/removal feature is added here;
+existing removal may continue only through the guarded transaction with honest
+unavailable save-role feedback. Future restoration/respec policy is separate.
+A same-version text edit does not change a character pin; authoringv2 never rebases
+originv1. Missing/wrong/duplicate active origin pin or invalid occurrence membership
+is ORIGIN_PIN_UNAVAILABLE. Missing/ambiguous grant classification is
+SAVE_OCCURRENCE_UNAVAILABLE. These are scoped role-dependent availability states,
+not total-sheet failure, zero-valued proficiency or silently reassigned primary role.
+
+### Proposed additive storage (names/fields frozen for challenge, no DDL now)
+
+1. `character_class_origins`: character_id PK/FKcharacter; system_id; schema_version1;
+   origin_status enum unselected/recorded/legacy_unavailable; origin_occurrence_id
+   nullableUUID (present ONLYrecorded), initialization_operation_id UUID; created_at.
+   command_revision bigint0..9223372036854775807 starts0. No client DML. Initialize only inside trusted NEWcharacter/copy transaction.
+   One unselected->recorded or ->legacy_unavailable transition; thereafter identity
+   immutable. Do not add origin evidence automatically to historical characters.
+2. `character_class_occurrences`: id serverUUIDPK, character_id/system_id;
+   content_id/content_version compositeFK immutable content_versions; class_slug
+   verified from snapshot, acquired_character_level integer1..20,
+   acquisition_operation_id UUID, acquired_at, ended_at nullable. Content/character/
+   system/acquisition identity is immutable; only active->ended once via guarded
+   removal. Unique active class slug per character; no timestamp-order inference.
+   `choices.classes[].occurrence_id` links the SAME occurrence and exact pin; this
+   is server-output metadata, never browser authority. OriginFK points to retained
+   occurrence row, not a deletable content-ref row. Origin/content version survives
+   remove/copy evidence without rewriting choices history or raw definitions.
+3. `content_class_save_manifests`: content_id/content_version compositePK/FK;
+   schema_version1, compiler_id fixed `private-basic-class-v1` (later compiler IDs
+   need separate reviewed producers), saving_throws_snapshot ordered JSON array,
+   effects_snapshot ordered full raw JSON array, occurrences ordered records
+   `{effect_index, kind:starting_save|independent_save, ability, stat_slug, effect_snapshot}`.
+   0-based index, unique/in-range; each effect_snapshot equals EXACT entry at index.
+   Whole raw effect array and declaration must match immutable version JSONB;
+   object-key order is immaterial, array order/type/value/duplicate positions matter.
+   New minimal producer has<=6 starting entries and no independent entries; full
+   manifest<=256 matching occurrences and<=128KiB serialized metadata, reject
+   oversized without truncation. This is external immutable provenance, not a new
+   effect conditional format or edits to effects_snapshot in existing versions.
+
+Ordinary authenticated users have no INSERT/UPDATE/DELETE on these metadata
+relations. Read only for existing character visibility and corresponding exact
+version entitlement; no broadened snapshot RLS. Trusted routines derive actor via
+existing account auth, verify owner/system/access and server-owned membership;
+request must not accept occurrence IDs or compiler indices as trusted assertions.
+No service-role path exposed to browser. Database grants/trigger fencing and
+metadata-specific access must be part of separately reviewed staged implementation.
+Append metadata and definition/version inside the SAME transaction, never a second
+best-effort client write. Raw version rows remain controlled by existing triggers.
+
+### Exact classification, including identical and class-level grants
+
+Source namespace participation gap is explicit: transformer emits save_<ability>, but SavingThrows, concentration-prompt and print-model use saving_throw_<ability> through exact-match sheet/helpers.isProficient/getSaveModifier. No alias was found. Raw legacy keys are not normalized silently. The new compiler contract uses the actual renderer key saving_throw_<ability>, after validating published six abilities and proficiency/config participation; a legacy-save compiler needs separate attestation and consumer alignment before availability. The legacy save_ counterexample remains missing-participation evidence, not a claimed UI+2 regression.
+
+The candidate tuple `type:grant, stat:save_<ability> OR saving_throw_<ability>, value:proficient` identifies a
+role-sensitive candidate, NOT its origin. Classification requires exact trusted
+manifest declaration/compiler occurrence pairing. For `private-basic-class-v1`,
+server compiles one starting grant per explicitly selected ability in submitted
+order; duplicate abilities rejected; stored manifest records its index/declaration
+and raw entry. No arbitrary effect input or inference by searching matching stat.
+Every save candidate in that version must have exactly one explicit starting_save
+or independent_save mapping. A second identical tuple is a distinct occurrence,
+not automatically redundant or starting: if producer provenance cannot classify
+both positions, the version is unavailable for role-dependent saves. Historical
+bare arrays, copied metadata with unmatched version/data, duplicate index mappings,
+unmatched declaration, absent compiler proof or unexplained class-level save grant
+are SAVE_OCCURRENCE_UNAVAILABLE. No automatic backfill by tuple equality.
+
+Independent class-level saving grants MUST remain ordered and active even when
+their class is secondary. Trusted future producers must explicitly label their
+occurrence as independent_save; selected subclass/feature/race/feat grants have
+independent source provenance and are never filtered as class starting grants.
+Narratives, mechanical effects, non-save grants, actions, choice histories and
+snapshot raw ordering remain unchanged. Text-only class edit may clone a trusted
+manifest to newversion ONLYinside the same trusted version transaction and only
+when original ordered effects, saving_throws and all raw data except description
+are exactly unchanged. Otherwise refuse classification/require reviewed compiler;
+never regenerate from defaulted parser output. Historical v1/pins/manifests stayv1.
+
+### Separate collector child (C1), then producer/fence child (P1)
+
+C1 owns pure `lib/character/class-role-effects.ts` + schema/tests only first.
+Input has exact character/system, class occurrence evidence, origin header,
+current selected occurrence/pins, version manifests and ordered source refs.
+Result contains original ordered sources/effects untouched; ordered evaluation
+projection filtering ONLY trusted secondary starting_save indices; typed
+saveAvailability per canonical ability and explicit unavailable occurrence reasons.
+Ambiguous candidates remain in original evidence and are not silently dropped.
+For unresolved affected saves, no numeric computed save is presented or actionable;
+other independent calculations remain usable. A known independent grant remains
+in projection even if a separate ambiguous candidate makes that save unavailable.
+No engine grant format/formula change; no UI/router/DB in first pure C1.
+
+Only after C1 source review, producer/fence P1 is planned against exact writers:
+
+| Existing source writer at b4e308f | Required fence/adapter before enabling |
+| --- | --- |
+| `characters/new/actions.ts:createCharacter`, `lib/supabase/characters.ts:createCharacter`, staged create_character_with_starting_grant | Trusted transaction creates explicit unselected origin header only for genuinely new character; incoming nonempty classes/origin metadata rejected unless reviewed privileged import/copy. Legacy INSERT cannot mint proof implicitly. |
+| `class-step-client.tsx:handleSelectClass` choices write then insertContentRef | Replace separate steps with ordinary-owner atomic class-acquisition RPC, validating freshness/access/pin/occurrence and sealing origin only from authoritative unselected status. Server creates UUID; origin acquisition always characterlevel1; later occurrences record actual acquisition level. No browser primary flag. |
+| handleLevelChange/handleConfirmLevelUp and handleSubclassSelect | Guarded same-identity occurrence patch under character lock; preserve origin/pin identity. Subclass exact parent/version provenance unchanged. Level changes cannot rewrite acquisition history. |
+| handleRemoveClass + content-ref deletion | Atomic end-occurrence/choice/ref update; originating removal computes unavailable, never elects next class. Reinsert same slug gets NEWsecondary occurrence when origin exists; closed origin remains closed. |
+| handleHpRollChange/handleChoiceSelect/handleFightingStyleSelect, race/background/equipment whole-choice updates | Existing nonclass writes may pass only if their class-occurrence/pin identity is unchanged from locked current row. Stale whole-choice writes conflict/reload rather than restore class metadata; no ASIwriter architecture change. |
+| `character-client.ts:updateCharacter/updateCharacterAndReturn`, `characters.ts:updateCharacter`, direct PostgREST UPDATEchoices | Database fence rejects protected class membership/origin/occurrence mutations outside guarded routines, including reorder with omitted UUID, deleted original metadata and ABArestore. Nonclass patch must not overwrite class subtree. |
+| `content-refs-client.ts:insertContentRef/removeContentRefById`, `content-refs.ts:addContentRef/removeContentRef/removeContentRefsByChoiceSource`, direct INSERT/UPDATE/DELETE/reparent class refs | Character-row lock plus class occurrence/pin fence; no unassociated class pin can establish role or bypass transaction. Nonclass refs retain existing behavior. Missing association is unavailable, never latest-catalog repair. |
+| `class/actions.ts:reconcileClassFeatureRefsAction`, feature-refs-server syncClassFeatureRefs, DB sync_character_feature_refs | Restore earned FEATURErefs from existing manifests only; no origin creation/reclassification/class-pin swap. Cannot repair a lost class origin through latest catalog. |
+| latest copy_character in20260722221534_atomic_background_selection.sql + staged starting-equipment copy | Copy exact evidence and remap occurrence/ref IDs atomically. Proven active origin remains same original pin/version; ended/unavailable/legacy remains unavailable. Copies do not initialize a new starting class by target array order. Existing feature/ASI/spell grants/history and equipment provenance unaffected. Both SQL definitions must share reviewed role adapter before staged gate. |
+| Existing ability/ASI/background RPCs and source promotion/import/admin writes | Fence only protected class identity when their merged row changes it; do not rewrite their independent action contract. Current MPMBspell/feat importer creates no classes; future class imports need authoritative classification metadata or explicit unavailable. Backup/restore must restore origin/occurrences/manifests together, never infer omitted metadata after restore. |
+
+P1 request contract: characterId, operationId UUID, operation add/set-level/
+set-subclass/remove/reorder, requested entitled contentid/version and bounded
+operation fields, expected current choices/class-ref identity/revision. Lock
+character first, then exact pins/metadata in deterministic IDs; reread policy and
+access after lock; commit occurrence/origin/choices/ref as one result. Operation
+identity replay returns the same committed occurrence/result after current owner
+check, with changed-intent rejection. No automatic retry after lost transport.
+Revision/command-receipt storage is frozen below; exact stagedSQL/permissions and real role gates must be independently accepted. Present helpers do not provide it. Until those gates pass, P1 stays OFF and no class creator can
+emit starting-save grants. No unreviewed migration filename or live execution.
+
+After producer storage acceptance, C2 wires same collector at all flattening
+boundaries: sheetpage, builder class/abilities/race/background, provider; components/sheet/saving-throws.tsx and concentration-prompt.tsx, lib/sheet/helpers.ts save availability boundary, lib/character/print-model.ts and character-print-view.tsx. Plain class content-preview may display declared starting saves, clearly distinct from current-character effective saves. Print/current preview parity required. R09 injected
+mechanical model uses original ordered snapshot inputs until separately reviewed
+alignment; do not silently change its parity in this prerequisite. Existing ASI,
+weapon/armor, HP/equipment calculations and independent actions stay intact.
+
+Required finite failure controls: two indistinguishable same-stat legacy grants;
+one starting and one independent class-level grant from trusted manifest; secondary
+class suppresses ONLYstarting index while independent survives; independent feat/
+race/feature save grant survives; declaration/index/array-order/version tampering;
+missing/ended/original-role evidence; remove+reinsert/reorder/copy/legacy emptyclass;
+wrongowner/system and corrupt associated pins. Current source leak remains a
+failing-before example, not a claimed executed regression. Real authenticated
+DML denial, transaction rollback/concurrency, durable replay, privilege fencing
+and restore/copy evidence require their separately approved DB/runtime gate.
+
+NEW class authoring follows C1+P1+C2 acceptance, not before. Local C1 does not prove
+storage authority; P1 does not prove UI availability; C2 cannot derive missing legacy
+history. Remove/respec first contract is conservatively unavailable; no open-ended
+respec feature or historical guessing is hidden under canon correctness.
+
+P1 replay/revision detail (frozen logical storage, staged source not yet approved):
+`character_class_commands` has PK(character_id,operation_id), schema_version1,
+canonical_intent JSONB, applied_revision bigint, result JSONB, accepted_at and
+current transaction marker during acceptance. Origin header command_revision
+increments exactlyonce per accepted class mutation; exhausted bigint refuses
+new commands but permits receipt replay. Request expectedRevision is decimal
+string0..9223372036854775807 (no leadingzero except0); compare after lock before
+mutation. Owner checked before receipt lookup; existing same-id/same-intent returns
+immutable result, changed intent rejects, then current access checked for fresh
+acceptance. Intent equality is normalized JSONB object-key-insensitive/array-order-
+sensitive; exact raw grant manifest arrays remain significant. Command payload
+<=32KiB with<=20 class occurrences; no raw choice/effect/schema authority input.
+Result records accepted occurrence IDs, origin availability and applied revision,
+not a stale replacement of all choices. Replay whose current revision has advanced
+requires current server read/reload before UI adopts choices, not an old absolute
+write. Receipts persist for character lifetime, protected from ordinary DML.
+
+Proposed routine `public.apply_character_class_command` is ordinary authenticated,
+derives actor from auth.uid(), verifies actual owner and system, then locks the
+character+origin header and relevant occurrence/pin/manifest rows in stable UUID
+order. First selection requires genuine new unselected header, exactclass manifest
+admission and acquisition at characterlevel1; later selection never elects origin.
+It patches ONLY current locked choices.classes subtree/required level and related
+exact refs; preserve other choice keys/ASI history subject to EXISTING legitimate
+level-pruning triggers. Guarded routines create command acceptance marker/planned
+before-after identities in protected storage for the same database transaction;
+protected class DML fence matches old/new rows, transaction and accepted command.
+Do not trust a caller-set GUC, primary boolean, service-role browser request or
+current_user alone to waive a fence. Unrelated nonclass updates are allowed only
+when protected class identity is unchanged. Commit closure checks exactlyone
+class ref per active occurrence and origin identity consistent with sealed metadata.
+No partially minted role receipt after a failed choice/ref write. Copy/create use
+reviewed internal bootstrap routines for the same storage, not origin inference.
+The exact privilege owner, marker/deferred closure triggers and SQL role tests are
+part of the P1 staged implementation challenge before execution; naming them here
+is not DDL or deployment authority.
+
+C1 inputs/results are service-internal pure contracts, not browser authority.
+Both applied/current/expected revisions cross TypeScript/PostgREST boundaries as
+validated decimal strings; no bigint conversion through JavaScript number. Pure
+positive fixtures inject trusted evidence only to test rules and never prove the
+producer exists. Header identity is immutable once sealed; command_revision is
+its explicitly allowed monotonic mutable counter under guarded commands. Copy
+remaps origin_occurrence_id to a target occurrence with copied exact version and
+original acquisition identity/provenance; it never changes source header/receipt.
+Origin removed/unavailable state is preserved even if copied current choices now
+start with a different active class. A restored partial backup with no provenance
+returns unavailable; no automatic historical attestations or current-array repairs.
