@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { chromium } from "playwright";
-import { loadCompanionProductionAssets, bindCompanionProjectInputs } from "./companion-production-inputs.mjs";
+import { loadCompanionProductionAssets, bindCompanionProjectInputs, rebindCompanionInputs } from "./companion-production-inputs.mjs";
 import { loadCompanionProcess } from "./companion-process.mjs";
 
 const script = fileURLToPath(import.meta.url), root = path.resolve(path.dirname(script), "..");
@@ -21,7 +21,7 @@ if (old.length) {
   const archive = path.join(output, `archive-${Date.now()}`); await fs.mkdir(archive);
   for (const name of old) await fs.rename(path.join(output, name), path.join(archive, name));
 }
-const taskProcess = { ...processes.osIdentity(process.pid, process.ppid), cwd: root, startTime: new Date().toISOString(), listeningPort: null };
+const taskProcess = { ...(await processes.freshIdentity(process.pid, process.ppid)), cwd: root, startTime: new Date().toISOString(), listeningPort: null };
 process.send?.({ type: "process", taskProcess });
 await fs.writeFile(path.join(output, "process-start.json"), JSON.stringify({ taskProcess }, null, 2));
 const flag = process.argv.indexOf("--artifact-manifest");
@@ -93,7 +93,7 @@ try {
   if (failure) throw failure;
   browserServer = await chromium.launchServer({ channel: "chrome", headless: true, host: "127.0.0.1", port: 0 });
   browserPort = Number(new URL(browserServer.wsEndpoint()).port);
-  browserProcess = { ...processes.osIdentity(browserServer.process().pid, process.pid), cwd: root, startTime: new Date().toISOString(), listeningPort: browserPort };
+  browserProcess = { ...(await processes.freshIdentity(browserServer.process().pid, process.pid)), cwd: root, startTime: new Date().toISOString(), listeningPort: browserPort };
   await fs.writeFile(path.join(output, "process-start.json"), JSON.stringify({ taskProcess, browserProcess }, null, 2));
   browser = await chromium.connect(browserServer.wsEndpoint());
   for (const [size, width] of [["desktop", 1280], ["mobile", 390]]) {
@@ -175,8 +175,11 @@ try {
 const closed = target => target ? new Promise(resolve => { const socket = net.connect({ host: "127.0.0.1", port: target });
   socket.setTimeout(2_000, () => { socket.destroy(); resolve(false); }); socket.once("connect", () => { socket.destroy(); resolve(false); }); socket.once("error", error => resolve(error.code === "ECONNREFUSED")); }) : Promise.resolve(true);
 const portClosed = await closed(port), browserPortClosed = await closed(browserPort), browserExited = !browserServer || browserServer.process().exitCode !== null;
+let finalBindings = null;
+try { finalBindings = await rebindCompanionInputs(root, manifestPath, processes.receipt, bundle.metafile, captured, production.artifacts); }
+catch (error) { failure ??= error; }
 await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ liveSupabase: false, persistence: "unavailable", simulatedAuth: true,
-  artifacts: production.artifacts, taskProcess, browserProcess, resourcesBefore, resourcesAfter: processes.resources(), portClosed, browserPortClosed, browserExited,
+  artifacts: production.artifacts, finalBindings, taskProcess, browserProcess, resourcesBefore, resourcesAfter: processes.resources(), portClosed, browserPortClosed, browserExited,
   evidence, screenshots, fontEvidence, assetRequests, pageErrors, blockedRequests, unexpectedRequests, diagnostics, failure: failure?.message ?? null,
   limits: "Actual canonical companion parser and Library browser/detail/profile; original fixtures. Auth/entitlements/queries/Next native links and failed-read alert simulated. No SQL, Data API role proof, catalog write, real sharing, private instance, persistence, eligibility, transformation, summoning, gameplay, server page or authenticated Next shell. Hash-bound production CSS/fonts and all bundled project bytes; no fallback CSS. Viewport screenshots plus long-profile end show reachability, not a full-page export." }, null, 2));
 finished = true; if (process.connected) process.disconnect();

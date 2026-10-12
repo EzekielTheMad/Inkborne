@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { loadCompanionProcess } from "../../scripts/companion-process.mjs";
+import { bindCompanionHarnessFiles } from "../../scripts/companion-production-inputs.mjs";
 
 test("actual declared companion Library with guarded production assets and private cleanup", async () => {
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startTime: new Date().toISOString(), port: null }));
@@ -16,7 +17,7 @@ test("actual declared companion Library with guarded production assets and priva
   let identity: { pid: number; parentPid: number; command: string; birthUtc: string } | undefined;
   try {
     expect(child.pid).toBeDefined();
-    try { identity = processes.osIdentity(child.pid!, process.pid); }
+    try { identity = await processes.freshIdentity(child.pid!, process.pid); }
     catch { expect(child.exitCode, "Cannot force-clean an unidentified live runner").not.toBeNull(); }
     if (identity) expect(identity.command).toContain(path.resolve("scripts/verify-companions-local.mjs"));
     const code = await completion; console.log(output); expect(code, output).toBe(0);
@@ -28,6 +29,18 @@ test("actual declared companion Library with guarded production assets and priva
     expect(result.artifacts.metafileSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.artifacts.harnessSourceSha).toMatch(/^[a-f0-9]{40}$/);
     expect(result.artifacts.harnessFiles).toHaveLength(6);
+    expect(result.artifacts.harnessFiles).toEqual(await bindCompanionHarnessFiles(process.cwd()));
+    for (const receipt of result.artifacts.harnessFiles) {
+      expect(receipt.executedSha256).toMatch(/^[a-f0-9]{64}$/);
+      expect(receipt.gitBlobSha256).toMatch(/^[a-f0-9]{64}$/);
+      expect(receipt.checkoutIdentities).toHaveLength(2);
+      expect(receipt.checkoutIdentities.every((entry: { headBlobOid: string; indexBlobOid: string }) => entry.headBlobOid === receipt.gitBlobOid && entry.indexBlobOid === receipt.gitBlobOid)).toBe(true);
+    }
+    expect(result.finalBindings?.passed).toBe(true);
+    expect(result.finalBindings.harnessFiles).toEqual(result.artifacts.harnessFiles);
+    expect(result.finalBindings.inheritedHelpers).toEqual(result.artifacts.inheritedHelpers);
+    expect(result.finalBindings.currentRootHead).toBe(result.artifacts.currentRootHead);
+    expect(result.finalBindings.metafileSha256).toBe(result.artifacts.metafileSha256);
     expect(result.artifacts.inheritedHelpers).toHaveLength(2);
     for (const oid of ["e4058f8a31cd911583a312e59fedcf4c3fd4adae", "0841bda7b9e785280e684030bf4fe900d81465e5"]) {
       const receipt = result.artifacts.inheritedHelpers.find((entry: { reviewedGitBlobOid: string }) => entry.reviewedGitBlobOid === oid);
@@ -60,7 +73,7 @@ test("actual declared companion Library with guarded production assets and priva
       });
       if (!ended && child.exitCode === null) {
         expect(identity, "Refuse forced cleanup without original OS birth/PID/parent/command").toBeDefined();
-        processes.forceOwnedTree(identity!);
+        await processes.forceOwnedTree(identity!);
       }
     }
   }

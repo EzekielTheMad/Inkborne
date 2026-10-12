@@ -8,8 +8,15 @@ import { companionProcessHelper, verifyCompanionInheritedHelper } from "./compan
 export async function loadCompanionProcess(root) {
   const receipt = await verifyCompanionInheritedHelper(root, companionProcessHelper);
   const inherited = await import("./npc-process.mjs");
+  async function verifyFresh() {
+    assert.deepEqual(await verifyCompanionInheritedHelper(root, companionProcessHelper), receipt, "Process executable changed since guarded import");
+  }
   return { receipt, osIdentity: inherited.npcOsIdentity, resources: inherited.npcResources, assertNoOtherRunner: inherited.assertNoOtherNpcRunner,
-    forceOwnedTree(identity) {
+    async freshIdentity(pid, parentPid) {
+      await verifyFresh(); return inherited.npcOsIdentity(pid, parentPid);
+    },
+    async forceOwnedTree(identity) {
+      await verifyFresh();
       const fresh = inherited.npcOsIdentity(identity.pid, identity.parentPid);
       assert.equal(fresh.birthUtc, identity.birthUtc); assert.equal(fresh.command, identity.command);
       assert.ok(fresh.command.includes(path.join(root, "scripts", "verify-companions-local.mjs")), "Refuse unrelated private tree");

@@ -56,6 +56,32 @@ export async function verifyCompanionInheritedHelper(root, descriptor) {
   }
   return { ...descriptor, canonicalBlobSha256: sha(canonical), executedSha256, checkoutIdentities, checkoutRepresentation };
 }
+/** Owned executable/fixture closure: canonical identity alone does not bind the
+ * mounted bytes actually loaded by Node/esbuild. Bind worker and root index,
+ * checkout representation and raw bytes; repeat at the acceptance boundary. */
+export async function bindCompanionHarnessFiles(root) {
+  const rootCheckout = path.resolve(root, "../equipment-verification"), receipts = [];
+  for (const relativePath of companionHarnessFiles) {
+    const gitBlobOid = git(root, ["rev-parse", `HEAD:${relativePath}`]).toString().trim();
+    const canonical = git(root, ["cat-file", "blob", gitBlobOid]);
+    const checkoutIdentities = []; let executedSha256, checkoutRepresentation;
+    for (const [role, checkout] of [["worker", root], ["root", rootCheckout]]) {
+      trackedClean(checkout, relativePath);
+      const headBlobOid = git(checkout, ["rev-parse", `HEAD:${relativePath}`]).toString().trim();
+      const indexBlobOid = git(checkout, ["rev-parse", `:${relativePath}`]).toString().trim();
+      assert.equal(headBlobOid, gitBlobOid); assert.equal(indexBlobOid, gitBlobOid);
+      const currentRepresentation = representation(checkout, relativePath);
+      if (checkoutRepresentation) assert.deepEqual(currentRepresentation, checkoutRepresentation);
+      checkoutRepresentation = currentRepresentation;
+      const raw = await fs.readFile(path.join(checkout, relativePath));
+      assert.equal(sha(raw), sha(git(checkout, ["cat-file", "--filters", `--path=${relativePath}`, gitBlobOid])), `Mounted harness differs from Git checkout: ${relativePath}`);
+      if (executedSha256) assert.equal(sha(raw), executedSha256, `Worker/root mounted harness differs: ${relativePath}`);
+      executedSha256 = sha(raw); checkoutIdentities.push({ role, headBlobOid, indexBlobOid });
+    }
+    receipts.push({ relativePath, gitBlobOid, gitBlobSha256: sha(canonical), executedSha256, checkoutIdentities, checkoutRepresentation });
+  }
+  return receipts;
+}
 export async function loadCompanionProductionAssets(root, manifestPath, originalProcessReceipt) {
   const inheritedAsset = await verifyCompanionInheritedHelper(root, assetHelper);
   const inheritedProcess = await verifyCompanionInheritedHelper(root, companionProcessHelper);
@@ -66,10 +92,7 @@ export async function loadCompanionProductionAssets(root, manifestPath, original
   result.artifacts.inheritedHelpers = [inheritedAsset, inheritedProcess];
   result.artifacts.companionSourceCheckpoint = companionSourceCheckpoint;
   result.artifacts.harnessSourceSha = git(root, ["rev-parse", "HEAD"]).toString().trim();
-  result.artifacts.harnessFiles = companionHarnessFiles.map(relativePath => {
-    trackedClean(root, relativePath);
-    return { relativePath, gitBlobSha256: sha(git(root, ["show", `HEAD:${relativePath}`])) };
-  });
+  result.artifacts.harnessFiles = await bindCompanionHarnessFiles(root);
   const rootCheckout = path.resolve(root, "../equipment-verification");
   result.artifacts.companionSourceFiles = required.map(relativePath => {
     const expected = sha(git(root, ["show", `${companionSourceCheckpoint}:${relativePath}`]));
@@ -84,6 +107,7 @@ export async function loadCompanionProductionAssets(root, manifestPath, original
   return result;
 }
 export async function bindCompanionProjectInputs(root, metafile, captured, artifacts) {
+  assert.deepEqual(await bindCompanionHarnessFiles(root), artifacts.harnessFiles, "Mounted owned harness changed after receipt");
   const receipts = [await verifyCompanionInheritedHelper(root, assetHelper), await verifyCompanionInheritedHelper(root, companionProcessHelper)];
   assert.deepEqual(receipts, artifacts.inheritedHelpers, "Inherited executable changed during bundle");
   const rootCheckout = path.resolve(root, "../equipment-verification"), projectInputs = [], syntheticInputs = [];
@@ -114,4 +138,14 @@ export async function bindCompanionProjectInputs(root, metafile, captured, artif
     if (relativePath === "package-lock.json") assert.equal(sha(bytes), artifacts.dependencyLockSha256);
   }
   return { bundledProjectInputs: projectInputs, syntheticInputs, metafileSha256: sha(JSON.stringify(metafile)) };
+}
+/** Final re-read of full inherited/owned executable closure, captured product
+ * bytes, current root/build/assets/lock/config. Fresh receipts must equal those
+ * used for rendering; no acceptance from an earlier successful guard alone. */
+export async function rebindCompanionInputs(root, manifestPath, processReceipt, metafile, captured, artifacts) {
+  const fresh = await loadCompanionProductionAssets(root, manifestPath, processReceipt);
+  Object.assign(fresh.artifacts, await bindCompanionProjectInputs(root, metafile, captured, fresh.artifacts));
+  assert.deepEqual(fresh.artifacts, artifacts, "Final source/build/runtime closure differs from rendered inputs");
+  return { passed: true, currentRootHead: fresh.artifacts.currentRootHead, harnessSourceSha: fresh.artifacts.harnessSourceSha,
+    harnessFiles: fresh.artifacts.harnessFiles, inheritedHelpers: fresh.artifacts.inheritedHelpers, metafileSha256: fresh.artifacts.metafileSha256 };
 }
