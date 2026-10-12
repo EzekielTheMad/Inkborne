@@ -17,7 +17,9 @@ const levelSpellcastingSchema = z.object({
 const classLevelSchema = z.object({
   level: z.number().int().min(1).max(20),
   features: z.array(z.string()),
-  spellcasting: levelSpellcastingSchema.nullable().default(null),
+  // Missing historical data is not evidence that this level cannot cast.
+  // Preserve absence so slot consumers can distinguish it from explicit null.
+  spellcasting: levelSpellcastingSchema.nullable().optional(),
   subclass_level: z.boolean().optional(),
   class_specific: z.record(z.string(), z.unknown()).optional(),
 });

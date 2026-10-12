@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolvePinnedSpellSlots, resolveSpellSlots } from "@/lib/spells/helpers";
 import { classDataSchema } from "@/lib/schemas/content-types/class";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import { parseContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
 
 const slots = (...counts: number[]) => [...counts, ...Array(9 - counts.length).fill(0)];
 const choice = (slug: string, level: number) => ({ slug, level });
@@ -75,5 +76,24 @@ describe("selected exact pin evidence", () => {
     if (problem === "system") row.content_definitions.system_id = "another";
     const refs = problem === "missing" ? [] : problem === "duplicate" ? [row, ref()] : [row];
     expect(resolvePinnedSpellSlots([choice("test", 3)], refs, character).status).toBe("unavailable");
+  });
+});
+
+describe("canonical snapshot preserves missing versus inactive progression", () => {
+  const character = { id: "11111111-1111-4111-8111-111111111111", system_id: "22222222-2222-4222-8222-222222222222" };
+  function parsedRef(type: "half" | null, omitted: boolean): ContentRefWithContent {
+    const rawData = profile(type, 3, null);
+    if (omitted) delete (rawData.levels[0] as { spellcasting?: unknown }).spellcasting;
+    const snapshot = parseContentVersionSnapshot({ content_id: "33333333-3333-4333-8333-333333333333", version: 1,
+      system_id_snapshot: character.system_id, content_type_snapshot: "class", slug_snapshot: "local-class", name_snapshot: "Original class",
+      data_snapshot: rawData, effects_snapshot: [], source_snapshot: "homebrew", scope_snapshot: "personal", owner_id_snapshot: "44444444-4444-4444-8444-444444444444" });
+    if (!snapshot) throw new Error("Expected canonical original snapshot");
+    return { character_id: character.id, content_id: snapshot.id, content_version: snapshot.version, content_definitions: snapshot } as ContentRefWithContent;
+  }
+  it.each(["half", null] as const)("does not turn an omitted %s row field into inactive evidence", type => {
+    expect(resolvePinnedSpellSlots([choice("local-class", 3)], [parsedRef(type, true)], character).status).toBe("unavailable");
+  });
+  it("retains an explicitly inactive row through canonical parsing", () => {
+    expect(resolvePinnedSpellSlots([choice("local-class", 3)], [parsedRef("half", false)], character)).toEqual({ status: "available", maxSlots: {}, pactSlotLevel: null });
   });
 });
