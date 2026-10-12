@@ -93,7 +93,7 @@ only bounded owner-authorized RPC results. No exposed raw marker or auth table.
   <=256 effects/indices and <=128KiB aggregate UTF8 metadata for supported producer;
   no duplicate index/declaration, every candidate classified, no injected partial row.
 - `private.character_class_commands_v1`: PK(character_id,operation_id), immutable
-  canonical intent/version, verified_actor_id (no profile cascade), before/after
+  receipt_kind=class_transition, canonical intent/version, verified_actor_id (no profile cascade), before/after
   class sequence and shared action revision, native accepted_at, bounded result and
   confirmation/copy evidence. FK cleanup only with accepted character lifecycle.
   Class sequence advances exactly1 per changed accepted class command. Confirmation
@@ -102,12 +102,14 @@ only bounded owner-authorized RPC results. No exposed raw marker or auth table.
   immutable bounded creation/copy intent and resulting target character ID. Serializes
   duplicate new-character/copy requests before target ID exists; no client authority
   over fresh flag. Copy result stores remapped occurrence/ref map and immutable source
-  confirmation/occurrence snapshot, so later source deletion cannot erase target
+  confirmation/occurrence snapshot and separate root/immediate copy lineage below,
+  so later source deletion cannot erase target
   proof. Target has new operation namespace; no copied executable command IDs,
   gameplay receipts, linked accepted rolls or target replay ledger from source.
 - `private.class_writer_acceptance_v1` plus exact transition entries: database
   transaction ID (xid8), DB-generated acceptance UUID, bounded command/character set,
-  old/new protected identities, expected final revisions/order and authorized row
+  acceptance_kind=class_transition|bootstrap_new|bootstrap_copy, old/new protected
+  identities where applicable, expected final revisions/order and authorized row
   transitions, finalized flag. Completed immutable records remain with the command
   for character lifetime; they are not reusable permission or background cleanup work.
   Only bounded trusted functions can create/consume.
@@ -195,16 +197,83 @@ to their own finite adapters. Same semantic no-op returns unchanged without muta
 counter increment or new accepted-command receipt; it cannot create confirmation.
 Already committed ID replay is immutable and takes precedence over today's counters.
 
-Proposed class transaction uses ONE changed parent choices/level UPDATE. Existing
-frozen R09 BEFORE parent trigger advances action_revision exactly1 for changed
-mechanical parent, and AFTER rebinds existing order.producer_revision only. Class
-counter separately advances1. All associated child/occurrence/pruning/materialization
+### Changed class transition, including private-metadata-only confirmation
+
+The previous48d9256 requirement for ONE changed parent choices/level UPDATE was
+incomplete. Confirming the already-first/only class can seal private origin/occurrences
+while every parent field watched by frozen R09 remains byte-identical. It is a real
+mechanical authority transition, not a semantic no-op; artificial reorder, level
+change, timestamp touch or stale whole-choice write must not manufacture its revision.
+
+Joint P1/R09 proposal: extend the frozen parent revision trigger with a **protected
+class metadata transition branch**, separately reviewed before any implementation.
+Trusted acceptance rows bind character/xid8/command, actual before+after private
+origin/occurrence identities, locked expected shared/class revisions and one initially
+unconsumed revision-transition entry. Admission must observe a genuine allowed
+metadata change (for confirm: draft→recorded, selected provisional→accepted,
+immutable origin binding and class counter+1), not only a caller request flag.
+
+For a changed choices/level command, the ordinary watched-field branch assigns
+old action_revision+1 and consumes that SAME class transition entry. For metadata-only
+confirmation, a narrow private `apply_class_metadata_revision_v1(acceptance_id)`
+performs a meaningful revision-only parent UPDATE after validated private metadata
+mutation. It accepts no desired revision/actor/raw patch. The joint BEFORE trigger
+validates the actual protected entry, current old parent, changed private identities
+and exact old+1 value, then consumes the entry once. This is a database-owned revision
+operation authorized by protected evidence, not a caller increment or no-op touch.
+Only the proposed bounded owner routine may request this path; role/current_user/GUC
+alone is insufficient. No private marker means the frozen unchanged-parent revision
+rejection remains in force. Reuse/consumed/forged/unchanged metadata rejects.
+
+Thus each changed class transition has exactly ONE shared bump whether watched
+parent fields change, private role metadata changes, or both. Never use both branches
+as two increments. The existing AFTER parent trigger rebinds existing
+order.producer_revision only; full order closure still follows. Class counter
+separately advances1. Actual protected metadata mutation, receipt, revision transition
+and order rebind roll back together on any immediate/deferred fault. Until this joint
+trigger path is accepted, metadata-only confirm is UNIMPLEMENTABLE, not an omitted
+test or a command made available by an artificial parent edit.
+
+All associated child/occurrence/pruning/materialization
 writes belong to that protected outer command; they do not independently advance
 revision inside this class transaction. This is a proposed exact batch participation
 contract requiring joint R09 review, NOT an existing child-trigger exemption.
 Standalone child reconciliation/writers need their separate R09 adapter/invalidation;
 they cannot reuse a class acceptance or claim a no-op parent touch incremented revision.
 Do not hand-set action_revision against the frozen trigger or accept unexplained >1.
+The proposed joint revision branch is not present in frozen666; P1a may declare
+strict transition storage/finalizer source but cannot claim this producer path exists.
+
+### Bootstrap initial state, distinct from a transition
+
+Fresh create/copy is an INSERT, with NO old target state and no UPDATE bump.
+Separate strict creation receipt variant `receipt_kind:bootstrap_new|bootstrap_copy`
+contains target_character_id, creation_operation_id, verified_actor_id, canonical
+creation/copy intent, native accepted_at, `initial_action_revision:'0'`,
+`initial_class_revision:'0'`, `initial_producer_revision:'0'`, created IDs and
+origin/provenance summary. It forbids before_revision/before_state/expected target
+revision fields rather than manufacturing zero-valued before evidence. Class-transition
+receipts require actual before/after revisions and cannot parse as bootstrap receipts.
+
+Trusted target INSERT uses database default action_revision0; fresh target header
+command_revision0 and order.producer_revision0. Copy source revision/counter remain
+source evidence only, never target counters. Bootstrap creates no accepted class
+transition receipt or confirmation. New copy target lifecycle may be recorded or
+ended via preserved lineage, but its local sequence is still0; this is source-copy
+provenance, not target confirmation execution. Later changed target class command
+starts the normal0→1 transition. Target replay of bootstrap returns the same initial
+receipt plus current readback separately, even after target revisions have advanced.
+
+Bootstrap finalizer is a distinct acceptance-kind branch: verifies new target identity
+with no prior target/header/order, exact initial0 counters/order and complete created
+row/provenance graph plus bootstrap receipt. It does NOT assert before+1. Immediate
+and deferred checks use the same bootstrap branch. Compose final copied choices,
+including inherited equipment-confirmed marker, BEFORE target INSERT. Existing
+staged copy's post-INSERT choices correction must be replaced in its later adapter;
+no post-insert UPDATE is allowed to silently convert bootstrap0 into1. Unexpected
+target UPDATE/bump/second bootstrap aborts closure, rather than resetting a counter.
+Equipment eligible/inherited grant, refs/grants/inventory/spells and origin/order
+all join this same bootstrap transaction; source counters/order are unchanged.
 
 After child mutations, an actual order producer updates semantic arrays by retaining
 existing survivors in original order and appending new rows in the authoritative
@@ -227,18 +296,19 @@ recorded before/after protected values prevents an approved insert from authoriz
 an unrelated delete/reparent. Character deletion/cascades need their exact lifecycle
 operation, not a hidden-parent exemption.
 
-First supported transaction permits at most one changed class command per character
-per database transaction; creation/copy bootstrap is part of that operation, not a
-second command. Multiple normal RPCs are separate transactions. Reject a second
-class acceptance for the same character/xid8 before DML rather than making earlier
+First supported transaction permits at most one class transition OR one bootstrap
+acceptance per target character/xid8, never both. Multiple normal RPCs are separate
+transactions. Reject a second acceptance before DML rather than making earlier
 closure compare against an unrelated later command's revision.
 
 Queue deferred constraint closure for origin/occurrence/class refs/order and acceptance
 record. On commit require finalized accepted command, exactly1 consumed planned
 transition each/no unplanned leftovers, one selected class pin per active occurrence
 and reverse relation (extra independent-only/no-save pins denied), subclass exact
-parent, frozen origin consistency, command receipt correspondence, action_revision
-before+1 and class sequence before+1, full raw ordering/projection closure. Routine
+parent, frozen origin consistency, receipt-kind correspondence, full raw ordering/
+projection closure. For class_transition require shared before+1, class sequence
+before+1 and consumed revision entry; for bootstrap require initial0/shared0/class0/
+producer0 and no transition bump. Routine
 forces closure before returning response; transaction commit runs it again. Deferral
 does not permit earlier direct DML, since immediate guards require protected entries.
 Keep completed marker/consumed transition rows immutable with the lifetime command,
@@ -285,8 +355,52 @@ confirmation and exact class pin/version with target occurrence/ref remaps; sour
 ended/unavailable origin stays ended/unavailable even if absent from target active
 choices. Legacy copy stays legacy, no marker added as new-character proof. Retained
 source proof is immutable snapshot in copy receipt, never fabricated target execution
-of source operation. Restore requires exact marker/occurrence/commands/manifests/order
+of source operation. Copy-of-copy lineage is frozen separately below. Restore requires exact marker/occurrence/commands/manifests/order
 bundle; partial restore remains unavailable, no bootstrap repair.
+
+### P1c copy-of-copy lineage: original anchor and immediate source are distinct
+
+For A confirmed, B copied from A, C copied from B, C retains A's original confirmation
+canonical character_id/selected_occurrence_id/operation_id/expected+applied class
+sequence/accepted_at exactly. Never relabel A's receipt as B or C. Immutable root
+anchor includes A's actual origin occurrence **at original confirmation** (original
+character/occurrence IDs, content/version/slug/acquisition identity/time/level1) and
+the original confirmation. Current lifecycle is separate, not a rewrite of that
+original snapshot. No recursive fabricated confirmation or target-origin election.
+
+Each protected bootstrap_copy receipt stores these distinct fields:
+
+- `root_confirmation` and `root_occurrence_at_confirmation`, unchanged from the
+  validated source root anchor;
+- `immediate_source`: source_character_id (B), source_origin_occurrence_id (B's
+  remapped occurrence), source creation/copy operation ID, exact locked source
+  action/class revisions, source origin status and current lifecycle/ended_at,
+  source current origin/pin identity and retained raw provenance;
+- `source_copy_receipt_identity`: null for direct original A, otherwise the exact
+  protected source bootstrap-copy operation/target identity and validated root-anchor
+  correspondence from B's stored receipt. This is trusted writer evidence verified
+  under lock, not a caller digest or a request to adopt legacy rows;
+- `target_map`: immediate B occurrence/ref UUIDs→new C UUIDs, including retained
+  ended origin occurrence separately from active pins; target current lifecycle/
+  ended_at preserves immediate source B. Only existing active pins are copied into
+  active projections. Copy metadata must not resurrect a removed controller ref.
+
+Copy validates source protected receipt/header/map/root consistency before storing
+this bounded flat attestation; it does not recursively copy an unbounded ancestor
+receipt graph or duplicate source command ledgers. Target stores its own immutable
+validated immediate-source snapshot and root anchor, so source deletion does not
+erase proof. A source lacking real producer lineage/receipt cannot be bridged by
+matching tuples, array order or claimed IDs. If B's origin ended while A remains
+active, C is ended/unavailable: A's confirmation stays untouched and B's separate
+ended lifecycle governs the target. If A ended before B copy, every downstream copy
+preserves that unavailable lifecycle without reseal. Source state/receipt never mutate.
+
+Accepted C1 currently proves injected direct-copy shape only. Its v1 copy proof
+compares source occurrence lifecycle directly with target and cannot represent this
+root-vs-immediate distinction in every multi-hop/ended case. P1c must add a separately
+reviewed versioned lineage/read DTO bridge plus positive/negative controls before
+copy availability; never squeeze multi-hop evidence into v1 by rewriting root IDs
+or its historical lifecycle. This is a named prerequisite, not a C1 production claim.
 
 First NEW class compiler is `private-basic-class-v1` only: genuine private authoring
 transaction validates one published dnd-5e-2014 system with exactly six unique actual
@@ -314,7 +428,7 @@ independent race/feat/feature/class-level grants retain source/effect order unto
 
 | Child | Bounded deliverable / evidence | Remains off/unimplemented afterward |
 | --- | --- | --- |
-| P1a first, after challenge | New staged `supabase/staged/class-origin-producer.sql` source (not migration), internal command/receipt schemas and original model/static tests. Protected role/storage/index/marker/closure text; fail-closed Auth/default-off gate; no app imports, no privilege cutover. | Real producer, all client/writer adapters, G2, C2/NEW class. |
+| P1a first, after challenge | New staged `supabase/staged/class-origin-producer.sql` source (not migration), internal strict request and distinct transition/bootstrap receipt schemas, original fixtures/model/static tests. Actual staged immediate and deferred finalizer function/trigger source checking new protected storage/ACL/marker/receipt/order contracts; Auth unavailable/all13false/default-off gate. No app imports or old writer/cutover activation. | Joint metadata-only revision producer, real bootstrap/command writers/materializers, all client adapters, G2, C2/NEW class. |
 | P1b | Atomic genuine fresh + existing equipment-create integration, class add/level/subclass/remove/reorder/explicit-confirm transaction source, private-basic-class compiler transaction seam; model and separately authorized disposable SQL tests. | Actual Auth/provider/role acceptance; copy/indirect writers until closed. No authoring form as shortcut. |
 | P1c | Both copy bodies/provenance, scoped nonclass choices and all ref/materializer/prune/reconcile adapters; shared order production and exact revision participation with R09. | Every unclosed state/inventory/spell/access/lifecycle/admin/restore family remains false. |
 | P1d | Reviewed exact ACL/function/trigger activation manifest closing ALL table/column/old-definer/service/lifecycle paths; original G2 role/HTTP/JWT/concurrency/fault proof and no fabricated readiness. | Deployment/cutover only by separate authorization; C2 UI still required. |
@@ -323,7 +437,10 @@ independent race/feat/feature/class-level grants retain source/effect order unto
 Proposed first child touchset ONLY new staged source, `lib/character/class-origin-command-schema.ts`,
 `lib/character/class-origin-command-model.ts`, corresponding focused tests, original
 fixtures and handoff. Existing C1/evaluator/provider/ASI/source effects unchanged.
-Any required frozen R09 helper ownership/order/revision source alteration is separately
+P1a is not a models-only substitute: staged immediate admission and distinct
+transition/bootstrap deferred finalizers are real SQL SOURCE deliverables, unapplied
+and unreachable through production Auth. Full producer/materializer/copy and joint
+R09 metadata-revision implementation remain later children. Any required frozen R09 helper ownership/order/revision source alteration is separately
 challenged before edits. Do not run migration CLI, generate migration name or execute
 this SQL from an npm test. G2 target/resource/role budget and cleanup manifest must be
 reviewed separately and require actual human authorization; it is absent today.
@@ -344,6 +461,15 @@ Finite acceptance controls before P1 availability:
    bijections after actual trigger side effects; no-op exactly0; exhaustion refuses
    new mutation but receipt replay works. Conflicting inspiration/ASI/level/ref/award
    attempts serialize, with no ABA or unversioned absolute writer success.
+   Metadata-only confirm of an only level1 class, only higher-level class, and already-
+   first multiclass origin advances exactly1 even when watched parent bytes are
+   unchanged. Confirm moving a different class first also advances only1. Duplicate
+   receipt replay advances0; ordinary unchanged level/subclass/reorder is0; same-
+   origin different-operation reseal refuses. Fake pending marker without actual
+   metadata delta and a second consumed revision transition refuse. Bootstrap fresh/
+   draft-copy/recorded-copy initializes0/0/order0 with absent before fields; source
+   high counters do not leak, unexpected post-insert UPDATE aborts, duplicate bootstrap
+   creates one target and advances0. Transition/bootstrap receipt substitution fails.
 5. Ordinary/foreign/anonymous/service generic DML and old RPCs cannot inject header,
    manifest, receipt, marker, origin/reseal, class/subclass reparent or caller revision.
    Forged GUC/current_user-only path/SET CONSTRAINTS/same-PID-next-transaction marker
@@ -359,6 +485,11 @@ Finite acceptance controls before P1 availability:
 8. Copy genuine draft/recorded/ended/legacy with exact remap, source unchanged, feature/
    ASI/spell/equipment provenance/consumption intact. Partial restore denies proof;
    source removal/profile lifecycle cannot erase surviving target/character receipts.
+   Copy-of-copy A→B→C retains A's original confirmation IDs/time/intent and separately
+   records B→C exact immediate remap/revisions. B-ended/A-active produces C-ended;
+   A-ended-before-copy stays unavailable through later copies. Wrong root ID, forged
+   immediate-source receipt, missing retained ended occurrence, active resurrected
+   origin pin, mismatched source/target map or copied counters refuses atomically.
 9. Actual authenticated HTTP/JWT owner/revoked owner/session/expiry boundary/current
    access tests plus provider/RI lock prefix must pass separately from trusted psql
    role/claim simulation. Browser draft/pending/native reset/error/malformed/uncertainty

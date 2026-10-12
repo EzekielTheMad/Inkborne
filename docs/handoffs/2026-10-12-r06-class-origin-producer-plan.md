@@ -35,3 +35,34 @@ Only static source/Git-object reads, maintainer documentation fetches, docs diff
 validation and local logical commit. No full gate required for documentation only.
 Future staged SQL source/execution, effective roles/concurrency/HTTP/JWT/recovery and
 all writer closure remain separately required; no G2 authority is present.
+
+## Amendment after independent HOLD on 48d9256
+
+48d9256 remains immutable. Corrected ONE changed parent-update assumption: explicit
+confirm_origin can change only protected private provenance for an already-first/
+only class. Proposed joint R09 protected metadata revision branch validates actual
+before/after metadata and consumes exactly one private transaction transition;
+bounded internal revision-only operation accepts no caller desired revision. Watched-
+parent and metadata-only branches share one entry, no double bump, manual caller
+increment, artificial reorder or no-op touch. The branch does not exist in frozen666.
+
+Separate bootstrap_new/bootstrap_copy receipt and finalizer variants have NO before
+target state/revision. Target action_revision0/class sequence0/order producer_revision0
+at INSERT; source counters remain source evidence only. Compose equipment/copy choices
+before INSERT, reject unexpected target UPDATE/bump. Later transition starts0→1.
+One bootstrap OR transition per target/xid8. Explicit level1/higher-level/multiclass
+already-first, moved-first, changed/unchanged/replay/exhaustion and receipt-kind failure
+controls added; no unexplained before+1 bootstrap assertion remains.
+
+P1c copy-of-copy freezes original A confirmation IDs/intent/time/root occurrence at
+confirmation separately from immediate B source receipt/revisions/current lifecycle
+and B→C remap. B ended while A active still makes C ended; historical root receipt
+is never rewritten. Bounded trusted flat copy attestation, not a recursive caller
+ancestry graph. C1 v1 direct-copy proof cannot represent all multi-hop ended cases;
+versioned lineage/read DTO bridge is explicitly required before copy availability.
+
+Smallest P1a after re-review includes actual UNAPPLIED staged immediate admission/
+transition+bootstrap deferred finalizer source plus private storage/ACL/strict schemas,
+not only a pure model. Auth unavailable, all13readinessfalse, full producers/writer/
+materializer/cutover future. This amendment changes ONLY these two plan/handoff docs;
+no product/SQL source, tests/heavy/runtime/process/dependency or other-tree operation.
