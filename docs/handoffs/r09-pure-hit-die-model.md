@@ -1,0 +1,28 @@
+# R09.2 — pure service-internal hit-die model checkpoint
+
+Base `aabf2d029bc0e12cf6331371e7c30d2f5209b4a0`, following the independently challenged [writer plan](../specs/2026-10-12-hit-die-writer-plan.md). This slice adds only `lib/character/durable-hit-die.ts`, its schema module, focused tests, and this handoff. It changes no provider/action/RPC, database type, SQL, migration, permission, dependency, or existing gameplay route.
+
+The planner returns `disabled` unless an internal caller explicitly passes its planning switch. That switch is for pure tests/trusted planning, **not** the future database rollout gate. There are no existing app/component imports of the new modules. `server-only` plus Node crypto keeps the planner outside client bundles. A `planned` result is a candidate, never a committed receipt or proof of durability.
+
+The strict browser request contains only version, character/operation IDs, command/class, expected decimal-string revision and fingerprint. Actor, die face, roll, HP and other extra authority fields are rejected. The injected face and evaluation/acceptance instants are separate service-internal inputs. No ambient RNG is used. `executeRoll` supplies the actual breakdown; its timestamp is overwritten with the injected evaluation instant so candidate output is deterministic.
+
+Snapshot validation requires explicit current HP/spent map/HP history, valid system rules, unique and matching character/system/content/version pins, one explicit selected class pin per choice, valid content data through existing content schemas, and coherent inventory provenance. Missing class data cannot fall back to d8. Missing non-primary rolled-only HP history is refused rather than converted to an average. A valid bigint revision is preserved as text up to PostgreSQL's maximum; a candidate at the maximum refuses counter exhaustion. Access/grant/spell dependency row arrays are opaque JSON: their presence does not prove authorization or freshness. The future resolver must construct/validate/lock them.
+
+Versioned canonicalization sorts object keys and preserves **all source array orders**, including class order and tied effects. It retains source data/effect fields in the dependency hash. No new ref sorting protocol is invented; shared server/sheet ordering remains an enablement prerequisite. `matchesHitDieOperation` compares identity/intent only and does not authorize receipt replay.
+
+Math reuses the actual evaluator, structured-source collector, max-HP, active-effect, armor, hit-die and dice helpers. It preserves current **baseline pin max HP / live Constitution** and **system-only sheet HP rule / builder campaign override** splits. First equipped body armor contributes generated armor effects. Shields contribute only the provider's `shield_equipped` boolean; inventory definition effects and numerical shield AC are not newly appended. This preserves current behavior and leaves the separate armor integration gap tracked. Healing floors at zero, caps at current baseline max HP, spends one die, and resets death saves only when healing from zero to positive HP.
+
+Effect expiry is checked using injected instants; acceptance at the deadline is expired. An effect already expired at evaluation is omitted by the existing collector. The future database must independently compare native timestamps using `clock_timestamp()` **after locks, immediately before acceptance**; transaction `now()` or this millisecond-precision TypeScript check is not commit authority. Receipt-first replay, current-owner denial, atomic state/roll/receipt commit, writer fences, primary recovery and account-scoped storage are still design requirements, not implemented here.
+
+Final verification:
+
+```powershell
+npm.cmd test -- tests/lib/character/durable-hit-die.test.ts tests/character/max-hp.test.ts tests/hit-dice/helpers.test.ts --maxWorkers=2
+npm.cmd run typecheck
+npm.cmd run lint
+git diff --check
+```
+
+All **3 files / 86 tests** passed, including **38 new schema/planner checks**; TypeScript and repository lint passed with zero warnings, and the diff check passed. Tests cover default-off behavior, authority-field rejection, bigint bounds, identity/fingerprint changes, complete/ambiguous/mismatched/unreadable pins, source-order parity, baseline/live/campaign splits, healing/spend/death-save behavior, unresolved/full HP/dice, expiry boundaries, unchanged inputs and no ambient RNG. Clean `npm ci --no-audit --no-fund` installed the existing lock (800 packages); package files are unchanged. Task shell/process metadata was recorded during install/tests/lint. Task-owned processes exited; no listeners or server/browser were started.
+
+No full suite/build/browser or real database gate was run for this bounded non-UI child. Root retains combined exact-source verification and independent review. Before enablement, the writer map must close all adapters and lock/privilege/phantom hazards; real multi-connection PostgreSQL/PostgREST must prove receipts, faults, replay and access; the real browser/server/database reload flow must prove account isolation and recovery. No hosted or release acceptance is implied.
