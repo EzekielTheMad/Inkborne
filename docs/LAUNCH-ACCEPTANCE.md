@@ -531,6 +531,63 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### Local NPC JSON reader/profile acceptance — 2026-10-12 20:57 UTC
+
+Test-only native byte-realm correction `7f3f021` and callback-void correction
+`53bb0a4` are integrated as `b48ff2e` / `2ec882b`. Tested handoff additions
+`a51060b`, `131b0b1`, `b1ecfa9` are `d6a61f8`, `c33734b`, `8ab7aff`.
+R13 sharing plan `8a19ab6` is `7ce212a`; P1b.2 producer plan `5058187` / replay
+amendment `f2da014` is `a7d6550` / `81629ce`. Plans passed independent review;
+their actual source children are now separate isolated work, not accepted runtime.
+
+Worker unsafe-reader-only control at `2594379` produced **nine substantive
+admission/profile failures and one valid positive**, with unchanged candidate
+schema/review/native hash/actual profile and exact eight-byte-file restoration.
+First restored run had **59 failures / 21 passes** because direct TextEncoder
+fixtures supplied foreign-realm bytes; reviewed identical-byte ownership fix
+yielded **four files / 80 tests PASS** at `a51060b`. Typecheck then found one
+table callback return-type error; reviewed void-only correction leaves all input
+vectors/assertions unchanged. Typecheck/lint passed at docs-only `131b0b1` over
+that correction. Original failure/restoration receipts remain in worker
+`test-results/r17-npc-json-gates/`; baseline manifest SHA256
+`2aa1f5ad799b46c228045ac6005cca7cd35aad2ee482519bd13c9bfa60704c49`.
+All **60** captured worker identities absent; owned processes/listeners zero.
+
+Clean root `81629ce050f9818827dc88008d6362cd6479435f` passed
+`npm.cmd run check`: **339 files / 4,266 tests**, 200.38 seconds, four workers,
+typecheck/zero-warning lint; all **374** identities absent. Fresh synthetic
+production build passed at the same source; all **24** identities absent. Exact
+build/root/lock/generated font classes, three CSS files and nineteen assets bound.
+
+Explicit `npm.cmd run test:e2e -- --config e2e/local-npc-json/playwright.config.ts`
+passed **eight desktop/mobile cases / eight screenshots / eight real-font samples**
+in 2.5 minutes. Native original file bytes/hash, duplicate story ideas/escaped
+text, Unicode byte-offset refusal with old preview retained, valid pair/declared
+empty groups, pending one-read guard and truthful prior-source status passed.
+Only result-delay timing is modeled. Complete own/inherited/transitive/source/
+root/build/manifest/assets/fonts/lock/installed-package envelope was freshly
+rebound after teardown and matched the rendered proof. Page/network/console errors
+zero, failure null; HTTP/CDP closed and browser exited. All **234** recorded gate
+identities absent; owned listeners zero. Mobile original/refused-retained and
+desktop pending screenshots inspected: readable contained content and explicit
+old source/hash. Receipts are in sibling `verification/launch-20261012/`, browser
+artifacts `test-results/npc-json-local/`. No OS file-dialog acceptance is claimed.
+
+This is a provisional LOCAL codec/review/profile; no Auth, app upload action,
+persisted ID/version, staging/commit/import/save, SQL or authenticated shell path.
+Human format preference and supported PDF matrix remain pending. Prior NPC,
+authoring/companion/ASI/print evidence retains its earlier exact-source bounds.
+This change added no app route or changed their production components.
+
+R13 worker's locked dependency setup also passed at `8a19ab6`: 804 packages,
+34 seconds, all five identities absent, unchanged lock SHA256 `7225aa90…2eb6`.
+No postinstall scripts, service/runtime or provider action. Item sharing source
+and private P1b.2 producer source now proceed without heavy gates. Independent
+R12 discovery recorded weak save acknowledgements/mounted-draft binding in older
+magic-item/item/weapon/armor/core-race families; a magic-item-only plan proceeds
+first, preserving family-specific raw/effect merge contracts. No beta or total
+project completion is implied; database activation and release gates stay open.
+
 ### Local NPC JSON prototype integrated, gates pending — 2026-10-12 20:36 UTC
 
 Reviewed local codec/review/profile source `0f3ee66`, meaningful unsafe-reader

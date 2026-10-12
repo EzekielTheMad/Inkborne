@@ -2,8 +2,12 @@
 
 ## Active execution — 2026-10-12 UTC
 
-Current local acceptance: `d62667d` passed **335 files / 4,186 tests**, typecheck,
-zero-warning lint and build after reviewed P1b.1 joint revision integration.
+Current local acceptance: `81629ce` passed **339 files / 4,266 tests**, typecheck,
+zero-warning lint and build after local NPC JSON prototype integration. Its eight
+desktop/mobile browser cases, eight screenshots/font samples, final source/build
+equality and empty errors/owned cleanup passed. All 374 check, 24 build and 234
+browser process identities exited. Provisional format has no app upload or save.
+Earlier P1b.1 combined acceptance is `d62667d` (335 files / 4,186 tests).
 The six source/test blobs match reviewed `760101b`; frozen P1a/R09 sources remain
 unchanged. Worker focused acceptance is 194 tests, with four meaningful old-model
 identity failures and four positive controls. All 363 check and 24 build process
@@ -18,9 +22,15 @@ acceptance remains `10b06c8`, with unchanged eight production blobs. Auth/query/
 actions/CAS/persistence remain modeled, actual authority open. Next P1b producer
 plan proceeds separately. Reviewed local NPC JSON source `0f3ee66` / `101027b`
 and corrected harness `2594379` are integrated through `d4fc0a7`; all 16 changed
-Git blobs match the approved worker. Narrow/full/build/browser gates are pending.
+Git blobs match the approved worker. Test-only realm/void corrections are included;
+80 worker tests/type/lint and the combined/browser gates above passed. Earlier
+59 realm failures and TS2322 remain preserved, not erased by later acceptance.
 Human format preference, app upload/commit and PDF matrix remain pending.
 Instances, companion mechanics and R19 remain open.
+R13 ordinary-item sharing and P1b.2 private confirmation producer plans are
+independently approved; source proceeds in isolated workers, no tests or SQL yet.
+Magic-item save acknowledgement hardening is the next bounded R12 plan; older
+authoring families still need uncertainty/snapshot/draft-binding acceptance.
 
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.

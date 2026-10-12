@@ -11,9 +11,11 @@ C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification
 ```
 
 Active branch `codex/launch-integration-20261011`. Verify actual HEAD/status before
-editing. Latest full check/build is `d62667d` (335 files / 4,186 tests), after reviewed
-P1b.1 source/model integration; 363 check and 24 build identities exited, owned
-listeners empty. SQL is unapplied/Auth unavailable/all13 readiness false. Earlier
+editing. Latest full check/build is `81629ce` (339 files / 4,266 tests), after local
+NPC JSON integration; 374 check and 24 build identities exited. JSON browser8/8
+screens/font samples and final whole artifact equality passed, 234 identities
+exited, owned listeners empty. SQL is unapplied/Auth unavailable/all13 readiness
+false. Earlier P1b.1 combined acceptance is `d62667d`; earlier
 `414f49e` companion
 22/22, NPC Library14/18, ASI44/226/46 and print6/33 gates passed with final binding
 and empty owned cleanup. Private NPC authoring18/20 remains `10b06c8`, unchanged
@@ -22,7 +24,10 @@ old-model identity failures retained. Next real private producer discovery is
 read-only; root has released the heavy slot after combined check/build.
 Reviewed JSON local codec/profile `0f3ee66` / `101027b` and final-binding harness
 `2594379` are integrated through `d4fc0a7`, all 16 changed Git blobs equal approved
-source. Worker owns narrow gates; root full/build/browser gates remain pending.
+source. Test-only realm/void corrections are included, worker80/type/lint and root
+combined/browser gates passed. Preserve original failed receipts. R13 item sharing
+and P1b.2 confirmation source workers proceed under reviewed plans; next R12
+magic-item acknowledgement plan is preparing. Root owns serialized heavy slots.
 Format preference/app upload/durable commit and PDF matrix remain pending.
 Root owns serialized heavy slots. Continue ready source/review/gates. This worktree shares Git
 with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git. No live changes.
