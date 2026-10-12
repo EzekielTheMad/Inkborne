@@ -77,7 +77,7 @@ describe("provisional local one-NPC JSON codec; no app upload or database proof"
     const result = decodeNpcJson(bytes(JSON.stringify(minimal).replace('"Original NPC"', '"\\ud83d\\ude00"')), "pair.json");
     expect(result).toMatchObject({ success: true, candidate: { name: "😀" } });
   });
-  it.each(['{"x":01}', '{"x":1.}', '{"x":true,}', '{"x":[1,]}', '{/*comment*/}', '[undefined]', '{} trailing', '{"x":"\\x41"}', '{"x":"\n"}', 'NaN', '(()=>{window.compromised=true})()'])("fails strict JSON grammar without partial candidate %s", source => refusal(source, "SYNTAX"));
+  it.each(['{"x":01}', '{"x":1.}', '{"x":true,}', '{"x":[1,]}', '{/*comment*/}', '[undefined]', '{} trailing', '{"x":"\\x41"}', '{"x":"\n"}', 'NaN', '(()=>{window.compromised=true})()'])("fails strict JSON grammar without partial candidate %s", source => { refusal(source, "SYNTAX"); });
   it("rejects finite overflow without inventing a value", () => refusal('{"x":1e999}', "NON_FINITE"));
   it("rejects BOM and malformed UTF8 with original sequence location", () => {
     expect(decodeNpcJson(new Uint8Array([0xef, 0xbb, 0xbf, 123, 125]), "bom.json")).toMatchObject({ success: false, diagnostics: [{ code: "BOM" }] });
