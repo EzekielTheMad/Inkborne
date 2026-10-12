@@ -18,6 +18,64 @@ export const approvedTraitSource = "fcb3c239ead1008b28332bf4914a6b7013825a2d";
 export const traitSourcePaths = ["components/library/trait-form.tsx", "lib/homebrew/trait-form.ts", "lib/supabase/homebrew-traits-server.ts", "app/(app)/homebrew/traits/actions.ts"];
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
 const readJson = bytes => JSON.parse(bytes.toString("utf8").replace(/^\uFEFF/, ""));
+const gitText = (root, args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", windowsHide: true }).trim();
+
+export function assertHeadWorkingTree(root, relativePath) {
+  // HEAD comparison includes staged AND unstaged tracked changes, unlike plain git diff.
+  assert.equal(gitText(root, ["diff", "HEAD", "--", relativePath]), "", `HEAD-to-working-tree drift: ${relativePath}`);
+  assert.equal(gitText(root, ["ls-files", "--error-unmatch", "--", relativePath]), relativePath, `Untracked bundled project input: ${relativePath}`);
+}
+
+export function traitProjectInputPlugin(root, captured) {
+  return { name: "trait-capture-actual-project-bytes", setup(builder) {
+    builder.onLoad({ filter: /\.(tsx?|jsx?|mjs|cjs|json)$/, namespace: "file" }, async args => {
+      const absolute = await fs.realpath(args.path);
+      const relativePath = path.relative(root, absolute).replaceAll(path.sep, "/");
+      if (relativePath.startsWith("node_modules/")) return;
+      assert.ok(relativePath && !relativePath.startsWith("../") && !path.isAbsolute(relativePath), "Project input escaped worker");
+      const bytes = await fs.readFile(absolute);
+      captured.set(absolute, { relativePath, sha256: digest(bytes), bytes: bytes.length });
+      const extension = path.extname(absolute).slice(1);
+      const loader = extension === "mjs" || extension === "cjs" ? "js" : extension;
+      return { contents: bytes.toString("utf8"), loader, resolveDir: path.dirname(absolute) };
+    });
+  } };
+}
+
+/** Bind every actual metafile project input to the bytes supplied to esbuild and root. */
+export async function bindTraitProjectInputs(root, metafile, captured, artifacts) {
+  const rootCheckout = path.resolve(root, "../equipment-verification");
+  assert.equal(gitText(rootCheckout, ["rev-parse", "HEAD"]), artifacts.currentRootHead, "Root moved during bundle");
+  assert.equal(gitText(rootCheckout, ["status", "--porcelain", "--untracked-files=no"]), "", "Root changed during bundle");
+  const bundledProjectInputs = [], syntheticInputs = [];
+  for (const input of Object.keys(metafile.inputs)) {
+    if (input.startsWith("trait-offline:")) { syntheticInputs.push({ input, boundary: "declared action/navigation stub" }); continue; }
+    const absolute = await fs.realpath(path.resolve(root, input));
+    const relativePath = path.relative(root, absolute).replaceAll(path.sep, "/");
+    if (relativePath.startsWith("node_modules/")) continue;
+    const receipt = captured.get(absolute);
+    assert.ok(receipt, `Project bytes were not captured by esbuild onLoad: ${input}`);
+    assert.equal(digest(await fs.readFile(absolute)), receipt.sha256, `Worker changed during bundle: ${relativePath}`);
+    if (relativePath === "e2e/local-traits/fixture.tsx") { syntheticInputs.push({ ...receipt, boundary: "synthetic fixture" }); continue; }
+    assertHeadWorkingTree(root, relativePath);
+    assertHeadWorkingTree(rootCheckout, relativePath);
+    assert.equal(digest(await fs.readFile(path.join(rootCheckout, relativePath))), receipt.sha256, `Bundled bytes differ from current root: ${relativePath}`);
+    const workerBlob = execFileSync("git", ["-C", root, "show", `HEAD:${relativePath}`], { windowsHide: true });
+    const rootBlob = execFileSync("git", ["-C", rootCheckout, "show", `HEAD:${relativePath}`], { windowsHide: true });
+    assert.equal(digest(workerBlob), digest(rootBlob), `Bundled input HEAD differs from root: ${relativePath}`);
+    bundledProjectInputs.push(receipt);
+  }
+  for (const required of ["components/library/trait-form.tsx", "lib/homebrew/trait-form.ts", "lib/schemas/content-types/trait.ts"]) {
+    assert.ok(bundledProjectInputs.some(entry => entry.relativePath === required), `Missing actual required bundled input: ${required}`);
+  }
+  for (const relativePath of ["package-lock.json", "package.json", "tsconfig.json"]) {
+    assertHeadWorkingTree(root, relativePath); assertHeadWorkingTree(rootCheckout, relativePath);
+    const worker = await fs.readFile(path.join(root, relativePath));
+    assert.equal(digest(worker), digest(await fs.readFile(path.join(rootCheckout, relativePath))), `Worker/root runtime configuration differs: ${relativePath}`);
+    if (relativePath === "package-lock.json") assert.equal(digest(worker), artifacts.dependencyLockSha256, "Dependency lock changed during bundle");
+  }
+  return { bundledProjectInputs, syntheticInputs, metafileSha256: digest(JSON.stringify(metafile)) };
+}
 
 /** Reviewed R16 static asset/receipt guards, applied to this separately bundled form. */
 export async function loadTraitProductionAssets(root, manifestPath) {
@@ -42,13 +100,20 @@ export async function loadTraitProductionAssets(root, manifestPath) {
   const receiptBytes = await fs.readFile(manifest.buildReceipt.path);
   assert.equal(digest(receiptBytes), manifest.buildReceipt.sha256);
   validateTraitBuildReceipt(readJson(receiptBytes), currentRootHead);
+  assert.match(manifest.dependencyLockSha256, /^[a-f0-9]{64}$/);
+  for (const checkout of [root, rootCheckout]) {
+    assertHeadWorkingTree(checkout, "package-lock.json");
+    assert.equal(digest(await fs.readFile(path.join(checkout, "package-lock.json"))), manifest.dependencyLockSha256, "Worker/root must use exact approved dependency lock bytes");
+  }
+  const lock = readJson(await fs.readFile(path.join(root, "package-lock.json")));
+  assert.equal(readJson(await fs.readFile(path.join(root, "node_modules/esbuild/package.json"))).version,
+    lock.packages["node_modules/esbuild"].version, "Installed esbuild must match the approved lock version");
   // Cherry-picks need not retain ancestry. Match exact approved Git blobs instead.
   const sourceFiles = traitSourcePaths.map(relativePath => {
     const expected = execFileSync("git", ["-C", root, "show", `${approvedTraitSource}:${relativePath}`], { windowsHide: true });
     const actual = execFileSync("git", ["-C", rootCheckout, "show", `${currentRootHead}:${relativePath}`], { windowsHide: true });
     assert.equal(digest(actual), digest(expected), `Root build lacks approved trait source: ${relativePath}`);
-    const worker = execFileSync("git", ["-C", root, "diff", "--", relativePath], { encoding: "utf8", windowsHide: true });
-    assert.equal(worker.trim(), "", `Worker trait source is dirty: ${relativePath}`);
+    assertHeadWorkingTree(root, relativePath);
     const workerHead = execFileSync("git", ["-C", root, "show", `HEAD:${relativePath}`], { windowsHide: true });
     assert.equal(digest(workerHead), digest(expected), `Worker trait source drift: ${relativePath}`);
     return { relativePath, gitBlobSha256: digest(actual) };

@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { chromium } from "playwright";
-import { loadTraitProductionAssets, traitOfflinePlugin } from "./trait-production-assets.mjs";
+import { bindTraitProjectInputs, loadTraitProductionAssets, traitOfflinePlugin, traitProjectInputPlugin } from "./trait-production-assets.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "test-results", "traits-local");
@@ -30,8 +30,14 @@ const manifestFlag = process.argv.indexOf("--artifact-manifest");
 if (manifestFlag !== -1) assert.ok(process.argv[manifestFlag + 1], "--artifact-manifest requires a path");
 const manifestPath = manifestFlag === -1 ? path.join(output, "production-artifacts.json") : path.resolve(process.argv[manifestFlag + 1]);
 const { assets, cssUrls, htmlClassName, artifacts } = await loadTraitProductionAssets(root, manifestPath);
-await build({ entryPoints: [path.join(root, "e2e/local-traits/fixture.tsx")], outfile: path.join(output, "fixture.js"),
-  bundle: true, platform: "browser", jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' }, plugins: [traitOfflinePlugin(root)] });
+const capturedInputs = new Map();
+const bundle = await build({ absWorkingDir: root, entryPoints: [path.join(root, "e2e/local-traits/fixture.tsx")], outfile: path.join(output, "fixture.js"),
+  bundle: true, metafile: true, platform: "browser", jsx: "automatic", define: { "process.env.NODE_ENV": '"production"' },
+  plugins: [traitOfflinePlugin(root), traitProjectInputPlugin(root, capturedInputs)] });
+Object.assign(artifacts, await bindTraitProjectInputs(root, bundle.metafile, capturedInputs, artifacts));
+await fs.writeFile(path.join(output, "bundle-metafile.json"), JSON.stringify(bundle.metafile, null, 2));
+await fs.writeFile(path.join(output, "bundle-inputs.json"), JSON.stringify({ dependencyLockSha256: artifacts.dependencyLockSha256,
+  bundledProjectInputs: artifacts.bundledProjectInputs, syntheticInputs: artifacts.syntheticInputs, metafileSha256: artifacts.metafileSha256 }, null, 2));
 assert.equal(stopping, false, "Trait harness interrupted during preparation");
 const evidence = [], screenshots = [], pageErrors = [], blockedRequests = [], unexpectedRequests = [], assetRequests = [], fontEvidence = [], layoutSamples = [];
 const reloads = new Map();
