@@ -43,6 +43,9 @@ function preserveFormDraft(form: HTMLFormElement | null) {
 
 export function ItemForm({ mode, initialValue }: ItemFormProps) {
   const [state, formAction, pending] = useActionState(mode === "create" ? createHomebrewItem : updateHomebrewItem, emptyState);
+  const [draftIdentity] = useState(() => ({ mode, id: initialValue?.id, version: initialValue?.version }));
+  const staleDraft = mode !== draftIdentity.mode || (mode === "edit" && (!initialValue
+    || initialValue.id !== draftIdentity.id || initialValue.version !== draftIdentity.version));
   const [fields, setFields] = useState(() => ({
     name: initialValue?.name ?? "",
     equipment_category: initialValue?.data.equipment_category ?? "",
@@ -55,10 +58,10 @@ export function ItemForm({ mode, initialValue }: ItemFormProps) {
     setFields((current) => ({ ...current, [key]: value }));
   }
   return (
-    <form action={formAction} ref={preserveFormDraft} className="j-card-paper space-y-7 p-5 sm:p-7">
-      {initialValue ? <>
-        <input type="hidden" name="id" value={initialValue.id} />
-        <input type="hidden" name="expected_version" value={initialValue.version} />
+    <form action={formAction} onSubmit={event => { if (staleDraft) event.preventDefault(); }} ref={preserveFormDraft} className="j-card-paper space-y-7 p-5 sm:p-7">
+      {draftIdentity.mode === "edit" ? <>
+        <input type="hidden" name="id" value={draftIdentity.id ?? ""} />
+        <input type="hidden" name="expected_version" value={draftIdentity.version ?? ""} />
       </> : null}
       <fieldset className="space-y-4">
         <legend className="j-folio mb-3">Item details</legend>
@@ -87,10 +90,11 @@ export function ItemForm({ mode, initialValue }: ItemFormProps) {
       <div className="space-y-3 border-t border-border pt-5">
         {mode === "edit" ? <p className="text-sm text-muted-foreground">Changes create a new immutable version. Existing character inventory pins keep their saved version.</p> : null}
         {state.status !== "idle" && state.message ? <p role="alert" className="text-sm text-destructive">{state.message}</p> : null}
+        {staleDraft ? <p role="alert" className="text-sm text-destructive">The saved item or campaign access changed. Your draft is preserved; reload latest before saving.</p> : null}
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Link href="/homebrew" className={buttonVariants({ variant: "outline" })}>Cancel</Link>
-          {state.status === "conflict" ? <Button type="button" variant="outline" onClick={() => window.location.reload()}>Reload latest</Button> : null}
-          <Button type="submit" variant="gold" disabled={pending || state.status === "conflict"}>
+          {staleDraft || state.status === "conflict" ? <Button type="button" variant="outline" onClick={() => window.location.reload()}>Reload latest</Button> : null}
+          <Button type="submit" variant="gold" disabled={pending || staleDraft || state.status === "conflict"}>
             {pending ? "Saving..." : mode === "create" ? "Create private item" : "Save new version"}
           </Button>
         </div>

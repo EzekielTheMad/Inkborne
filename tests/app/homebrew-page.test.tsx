@@ -322,3 +322,18 @@ describe("HomebrewPage", () => {
     expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
 });
+
+describe("ordinary item saved scope badge", () => {
+  beforeEach(() => {
+    for (const [key, mock] of Object.entries(mocks)) if (key.startsWith("listOwned")) mock.mockResolvedValue([]);
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null });
+  });
+  it("renders the shared current item without relabeling unrelated private families", async () => {
+    mocks.listOwnedItems.mockResolvedValue([{ id: "original-item", name: "Original Shared Lantern", scope: "shared", version: 2,
+      data: { equipment_category: "Gear", description: "Original equipment." } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    const link = screen.getByRole("link", { name: /Original Shared Lantern/ });
+    expect(link).toHaveAttribute("href", "/homebrew/items/original-item/edit");
+    expect(link).toHaveTextContent("Shared"); expect(link).toHaveTextContent("v2");
+  });
+});

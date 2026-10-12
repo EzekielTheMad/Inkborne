@@ -29,7 +29,7 @@ export interface HomebrewItemRecord {
   data: ItemData;
   effects: unknown[];
   source: "homebrew";
-  scope: "personal";
+  scope: "personal" | "shared";
   owner_id: string;
   version: number;
   created_at: string;
@@ -55,7 +55,7 @@ const rowEnvelopeSchema = z.object({
   data: z.unknown(),
   effects: z.array(z.unknown()),
   source: z.literal("homebrew"),
-  scope: z.literal("personal"),
+  scope: z.enum(["personal", "shared"]),
   owner_id: z.string().uuid(),
   version: z.number().int().positive(),
   created_at: z.string().min(1),
@@ -177,7 +177,7 @@ export async function listOwnedHomebrewItems(): Promise<
     .eq("system_id", system.id)
     .eq("source", "homebrew")
     .eq("content_type", "item")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .order("name");
 
@@ -202,7 +202,7 @@ export async function getOwnedHomebrewItem(
     .eq("system_id", system.id)
     .eq("source", "homebrew")
     .eq("content_type", "item")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .maybeSingle();
 
@@ -250,7 +250,10 @@ export async function createHomebrewItemRecord(
 
   if (error || !data) return databaseMutationFailure(error);
   try {
-    return parseRecord(data);
+    const saved = parseRecord(data);
+    // Shared reads/edits do not widen the original private-create response.
+    if (saved.scope !== "personal") return failure("The item could not be saved. Please try again.");
+    return saved;
   } catch {
     return failure("The item could not be saved. Please try again.");
   }
@@ -301,7 +304,7 @@ export async function updateHomebrewItemRecord(
     .eq("system_id", context.systemId)
     .eq("source", "homebrew")
     .eq("content_type", "item")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .eq("version", identity.data.expectedVersion)
     .select(HOMEBREW_SELECT)
@@ -324,7 +327,7 @@ export async function updateHomebrewItemRecord(
     .eq("system_id", context.systemId)
     .eq("source", "homebrew")
     .eq("content_type", "item")
-    .eq("scope", "personal")
+    .in("scope", ["personal", "shared"])
     .eq("is_retired", false)
     .maybeSingle();
 
@@ -338,4 +341,78 @@ export async function updateHomebrewItemRecord(
   }
 
   return failure("This homebrew item could not be found.");
+}
+
+export interface HomebrewItemCampaignOption {
+  id: string;
+  name: string;
+  shared: boolean;
+  eligible: boolean;
+}
+export interface HomebrewItemCampaignAccess {
+  campaigns: HomebrewItemCampaignOption[];
+  sharedCampaignCount: number;
+}
+export interface HomebrewItemShareSuccess {
+  contentId: string;
+  version: number;
+  scope: "personal" | "shared";
+  sharedCampaignCount: number;
+}
+export interface HomebrewItemShareFailure {
+  status: "error" | "conflict" | "uncertain";
+  message: string;
+}
+export type HomebrewItemShareResponse = HomebrewItemShareSuccess | HomebrewItemShareFailure;
+const campaignOptionSchema = z.strictObject({ id: z.uuid(), name: z.string().min(1), shared: z.boolean(), eligible: z.boolean() });
+const shareVersionSchema = z.number().int().min(1).max(2147483647);
+const shareRowSchema = z.strictObject({ content_id: z.uuid(), version: shareVersionSchema,
+  scope: z.enum(["personal", "shared"]), shared_campaign_count: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) });
+
+export async function getHomebrewItemCampaignAccess(id: string): Promise<HomebrewItemCampaignAccess> {
+  // The type-independent RPC cannot replace the owned item route boundary.
+  const item = await getOwnedHomebrewItem(id);
+  if (!item) throw new Error("This owned homebrew item is unavailable.");
+  const { supabase } = await requireAuthenticatedSession();
+  const { data, error, count } = await supabase.rpc("list_owned_content_campaign_access", { target_content_id: item.id }, { count: "exact" });
+  if (error) throw error;
+  const campaigns = z.array(campaignOptionSchema).parse(data);
+  if (!Number.isSafeInteger(count) || count !== campaigns.length) throw new Error("Complete campaign access projection is unavailable.");
+  if (new Set(campaigns.map(campaign => campaign.id)).size !== campaigns.length) throw new Error("Campaign access returned duplicate identifiers.");
+  return { campaigns, sharedCampaignCount: campaigns.filter(campaign => campaign.shared).length };
+}
+
+function uncertainItemShare(): HomebrewItemShareFailure {
+  return { status: "uncertain", message: "Campaign access could not be confirmed. Reload latest access before making another change." };
+}
+export async function setHomebrewItemCampaignShare(contentId: string, campaignId: string, enabled: boolean, expectedVersion: number): Promise<HomebrewItemShareResponse> {
+  const session = await authenticatedSession();
+  if (!session) return { status: "error", message: "Sign in before changing campaign access." };
+  const input = z.object({ contentId: z.uuid(), campaignId: z.uuid(), enabled: z.boolean(), expectedVersion: shareVersionSchema })
+    .safeParse({ contentId, campaignId, enabled, expectedVersion });
+  if (!input.success) return { status: "error", message: "The item, campaign, or version is invalid." };
+  if (!await resolvePublishedSystem(session.supabase)) return { status: "error", message: "The D&D 5e (2014) system is unavailable." };
+  try {
+    const { data, error } = await session.supabase.rpc("set_content_campaign_share", {
+      target_content_id: input.data.contentId, target_campaign_id: input.data.campaignId,
+      enabled: input.data.enabled, expected_version: input.data.expectedVersion,
+    });
+    if (error) {
+      if (error.code === "40001") return { status: "conflict", message: "This item changed in another session. Reload latest access." };
+      // These database exceptions roll back the single RPC transaction. Network
+      // failures and unclassified responses cannot certify whether it committed.
+      if (["42501", "22023", "22003", "23514"].includes(error.code)) return { status: "error", message: "Campaign access was refused. Reload latest access before trying again." };
+      return uncertainItemShare();
+    }
+    const rows = z.array(shareRowSchema).length(1).safeParse(data);
+    if (!rows.success) return uncertainItemShare();
+    const row = rows.data[0];
+    if (row.content_id !== input.data.contentId
+      || (row.version !== input.data.expectedVersion && row.version !== input.data.expectedVersion + 1)
+      || (row.scope === "shared") !== (row.shared_campaign_count > 0)
+      || (input.data.enabled && row.shared_campaign_count === 0)) return uncertainItemShare();
+    // Exact written snapshot proof belongs to the staged RPC transaction, not a
+    // racy later current-row read (nor an inaccessible final-revoke snapshot).
+    return { contentId: row.content_id, version: row.version, scope: row.scope, sharedCampaignCount: row.shared_campaign_count };
+  } catch { return uncertainItemShare(); }
 }

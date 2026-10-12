@@ -36,6 +36,8 @@ vi.mock("@/lib/supabase/homebrew-spells-server", () => ({
   setHomebrewSpellCampaignShare: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase/homebrew-items-server", () => ({ setHomebrewItemCampaignShare: vi.fn() }));
+
 import { revalidatePath } from "next/cache";
 import {
   assignCharacterToCampaign,
@@ -55,6 +57,7 @@ import { createClient } from "@/lib/supabase/server";
 import { setHomebrewBackgroundCampaignShare } from "@/lib/supabase/homebrew-backgrounds-server";
 import { setHomebrewFeatCampaignShare } from "@/lib/supabase/homebrew-feats-server";
 import { setHomebrewSpellCampaignShare } from "@/lib/supabase/homebrew-spells-server";
+import { setHomebrewItemCampaignShare } from "@/lib/supabase/homebrew-items-server";
 
 const mockedCreateClient = vi.mocked(createClient);
 const campaignId = "11111111-1111-4111-8111-111111111111";
@@ -386,5 +389,24 @@ describe("campaign actions", () => {
     expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
     expect(setHomebrewBackgroundCampaignShare).not.toHaveBeenCalled();
     expect(target).toBe("/campaigns?error=invalid_content_share");
+  });
+});
+
+describe("ordinary item campaign-owner revoke dispatch", () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+  it("adds item without routing it through spell/feat/background helpers", async () => {
+    mockSupabase();
+    vi.mocked(setHomebrewItemCampaignShare).mockResolvedValue({ contentId, version: 5, scope: "personal", sharedCampaignCount: 0 });
+    const target = await captureRedirect(() => revokeCampaignSharedContent(makeFormData({ campaign_id: campaignId, content_id: contentId, content_type: "item", expected_version: "4" })));
+    expect(setHomebrewItemCampaignShare).toHaveBeenCalledExactlyOnceWith(contentId, campaignId, false, 4);
+    expect(setHomebrewFeatCampaignShare).not.toHaveBeenCalled(); expect(setHomebrewBackgroundCampaignShare).not.toHaveBeenCalled(); expect(setHomebrewSpellCampaignShare).not.toHaveBeenCalled();
+    expect(target).toBe(`/campaigns/${campaignId}/settings?content_revoked=1`);
+  });
+  it("does not announce a revoke when the result is uncertain", async () => {
+    mockSupabase();
+    vi.mocked(setHomebrewItemCampaignShare).mockResolvedValue({ status: "uncertain", message: "Reload before retry." });
+    const target = await captureRedirect(() => revokeCampaignSharedContent(makeFormData({ campaign_id: campaignId, content_id: contentId, content_type: "item", expected_version: "4" })));
+    expect(target).toBe(`/campaigns/${campaignId}/settings?content_error=1`);
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

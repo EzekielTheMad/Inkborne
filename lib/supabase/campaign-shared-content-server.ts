@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 const campaignSharedContentRowSchema = z.object({
   content_id: z.string().uuid(),
   name: z.string().min(1),
-  content_type: z.enum(["spell", "feat", "background"]),
+  content_type: z.enum(["spell", "feat", "background", "item"]),
   version: z.number().int().positive(),
   source: z.string().min(1),
   scope: z.literal("shared"),
@@ -17,7 +17,7 @@ const campaignSharedContentRowSchema = z.object({
 export interface CampaignSharedContent {
   contentId: string;
   name: string;
-  contentType: "spell" | "feat" | "background";
+  contentType: "spell" | "feat" | "background" | "item";
   version: number;
   source: string;
   scope: "shared";

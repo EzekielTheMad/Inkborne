@@ -10,6 +10,7 @@ import { normalizeRichTextContent } from "@/lib/editor/content";
 import { setHomebrewFeatCampaignShare } from "@/lib/supabase/homebrew-feats-server";
 import { setHomebrewBackgroundCampaignShare } from "@/lib/supabase/homebrew-backgrounds-server";
 import { setHomebrewSpellCampaignShare } from "@/lib/supabase/homebrew-spells-server";
+import { setHomebrewItemCampaignShare } from "@/lib/supabase/homebrew-items-server";
 
 const createCampaignInput = z.object({
   name: z.string().trim().min(1).max(100),
@@ -57,7 +58,7 @@ const removeMemberInput = campaignIdInput.extend({
 
 const revokeSharedContentInput = campaignIdInput.extend({
   contentId: z.string().uuid(),
-  contentType: z.enum(["spell", "feat", "background"]),
+  contentType: z.enum(["spell", "feat", "background", "item"]),
   expectedVersion: z.coerce.number().int().positive(),
 });
 
@@ -84,7 +85,9 @@ export async function revokeCampaignSharedContent(formData: FormData): Promise<n
     ? setHomebrewFeatCampaignShare
     : parsed.data.contentType === "background"
       ? setHomebrewBackgroundCampaignShare
-      : setHomebrewSpellCampaignShare;
+      : parsed.data.contentType === "item"
+        ? setHomebrewItemCampaignShare
+        : setHomebrewSpellCampaignShare;
   const result = await mutation(
     parsed.data.contentId,
     parsed.data.campaignId,

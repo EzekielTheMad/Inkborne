@@ -66,3 +66,34 @@ describe("ItemForm", () => {
     expect((actions.update.mock.calls[0][1] as FormData).get("expected_version")).toBe("2");
   });
 });
+
+describe("mounted item draft version binding", () => {
+  const original = { id: "11111111-1111-4111-8111-111111111111", name: "Original Lantern", version: 2,
+    data: { equipment_category: "Gear", description: "Original draft text.", cost: { quantity: 0, unit: "gp" }, weight: 0 } };
+  it.each([{ ...original, version: 3 }, { ...original, id: "22222222-2222-4222-8222-222222222222" }])("refuses revalidation identity/version %j without rebasing or resetting draft", next => {
+    actions.update.mockClear();
+    const { rerender } = render(<ItemForm mode="edit" initialValue={original} />);
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Unsaved original draft" } });
+    fireEvent.change(screen.getByLabelText("Item description"), { target: { value: "Preserve every word." } });
+    rerender(<ItemForm mode="edit" initialValue={next} />);
+    const form = screen.getByRole("button", { name: "Save new version" }).closest("form")!;
+    // Meaningful before control: old typed fields are still mounted before the
+    // exact version/refusal oracles, not a missing component or new constructor.
+    expect(screen.getByLabelText("Name")).toHaveValue("Unsaved original draft");
+    expect(screen.getByLabelText("Item description")).toHaveValue("Preserve every word.");
+    expect(new FormData(form).get("expected_version")).toBe("2");
+    expect(new FormData(form).get("id")).toBe(original.id);
+    expect(screen.getByRole("button", { name: "Save new version" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Your draft is preserved");
+    expect(screen.getByRole("button", { name: "Reload latest" })).toBeEnabled();
+    fireEvent.submit(form);
+    expect(actions.update).not.toHaveBeenCalled();
+  });
+  it("keeps a same-version revalidation editable with its original draft", () => {
+    const { rerender } = render(<ItemForm mode="edit" initialValue={original} />);
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Local draft" } });
+    rerender(<ItemForm mode="edit" initialValue={{ ...original }} />);
+    expect(screen.getByLabelText("Name")).toHaveValue("Local draft");
+    expect(screen.getByRole("button", { name: "Save new version" })).toBeEnabled();
+  });
+});

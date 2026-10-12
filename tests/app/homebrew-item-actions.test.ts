@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
+  share: vi.fn(),
   revalidatePath: vi.fn(),
   redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`); }),
   getUser: vi.fn(),
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({
   createHomebrewItemRecord: mocks.create,
   updateHomebrewItemRecord: mocks.update,
+  setHomebrewItemCampaignShare: mocks.share,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
@@ -21,6 +23,7 @@ vi.mock("@/lib/supabase/server", () => ({
 import {
   createHomebrewItem,
   updateHomebrewItem,
+  toggleHomebrewItemCampaignShare,
 } from "@/app/(app)/homebrew/items/actions";
 
 const idle = { status: "idle" as const, message: "" };
@@ -91,5 +94,41 @@ describe("homebrew item actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith(
       "/homebrew/items/item-id/edit",
     );
+  });
+});
+
+describe("ordinary item sharing action", () => {
+  const contentId = "33333333-3333-4333-8333-333333333333", campaignId = "44444444-4444-4444-8444-444444444444";
+  function input(enabled = "true", version = "1") {
+    const form = new FormData();
+    for (const [key, value] of Object.entries({ content_id: contentId, campaign_id: campaignId, enabled, expected_version: version })) form.set(key, value);
+    return form;
+  }
+  beforeEach(() => { vi.clearAllMocks(); mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null }); });
+  it("authenticates before any sharing helper", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    await expect(toggleHomebrewItemCampaignShare(idle, input())).rejects.toThrow("REDIRECT:/login"); expect(mocks.share).not.toHaveBeenCalled();
+  });
+  it.each(["false-ish", "1", "", "TRUE"])("refuses malformed enabled %s without RPC", async enabled => {
+    expect(await toggleHomebrewItemCampaignShare(idle, input(enabled))).toMatchObject({ status: "error" }); expect(mocks.share).not.toHaveBeenCalled();
+  });
+  it.each(["0", "2147483648", "1.5"])("refuses out-of-domain version %s", async version => {
+    expect(await toggleHomebrewItemCampaignShare(idle, input("true", version))).toMatchObject({ status: "error" }); expect(mocks.share).not.toHaveBeenCalled();
+  });
+  it("returns exact confirmed identity/selection/written version and invalidates only its catalog/edit/campaign paths", async () => {
+    mocks.share.mockResolvedValue({ contentId, version: 2, scope: "shared", sharedCampaignCount: 1 });
+    expect(await toggleHomebrewItemCampaignShare(idle, input())).toMatchObject({ status: "idle", contentId, campaignId, enabled: true, version: 2 });
+    expect(mocks.share).toHaveBeenCalledExactlyOnceWith(contentId, campaignId, true, 1);
+    expect(mocks.revalidatePath.mock.calls.map(([path]) => path)).toEqual(["/homebrew", "/library", `/homebrew/items/${contentId}/edit`, `/campaigns/${campaignId}/settings`]);
+  });
+  it.each(["conflict", "uncertain"] as const)("does not automatically resubmit prior %s state or emit success invalidation", async status => {
+    const previous = { status, message: "Explicit reload required", contentId, campaignId, enabled: true };
+    expect(await toggleHomebrewItemCampaignShare(previous, input())).toEqual(previous);
+    expect(mocks.share).not.toHaveBeenCalled(); expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+  it("keeps uncertain returned state correlated with requested campaign, without success", async () => {
+    mocks.share.mockResolvedValue({ status: "uncertain", message: "Reload latest access." });
+    expect(await toggleHomebrewItemCampaignShare(idle, input())).toMatchObject({ status: "uncertain", contentId, campaignId, enabled: true });
+    expect(mocks.share).toHaveBeenCalledOnce(); expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

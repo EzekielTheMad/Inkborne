@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 
 import { ItemForm } from "@/components/library/item-form";
-import { getOwnedHomebrewItem } from "@/lib/supabase/homebrew-items-server";
+import { ItemSharingPanel } from "@/components/library/item-sharing-panel";
+import { getOwnedHomebrewItem, getHomebrewItemCampaignAccess } from "@/lib/supabase/homebrew-items-server";
 import { createClient } from "@/lib/supabase/server";
 
 interface EditHomebrewItemPageProps {
@@ -18,12 +19,13 @@ export default async function EditHomebrewItemPage({
   const { id } = await params;
   const item = await getOwnedHomebrewItem(id);
   if (!item) notFound();
+  const campaignAccess = await getHomebrewItemCampaignAccess(item.id);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="j-folio">Private homebrew · version {item.version}</p>
+          <p className="j-folio">{item.scope === "shared" ? "Shared homebrew" : "Private homebrew"} · version {item.version}</p>
           <h1 className="j-display mt-1.5 text-2xl text-foreground sm:text-3xl">
             Edit {item.name}
           </h1>
@@ -41,6 +43,7 @@ export default async function EditHomebrewItemPage({
           data: item.data,
         }}
       />
+      <ItemSharingPanel contentId={item.id} version={item.version} scope={item.scope} sharedCampaignCount={campaignAccess.sharedCampaignCount} campaigns={campaignAccess.campaigns} />
     </div>
   );
 }

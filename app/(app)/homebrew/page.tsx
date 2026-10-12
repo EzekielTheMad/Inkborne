@@ -374,7 +374,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
                     <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{item.data.description}</p>
                   </div>
                   <div className="flex shrink-0 gap-1.5">
-                    <Badge variant="outline">Private</Badge>
+                    <Badge variant="outline">{item.scope === "shared" ? "Shared" : "Private"}</Badge>
                     <Badge variant="secondary">v{item.version}</Badge>
                   </div>
                 </div>
