@@ -56,6 +56,7 @@ const maceRef = {
       range: "5 ft",
       properties: [],
       weapon_type: "melee",
+      weapon_category: "Simple",
     },
   },
 } as unknown as ContentRefWithContent;

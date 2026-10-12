@@ -1,5 +1,6 @@
 import type { CharacterPrintInput } from "@/lib/character/print-model";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import { weaponDataSchema } from "@/lib/schemas/content-types/weapon";
 
 /** Original, rights-safe renderer fixtures. These model loaded evaluated values;
  * they do not establish rule-engine parity or live character hydration. */
@@ -23,7 +24,7 @@ export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrin
   };
   ctx.inventory = [{ id: "item", character_id: id, content_id: null, content_version: null, name: "Courier's Rope", content_type: "equipment", quantity: 2, equipped: false, attuned: false, sort_order: 0, notes: "FORBIDDEN_ITEM_NOTE", custom_data: { weight: 5, description: "A sturdy rope marked at regular intervals.", secret: "FORBIDDEN_CUSTOM" }, created_at: "2026-10-11" }];
   if (kind === "martial") {
-    const weapon = { ...definition, id: "33333333-3333-4333-8333-333333333333", name: "Roadwarden Blade", slug: "roadwarden-blade", content_type: "weapon", data: { damage: "1d8", damage_type: "slashing", range: "5 ft", properties: ["versatile"], description: "A dependable blade carried by the roadwardens." } };
+    const weapon = { ...definition, id: "33333333-3333-4333-8333-333333333333", name: "Roadwarden Blade", slug: "roadwarden-blade", content_type: "weapon", data: weaponDataSchema.parse({ weapon_category: "Martial", weapon_range: "Melee", damage: { dice: "1d8", type: "slashing" }, range: { normal: 5 }, properties: ["versatile"], two_handed_damage: { dice: "1d10", type: "slashing" }, weight: 3, source_refs: [] }) };
     ctx.contentRefs.push({ ...ref, id: "weapon-ref", content_id: weapon.id, content_definitions: weapon });
     ctx.evalResult.grants.push({ type: "grant", stat: "martial_weapons", value: "proficient" });
     ctx.inventory.push({ ...ctx.inventory[0], id: "weapon-item", name: weapon.name, content_type: "weapon", quantity: 1, equipped: true, content_id: weapon.id, content_version: 3, content_definitions: weapon, custom_data: null });

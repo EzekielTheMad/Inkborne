@@ -1,6 +1,7 @@
 import type { CharacterContextValue } from "@/lib/character/character-context";
 import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions-parser";
-import { formatModifier, getSaveModifier, getSkillModifier, isProficient } from "@/lib/sheet/helpers";
+import { formatModifier, getSaveModifier, getSkillModifier } from "@/lib/sheet/helpers";
+import { getWeaponAttack, getWeaponDisplay } from "@/lib/sheet/weapon-attack";
 import { getItemData } from "@/lib/inventory/helpers";
 
 export interface PrintEntry { name: string; details: string; description: string; pin: string }
@@ -104,18 +105,15 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
     proficiencies: [...new Set(result.grants.filter(grant => grant.value === "proficient" || grant.value === "expertise").map(grant => `${label(grant.stat)} (${grant.value})`))],
     attacks: ctx.contentRefs.filter(ref => ref.content_definitions.content_type === "weapon").map(ref => {
       const def = ref.content_definitions, data = def.data;
-      // Keep the existing sheet's weapon ability/proficiency calculation. The
-      // evaluated stats already include the current character's active effects.
-      const properties = list(data.properties), range = text(data.range) || "5 ft";
-      const ranged = text(data.weapon_type).includes("ranged") || range.includes("/");
-      const modifier = properties.toLowerCase().includes("finesse") ? Math.max(abilityMod("strength"), abilityMod("dexterity")) : abilityMod(ranged ? "dexterity" : "strength");
-      const proficient = [def.slug, `weapon_${def.slug}`, "simple_weapons", "martial_weapons"].some(slug => isProficient(result.grants, slug));
-      return { name: def.name, details: `Hit ${formatModifier(modifier + (proficient ? bonus : 0))} | Damage ${text(data.damage) || "1d4"} ${formatModifier(modifier)} ${text(data.damage_type)} | ${range} | ${properties}`, description: text(data.description), pin: pin(ref.content_id, ref.content_version, def) };
+      const attack = getWeaponAttack(def.name, def.slug, data, result);
+      return { name: def.name, details: [`Hit ${attack.hitBonus}`, attack.damageExpression ? `Damage ${attack.damage}` : attack.damage, attack.range, attack.properties].filter(Boolean).join(" | "), description: text(data.description), pin: pin(ref.content_id, ref.content_version, def) };
     }),
     inventory: ctx.inventory.map(item => {
       const source = pin(item.content_id, item.content_version, item.content_definitions);
       const data = getItemData(item);
-      const details = [`Quantity ${item.quantity}`, item.equipped ? "Equipped" : "Carried", item.attuned ? "Attuned" : "", data.weight != null ? `${text(data.weight)} lb each` : "", text(data.damage), text(data.damage_type), text(data.range), list(data.properties)].filter(Boolean).join(" | ");
+      const display = getWeaponDisplay(data);
+      const damage = display.damageText ?? (item.content_type === "weapon" ? "Damage unavailable" : "");
+      const details = [`Quantity ${item.quantity}`, item.equipped ? "Equipped" : "Carried", item.attuned ? "Attuned" : "", data.weight != null ? `${text(data.weight)} lb each` : "", damage, display.range, display.properties].filter(Boolean).join(" | ");
       return { name: item.name, details, description: text(data.description), pin: source };
     }),
     spells: ctx.spells.map(spell => {

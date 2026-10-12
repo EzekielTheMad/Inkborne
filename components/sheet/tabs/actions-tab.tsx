@@ -6,8 +6,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { RollResult } from "@/lib/dice/types";
-import { formatModifier, isProficient } from "@/lib/sheet/helpers";
-import { formatSignedTerm } from "@/lib/rolls/requests";
+import { getWeaponAttack } from "@/lib/sheet/weapon-attack";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import { SheetEmptyState } from "@/components/sheet/empty-state";
 
@@ -29,82 +28,23 @@ interface ActionsTabProps {
   contentRefs: ContentRefWithContent[];
 }
 
-interface AttackRow {
-  name: string;
-  range: string;
-  hitBonus: string;
-  /** Numeric attack bonus for the roll request. */
-  hitBonusValue: number;
-  damage: string;
-  /** Parseable dice expression for the damage roll, e.g. "1d8+3". */
-  damageExpression: string;
-  damageType: string;
-  properties: string;
-}
-
 export function ActionsTab({
   evalResult,
   contentRefs,
 }: ActionsTabProps) {
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
 
-  const proficiencyBonus = evalResult.computed.proficiency_bonus ?? 2;
-
   // Build attack rows from weapon content refs
-  const attacks = useMemo((): AttackRow[] => {
+  const attacks = useMemo(() => {
     const weaponRefs = contentRefs.filter(
       (ref) => ref.content_definitions?.content_type === "weapon",
     );
 
     return weaponRefs.map((ref) => {
-      const data = ref.content_definitions?.data ?? {};
-      const name = ref.content_definitions?.name ?? "Unknown Weapon";
-      const range = (data.range as string) ?? "5 ft";
-      const damageDice = (data.damage as string) ?? "1d4";
-      const damageType = (data.damage_type as string) ?? "";
-      const properties = Array.isArray(data.properties)
-        ? (data.properties as string[]).join(", ")
-        : "";
-
-      // Determine ability modifier for attack/damage
-      const isFinesse = properties.toLowerCase().includes("finesse");
-      const isRanged =
-        (data.weapon_type as string)?.includes("ranged") ||
-        range.includes("/");
-
-      const strMod = evalResult.stats.strength
-        ? Math.floor((evalResult.stats.strength - 10) / 2)
-        : 0;
-      const dexMod = evalResult.stats.dexterity
-        ? Math.floor((evalResult.stats.dexterity - 10) / 2)
-        : 0;
-
-      let abilityMod = isRanged ? dexMod : strMod;
-      if (isFinesse) abilityMod = Math.max(strMod, dexMod);
-
-      // Check weapon proficiency (simplified — check for weapon category grants)
-      const weaponSlug = ref.content_definitions?.slug ?? "";
-      const hasProficiency =
-        isProficient(evalResult.grants, weaponSlug) ||
-        isProficient(evalResult.grants, `weapon_${weaponSlug}`) ||
-        isProficient(evalResult.grants, "simple_weapons") ||
-        isProficient(evalResult.grants, "martial_weapons");
-
-      const hitBonus = abilityMod + (hasProficiency ? proficiencyBonus : 0);
-      const damageStr = `${damageDice}${abilityMod >= 0 ? " + " + abilityMod : " - " + Math.abs(abilityMod)}${damageType ? ` ${damageType}` : ""}`;
-
-      return {
-        name,
-        range,
-        hitBonus: formatModifier(hitBonus),
-        hitBonusValue: hitBonus,
-        damage: damageStr,
-        damageExpression: `${damageDice}${formatSignedTerm(abilityMod)}`,
-        damageType,
-        properties,
-      };
+      const definition = ref.content_definitions;
+      return getWeaponAttack(definition?.name ?? "Unknown Weapon", definition?.slug ?? "", definition?.data ?? {}, evalResult);
     });
-  }, [contentRefs, evalResult, proficiencyBonus]);
+  }, [contentRefs, evalResult]);
 
   // Attack → damage crit chain (design §3.3/§3.4): a natural 20 on a row's
   // attack roll arms `crit: true` on that row's next damage roll; the damage
@@ -220,7 +160,8 @@ export function ActionsTab({
                       <RollPopover
                         kind="damage"
                         label={`${atk.name} — Damage`}
-                        expression={atk.damageExpression}
+                        expression={atk.damageExpression ?? undefined}
+                        disabled={atk.damageExpression === null}
                         crit={critArmed[i] === true}
                         meta={atk.damageType ? { damage_type: atk.damageType } : undefined}
                         ariaLabel={`Roll ${atk.name} damage`}
