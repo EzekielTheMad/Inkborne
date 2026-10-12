@@ -34,7 +34,7 @@ One worker, no retries, 240-second test limit. Exactly **28 recorded checks**:
 | 7 | Synthetic concurrent revision returns conflict; real form locks retries and retains stale draft. Actual Reload latest uses local HTTP reload and synthetic session readback, never resubmits. |
 | 8 | Actual rejected callback **after synthetic write** returns uncertainty/Check Homebrew; draft/native-reset protection remain, one invocation/no false confirmation. Does not infer rollback. |
 | 9 | Actual malformed callback **after synthetic write** follows the same retained-draft/no-confirmation path. This is separate from rejection evidence. |
-| 10 | Name control declares max length 100; a 101-character autofill-style control value is refused before action and retained/focused, without truncating it. |
+| 10 | Name declares max length 100. A native value setter plus bubbled `input` event injects 101 characters; real React reconciliation (`value` AND `defaultValue`) and actual FormData serialization must both contain 101 **before** submit. Then actual validation refuses the action, retains/focuses the draft and does not truncate it. |
 | 11 | Original all-fields fixture round-trips through actual controls/mapper with declared zero/negative values and a synthetic no-op retaining exact record/version. |
 | 12 | Actual stat-block preview displays literal synthetic script/HTML/handler/URL text escaped; no injected node, handler, URL execution or side effect. |
 | 13 | Original >60 KiB/<=64 KiB multibyte/unbroken-text fixture mounts all 20 traits with actual fonts/no body overflow. |
@@ -115,7 +115,17 @@ The copied reviewed runtime records Node/worker/browser PID, parent, command,
 cwd, start time and dynamic HTTP/browser control ports. Chrome is private, local
 and headless. IPC stop closes browser before server; normal/failure paths persist
 evidence and verify HTTP/control port refusal and browser exit. The Playwright
-finally block permits force cleanup only after fresh exact child PID + parent +
-command proof, preserving all unrelated workers/processes. No process is started
+finally block captures the spawned runner's actual `Win32_Process.CreationDate`
+once and stores its normalized UTC value in `runner-os-birth.json`. Forced cleanup
+requires a fresh exact child PID + parent + command + identical OS birth, refusing
+missing/mismatched birth or PID reuse; no `Date.now` birth guess. It preserves all
+unrelated workers/processes. No process is started
 by this preparation. Harness output is distinct `test-results/monster-authoring-local`
 and Playwright output `test-results/monster-authoring-offline-playwright`.
+
+Independent review of immutable `e1bccb95` accepted all other asset, actual Next
+helper, response simulation and cleanup boundaries. The separate source correction
+implements only the native controlled/serialized-name proof and OS birth fence.
+The child completion listener is installed before OS probing so a quick preflight
+exit cannot be missed. Static checks pass; this corrected browser scenario and OS
+cleanup path remain unexecuted pending root review/current-build/UI release.

@@ -136,9 +136,25 @@ export async function exerciseMonsterAuthoring({ page, origin, output, size, rec
   await page.getByRole("button", { name: "Set normal response", exact: true }).click();
   const nameControl = page.getByLabel("Name", { exact: true }), nameBefore = await nameControl.inputValue();
   assert.equal(await nameControl.getAttribute("maxlength"), "100");
-  await nameControl.fill("N".repeat(101)); const beforeBudgetCalls = (await state(page)).calls.length;
+  const oversizedName = "N".repeat(101);
+  await nameControl.evaluate((node, value) => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    if (!setter) throw Error("Native input value setter is unavailable");
+    setter.call(node, value); // Bypass only native maxlength, not the real React handler/state.
+    node.dispatchEvent(new Event("input", { bubbles: true }));
+  }, oversizedName);
+  await page.waitForFunction(value => {
+    const node = document.querySelector('input[name="name"]');
+    // React's controlled reconciliation updates defaultValue as well as value.
+    // The native setter alone changes only value; this proves state accepted 101.
+    return node instanceof HTMLInputElement && node.value === value && node.defaultValue === value;
+  }, oversizedName);
+  assert.equal(await nameControl.inputValue(), oversizedName);
+  assert.equal(await nameControl.evaluate(node => node.defaultValue), oversizedName);
+  assert.equal(await page.locator("form").evaluate(node => new FormData(node).get("name")), oversizedName);
+  const beforeBudgetCalls = (await state(page)).calls.length;
   await save(page).click(); await page.getByRole("alert").waitFor();
-  assert.equal((await state(page)).calls.length, beforeBudgetCalls); assert.equal(await nameControl.inputValue(), "N".repeat(101));
+  assert.equal((await state(page)).calls.length, beforeBudgetCalls); assert.equal(await nameControl.inputValue(), oversizedName);
   assert.equal(await nameControl.evaluate(node => node === document.activeElement), true);
   await reach(nameControl); await layout(page); await nameControl.fill(nameBefore);
   record(size, "101-character draft is refused before action and retained; no silent name truncation");
