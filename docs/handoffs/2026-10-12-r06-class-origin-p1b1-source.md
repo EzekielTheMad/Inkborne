@@ -1,4 +1,7 @@
-# R06/R12 P1b.1 — UNVERIFIED disabled joint source checkpoint
+# R06/R12 P1b.1 — disabled joint source, local model gates verified
+
+Initial sections preserve historical source-only/UNRUN checkpoints. The final
+section records released local gates on760101b; SQL/runtime remains unverified.
 
 Owned passive-feature worktree/branch, approved plan predecessor
 4bd378bcc63719bec94d31657cff3a813f4b7875. Sole writer of ALL new joint source;
@@ -104,3 +107,54 @@ receipt_protected_identity_mismatch or stored_metadata_target_mismatch, never ge
 graph mismatch or constructor/collection failure. Source-removal controls bind the
 actual SQL predicates separately. These tests remain UNRUN under root heavy hold.
 Static diff only; Auth/readiness/default-off/bootstrap0 and all runtime/G2 gaps remain.
+
+## Released narrow gates on760101b201412e9546cfb440710ac4467ec38c61
+
+Both actual class and original R09 authority SQL families approved the unchanged
+27bb36a stage source. Independent model correction review approved760101b; root
+then released one exclusive narrow slot. No implementation/source fix was needed
+after these gates, and both frozen bases remain unchanged.
+
+- Meaningful BEFORE substituted ONLY exact27bb36a845e9192573513d7bf7b919109cbba70c
+  model bytes; current SQL/schema/tests remained unchanged. Package command:
+  `npm.cmd test -- tests/lib/character/class-origin-joint-revision.test.ts
+  --maxWorkers=2 --testNamePattern="genuine already-first|keeps original ordinary|
+  selfconsistent .* expected/observed" --reporter=json
+  --outputFile=test-results/r06-class-origin-joint-local/baseline-vitest.json`.
+  Expected exit1: all four original positive/ordinary controls PASSED, while the
+  four selfconsistent receipt-actor/receipt-target/origin-target/occurrence-target
+  assertions FAILED because old model admitted them (model_checked instead of
+  model_rejected). These are named identity admission failures, not a constructor,
+  collection, generic graph mismatch or unavailable SQL-engine failure. Complete
+  messages/JSON report retained. Try/finally restored model byte-for-byte, checked
+  SHA256/current SQL/schema/test hashes and clean status; final readback repeated
+  restoration and unchanged retained-file hashes. SQL was not substituted/executed.
+- Restored package command:
+  `npm.cmd test -- tests/lib/character/class-origin-joint-revision.test.ts
+  tests/supabase/class-origin-joint-revision-staged-contract.test.ts
+  tests/lib/character/class-origin-command-model.test.ts
+  tests/supabase/class-origin-staged-contract.test.ts
+  tests/lib/character/class-role-effects.test.ts --maxWorkers=2`:
+  **5 files,194 tests PASS**, exit0, reported duration4.95s.
+- `npm.cmd run typecheck`: PASS, exit0.
+- `npm.cmd run lint`: PASS, exit0, existing max-warnings0 script.
+
+Immutable additive evidence:
+`C:\Users\kaios\Documents\Codex\2026-10-11\task-2\verification\r06-class-origin-joint-20261012`.
+`manifest.json` SHA256:
+`6FF702F73ADCBC5EF188948A4976213181D77F677B704D765B9708B6C15B4CA9`.
+Manifest binds source SHA/clean status, exact new+frozen source/test/schema/package/
+lock hashes, frozen authority1d02806/blob7f8650e, commands/exits, baseline model-only
+substitution/semantic controls/exact restoration. Per-gate stdout/stderr and
+resource receipts record actual OS PID/birth/parent/command/CWD plus CPU/memory/
+process/listener before/after snapshots. Final repeated readback found **all30
+observed process identities absent, owned listeners0**, no kill/cleanup exception.
+Heavy slot was released immediately after this readback; no further heavy work.
+
+Verified scope is source-bound pure model/static contracts/TypeScript/lint only.
+SQL syntax/execution, effective ACL/RLS/function owners/trigger timing/native time,
+Auth/RI locks, concurrent writers and commit rollback remain UNPROVED until separately
+authorized G2. The actual stage is UNAPPLIED; Auth unavailable, gate false, all13
+readiness families false. No issuer/API/app/producer/compiler/bootstrap/copy/order
+creation was added. Full P1b–d/writer closure/C1v2/C2 remain required before NEW
+class authoring, genuine gameplay availability or release acceptance.
