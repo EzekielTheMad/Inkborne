@@ -3,7 +3,6 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { assertHeadWorkingTree, passiveFeatureProjectInputPlugin, loadPassiveFeatureProductionAssets } from "./passive-feature-production-assets.mjs";
 
 // Source checkpoint, subject to independent review; no arbitrary current-root bypass.
 export const npcSourceCheckpoint = "4c077c62b45c1c713617905e9065e26d9cbe6224";
@@ -12,10 +11,40 @@ const required = ["lib/schemas/content-types/npc.ts", "lib/schemas/content-types
   "components/compendium/compendium-detail.tsx", "components/compendium/compendium-row.tsx"];
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const git = (root, args) => execFileSync("git", ["-C", root, ...args], { windowsHide: true });
-export const npcProjectInputPlugin = passiveFeatureProjectInputPlugin;
+function assertHeadWorkingTree(root, relativePath) {
+  assert.equal(git(root, ["diff", "HEAD", "--", relativePath]).toString().trim(), "", `HEAD/index/working drift: ${relativePath}`);
+  assert.equal(git(root, ["ls-files", "--error-unmatch", "--", relativePath]).toString().trim(), relativePath);
+}
+const inheritedPath = "scripts/passive-feature-production-assets.mjs";
+const inheritedAnchor = "5fedd622", inheritedBlob = "e4058f8a31cd911583a312e59fedcf4c3fd4adae";
+async function verifyInheritedHelper(root) {
+  const rootCheckout = path.resolve(root, "../equipment-verification");
+  assert.equal(git(rootCheckout, ["status", "--porcelain", "--untracked-files=no"]).toString().trim(), "", "Root must be frozen clean");
+  assert.equal(git(root, ["rev-parse", `${inheritedAnchor}:${inheritedPath}`]).toString().trim(), inheritedBlob);
+  const canonical = git(root, ["cat-file", "blob", inheritedBlob]);
+  let executedSha256;
+  for (const checkout of [root, rootCheckout]) {
+    assertHeadWorkingTree(checkout, inheritedPath);
+    assert.equal(git(checkout, ["rev-parse", `HEAD:${inheritedPath}`]).toString().trim(), inheritedBlob);
+    const raw = await fs.readFile(path.join(checkout, inheritedPath));
+    // This repository checks text out as CRLF. Bind actual executed bytes to
+    // Git's reviewed-blob checkout, not a guessed newline-normalized string.
+    const checkoutBytes = git(checkout, ["cat-file", "--filters", `--path=${inheritedPath}`, inheritedBlob]);
+    assert.equal(sha(raw), sha(checkoutBytes), "Inherited helper mounted bytes differ from anchored Git checkout");
+    if (executedSha256) assert.equal(sha(raw), executedSha256, "Inherited helper worker/root actual bytes differ");
+    executedSha256 = sha(raw);
+  }
+  return { relativePath: inheritedPath, reviewedAnchor: inheritedAnchor, reviewedGitBlobOid: inheritedBlob,
+    canonicalBlobSha256: sha(canonical), executedSha256, checkoutRepresentation: "git cat-file --filters of reviewed blob; raw worker/root equality" };
+}
 // Reuse the reviewed complete CSS/font/clean-build/lock/installed-runtime validator.
 export async function loadNpcProductionAssets(root, manifestPath) {
+  // Verify the executable dependency independently BEFORE importing/invoking it.
+  const inheritedHelper = await verifyInheritedHelper(root);
+  const { loadPassiveFeatureProductionAssets, passiveFeatureProjectInputPlugin } = await import("./passive-feature-production-assets.mjs");
   const result = await loadPassiveFeatureProductionAssets(root, manifestPath);
+  result.projectInputPlugin = passiveFeatureProjectInputPlugin;
+  result.artifacts.inheritedHelper = inheritedHelper;
   const rootCheckout = path.resolve(root, "../equipment-verification");
   result.artifacts.npcSourceCheckpoint = npcSourceCheckpoint;
   result.artifacts.harnessSourceSha = git(root, ["rev-parse", "HEAD"]).toString().trim();
@@ -37,6 +66,7 @@ export async function loadNpcProductionAssets(root, manifestPath) {
   return result;
 }
 export async function bindNpcProjectInputs(root, metafile, captured, artifacts) {
+  assert.deepEqual(await verifyInheritedHelper(root), artifacts.inheritedHelper, "Inherited helper changed during execution");
   const rootCheckout = path.resolve(root, "../equipment-verification"), projectInputs = [], syntheticInputs = [];
   assert.equal(git(rootCheckout, ["rev-parse", "HEAD"]).toString().trim(), artifacts.currentRootHead);
   assert.equal(git(rootCheckout, ["status", "--porcelain", "--untracked-files=no"]).toString().trim(), "");

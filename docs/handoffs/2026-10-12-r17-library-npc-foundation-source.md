@@ -86,3 +86,23 @@ been started while preparing this checkpoint.
 
 Static diff check only. Install, all unit/type/lint gates, build and offline browser
 remain held by root; source review is not workflow or database acceptance.
+
+## Harness review correction / gate release
+
+The inherited executable asset helper is now verified independently before dynamic
+import or validator invocation: reviewed `5fedd622` blob
+`e4058f8a31cd911583a312e59fedcf4c3fd4adae`, exact current worker/root HEAD OIDs,
+tracked HEAD-to-index/working-tree status, and actual mounted raw bytes against
+Git's checkout-filtered reviewed blob and each other. Both canonical LF blob hash
+and executed CRLF byte hash are recorded as a separate inherited-helper receipt,
+rechecked after bundling. Six owned harness files remain separately receipted.
+No speculative newline normalization or reliance on the helper's self-check.
+The shared-fixture browser check now asserts the actual visible `Campaign shared`
+badge rather than claiming it solely from escaped text.
+
+Root released install/narrow/typecheck/lint, with browser/full/build still held.
+Locked install passed: 804 packages in 35 seconds, four captured OS identities,
+zero remaining exact processes/listeners. No lock/dependency edits. Receipt/logs
+are ignored `test-results/r17-focused-gates/ci.*`; core failing-before and focused
+gates follow this separate correction freeze. Existing claims above describe the
+earlier source-only checkpoints, not completed test/browser acceptance.

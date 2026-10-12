@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { chromium } from "playwright";
-import { loadNpcProductionAssets, bindNpcProjectInputs, npcProjectInputPlugin } from "./npc-production-inputs.mjs";
+import { loadNpcProductionAssets, bindNpcProjectInputs } from "./npc-production-inputs.mjs";
 import { npcOsIdentity, npcResources, assertNoOtherNpcRunner } from "./npc-process.mjs";
 
 const script = fileURLToPath(import.meta.url), root = path.resolve(path.dirname(script), "..");
@@ -30,7 +30,7 @@ const production = await loadNpcProductionAssets(root, manifestPath);
 const captured = new Map();
 const bundle = await build({ entryPoints: [path.join(root, "e2e/local-npcs/fixture.tsx")], absWorkingDir: root,
   outfile: path.join(output, "fixture.js"), bundle: true, metafile: true, platform: "browser", jsx: "automatic",
-  define: { "process.env.NODE_ENV": '"production"' }, plugins: [npcProjectInputPlugin(root, captured), {
+  define: { "process.env.NODE_ENV": '"production"' }, plugins: [production.projectInputPlugin(root, captured), {
     name: "npc-native-link-only", setup(builder) {
       builder.onResolve({ filter: /^(next\/|@\/lib\/supabase\/server|server-only)/ }, args => {
         if (args.path !== "next/link") throw Error(`Unapproved live boundary: ${args.path}`);
@@ -128,6 +128,7 @@ try {
     await inspect(page, size, "long-bottom"); evidence.push({ size, check: "maximum bounded profile/name contained and final hook reachable", passed: true });
     await page.goto(`${origin}/library/b1711111-1111-4111-8111-000000000006`);
     await page.getByText('<script>window.compromised=true</script><img src=x onerror="alert(1)">', { exact: true }).waitFor();
+    assert.equal(await page.getByText("Campaign shared", { exact: true }).isVisible(), true);
     assert.equal(await page.evaluate(() => Boolean(window.compromised)), false); assert.equal(await page.locator("img").count(), 0);
     await inspect(page, size, "escaped"); evidence.push({ size, check: "original escaped content and simulated shared provenance", passed: true });
     for (const scenario of ["empty", "malformed", "denied"]) {

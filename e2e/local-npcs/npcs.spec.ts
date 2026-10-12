@@ -27,6 +27,9 @@ test("actual narrative NPC Library with guarded production assets and private cl
     expect(result.artifacts.metafileSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.artifacts.harnessSourceSha).toMatch(/^[a-f0-9]{40}$/);
     expect(result.artifacts.harnessFiles).toHaveLength(6);
+    expect(result.artifacts.inheritedHelper.reviewedGitBlobOid).toBe("e4058f8a31cd911583a312e59fedcf4c3fd4adae");
+    expect(result.artifacts.inheritedHelper.executedSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.artifacts.inheritedHelper.canonicalBlobSha256).toMatch(/^[a-f0-9]{64}$/);
     for (const relativePath of ["lib/schemas/content-types/npc.ts", "lib/supabase/content-definitions-parser.ts", "components/compendium/npc-profile.tsx", "components/compendium/compendium-detail.tsx", "tests/fixtures/npcs.ts"]) {
       expect(result.artifacts.bundledProjectInputs.some((input: { relativePath: string; sha256: string }) => input.relativePath === relativePath && /^[a-f0-9]{64}$/.test(input.sha256))).toBe(true);
     }
