@@ -60,6 +60,7 @@ export function getCompendiumEntryDescription(entry: CompendiumEntry): string {
   const direct = text(data.description) ?? text(data.descriptionFull);
   if (direct) return direct;
   if (entry.content_type === "monster") return "Monster stat block.";
+  if (entry.content_type === "npc") return "NPC narrative template.";
 
   if (entry.content_type === "background") {
     return text(record(data.feature)?.description) ?? "Background rules and proficiencies.";
@@ -100,6 +101,9 @@ export function getCompendiumEntryFacts(entry: CompendiumEntry): CompendiumFact[
   };
 
   switch (entry.content_type) {
+    case "npc":
+      add("Occupation", text(data.occupation));
+      break;
     case "monster": {
       add("Size", text(data.size));
       add("Type", text(data.creature_type));
@@ -216,6 +220,7 @@ export function getCompendiumEntryFacts(entry: CompendiumEntry): CompendiumFact[
 }
 
 export function getCompendiumEntryEyebrow(entry: CompendiumEntry): string {
+  if (entry.content_type === "npc") return "NPC narrative template";
   if (entry.content_type === "monster") {
     const challenge = text(record(entry.data.challenge)?.rating);
     return `Monster · ${text(entry.data.size) ?? ""} ${text(entry.data.creature_type) ?? ""}${challenge === null ? "" : ` · Challenge ${challenge}`}`;

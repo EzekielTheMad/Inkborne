@@ -24,6 +24,11 @@ import LibraryPage from "@/app/(app)/library/page";
 const systemId = "22222222-2222-4222-8222-222222222222";
 
 describe("LibraryPage", () => {
+  it("routes the NPC category through the existing authenticated published-system Library", async () => {
+    render(await LibraryPage({ searchParams: Promise.resolve({ category: "npcs", system: systemId }) }));
+    expect(mocks.listEntries).toHaveBeenCalledWith(expect.objectContaining({ category: "npcs", system: systemId }), "user-id");
+    expect(screen.getByRole("heading", { level: 2, name: "NPCs" })).toBeVisible();
+  });
   it("retains authentication and the same published-system query for monsters", async () => {
     render(await LibraryPage({ searchParams: Promise.resolve({ category: "monsters", system: systemId, size: "Small" }) }));
     expect(mocks.listEntries).toHaveBeenCalledWith(expect.objectContaining({ category: "monsters", system: systemId, size: "Small" }), "user-id");

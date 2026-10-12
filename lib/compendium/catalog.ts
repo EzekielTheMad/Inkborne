@@ -62,6 +62,12 @@ export const COMPENDIUM_CATEGORIES = {
     description: "Creature stat blocks, actions, and traits.",
     contentTypes: ["monster"],
   },
+  npcs: {
+    label: "NPCs",
+    singular: "NPC",
+    description: "Narrative templates, personalities, and relationship ideas.",
+    contentTypes: ["npc"],
+  },
 } as const;
 
 export type CompendiumCategory = keyof typeof COMPENDIUM_CATEGORIES;

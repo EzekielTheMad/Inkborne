@@ -23,14 +23,14 @@ export function CompendiumRow({ entry, userId, returnHref }: CompendiumRowProps)
   return (
     <Link
       href={`/library/${entry.id}?returnTo=${encodeURIComponent(returnHref)}`}
-      className="j-card-paper group flex h-full flex-col p-5 transition-colors hover:border-accent/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className={`j-card-paper group flex h-full flex-col p-5 transition-colors hover:border-accent/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent${entry.content_type === "npc" ? " min-w-0" : ""}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="j-folio text-[10px] text-muted-foreground">
             {getCompendiumEntryEyebrow(entry)}
           </p>
-          <h2 className="j-display mt-1 truncate text-xl text-foreground transition-colors group-hover:text-accent">
+          <h2 className={`j-display mt-1 text-xl text-foreground transition-colors group-hover:text-accent ${entry.content_type === "npc" ? "[overflow-wrap:anywhere]" : "truncate"}`}>
             {entry.name}
           </h2>
         </div>

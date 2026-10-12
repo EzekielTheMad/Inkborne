@@ -15,6 +15,7 @@ import { armorDataSchema } from "./armor";
 import { itemDataSchema } from "./item";
 import { magicItemDataSchema } from "./magic-item";
 import { monsterDataSchema } from "./monster";
+import { npcDataSchema } from "./npc";
 
 const CONTENT_TYPE_SCHEMAS: Record<string, z.ZodType> = {
   race: raceDataSchema,
@@ -33,6 +34,7 @@ const CONTENT_TYPE_SCHEMAS: Record<string, z.ZodType> = {
   item: itemDataSchema,
   magic_item: magicItemDataSchema,
   monster: monsterDataSchema,
+  npc: npcDataSchema,
 };
 
 export function getContentTypeSchema(contentType: string): z.ZodType | undefined {

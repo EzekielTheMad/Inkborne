@@ -29,6 +29,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { parseCompendiumQuery } from "@/lib/compendium/catalog";
 import { monsterEnvelope } from "@/tests/fixtures/monsters";
+import { npcEnvelope } from "@/tests/fixtures/npcs";
 import {
   getCompendiumEntry,
   listCompendiumEntries,
@@ -69,6 +70,41 @@ describe("compendium server boundary", () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks.chain)) mock.mockClear();
     mocks.from.mockClear();
+  });
+
+  it.each(["all", "mine", "shared", "srd"])("queries narrative NPCs with bounded fixed filters and %s provenance (mock transport)", async provenance => {
+    const row = npcEnvelope();
+    const returned = provenance === "srd" ? { ...row, source: "srd", scope: "platform", owner_id: null }
+      : provenance === "shared" ? { ...row, scope: "shared", owner_id: "44444444-4444-4444-8444-444444444444" } : row;
+    mocks.chain.range.mockResolvedValue({ data: [returned], error: null, count: 25 });
+    const query = parseCompendiumQuery({ category: "npcs", system: systemId, provenance, q: "keeper", page: "2", size: "Small", level: "2" });
+    const result = await listCompendiumEntries(query, userId);
+    expect(mocks.chain.in).toHaveBeenCalledWith("content_type", ["npc"]);
+    expect(mocks.chain.eq).toHaveBeenCalledWith("system_id", systemId);
+    expect(mocks.chain.eq).toHaveBeenCalledWith("is_retired", false);
+    expect(mocks.chain.ilike).toHaveBeenCalledWith("name", "%keeper%");
+    expect(mocks.chain.filter).not.toHaveBeenCalled();
+    expect(mocks.chain.range).toHaveBeenCalledWith(24, 47);
+    if (provenance === "mine") expect(mocks.chain.eq).toHaveBeenCalledWith("owner_id", userId);
+    if (provenance === "shared") expect(mocks.chain.neq).toHaveBeenCalledWith("owner_id", userId);
+    if (provenance === "srd") expect(mocks.chain.eq).toHaveBeenCalledWith("source", "srd");
+    expect(result.entries[0]).toMatchObject({ content_type: "npc", effects: [], data: row.data });
+    expect(result.total).toBe(25);
+  });
+
+  it("distinguishes NPC read denial from empty/malformed results without creating rows", async () => {
+    const query = parseCompendiumQuery({ category: "npcs", system: systemId });
+    const error = { code: "42501", message: "Synthetic NPC read denial" };
+    mocks.chain.range.mockResolvedValue({ data: null, error, count: null });
+    await expect(listCompendiumEntries(query, userId)).rejects.toBe(error);
+    mocks.chain.range.mockResolvedValue({ data: [], error: null, count: 0 });
+    expect((await listCompendiumEntries(query, userId)).entries).toEqual([]);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.chain.range.mockResolvedValue({ data: [{ ...npcEnvelope(), effects: [{ type: "mechanical", stat: "strength", op: "add", value: 2 }] }], error: null, count: 1 });
+    expect((await listCompendiumEntries(query, userId)).entries).toEqual([]);
+    mocks.chain.maybeSingle.mockResolvedValue({ data: npcEnvelope(), error: null });
+    expect(await getCompendiumEntry(npcEnvelope().id)).toMatchObject({ content_type: "npc" });
+    expect(mocks.chain.eq).toHaveBeenCalledWith("id", npcEnvelope().id);
   });
 
   it.each(["all", "mine", "shared", "srd"])("queries canonical monsters with fixed filters and %s provenance (mocked transport)", async (provenance) => {

@@ -57,6 +57,14 @@ const contentVersionSnapshotSchema = z.object({
 export function parseContentDefinition(
   raw: unknown,
 ): ParsedContentDefinition | null {
+  // NPCs are narrative templates. Check raw presence before the generic effects
+  // default; never turn an effectful/malformed NPC into an accepted empty one.
+  const npcEnvelope = raw as { content_type?: unknown; effects?: unknown } | null;
+  if (npcEnvelope?.content_type === "npc" &&
+    (!Array.isArray(npcEnvelope.effects) || npcEnvelope.effects.length !== 0)) {
+    console.error("[content-definitions] NPC envelope requires explicit empty effects");
+    return null;
+  }
   const envelope = contentDefinitionSchema.safeParse(raw);
   const id = contentDefinitionIdSchema.safeParse(
     (raw as { id?: unknown } | null)?.id,
@@ -157,6 +165,12 @@ export function parseNestedContentDefinition(
 export function parseContentVersionSnapshot(
   raw: unknown,
 ): ParsedContentDefinition | null {
+  const npcSnapshot = raw as { content_type_snapshot?: unknown; effects_snapshot?: unknown } | null;
+  if (npcSnapshot?.content_type_snapshot === "npc" &&
+    (!Array.isArray(npcSnapshot.effects_snapshot) || npcSnapshot.effects_snapshot.length !== 0)) {
+    console.error("[content-versions] NPC snapshot requires explicit empty effects");
+    return null;
+  }
   const snapshot = contentVersionSnapshotSchema.safeParse(raw);
   if (!snapshot.success) {
     const maybeContentId = (raw as { content_id?: unknown } | null)?.content_id;

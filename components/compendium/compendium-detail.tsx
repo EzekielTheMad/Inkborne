@@ -4,7 +4,9 @@ import { ArrowLeft, BookMarked } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { MonsterStatBlock } from "@/components/compendium/monster-stat-block";
+import { NpcProfile } from "@/components/compendium/npc-profile";
 import { monsterDataSchema } from "@/lib/schemas/content-types/monster";
+import { npcDataSchema } from "@/lib/schemas/content-types/npc";
 import {
   getCompendiumEntryDescription,
   getCompendiumEntryEyebrow,
@@ -26,6 +28,9 @@ export function CompendiumDetail({ entry, userId, returnHref }: CompendiumDetail
   const facts = getCompendiumEntryFacts(entry);
   const isMonster = entry.content_type === "monster";
   const monster = isMonster ? monsterDataSchema.safeParse(entry.data) : null;
+  const isNpc = entry.content_type === "npc";
+  const npc = isNpc ? npcDataSchema.safeParse(entry.data) : null;
+  const hasStructuredProfile = isMonster || isNpc;
 
   return (
     <article className="mx-auto w-full max-w-5xl space-y-6 pb-12">
@@ -37,7 +42,7 @@ export function CompendiumDetail({ entry, userId, returnHref }: CompendiumDetail
       <header className="j-card-paper overflow-hidden">
         <div className="border-b border-border bg-gradient-to-br from-accent/15 via-transparent to-transparent px-6 py-8 sm:px-9 sm:py-10">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div className={isMonster ? "min-w-0 [overflow-wrap:anywhere]" : undefined}>
+            <div className={hasStructuredProfile ? "min-w-0 [overflow-wrap:anywhere]" : undefined}>
               <p className="j-folio text-muted-foreground">{getCompendiumEntryEyebrow(entry)}</p>
               <h1 className="j-display mt-2 text-3xl text-foreground sm:text-5xl">{entry.name}</h1>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -50,17 +55,18 @@ export function CompendiumDetail({ entry, userId, returnHref }: CompendiumDetail
         </div>
 
         <div className="grid gap-8 px-6 py-7 sm:px-9 lg:grid-cols-[minmax(0,1fr)_18rem]">
-          <div className={isMonster ? "min-w-0 space-y-8 [overflow-wrap:anywhere]" : "space-y-8"}>
-            {isMonster && (!monster?.success || monster.data.description === undefined) ? null : <section aria-labelledby="entry-description-heading">
+          <div className={hasStructuredProfile ? "min-w-0 space-y-8 [overflow-wrap:anywhere]" : "space-y-8"}>
+            {(isMonster && (!monster?.success || monster.data.description === undefined)) || (isNpc && (!npc?.success || npc.data.description === undefined)) ? null : <section aria-labelledby="entry-description-heading">
               <h2 id="entry-description-heading" className="j-folio">Description</h2>
               <div className="mt-3 whitespace-pre-line text-sm leading-7 text-foreground/90">
                 {getCompendiumEntryDescription(entry)}
               </div>
             </section>}
-            {isMonster ? monster?.success ? <MonsterStatBlock data={monster.data} /> : <p className="text-sm">Stat block unavailable.</p> : <ExtendedRules entry={entry} />}
+            {isMonster ? monster?.success ? <MonsterStatBlock data={monster.data} /> : <p className="text-sm">Stat block unavailable.</p>
+              : isNpc ? npc?.success ? <NpcProfile data={npc.data} /> : <p className="text-sm">NPC profile unavailable.</p> : <ExtendedRules entry={entry} />}
           </div>
 
-          <aside aria-label="Rule details" className={isMonster ? "min-w-0 rounded-lg border border-border bg-muted/25 p-5 [overflow-wrap:anywhere]" : "rounded-lg border border-border bg-muted/25 p-5"}>
+          <aside aria-label="Rule details" className={hasStructuredProfile ? "min-w-0 rounded-lg border border-border bg-muted/25 p-5 [overflow-wrap:anywhere]" : "rounded-lg border border-border bg-muted/25 p-5"}>
             <h2 className="j-folio">At a glance</h2>
             {facts.length > 0 ? (
               <dl className="mt-4 space-y-4">
@@ -81,7 +87,7 @@ export function CompendiumDetail({ entry, userId, returnHref }: CompendiumDetail
       </header>
 
       <p className="text-center text-xs text-muted-foreground">
-        {isMonster ? "This stat block is read-only." : "This view is read-only. Manage content you own from Homebrew."}
+        {isMonster ? "This stat block is read-only." : isNpc ? "This NPC narrative template is read-only." : "This view is read-only. Manage content you own from Homebrew."}
       </p>
     </article>
   );
