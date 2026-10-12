@@ -61,11 +61,12 @@ MCP/Express/proxy-addr chain. That remaining risk is open, not accepted or hidde
 Root subsequently confirmed the maintainer's [critical advisory and patched version](https://github.com/jshttp/proxy-addr/security/advisories/GHSA-jqcg-44mw-7w3h)
 and changed only locked development `proxy-addr` from `2.0.7` to `2.0.8` at
 `12290be`. The refreshed lockfile audit reports **23 findings / zero critical**
-(15 high, seven moderate, one low); independent review/install/combined checks
-remain pending. Production findings remain zero. Earlier 24/one-critical counts
+(15 high, seven moderate, one low); independent review, locked installation and
+four proxy-trust regressions passed. Remaining development findings are undergoing
+a separate scoped remediation plan. Production findings remain zero. Earlier 24/one-critical counts
 above describe the preceding checkpoint, not the current lockfile.
 The real mounted editor harness was reviewed/integrated as `2bca782`; its 12 offline
-checks still require a final combined-source run with build CSS.
+checks passed on the combined `edac6d7` product with build CSS.
 
 Additional reviewed local checkpoints:
 
@@ -84,10 +85,9 @@ reviewed, corrected for raw extension-key preservation, and integrated as `dd39a
 focused tests preceded the correction; 38 focused tests covered the correction.
 Its real form/mapper passed 14 offline desktop/mobile checks with simulated actions;
 actual owner/RLS/version-trigger/race and inventory-pin continuity remain open.
-R12.3 private armor authoring is in development; R21.1 is inventory/planning for the
-documented M6 mechanics. R09.2 initial pure model was blocked in review for omitted
-selected non-class pins and unchecked result intent; correction is in progress and
-that source is not integrated.
+R12.3 private armor authoring and corrected R09.2 pure modeling are now integrated
+as recorded below. R21.1a single-source slots is also integrated; R21.1b per-class
+casting ability is the next bounded planning child.
 These are implementation checkpoints, not complete milestone or beta acceptance.
 
 At clean `9ae5a65`, the root combined `npm.cmd run check` passed TypeScript,
@@ -106,13 +106,37 @@ Coherent locked snapshots, authority/access, monotonic writer fences, atomic rol
 receipts and account recovery remain unimplemented acceptance gates. This later
 source requires new combined acceptance.
 
-R12.3 source `c0ae7b1` plus docs `f8f5986` passed independent code review and
-59 focused tests/typecheck/lint; offline armor form UI is still in progress before
-integration. R21.1 inventory `1479b43` was integrated as `9ae5a65`; its reviewed
-single-source slot child is in development with explicit numbered pinned rows and
-an unavailable state propagated to cast/rest/print. The existing Arcane Recovery
-path is retained. R07.2 actual-schema role/create/award/copy fixture preparation
-has begun in isolation; no container or SQL execution is authorized or performed.
+R12.3 source `c0ae7b1` plus documentation passed independent review, 59 focused
+tests/typecheck/lint and 16 actual-form offline checks. Integrated commits are
+`c885782`, `e1b8e24`, `edac6d7`. Canonical armor metadata edits preserve raw effects
+and extensions. Shield AC, strength and stealth automation are separate open gaps.
+
+At `edac6d7`, the root full check passed **253 files / 2,605 tests**, typecheck and
+zero-warning lint; the synthetic-config Next 16.3.8 build also passed. Nine bounded
+offline configurations passed: magic items 12, items 12, weapons 14, armor 16,
+editor 12, core 43, drift 10, canonical weapon play one, and six print/PDF cases.
+The drift harness required only four new read-only list stubs at `7b78b35`.
+All 33 generated PDF pages passed privacy/margin checks and visual inspection.
+These are simulated action/persistence and loaded-snapshot boundaries, not live
+provider/database acceptance. Gate process readbacks found no owned processes or
+listeners; PDF renderer children closed, with incomplete Python-parent metadata
+explicitly recorded in its cleanup receipt.
+
+R07.2 source `38fd0fc` passed independent source review and 60 focused harness
+tests and was integrated as `794e5ba`. Its canonical real-role/create/award/consume/
+replay/catalog-drift/copy fixture preparation enforces immutable predecessor
+receipts, phase freshness, exact IDs and approved budgets. No Docker or SQL was
+executed; actual G2 runtime authorization and database evidence remain open.
+
+R21.1a source `6f9b39c`, corrected `e54ef40`, passed independent review and was
+integrated as `5012383`, `85f8ee9`. One validated selected-pin SlotResolution now
+feeds casting, trackers, acquisition, rests and print. Missing/ambiguous data stays
+unavailable. Large pools use bounded dots and preserve numeric totals. The review
+correction passed 86 affected tests and five actual-provider offline browser cases
+with seven inspected desktop/mobile screenshots; persistence was simulated.
+R12.4 private core race source `bf3bfe3` and docs `3990882` passed independent
+review and 82 focused tests; its browser acceptance remains in progress before
+integration. New source after `edac6d7` still requires combined acceptance.
 
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
@@ -134,9 +158,9 @@ Batch these scope choices early; continue unambiguous M1/core/M4/print work whil
 
 ## Checkpoint and evidence vocabulary
 
-- Integration worktree: `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, branch `codex/equipment-executable-verification`. Inspected clean documentation HEAD `c5370eb60053a40506cfaf1f9449d9f632769d51`; tested application `ada6c9b8c51c8d674c6a76dbf4df1f9955ce5cdf`. This handoff adds later docs-only commits; always read actual HEAD.
+- Integration worktree: `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, active branch `codex/launch-integration-20261011`. Prior handoff branch `codex/equipment-executable-verification`, documentation `c5370eb` and tested application `ada6c9b` are historical checkpoints. Read the active continuation and actual HEAD for new source/evidence.
 - [Closing evidence](handoffs/2026-10-11-orchestrator-local-queue.md): full check 226 files / 2,292 tests, zero-warning lint/typecheck, dummy build, 43 core + 10 drift offline checks. L1/A1/T1 integrated. D1/E1 are characterization/proposals, not durable schema/runtime acceptance.
-- [M1 magic-item worker](handoffs/2026-10-11-m1-magic-item-revalidation.md): `..\m1-magic-item-worker`, `codex/m1-magic-item-revalidation`, tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. 1,805 tests/build/12 offline checks. Its PR99-derived rarity fix and authoring code are **not integrated into core or published**. “M1” here is an old worker ID; roadmap M1 is pre-alpha consolidation.
+- [M1 magic-item worker](handoffs/2026-10-11-m1-magic-item-revalidation.md): `..\m1-magic-item-worker`, `codex/m1-magic-item-revalidation`, tested `3d61ff3747dbb04da55d9fb436753e71b1596d29`, docs HEAD `6c740f0281a3268bee5a0074a891a453af7c09a2`. Historical 1,805 tests/build/12 offline checks. Its reviewed PR99-derived slice is now integrated locally, with combined evidence above; publication and real database acceptance remain open. “M1” here is an old worker ID; roadmap M1 is pre-alpha consolidation.
 - Existing shipped main/deployed surfaces have historical UAT receipts. Those receipts do not accept the new combined candidate. Latest dev deployment is still PR101 `794fd878`, not `ada6c9b` or the standalone magic-item fix.
 
 Stage columns: **I** implemented source; **T** tested at stated boundary; **G** integrated into candidate; **D** deployed; **A** accepted against that exact release/target. `P` partial; `H` historical; `U` unknown/uninventoried; `-` absent/unverified. An aggregate green suite does not fill a requirement's acceptance column. Every completion record must include source SHA, test command/result, real data/runtime target where applicable, cleanup receipt and accepted/deferred decision.

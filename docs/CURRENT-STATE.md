@@ -4,12 +4,14 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source `3bfc90b`
-includes reviewed private magic-item/ordinary-item authoring, effects-preserving
-metadata edits, print/PDF export, canonical weapon sheet/print calculations,
-patched production dependencies and local runtime preparation. R11's earlier
-combined gate passed 230 files / 2,315 tests; final combined gates are pending
-the active private-weapon and pure hit-die children. See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
+on local branch `codex/launch-integration-20261011`. Product source `85f8ee9`
+includes reviewed private magic-item/item/weapon/armor authoring, raw metadata and
+effects preservation, print/PDF export, canonical weapon calculations, validated
+single-source slots, default-disabled pure hit-die modeling, patched production
+dependencies and runtime fixture preparation. At `edac6d7`, combined check passed
+253 files / 2,605 tests, lint/typecheck, synthetic build and nine bounded offline
+configurations. Later slot/runtime preparation needs combined reacceptance.
+See the single [launch ledger](LAUNCH-ACCEPTANCE.md) for
 exact source, reviews and open evidence. Original checkouts remain preserved.
 
 Victor selected all included milestones before beta, PDF importing before beta,
@@ -19,8 +21,9 @@ remain explicit decisions. Durable gameplay starts with one trusted server roll
 and immutable lifetime receipt; deployment stays disabled until writer/database/
 recovery evidence passes.
 
-Private-weapon review, pure durable hit-die modeling and M6 inventory are active
-in isolated worktrees. The [concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
+Private core race browser acceptance, per-class casting planning and remaining
+development dependency remediation are active in isolated worktrees. The
+[concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
 is reviewable. G1 engine startup/image pulls were requested; no approval or runtime
 execution is inferred. G2 full SQL/fixture/ephemeral credential execution and G3-G5
 hosted/auth/publication/ops actions remain separately gated. No live or remote write
