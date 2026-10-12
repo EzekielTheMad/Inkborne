@@ -64,8 +64,18 @@ export function createStateWriter(
     return operation;
   };
 
+  // The same settled-state preflight protects actions that must generate dice
+  // synchronously before entering a write. It never queues or publishes a patch.
+  const assertActionReady = (expectedState: CharacterState) => {
+    if (reloadError) throw reloadError;
+    if (pending.length > 0 || expectedState !== visible) {
+      throw new Error("The character is still saving or has changed. Please try the action again.");
+    }
+  };
+
   return Object.assign(write, {
     hasPendingWrites: () => pending.length > 0,
+    assertActionReady,
     /** A state-dependent action must start from a settled, current render.
      * Refuse stale/busy commands before computing effects or spending a slot. */
     async runAction<T>(
@@ -73,10 +83,7 @@ export function createStateWriter(
       compute: (state: CharacterState) => { patch: Partial<CharacterState>; result: T },
       writeOptions?: StateWriteOptions,
     ): Promise<T> {
-      if (reloadError) throw reloadError;
-      if (pending.length > 0 || expectedState !== visible) {
-        throw new Error("The character is still saving or has changed. Please try the action again.");
-      }
+      assertActionReady(expectedState);
       const { patch, result } = compute(confirmed);
       if (Object.keys(patch).length > 0 && !(await write(patch, writeOptions))) {
         if (reloadError) throw reloadError;

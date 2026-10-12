@@ -440,11 +440,11 @@ export function CharacterProvider({
   const committedMechanics = useRef(mechanicsSnapshot);
   useLayoutEffect(() => { committedMechanics.current = mechanicsSnapshot; }, [mechanicsSnapshot]);
   const assertMechanics = useCallback((requirement: MechanicsRequirement = {}) => {
+    patchState.assertActionReady(state);
     if (committedMechanics.current !== mechanicsSnapshot) throw new Error("Saved mechanical inputs changed. Use the current loaded controls before trying again.");
     if (!isOwner || !contentSnapshotsComplete) throw new Error("Complete owned saved mechanics are required for this action.");
-    if (reloadRequired || patchState.hasPendingWrites()) throw new Error("Wait for pending saves or reload before using saved mechanics.");
     assertAbilityMechanics(mechanics, evalResult, schema, requirement);
-  }, [mechanicsSnapshot, isOwner, contentSnapshotsComplete, mechanics, evalResult, schema, reloadRequired, patchState]);
+  }, [mechanicsSnapshot, isOwner, contentSnapshotsComplete, mechanics, evalResult, schema, patchState, state]);
 
   // --- Spells ---
 
@@ -636,8 +636,8 @@ export function CharacterProvider({
   const castSpell = useCallback(
     async (spell: CharacterSpell, choice: CastChoice): Promise<CastOutcome> => {
       if (currentCastingSnapshot.current !== castingSnapshot) throw new Error("The saved casting source changed. Choose the spell again using its current loaded content before casting.");
-      assertMechanics();
       if (!isOwner) throw new Error("This character is read-only. Only its owner can cast spells.");
+      assertMechanics();
       if (slotResolution.status !== "available") throw new Error(slotResolution.reason);
       const resolved = getCastingAbility(spell);
       if (resolved.status !== "available") throw new Error(resolved.reason);
@@ -1133,10 +1133,9 @@ export function useRest(): {
   };
 
   const longRest = () => {
-    ctx.assertMechanics({ abilities: ["constitution"], values: [maxHp, state.current_hp!, state.temp_hp!, ...resources.map(entry => entry.max), ...hitDicePools.flatMap(pool => [pool.max, pool.spent, pool.die])] });
     if (slotResolution.status !== "available" || !longEffects.canApply) return Promise.resolve(false);
     return patchState.runAction(state, () => {
-      ctx.assertMechanics({ abilities: ["constitution"], values: [maxHp] });
+      ctx.assertMechanics({ abilities: ["constitution"], values: [maxHp, state.current_hp!, state.temp_hp!, ...resources.map(entry => entry.max), ...hitDicePools.flatMap(pool => [pool.max, pool.spent, pool.die])] });
       return { patch: longEffects.statePatch, result: true };
     }).catch((error: unknown) => {
       if (error instanceof CharacterStateReloadError) throw error;

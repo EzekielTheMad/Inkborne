@@ -111,11 +111,32 @@ describe("conditional raw snapshots and reload boundary", () => {
     let state: CharacterState = { current_hp: 10, quick_notes: "old" };
     const writer = createStateWriter(state, persist, next => { state = next; }, vi.fn(), { persistedState: state });
     const damage = writer({ current_hp: 8 }); const notes = writer({ quick_notes: "new" });
+    const compute = vi.fn(() => ({ patch: { current_hp: 7 }, result: true }));
+    expect(() => writer.assertActionReady(state)).toThrow(/saving|changed/);
+    await expect(writer.runAction(state, compute)).rejects.toThrow(/saving|changed/);
+    expect(compute).not.toHaveBeenCalled();
     await Promise.resolve(); pending.reject(conflict);
     expect(await damage).toBe(false); expect(await notes).toBe(true);
     expect(state).toEqual({ current_hp: 10, quick_notes: "new" });
+    let refused: unknown;
+    try { writer.assertActionReady(state); } catch (error) { refused = error; }
+    expect(refused).toBe(conflict);
     expect(await writer({ temp_hp: 3 })).toBe(false);
     await expect(writer.runAction(state, () => ({ patch: { current_hp: 7 }, result: true }))).rejects.toThrow("Reload required");
     expect(persist).toHaveBeenCalledTimes(2);
+  });
+  it("refuses a captured pre-write state before compute without queuing another patch", async () => {
+    let state: CharacterState = { current_hp: 10 };
+    const original = state, persist = vi.fn().mockResolvedValue(undefined);
+    const writer = createStateWriter(state, persist, next => { state = next; }, vi.fn());
+    expect(await writer({ current_hp: 8 })).toBe(true);
+    const compute = vi.fn(() => ({ patch: { current_hp: 7 }, result: true }));
+    expect(() => writer.assertActionReady(original)).toThrow(/saving|changed/);
+    await expect(writer.runAction(original, compute)).rejects.toThrow(/saving|changed/);
+    expect(compute).not.toHaveBeenCalled();
+    expect(writer.hasPendingWrites()).toBe(false);
+    expect(persist).toHaveBeenCalledTimes(1);
+    expect(state).toEqual({ current_hp: 8 });
+    expect(() => writer.assertActionReady(state)).not.toThrow();
   });
 });
