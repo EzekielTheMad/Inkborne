@@ -67,7 +67,7 @@ describe("actual provider ASI acceptance and stale callbacks; persistence simula
     view.rerender(<Fixture fixture={next} />);
     expect(() => retained.roll({ kind: "attack", label: "Original attack", expression: "1d20+2" }, { abilities: ["strength"] })).toThrow(/changed/);
     await expect(retained.patchActionState({ current_hp: 4 })).rejects.toThrow(/changed/);
-    expect(() => retained.longRest()).toThrow(/changed/);
+    await expect(retained.longRest()).resolves.toBe(false);
     expect(() => buildCharacterPrintModel({ ...retained, isOwner: true, hasSheet: true, resources: [] })).toThrow(/changed/);
     expect(executeRoll).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled(); expect(updateCharacterState).not.toHaveBeenCalled();
   });
@@ -130,7 +130,7 @@ describe("actual provider ASI acceptance and stale callbacks; persistence simula
   });
   it("incomplete evidence blocks whole long rest/relative HP/derived rolls, but independent custom dice and toggles remain usable", async () => {
     render(<Fixture fixture={originalAsiFixture()} incomplete />);
-    expect(() => latest.longRest()).toThrow();
+    await expect(latest.longRest()).resolves.toBe(false);
     expect(() => latest.roll({ kind: "check", label: "Original check", expression: "1d20+2" }, { abilities: ["strength"] })).toThrow();
     await expect(latest.patchActionState({ current_hp: 10 })).rejects.toThrow();
     expect(executeRoll).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled(); expect(updateCharacterState).not.toHaveBeenCalled();
