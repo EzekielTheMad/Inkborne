@@ -4,13 +4,13 @@ Updated 2026-10-12 UTC. This is the single durable development backlog and compl
 
 ## Finite scope and decisions
 
-**Project-wide objective:** close the documented M1-M8 milestones (including M5.5), the PRD P0/MVP requirements, and the safety/operational acceptance of the shipped surfaces. Implement, integrate, verify and release them, or record an explicit Victor-approved removal/deferral. A deferred milestone stays visible and cannot be described as implemented. Later PRD P1-P3 ambitions are a separate decision register below; they are not an unlimited license to invent features.
+**User-selected project-wide objective:** complete ALL documented M1-M8 milestones (including M5.5) and account for every documented PRD requirement, including P1-P3. Every documented ambition must have an explicit included/completed/deferred/out-of-scope disposition; all included requirements must be accepted. Deferral or removal requires an explicit dated Victor decision, remains visible, and cannot be described as implemented. No documented requirement disappears merely because it was not selected for an earlier beta. This finite documented scope is not a license to invent new features.
 
 **Recommended v1 boundary, pending Victor:** the PRD's explicit MVP list (accounts, D&D 5e guided builder/sheet/spells/inventory, campaigns, structured species/subclass/spell/item/feat authoring, print-friendly PDF export, responsive web and its stated second-system proof), plus the privacy/durability/backup/feedback and M8 release gates. Retain already-shipped narrative/wiki functionality. Stage the broader M5/M6 work and M7 PDF *importing* after this first public beta where the roadmap permits, while continuing their project-wide queue. This is a recommendation, not an approved exclusion. Until scope is resolved, ambiguous requirements remain open and prevent an unconditional launch-complete verdict.
 
 | Decision | Conflict / concrete choice | Recommended resolution and execution effect |
 | --- | --- | --- |
-| S1 | Does “finish the project” require every M1-M8 exit before initial public beta, or staged beta then full-roadmap completion? | Track all milestones either way. Recommend the explicit MVP + safety/ops beta boundary above, then finish remaining milestones. Victor must approve the launch subset; no empty-queue completion. |
+| S1 | Launch sequencing only: every M1-M8 exit before the first public beta, or staged beta while completing the full documented project? | ALL-milestone project completion is already chosen. A staged beta is an intermediate checkpoint, never a smaller replacement scope; automatically continue the remaining milestone/requirement queue afterward. Victor may choose sequencing and explicitly disposition individual requirements, not silently narrow the project. |
 | S2 | PRD P0/MVP requires Daggerheart; later roadmap leaves multi-system timing open/post-beta. | Keep the second-system requirement open until Victor chooses launch-time support or an explicit deferral. Preserve system-agnostic architecture; do not pretend a schema registry proves a playable second system. |
 | S3 | PRD P0 includes public content scope; later decisions select campaign-only sharing first and public publishing as optional/later. | Recommend private/campaign sharing for v1, public publishing only after an explicit visibility/redaction/licensing/moderation contract. Approval is required to defer this P0 or select the public contract. |
 | S4 | M7 PDF importing has no supported-layout/content-family acceptance set and is explicitly bypassable/post-beta. | Define a finite supported input matrix and rights-safe fixtures before implementation. Preserve source/corrections/audit/calculation gates; label unsupported layouts. Do not promise arbitrary PDFs. This is distinct from required print/PDF character export. |
@@ -88,7 +88,7 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | §11-§12 | PWA/offline writes, native/desktop apps, Discord bot, VTT, embeds/public API, external character migration -> S5 future register. Existing responsive web and MPMB imports are not these features. Specify selected targets/contracts before adding platform/service scope. |
 | §13-§14 | Public roadmap/voting/open-source license, creator/community profiles/forums; system-admin tools, moderation/abuse, analytics -> R04/R26/R27 + S5. Feedback exists; remaining capabilities need inventory and owner choices. No analytics or external messages/services by implication. |
 
-Before saying the **entire project scope** is finished, every selected ambition in this register must have child requirement IDs and accepted evidence or a dated Victor disposition. A public-beta verdict can be narrower only after S1-S5 scope decisions are recorded. Do not indefinitely expand “finish” with new unrequested ideas.
+Before saying the **total documented project** is finished, every documented ambition has an explicit included/completed/deferred/out-of-scope disposition; all included requirements are accepted. Every PRD requirement, including unselected P1-P3 ambitions, must have a child requirement ID and accepted evidence or an explicit dated Victor disposition. A narrower public-beta verdict is an intermediate checkpoint only; automatically continue the remaining milestone/requirement queue. Do not indefinitely expand “finish” with new unrequested ideas.
 
 ## First actions and dependency-driven execution
 
@@ -112,7 +112,11 @@ This pass authorizes none of these actions. The next orchestrator prepares a con
 
 All requests identify owner, frozen source, action/target, remaining uncertainty, risk, resource/data cap, exact cleanup and acceptance. If not concrete yet, do preparatory read-only/local work before asking. An access blocker closes only its dependency lane, not the project.
 
-## Completion gate and durable tracking
+## Completion gates and durable tracking
+
+### Mandatory total documented project completion gate
+
+This gate is separate from local readiness and any launch/beta checkpoint. Every M1-M8 exit, including M5.5, and every documented PRD requirement must have accepted evidence or an explicit dated Victor disposition. Every documented ambition has an explicit included/completed/deferred/out-of-scope disposition; **all included requirements are accepted**. No open, unknown, blocked or merely unselected requirement may silently vanish. Deferrals/out-of-scope decisions name Victor, UTC date, exact requirement, rationale and remaining follow-up; never count them as implementation. After a staged beta, automatically continue all remaining documented milestone/requirement work. Only this total-completion gate, a user pause, or actual blockers affecting all remaining work can end the project-wide execution loop.
 
 **Local readiness:** selected code integrated; meaningful focused tests, zero-warning full check, build and representative UI pass on one exact SHA; reviews done; reproducible data/runtime contracts with limitations recorded. This is a prerequisite, not launch.
 
@@ -120,7 +124,7 @@ All requests identify owner, frozen source, action/target, remaining uncertainty
 
 Every work item records: ID and source requirement, owner/worktree/base, current stage, acceptance/dependencies, exact commits, commands/results/artifact paths, target/fixture budget/cleanup, remaining defects and next action. Append progress below and update the row evidence; history remains immutable. Fresh thread reads latest HEAD/status/ledger and resumes first ready dependency. Context/host/budget interruption is a resumable pause, not scope completion.
 
-If no queued task is ready, inspect open requirement evidence and derive the next bounded implementation/integration/defect/acceptance task. Batch real approvals. Stop only for a human pause, an unresolved scope/approval/access dependency affecting **all** remaining work, or verified agreed scope completion. Record blocked rows with exact next actions and continue unaffected work. Never stop merely because the prior local queue ended or offline tests are green.
+If no queued task is ready, inspect open requirement evidence and derive the next bounded implementation/integration/defect/acceptance task. Batch real approvals. Stop only for a human pause, an unresolved scope/approval/access dependency affecting **all** remaining work, or verified total documented project completion. Record blocked rows with exact next actions and continue unaffected work. Never stop merely because the prior local queue ended or offline tests are green.
 
 | UTC date | Owner/source | Result | Next |
 | --- | --- | --- | --- |
