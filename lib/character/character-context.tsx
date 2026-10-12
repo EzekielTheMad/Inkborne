@@ -21,6 +21,7 @@ import type {
   StructuredSources,
 } from "@/lib/engine/evaluator";
 import { evaluate } from "@/lib/engine/evaluator";
+import { resolveAbilityMechanics, assertAbilityMechanics, getConfirmedAbilityModifier, type AbilityMechanics, type MechanicsRequirement } from "@/lib/character/ability-mechanics";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { Effect } from "@/lib/types/effects";
 import type { InventoryItem, Currency } from "@/lib/types/inventory";
@@ -166,6 +167,9 @@ export interface CharacterContextValue {
 
   // Evaluation
   evalResult: EvaluationResult;
+  mechanics: AbilityMechanics;
+  mechanicsToken: object;
+  assertMechanics: (requirement?: MechanicsRequirement) => void;
 
   // Portrait
   portrait: PortraitData;
@@ -184,8 +188,8 @@ export interface CharacterContextValue {
 
   // Rolls (hydrated history + session, newest first)
   rolls: RollLogEntry[];
-  roll: (request: RollRequest) => RollResult;
-  rollWithPersistence: (request: RollRequest) => { result: RollResult; persistence: Promise<void> };
+  roll: (request: RollRequest, requirement?: MechanicsRequirement) => RollResult;
+  rollWithPersistence: (request: RollRequest, requirement?: MechanicsRequirement) => { result: RollResult; persistence: Promise<void> };
   rollPersistencePending: boolean;
   rollPersistenceUncertain: boolean;
 
@@ -425,9 +429,24 @@ export function CharacterProvider({
   ]);
 
   const currency = (state.currency as Currency) ?? DEFAULT_CURRENCY;
+  const [spells, setSpells] = useState<CharacterSpell[]>(initialSpells);
+  const [pendingConcentrationCheck, setPendingConcentrationCheck] = useState<PendingConcentrationCheck | null>(null);
+  const permanentResult = useMemo(() => evaluate(baseStatsWithLevel, allEffects, schema, structuredSources, state as Record<string, unknown>),
+    [baseStatsWithLevel, allEffects, schema, structuredSources, state]);
+  const mechanics = useMemo(() => resolveAbilityMechanics(baseStatsWithLevel, evalResult, schema, permanentResult), [baseStatsWithLevel, evalResult, schema, permanentResult]);
+  const mechanicsSnapshot = useMemo(() => ({ character, contentRefs, contentSnapshotsComplete, schema, structuredSources, baseStatsWithLevel, allEffects,
+    derivedState, inventory, mechanics, evalResult, permanentResult, maxHp, isOwner, spells, pendingConcentrationCheck }),
+  [character, contentRefs, contentSnapshotsComplete, schema, structuredSources, baseStatsWithLevel, allEffects, derivedState, inventory, mechanics, evalResult, permanentResult, maxHp, isOwner, spells, pendingConcentrationCheck]);
+  const committedMechanics = useRef(mechanicsSnapshot);
+  useLayoutEffect(() => { committedMechanics.current = mechanicsSnapshot; }, [mechanicsSnapshot]);
+  const assertMechanics = useCallback((requirement: MechanicsRequirement = {}) => {
+    if (committedMechanics.current !== mechanicsSnapshot) throw new Error("Saved mechanical inputs changed. Use the current loaded controls before trying again.");
+    if (!isOwner || !contentSnapshotsComplete) throw new Error("Complete owned saved mechanics are required for this action.");
+    if (reloadRequired || patchState.hasPendingWrites()) throw new Error("Wait for pending saves or reload before using saved mechanics.");
+    assertAbilityMechanics(mechanics, evalResult, schema, requirement);
+  }, [mechanicsSnapshot, isOwner, contentSnapshotsComplete, mechanics, evalResult, schema, reloadRequired, patchState]);
 
   // --- Spells ---
-  const [spells, setSpells] = useState<CharacterSpell[]>(initialSpells);
 
   const castingSources = useMemo(() => resolveEffectiveCastingSources(
     character.choices?.classes ?? [], contentRefs, { id: character.id, system_id: character.system_id },
@@ -452,10 +471,26 @@ export function CharacterProvider({
 
   const updateSpell = useCallback(
     async (id: string, updates: SpellUpdate) => {
+      if (Object.hasOwn(updates, "is_prepared")) {
+        const spell = spells.find(entry => entry.id === id);
+        if (!spell) throw new Error("Saved spell is unavailable.");
+        assertMechanics();
+        const resolved = resolveCastingAbility(spell, { character: { id: character.id, system_id: character.system_id, choices: character.choices }, spells, contentRefs,
+          abilities: schema.ability_scores, abilityScores: evalResult.stats, proficiencyBonus: evalResult.computed.proficiency_bonus });
+        if (resolved.status !== "available") throw new Error(resolved.reason);
+        assertMechanics({ abilities: [resolved.profile.ability], computed: ["proficiency_bonus"] });
+        const sources = resolveEffectiveCastingSources(character.choices.classes ?? [], contentRefs, { id: character.id, system_id: character.system_id });
+        const source = sources.status === "available" ? sources.sources.find(entry => entry.classSlug === spell.class_slug) : null;
+        const modifier = getConfirmedAbilityModifier(evalResult, schema, resolved.profile.ability);
+        if (!source?.prepared || modifier === null) throw new Error("Saved preparation mechanics are unavailable.");
+        const maximum = source.preparationRule === "parent" ? computeMaxPrepared(source.classSlug, source.classLevel, modifier)
+          : Math.max(1, modifier + (source.preparationRule === "half-class-level-plus-ability" ? Math.floor(source.classLevel / 2) : source.classLevel));
+        assertMechanics({ values: [maximum] });
+      }
       await updateCharacterSpell(id, updates);
       setSpells((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
     },
-    [],
+    [spells, assertMechanics, character, contentRefs, schema, evalResult],
   );
 
   const removeSpell = useCallback(
@@ -482,8 +517,6 @@ export function CharacterProvider({
   // The damage path (HP tracker) raises a pending CON-save check; the
   // ConcentrationPrompt dialog resolves it. Drop resolution applies the same
   // atomic drop patch as every other concentration-ending path.
-  const [pendingConcentrationCheck, setPendingConcentrationCheck] =
-    useState<PendingConcentrationCheck | null>(null);
 
   const requestConcentrationCheck = useCallback((damage: number) => {
     if (damage <= 0) return;
@@ -539,7 +572,11 @@ export function CharacterProvider({
     if (castingSources.status === "available") for (const source of castingSources.sources) {
       if (!source.active || !source.config) continue;
       const sc = source.config;
-      const castingMath = resolveCastingMath(sc.ability, schema.ability_scores, abilityScores, profBonus);
+      const normalMath = resolveCastingMath(sc.ability, schema.ability_scores, abilityScores, profBonus);
+      const modifier = getConfirmedAbilityModifier(evalResult, schema, sc.ability);
+      const castingMath = mechanics.status !== "available" || modifier === null || normalMath.status !== "available" || !Number.isFinite(profBonus + modifier + 8)
+        ? { status: "unavailable" as const, reason: "Saved casting mechanics are unavailable." }
+        : { ...normalMath, abilityModifier: modifier, spellAttackBonus: profBonus + modifier, spellDc: 8 + profBonus + modifier };
       const maxPrepared = castingMath.status !== "available" ? null : !source.prepared ? 0 : source.preparationRule === "parent"
         ? computeMaxPrepared(source.classSlug, source.classLevel, castingMath.abilityModifier)
         : Math.max(1, castingMath.abilityModifier + (source.preparationRule === "half-class-level-plus-ability" ? Math.floor(source.classLevel / 2) : source.classLevel));
@@ -564,7 +601,7 @@ export function CharacterProvider({
       spellAttackBonus,
       castingMathStatus,
     };
-  }, [castingSources, evalResult, schema.ability_scores]);
+  }, [castingSources, evalResult, schema.ability_scores, mechanics]);
 
   // Compatibility aliases are usable only alongside the explicit resolution.
   const maxSlots = slotResolution.status === "available" ? slotResolution.maxSlots : {};
@@ -586,20 +623,31 @@ export function CharacterProvider({
   const castingSnapshot = useMemo(() => ({ inputs: castingInputs, isOwner, characterLevel: character.level }), [castingInputs, isOwner, character.level]);
   const currentCastingSnapshot = useRef(castingSnapshot);
   useLayoutEffect(() => { currentCastingSnapshot.current = castingSnapshot; }, [castingSnapshot]);
-  const getCastingAbility = useCallback((target: CharacterSpell) => resolveCastingAbility(target, castingInputs), [castingInputs]);
+  const getCastingAbility = useCallback((target: CharacterSpell): CastingAbilityResolution => {
+    if (mechanics.status !== "available") return { status: "unavailable", reason: mechanics.reason };
+    const resolved = resolveCastingAbility(target, castingInputs);
+    if (resolved.status !== "available") return resolved;
+    const modifier = getConfirmedAbilityModifier(evalResult, schema, resolved.profile.ability);
+    const proficiency = evalResult.computed.proficiency_bonus;
+    if (modifier === null || !Number.isFinite(proficiency) || !Number.isFinite(modifier + proficiency)) return { status: "unavailable", reason: "Saved casting modifier is unavailable." };
+    return { ...resolved, profile: { ...resolved.profile, abilityModifier: modifier, spellAttackBonus: modifier + proficiency, spellDc: 8 + modifier + proficiency } };
+  }, [castingInputs, mechanics, evalResult, schema]);
 
   const castSpell = useCallback(
     async (spell: CharacterSpell, choice: CastChoice): Promise<CastOutcome> => {
       if (currentCastingSnapshot.current !== castingSnapshot) throw new Error("The saved casting source changed. Choose the spell again using its current loaded content before casting.");
+      assertMechanics();
       if (!isOwner) throw new Error("This character is read-only. Only its owner can cast spells.");
       if (slotResolution.status !== "available") throw new Error(slotResolution.reason);
       const resolved = getCastingAbility(spell);
       if (resolved.status !== "available") throw new Error(resolved.reason);
+      assertMechanics({ abilities: [resolved.profile.ability], computed: ["proficiency_bonus"] });
       const source = castSourceFromCharacterSpell(resolved.spell);
       if (!source) {
         throw new Error(`Spell "${spell.name}" has no castable content data.`);
       }
       return patchState.runAction(state, (confirmedState) => {
+        assertMechanics({ abilities: [resolved.profile.ability], computed: ["proficiency_bonus"] });
         const outcome = computeCastEffects({
           spell: source,
           choice,
@@ -610,7 +658,7 @@ export function CharacterProvider({
         return { patch: outcome.statePatch, result: outcome };
       }, { requireCurrent: true });
     },
-    [state, isOwner, getCastingAbility, character.level, patchState, slotResolution, castingSnapshot],
+    [state, isOwner, getCastingAbility, character.level, patchState, slotResolution, castingSnapshot, assertMechanics],
   );
 
   // --- Rolls ---
@@ -618,7 +666,9 @@ export function CharacterProvider({
   const [rolls, setRolls] = useState<RollLogEntry[]>(initialRolls ?? []);
 
   const recordRoll = useCallback(
-    (request: RollRequest, requireConfirmation = false) => {
+    (request: RollRequest, requireConfirmation = false, requirement?: MechanicsRequirement) => {
+      if (["check", "save", "attack", "initiative", "hit_die", "concentration"].includes(request.kind) && !requirement) throw new Error("This derived roll needs current saved mechanical inputs.");
+      if (requirement) assertMechanics(requirement);
       // Active-effect roll modifiers (Bless +1d4, Bane -1d4…) are collected
       // by the roll SURFACES (RollPopover, ConcentrationPrompt) via
       // `collectRollModifiers` and arrive already baked into the request —
@@ -644,10 +694,10 @@ export function CharacterProvider({
         : insertRoll(character.id, result);
       return { result, persistence: Promise.resolve(persistence) };
     },
-    [character.id, character.user_id],
+    [character.id, character.user_id, assertMechanics],
   );
-  const roll = useCallback((request: RollRequest): RollResult => {
-    const tracked = recordRoll(request);
+  const roll = useCallback((request: RollRequest, requirement?: MechanicsRequirement): RollResult => {
+    const tracked = recordRoll(request, false, requirement);
     void tracked.persistence.catch(err => console.error("Failed to persist roll:", err));
     return tracked.result;
   }, [recordRoll]);
@@ -655,10 +705,10 @@ export function CharacterProvider({
   const trackedRollUncertain = useRef(false);
   const [rollPersistencePending, setRollPersistencePending] = useState(false);
   const [rollPersistenceUncertain, setRollPersistenceUncertain] = useState(false);
-  const rollWithPersistence = useCallback((request: RollRequest) => {
+  const rollWithPersistence = useCallback((request: RollRequest, requirement?: MechanicsRequirement) => {
     if (trackedRollUncertain.current) throw new CharacterStateReloadError("The death-save roll record could not be confirmed. Reload before rolling again.");
     if (trackedRollPending.current) throw new Error("A death-save roll record is still saving.");
-    const tracked = recordRoll(request, true);
+    const tracked = recordRoll(request, true, requirement);
     trackedRollPending.current = true;
     setRollPersistencePending(true);
     const persistence = tracked.persistence.catch(error => {
@@ -698,26 +748,29 @@ export function CharacterProvider({
   // dice remaining and HP not already full; returns null when it can't spend.
   const spendHitDie = useCallback(
     async (classSlug: string): Promise<RollResult | null> => {
+      assertMechanics({ abilities: ["constitution"], values: [maxHp, state.current_hp!, state.temp_hp!] });
       const pool = hitDicePools.find((p) => p.classSlug === classSlug);
       if (!pool || pool.spent >= pool.max) return null;
 
       const currentHp = state.current_hp ?? maxHp;
       if (currentHp >= maxHp) return null;
 
-      const conScore =
-        (evalResult.stats.constitution as number | undefined) ?? 10;
-      const conMod = Math.floor((conScore - 10) / 2);
+      const conMod = getConfirmedAbilityModifier(evalResult, schema, "constitution")!;
 
       return patchState.runAction(state, (confirmedState) => {
         // Refuse dependent work before rolling or logging a resource spend.
-        const result = roll(buildHitDieRollRequest(pool, conMod));
+        assertMechanics({ abilities: ["constitution"], values: [maxHp, conMod] });
+        const result = roll(buildHitDieRollRequest(pool, conMod), { abilities: ["constitution"], values: [maxHp, conMod] });
         return { patch: spendHitDiePatch(confirmedState, classSlug, result.total, maxHp), result };
       });
     },
-    [hitDicePools, state, maxHp, evalResult.stats.constitution, roll, patchState],
+    [hitDicePools, state, maxHp, evalResult, schema, roll, patchState, assertMechanics],
   );
 
   const value: CharacterContextValue = {
+    mechanics,
+    mechanicsToken: mechanicsSnapshot,
+    assertMechanics,
     character,
     schema,
     contentRefs,
@@ -816,6 +869,9 @@ export function useCharacter() {
     isDm: ctx.isDm,
     hasSheet: ctx.hasSheet,
     evalResult: ctx.evalResult,
+    mechanics: ctx.mechanics,
+    mechanicsToken: ctx.mechanicsToken,
+    assertMechanics: ctx.assertMechanics,
     maxHp: ctx.maxHp,
     primaryColor: ctx.primaryColor,
     setPrimaryColor: ctx.setPrimaryColor,
@@ -835,7 +891,10 @@ export function useCharacterState() {
     // Relative HP callers computed their patch from this render. Keep raw
     // absolute edits on patchState; only this action path requires settled state.
     patchActionState: (patch: Partial<CharacterState>) =>
-      ctx.patchState.runAction(ctx.state, () => ({ patch, result: true })),
+      ctx.patchState.runAction(ctx.state, () => {
+        ctx.assertMechanics({ abilities: ["constitution"], values: [ctx.maxHp, ctx.state.current_hp!, ctx.state.temp_hp!] });
+        return { patch, result: true };
+      }),
   };
 }
 
@@ -928,14 +987,20 @@ export function usePortrait() {
 export function useRolls(): {
   /** Hydrated + session rolls, newest first. */
   rolls: RollLogEntry[];
-  roll: (request: RollRequest) => RollResult;
-  rollWithPersistence: (request: RollRequest) => { result: RollResult; persistence: Promise<void> };
+  roll: (request: RollRequest, requirement?: MechanicsRequirement) => RollResult;
+  rollWithPersistence: (request: RollRequest, requirement?: MechanicsRequirement) => { result: RollResult; persistence: Promise<void> };
+  assertMechanics: (requirement?: MechanicsRequirement) => void;
+  mechanics: AbilityMechanics;
+  mechanicsToken: object;
   rollPersistencePending: boolean;
   rollPersistenceUncertain: boolean;
 } {
   const ctx = useCharacterContext();
   return {
     rolls: ctx.rolls,
+    assertMechanics: ctx.assertMechanics,
+    mechanics: ctx.mechanics,
+    mechanicsToken: ctx.mechanicsToken,
     roll: ctx.roll,
     rollWithPersistence: ctx.rollWithPersistence,
     rollPersistencePending: ctx.rollPersistencePending,
@@ -1015,7 +1080,8 @@ export function useRest(): {
   const exhaustion = (state.exhaustion as number | undefined) ?? 0;
 
   const shortEffects = computeShortRestEffects(state, resources);
-  const longEffects = computeLongRestEffects(state, maxHp, resources, hitDicePools);
+  const longEffects = ctx.mechanics.status === "available" && Number.isSafeInteger(maxHp) && maxHp > 0
+    ? computeLongRestEffects(state, maxHp, resources, hitDicePools) : { canApply: false, statePatch: {} };
 
   const arcaneRecovery = slotResolution.status !== "available"
     ? { available: false, budget: 0, recoverableSlots: {} }
@@ -1065,8 +1131,12 @@ export function useRest(): {
   };
 
   const longRest = () => {
+    ctx.assertMechanics({ abilities: ["constitution"], values: [maxHp, state.current_hp!, state.temp_hp!, ...resources.map(entry => entry.max), ...hitDicePools.flatMap(pool => [pool.max, pool.spent, pool.die])] });
     if (slotResolution.status !== "available" || !longEffects.canApply) return Promise.resolve(false);
-    return patchState.runAction(state, () => ({ patch: longEffects.statePatch, result: true })).catch((error: unknown) => {
+    return patchState.runAction(state, () => {
+      ctx.assertMechanics({ abilities: ["constitution"], values: [maxHp] });
+      return { patch: longEffects.statePatch, result: true };
+    }).catch((error: unknown) => {
       if (error instanceof CharacterStateReloadError) throw error;
       return false;
     });

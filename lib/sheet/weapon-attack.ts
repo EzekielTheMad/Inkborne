@@ -3,6 +3,8 @@ import type { WeaponData } from "@/lib/schemas/content-types/weapon";
 import { parseDiceExpression } from "@/lib/dice/parser";
 import { formatSignedTerm } from "@/lib/rolls/requests";
 import { formatModifier, isProficient } from "@/lib/sheet/helpers";
+import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
+import type { SystemSchemaDefinition } from "@/lib/types/system";
 
 export interface WeaponDisplay {
   damageDice: string | null;
@@ -66,9 +68,11 @@ export function getWeaponAttack(
   slug: string,
   data: WeaponData | Record<string, unknown>,
   result: EvaluationResult,
+  schema?: SystemSchemaDefinition,
 ): WeaponAttack {
   const display = getWeaponDisplay(data);
   const modifierFor = (ability: string) => {
+    if (schema) return getConfirmedAbilityModifier(result, schema, ability) ?? Number.NaN;
     const effective = result.stats[`${ability}_mod`];
     if (typeof effective === "number" && Number.isFinite(effective)) return effective;
     const score = result.stats[ability];

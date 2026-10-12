@@ -1,4 +1,7 @@
 "use client";
+import type { AsiEvidence } from "@/lib/character/asi-contributions";
+import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
+
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -31,6 +34,7 @@ interface BackgroundStepClientProps {
   characterId: string;
   character: {
     id: string;
+    system_id?: string;
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
@@ -52,6 +56,7 @@ interface BackgroundStepClientProps {
       source: string;
     };
   }>;
+  asiEvidence?: AsiEvidence;
   schema: SystemSchemaDefinition | undefined;
   availableLanguages?: string[];
 }
@@ -76,6 +81,7 @@ export function BackgroundStepClient({
   backgrounds,
   contentRefs,
   schema,
+  asiEvidence,
   availableLanguages = [],
 }: BackgroundStepClientProps) {
   const saveBusy = useRef(false);
@@ -535,6 +541,7 @@ export function BackgroundStepClient({
             effects={allEffects}
             schema={schema}
             level={character.level}
+            sources={buildCharacterStructuredSources(contentRefs, character.level, { character: { ...character, system_id: character.system_id ?? "" }, evidence: asiEvidence })}
           />
         </div>
       )}

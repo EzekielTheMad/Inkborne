@@ -8,6 +8,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { CharacterState } from "@/lib/types/character";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
+import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
 
 interface StatRibbonProps {
   schema: SystemSchemaDefinition;
@@ -46,12 +47,13 @@ export function StatRibbon({
       {/* Ability score cards: 3x2 grid on mobile, horizontal row on desktop */}
       <div className="grid grid-cols-3 gap-2 md:flex md:gap-2 shrink-0">
         {schema.ability_scores.map((ability) => {
-          const score = stats[ability.slug] ?? 10;
-          const modifier = Math.floor((score - 10) / 2);
+          const score = stats[ability.slug];
+          const modifier = getConfirmedAbilityModifier(evalResult, schema, ability.slug) ?? Number.NaN;
           return (
             <AbilityCard
               key={ability.slug}
               name={ability.abbr}
+              ability={ability.slug}
               score={score}
               modifier={modifier}
               rollLabel={ability.name}

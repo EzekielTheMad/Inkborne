@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getContentByType } from "@/lib/supabase/content-definitions";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { RaceStepClient } from "./race-step-client";
 
@@ -32,13 +32,13 @@ export default async function RaceStepPage({ params }: PageProps) {
 
   const systemId = character.system_id;
 
-  const [raceContent, subraceContent, traitContent, contentRefs, languages] =
+  const [raceContent, subraceContent, traitContent, contentSnapshot, languages] =
     await Promise.all([
       getContentByType(systemId, "race"),
       getContentByType(systemId, "subrace"),
       // Traits resolve race choices such as Dwarf tool proficiency.
       getContentByType(systemId, "trait"),
-      getContentRefsByCharacter(id, { requireCompleteSnapshots: true }),
+      getCharacterContentRefSnapshot(id),
       getContentByType(systemId, "language"),
     ]);
 
@@ -50,7 +50,8 @@ export default async function RaceStepPage({ params }: PageProps) {
       subraces={subraceContent}
       traits={traitContent}
       availableLanguages={languages.map(language => language.slug)}
-      contentRefs={contentRefs}
+      contentRefs={contentSnapshot.refs}
+      asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}
     />
   );

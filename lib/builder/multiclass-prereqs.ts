@@ -30,7 +30,7 @@ export const MULTICLASS_PREREQ_TABLE: Record<string, MulticlassPrereq> = {
   wizard: { all: [{ ability: "intelligence", min: 13 }] },
 };
 
-export type ClassPrereqState = "met" | "not-met" | "already-in-build";
+export type ClassPrereqState = "met" | "not-met" | "already-in-build" | "unavailable";
 
 export interface ClassPrereqResult {
   classSlug: string;
@@ -58,6 +58,7 @@ export function evaluateMulticlassPrereq(
   classSlug: string,
   resolvedStats: Record<string, number>,
   selectedClasses: Array<{ slug: string }>,
+  mechanicsAvailable = true,
 ): ClassPrereqResult {
   if (selectedClasses.some((c) => c.slug === classSlug)) {
     return {
@@ -68,6 +69,10 @@ export function evaluateMulticlassPrereq(
   }
 
   const prereq = MULTICLASS_PREREQ_TABLE[classSlug];
+  const required = [...(prereq?.all ?? []), ...(prereq?.any ?? [])];
+  if (!mechanicsAvailable || required.some(entry => !Object.hasOwn(resolvedStats, entry.ability) || !Number.isFinite(resolvedStats[entry.ability]))) {
+    return { classSlug, state: "unavailable", line: "Saved ability mechanics unavailable; reload or finish confirmed choices." };
+  }
   if (!prereq) {
     return { classSlug, state: "met", line: "" };
   }
@@ -123,6 +128,7 @@ export function multiclassPrereqsForAll(
   resolvedStats: Record<string, number>,
   selectedClasses: Array<{ slug: string }>,
   classes: ContentEntry[],
+  mechanicsAvailable = true,
 ): ClassPrereqResult[] {
-  return classes.map((c) => evaluateMulticlassPrereq(c.slug, resolvedStats, selectedClasses));
+  return classes.map((c) => evaluateMulticlassPrereq(c.slug, resolvedStats, selectedClasses, mechanicsAvailable));
 }

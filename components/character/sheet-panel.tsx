@@ -28,7 +28,7 @@ import {
 } from "@/lib/character/character-context";
 
 export function SheetPanel() {
-  const { character, schema, contentRefs, hasSheet, evalResult, maxHp } =
+  const { character, schema, contentRefs, hasSheet, evalResult, maxHp, mechanics } =
     useCharacter();
   const { state, patchState, patchActionState, patchConditionalState } = useCharacterState();
   const { hitDicePools } = useRest();
@@ -87,6 +87,8 @@ export function SheetPanel() {
 
   return (
     <>
+      {mechanics.status !== "available" ? <p role="status" className="px-4 py-2 text-sm">{mechanics.reason} Displayed content values are read-only and do not confirm ASI-inclusive mechanics.</p>
+        : mechanics.capUnverified ? <p role="status" className="px-4 py-2 text-sm">Saved ASI contributions are retained. A later base or content change exceeds the usual score cap; historical cap eligibility is unverified.</p> : null}
       <div className="px-4"><RaceAbilityNotice contentRefs={contentRefs} /></div>
       <CharacterPrintAction />
       <div className="hidden md:block px-4 py-3 border-b border-border">

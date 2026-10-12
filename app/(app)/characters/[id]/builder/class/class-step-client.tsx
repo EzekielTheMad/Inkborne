@@ -1,6 +1,9 @@
 "use client";
+import type { AsiEvidence } from "@/lib/character/asi-contributions";
+import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 
-import { useCallback, useMemo, useRef, useState, useTransition } from "react";
+
+import { useCallback, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateCharacter,
@@ -40,6 +43,7 @@ interface ClassStepClientProps {
   character: {
     id: string;
     name: string;
+    system_id?: string;
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
@@ -66,6 +70,7 @@ interface ClassStepClientProps {
       source: string;
     };
   }>;
+  asiEvidence?: AsiEvidence;
   schema: SystemSchemaDefinition | undefined;
   availableLanguages?: string[];
 }
@@ -103,10 +108,12 @@ export function ClassStepClient({
   spells,
   contentRefs: serverContentRefs,
   schema,
+  asiEvidence: serverAsiEvidence,
   availableLanguages,
 }: ClassStepClientProps) {
-  const [recovered, setRecovered] = useState<{ source: ClassStepClientProps["contentRefs"]; refs: ClassStepClientProps["contentRefs"] } | null>(null);
+  const [recovered, setRecovered] = useState<{ source: ClassStepClientProps["contentRefs"]; refs: ClassStepClientProps["contentRefs"]; asiEvidence: AsiEvidence } | null>(null);
   const contentRefs = recovered?.source === serverContentRefs ? recovered.refs : serverContentRefs;
+  const asiEvidence = recovered?.source === serverContentRefs ? recovered.asiEvidence : serverAsiEvidence;
   const saveBusy = useRef(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -158,7 +165,7 @@ export function ClassStepClient({
     try {
       const result = await reconcileClassFeatureRefsAction({ characterId });
       if (result.status !== "success") throw new Error(result.message);
-      setRecovered({ source: serverContentRefs, refs: result.refs });
+      setRecovered({ source: serverContentRefs, refs: result.refs, asiEvidence: result.asiEvidence });
       startTransition(() => router.refresh());
     } catch {
       setSaveError("Saved class features could not be restored. Your selections are kept. Try again or reload the character.");
@@ -179,11 +186,11 @@ export function ClassStepClient({
     (ref) => ref.content_definitions?.effects ?? [],
   );
 
-  const resolvedStats = useMemo(() => {
-    if (!schema) return character.base_stats ?? {};
-    const baseWithLevel = { ...(character.base_stats ?? {}), level: localLevel };
-    return evaluate(baseWithLevel, allEffects, schema, buildCharacterStructuredSources(contentRefs, localLevel), character.state).stats;
-  }, [character.base_stats, character.state, localLevel, allEffects, schema, contentRefs]);
+  const confirmedSources = buildCharacterStructuredSources(contentRefs, character.level, { character: { ...character, system_id: character.system_id ?? "" }, evidence: asiEvidence });
+  const confirmedResult = schema ? evaluate({ ...character.base_stats, level: character.level }, allEffects, schema, confirmedSources, character.state) : null;
+  const confirmedMechanics = schema && confirmedResult ? resolveAbilityMechanics(character.base_stats, confirmedResult, schema) : { status: "unavailable" as const, reason: "Saved mechanics are unavailable." };
+  const mechanicsAvailable = confirmedMechanics.status === "available" && localLevel === character.level && JSON.stringify(localChoices) === JSON.stringify(character.choices) && !saving;
+  const resolvedStats = confirmedResult?.stats ?? {};
 
   function beginSave() {
     if (saveBusy.current) {
@@ -605,6 +612,7 @@ export function ClassStepClient({
             selectedClasses={selectedClasses}
             localChoices={localChoices}
             resolvedStats={resolvedStats}
+            mechanicsAvailable={mechanicsAvailable}
             hpRule={hpRule}
             hpRolls={hpRolls}
             onLevelChange={handleLevelChange}
@@ -670,7 +678,8 @@ export function ClassStepClient({
             effects={allEffects}
             schema={schema}
             level={localLevel}
-            sources={buildCharacterStructuredSources(contentRefs, localLevel)}
+            sources={confirmedSources}
+            draft={!mechanicsAvailable}
             state={character.state}
           />
         </div>

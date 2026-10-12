@@ -10,6 +10,7 @@ import {
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import type { SystemSchemaDefinition, SkillDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
+import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
 
 interface SkillsListProps {
   schema: SystemSchemaDefinition;
@@ -17,7 +18,7 @@ interface SkillsListProps {
 }
 
 export function SkillsList({ schema, evalResult }: SkillsListProps) {
-  const { grants, stats, computed } = evalResult;
+  const { grants, computed } = evalResult;
   const proficiencyBonus = computed.proficiency_bonus ?? 0;
 
   // Sort skills alphabetically
@@ -32,7 +33,7 @@ export function SkillsList({ schema, evalResult }: SkillsListProps) {
       </h3>
       <div className="space-y-0.5">
         {sortedSkills.map((skill) => {
-          const abilityMod = stats[`${skill.ability}_mod`] ?? 0;
+          const abilityMod = getConfirmedAbilityModifier(evalResult, schema, skill.ability) ?? Number.NaN;
           const proficient = isProficient(grants, skill.slug);
           const expertise = hasExpertise(grants, skill.slug);
           const modifier = getSkillModifier(
@@ -54,6 +55,7 @@ export function SkillsList({ schema, evalResult }: SkillsListProps) {
               kind="check"
               label={`${skill.name} Check`}
               modifier={modifier}
+              mechanicsRequirement={{ abilities: [skill.ability], computed: ["proficiency_bonus"], values: [modifier] }}
               ariaLabel={`Roll ${skill.name} check`}
               className={cn(
                 "flex w-full items-center gap-2 py-1 px-2 rounded-sm text-left",

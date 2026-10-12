@@ -9,6 +9,9 @@ import { generateArmorEffects } from "@/lib/inventory/armor-effects";
 import { computeHitDicePools, buildHitDieRollRequest, spendHitDiePatch } from "@/lib/hit-dice/helpers";
 import { executeRoll } from "@/lib/dice/roller";
 import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
+import { frozenFeatureGrantSchema, type AsiEvidence } from "@/lib/character/asi-contributions";
+import { resolveAbilityMechanics, assertAbilityMechanics, getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
+import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { Effect } from "@/lib/types/effects";
 import type { ActiveEffect } from "@/lib/types/active-effects";
 import type { CharacterState } from "@/lib/types/character";
@@ -80,13 +83,16 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
   if (validUntil !== null && Date.parse(acceptance.data) >= Date.parse(validUntil)) return reject("expired_plan");
 
   try {
-    const refs = snapshot.pins.map(pin => ({ content_definitions: pin.resolved }));
+    const refs = snapshot.pins.map(pin => ({ ...pin, created_at: "captured", content_definitions: pin.resolved })) as unknown as ContentRefWithContent[];
     const effects = snapshot.pins.flatMap(pin => pin.resolved.effects) as unknown as Effect[];
     const schema = systemSchemaDefinitionSchema.parse(snapshot.system.schema_definition);
-    const structured = buildCharacterStructuredSources(refs, snapshot.character.level);
+    const asiEvidence: AsiEvidence = { status: "complete", character_id: snapshot.character.id, system_id: snapshot.character.system_id,
+      refs, grants: snapshot.feature_grants.map(grant => frozenFeatureGrantSchema.parse(grant)) };
+    const structured = buildCharacterStructuredSources(refs, snapshot.character.level, { character: snapshot.character, evidence: asiEvidence });
     const baseStats = { ...snapshot.character.base_stats, level: snapshot.character.level };
     // Match CharacterPage's baseline maxHp, not the live provider Constitution.
     const baseline = evaluate(baseStats, effects, schema, structured, state);
+    assertAbilityMechanics(resolveAbilityMechanics(baseStats, baseline, schema), baseline, schema, { abilities: ["constitution"] });
     const classes = snapshot.character.choices.classes;
     const classData = Object.fromEntries(snapshot.pins.filter(pin => pin.resolved.content_type === "class").map(pin => [pin.resolved.slug, { slug: pin.resolved.slug, data: pin.resolved.data }]));
     const rule = snapshot.system.schema_definition.hp_rule === undefined ? "free_choice" : hpRuleSchema.parse(snapshot.system.schema_definition.hp_rule);
@@ -107,6 +113,7 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
     }
     const liveState = { ...state, equipped_armor: bodyArmor ? String(itemData(bodyArmor).armor_category ?? "none").toLowerCase() : "none", shield_equipped: shield };
     const live = evaluate(baseStats, [...effects, ...armorEffects, ...collectActiveEffects(activeEffects, new Date(evaluation.data))], schema, structured, liveState);
+    assertAbilityMechanics(resolveAbilityMechanics(baseStats, live, schema, baseline), live, schema, { abilities: ["constitution"] });
     if (![baseline.stats.constitution, live.stats.constitution, maxHp].every(Number.isSafeInteger) || maxHp <= 0) return reject("invalid_mechanics");
     if (state.current_hp === undefined || state.current_hp > maxHp) return reject("invalid_mechanics");
     if (state.current_hp === maxHp) return reject("full_hp");
@@ -116,7 +123,7 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
     // existing clamped display; never write a fabricated replacement count.
     if (pool.spent >= pool.max) return reject("no_dice");
     if (!Number.isInteger(inputs.acceptedDieFace) || inputs.acceptedDieFace < 1 || inputs.acceptedDieFace > pool.die) return reject("invalid_mechanics");
-    const modifier = Math.floor((live.stats.constitution - 10) / 2);
+    const modifier = getConfirmedAbilityModifier(live, schema, "constitution")!;
     const roll = executeRoll(buildHitDieRollRequest(pool, modifier), () => (inputs.acceptedDieFace - 0.5) / pool.die);
     roll.rolled_at = evaluation.data;
     return hitDiePlanResultSchema.parse({ status: "planned", request, canonical_intent: canonicalHitDieIntent(request), dependency_fingerprint: fingerprint,

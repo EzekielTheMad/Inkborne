@@ -5,6 +5,7 @@ import { formatModifier } from "@/lib/sheet/helpers";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 
 interface AbilityCardProps {
+  ability?: string;
   name: string;
   score: number;
   modifier: number;
@@ -18,6 +19,7 @@ interface AbilityCardProps {
 }
 
 export function AbilityCard({
+  ability,
   name,
   score,
   modifier,
@@ -35,9 +37,9 @@ export function AbilityCard({
         {name}
       </p>
       <p className="text-2xl font-bold text-foreground leading-tight">
-        {formatModifier(modifier)}
+        {Number.isFinite(modifier) ? formatModifier(modifier) : "--"}
       </p>
-      <p className="text-sm text-muted-foreground">{score}</p>
+      <p className="text-sm text-muted-foreground">{Number.isFinite(score) ? score : "Unavailable"}</p>
     </>
   );
 
@@ -50,6 +52,7 @@ export function AbilityCard({
       kind="check"
       label={`${rollLabel} Check`}
       modifier={modifier}
+      mechanicsRequirement={ability ? { abilities: [ability], values: [score, modifier] } : undefined}
       className={cardClasses}
       ariaLabel={`Roll ${rollLabel} check`}
     >

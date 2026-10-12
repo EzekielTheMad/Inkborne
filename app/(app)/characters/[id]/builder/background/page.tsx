@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getContentByType } from "@/lib/supabase/content-definitions";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { BackgroundStepClient } from "./background-step-client";
 
@@ -30,9 +30,9 @@ export default async function BackgroundStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
-  const [backgroundContent, contentRefs, languages] = await Promise.all([
+  const [backgroundContent, contentSnapshot, languages] = await Promise.all([
     getContentByType(character.system_id, "background"),
-    getContentRefsByCharacter(id),
+    getCharacterContentRefSnapshot(id),
     // Used to resolve the "all_languages" choice.
     getContentByType(character.system_id, "language"),
   ]);
@@ -42,7 +42,8 @@ export default async function BackgroundStepPage({ params }: PageProps) {
       characterId={id}
       character={character}
       backgrounds={backgroundContent}
-      contentRefs={contentRefs}
+      contentRefs={contentSnapshot.refs}
+      asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}
       availableLanguages={languages.map((language) => language.slug)}
     />

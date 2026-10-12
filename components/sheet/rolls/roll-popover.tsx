@@ -14,8 +14,10 @@ import {
 } from "@/lib/rolls/requests";
 import type { RollKind, RollMode, RollResult, RollRequest } from "@/lib/dice/types";
 import { cn } from "@/lib/utils";
+import type { MechanicsRequirement } from "@/lib/character/ability-mechanics";
 
 export interface RollPopoverProps {
+  mechanicsRequirement?: MechanicsRequirement;
   kind: RollKind;
   /** Roll label, e.g. "Athletics Check", "Longsword — Attack". */
   label: string;
@@ -52,6 +54,7 @@ const TRIGGER_INTERACTION_CLASSES =
  * precedent), so `MobileSheet`'s mirrored surfaces need no extra work.
  */
 export function RollPopover({
+  mechanicsRequirement,
   kind,
   label,
   modifier,
@@ -65,29 +68,36 @@ export function RollPopover({
   ariaLabel,
   children,
 }: RollPopoverProps) {
-  const { roll } = useRolls();
+  const { roll, assertMechanics, mechanics } = useRolls();
   const { activeEffects } = useActiveEffects();
   const [open, setOpen] = useState(false);
+  const [rollError, setRollError] = useState<string | null>(null);
+  const dependent = mechanicsRequirement !== undefined || ["check", "save", "attack", "initiative", "hit_die", "concentration"].includes(kind);
+  const blocked = disabled || (dependent && (mechanics?.status !== "available" || !mechanicsRequirement));
 
   // Immediate kinds: one click, one roll — no popover (design §3.4).
   if (!isD20RollKind(kind)) {
     const executeImmediate = () => {
-      if (disabled) return;
-      const request = buildImmediateRollRequest({ kind, label, expression: expression ?? "", crit, meta });
-      if (onRollRequest) onRollRequest(request);
-      else { const result = roll(request); onResult?.(result); }
+      if (blocked) return;
+      try {
+        if (dependent) assertMechanics(mechanicsRequirement);
+        const request = buildImmediateRollRequest({ kind, label, expression: expression ?? "", crit, meta });
+        if (onRollRequest) onRollRequest(request);
+        else { const result = roll(request, mechanicsRequirement); onResult?.(result); }
+        setRollError(null);
+      } catch (cause) { setRollError(cause instanceof Error ? cause.message : "Reload before using this saved roll."); }
     };
 
     return (
-      <button
+      <><button
         type="button"
         onClick={executeImmediate}
-        disabled={disabled}
+        disabled={blocked}
         aria-label={ariaLabel ?? `Roll ${label}`}
         className={cn(TRIGGER_INTERACTION_CLASSES, className)}
       >
         {children}
-      </button>
+      </button>{rollError && <span role="alert" className="text-xs text-destructive">{rollError}</span>}</>
     );
   }
 
@@ -97,20 +107,21 @@ export function RollPopover({
   );
 
   const executeD20 = (mode: RollMode) => {
-    if (disabled) return;
-    const request = buildD20RollRequest({
-      kind, label, modifier, mode,
-      rollModifiers: collectRollModifiers(activeEffects, rollModifierKindFor(kind)), meta,
-    });
-    setOpen(false);
-    if (onRollRequest) onRollRequest(request);
-    else { const result = roll(request); onResult?.(result); }
+    if (blocked) return;
+    try {
+      if (dependent) assertMechanics({ ...mechanicsRequirement, values: [...(mechanicsRequirement?.values ?? []), modifier!] });
+      const request = buildD20RollRequest({ kind, label, modifier, mode,
+        rollModifiers: collectRollModifiers(activeEffects, rollModifierKindFor(kind)), meta });
+      if (onRollRequest) onRollRequest(request);
+      else { const result = roll(request, mechanicsRequirement); onResult?.(result); }
+      setRollError(null); setOpen(false);
+    } catch (cause) { setRollError(cause instanceof Error ? cause.message : "Reload before using this saved roll."); }
   };
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger
-        disabled={disabled}
+        disabled={blocked}
         aria-label={ariaLabel ?? `Roll ${label}`}
         className={cn(TRIGGER_INTERACTION_CLASSES, className)}
       >
@@ -134,10 +145,11 @@ export function RollPopover({
               {describeD20Roll(modifier, rollModifiers)}
             </p>
             <div className="flex flex-col gap-1.5">
+              {rollError && <p role="alert" className="text-xs text-destructive">{rollError}</p>}
               <Button
                 size="sm"
                 className="w-full bg-character-fg text-background hover:opacity-90"
-                disabled={disabled}
+                disabled={blocked}
                 onClick={() => executeD20("normal")}
               >
                 Roll
@@ -146,7 +158,7 @@ export function RollPopover({
                 variant="outline"
                 size="sm"
                 className="w-full border-emerald-500/40 text-emerald-500 hover:text-emerald-400"
-                disabled={disabled}
+                disabled={blocked}
                 onClick={() => executeD20("advantage")}
               >
                 Advantage
@@ -155,7 +167,7 @@ export function RollPopover({
                 variant="outline"
                 size="sm"
                 className="w-full border-destructive/40 text-destructive hover:text-destructive"
-                disabled={disabled}
+                disabled={blocked}
                 onClick={() => executeD20("disadvantage")}
               >
                 Disadvantage

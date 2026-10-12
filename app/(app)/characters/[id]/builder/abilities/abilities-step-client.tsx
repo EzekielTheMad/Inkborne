@@ -1,4 +1,7 @@
 "use client";
+import type { AsiEvidence } from "@/lib/character/asi-contributions";
+import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
+
 
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -29,6 +32,7 @@ interface AbilitiesStepClientProps {
   characterId: string;
   character: {
     id: string;
+    system_id?: string;
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
@@ -48,6 +52,7 @@ interface AbilitiesStepClientProps {
       effects: Effect[];
     };
   }>;
+  asiEvidence?: AsiEvidence;
   schema: SystemSchemaDefinition | undefined;
 }
 
@@ -61,6 +66,7 @@ function AbilitiesEditor({
   character,
   contentRefs,
   schema,
+  asiEvidence,
 }: AbilitiesStepClientProps) {
   const router = useRouter();
   const abilities = useMemo(
@@ -101,8 +107,9 @@ function AbilitiesEditor({
     (ref) => ref.content_definitions?.effects ?? [],
   );
 
-  const structuredSources = buildCharacterStructuredSources(contentRefs, character.level);
+  const structuredSources = buildCharacterStructuredSources(contentRefs, character.level, { character: { ...character, system_id: character.system_id ?? "" }, evidence: asiEvidence });
   const evaluated = schema ? evaluate({ ...scores, level: character.level }, allEffects, schema, structuredSources, character.state) : null;
+  const mechanics = schema && evaluated ? resolveAbilityMechanics(scores, evaluated, schema) : { status: "unavailable" as const, reason: "Saved mechanics are unavailable." };
 
   // Preserve the existing saved ASI display contribution separately. It is not
   // synthesized into live effects by this race repair (R06.3 remains open).
@@ -113,7 +120,8 @@ function AbilitiesEditor({
     const asiChoices = character.choices?.asi_choices ?? {};
     for (const asiChoice of Object.values(asiChoices)) {
       if (asiChoice?.mode === "asi") {
-        for (const alloc of asiChoice.allocations) {
+        for (const alloc of Array.isArray(asiChoice.allocations) ? asiChoice.allocations : []) {
+          if (!alloc || typeof alloc.ability !== "string" || !Number.isFinite(alloc.amount)) continue;
           if (alloc.amount !== 0) {
             const slug = alloc.ability;
             if (!bonuses[slug]) bonuses[slug] = [];
@@ -202,9 +210,10 @@ function AbilitiesEditor({
         <p className="text-sm text-muted-foreground">Totals include race and content effects; conditions follow the saved character state.
           Content considered: {contentRefs.map(ref => ref.content_definitions.name).join(", ") || "none"}.</p>
         {Object.keys(asiBonuses).length > 0 && <p role="status" className="text-sm text-muted-foreground">
-          Saved Ability Score Improvement choices are added to these totals separately. The Stats preview and live sheet
-          currently omit that addition.
+          Saved Ability Score Improvement allocations are shown for attribution. Only earned, exact pinned occurrences participate in evaluation; they are not added again after evaluation.
         </p>}
+        {mechanics.status !== "available" ? <p role="status">{mechanics.reason} Saved choice amounts are unverified evidence, not accepted totals.</p> : mechanics.capUnverified ? <p role="status">Saved ASI contributions are retained; later scores exceed the usual cap and historical cap eligibility is unverified.</p> : null}
+        {status !== "saved" && <p role="status">Draft preview only. These values cannot authorize live actions or prerequisites.</p>}
         {Object.keys(subraceBonuses).length > 0 && <p role="status" className="text-sm text-muted-foreground">
           Saved subrace score bonuses remain a separate builder contribution. The Stats preview and live sheet omit
           those score-only bonuses; subrace calculation parity remains unresolved.
@@ -283,7 +292,7 @@ function AbilitiesEditor({
           {abilities.map((ability) => {
             const base = currentScores[ability.slug] ?? 0;
             const contentTotal = evaluated?.stats[ability.slug] ?? base;
-            const displayContributions = [...(asiBonuses[ability.slug] ?? []), ...(subraceBonuses[ability.slug] ?? [])];
+            const displayContributions = subraceBonuses[ability.slug] ?? [];
             const total = contentTotal + displayContributions.reduce((sum, entry) => sum + entry.value, 0);
             const mod = Math.floor((total - 10) / 2);
 
@@ -386,6 +395,7 @@ function AbilitiesEditor({
                       <span className="font-medium">{base || "--"}</span>
                     </div>
                     <div className="flex justify-between"><span>Evaluated content total</span><span>{contentTotal}</span></div>
+                    {(asiBonuses[ability.slug] ?? []).map((entry, index) => <div key={`asi-${index}`} className="flex justify-between"><span>{entry.source} (nominal allocation)</span><span>+{entry.value}</span></div>)}
                     {displayContributions.map((entry, i) => (
                       <div key={i} className="flex justify-between">
                         <span className="text-muted-foreground">{entry.source}</span>
@@ -438,6 +448,7 @@ function AbilitiesEditor({
       {schema && (
         <div className="hidden lg:block">
           <StatPreview
+            draft={status !== "saved"}
             baseStats={currentScores}
             effects={allEffects}
             schema={schema}

@@ -1,4 +1,6 @@
 "use client";
+import type { AsiEvidence } from "@/lib/character/asi-contributions";
+
 
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -47,6 +49,7 @@ interface RaceStepClientProps {
   characterId: string;
   character: {
     id: string;
+    system_id?: string;
     level: number;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
@@ -72,6 +75,7 @@ interface RaceStepClientProps {
       source: string;
     };
   }>;
+  asiEvidence?: AsiEvidence;
   schema: SystemSchemaDefinition | undefined;
   availableLanguages?: string[];
 }
@@ -84,6 +88,7 @@ export function RaceStepClient({
   traits,
   contentRefs,
   schema,
+  asiEvidence,
   availableLanguages,
 }: RaceStepClientProps) {
   const saveBusy = useRef(false);
@@ -620,7 +625,7 @@ export function RaceStepClient({
             effects={allEffects}
             schema={schema}
             level={character.level}
-            sources={buildCharacterStructuredSources(contentRefs, character.level)}
+            sources={buildCharacterStructuredSources(contentRefs, character.level, { character: { ...character, system_id: character.system_id ?? "" }, evidence: asiEvidence })}
             state={character.state}
           />
         </div>

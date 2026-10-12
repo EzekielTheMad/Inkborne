@@ -17,7 +17,7 @@ export function originalRef(snapshot: ReturnType<typeof originalSnapshot>): Cont
   const parsed = parseContentVersionSnapshot(snapshot);
   if (!parsed) throw new Error(`Invalid original snapshot: ${snapshot.slug_snapshot}`);
   const raw = rawOriginalRef(snapshot);
-  return { id: raw.id, character_id: raw.character_id, content_id: raw.content_id, content_version: raw.content_version, context: raw.context,
+  return { feature_grant_id: null, id: raw.id, character_id: raw.character_id, content_id: raw.content_id, content_version: raw.content_version, context: raw.context,
     choice_source: raw.choice_source, created_at: raw.created_at, content_definitions: parsed };
 }
 export function originalParent(slug = "warden", type: "full" | "half" | "third" | "pact" | null = null, slots: number[] | null = null, n = 10): ContentRefWithContent {

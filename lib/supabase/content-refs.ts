@@ -9,12 +9,14 @@ import {
 } from "@/lib/supabase/content-definitions-parser";
 import { createClient } from "@/lib/supabase/server";
 import type { CharacterContentRef } from "@/lib/types/character";
+import { frozenFeatureGrantSchema, type AsiEvidence } from "@/lib/character/asi-contributions";
 
 export interface ContentRefWithContent extends CharacterContentRef {
   content_definitions: ParsedContentDefinition;
 }
 
 const contentRefEnvelopeSchema = z.object({
+  feature_grant_id: z.uuid().nullable(),
   id: z.string().uuid(),
   character_id: z.string().uuid(),
   content_id: z.string().uuid(),
@@ -45,6 +47,7 @@ export function parseContentRefWithContent(
   if (definition === null) return null;
 
   return {
+    feature_grant_id: envelope.data.feature_grant_id,
     id: envelope.data.id,
     character_id: envelope.data.character_id,
     content_id: envelope.data.content_id,
@@ -60,19 +63,20 @@ export function parseContentRefWithContent(
 // rows lets layout/page readers retain their own complete-snapshot validation.
 async function readContentRefRows(characterId: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from("character_content_refs")
     .select(
-      `id, character_id, content_id, content_version, context, choice_source, created_at,
+      `id, character_id, content_id, content_version, context, choice_source, feature_grant_id, created_at,
        content_versions!character_content_refs_content_version_fkey (
          content_id, version, system_id_snapshot, content_type_snapshot,
          slug_snapshot, name_snapshot, data_snapshot, effects_snapshot,
          source_snapshot, scope_snapshot, owner_id_snapshot, created_at
-       )`,
+       )`, { count: "exact" },
     )
     .eq("character_id", characterId);
 
   if (error) throw error;
+  if (!Array.isArray(data) || count !== data.length) throw new Error("Saved content reference projection is incomplete.");
   return data ?? [];
 }
 
@@ -95,12 +99,14 @@ export async function getContentRefsByCharacter(
 export async function getCharacterContentRefSnapshot(
   characterId: string,
   options: { fresh?: boolean } = {},
-): Promise<{ refs: ContentRefWithContent[]; complete: boolean }> {
+): Promise<{ refs: ContentRefWithContent[]; complete: boolean; asiEvidence: AsiEvidence }> {
   // Reads after a write in the same render must bypass its earlier snapshot.
-  const data = await (options.fresh ? readContentRefRows : readContentRefRowsForRequest)(characterId);
+  let data: unknown[] = [];
+  let complete = true;
+  try { data = await (options.fresh ? readContentRefRows : readContentRefRowsForRequest)(characterId); }
+  catch { complete = false; }
 
   const refs: ContentRefWithContent[] = [];
-  let complete = true;
   for (const row of data ?? []) {
     const ref = parseContentRefWithContent(row);
     if (ref === null ||
@@ -110,7 +116,21 @@ export async function getCharacterContentRefSnapshot(
     }
     if (ref !== null) refs.push(ref);
   }
-  return { refs, complete };
+  let asiEvidence: AsiEvidence = { status: "unavailable", reason: "incomplete_evidence" };
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (!user || authError) return { refs, complete, asiEvidence };
+    const [identity, grants] = await Promise.all([
+      supabase.from("characters").select("id, system_id, game_systems (slug)").eq("id", characterId).single(),
+      supabase.from("character_feature_grants").select("id, character_id, controller_ref_id, controller_type, controller_slug, feature_content_id, feature_version, feature_slug, unlock_level, created_at", { count: "exact" }).eq("character_id", characterId),
+    ]);
+    const parsed = z.array(frozenFeatureGrantSchema).safeParse(grants.data);
+    if (complete && !identity.error && identity.data?.id === characterId && identity.data.game_systems?.slug === "dnd-5e-2014" && z.uuid().safeParse(identity.data.system_id).success && !grants.error && parsed.success && grants.count === parsed.data.length) {
+      asiEvidence = { status: "complete", character_id: characterId, system_id: identity.data.system_id, refs, grants: parsed.data };
+    }
+  } catch { /* Failure stays explicitly unavailable, never confirmed empty grants. */ }
+  return { refs, complete, asiEvidence };
 }
 
 export async function addContentRef(params: {

@@ -5,8 +5,10 @@ import { evaluate, type StructuredSources } from "@/lib/engine/evaluator";
 import { Separator } from "@/components/ui/separator";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
+import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 
 interface StatPreviewProps {
+  draft?: boolean;
   baseStats: Record<string, number>;
   effects: Effect[];
   schema: SystemSchemaDefinition;
@@ -16,6 +18,7 @@ interface StatPreviewProps {
 }
 
 export function StatPreview({
+  draft = false,
   baseStats,
   effects,
   schema,
@@ -29,17 +32,21 @@ export function StatPreview({
   }, [baseStats, effects, schema, level, sources, state]);
 
   const hasStats = Object.keys(baseStats).length > 0;
+  const mechanics = resolveAbilityMechanics(baseStats, result, schema);
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3">
       <h3 className="text-sm font-semibold">Stats</h3>
+      {draft ? <p role="status" className="text-xs">Draft preview only; these values do not authorize actions or prerequisites.</p>
+        : mechanics.status !== "available" ? <p role="status" className="text-xs">{mechanics.reason} Content preview is read-only.</p>
+        : mechanics.capUnverified ? <p role="status" className="text-xs">Saved ASI contributions retained; historical cap eligibility is unverified.</p> : null}
 
       {hasStats ? (
         <>
           {/* Ability Scores */}
           <div className="grid grid-cols-3 gap-2">
             {schema.ability_scores.map((ability) => {
-              const score = result.stats[ability.slug] ?? baseStats[ability.slug] ?? 10;
+              const score = result.stats[ability.slug];
               const mod = Math.floor((score - 10) / 2);
 
               return (
@@ -50,10 +57,9 @@ export function StatPreview({
                   <p className="text-[10px] font-medium text-muted-foreground uppercase">
                     {ability.abbr}
                   </p>
-                  <p className="text-lg font-bold">{score}</p>
+                  <p className="text-lg font-bold">{Number.isFinite(score) ? score : "Unavailable"}</p>
                   <p className="text-xs text-muted-foreground">
-                    {mod >= 0 ? "+" : ""}
-                    {mod}
+                    {Number.isFinite(mod) ? `${mod >= 0 ? "+" : ""}${mod}` : "--"}
                   </p>
                 </div>
               );

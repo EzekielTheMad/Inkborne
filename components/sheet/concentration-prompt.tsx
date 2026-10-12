@@ -18,6 +18,7 @@ import { buildConcentrationSaveRequest } from "@/lib/active-effects/concentratio
 import { collectRollModifiers } from "@/lib/active-effects/helpers";
 import { rollModifierKindFor } from "@/lib/rolls/requests";
 import { formatModifier, getSaveModifier } from "@/lib/sheet/helpers";
+import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
 import {
   useActiveEffects,
   useCharacter,
@@ -41,9 +42,9 @@ import {
  */
 export function ConcentrationPrompt() {
   const { concentration, pendingCheck, resolveCheck } = useConcentration();
-  const { evalResult } = useCharacter();
+  const { evalResult, schema } = useCharacter();
   const { state, patchState } = useCharacterState();
-  const { roll } = useRolls();
+  const { roll, assertMechanics } = useRolls();
   const { activeEffects } = useActiveEffects();
 
   const { setConcentration } = useSpells();
@@ -63,10 +64,8 @@ export function ConcentrationPrompt() {
   };
   if (!pendingCheck || !concentration) return null;
 
-  const { grants, stats, computed } = evalResult;
-  const conMod =
-    stats.constitution_mod ??
-    Math.floor(((stats.constitution ?? 10) - 10) / 2);
+  const { grants, computed } = evalResult;
+  const conMod = getConfirmedAbilityModifier(evalResult, schema, "constitution") ?? Number.NaN;
   const proficiencyBonus = computed.proficiency_bonus ?? 0;
   const saveModifier = getSaveModifier(
     conMod,
@@ -84,12 +83,14 @@ export function ConcentrationPrompt() {
       // Refuse stale/pending/reload-required state before generating or logging dice.
       // The roll insert is still separate from the conditional drop save below.
       const result = await patchState.runAction(state, () => {
+        if (currentCheck.current !== check) throw new Error("The pending concentration check changed before this roll.");
+        assertMechanics({ abilities: ["constitution"], computed: ["proficiency_bonus"], values: [saveModifier, check.dc] });
         const generated = roll(buildConcentrationSaveRequest(
           concentration.spell_name,
           saveModifier,
           check,
           collectRollModifiers(activeEffects, rollModifierKindFor("concentration")),
-        ));
+        ), { abilities: ["constitution"], computed: ["proficiency_bonus"], values: [saveModifier, check.dc] });
         rolled = true;
         return { patch: {}, result: generated };
       });

@@ -37,6 +37,7 @@ export interface ClassStepRailProps {
   localChoices: CharacterChoices;
   /** Engine-resolved ability scores for the current build. */
   resolvedStats: Record<string, number>;
+  mechanicsAvailable?: boolean;
   /** HP rule for the campaign/session. */
   hpRule: HpRule;
   /** Stored HP roll records keyed by "{classSlug}-{level}". */
@@ -88,6 +89,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     selectedClasses,
     localChoices,
     resolvedStats,
+    mechanicsAvailable = false,
     hpRule,
     hpRolls,
     onLevelChange,
@@ -145,7 +147,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
   const totalLevel = selectedClasses.reduce((sum, c) => sum + c.level, 0);
   const levelsRemaining = MAX_TOTAL_LEVEL - totalLevel;
 
-  const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes);
+  const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes, mechanicsAvailable);
   const anyMet = prereqs.some((p) => p.state === "met");
   const canAddClass = anyMet && levelsRemaining > 0;
 

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getContentByType } from "@/lib/supabase/content-definitions";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { ClassStepClient } from "./class-step-client";
 
@@ -32,13 +32,13 @@ export default async function ClassStepPage({ params }: PageProps) {
 
   const systemId = character.system_id;
 
-  const [classContent, subclassContent, featureContent, spells, contentRefs, languages] =
+  const [classContent, subclassContent, featureContent, spells, contentSnapshot, languages] =
     await Promise.all([
       getContentByType(systemId, "class"),
       getContentByType(systemId, "subclass"),
       getContentByType(systemId, "feature"),
       getContentByType(systemId, "spell"),
-      getContentRefsByCharacter(id),
+      getCharacterContentRefSnapshot(id),
       getContentByType(systemId, "language"),
     ]);
 
@@ -52,7 +52,8 @@ export default async function ClassStepPage({ params }: PageProps) {
       availableLanguages={languages.map(language => language.slug)}
       feats={[]}
       spells={spells}
-      contentRefs={contentRefs}
+      contentRefs={contentSnapshot.refs}
+      asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}
     />
   );

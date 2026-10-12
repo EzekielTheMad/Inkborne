@@ -5,6 +5,7 @@ import { formatModifier, isProficient, getSaveModifier } from "@/lib/sheet/helpe
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
+import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
 
 interface SavingThrowsProps {
   schema: SystemSchemaDefinition;
@@ -12,7 +13,7 @@ interface SavingThrowsProps {
 }
 
 export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
-  const { grants, stats, computed } = evalResult;
+  const { grants, computed } = evalResult;
   const proficiencyBonus = computed.proficiency_bonus ?? 0;
 
   return (
@@ -23,7 +24,7 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
       <div className="grid grid-cols-2 gap-1.5">
         {schema.ability_scores.map((ability) => {
           const saveSlug = `saving_throw_${ability.slug}`;
-          const abilityMod = stats[`${ability.slug}_mod`] ?? 0;
+          const abilityMod = getConfirmedAbilityModifier(evalResult, schema, ability.slug) ?? Number.NaN;
           const proficient = isProficient(grants, saveSlug);
           const modifier = getSaveModifier(abilityMod, proficiencyBonus, grants, saveSlug);
 
@@ -33,6 +34,7 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
               kind="save"
               label={`${ability.name} Save`}
               modifier={modifier}
+              mechanicsRequirement={{ abilities: [ability.slug], computed: ["proficiency_bonus"], values: [modifier] }}
               ariaLabel={`Roll ${ability.name} saving throw`}
               className={cn(
                 "flex items-center gap-1.5 rounded-md border px-2 py-1 text-left",

@@ -23,6 +23,7 @@ export function CharacterPrintAction() {
   const closeRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const snapshotGuard = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!model) return;
     const previousTitle = document.title;
@@ -43,21 +44,21 @@ export function CharacterPrintAction() {
     return () => { document.removeEventListener("keydown", onKeyDown); document.title = previousTitle; trigger?.focus(); };
   }, [model]);
   if (!ctx.isOwner || !ctx.hasSheet) return null;
-  const mathUnavailable = ctx.casterInfo.castingMathStatus === "unavailable";
+  const mathUnavailable = ctx.mechanics.status !== "available" || ctx.casterInfo.castingMathStatus === "unavailable";
   const busy = ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending || ctx.rollPersistenceUncertain || !!ctx.pendingConcentrationCheck || !ctx.contentSnapshotsComplete || ctx.slotResolution?.status !== "available" || mathUnavailable;
   return <>
     <div className="flex flex-wrap items-center justify-end gap-2 border-b border-border px-4 py-2">
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
       {busy ? <p className="text-xs text-muted-foreground">{ctx.slotResolution?.status !== "available" ? "Spell slots are unavailable. Reload or restore saved class content before printing." : mathUnavailable ? "Casting values are unavailable. Reload or restore saved ability/class content before printing." : !ctx.contentSnapshotsComplete ? "Saved content is incomplete. Reload before printing." : "Finish saving and resolve pending play actions to print."}</p> : null}
       <Button ref={triggerRef} variant="outline" size="sm" disabled={busy} onClick={() => {
-        try { setModel(buildCharacterPrintModel(ctx)); setError(null); }
+        try { const captured = buildCharacterPrintModel(ctx); snapshotGuard.current = () => ctx.assertMechanics(); setModel(captured); setError(null); }
         catch (cause) { setError(cause instanceof Error ? cause.message : "The character could not be prepared for printing."); }
       }}>Print / Save PDF</Button>
     </div>
     {model ? createPortal(<div ref={previewRef} data-character-print className={styles.preview} role="dialog" aria-modal="true" aria-label="Print preview"><div className={styles.toolbar}>
       <button ref={closeRef} type="button" onClick={() => setModel(null)}>Back to character</button>
       <p>Choose Letter or A4 and Save as PDF in your print dialog. Turn off browser headers and footers. Review this snapshot before sharing.</p>
-      <button type="button" onClick={() => window.print()}>Print / Save PDF</button>
+      <button type="button" onClick={() => { try { if (!snapshotGuard.current) throw new Error("Print mechanics are unavailable."); snapshotGuard.current(); window.print(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Reload before printing."); setModel(null); } }}>Print / Save PDF</button>
     </div><CharacterPrintView model={model} /></div>, document.body) : null}
   </>;
 }

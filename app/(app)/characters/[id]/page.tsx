@@ -70,7 +70,7 @@ export default async function CharacterPage({ params }: PageProps) {
   }
 
   // Fetch content refs for sheet evaluation
-  let { refs: contentRefs, complete: contentSnapshotsComplete } = await getCharacterContentRefSnapshot(id);
+  let { refs: contentRefs, complete: contentSnapshotsComplete, asiEvidence } = await getCharacterContentRefSnapshot(id);
 
   // Fetch inventory
   const { data: inventoryRowsRaw, error: inventoryError } = await supabase
@@ -122,9 +122,11 @@ export default async function CharacterPage({ params }: PageProps) {
         const freshSnapshot = await getCharacterContentRefSnapshot(id, { fresh: true });
         contentRefs = freshSnapshot.refs;
         contentSnapshotsComplete = freshSnapshot.complete;
+        asiEvidence = freshSnapshot.asiEvidence;
       }
     } catch (error) {
       contentSnapshotsComplete = false;
+      asiEvidence = { status: "unavailable", reason: "incomplete_evidence" };
       const syncError = error instanceof Error ? error : new Error(String(error));
       console.error("[CharacterPage] Failed to sync class feature refs:", syncError);
       await reportServerError({
@@ -265,6 +267,7 @@ export default async function CharacterPage({ params }: PageProps) {
   const structuredSources: StructuredSources = buildCharacterStructuredSources(
     contentRefs,
     character.level,
+    { character: characterForView, evidence: asiEvidence },
   );
 
   // Run expression engine

@@ -6,9 +6,10 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { RollResult } from "@/lib/dice/types";
-import { getWeaponAttack } from "@/lib/sheet/weapon-attack";
+import { getWeaponAttack, getWeaponDisplay } from "@/lib/sheet/weapon-attack";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import { SheetEmptyState } from "@/components/sheet/empty-state";
+import { useRolls } from "@/lib/character/character-context";
 
 const SUB_FILTERS = [
   { id: "all", label: "All" },
@@ -29,6 +30,7 @@ interface ActionsTabProps {
 }
 
 export function ActionsTab({
+  schema,
   evalResult,
   contentRefs,
 }: ActionsTabProps) {
@@ -42,24 +44,26 @@ export function ActionsTab({
 
     return weaponRefs.map((ref) => {
       const definition = ref.content_definitions;
-      return getWeaponAttack(definition?.name ?? "Unknown Weapon", definition?.slug ?? "", definition?.data ?? {}, evalResult);
+      const data = definition?.data ?? {}, display = getWeaponDisplay(data);
+      return { ...getWeaponAttack(definition?.name ?? "Unknown Weapon", definition?.slug ?? "", data, evalResult, schema),
+        requiredAbilities: display.finesse ? ["strength", "dexterity"] : [display.ranged ? "dexterity" : "strength"] };
     });
-  }, [contentRefs, evalResult]);
+  }, [contentRefs, evalResult, schema]);
 
   // Attack → damage crit chain (design §3.3/§3.4): a natural 20 on a row's
   // attack roll arms `crit: true` on that row's next damage roll; the damage
   // roll consumes the arming.
-  const [critArmed, setCritArmed] = useState<Record<number, boolean>>({});
+  const { mechanicsToken: attackSnapshot } = useRolls();
+  const [critState, setCritState] = useState<{ source: object; armed: Record<number, boolean> }>({ source: attackSnapshot, armed: {} });
+  const critArmed = critState.source === attackSnapshot ? critState.armed : {};
 
   const handleAttackResult = useCallback((rowIndex: number, result: RollResult) => {
-    setCritArmed((prev) => ({ ...prev, [rowIndex]: result.natural === 20 }));
-  }, []);
+    setCritState((prev) => ({ source: attackSnapshot, armed: { ...(prev.source === attackSnapshot ? prev.armed : {}), [rowIndex]: result.natural === 20 } }));
+  }, [attackSnapshot]);
 
   const handleDamageRolled = useCallback((rowIndex: number) => {
-    setCritArmed((prev) =>
-      prev[rowIndex] ? { ...prev, [rowIndex]: false } : prev,
-    );
-  }, []);
+    setCritState((prev) => prev.source === attackSnapshot && prev.armed[rowIndex] ? { ...prev, armed: { ...prev.armed, [rowIndex]: false } } : prev);
+  }, [attackSnapshot]);
 
   // Collect class features and selected feats with action metadata. Feats use
   // the schema's `action` field while legacy class features use `action_type`.
@@ -147,6 +151,7 @@ export function ActionsTab({
                     <td className="py-2 pr-3 font-medium">
                       <RollPopover
                         kind="attack"
+                        mechanicsRequirement={{ abilities: atk.requiredAbilities, computed: ["proficiency_bonus"], values: [atk.hitBonusValue] }}
                         label={`${atk.name} — Attack`}
                         modifier={atk.hitBonusValue}
                         ariaLabel={`Roll ${atk.name} attack`}
@@ -159,6 +164,7 @@ export function ActionsTab({
                     <td className="py-2 pr-3">
                       <RollPopover
                         kind="damage"
+                        mechanicsRequirement={{ abilities: atk.requiredAbilities, values: [atk.hitBonusValue] }}
                         label={`${atk.name} — Damage`}
                         expression={atk.damageExpression ?? undefined}
                         disabled={atk.damageExpression === null}

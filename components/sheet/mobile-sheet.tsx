@@ -7,6 +7,7 @@ import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
 import { AbilityCard } from "@/components/sheet/ability-card";
+import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
 import { CombatStats } from "@/components/sheet/combat-stats";
 import { HPTracker, type HPConcentrationProps } from "@/components/sheet/hp-tracker";
 import { RestButton } from "@/components/sheet/rest-button";
@@ -151,12 +152,13 @@ export function MobileSheet({
             </h3>
             <div className="grid grid-cols-3 gap-2">
               {schema.ability_scores.map((ability) => {
-                const score = stats[ability.slug] ?? 10;
-                const modifier = Math.floor((score - 10) / 2);
+                const score = stats[ability.slug];
+                const modifier = getConfirmedAbilityModifier(evalResult, schema, ability.slug) ?? Number.NaN;
                 return (
                   <AbilityCard
                     key={ability.slug}
                     name={ability.abbr}
+                    ability={ability.slug}
                     score={score}
                     modifier={modifier}
                     rollLabel={ability.name}

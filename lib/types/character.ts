@@ -162,6 +162,7 @@ export interface Character {
 }
 
 export interface CharacterContentRef {
+  feature_grant_id: string | null;
   id: string;
   character_id: string;
   content_id: string;

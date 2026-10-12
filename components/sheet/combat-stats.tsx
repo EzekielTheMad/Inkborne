@@ -93,6 +93,7 @@ export function CombatStats({
           kind="initiative"
           label="Initiative"
           modifier={initiative}
+          mechanicsRequirement={{ abilities: ["dexterity"], computed: ["initiative"], values: [initiative] }}
           className={combatStatCardClasses()}
           ariaLabel="Roll initiative"
         >

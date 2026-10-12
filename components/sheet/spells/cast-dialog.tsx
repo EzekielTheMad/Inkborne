@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Brain, Sparkles, TriangleAlert } from "lucide-react";
 import {
   Dialog,
@@ -111,7 +111,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     castSpell,
     getCastingAbility,
   } = useSpells();
-  const { roll } = useRolls();
+  const { roll, assertMechanics } = useRolls();
 
   const sourceResolution = getCastingAbility(spell);
   const profile = sourceResolution.status === "available" ? sourceResolution.profile : null;
@@ -134,6 +134,13 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
   const { pending: casting, run, canDismiss } = useDialogAction();
   const [castError, setCastError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<CastOutcome | null>(null);
+  // Bind once to the post-cast committed render, never refresh an old outcome
+  // onto a later spell/ability/grant snapshot merely because props rerender.
+  const outcomeGuard = useRef<{ outcome: CastOutcome; check: () => void } | null>(null);
+  useLayoutEffect(() => {
+    if (!outcome) { outcomeGuard.current = null; return; }
+    if (outcomeGuard.current?.outcome !== outcome) outcomeGuard.current = { outcome, check: () => assertMechanics() };
+  }, [outcome, assertMechanics]);
   const [results, setResults] = useState<Record<number, RollResult>>({});
   const [critArmed, setCritArmed] = useState(false);
 
@@ -191,17 +198,24 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
   };
 
   const executeRoll = (index: number, request: RollRequest, mode?: RollRequest["mode"]) => {
+    try {
+    if (!outcome || outcomeGuard.current?.outcome !== outcome) throw new Error("The saved cast result is unavailable.");
+    outcomeGuard.current.check();
+    if (!profile) throw new Error("The saved casting profile is unavailable.");
+    const requirement = { abilities: [profile.ability], computed: ["proficiency_bonus"], values: [profile.abilityModifier, profile.spellDc, profile.spellAttackBonus] };
+    assertMechanics(requirement);
     const finalRequest: RollRequest = {
       ...request,
       ...(mode ? { mode } : {}),
       ...(request.kind === "damage" && critArmed ? { crit: true } : {}),
     };
-    const result = roll(finalRequest);
+    const result = roll(finalRequest, requirement);
     setResults((prev) => ({ ...prev, [index]: result }));
     if (request.kind === "attack" && result.natural === 20) {
       setCritArmed(true);
     }
     return result;
+    } catch (cause) { setCastError(cause instanceof Error ? cause.message : "Reload before rolling this saved cast result."); }
   };
 
   const body: ReactNode = outcome === null ? (
@@ -339,6 +353,7 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
   ) : (
     /* ---------------- Result pane ---------------- */
     <div className="space-y-4 text-sm">
+      {castError && <p role="alert" className="text-destructive">{castError}</p>}
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Sparkles className="size-3.5 text-character-fg" aria-hidden />
         {spell.name} cast

@@ -10,7 +10,8 @@ import {
 } from "@/lib/supabase/feat-selection-server";
 import type { UsableFeatOption } from "@/lib/types/character";
 import { syncClassFeatureRefs } from "@/lib/supabase/feature-refs-server";
-import { getContentRefsByCharacter, type ContentRefWithContent } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot, type ContentRefWithContent } from "@/lib/supabase/content-refs";
+import type { AsiEvidence } from "@/lib/character/asi-contributions";
 import { createClient } from "@/lib/supabase/server";
 
 const allocationSchema = z.object({
@@ -116,7 +117,7 @@ export async function setCharacterAsiChoiceAction(
 /** Restore exact feature versions from existing immutable grants. Never infer a
  * lost class pin or rewrite a valid historical version from the current catalog. */
 export async function reconcileClassFeatureRefsAction(input: unknown): Promise<
-  { status: "success"; refs: ContentRefWithContent[] } | { status: "error"; message: string }
+  { status: "success"; refs: ContentRefWithContent[]; asiEvidence: AsiEvidence } | { status: "error"; message: string }
 > {
   const parsed = z.object({ characterId: z.string().uuid() }).strict().safeParse(input);
   if (!parsed.success) return { status: "error", message: "This character reference request is invalid." };
@@ -126,10 +127,11 @@ export async function reconcileClassFeatureRefsAction(input: unknown): Promise<
   try {
     // Existing RPC verifies owner authorization and preserves active grant pins.
     await syncClassFeatureRefs(supabase, { characterId: parsed.data.characterId });
-    const refs = await getContentRefsByCharacter(parsed.data.characterId, { requireCompleteSnapshots: true, fresh: true });
+    const snapshot = await getCharacterContentRefSnapshot(parsed.data.characterId, { fresh: true });
+    if (!snapshot.complete) throw new Error("Saved content projection is incomplete.");
     revalidatePath(`/characters/${parsed.data.characterId}/builder`);
     revalidatePath(`/characters/${parsed.data.characterId}`);
-    return { status: "success", refs };
+    return { status: "success", refs: snapshot.refs, asiEvidence: snapshot.asiEvidence };
   } catch {
     return { status: "error", message: "Saved class features could not be restored. Please try again." };
   }

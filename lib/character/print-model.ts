@@ -4,10 +4,11 @@ import { formatModifier, getSaveModifier, getSkillModifier } from "@/lib/sheet/h
 import { getWeaponAttack, getWeaponDisplay } from "@/lib/sheet/weapon-attack";
 import { getItemData } from "@/lib/inventory/helpers";
 import { resolveCastingMath } from "@/lib/spells/casting-math";
+import { assertAbilityMechanics, getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
 
 export interface PrintEntry { name: string; details: string; description: string; pin: string }
 export type CharacterPrintInput = Pick<CharacterContextValue,
-  "character" | "schema" | "evalResult" | "state" | "isOwner" | "hasSheet" | "reloadRequired" |
+  "character" | "schema" | "evalResult" | "mechanics" | "assertMechanics" | "state" | "isOwner" | "hasSheet" | "reloadRequired" |
   "patchState" | "rollPersistencePending" | "rollPersistenceUncertain" | "pendingConcentrationCheck" |
   "contentRefs" | "contentSnapshotsComplete" | "inventory" | "currency" | "spells" | "slotResolution" | "maxSlots" | "slotState" | "pactSlotLevel" |
   "hitDicePools" | "resources" | "casterInfo" | "concentration" | "maxHp">;
@@ -51,10 +52,17 @@ function assertIdentity(row: { character_id?: string; content_definitions?: Pars
  * character narrative, arbitrary JSON, DM notes, campaign pages or item notes. */
 export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = new Date().toISOString()): CharacterPrintModel {
   const { character, schema, evalResult: result, state } = ctx;
+  ctx.assertMechanics({ computed: ["proficiency_bonus", "initiative"], values: [ctx.maxHp] });
+  assertAbilityMechanics(ctx.mechanics, result, schema, { abilities: schema.ability_scores.map(entry => entry.slug), computed: ["proficiency_bonus", "initiative"], values: [ctx.maxHp] });
   if (!ctx.isOwner || !ctx.hasSheet) throw new Error("Print is available for your completed character sheets.");
   const resolution = ctx.slotResolution;
   if (resolution?.status !== "available") throw new Error("Spell slots are unavailable. Reload the character or restore its saved class content before printing.");
-  const castingProfiles = ctx.casterInfo.classes.map(caster => resolveCastingMath(caster.ability, schema.ability_scores, result.stats, result.computed.proficiency_bonus));
+  const castingProfiles = ctx.casterInfo.classes.map(caster => {
+    const normal = resolveCastingMath(caster.ability, schema.ability_scores, result.stats, result.computed.proficiency_bonus);
+    const modifier = getConfirmedAbilityModifier(result, schema, caster.ability), proficiency = result.computed.proficiency_bonus;
+    if (normal.status !== "available" || modifier === null || !Number.isFinite(modifier + proficiency + 8)) return { status: "unavailable" as const, reason: "Saved casting values are unavailable." };
+    return { ...normal, abilityModifier: modifier, spellAttackBonus: modifier + proficiency, spellDc: 8 + modifier + proficiency };
+  });
   if (ctx.casterInfo.castingMathStatus === "unavailable" || castingProfiles.some(math => math.status !== "available")) throw new Error("Casting values are unavailable. Reload or restore the saved ability/class content before printing.");
   if (!ctx.contentSnapshotsComplete) throw new Error("A saved content version is unavailable. Reload the character before printing.");
   if (ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending ||
@@ -64,7 +72,11 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
   for (const row of [...ctx.contentRefs, ...ctx.inventory, ...ctx.spells]) assertIdentity(row, character);
   for (const ref of ctx.contentRefs) pin(ref.content_id, ref.content_version, ref.content_definitions);
   const bonus = result.computed.proficiency_bonus ?? 0;
-  const abilityMod = (slug: string) => result.stats[`${slug}_mod`] ?? Math.floor(((result.stats[slug] ?? 10) - 10) / 2);
+  const abilityMod = (slug: string) => {
+    const modifier = getConfirmedAbilityModifier(result, schema, slug);
+    if (modifier === null) throw new Error("A saved ability modifier is unavailable.");
+    return modifier;
+  };
   const skills = [...schema.skills].sort((a, b) => a.name.localeCompare(b.name)).map(skill => {
     const modifier = getSkillModifier(abilityMod(skill.ability), bonus, result.grants, skill.slug);
     return { name: skill.name, modifier: formatModifier(modifier), passive: 10 + modifier };
@@ -113,7 +125,7 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
     proficiencies: [...new Set(result.grants.filter(grant => grant.value === "proficient" || grant.value === "expertise").map(grant => `${label(grant.stat)} (${grant.value})`))],
     attacks: ctx.contentRefs.filter(ref => ref.content_definitions.content_type === "weapon").map(ref => {
       const def = ref.content_definitions, data = def.data;
-      const attack = getWeaponAttack(def.name, def.slug, data, result);
+      const attack = getWeaponAttack(def.name, def.slug, data, result, schema);
       return { name: def.name, details: [`Hit ${attack.hitBonus}`, attack.damageExpression ? `Damage ${attack.damage}` : attack.damage, attack.range, attack.properties].filter(Boolean).join(" | "), description: text(data.description), pin: pin(ref.content_id, ref.content_version, def) };
     }),
     inventory: ctx.inventory.map(item => {

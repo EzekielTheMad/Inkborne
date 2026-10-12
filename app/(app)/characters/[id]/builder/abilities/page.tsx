@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { AbilitiesStepClient } from "./abilities-step-client";
 
@@ -29,7 +29,7 @@ export default async function AbilitiesStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
-  const contentRefs = await getContentRefsByCharacter(id);
+  const contentSnapshot = await getCharacterContentRefSnapshot(id);
 
   return (
     <AbilitiesStepClient
@@ -37,7 +37,8 @@ export default async function AbilitiesStepPage({ params }: PageProps) {
       ownerId={user.id}
       characterId={id}
       character={character}
-      contentRefs={contentRefs}
+      contentRefs={contentSnapshot.refs}
+      asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}
     />
   );

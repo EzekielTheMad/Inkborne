@@ -4,6 +4,7 @@ import { activeEffectSchema } from "@/lib/schemas/active-effects";
 import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
 import { getContentTypeSchema } from "@/lib/schemas/content-types";
 import { serializeHitDieIntent } from "@/lib/character/durable-hit-die-canonical";
+import { frozenFeatureGrantSchema } from "@/lib/character/asi-contributions";
 
 export const HIT_DIE_CONTRACT_VERSION = 1 as const;
 export const MAX_ACTION_REVISION = "9223372036854775807" as const;
@@ -43,6 +44,7 @@ const definitionSchema = z.strictObject({
   }
 });
 const pinSchema = z.strictObject({
+  feature_grant_id: z.uuid().nullable(),
   id: z.uuid(), character_id: z.uuid(), content_id: z.uuid(), content_version: z.number().int().positive(),
   context: jsonObject, choice_source: z.string().nullable(), resolved: definitionSchema,
 });
@@ -88,7 +90,9 @@ export const hitDieSnapshotSchema = z.strictObject({
   system: z.strictObject({ id: z.uuid(), slug: z.literal("dnd-5e-2014"), schema_definition: systemRulesSchema, expression_context: jsonObject }),
   campaign: z.strictObject({ id: z.uuid(), hp_rule: hpRuleSchema.nullable() }).nullable(),
   pins: z.array(pinSchema), inventory: z.array(inventorySchema),
-  feature_grants: z.array(jsonObject), spell_grants: z.array(jsonObject), spells: z.array(jsonObject), access_rows: z.array(jsonObject),
+  feature_grants: z.array(jsonObject).superRefine((grants, context) => {
+    if (!z.array(frozenFeatureGrantSchema).safeParse(grants).success) context.addIssue({ code: "custom", message: "Frozen feature grant projection is incomplete or malformed" });
+  }), spell_grants: z.array(jsonObject), spells: z.array(jsonObject), access_rows: z.array(jsonObject),
 }).superRefine((snapshot, context) => {
   const fail = (message: string) => context.addIssue({ code: "custom", message });
   const character = snapshot.character;

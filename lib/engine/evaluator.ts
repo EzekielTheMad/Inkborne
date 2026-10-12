@@ -10,6 +10,7 @@ import { sortEffectsByPriority } from "@/lib/engine/effects";
 import { parseExpression } from "@/lib/engine/parser";
 import { checkCondition } from "@/lib/engine/conditions";
 import { resolveRaceAbilityContributions, type RaceAbilityData } from "@/lib/engine/race-ability-scores";
+import type { AsiContributions } from "@/lib/character/asi-contributions";
 
 // ---------------------------------------------------------------------------
 // Structured data types for Phase 1 mechanical aggregation
@@ -17,6 +18,7 @@ import { resolveRaceAbilityContributions, type RaceAbilityData } from "@/lib/eng
 
 /** Structured data sourced from content ref JSONB `data` fields (race, features, class). */
 export interface StructuredSources {
+  asi?: AsiContributions;
   raceData?: RaceAbilityData & {
     speed_detail?: SpeedData;
     speed?: number;
@@ -42,6 +44,7 @@ export interface StructuredSources {
 // ---------------------------------------------------------------------------
 
 export interface EvaluationResult {
+  asi?: AsiContributions;
   stats: Record<string, number>;
   computed: Record<string, number>;
   narratives: NarrativeEffect[];
@@ -165,7 +168,7 @@ export function evaluate(
 ): EvaluationResult {
   // Resolve the first structured race's contribution once. Original effects
   // retain their order; explicit effects mode never adds display scores again.
-  const allEffects = [...resolveRaceAbilityContributions(sources?.raceData), ...effects];
+  const allEffects = [...resolveRaceAbilityContributions(sources?.raceData), ...(sources?.asi?.status === "available" ? sources.asi.effects : []), ...effects];
 
   // 1. Separate effects by type
   const mechanical: MechanicalEffect[] = [];
@@ -306,7 +309,7 @@ export function evaluate(
   // 8. Collect structured data from content ref sources
   const structured = collectStructuredData(sources);
 
-  return { stats, computed, narratives, grants, ...structured };
+  return { stats, computed, narratives, grants, ...structured, asi: sources?.asi };
 }
 
 /** Apply a sorted list of static mechanical effects to a stats record in-place. */
