@@ -1,0 +1,9 @@
+# R09.3b2 earned-authority binding — review handoff
+
+Docs-only amendment on clean reviewed-unready source `66621332b69b5f25a93df55ccf1bb73a67ad7d4d`. Actual approved ASI source inspected read-only in root through `f385002853fb4a200615dde55ff13b8204f6128b`; no root/ASI file copied, cherry-picked or edited. Plan: `docs/specs/2026-10-12-hit-die-earned-authority-binding-plan.md`.
+
+The actual shared ASI resolver/evidence adapter is usable after parent integration. Frozen spell authority has no equivalent complete shared validator. Existing three-field display RPC/overlay does not establish full immutable manifest/minimum-unlock/activity/acquisition closure. Current graph lacks immutable controller/spell version creation times and required nullable acquisition grant identity; materialization timestamps cannot substitute. The plan freezes a strict complete-v2 metadata envelope, exact same snapshot/canonical receipts, real shared ASI binding and one full raw frozen-spell helper called by the actual response consumer.
+
+Full frozen lineage cannot be reconstructed using current catalog/access. Trusted materializer/copy/writer provenance and original legacy adoption remain G2 prerequisites; unsupported class object tiers and feat/item acquisitions remain unavailable. Every inactive manifest tuple is retained/validated; selected different-version acquisitions preserve provenance and logical overlay semantics. No read reconciliation, mutation or fake positive callback is proposed.
+
+Ready for independent **plan** challenge only. No product source/SQL/runtime change, install/test/typecheck/lint/build/browser/PGlite/scratch execution, hosted/provider/Auth/Storage access or background process occurred. Prior `5367243` blocked source and `6662133` corrective source remain preserved and untested. Auth helper remains unconditionally unavailable and all thirteen readiness families remain false. Parent still owns heavy verification/integration/release.
