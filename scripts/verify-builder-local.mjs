@@ -134,17 +134,19 @@ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
 console.log(JSON.stringify({ taskProcess: { pid: process.pid, parentPid: process.ppid, command: 'node scripts/verify-builder-local.mjs', cwd: root, startTime: new Date().toISOString(), listeningPort: server.address().port } }));
 let browser;
+let page;
 const evidence = [];
+const blockedRequests = [];
+const errors = [];
 try {
   browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const blockedRequests = [];
   await context.route("**/*", route => {
     if (new URL(route.request().url()).origin !== origin) { blockedRequests.push(route.request().url()); return route.abort(); }
     return route.continue();
   });
-  const page = await context.newPage();
-  const errors = []; page.on("pageerror", error => errors.push(error.message));
+  page = await context.newPage();
+  page.on("pageerror", error => errors.push(error.message));
   await page.goto(origin + "/overview");
   await page.getByRole("link", { name: "Abilities", exact: true }).click();
   await page.getByRole("spinbutton", { name: "Strength score" }).fill("18");
@@ -502,6 +504,18 @@ try {
   assert.deepEqual(blockedRequests, []);
   await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({ simulated: true, liveSupabase: false, browser: "installed Chrome", evidence, pageErrors: errors, blockedRemoteRequests: blockedRequests }, null, 2));
   console.log(JSON.stringify({ passed: evidence.length, evidence, output }, null, 2));
+} catch (error) {
+  await Promise.allSettled([
+    fs.writeFile(path.join(output, "failure.json"), JSON.stringify({
+      simulated: true, liveSupabase: false, error: String(error),
+      pageErrors: errors, blockedRemoteRequests: blockedRequests, completedChecks: evidence,
+    }, null, 2)),
+    ...(page ? [
+      page.screenshot({ path: path.join(output, "failure.png"), fullPage: true }),
+      page.content().then(html => fs.writeFile(path.join(output, "failure.html"), html)),
+    ] : []),
+  ]);
+  throw error;
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => server.close(resolve));
