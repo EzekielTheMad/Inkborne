@@ -40,7 +40,7 @@ describe("actual read-only NPC Library/profile", () => {
     render(<CompendiumBrowser systems={[{ id: npcSystemId, name: "Original fixture", slug: "fixture", versionLabel: "2014" }]}
       query={query} result={{ entries: [npcEnvelope()], total: 1, page: 1, pageSize: 24 }} userId={npcOwnerId} />);
     expect(isCompendiumCategory("npcs")).toBe(true);
-    expect(screen.getByRole("link", { name: "NPCs", exact: true })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "NPCs" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByLabelText("Search by name")).toHaveAttribute("placeholder", "Search npcs…");
     expect(screen.queryByLabelText("Size")).toBeNull();
     expect(screen.getByRole("link", { name: /Original Bridge Keeper/ })).toHaveAttribute("href", expect.stringContaining("returnTo="));

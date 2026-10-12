@@ -21,7 +21,7 @@ test("actual narrative NPC Library with guarded production assets and private cl
     const code = await completion; console.log(output); expect(code, output).toBe(0);
     const result = JSON.parse(await readFile("test-results/npcs-local/evidence.json", "utf8"));
     expect(result.liveSupabase).toBe(false); expect(result.persistence).toBe("unavailable");
-    expect(result.artifacts.npcSourceCheckpoint).toBe("4c077c62b45c1c713617905e9065e26d9cbe6224");
+    expect(result.artifacts.npcSourceCheckpoint).toBe("7137fad54bc300ed051f1025877e6eb54eb26603");
     expect(result.artifacts.sourceCommit).toBe(result.artifacts.currentRootHead);
     expect(result.artifacts.dependencyLockSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.artifacts.metafileSha256).toMatch(/^[a-f0-9]{64}$/);

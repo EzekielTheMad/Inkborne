@@ -129,3 +129,16 @@ baseline npm filter/worker flags were not forwarded, so both selected files ran
 fully; only two files could run concurrently. Original receipts were preserved,
 not relabeled. Typecheck/lint follow this clean harness-stage-guard checkpoint;
 no browser/full/build/DB acceptance has run.
+
+`a9b994a` actual-consumer test reorder and `7137fad` profile/category correction
+were independently approved. Root explicitly authorized advancing the eight-file
+NPC product anchor to full `7137fad54bc300ed051f1025877e6eb54eb26603`; only profile
+blob `93cd187fe94bef813765ad33830389e3a812fc17` differs from original core among
+those eight files. Harness helper/spec now bind that precise source, retaining
+every inherited/raw/metafile/index/build/lock check; no current-HEAD fallback.
+
+Initial typecheck at clean `75d8600` found only unsupported Testing Library role
+query option `exact`. It is removed from the test; the name remains an exact
+string matcher, and the assertion is unchanged. No production behavior change.
+Receipt preserves that type failure separately. Focused profile recheck and
+sequential typecheck/lint follow this clean correction/anchor checkpoint.

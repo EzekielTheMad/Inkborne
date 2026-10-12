@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 
 // Source checkpoint, subject to independent review; no arbitrary current-root bypass.
-export const npcSourceCheckpoint = "4c077c62b45c1c713617905e9065e26d9cbe6224";
+export const npcSourceCheckpoint = "7137fad54bc300ed051f1025877e6eb54eb26603";
 const required = ["lib/schemas/content-types/npc.ts", "lib/schemas/content-types/index.ts", "lib/supabase/content-definitions-parser.ts",
   "lib/compendium/catalog.ts", "lib/compendium/presentation.ts", "components/compendium/npc-profile.tsx",
   "components/compendium/compendium-detail.tsx", "components/compendium/compendium-row.tsx"];
