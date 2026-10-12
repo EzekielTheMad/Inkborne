@@ -6,7 +6,10 @@ import { npcRejectedEffects } from "@/tests/fixtures/npcs";
 import { effectSchema } from "@/lib/schemas/effects";
 import { npcEnvelope, npcSnapshot } from "@/tests/fixtures/npcs";
 import { parseContentDefinition, parseContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
-const bytes = (text: string) => new TextEncoder().encode(text);
+// jsdom's native TextEncoder can produce a different-realm Uint8Array. Own the
+// identical bytes in this realm, matching File.arrayBuffer -> review's native
+// byte copy; no text normalization or parser/guard substitution is involved.
+const bytes = (text: string) => new Uint8Array(new TextEncoder().encode(text));
 const minimal = { format: "inkborne-npc", format_version: 1, name: "Original NPC", data: { schema_version: 1 }, effects: [] };
 function refusal(text: string, code: string) {
   const result = decodeNpcJson(bytes(text), "original.json"); expect(result.success).toBe(false);
