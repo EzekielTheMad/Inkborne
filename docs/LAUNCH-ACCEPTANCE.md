@@ -284,6 +284,19 @@ subclass worker owns the focused-check slot. G1 remains unanswered; a fresh
 read-only Docker version request still cannot connect to the Linux-engine pipe.
 No daemon startup, image pull, SQL execution, hosted or publication action occurred.
 
+### Current review / resource queue
+
+| Child / isolated owner | Source and observed local evidence | Current gate / next action |
+| --- | --- | --- |
+| R21.1c subclass casting; `../r21-subclass-worker`, base `0b8ade1` | Worker `a26fd843` is **not integrated**. Four failing-before parser/slot/ability controls; affected 46-file sequence ended 647/648 after a new test mock incorrectly rejected an unconditional notes save. That mock was corrected; provider 13/13 and typecheck/lint passed, with prior failures preserved. Nine-case browser is unrun. | Independent review requires current source/list/range/search-generation binding for Add Spell results and zero-DAL stale/deferred-result tests; shared valid ability math for preparation/summary/print must stop inventing score10 for unavailable profiles. Repair the nine-case harness secure-origin/optional-CSS setup too. Scoped corrections are in progress; no broader HP/grant/recovery or SQL change. |
+| R16.2 private monster authoring; `../r16-monster-worker` | Worker implementation `80a64c8`, test-only `222864d` / `50300b6`, handoff tip `f460679` are **not integrated**. Six-file 106/106, typecheck and lint passed; assertion/table-packaging/unused-binding failures retained. No browser/DB/RLS acceptance. | Independent review approves fields/caps/raw intent/CAS/effects boundaries but blocks direct server action use in the form: rejected save transport must return retained-draft uncertainty UI. Add actual rejected/missing/malformed response controls and distinguish framework navigation. Correction is in progress; heavy gates held. |
+| R12.5 standalone private traits; `../r12-trait-worker`, base `2e20658` | Independently approved plan is integrated as `4f5464d` / `f5e4a06` / `dcb2ec0`. Worker source `a7fb204` is an explicitly **unverified, unintegrated** checkpoint; no install or checks preceded it. | Locked install and planned focused/typecheck/lint sequence are now released as the sole heavy slot. Source then needs independent review and real-form browser/current build; exact relation/application, per-level/extra counters and actual clock recovery remain separate required children. |
+
+No rejected review source is treated as accepted. Root remains the sole integration
+writer; worker code edits proceed in parallel while expensive checks and browsers
+are serialized. Root `7945136` contains only earlier reviewed source, harnesses,
+plans and evidence updates; its later combined check/build is still pending.
+
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions
