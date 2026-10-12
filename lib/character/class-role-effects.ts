@@ -82,7 +82,11 @@ export function collectClassRoleEffects(input: unknown): ClassRoleCollection {
       || (row.ended_at !== null && Date.parse(row.ended_at) < Date.parse(row.accepted_at ?? row.selected_at))
       || (row.lifecycle === "ended" && ((row.accepted_at === null) !== (row.acquisition_operation_id === null) || row.accepted_at === null && row.acquired_character_level !== null)));
   if (identityError) return { status: "invalid_evidence", messages: ["Class evidence identity, lifecycle or uniqueness mismatch"] };
-  const saveAvailability = Object.fromEntries(CLASS_ROLE_ABILITIES.map(ability => [ability, { status: "available", issues: [] }])) as Record<ClassRoleAbility, { status: "available" | "unavailable"; issues: ClassRoleIssue[] }>;
+  const availableSave = (): { status: "available" | "unavailable"; issues: ClassRoleIssue[] } => ({ status: "available", issues: [] });
+  const saveAvailability: Record<ClassRoleAbility, ReturnType<typeof availableSave>> = {
+    strength: availableSave(), dexterity: availableSave(), constitution: availableSave(),
+    intelligence: availableSave(), wisdom: availableSave(), charisma: availableSave(),
+  };
   function unavailable(issue: ClassRoleIssue, abilities: Iterable<ClassRoleAbility>) {
     for (const key of abilities) { saveAvailability[key].status = "unavailable"; saveAvailability[key].issues.push(issue); }
   }
