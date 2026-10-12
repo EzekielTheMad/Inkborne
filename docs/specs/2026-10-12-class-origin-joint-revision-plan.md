@@ -122,8 +122,11 @@ shared guard and R09 parent/order triggers already exist from the two unchanged 
    The existing R09 trigger function object also exists; its replacement follows
    before any runtime dispatch trigger is installed or any data can be mutated.
 7. Define `private.class_origin_revision_event_closure_v1() RETURNS trigger`, SECURITY
-   DEFINER, authority owner. Calls step4 assertion and existing P1a finalizer dispatch.
-   Deferred callbacks re-read the CURRENT event/acceptance by acceptance_id, not an
+   DEFINER, authority owner. Calls ONLY the step4 finalized observed-event assertion;
+   it does NOT call `private.class_origin_finalize_acceptance_v1(uuid)`. Unchanged
+   class-owned P1a acceptance/transition deferred triggers provide full original
+   normal closure through that existing dispatch. No extra cross-owner EXECUTE grant
+   is needed or added. Deferred callbacks re-read CURRENT event/acceptance by acceptance_id, not an
    obsolete queued NEW.pending/assigned snapshot. Define
    `private.class_origin_metadata_revision_dispatch_v1() RETURNS trigger`, SECURITY
    DEFINER, class owner, calling steps2/6 against actual origin OLD/NEW plus stored
@@ -211,8 +214,11 @@ its Auth/entitlement/order seeding are NOT delivered by this first child:
    acceptance finalized. Normal P1a finalizer additionally asserts observed event
    correspondence; all original raw graph/revision/receipt/consumed-proof checks stay.
    Existing initially deferred acceptance/transition triggers repeat it at commit.
-   A new initially deferred event constraint trigger also verifies retained observed
-   proof, finalized acceptance/receipt and exact current parent/order, including late
+   A new initially deferred event constraint trigger calls ONLY the finalized
+   observed-event assertion, verifying retained proof, finalized acceptance/receipt
+   and exact current parent/order; it does not invoke the base finalizer dispatch.
+   Unchanged P1a acceptance/transition deferred triggers retain full original normal
+   graph/receipt/proof closure. Both callbacks detect their respective late
    alternate writes. Failure at any nested/immediate/deferred point rolls back all.
 
 This order deliberately does not finalize before the class receipt exists. Consumed
@@ -247,7 +253,8 @@ counter/state UPDATE privilege. Class-owned Boolean consumer grants EXECUTE ONLY
 authority owner; validator and consumer use exact receipt/xid/proof checks, not the
 grant itself as authorization. No broad authority DML to P1 journal/origin tables.
 Authority role additionally gets EXECUTE only on the finalized class event assertion
-for its deferred closure. The observed-proof validator is called within class-owned
+for its deferred closure, never on `class_origin_finalize_acceptance_v1(uuid)`;
+the redundant call is removed rather than expanding privileges. The observed-proof validator is called within class-owned
 functions and needs no cross-owner EXECUTE grant. Class validator and consumer read
 the event via explicit SELECT-only policy; no authority-owner broad
 P1 journal DML. New guard/dispatch trigger functions gain no callable caller grants.

@@ -71,3 +71,15 @@ receipt/finalized acceptance. BEFORE observed-phase event guard checks NEW direc
 not a SELECT of the still-assigned stored event. Deferred callback checks current
 event by acceptance ID instead of stale queued trigger NEW phase. These specify
 dependency/timing contracts without SQL/runtime execution or authority activation.
+
+## Sole ACL correction after immutable4c62885 review HOLD
+
+Authority-owned `class_origin_revision_event_closure_v1()` now calls ONLY the new
+class-owned finalized observed-event assertion. Remove the redundant direct
+`class_origin_finalize_acceptance_v1(uuid)` call; do NOT expand its revoked EXECUTE
+grant. Unchanged class-owned P1a acceptance/transition deferred triggers continue to
+provide full original normal graph/receipt/proof closure through that dispatch.
+Event callback separately proves retained observed revision evidence/current final
+parent/order, so neither closure is omitted. Object-definition order, sole joint
+source writer and independent original-owner review stay unchanged. Two docs only;
+no code/SQL/runtime/network/heavy operations or new source authority.
