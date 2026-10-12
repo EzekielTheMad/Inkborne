@@ -293,7 +293,6 @@ export async function updateHomebrewMagicItemRecord(
     .update({
       name: parsed.data.name,
       data: content.data as unknown as Json,
-      effects: [],
     })
     .eq("id", identity.data.id)
     .eq("owner_id", session.userId)

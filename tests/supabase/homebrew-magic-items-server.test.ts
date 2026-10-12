@@ -268,7 +268,7 @@ describe("updateHomebrewMagicItemRecord", () => {
       updateHomebrewMagicItemRecord(ITEM_ID, 1, new FormData()),
     ).resolves.toEqual(row(2));
     expect(db.calls[1].operation).toBe("update");
-    expect(db.calls[1].payload).toEqual({ name: row().name, data, effects: [] });
+    expect(db.calls[1].payload).toEqual({ name: row().name, data });
     expectFilters(db.calls[1], [
       ["id", ITEM_ID],
       ["owner_id", USER_ID],
@@ -279,6 +279,23 @@ describe("updateHomebrewMagicItemRecord", () => {
       ["is_retired", false],
       ["version", 1],
     ]);
+  });
+
+  it("preserves existing mechanical effects when editing only item metadata", async () => {
+    const existingEffects = [{ type: "mechanical", stat: "armor_class", op: "add", value: 1 }];
+    const updated = { ...row(2), effects: existingEffects };
+    const db = makeClient([
+      { data: { id: SYSTEM_ID }, error: null },
+      { data: updated, error: null },
+    ]);
+    mocks.createClient.mockResolvedValue(db.client);
+
+    await expect(updateHomebrewMagicItemRecord(ITEM_ID, 1, new FormData()))
+      .resolves.toEqual(updated);
+    // These controls cannot author effects. Omitting the column preserves the
+    // current effects through the versioned metadata UPDATE in PostgreSQL.
+    expect(db.calls[1].payload).not.toHaveProperty("effects");
+    expectFilters(db.calls[1], [["version", 1], ["owner_id", USER_ID]]);
   });
 
   it("returns a friendly conflict without retrying a stale overwrite", async () => {
