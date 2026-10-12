@@ -90,4 +90,11 @@ describe("private NPC DAL modeled PostgREST, no real authority acceptance", () =
     state.reads = [{ ...original(), version: 2_147_483_647 }]; expect((await updateHomebrewNpcRecord(input(true, 2_147_483_647, false))).status).toBe("unchanged");
     expect(state.requests.some(request => request.operation === "update")).toBe(false);
   });
+  it("malformed many-path edit with invalid identity/intent refuses before DAL mutation", async () => {
+    const form = input(true); form.set("id", "bad"); form.set("expected_version", "0"); form.set("changed_fields", "{");
+    form.set("npc_data", JSON.stringify({ schema_version: 1, relationships: Array.from({ length: 500 }, () => ({ name: 0, relationship: 0, description: 0 })) }));
+    const result = await updateHomebrewNpcRecord(form); expect(result.status).toBe("error");
+    if ("fieldErrors" in result) expect(Object.keys(result.fieldErrors ?? {}).length).toBeLessThanOrEqual(100);
+    expect(state.requests.some(request => request.operation === "update")).toBe(false);
+  });
 });

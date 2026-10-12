@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapNpcForm, mergeNpcEdit, changedNpcFields, acceptNpcResponse, NPC_VERSION_MAX } from "@/lib/homebrew/npc-form";
+import { mapNpcForm, mergeNpcEdit, changedNpcFields, acceptNpcResponse, npcActionStateSchema, NPC_VERSION_MAX } from "@/lib/homebrew/npc-form";
 import { npcId, originalNpc } from "@/tests/fixtures/npcs";
 function form(data: unknown, version = "1", edit = false) {
   const input = new FormData(); input.set("name", "  Original NPC  "); input.set("npc_data", JSON.stringify(data));
@@ -43,5 +43,20 @@ describe("NPC authoring mapper and raw group merge", () => {
     expect(acceptNpcResponse({ status: "saved", ...expected, operation: "edit" }, "edit", expected).status).toBe("uncertain");
     expect(acceptNpcResponse({ status: "saved", ...expected, version: 2, operation: "edit" }, "edit", expected).status).toBe("saved");
     expect(acceptNpcResponse({ status: "unchanged", ...expected, message: "No changes to save." }, "edit", expected).status).toBe("unchanged");
+  });
+  it.each(["create", "edit"] as const)("unexpected nonblank idle stays uncertain for %s", mode => {
+    expect(acceptNpcResponse({ status: "idle", message: "Unexpected idle response" }, mode, { id: npcId(1), version: 1 }).status).toBe("uncertain");
+  });
+  it("reserves total error capacity for invalid identity/intent after many schema paths", () => {
+    const input = form({ schema_version: 1, relationships: Array.from({ length: 500 }, () => ({ name: 0, relationship: 0, description: 0 })) }, "0", true);
+    input.set("id", "bad"); input.set("changed_fields", "{"); const result = mapNpcForm(input, "edit");
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(Object.keys(result.fieldErrors).length).toBeLessThanOrEqual(100);
+      expect(result.fieldErrors.id).toBeDefined(); expect(result.fieldErrors.changed_fields).toBeDefined();
+      const feedback = { status: "error", message: "Check the highlighted fields.", fieldErrors: result.fieldErrors };
+      expect(npcActionStateSchema.safeParse(feedback).success).toBe(true);
+      expect(acceptNpcResponse(feedback, "edit", { id: npcId(1), version: 1 }).status).toBe("error");
+    }
   });
 });

@@ -49,7 +49,9 @@ export function mapNpcForm(form: FormData, mode: "create" | "edit"): Mapped {
   const parsed = npcDataSchema.safeParse(raw);
   if (!parsed.success) for (const issue of parsed.error.issues) {
     const path = issue.path.join(".") || "npc_data";
-    if (Object.keys(fieldErrors).length >= 100 && !fieldErrors[path]) continue;
+    // Edit identity and intent diagnostics are appended below. Reserve their
+    // two keys so our own feedback never exceeds the strict action-state cap.
+    if (Object.keys(fieldErrors).length >= (mode === "edit" ? 98 : 100) && !fieldErrors[path]) continue;
     const errors = fieldErrors[path] ??= []; if (errors.length < 3) errors.push(issue.message.slice(0, 200));
   }
   let id: string | undefined, expectedVersion: number | undefined, changedFields: NpcEditableField[] = [];
@@ -77,6 +79,7 @@ export function mergeNpcEdit(raw: unknown, draft: NpcData, intent: NpcEditableFi
 export function acceptNpcResponse(raw: unknown, mode: "create" | "edit", expected?: { id: string; version: number }): NpcActionState {
   const parsed = npcActionStateSchema.safeParse(raw); if (!parsed.success) return npcUncertainty(mode);
   const state = parsed.data;
+  if (state.status === "idle") return npcUncertainty(mode);
   if (state.status === "saved" && (state.operation !== mode || (mode === "create" ? state.version !== 1 : !expected || state.id !== expected.id || state.version !== expected.version + 1))) return npcUncertainty(mode);
   if (state.status === "unchanged" && (mode !== "edit" || !expected || state.id !== expected.id || state.version !== expected.version)) return npcUncertainty(mode);
   if (state.status !== "saved" && state.status !== "unchanged" && (!state.message?.trim() || (mode === "create" && state.status === "conflict"))) return npcUncertainty(mode);

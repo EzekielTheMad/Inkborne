@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn(), push: vi.fn(
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }), unstable_rethrow: () => {} }));
 vi.mock("@/app/(app)/homebrew/npcs/actions", () => ({ createHomebrewNpc: mocks.create, updateHomebrewNpc: mocks.update }));
 import { NpcForm } from "@/components/library/npc-form";
+import { mapNpcForm } from "@/lib/homebrew/npc-form";
 import { npcId, originalNpc } from "@/tests/fixtures/npcs";
 function submit() { fireEvent.submit(screen.getByRole("button", { name: /Create private NPC|Save new version|Saving…/ }).closest("form")!); }
 function transport() { return new FormData(screen.getByRole("button", { name: /Create private NPC|Save new version|Saving…/ }).closest("form")!); }
@@ -20,7 +21,7 @@ describe("actual NPC form controlled presence/order/draft", () => {
     fireEvent.click(screen.getByLabelText("Include ideals")); expect(JSON.parse(String(transport().get("npc_data"))).personality).toEqual({});
     fireEvent.click(screen.getByLabelText("Include ideals")); expect(screen.getByLabelText("Ideals 2")).toHaveValue("same");
   });
-  it.each([undefined, { status: "saved", id: "bad", version: 1, operation: "create" }])("uncertain create retains native-reset draft and requires manual acknowledgment %j", async response => {
+  it.each([undefined, { status: "idle", message: "Unexpected idle" }, { status: "saved", id: "bad", version: 1, operation: "create" }])("uncertain create retains native-reset draft and requires manual acknowledgment %j", async response => {
     mocks.create.mockResolvedValue(response); render(<NpcForm mode="create" />);
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Kept NPC" } }); submit(); await screen.findByRole("alert");
     expect(screen.getByRole("button", { name: "Create private NPC" })).toBeDisabled(); expect(mocks.push).not.toHaveBeenCalled();
@@ -46,5 +47,24 @@ describe("actual NPC form controlled presence/order/draft", () => {
     fireEvent.change(screen.getByLabelText("Description (optional)"), { target: { value: "Unsaved new text" } }); submit(); await screen.findByRole("alert");
     expect(screen.getByLabelText("Description (optional)")).toHaveValue("Unsaved new text"); expect(transport().get("expected_version")).toBe("1");
     expect(screen.getByRole("button", { name: "Save new version" })).toBeDisabled(); expect(screen.getByRole("button", { name: "Reload latest" })).toBeVisible();
+  });
+  it("unexpected idle edit remains uncertain/locked until reload with no extra action or navigation", async () => {
+    mocks.update.mockResolvedValue({ status: "idle", message: "Unexpected idle" }); render(<NpcForm mode="edit" initialValue={{ id: npcId(1), name: "Original NPC", version: 1, data: originalNpc }} />);
+    fireEvent.change(screen.getByLabelText("Description (optional)"), { target: { value: "Kept idle-edit draft" } }); submit(); await screen.findByRole("alert");
+    expect(screen.getByRole("button", { name: "Save new version" })).toBeDisabled(); expect(screen.getByRole("button", { name: "Reload latest" })).toBeVisible();
+    fireEvent.reset(screen.getByLabelText("Name").closest("form")!); expect(screen.getByLabelText("Description (optional)")).toHaveValue("Kept idle-edit draft");
+    submit(); expect(mocks.update).toHaveBeenCalledTimes(1); expect(mocks.push).not.toHaveBeenCalled();
+  });
+  it("many malformed edit paths/identity/intent return editable bounded error rather than uncertainty", async () => {
+    mocks.update.mockImplementation(async (_previous, incoming: FormData) => {
+      incoming.set("npc_data", JSON.stringify({ schema_version: 1, relationships: Array.from({ length: 500 }, () => ({ name: 0, relationship: 0, description: 0 })) }));
+      incoming.set("id", "bad"); incoming.set("expected_version", "0"); incoming.set("changed_fields", "{");
+      const mapped = mapNpcForm(incoming, "edit"); if (mapped.success) throw Error("Malformed fixture must fail");
+      return { status: "error", message: "Original bounded validation refusal", fieldErrors: mapped.fieldErrors };
+    });
+    render(<NpcForm mode="edit" initialValue={{ id: npcId(1), name: "Original NPC", version: 1, data: originalNpc }} />);
+    fireEvent.change(screen.getByLabelText("Description (optional)"), { target: { value: "Kept validation draft" } }); submit(); await screen.findByRole("alert");
+    expect(screen.getByRole("button", { name: "Save new version" })).not.toBeDisabled();
+    expect(screen.getByLabelText("Description (optional)")).toHaveValue("Kept validation draft"); expect(mocks.push).not.toHaveBeenCalled();
   });
 });
