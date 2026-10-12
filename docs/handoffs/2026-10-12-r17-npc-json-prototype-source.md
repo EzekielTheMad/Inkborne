@@ -134,3 +134,36 @@ These are source-only amendments. No narrow/type/lint/build/browser baseline or
 acceptance has run. Earlier75e is preserved as an immutable superseded harness
 checkpoint. Independent exact review and explicit resource/UI release remain
 required; format decision and app/persistence activation remain pending.
+
+## First released narrow attempt — paused for test-only correction review
+
+At approved clean25943793fb928bfb2d9f50755ef7429fc984f32b,
+`npm.cmd test -- tests/components/library/npc-json-admission.test.tsx --maxWorkers=2`
+with ONLY the reviewed temporary unsafe UTF8-decode/JSON-reader substitution
+produced9substantive actual-profile admission failures and1valid positive pass.
+This is a synthetic unsafe-reader control, not a claim of historical production
+exposure. Strict candidate schema/name/NPC/review/native hash/profile stayed
+unchanged. Finally restored all8original raw hashes and clean status; codec Git
+blob1f9b335849eaefdd5b10cdef1fc1693e3001f1f2/rawSHA256
+a404a56d75307bbdf9a498137c9b3d4f9a1ffb540a3d9085e582c61c27a1c4e9.
+
+Restored four-file focus (codec/review/preview/admission, --maxWorkers=2) then
+observed59fail/21pass, 1filefail/3pass,80tests. Native TextEncoder in jsdom returns
+another-realm Uint8Array; direct codec fixtures hit the existing instanceof
+byte guard, while review's native byte copy and the other3suites passed. No
+parser/schema/semantic admission assertions are removed or changed. Finite
+TEST-ONLY7f3f021582140fd1fc64d63e0ef8306b4455fb59 copies native encoded bytes
+into this realm's Uint8Array, matching File.arrayBuffer/review input construction
+without changing byte values/text. Production259 remains unchanged. Correction
+requires independent review before any repeat; no follow-up gate/type/lint run.
+
+Original baseline/focused failure logs/receipts, approved/unsafe byte backups,
+eight-file restoration and preparation manifest are retained in ignored
+test-results/r17-npc-json-gates. baseline-inputs.json SHA256
+2aa1f5ad799b46c228045ac6005cca7cd35aad2ee482519bd13c9bfa60704c49.
+No production browser manifest/build/UI generated here. Gate receipts record
+actual OS birth/PID/parent/cmd/cwd/start and before/after process/memory/CPU/
+listener counts; paused readback23captured identities including wrappers,
+zero exact live task processes and task listeners. Heavy slot released to root
+pending correction review. No build/full/browser/install/network/SQL/provider
+activity; final acceptance is incomplete.
