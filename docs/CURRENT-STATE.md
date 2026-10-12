@@ -4,8 +4,8 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source through `821eb1a`
-includes reviewed private magic-item/item/weapon/armor/core-race/trait/monster authoring, raw metadata and
+on local branch `codex/launch-integration-20261011`. Product source through `02c7b53`
+includes reviewed private magic-item/item/weapon/armor/core-race/trait/passive-feature/monster authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, exact selected subclass sources and per-acquisition casting math, explicit race-score
 representation, read-only monster schema/stat blocks/Library, default-disabled
@@ -44,10 +44,14 @@ rendered layout checks passed. All owned processes/listeners closed. Trait CREAT
 requires checking Homebrew before an explicitly acknowledged further create.
 Private passive-feature source `6f43b57` and test-only corrections through
 `ff3e452` passed independent review and **145 focused tests**, typecheck and lint
-in its isolated worker. Integration and actual-form acceptance are next.
+in its isolated worker, then integrated through `02c7b53`. Exact Homebrew seam
+review passed. Clean root `02c7b53` passed **302 files / 3,591 tests**, typecheck
+and zero-warning lint; recorded process/listener readback is empty. Fresh build
+and actual passive-feature form acceptance are next.
 The staged hit-die kernel is undergoing source review and model/static checks;
 its dependency reader is deliberately unavailable and production stays disabled.
-Saved ASI consumer-parity plan amendments are awaiting challenge before code.
+Saved ASI consumer-parity plan `6fcd21e` passed independent challenge; its isolated
+worker is implementing the bounded actual-consumer repair.
 Development audit remains eight
 unpatched high findings / zero critical, production zero; no residual risk is
 accepted. Saved ASI parity remains a separate documented gap. The

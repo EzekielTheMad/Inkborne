@@ -367,6 +367,25 @@ all six contact sheets plus the full caster A4 first page. Print uses its own
 production print CSS module and a context shim, so global production-font/provider
 acceptance remains open. Python/render child process readbacks are empty.
 
+Passive source/corrections/handoff were independently approved and integrated as
+`f100bc4` / `1073865` / `de05e42` / `c894e2d` / `02c7b53`. Exact Homebrew seam
+review at `02c7b53284524d4060736d50e631ee9203309dfc` confirms all eleven families'
+tuple positions, independent error paths and global empty-state conditions.
+Clean root at that SHA passed **302 files / 3,591 tests**, typecheck and zero-warning
+lint, four workers, 148.93 seconds test duration. The gate observed 357 task process
+identities; exit/readback processes and listeners are empty. Fresh build and actual
+passive form acceptance remain pending. ASI plan `6fcd21e` passed independent exact
+challenge; scoped source implementation is now underway in `../r06-asi-consumer-worker`.
+
+Kernel review identified two blockers: accepted responses require the retained
+request/operation correlation and lookup-status consistency; the offline model
+must enforce candidate acceptance time at or before native acceptance, like the
+staged SQL. Original modeled/static **139 tests**, typecheck/lint passed at
+`aeea1e4`; they did not detect these boundaries. Reproduction `f8b7cd1` on unchanged
+product preserved **3 failures / 2 passes / 31 skips**. Correction `859d3db` passed
+**144 focused tests** and typecheck; independent correction review and final lint
+are pending. No SQL was executed and production remains disabled.
+
 The sole root writer continues approved integration while expensive checks remain
 serialized. Any root HEAD change makes the `821eb1a` browser build manifests stale;
 rebuild and rebind before using them for later source. G1/PDF input/P1-P3 decisions
