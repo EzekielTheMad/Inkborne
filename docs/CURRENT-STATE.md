@@ -2,6 +2,17 @@
 
 ## Active execution — 2026-10-12 UTC
 
+Current local acceptance: `c18cf445` passed **322 files / 3,931 tests**, typecheck,
+lint and build. Later reviewed harness fix `42abdbb` passed fresh build, **14 NPC
+desktop/mobile controls / 18 screenshots** and **44 character ASI cases / 226
+assertions / 46 screenshots**. All owned process/port cleanup passed; data/Auth/
+action authority remains simulated. Private NPC authoring proceeds under reviewed
+plan `5bdb03e`; P1a `00dce154` is source-reviewed and undergoing model/static/type/
+lint gates. No SQL execution, hosted write, deployment or beta acceptance.
+
+Earlier integration checkpoints follow; the ledger retains their failures and
+subsequent corrections.
+
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
 on local branch `codex/launch-integration-20261011`. Product source through `2467388`

@@ -10,7 +10,16 @@ Main_PC resume directory:
 C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification
 ```
 
-Active branch `codex/launch-integration-20261011`. Read actual HEAD and the ledger's latest exact acceptance: `259bcd8` passed 305 files / 3,645 tests after the builder harness correction. Independently reviewed saved-ASI consumer source is integrated through `b2e45de`; fixture-only amendments through `f385002` passed 36 kernel controls. The fresh combined `f385002` check passed typecheck/lint but failed 168 tests in 24 files, with 3,546 passing and 14 unhandled errors. Preserve that failure and repair/classify older consumer fixtures before new combined acceptance. Actual canonical ASI browser preparation is underway; the earlier `b4e308f` build/forms are historical evidence, not an ASI acceptance. Incoming docs `c5370eb` and tested core `ada6c9b` are historical. This worktree shares Git with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git.
+Active branch `codex/launch-integration-20261011`. Verify actual HEAD/status before
+editing. Latest full check is `c18cf445` (322 files / 3,931 tests); latest build and
+NPC/ASI browser acceptance is `42abdbb`. Later `5bdb03e` / `073003d` add reviewed
+NPC authoring plan and acceptance documentation only. Private NPC authoring is
+active; P1a model/static/type/lint gates have the sole heavy slot. Next integrate
+reviewed tested source and repeat combined acceptance. This worktree shares Git
+with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git. No live changes.
+
+Earlier checkpoints below remain historical; their then-open failures were
+subsequently corrected as recorded in the single ledger.
 
 Latest reviewed root source through `7a68def` includes the content-ref error-contract
 repair, canonical consumer fixtures and typed state-writer preflight/boolean rest
