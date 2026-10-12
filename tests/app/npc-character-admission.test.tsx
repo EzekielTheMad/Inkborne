@@ -64,10 +64,17 @@ describe("actual ref reader and CharacterPage evaluator with simulated transport
   it.each(npcRejectedEffects)("refuses independently valid %j through actual consumer, retaining raw evidence", async effect => {
     expect(effectSchema.safeParse(effect).success).toBe(true);
     const ref = rawNpcRef([effect]), original = JSON.stringify(ref); state.rows.push(ref);
-    expect(parseContentRefWithContent(ref)).toBeNull();
     const snapshot = await getCharacterContentRefSnapshot(ref.character_id, { fresh: true });
-    expect(snapshot.complete).toBe(false); expect(snapshot.asiEvidence.status).toBe("unavailable");
     const page = await CharacterPage({ params: Promise.resolve({ id: ref.character_id }) });
+    // Execute the actual consumer before fence assertions, so before/after
+    // characterization reaches evaluation instead of stopping at a parser check.
+    console.info("[original NPC consumer characterization]", JSON.stringify({ effectType: effect.type,
+      refComplete: snapshot.complete, characterComplete: page.props.contentSnapshotsComplete,
+      strength: page.props.evalResult.stats.strength, grants: page.props.evalResult.grants,
+      npcAccepted: page.props.contentRefs.some((entry: { content_id: string }) => entry.content_id === ref.content_id),
+      npcEffectsCollected: page.props.allEffects.some((entry: unknown) => JSON.stringify(entry) === JSON.stringify(effect)) }));
+    expect(parseContentRefWithContent(ref)).toBeNull();
+    expect(snapshot.complete).toBe(false); expect(snapshot.asiEvidence.status).toBe("unavailable");
     expect(page.props.contentSnapshotsComplete).toBe(false);
     expect(page.props.structuredSources.asi.status).toBe("unavailable");
     expect(page.props.contentRefs.some((entry: { content_id: string }) => entry.content_id === ref.content_id)).toBe(false);
