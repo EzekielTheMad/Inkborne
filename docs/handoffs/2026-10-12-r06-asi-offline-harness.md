@@ -59,6 +59,21 @@ Binding amendment retains base product anchors at exact `c37e5b3`; only named in
 
 Static actual working-byte comparison at root7a: character-context worker/root both SHA256 `ca50fff8736a2086faeb9976ae888150bbbdd8188d5c2827e43b0e937491eb6e`; state-writer both `b63f352fd90ed2672c68a2302e02d3228b5bb9dc1117f31cdc0c0b460158e4d0`; dependency lock both `7225aa9026eb747c5626204c9e5e5901809f95b33a1aacaba35cd139e86a2eb6`. No install/dependency edit occurred. Other root/worker production differences identified by static Git inventory are the separately owned C1 pure files, durable kernel/receipt and server content-refs; they are not hand-copied or accepted by a wildcard. Runtime metafile binding will still refuse any differing actual imported project bytes. No bundling/tests/type/lint/full/build/browser/runtime/SQL ran. Independent exact binding review, root's single fresh successful clean production build/manifest and explicit UI release remain required;44/46 are prepared counts only.
 
+## Pending ability navigation source correction
+
+Independent source review of the named spell selector also checked remaining
+finite control names. It found that the ability-draft case attempted a Playwright
+pointer click on `Next: Background` during a pending save. Actual
+`AbilitiesStepClient` intentionally disables that button through `cannotNavigate`;
+the pointer action would wait for enabled state instead of testing refusal.
+Before another browser attempt, the harness now requires Playwright effective
+and native `:disabled` state, attempts native `node.click()` without forcing or
+dispatching an event, and retains no navigation. It additionally requires the
+same one save, no journal delta and unchanged state/raw pins. Rejection, remount,
+explicit retry and original expected-score checks remain untouched. This was
+found by source review before the case ran; no runtime failure/pass is invented.
+No product/source/asset guard changes. Exact review and actual rerun remain next.
+
 ## Third root browser failure: spell-row accessible name
 
 Fresh production-bound root `f6dc76a` preserved twelve completed desktop cases.

@@ -248,8 +248,22 @@ export async function executeAsiScenario(page, scenario, helpers) {
     await view(page, "abilities"); const input = page.getByRole("spinbutton", { name: "Strength score", exact: true }); await keyboardReach(page, input);
     await input.fill("11"); await page.waitForFunction(() => !!window.asiHarness.rejectAbility);
     await check("actual native input creates a pending ordered draft, no navigation", async () => { assert.equal(await input.inputValue(), "11"); assert.ok(await page.getByText(/Saving ability scores/).count()); assert.equal((await read(page)).calls.filter(call => call.name === "save_character_abilities").length, 1); });
-    await page.getByRole("button", { name: "Next: Background", exact: true }).click();
-    await check("pending draft cannot navigate", async () => assert.deepEqual((await read(page)).navigation, []));
+    await check("pending draft natively disables navigation and cannot send another save or side effect", async () => {
+      const before = await read(page);
+      const next = page.getByRole("button", { name: "Next: Background", exact: true });
+      assert.equal(await next.isDisabled(), true);
+      assert.equal(await next.evaluate(node => node.matches(":disabled")), true);
+      // Native activation respects disabled controls; Playwright pointer clicks
+      // intentionally wait for enabled state and cannot test this refusal.
+      await next.evaluate(node => node.click());
+      const after = await read(page);
+      assert.deepEqual(after.navigation, []);
+      assert.deepEqual(after.calls, before.calls);
+      assert.equal(after.calls.filter(call => call.name === "save_character_abilities").length, 1);
+      assert.deepEqual(count(after.journal), count(before.journal));
+      assert.deepEqual(after.snapshot.state, before.snapshot.state);
+      assert.deepEqual(after.projection.rawRefs, before.projection.rawRefs);
+    });
     await page.evaluate(() => window.asiHarness.rejectAbility()); await page.getByRole("button", { name: "Retry save", exact: true }).waitFor();
     await page.getByRole("button", { name: "Unmount ability editor", exact: true }).click(); await page.getByRole("button", { name: "Remount ability editor", exact: true }).click();
     await check("actual browser-memory draft survives SPA remount after rejection", async () => { assert.equal(await page.getByRole("spinbutton", { name: "Strength score", exact: true }).inputValue(), "11"); assert.ok(await page.getByText(/Could not save ability scores/).isVisible()); });
