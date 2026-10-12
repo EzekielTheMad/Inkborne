@@ -161,6 +161,32 @@ LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$ BEGIN
   PERFORM (value#>>'{}')::uuid; RETURN true;
 EXCEPTION WHEN invalid_text_representation THEN RETURN false;
 END $$;
+CREATE FUNCTION private.class_origin_instant_v1(value jsonb) RETURNS boolean
+LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$ DECLARE instant_value timestamptz; BEGIN
+  IF pg_catalog.jsonb_typeof(value) IS DISTINCT FROM 'string'
+    OR value#>>'{}' !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$' THEN RETURN false; END IF;
+  instant_value:=(value#>>'{}')::timestamptz;
+  RETURN COALESCE(pg_catalog.isfinite(instant_value) AND instant_value>='0001-01-01T00:00:00Z'::timestamptz
+    AND instant_value<'10000-01-01T00:00:00Z'::timestamptz,false);
+EXCEPTION WHEN invalid_text_representation OR invalid_datetime_format OR datetime_field_overflow THEN RETURN false;
+END $$;
+CREATE FUNCTION private.class_origin_row_scope_v1(relation text,row_value jsonb,target uuid,actor uuid) RETURNS boolean
+LANGUAGE sql IMMUTABLE SET search_path='' AS $$
+ SELECT CASE WHEN row_value IS NULL THEN true
+   WHEN pg_catalog.jsonb_typeof(row_value) IS DISTINCT FROM 'object' THEN false
+   WHEN relation='creation_receipt' THEN COALESCE(row_value->>'target_character_id'=target::text AND row_value->>'verified_actor_id'=actor::text,false)
+   WHEN relation IN ('origin','occurrence','class_receipt') THEN COALESCE(row_value->>'character_id'=target::text,false)
+   ELSE false END
+$$;
+CREATE FUNCTION private.class_origin_row_key_v1(relation text,row_value jsonb) RETURNS jsonb
+LANGUAGE sql IMMUTABLE SET search_path='' AS $$
+ SELECT CASE WHEN row_value IS NULL THEN NULL
+   WHEN relation='origin' THEN pg_catalog.jsonb_build_array(row_value->>'character_id')
+   WHEN relation='occurrence' THEN pg_catalog.jsonb_build_array(row_value->>'id')
+   WHEN relation='class_receipt' THEN pg_catalog.jsonb_build_array(row_value->>'character_id',row_value->>'operation_id')
+   WHEN relation='creation_receipt' THEN pg_catalog.jsonb_build_array(row_value->>'verified_actor_id',row_value->>'operation_id')
+   ELSE NULL END
+$$;
 CREATE FUNCTION private.class_origin_copy_lineage_shape_v1(lineage jsonb) RETURNS boolean
 LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
 DECLARE source jsonb:=lineage->'immediate_source'; anchor jsonb:=lineage->'root_anchor'; original jsonb; occurrence jsonb;
@@ -173,8 +199,7 @@ DECLARE source jsonb:=lineage->'immediate_source'; anchor jsonb:=lineage->'root_
     OR source->>'origin_status' IS DISTINCT FROM CASE lineage->>'copy_kind' WHEN 'draft' THEN 'draft' WHEN 'recorded' THEN 'recorded' ELSE 'legacy_unavailable' END
     OR pg_catalog.jsonb_typeof(source->'raw_provenance') IS DISTINCT FROM 'object' THEN RETURN false; END IF;
   IF source->'lifecycle' IS DISTINCT FROM 'null'::jsonb AND source->>'lifecycle' NOT IN ('provisional','accepted','ended') THEN RETURN false; END IF;
-  IF source->'ended_at' IS DISTINCT FROM 'null'::jsonb AND (pg_catalog.jsonb_typeof(source->'ended_at') IS DISTINCT FROM 'string'
-    OR NOT pg_catalog.isfinite((source->>'ended_at')::timestamptz)) THEN RETURN false; END IF;
+  IF source->'ended_at' IS DISTINCT FROM 'null'::jsonb AND NOT private.class_origin_instant_v1(source->'ended_at') THEN RETURN false; END IF;
   IF source->'source_origin_occurrence_id' IS DISTINCT FROM 'null'::jsonb AND NOT private.class_origin_uuid_v1(source->'source_origin_occurrence_id')
     OR source->'creation_operation_id' IS DISTINCT FROM 'null'::jsonb AND NOT private.class_origin_uuid_v1(source->'creation_operation_id')
     OR source->'class_revision' IS DISTINCT FROM 'null'::jsonb AND NOT private.class_origin_decimal_v1(source->>'class_revision')
@@ -204,7 +229,8 @@ DECLARE source jsonb:=lineage->'immediate_source'; anchor jsonb:=lineage->'root_
     OR NOT private.class_origin_uuid_v1(occurrence->'system_id') OR NOT private.class_origin_uuid_v1(occurrence->'content_id')
     OR pg_catalog.jsonb_typeof(occurrence->'content_version') IS DISTINCT FROM 'number' OR (occurrence->>'content_version')::integer<1
     OR pg_catalog.jsonb_typeof(occurrence->'class_slug') IS DISTINCT FROM 'string' OR length(occurrence->>'class_slug') NOT BETWEEN 1 AND 200
-    OR NOT pg_catalog.isfinite((occurrence->>'selected_at')::timestamptz) OR NOT pg_catalog.isfinite((occurrence->>'accepted_at')::timestamptz)
+    OR NOT private.class_origin_instant_v1(occurrence->'selected_at') OR NOT private.class_origin_instant_v1(occurrence->'accepted_at')
+    OR NOT private.class_origin_instant_v1(anchor#>'{root_confirmation,accepted_at}')
     OR (occurrence->>'selected_at')::timestamptz>(occurrence->>'accepted_at')::timestamptz THEN RETURN false; END IF;
   IF (original->>'expected_revision')::bigint=9223372036854775807
     OR (anchor#>>'{root_confirmation,applied_revision}')::bigint<>(original->>'expected_revision')::bigint+1
@@ -212,6 +238,7 @@ DECLARE source jsonb:=lineage->'immediate_source'; anchor jsonb:=lineage->'root_
     OR occurrence->>'acquisition_operation_id' IS DISTINCT FROM original->>'operation_id'
     OR occurrence->'acquired_character_level' IS DISTINCT FROM '1'::jsonb OR occurrence->>'lifecycle' IS DISTINCT FROM 'accepted'
     OR occurrence->'ended_at' IS DISTINCT FROM 'null'::jsonb OR occurrence->>'accepted_at' IS DISTINCT FROM anchor#>>'{root_confirmation,accepted_at}' THEN RETURN false; END IF;
+  IF source->>'lifecycle'='ended' AND (source->>'ended_at')::timestamptz<(occurrence->>'accepted_at')::timestamptz THEN RETURN false; END IF;
   IF NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(lineage->'occurrence_map') WHERE value->>'source_id'=source->>'source_origin_occurrence_id') THEN RETURN false; END IF;
   IF prior IS DISTINCT FROM 'null'::jsonb THEN
     RETURN COALESCE(private.class_origin_exact_keys_v1(prior,ARRAY['operation_id','target_character_id','root_character_id','root_occurrence_id']),false)
@@ -225,8 +252,7 @@ CREATE FUNCTION private.class_origin_receipt_shape_v1(receipt jsonb) RETURNS boo
 LANGUAGE plpgsql IMMUTABLE SET search_path='' AS $$
 DECLARE intent jsonb:=receipt->'canonical_intent'; fields jsonb:=intent->'fields'; command text:=intent->>'command'; shape_ok boolean; BEGIN
   IF receipt->'receipt_version' IS DISTINCT FROM '1'::jsonb OR intent->'contract_version' IS DISTINCT FROM '1'::jsonb
-    OR pg_catalog.jsonb_typeof(receipt->'accepted_at') IS DISTINCT FROM 'string'
-    OR NOT pg_catalog.isfinite((receipt->>'accepted_at')::timestamptz) THEN RETURN false; END IF;
+    OR NOT private.class_origin_instant_v1(receipt->'accepted_at') THEN RETURN false; END IF;
   IF NOT private.class_origin_uuid_v1(receipt->'operation_id') OR NOT private.class_origin_uuid_v1(receipt->'target_character_id')
     OR NOT private.class_origin_uuid_v1(receipt->'verified_actor_id') OR NOT private.class_origin_uuid_v1(intent->'operation_id') THEN RETURN false; END IF;
   IF receipt->>'operation_id' IS DISTINCT FROM intent->>'operation_id' OR pg_catalog.octet_length(intent::text)>32768 THEN RETURN false; END IF;
@@ -313,6 +339,12 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$ DECLARE parent public
     OR EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(NEW.planned_transitions) WHERE NOT COALESCE(private.class_origin_exact_keys_v1(value,
       ARRAY['relation_key','row_key','before_row','after_row']),false)) THEN
     RAISE EXCEPTION 'Unique exact planned transitions required' USING ERRCODE='23514'; END IF;
+  IF EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(NEW.planned_transitions) transition
+    WHERE NOT private.class_origin_row_scope_v1(transition->>'relation_key',NULLIF(transition->'before_row','null'::jsonb),NEW.target_character_id,NEW.verified_actor_id)
+      OR NOT private.class_origin_row_scope_v1(transition->>'relation_key',NULLIF(transition->'after_row','null'::jsonb),NEW.target_character_id,NEW.verified_actor_id)
+      OR transition->'before_row' IS DISTINCT FROM 'null'::jsonb AND private.class_origin_row_key_v1(transition->>'relation_key',transition->'before_row') IS DISTINCT FROM transition->'row_key'
+      OR transition->'after_row' IS DISTINCT FROM 'null'::jsonb AND private.class_origin_row_key_v1(transition->>'relation_key',transition->'after_row') IS DISTINCT FROM transition->'row_key') THEN
+    RAISE EXCEPTION 'Planned row target actor or immutable key mismatch' USING ERRCODE='42501'; END IF;
   IF NEW.acceptance_kind='class_transition' THEN
     SELECT * INTO parent FROM public.characters WHERE id=NEW.target_character_id FOR UPDATE;
     IF NOT FOUND OR parent.user_id<>NEW.verified_actor_id
@@ -345,6 +377,11 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$ DECLARE j private.cla
     RAISE EXCEPTION 'No pending acceptance' USING ERRCODE='42501'; END IF;
   IF NOT j.planned_transitions @> pg_catalog.jsonb_build_array(pg_catalog.to_jsonb(NEW)-ARRAY['acceptance_id','consumed']) THEN
     RAISE EXCEPTION 'Unplanned transition' USING ERRCODE='42501'; END IF;
+  IF NOT private.class_origin_row_scope_v1(NEW.relation_key,NEW.before_row,j.target_character_id,j.verified_actor_id)
+    OR NOT private.class_origin_row_scope_v1(NEW.relation_key,NEW.after_row,j.target_character_id,j.verified_actor_id)
+    OR NEW.before_row IS NOT NULL AND private.class_origin_row_key_v1(NEW.relation_key,NEW.before_row) IS DISTINCT FROM NEW.row_key
+    OR NEW.after_row IS NOT NULL AND private.class_origin_row_key_v1(NEW.relation_key,NEW.after_row) IS DISTINCT FROM NEW.row_key THEN
+    RAISE EXCEPTION 'Row target actor or immutable key mismatch' USING ERRCODE='42501'; END IF;
   IF TG_OP='INSERT' AND NEW.consumed OR TG_OP='UPDATE' AND (OLD.consumed OR NOT NEW.consumed
     OR (pg_catalog.to_jsonb(OLD)-'consumed') IS DISTINCT FROM (pg_catalog.to_jsonb(NEW)-'consumed')) THEN
     RAISE EXCEPTION 'Transition is single consumption' USING ERRCODE='42501'; END IF;
@@ -366,12 +403,20 @@ DECLARE old_row jsonb; new_row jsonb; identity_row jsonb; computed_key jsonb:='[
   SELECT pg_catalog.count(*) INTO match_count FROM private.class_writer_row_transitions_v1 transition
     JOIN private.class_writer_acceptance_v1 j USING(acceptance_id)
     WHERE transition.relation_key=TG_ARGV[0] AND transition.row_key=computed_key AND NOT transition.consumed AND NOT j.finalized
-      AND j.transaction_id=pg_catalog.pg_current_xact_id() AND transition.before_row IS NOT DISTINCT FROM old_row AND transition.after_row IS NOT DISTINCT FROM new_row;
+      AND j.transaction_id=pg_catalog.pg_current_xact_id() AND transition.before_row IS NOT DISTINCT FROM old_row AND transition.after_row IS NOT DISTINCT FROM new_row
+      AND private.class_origin_row_scope_v1(TG_ARGV[0],old_row,j.target_character_id,j.verified_actor_id)
+      AND private.class_origin_row_scope_v1(TG_ARGV[0],new_row,j.target_character_id,j.verified_actor_id)
+      AND (old_row IS NULL OR private.class_origin_row_key_v1(TG_ARGV[0],old_row)=computed_key)
+      AND (new_row IS NULL OR private.class_origin_row_key_v1(TG_ARGV[0],new_row)=computed_key);
   IF match_count<>1 THEN RAISE EXCEPTION 'Exact protected row proof required' USING ERRCODE='42501'; END IF;
   SELECT transition.acceptance_id INTO proof FROM private.class_writer_row_transitions_v1 transition
     JOIN private.class_writer_acceptance_v1 j USING(acceptance_id)
     WHERE transition.relation_key=TG_ARGV[0] AND transition.row_key=computed_key AND NOT transition.consumed AND NOT j.finalized
-      AND j.transaction_id=pg_catalog.pg_current_xact_id() AND transition.before_row IS NOT DISTINCT FROM old_row AND transition.after_row IS NOT DISTINCT FROM new_row;
+      AND j.transaction_id=pg_catalog.pg_current_xact_id() AND transition.before_row IS NOT DISTINCT FROM old_row AND transition.after_row IS NOT DISTINCT FROM new_row
+      AND private.class_origin_row_scope_v1(TG_ARGV[0],old_row,j.target_character_id,j.verified_actor_id)
+      AND private.class_origin_row_scope_v1(TG_ARGV[0],new_row,j.target_character_id,j.verified_actor_id)
+      AND (old_row IS NULL OR private.class_origin_row_key_v1(TG_ARGV[0],old_row)=computed_key)
+      AND (new_row IS NULL OR private.class_origin_row_key_v1(TG_ARGV[0],new_row)=computed_key);
   UPDATE private.class_writer_row_transitions_v1 SET consumed=true WHERE acceptance_id=proof.acceptance_id AND relation_key=TG_ARGV[0] AND row_key=computed_key;
   IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW;
 END $$;
@@ -402,6 +447,8 @@ DECLARE c public.characters%ROWTYPE; origin private.character_class_origin_v1%RO
   IF NOT FOUND THEN RAISE EXCEPTION 'Missing final parent' USING ERRCODE='23514'; END IF;
   SELECT * INTO origin FROM private.character_class_origin_v1 WHERE character_id=p_target;
   IF NOT FOUND THEN RAISE EXCEPTION 'Missing final origin' USING ERRCODE='23514'; END IF;
+  IF EXISTS(SELECT 1 FROM private.character_class_occurrences_v1 WHERE character_id=p_target AND system_id IS DISTINCT FROM c.system_id) THEN
+    RAISE EXCEPTION 'Retained occurrence system mismatch' USING ERRCODE='23514'; END IF;
   SELECT * INTO ordering FROM private.character_projection_order_v1 WHERE character_id=p_target;
   IF NOT FOUND OR ordering.producer_version<>1 OR ordering.producer_revision<>c.action_revision THEN
     RAISE EXCEPTION 'Order revision mismatch' USING ERRCODE='23514'; END IF;
@@ -452,6 +499,8 @@ DECLARE c public.characters%ROWTYPE; origin private.character_class_origin_v1%RO
   ) SELECT pg_catalog.count(*),pg_catalog.count(v.content_id),COALESCE(pg_catalog.jsonb_agg(pg_catalog.to_jsonb(v) ORDER BY required.content_id,required.content_version),'[]'::jsonb)
     INTO required_count,resolved_count,version_rows FROM required LEFT JOIN public.content_versions v ON v.content_id=required.content_id AND v.version=required.content_version;
   IF required_count<>resolved_count THEN RAISE EXCEPTION 'Immutable version closure incomplete' USING ERRCODE='23514'; END IF;
+  IF EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(version_rows) WHERE value->>'system_id_snapshot' IS DISTINCT FROM c.system_id::text) THEN
+    RAISE EXCEPTION 'Required immutable version system mismatch' USING ERRCODE='23514'; END IF;
   RETURN graph||pg_catalog.jsonb_build_object('versions',version_rows);
 END $$;
 
@@ -469,6 +518,12 @@ DECLARE j private.class_writer_acceptance_v1%ROWTYPE; graph jsonb; occurrence_id
     OR EXISTS(SELECT 1 FROM private.class_writer_row_transitions_v1 transition WHERE acceptance_id=j.acceptance_id
       AND NOT j.planned_transitions @> pg_catalog.jsonb_build_array(pg_catalog.to_jsonb(transition)-ARRAY['acceptance_id','consumed'])) THEN
     RAISE EXCEPTION 'Exact planned proof set mismatch' USING ERRCODE='23514'; END IF;
+  IF EXISTS(SELECT 1 FROM private.class_writer_row_transitions_v1 transition WHERE acceptance_id=j.acceptance_id AND
+    (NOT private.class_origin_row_scope_v1(transition.relation_key,transition.before_row,j.target_character_id,j.verified_actor_id)
+      OR NOT private.class_origin_row_scope_v1(transition.relation_key,transition.after_row,j.target_character_id,j.verified_actor_id)
+      OR transition.before_row IS NOT NULL AND private.class_origin_row_key_v1(transition.relation_key,transition.before_row) IS DISTINCT FROM transition.row_key
+      OR transition.after_row IS NOT NULL AND private.class_origin_row_key_v1(transition.relation_key,transition.after_row) IS DISTINCT FROM transition.row_key)) THEN
+    RAISE EXCEPTION 'Consumed row target actor or key mismatch' USING ERRCODE='42501'; END IF;
   SELECT COALESCE(pg_catalog.array_agg((value->>'id')::uuid ORDER BY position),ARRAY[]::uuid[]) INTO occurrence_ids
     FROM pg_catalog.jsonb_array_elements(j.expected_graph->'occurrences') WITH ORDINALITY expected(value,position);
   graph:=private.class_origin_read_final_graph_v1(j.target_character_id,occurrence_ids);
@@ -504,7 +559,7 @@ DECLARE j private.class_writer_acceptance_v1%ROWTYPE; graph jsonb; occurrence_id
         JOIN public.content_versions v ON v.content_id=ref.content_id AND v.version=ref.content_version
         WHERE occurrence.id=(choice->>'occurrence_id')::uuid AND occurrence.character_id=j.target_character_id
           AND v.content_type_snapshot='subclass' AND v.slug_snapshot=choice->>'subclass' AND v.system_id_snapshot=occurrence.system_id
-          AND v.data_snapshot->>'class'=occurrence.class_slug AND ref.context->>'source'='subclass' AND ref.context->>'class'=occurrence.class_slug) THEN
+          AND v.data_snapshot->>'parent_class'=occurrence.class_slug AND ref.context->>'source'='subclass' AND ref.context->>'class'=occurrence.class_slug) THEN
         RAISE EXCEPTION 'Subclass exact parent mismatch' USING ERRCODE='23514'; END IF;
     ELSIF EXISTS(SELECT 1 FROM private.character_class_occurrences_v1 WHERE id=(choice->>'occurrence_id')::uuid AND subclass_ref_id IS NOT NULL) THEN
       RAISE EXCEPTION 'Unselected subclass association' USING ERRCODE='23514'; END IF;
@@ -533,7 +588,8 @@ DECLARE j private.class_writer_acceptance_v1%ROWTYPE; graph jsonb; occurrence_id
   RETURN graph;
 END $$;
 CREATE FUNCTION private.class_origin_finalize_transition_v1(p_acceptance uuid) RETURNS void
-LANGUAGE plpgsql VOLATILE SET search_path='' AS $$ DECLARE j private.class_writer_acceptance_v1%ROWTYPE; graph jsonb; before_shared bigint; before_class bigint; BEGIN
+LANGUAGE plpgsql VOLATILE SET search_path='' AS $$ DECLARE j private.class_writer_acceptance_v1%ROWTYPE; graph jsonb; before_shared bigint; before_class bigint;
+  selected_id uuid; selected_proof private.class_writer_row_transitions_v1%ROWTYPE; selected_occurrence private.character_class_occurrences_v1%ROWTYPE; matching bigint; BEGIN
   graph:=private.class_origin_assert_common_v1(p_acceptance);
   SELECT * INTO j FROM private.class_writer_acceptance_v1 WHERE acceptance_id=p_acceptance;
   before_shared:=(j.before_parent->>'action_revision')::bigint; before_class:=(j.before_origin->>'command_revision')::bigint;
@@ -559,6 +615,25 @@ LANGUAGE plpgsql VOLATILE SET search_path='' AS $$ DECLARE j private.class_write
       OR j.receipt#>>'{confirmation,accepted_at}' IS DISTINCT FROM j.receipt->>'accepted_at'
       OR graph#>'{origin,role_proof}' IS DISTINCT FROM pg_catalog.jsonb_build_object('kind','confirmation','receipt',j.receipt->'confirmation') THEN
       RAISE EXCEPTION 'Actual metadata confirmation delta missing' USING ERRCODE='23514'; END IF;
+    selected_id:=(j.receipt#>>'{canonical_intent,fields,selected_occurrence_id}')::uuid;
+    SELECT pg_catalog.count(*) INTO matching FROM private.class_writer_row_transitions_v1 WHERE acceptance_id=j.acceptance_id
+      AND relation_key='occurrence' AND row_key=pg_catalog.jsonb_build_array(selected_id) AND consumed;
+    IF matching<>1 THEN RAISE EXCEPTION 'Consumed selected occurrence confirmation required' USING ERRCODE='23514'; END IF;
+    SELECT * INTO selected_proof FROM private.class_writer_row_transitions_v1 WHERE acceptance_id=j.acceptance_id
+      AND relation_key='occurrence' AND row_key=pg_catalog.jsonb_build_array(selected_id) AND consumed;
+    SELECT * INTO selected_occurrence FROM private.character_class_occurrences_v1 WHERE id=selected_id AND character_id=j.target_character_id;
+    IF NOT FOUND OR selected_proof.before_row IS NULL OR selected_proof.before_row->>'lifecycle' IS DISTINCT FROM 'provisional'
+      OR selected_proof.before_row->'acquired_character_level' IS DISTINCT FROM 'null'::jsonb
+      OR selected_proof.before_row->'acquisition_operation_id' IS DISTINCT FROM 'null'::jsonb
+      OR selected_proof.before_row->'accepted_at' IS DISTINCT FROM 'null'::jsonb
+      OR selected_occurrence.lifecycle IS DISTINCT FROM 'accepted' OR selected_occurrence.acquired_character_level IS DISTINCT FROM 1
+      OR selected_occurrence.acquisition_operation_id IS DISTINCT FROM (j.receipt->>'operation_id')::uuid
+      OR selected_occurrence.accepted_at IS DISTINCT FROM (j.receipt->>'accepted_at')::timestamptz
+      OR selected_occurrence.selected_at>selected_occurrence.accepted_at
+      OR selected_proof.after_row IS DISTINCT FROM pg_catalog.to_jsonb(selected_occurrence)
+      OR EXISTS(SELECT 1 FROM pg_catalog.unnest(ARRAY['id','character_id','system_id','content_id','content_version','class_slug','selected_at','controller_ref_id']) key(name)
+        WHERE selected_proof.before_row->name IS DISTINCT FROM selected_proof.after_row->name) THEN
+      RAISE EXCEPTION 'Selected confirmation occurrence transition mismatch' USING ERRCODE='23514'; END IF;
   ELSIF (j.before_origin-ARRAY['command_revision']) IS DISTINCT FROM (graph->'origin'-ARRAY['command_revision']) THEN
     RAISE EXCEPTION 'Other command cannot reseal origin' USING ERRCODE='23514';
   END IF;
@@ -604,6 +679,13 @@ LANGUAGE plpgsql VOLATILE SET search_path='' AS $$ DECLARE j private.class_write
         OR origin_occurrence->>'lifecycle' IS DISTINCT FROM lineage#>>'{immediate_source,lifecycle}'
         OR (origin_occurrence->>'ended_at')::timestamptz IS DISTINCT FROM (lineage#>>'{immediate_source,ended_at}')::timestamptz
         OR origin_occurrence->>'acquisition_operation_id' IS DISTINCT FROM lineage#>>'{root_anchor,root_occurrence_at_confirmation,acquisition_operation_id}'
+        OR origin_occurrence->>'content_id' IS DISTINCT FROM lineage#>>'{root_anchor,root_occurrence_at_confirmation,content_id}'
+        OR origin_occurrence->'content_version' IS DISTINCT FROM lineage#>'{root_anchor,root_occurrence_at_confirmation,content_version}'
+        OR origin_occurrence->>'class_slug' IS DISTINCT FROM lineage#>>'{root_anchor,root_occurrence_at_confirmation,class_slug}'
+        OR origin_occurrence->>'system_id' IS DISTINCT FROM lineage#>>'{root_anchor,root_occurrence_at_confirmation,system_id}'
+        OR lineage#>>'{root_anchor,root_occurrence_at_confirmation,system_id}' IS DISTINCT FROM graph#>>'{parent,system_id}'
+        OR origin_occurrence->'acquired_character_level' IS DISTINCT FROM '1'::jsonb
+        OR (origin_occurrence->>'selected_at')::timestamptz IS DISTINCT FROM (lineage#>>'{root_anchor,root_occurrence_at_confirmation,selected_at}')::timestamptz
         OR (origin_occurrence->>'accepted_at')::timestamptz IS DISTINCT FROM (lineage#>>'{root_anchor,root_occurrence_at_confirmation,accepted_at}')::timestamptz THEN
         RAISE EXCEPTION 'Target copy must preserve root identity and immediate lifecycle' USING ERRCODE='23514'; END IF;
     ELSIF lineage->>'copy_kind'='draft' THEN

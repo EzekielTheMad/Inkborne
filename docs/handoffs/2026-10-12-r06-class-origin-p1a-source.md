@@ -73,3 +73,44 @@ shape equality. C1v2 nullable-grant/multihop lineage bridge and C2 actual save/
 concentration/print/provider consumers remain mandatory before NEW class authoring.
 G2 authorization is absent; no SQL execution, migration generation, runtime startup,
 hosted/provider action, build/browser/full check or independent risk acceptance.
+
+## Source-only correction after 7fb4dae exact review HOLD
+
+7fb4dae is preserved immutable. Corrected only the same owned paths; all new
+checks remain UNRUN/UNVERIFIED under parent heavy hold:
+
+- Actual canonical subclass key is data_snapshot.parent_class, in both SQL and
+  reference closure. Original schema-valid subclass positive, wrong-parent and
+  class-only negative controls now exercise matching expected/observed graphs.
+- Confirmation requires one consumed selected occurrence proof, provisional before
+  (no acquisition identity/time/level) → accepted after, acquired_character_level1,
+  current confirmation operation/time, actual after row and unchanged ID/character/
+  system/content/version/slug/selection-time/controller pin. Higher current class
+  level does not invent a higher original acquisition level. Other creation-plan
+  occurrences may retain unknown acquired level. Selfconsistent altered lifecycle,
+  acquisition, operation/time and frozen tuples reject specifically at this check.
+- EVERY retained occurrence and required immutable version must match parent system,
+  including ended occurrences and versions required only by inventory/spells/inactive
+  feature/spell grants. No selfconsistent foreign occurrence↔version pair can escape.
+- Recorded target copy origin matches original root content/version/slug/system and
+  acquired level1, preserves original acquisition/time/selection, with original root
+  IDs untouched and immediate source ended lifecycle separate. Explicit JSON string,
+  non-null, finite supported native instant checks precede SQL casts/predicates for
+  root selected/accepted/confirmation times; selected<=accepted<=ended is checked.
+  Owned pure parser compares microseconds (including offset/range), not rounded
+  millisecond chronology. Null and one-microsecond inversion controls are prepared.
+- Immediate planned-row admission, actual protected OLD+NEW row guard and deferred
+  consumption all bind origin/occurrence/class-receipt character to exact acceptance
+  target, creation-receipt target AND actor, with immutable identity keys. A source
+  read during copy is no exception authorizing source/foreign writes. Selfconsistent
+  foreign plans fail BEFORE consumption; actor-only and target-only creation receipt
+  negatives independently exercise both predicates.
+
+The source-bound model now requires actual new critical stage predicates/functions
+as well as prior entry/finalizer/dispatch/closure paths. Positives remain model_checked
+only; SQL/source/model tests are not PostgreSQL/RLS/lock/native Auth/commit evidence.
+Source module/parser/fixture correctness still needs released focused/typecheck/lint
+gates and separately authorized real SQL acceptance. Auth always denied, private
+gate remains CHECK(NOT enabled), all13 shared readiness families untouched/false.
+No shared R09 source, actual producer, writer/materializer, renderer/C1 bridge or
+product file edited. Joint metadata bump and all P1b–d/G2/C2 obligations remain open.

@@ -9,7 +9,20 @@ import {
 /** Internal P1a shape checks only. No shape, context or fixture authenticates a writer. */
 const uuid = z.string().uuid();
 const version = z.number().int().min(1).max(2147483647);
-const instant = z.string().datetime({ offset: true });
+const baseInstant = z.string().datetime({ offset: true });
+/** Native-microsecond correspondence only; no clock or acceptance authority. */
+export function classOriginInstantMicros(value: unknown): bigint | null {
+  if (!baseInstant.safeParse(value).success || typeof value !== "string") return null;
+  const parts = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,6}))?(Z|[+-]\d{2}:\d{2})$/.exec(value);
+  if (!parts || Number(value.slice(0, 4)) < 1) return null;
+  const fraction = (parts[2] ?? "").padEnd(6, "0"), millis = Date.parse(`${parts[1]}.${fraction.slice(0, 3)}${parts[3]}`);
+  if (!Number.isSafeInteger(millis)) return null;
+  const micros = BigInt(millis) * BigInt(1000) + BigInt(fraction.slice(3));
+  const minimum = BigInt(Date.parse("0001-01-01T00:00:00Z")) * BigInt(1000);
+  const maximum = BigInt(Date.parse("9999-12-31T23:59:59Z") + 1000) * BigInt(1000);
+  return micros >= minimum && micros < maximum ? micros : null;
+}
+const instant = baseInstant.refine(value => classOriginInstantMicros(value) !== null, "Finite supported native instant required");
 const raw = z.record(z.string(), z.unknown());
 const revisionStep = (before: string, after: string) => classRoleRevisionSchema.safeParse(before).success
   && classRoleRevisionSchema.safeParse(after).success && BigInt(after) === BigInt(before) + BigInt(1);
@@ -44,12 +57,14 @@ const rootAnchor = z.strictObject({
   root_occurrence_at_confirmation: classRoleOccurrenceSchema,
 }).superRefine((anchor, context) => {
   const receipt = anchor.root_confirmation, occurrence = anchor.root_occurrence_at_confirmation;
+  const selected = classOriginInstantMicros(occurrence.selected_at), accepted = classOriginInstantMicros(occurrence.accepted_at);
+  const receiptTime = classOriginInstantMicros(receipt.accepted_at);
   if (receipt.canonical_intent.character_id !== occurrence.character_id
     || receipt.canonical_intent.selected_occurrence_id !== occurrence.id
     || receipt.canonical_intent.operation_id !== occurrence.acquisition_operation_id
     || receipt.accepted_at !== occurrence.accepted_at || occurrence.lifecycle !== "accepted"
     || occurrence.ended_at !== null || occurrence.acquired_character_level !== 1
-    || Date.parse(occurrence.selected_at) > Date.parse(occurrence.accepted_at ?? "")
+    || selected === null || accepted === null || receiptTime === null || selected > accepted || accepted !== receiptTime
     || !revisionStep(receipt.canonical_intent.expected_revision, receipt.applied_revision)) {
     context.addIssue({ code: "custom", message: "Original confirmation anchor mismatch" });
   }
@@ -81,6 +96,10 @@ export const classOriginCopyLineageSchema = z.strictObject({
     context.addIssue({ code: "custom", message: "Recorded immediate source is incomplete" });
   }
   if (root) {
+    const accepted = classOriginInstantMicros(root.root_occurrence_at_confirmation.accepted_at), ended = classOriginInstantMicros(source.ended_at);
+    if (source.lifecycle === "ended" && (accepted === null || ended === null || ended < accepted)) {
+      context.addIssue({ code: "custom", message: "Immediate ended lifecycle precedes original acceptance" });
+    }
     const identity = lineage.source_copy_receipt_identity;
     const original = root.root_confirmation.canonical_intent;
     if (source.source_character_id !== original.character_id && !identity

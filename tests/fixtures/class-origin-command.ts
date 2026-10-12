@@ -94,3 +94,37 @@ export function classOriginCopiedFixture(ended = false): ClassOriginAcceptance {
   ];
   return { ...fixture, acceptance_kind: "bootstrap_copy", expected_graph: after, receipt, transitions, planned_transitions: plan(transitions) };
 }
+
+/** Rebuild protected expected row proofs after a deliberate synthetic mutation. */
+export function refreshClassOriginFixtureProofs(fixture: ClassOriginAcceptance): void {
+  for (const transition of fixture.transitions) {
+    if (transition.relation_key === "origin") transition.after_row = structuredClone(fixture.expected_graph.origin);
+    if (transition.relation_key === "occurrence") {
+      const occurrence = fixture.expected_graph.occurrences.find(row => row.id === transition.row_key[0]);
+      if (occurrence) transition.after_row = structuredClone(occurrence);
+    }
+    if (transition.relation_key === "class_receipt" && transition.after_row) transition.after_row.receipt = structuredClone(fixture.receipt);
+    if (transition.relation_key === "creation_receipt" && transition.after_row) transition.after_row.receipt = structuredClone(fixture.receipt);
+  }
+  fixture.planned_transitions = plan(fixture.transitions);
+}
+
+export function classOriginCanonicalSubclassFixture(): ClassOriginAcceptance {
+  const fixture = classOriginCopiedFixture();
+  if (fixture.receipt.receipt_kind !== "bootstrap_copy") throw Error("Copy fixture required");
+  const subRef = roleId(930), subContent = roleId(931), graph = fixture.expected_graph;
+  graph.parent.level = 3;
+  const choice = (graph.parent.choices as { classes: { level: number; subclass?: string }[] }).classes[0];
+  choice.level = 3; choice.subclass = "original-lantern-watch";
+  graph.occurrences[0].subclass_ref_id = subRef;
+  graph.refs.push({ id: subRef, character_id: graph.parent.id, content_id: subContent, content_version: 1,
+    context: { source: "subclass", class: "lantern-keeper" }, choice_source: null, feature_grant_id: null });
+  graph.order.pins.push(subRef);
+  graph.versions.push({ content_id: subContent, version: 1, system_id_snapshot: graph.parent.system_id, content_type_snapshot: "subclass",
+    slug_snapshot: choice.subclass, name_snapshot: "Original lantern watch", data_snapshot: { parent_class: "lantern-keeper", description: "Original test association.",
+      flavor_label: "Watch", levels: [{ level: 3, features: [], spellcasting: null }], spells: [] }, effects_snapshot: [], source_snapshot: "homebrew", scope_snapshot: "personal",
+    owner_id_snapshot: graph.parent.user_id, created_at: "2026-10-12T03:00:00Z" });
+  fixture.receipt.copy_lineage.ref_map.push({ source_id: roleId(932), target_id: subRef });
+  graph.origin.role_proof = { kind: "copy_lineage", lineage_version: 1, lineage: structuredClone(fixture.receipt.copy_lineage) };
+  refreshClassOriginFixtureProofs(fixture); return fixture;
+}

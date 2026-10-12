@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CLASS_ORIGIN_STAGE_PATH } from "@/lib/character/class-origin-command-model";
 const sql = readFileSync(CLASS_ORIGIN_STAGE_PATH, "utf8");
-function body(name: string) { const start = sql.indexOf(`CREATE FUNCTION private.${name}(`); expect(start).toBeGreaterThan(-1); return sql.slice(start, sql.indexOf("END $$;", start)); }
+function body(name: string) { const start = sql.indexOf(`CREATE FUNCTION private.${name}(`); expect(start).toBeGreaterThan(-1); const opening = sql.indexOf("AS $$", start); return sql.slice(start, sql.indexOf("$$;", opening + 5)); }
 describe("P1a actual staged source contract, never executes SQL", () => {
   it("has no public producer/positive auth/shared revision change/cutover/readiness writer", () => {
     expect(sql).not.toMatch(/CREATE(?: OR REPLACE)? FUNCTION public\./);
@@ -72,5 +72,35 @@ describe("P1a actual staged source contract, never executes SQL", () => {
     expect(bootstrap).toContain("origin_occurrence->>'lifecycle' IS DISTINCT FROM lineage#>>'{immediate_source,lifecycle}'");
     expect(bootstrap).toContain("Target copy must preserve root identity and immediate lifecycle");
     expect(sql).toContain("Immutable history; lifecycle prerequisite unavailable");
+  });
+  it("uses actual canonical subclass parent_class and parent-bound systems for every retained/resolved tuple", () => {
+    const common = body("class_origin_assert_common_v1"), graph = body("class_origin_read_final_graph_v1");
+    expect(common).toContain("v.data_snapshot->>'parent_class'=occurrence.class_slug"); expect(common).not.toContain("v.data_snapshot->>'class'=");
+    expect(graph).toContain("system_id IS DISTINCT FROM c.system_id"); expect(graph).toContain("value->>'system_id_snapshot' IS DISTINCT FROM c.system_id::text");
+  });
+  it("actual confirmation finalizer validates consumed exact selected occurrence before/after identity and acquisition", () => {
+    const transition = body("class_origin_finalize_transition_v1");
+    for (const token of ["Consumed selected occurrence confirmation required", "selected_proof.before_row->>'lifecycle' IS DISTINCT FROM 'provisional'",
+      "selected_occurrence.lifecycle IS DISTINCT FROM 'accepted'", "selected_occurrence.acquired_character_level IS DISTINCT FROM 1",
+      "selected_occurrence.acquisition_operation_id IS DISTINCT FROM (j.receipt->>'operation_id')::uuid", "selected_occurrence.accepted_at IS DISTINCT FROM (j.receipt->>'accepted_at')::timestamptz",
+      "selected_proof.after_row IS DISTINCT FROM pg_catalog.to_jsonb(selected_occurrence)", "'system_id','content_id','content_version','class_slug'"])
+      expect(transition).toContain(token);
+  });
+  it("root times use explicit nonnull JSON string/native finite checks; recorded target tuple is complete", () => {
+    const instant = body("class_origin_instant_v1"), lineage = body("class_origin_copy_lineage_shape_v1"), bootstrap = body("class_origin_finalize_bootstrap_v1");
+    expect(instant).toContain("pg_catalog.jsonb_typeof(value) IS DISTINCT FROM 'string'"); expect(instant).toContain("COALESCE(pg_catalog.isfinite(instant_value)");
+    for (const token of ["private.class_origin_instant_v1(occurrence->'selected_at')", "private.class_origin_instant_v1(occurrence->'accepted_at')", "private.class_origin_instant_v1(anchor#>'{root_confirmation,accepted_at}')"]) expect(lineage).toContain(token);
+    expect(lineage).toContain("(source->>'ended_at')::timestamptz<(occurrence->>'accepted_at')::timestamptz");
+    for (const field of ["content_id", "content_version", "class_slug", "system_id"]) expect(bootstrap).toContain(`root_anchor,root_occurrence_at_confirmation,${field}`);
+    expect(bootstrap).toContain("origin_occurrence->'acquired_character_level' IS DISTINCT FROM '1'::jsonb");
+  });
+  it("protected immediate guards and deferred closure bind both row images to exact target/actor/key", () => {
+    const guard = body("class_origin_protected_row_guard_v1"), scope = body("class_origin_row_scope_v1"), common = body("class_origin_assert_common_v1");
+    for (const image of ["old_row", "new_row"]) expect(guard).toContain(`private.class_origin_row_scope_v1(TG_ARGV[0],${image},j.target_character_id,j.verified_actor_id)`);
+    expect(scope).toContain("row_value->>'character_id'=target::text"); expect(scope).toContain("row_value->>'target_character_id'=target::text");
+    expect(scope).toContain("row_value->>'verified_actor_id'=actor::text"); expect(guard).toContain("private.class_origin_row_key_v1(TG_ARGV[0],old_row)=computed_key");
+    expect(body("class_origin_acceptance_guard_v1")).toContain("Planned row target actor or immutable key mismatch");
+    expect(body("class_origin_row_transition_guard_v1")).toContain("Row target actor or immutable key mismatch");
+    expect(common).toContain("Consumed row target actor or key mismatch");
   });
 });
