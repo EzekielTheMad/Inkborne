@@ -41,11 +41,32 @@ dependencies, seeds, imports, sharing, public publishing or campaign instances.
 
 ## Verification record
 
-Focused tests prepared for mapper/draft/merge, actual-mapper mocked DAL, actual
-structured React form, actions/pages and Homebrew family isolation. Narrow test,
-typecheck and lint results will be recorded after root releases the serialized
-resource slot. No tests, browser, build, full check, live request, database operation
-or migration is claimed by this preparation statement.
+Root released the narrow resource slot after the R23 sequence ended. Exact clean
+source `50300b69f4e50ab08f6765f83c908b7ef1695047` passed:
+
+1. `npm.cmd test -- tests/lib/homebrew/monster-form.test.ts tests/supabase/homebrew-monsters-server.test.ts tests/components/library/monster-form.test.tsx tests/app/homebrew-monster-actions.test.ts tests/app/homebrew-monster-pages.test.tsx tests/app/homebrew-page.test.tsx --maxWorkers=2`
+   — **6 files / 106 tests PASS**, Vitest 4.1.11, 7.86 seconds.
+2. `npm.cmd run typecheck` — **exit 0**.
+3. `npm.cmd run lint` — **exit 0 / no warnings**.
+
+Source child `80a64c8` is followed by test-only corrections `222864d` and
+`50300b6`. Initial focused run: 94 passed / 12 failed, caused by exact filter
+ordering assertions and Vitest array-table argument packaging. Initial lint:
+one unused optional-clear test binding under zero-warning policy. Corrections
+changed only tests; all initial logs/results are retained separately. No product
+behavior was weakened to make these tests pass. No install, full check, build,
+browser, live request, database operation or migration ran in this child.
+
+Evidence: `test-results/r16-authoring-local` plus frozen external copy
+`../verification/r16-private-authoring-20261012`. Per-gate process JSON records
+source SHA/clean status, command, PID/parent/command line/creation time and inherited
+working directory; result receipts record exit and captured PID readback. No gate
+started a listener. Final readback at `2026-10-12T03:48:51Z`: **0 owned Node processes,
+0 captured gate PIDs, 0 captured gate listeners**. Shared-machine before/after:
+450→485 processes, 26,561,576,960→27,828,154,368 working-set bytes,
+39,229.421875→39,544.921875 cumulative CPU seconds, listeners **41→41**. Those
+shared totals include unrelated concurrent machine activity and are not attributed
+to this slice. No unrelated process was stopped.
 
 ## Review and remaining acceptance
 
