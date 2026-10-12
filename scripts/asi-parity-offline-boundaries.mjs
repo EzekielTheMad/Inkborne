@@ -1,0 +1,29 @@
+import path from "node:path";
+
+/** All live edges are explicit fixtures. Unknown edges fail preparation/calls. */
+export function asiOfflinePlugin(root) {
+  const journal = `const h=()=>window.asiHarness;const deny=(name,args)=>{h().unexpectedCalls.push({name,args});throw Error('Unapproved simulated boundary: '+name)};`;
+  const stubs = {
+    "next/link": `import React from 'react';export default function Link({href,children,...props}){return React.createElement('a',{...props,href,onClick:event=>{event.preventDefault();window.asiHarness.navigation.push({kind:'anchor',href})}},children)}`,
+    "next/navigation": `export { unstable_rethrow } from 'next/dist/client/components/unstable-rethrow.browser.js';const router={push:href=>window.asiHarness.navigation.push({kind:'router',href}),refresh:()=>window.asiHarness.navigation.push({kind:'refresh'})};export const useRouter=()=>router;`,
+    "@/lib/supabase/client": `${journal}export function createClient(){return {auth:{onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},rpc:async(name,args)=>{if(name!=='save_character_abilities')return deny(name,args);h().calls.push({name,args});if(h().scenario==='ability-draft'&&h().calls.filter(c=>c.name===name).length===1)await new Promise((resolve,reject)=>{h().releaseAbility=resolve;h().rejectAbility=()=>reject(Error('Simulated ability-save rejection'))});const old=h().abilitySaved;const same=values=>JSON.stringify(Object.entries(values).sort(([a],[b])=>a.localeCompare(b)));if(old.method!==args.expected_method||same(old.scores)!==same(args.expected_scores))return {data:null,error:{code:'P0001',message:'ABILITY_SCORES_CHANGED'}};h().abilitySaved={method:args.ability_method,scores:args.ability_scores};return {data:[{saved_method:args.ability_method,saved_scores:args.ability_scores}],error:null}},from:(...args)=>deny('from',args)}}`,
+    "@/lib/sheet/update-state": `export async function updateCharacterState(characterId,patch,expected){window.asiHarness.journal.stateWrites.push({characterId,patch:structuredClone(patch),expected:structuredClone(expected)});return {...expected,...patch}}`,
+    "@/lib/supabase/rolls": `export async function insertRoll(characterId,result,options){window.asiHarness.journal.persistedRolls.push({characterId,result:structuredClone(result),options});return {id:crypto.randomUUID(),character_id:characterId}}`,
+    "@/lib/supabase/spells": `${journal}export async function updateCharacterSpell(id,patch){h().journal.spellWrites.push({id,patch:structuredClone(patch)})}export const addCharacterSpell=(...args)=>deny('addCharacterSpell',args);export const removeCharacterSpell=(...args)=>deny('removeCharacterSpell',args);export const searchSpells=(...args)=>deny('searchSpells',args);`,
+    "@/lib/supabase/inventory": `${journal}export const addInventoryItem=(...args)=>deny('addInventoryItem',args);export const updateInventoryItem=(...args)=>deny('updateInventoryItem',args);export const removeInventoryItem=(...args)=>deny('removeInventoryItem',args);export const unequipAllArmor=(...args)=>deny('unequipAllArmor',args);export const searchItems=(...args)=>deny('searchItems',args);`,
+    "@/lib/supabase/character-client": `${journal}export const updateCharacter=(...args)=>deny('updateCharacter',args);export const updateCharacterAndReturn=(...args)=>deny('updateCharacterAndReturn',args);`,
+    "@/lib/supabase/content-refs-client": `${journal}export const insertContentRef=(...args)=>deny('insertContentRef',args);export const removeContentRefById=(...args)=>deny('removeContentRefById',args);`,
+    "@/lib/supabase/background-selection-client": `${journal}export async function setCharacterBackground(...args){h().calls.push({name:'backgroundSelection',args});if(h().scenario==='background-reject')await new Promise((resolve,reject)=>{h().rejectBackground=()=>reject(Error('Simulated background rejection'))});return deny('unplannedBackgroundSave',args)}`,
+    "class-actions": `${journal}export const reconcileClassFeatureRefsAction=(...args)=>deny('reconcileClassFeatureRefsAction',args);export const searchUsableFeatsAction=(...args)=>deny('searchUsableFeatsAction',args);export const setCharacterAsiChoiceAction=(...args)=>deny('setCharacterAsiChoiceAction',args);`,
+    "@/lib/dice/roller": `import {executeRoll as originalRoll} from ${JSON.stringify(path.join(root, "lib/dice/roller.ts"))};export function executeRoll(request,...args){const h=window.asiHarness;h.journal.rngAttempts.push(structuredClone(request));const original=originalRoll(request,...args);let result=original;if(['weapon-crit','retained-crit'].includes(h.scenario)&&request.kind==='attack'){result={...original,natural:20,total:20+original.modifier,groups:original.groups.map((group,index)=>index===0?{...group,rolls:[20],kept:[20]}:group)};}h.journal.rollResults.push({original:structuredClone(original),accepted:structuredClone(result),acceptedResultSimulated:result!==original});return result;}`,
+  };
+  return { name: "asi-declared-offline-boundaries", setup(builder) {
+    builder.onResolve({ filter: /^(next\/|@\/lib\/supabase\/|@\/lib\/sheet\/update-state|@\/lib\/dice\/roller|server-only)|actions$/ }, args => {
+      if (args.path === "next/dist/client/components/unstable-rethrow.browser.js" || args.path === "@/lib/supabase/content-definitions-parser" || args.path === "@/lib/supabase/ability-scores-client") return;
+      if (args.path === "./actions" && /builder[\\/]class[\\/]/.test(args.importer)) return { path: "class-actions", namespace: "asi-offline" };
+      if (Object.hasOwn(stubs, args.path)) return { path: args.path, namespace: "asi-offline" };
+      throw Error(`Unapproved live boundary: ${args.path}`);
+    });
+    builder.onLoad({ filter: /.*/, namespace: "asi-offline" }, args => ({ contents: stubs[args.path], loader: "js", resolveDir: root }));
+  } };
+}
