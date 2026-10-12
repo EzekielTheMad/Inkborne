@@ -57,9 +57,13 @@ only explicit decimal-integer input syntax to numbers; required blank stays
 invalid, optional blank means omission, zero stays zero, decimals/exponents/
 nonfinite values fail. Checkbox/select choices are explicit booleans or absence.
 Server always revalidates typed data through the canonical schema, including
-aggregate bytes; browser validity is never authority. Before JSON parsing,
-cap serialized data/intent transport at **128 KiB UTF-8**; decoded data still
-must meet **64 KiB**. Invalid JSON, File/duplicate control values and oversized
+aggregate bytes; browser validity is never authority. Before parsing either
+serialized field, sum the UTF-8 byte lengths of **all relevant control values**:
+`name + monster_data + changed_fields + id + expected_version` (edit-only controls
+absent on create contribute zero). This cumulative budget is **131,072 bytes / 128 KiB**,
+not 128 KiB independently for data and intent. It excludes multipart/framework
+overhead and is not a complete HTTP body guarantee; decoded data independently
+still must meet **64 KiB**. Invalid JSON, File/duplicate control values and oversized
 requests return bounded field errors without invoking a mutation.
 
 The server derives literal schema_version 1 on create; it does not accept a format
@@ -158,7 +162,7 @@ old-snapshot stability/trigger effects need authorized database acceptance later
 
 | Layer | Required evidence |
 | --- | --- |
-| Pure mapper/merge tests | Original three fixtures through structured draft round-trip; blank required vs absent/zero/negative optional numbers; all groups and duplicate order; body/data byte boundaries, invalid JSON/File/duplicates/privileged claims, ID/version bounds; explicit group clear and no-op; unchanged optional/present-empty/text/groups preserved; unknown extension/future format/invalid mechanics rejected without mutation. |
+| Pure mapper/merge tests | Original three fixtures through structured draft round-trip; blank required vs absent/zero/negative optional numbers; all groups and duplicate order; cumulative relevant control-value UTF-8 boundaries at 131,071/131,072/131,073 bytes (with per-field strings below 128 KiB but combined overflow rejected), independent decoded-data 64 KiB boundary, invalid JSON, File or duplicate values for data/intent/identity/name controls, privileged claims and ID/version bounds. Changed-field duplicate/unknown/schema_version/effects/envelope-key tampering refused; a draft group change missing its declared intent refused; declared changed fields with equal values are no-op (no UPDATE); explicit optional clear and required-clear rejection. Unchanged optional/present-empty/text/groups preserved; unknown extension/future format/invalid mechanics rejected without mutation. |
 | Mocked server tests | Missing auth, zero/duplicate/unpublished system, foreign owner/wrong type/source/system/shared/retired/malformed row; exact private INSERT and version-free payload; raw expected-version read and same final CAS filters; race after read gives conflict with no broad retry; effects/envelope/snapshots omitted; preserved raw effect extras/order; no-op performs no UPDATE; missing/malformed write response never counts as confirmed save. These are query/logic tests, not real RLS. |
 | Action/page/list tests | Signed-out create/edit redirects; malformed/foreign IDs not-found; owned list/create/edit/detail links; correct revalidation only after confirmed success; isolated monster load failure; current canonical Library shows parsed original private row; unchanged other families. Historical v1 parsed snapshot stays exact when separate v2 data/name differ. No campaign/PC pin writes. |
 | Form tests | Normal labels/controls for every group, explicit no guessed defaults; stable ordered duplicate rows Add/Remove/Move; errors focus/reveal relevant collapsed section, retain draft; zero values and optional presence survive reload; pending/conflict lock, explicit reload, validated real stat-block preview and read-only unsupported state. No JSON-only normal form or raw effect editor. |
