@@ -531,6 +531,34 @@ binding and frozen spell/version-time/acquisition closure are source work in pro
 Auth remains unavailable and all thirteen readiness families false. No SQL/runtime,
 hosted writes, deployment or publication occurred.
 
+### Latest integration awaiting fresh combined gates — 2026-10-12 18:23 UTC
+
+Independent P1 amendment review approved `cf69b854`; original plan `48d9256` and
+amendment are integrated as `32d56ad` / `1d2ceea`. Both metadata-only revision and
+bootstrap revision-zero contradictions are resolved in the contract. Additive
+P1a private storage/admission/finalizer source proceeds in its isolated worker;
+the joint R09 revision branch, actual producers/materializers, full writer fences,
+versioned multi-hop lineage bridge and G2 are future dependencies.
+
+The ASI failure was confirmed as an oracle error: installed Playwright excludes
+FIELDSET from `isNativelyDisabled`, while the captured actual fieldset is disabled
+and busy. Independently reviewed `871ccbd` is integrated as `1ca8bf3`; it checks
+native reflected state, effective descendant disabling, pending no-second-action/
+navigation behavior, and rejected-save recovery without changing product source
+or the original draft/raw-data assertions. Full 44-case rerun remains pending.
+
+Reviewed R09 source `5367243` / `6662133` / `f9891e4` is now integrated as
+`8c393f4` / `7845c1b` / `77cb820`. Worker reproduced three substantive received-v2
+failures against exact old product bytes, then restored exact hashes. First narrow
+run preserved one collection failure with 139 tests passing; reviewed marker-only
+test isolation `d1bd508` (root `46f0e38`) corrected it. Final worker **five files /
+185 tests**, typecheck and zero-warning lint passed; every owned process/listener
+readback was empty. Evidence handoff `5bdd9c1` is integrated as `ccd3bb3`.
+Actual ASI and frozen-spell validators remain real imports. Staged SQL is unapplied,
+Auth unconditionally unavailable and all thirteen readiness families false.
+Fresh root check/build/UI is next; individual worker gates are not combined
+acceptance. No SQL/runtime, hosted write or publication occurred.
+
 ### Combined acceptance and first canonical UI run — 2026-10-12 18:17 UTC
 
 Independently reviewed ASI harness freeze `dddff0d`, including actual recovery and
