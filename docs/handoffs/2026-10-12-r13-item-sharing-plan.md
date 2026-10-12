@@ -1,0 +1,9 @@
+# R13.1 ordinary-item sharing plan handoff
+
+PLAN ONLY in clean dedicated r13-item-sharing-worker, branchcodex/r13-item-campaign-sharing, basefccfc1d6b2fa7e5976852141998089f1c864643a; relevant discovery9b3054e source identical. Two docs only. Original frozen kernel/companion and other active worktrees are untouched. Root alone integrates/releases heavy resources.
+
+Finite nine-production-path plan: owner item DAL (shared scope retains exact owner/system/type/source/active/CAS/effect omission), item action/panel/edit page/Homebrew badge, ItemForm mounted draft identity/version to prevent real silent-rebase hazard, owner campaign-list enum and revoke dispatch, one NEW staged UNAPPLIED two-RPC amendment. Existing spell/feat/background behavior, platform/private permissions, import rights and character snapshot/pin/copy invariants retained.
+
+Exact written item snapshot/scope/data/effects/identity checked inside the SQL transaction after RETURNING and existing snapshot trigger; missing/mismatch/exhaustion rolls back all. No later currentrow read as write proof, no private snapshot grants for campaign owner after final revoke. Sharing RPC has no operation receipt: ambiguous/lost/malformed response remains uncertain with explicit reload, never automatic retry/R09 replay. Original item create/update is only idle/error/conflict and parsed current row, NO strong immutable confirmation; broader R12 repair remains separate.
+
+Meaningful before tests restore only exact old DAL/form/action bytes with real components/new fixtures retained and final rawhash restore. Finite schema/DAL/action/page/actualform tests and separately reviewed guarded browser harness; real SQL/roles/locks/scope races/pins/Auth remain G2. No code/dependencies/tests/type/lint/build/browser/network/SQL/runtime/provider operation. Ready for exact independent plan challenge; no source implementation yet.
