@@ -156,7 +156,13 @@ Reuse exact existing lock_character_writer_guard_v1() FOR UPDATE. After future A
 lock current owned parent FOR UPDATE, recheck native current-owner/session/Auth
 and expiry after those waits, then lookup/recheck replay as specified above. Only
 NEW work locks private origin/all retained occurrences by stable UUID, selected
-bootstrap/add-class receipt/journal records and sources. New authority-owned source
+bootstrap/add-class journal/consumed proof records and sources. Read their exact
+receipt bytes under the already locked owned parent and unchanged immutable P1a
+UPDATE/DELETE guards: receipt tables have SELECT/INSERT only, so do not use
+FOR SHARE or broaden receipt privileges. Recheck actual receipt-to-journal/proof
+correspondence. Native immutability/role/trigger/lock behavior remains G2. This
+finite privilege refinement was approved before source preparation.
+New authority-owned source
 helper uses existing R09 stable public prefix: definitions UUID, system, campaign, members UUID, shares
 UUID, versions(content_id,version), then refs/inventory/spells/feature grants/spell
 grants each by UUID and existing projection order. Preserve semantic arrays separately.

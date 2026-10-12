@@ -41,6 +41,10 @@ lock policies, no mutation/caller/class-role source grants. All other existing R
 key locks/order-rebind rights unchanged. These are ephemeral transaction locks,
 not ALL writer/phantom/RI/provider fences; future actual writer role transitions need
 separate review and G2. No positive native Auth/context/actor resolver exists now.
+Source-preparation refinement approved: unchanged receipts have SELECT/INSERT only;
+read their exact immutable bytes under the owned parent, and FOR SHARE-lock their
+finalized journal/consumed proofs using existing rights. No receipt privilege is
+added, and receipt↔journal/proof correspondence is rechecked. Native guards remain G2.
 
 Concrete object order: prerequisite checks/precise lock grants+policies, class-owned
 private-input helper, authority-owned source/access helper, bounded class before-
