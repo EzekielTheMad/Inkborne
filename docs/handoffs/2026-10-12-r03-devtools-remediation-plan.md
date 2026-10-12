@@ -2,9 +2,10 @@
 
 Prepared 2026-10-12 UTC, branch `codex/r03-devtool-remediation`, worker
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\r03-devtools-worker`,
-base `794e5ba`. **Plan/inventory only.** No package/lock mutation, install, server,
-MCP/Express startup, hosted request, environment/credential read or heavy gate.
-Independent plan challenge and root resource release precede implementation.
+base `794e5ba`. The original plan/inventory below was committed before package
+mutation. Its approved implementation and installed evidence are recorded in the
+final appendix. No server, MCP/Express startup, hosted request or
+environment/credential read was performed.
 
 Fresh `npm.cmd audit --json`: **23 findings: 15 high, 7 moderate, 1 low, zero
 critical**. Every reported node has `dev: true` in this exact lock. Local public
@@ -261,3 +262,140 @@ justified reparenting/deduplication with unchanged version/integrity. The eight
 unpatched braces-chain highs stay unresolved and unaccepted. Root coordinates
 install with other workers and owns final combined gates; current no-install hold
 remains until the actual revised diff is accepted.
+
+Root approved amendment `3e8e7a4`. A second lock-only resolution retained the
+protected production/compiler tree and produced exactly the eight residual highs
+and zero omit-dev findings, but exposed two additional unrequired changes:
+WASM binding's `@napi-rs/wasm-runtime 1.1.6 -> 1.2.5`, and shared tinyglobby's
+picomatch `4.0.4 -> 4.0.5` through the recursive Vite override. Stopped again before
+installation. Second evidence is `revised-resolution-changes.json`,
+`second-resolution-lock.json`, `second-resolution-package.json`, and
+`revised-lock-audit.json` / `revised-lock-production-audit.json`; preserved separately
+from the first rejected tree.
+
+Root independently approved these exact final preservation refinements:
+
+```json
+{
+  "vite@^8.0.0": {
+    ".": "8.1.5",
+    "rolldown": {
+      ".": "1.1.5",
+      "@rolldown/pluginutils": "1.0.1",
+      "@rolldown/binding-wasm32-wasi": {
+        ".": "1.1.5",
+        "@napi-rs/wasm-runtime": "1.1.6"
+      }
+    },
+    "lightningcss": "1.32.0",
+    "picomatch": "4.0.5",
+    "tinyglobby": { ".": "0.2.17", "picomatch": "4.0.4" }
+  }
+}
+```
+
+Actual parent ranges are WASM binding `^1.1.6` and tinyglobby `^4.0.4`; fixed old
+values satisfy them. The former's peers `@emnapi/core/runtime ^1.7.1` are satisfied
+by the binding's exact `1.11.1` dependencies. Direct Vite picomatch remains `4.0.5`.
+Npm must regenerate this tree; no manual lock splicing or invented integrities.
+After a matching complete diff, root permits the worker install and narrow gates,
+serialized after the R21 worker's install. Until installed verification, reported
+audit results are lock evidence only; eight highs are still not accepted risks.
+
+## Final approved implementation and installed evidence
+
+Root approved the complete matrix and preservation constraints above. Final npm
+lock-only resolution used `--ignore-scripts`, with no manual lock edits. Full
+before/after node comparison is `final-resolution-changes.json`: **31 entries**,
+including root metadata and **30 package nodes** (26 existing updates, four new
+development entries, zero removals). Every changed package is listed in the
+original security matrix or its explicitly approved supporting floors:
+
+| Supporting entry | Actual result | Reason |
+| --- | --- | --- |
+| `@humanfs/core` | `0.19.1 -> 0.19.2` | Required patched node package floor |
+| `@humanfs/types` | New `0.15.0` | Required node/core type helper |
+| body-parser nested content-type | New `2.0.0` | Required `^2.0.0`; global helper retained |
+| body-parser nested type-is | New `2.1.0` | Required `^2.1.0`; Express `2.0.1` retained |
+| Browserslist nested caniuse-lite | New `1.0.30001806` | Required floor; Next's original global `1.0.30001786` retained |
+| electron-to-chromium | `1.5.331 -> 1.5.393` | Browserslist required floor |
+| node-releases | `2.0.37 -> 2.0.51` | Browserslist required floor |
+
+All seven Vitest companion packages are coherently `4.1.11`. No additional
+optional package family was added. Protected Vite `8.1.5`, Rolldown `1.1.5`, its
+binding/OXC family, WASM runtime `1.1.6`, Lightning CSS `1.32.0`, both distinct
+picomatch versions, Chai, tinyrainbow, Next/eslint-config-next `16.3.8`, shadcn
+`4.1.2`, TipTap `3.30.5`, previous security overrides and **every production lock
+node** retain their original full node metadata. New Browserslist metadata stays
+scoped. Earlier rejected resolutions remain separate immutable evidence; neither
+was installed. Revert this implementation's package/lock commit to roll back,
+recognizing that this restores the original 23 development findings.
+
+Actual isolated `npm.cmd ci --ignore-scripts` exited **0**, installing 804
+packages. Node `24.14.0`, npm `11.9.0`; no engine/peer refusal. Installed version
+proof confirms every changed package node matches its locked version and zero
+production-node changes (`installed-version-proof.json`). Existing Node 22
+environments still need the already applicable **22.13+** dependency floor;
+this child did not change CI or run that Node version.
+
+`npm.cmd ls --all --json` exited **0**, reporting no invalid ranges, but six
+**extraneous optional WASM** entries: `@emnapi/core 1.11.1`,
+`@emnapi/runtime 1.11.1`, `@emnapi/wasi-threads 1.2.2`,
+`@img/sharp-wasm32 0.35.5`, `@tybys/wasm-util 0.10.3`, and that sharp WASM
+package's nested `@emnapi/runtime 1.11.3`. Their exact full metadata exists
+unchanged in the predecessor lock. This is an observed npm optional-tree
+classification, not proof that their WASM runtime paths were executed. No
+pruning or additional package changes were made.
+
+Installed `npm.cmd audit --json` exits **1** with **8 high, 0 moderate, 0 low,
+0 critical**; `npm.cmd audit --omit=dev --json` exits **0**, zero findings.
+Separate evidence is `installed-audit.json`, `installed-production-audit.json`
+and `installed-tree.json` under the external evidence directory identified above.
+This reduces 23 development findings to eight. The residual high nodes remain
+`@next/eslint-plugin-next`, `@ts-morph/common`, `braces`, `eslint-config-next`,
+`fast-glob`, `micromatch`, `shadcn`, and `ts-morph`. They are the unresolved
+**GHSA-vfj7-8cjw-p6xm / braces <=3.0.3** chain described above, with no observed
+compatible patched release. **No residual risk acceptance is implied.**
+
+Bounded installed validation:
+
+- `node <external-evidence>/offline-probes.cjs`: **11 passed**. Real library
+  calls cover three minimatch brace-expansion parents, YAML merge parsing, URI
+  serialization, query parsing/prototype rejection, selector serialization,
+  invalid/valid body-parser size configuration without running its middleware,
+  scoped content-type/type-is APIs, the full IPv6 link-local prefix boundary and
+  jsdom local HTML parsing. No listener/network request is part of these probes.
+- `npm.cmd test -- tests/components/editor/rich-text-editor.test.ts
+  tests/components/narrative/use-narrative-editor.test.ts
+  tests/app/builder-choice-recovery.test.tsx
+  tests/api/campaign-mentions-route.test.ts
+  tests/lib/supabase/content-definitions-parser.test.ts
+  tests/scripts/equipment-runtime-fixtures.test.ts --maxWorkers=2`:
+  **6 files / 101 tests passed**, Vitest `4.1.11`; injected fixture tests only.
+- `npm.cmd run typecheck`: **passed**.
+- `npm.cmd run lint`: **passed**, repository script's zero-warning budget.
+- `git diff --check`: **passed**. shadcn's required exported CSS SHA-256 remains
+  `146941ac3ff65496fdf1cb306e697255328e4dadc7c105d66e36bb031b00f6d6`.
+
+No default hosted E2E, SQL/Docker execution, shadcn CLI generation, MCP/Express
+startup, real HTTP/JWT/provider workflow, server or dependency install scripts
+were exercised. Offline parsing and existing tests establish bounded
+compatibility, not exploit absence or real release acceptance. Root owns reviewed
+integration, combined full check/build and final rendered CSS/browser acceptance.
+
+Process/resource evidence (UTC; parent shell PID `30200`, this worktree's cwd):
+
+| Command | Shell PID | Start / finish | Exit |
+| --- | --- | --- | --- |
+| Final lock-only resolution | `41296` | `02:18:33.292 / 02:18:35.156` | `0` |
+| Locked ignore-scripts install | `58332` | `02:19:53.651 / 02:20:29.599` | `0` |
+| Six focused test files | `38068` | `02:23:41.399 / 02:24:05.057` | `0` |
+| Typecheck | `15048` | `02:24:21.517 / 02:24:37.301` | `0` |
+| Lint | `31008` | `02:24:31.940 / 02:25:19.446` | `0` |
+
+Before/after installation: process count `455 -> 489`, free physical memory
+`9,515,744 -> 8,578,480 KiB`, sampled CPU `22% -> 16%`, listening sockets
+`41 -> 41`. Other coordinated workers were active, so aggregate changes cannot be
+attributed solely to this install. This task started no listener and retained no
+server. Final exact-worktree Node/process cleanup readback is recorded alongside
+the installed evidence; no unrelated process was stopped.

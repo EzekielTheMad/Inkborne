@@ -53,7 +53,53 @@
     "linkify-it": "5.0.2",
     "markdown-it": "14.3.1",
     "postcss": "8.5.23",
-    "ws": "8.21.1"
+    "ws": "8.21.1",
+    "@modelcontextprotocol/sdk@^1.0.0": {
+      ".": "1.31.0",
+      "@hono/node-server": "1.19.15",
+      "hono": "4.13.7"
+    },
+    "@humanfs/node@^0.16.0": {
+      ".": "0.16.8",
+      "@humanfs/core": { ".": "0.19.2", "@humanfs/types": "0.15.0" },
+      "@humanfs/types": "0.15.0"
+    },
+    "body-parser@^2.0.0": {
+      ".": "2.3.0",
+      "content-type": "2.0.0",
+      "type-is": { ".": "2.1.0", "content-type": "2.0.0" }
+    },
+    "brace-expansion@^1.0.0": "1.1.21",
+    "brace-expansion@^5.0.0": "5.0.12",
+    "browserslist@^4.0.0": {
+      ".": "4.28.7",
+      "caniuse-lite": "1.0.30001806",
+      "electron-to-chromium": "1.5.393",
+      "node-releases": "2.0.51",
+      "baseline-browser-mapping": "2.11.28",
+      "update-browserslist-db": "1.2.3"
+    },
+    "fast-uri@^3.0.0": "3.1.8",
+    "ip-address@^10.0.0": "10.7.1",
+    "js-yaml@^4.0.0": "4.3.2",
+    "postcss-selector-parser@^7.0.0": "7.1.6",
+    "qs@^6.0.0": "6.16.0",
+    "undici@^7.0.0": "7.29.1",
+    "vite@^8.0.0": {
+      ".": "8.1.5",
+      "rolldown": {
+        ".": "1.1.5",
+        "@rolldown/pluginutils": "1.0.1",
+        "@rolldown/binding-wasm32-wasi": { ".": "1.1.5", "@napi-rs/wasm-runtime": "1.1.6" }
+      },
+      "lightningcss": "1.32.0",
+      "picomatch": "4.0.5",
+      "tinyglobby": { ".": "0.2.17", "picomatch": "4.0.4" }
+    },
+    "chai@^6.0.0": "6.2.2",
+    "tinyrainbow@^3.0.0": "3.1.0",
+    "caniuse-lite": "1.0.30001786",
+    "type-is@^2.0.0": "2.0.1"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
@@ -72,6 +118,6 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "vitest": "^4.1.2"
+    "vitest": "4.1.11"
   }
 }
