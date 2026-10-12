@@ -49,3 +49,60 @@ This checkpoint has only static diff checks. Root holds heavy/UI: no tests,
 typecheck/lint/build/browser/install/server/network/provider/SQL executed. No
 long-running task process/listener started. Freeze exact source/tests before a
 separate offline fixture/harness checkpoint and independent review/released gates.
+
+## Separate offline source preparation — still unexecuted
+
+Production/source tests0f3ee6647f0b15f96a58c8d70a32c828b14a3476 independently
+approved. Additional test-only checkpoint7cdce9aee0273974b32a5211317c436fd2ed90b0
+prepares otherwise-valid unsafe-reader controls: duplicate effects dropping a
+valid mechanical effect; unsupported/escaped duplicate format version; dangerous
+or NUL original keys hidden by duplicate data; NUL/lone surrogates in narrative;
+malformed UTF8 whose replacement text still fits the shipped schema. They invoke
+current review/native hashing and render the actual profile if admitted BEFORE
+the refusal assertions. A complete valid positive stays intact. Exact lowered
+byte/depth/node/member boundary test uses an otherwise valid NPC (7nodes,
+6members, depth3), then the same candidate one below each ceiling; no invalid
+schema payload masquerades as positive reader-boundary acceptance.
+
+When a separate baseline slot is authorized, temporarily substitute ONLY codec
+decoding/JSON-reader admission with nonfatal UTF8 decode plus JSON.parse; keep
+current strict candidateSchema/name/NPC validation, review hashing/freezing and
+actual profile unchanged. The dedicated admission controls must show substantive
+accepted-profile failures with the original positive passing; no missing-module,
+unknown-field/constructor collection failure counts as reproduction. Preserve
+exact source/blob/mounted bytes before substitution and finally restore all
+hashes/clean status. No baseline has been run yet.
+
+Explicit offline config `e2e/local-npc-json/playwright.config.ts`; later command
+`npm.cmd run test:e2e -- --config e2e/local-npc-json/playwright.config.ts` only after
+review/build/UI release. Artifact directory `test-results/npc-json-local`;
+default manifest `test-results/npc-json-local/production-artifacts.json`. Six
+owned fixture/config/spec/production-input/scenario/runner paths, eight fixed
+core/fixture source paths at0f, two independently bound inherited executable
+helpers (process0841bda7b9e785280e684030bf4fe900d81465e5 and production assets
+e4058f8a31cd911583a312e59fedcf4c3fd4adae). Wrapper AND runner verify fixed Git
+blobs/raw root/index/checkout config before dynamic process-helper import/use,
+and repeat at end/before force; own full non-bundle closure and fixed core bytes
+are checked before those helpers and again afterward. Actual metafile project
+inputs and lock/root mounted bytes are checked before any browser execution.
+
+Complete successful clean current-root build receipt/BUILD_ID, complete compiled
+CSS and local font manifest are required; no fallback CSS or fabricated font.
+One private Chrome/server pair with OS birth/PID/parent/exact command/cwd/start,
+resources and both closed-port/browser-exit readback. Cooperative IPC shutdown
+then bounded10seconds; force only freshly identical captured birth/PID/parent/
+command for that exact tree. Previous receipts/screens/failure DOM are archived.
+
+Intended four finite cases per desktop1280/mobile390 = 8grouped receipts and
+8viewport/font screenshots: original native file/schema/profile/hash/duplicates/
+escaped markup; surrogate/multibyte-offset refusal with invalid focus and prior
+source/hash visibly retained; valid pair plus declared empty groups; disabled
+native picker/pending single read with an explicitly modeled result delay and
+native SHA256. No Math.random/crypto substitute. All local codec/file/profile
+behavior is real; result delay is a fixture timing model. No Auth/actions/router/
+app upload/stage/commit/save/navigation/SQL/RLS/provider or human-format approval
+is simulated or claimed. Counts remain intentions until actual execution.
+
+Static diff checks only for this harness preparation. No new gate/process/server
+has run. Freeze this source for independent review before any released narrow
+tests/typecheck/lint, full integration/build or explicit UI acceptance.
