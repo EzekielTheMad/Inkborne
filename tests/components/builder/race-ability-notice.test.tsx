@@ -26,4 +26,12 @@ describe("legacy race ambiguity notice shared by builder and sheet", () => {
     render(<RaceAbilityNotice contentRefs={[pinnedRaceRef(pin)]} />);
     expect(screen.getByRole("status")).toBeInTheDocument();
   });
+  it("does not warn when the undeclared scores array adds zero, while retaining the ability effect", () => {
+    const { pin } = syntheticRacePin();
+    pin.data.scores = [0, 0, 0, 0, 0, 0];
+    const before = JSON.stringify(pin);
+    render(<RaceAbilityNotice contentRefs={[pinnedRaceRef(pin)]} />);
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(JSON.stringify(pin)).toBe(before);
+  });
 });

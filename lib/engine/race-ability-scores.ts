@@ -29,5 +29,6 @@ export function resolveRaceAbilityContributions(data?: RaceAbilityData): Mechani
 
 export function hasLegacyRaceAbilityAmbiguity(data: RaceAbilityData | undefined, effects: Effect[]): boolean {
   return data?.ability_score_representation === undefined && Array.isArray(data?.scores) && data.scores.length === 6
+    && data.scores.some(value => value !== 0)
     && effects.some(effect => effect.type === "mechanical" && RACE_ABILITY_SLUGS.some(slug => slug === effect.stat));
 }

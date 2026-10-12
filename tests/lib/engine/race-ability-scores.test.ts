@@ -18,7 +18,8 @@ describe("first-race mechanical representation contract", () => {
     const { pin } = syntheticRacePin();
     expect(evaluateSyntheticPin(pin).stats).toMatchObject({ strength: 14, constitution: 16 });
     expect(hasLegacyRaceAbilityAmbiguity(pin.data, pin.effects)).toBe(true);
-    expect(hasLegacyRaceAbilityAmbiguity({ scores: [0, 0, 0, 0, 0, 0] }, pin.effects)).toBe(true);
+    expect(hasLegacyRaceAbilityAmbiguity({ scores: [0, 0, 0, 0, 0, 0] }, pin.effects)).toBe(false);
+    expect(resolveRaceAbilityContributions({ scores: [0, 0, 0, 0, 0, 0] })).toEqual([]);
     expect(hasLegacyRaceAbilityAmbiguity(syntheticRacePin("scores-only").pin.data, [])).toBe(false);
     expect(hasLegacyRaceAbilityAmbiguity(syntheticRacePin("effects-only").pin.data, pin.effects)).toBe(false);
   });
