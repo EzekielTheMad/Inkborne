@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ createClient: vi.fn(), uuid: vi.fn() }));
 vi.mock("server-only", () => ({}));
-vi.mock("node:crypto", async (importOriginal) => ({
-  ...await importOriginal<typeof import("node:crypto")>(),
-  randomUUID: mocks.uuid,
-}));
+vi.mock("node:crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:crypto")>();
+  return { ...actual, default: { ...actual.default, randomUUID: mocks.uuid }, randomUUID: mocks.uuid };
+});
 vi.mock("@/lib/supabase/server", () => ({ createClient: mocks.createClient }));
 import { createHomebrewPassiveFeatureRecord, getOwnedHomebrewPassiveFeature, listOwnedHomebrewPassiveFeatures, updateHomebrewPassiveFeatureRecord } from "@/lib/supabase/homebrew-passive-features-server";
 import { FEATURE_VERSION_MAX } from "@/lib/homebrew/passive-feature-form";
@@ -42,11 +42,13 @@ describe("private standalone feature DAL; mocks do not prove real RLS/grants", (
   });
   it("creates only a server-derived private passive definition; no attachment/RPC/grant/other write", async () => {
     const db = database([ok({ id: SYSTEM }), ok(passiveFeatureRow())]);
-    expect(await createHomebrewPassiveFeatureRecord(passiveFeatureCreateForm())).toEqual({ status: "saved", id: ID, version: 1, operation: "create" });
+    const result = await createHomebrewPassiveFeatureRecord(passiveFeatureCreateForm());
+    expect(mocks.uuid).toHaveBeenCalledOnce();
     expect(db.calls[0]).toMatchObject({ terminal: "single", filters: [["slug", "dnd-5e-2014"], ["status", "published"]] });
     expect(db.calls[1].payload).toEqual({ id: ID, system_id: SYSTEM, content_type: "feature", slug: "lantern-cadence-11111111", name: "Lantern Cadence",
       data: passiveFeatureData, effects: [], source: "homebrew", scope: "personal", owner_id: OWNER });
     expect(db.calls[1].payload).not.toHaveProperty("version"); expect(db.calls).toHaveLength(2); expect(db.client.rpc).not.toHaveBeenCalled();
+    expect(result).toEqual({ status: "saved", id: ID, version: 1, operation: "create" });
   });
   it.each([createHomebrewPassiveFeatureRecord, updateHomebrewPassiveFeatureRecord])("requires authentication before persistence", async operation => {
     const db = database([], false); const form = operation === createHomebrewPassiveFeatureRecord ? passiveFeatureCreateForm() : passiveFeatureEditForm();
