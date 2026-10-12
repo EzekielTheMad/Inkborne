@@ -45,3 +45,21 @@ The installed Next upgrade guide was read before and after installation. No comp
 The critical residual is `proxy-addr@2.0.7`, reached through **dev shadcn 4.1.2 → MCP SDK 1.29.0 → Express 5.2.1**. It is not an Inkborne runtime dependency. Remaining findings include MCP/Hono/Express tooling, ESLint/glob/YAML/browser tooling, ts-morph/shadcn tooling, Vitest mock tooling, and dev undici. Tool-only classification is not acceptance or remediation of these risks; they remain a separate release security decision. Do not expose development MCP/HTTP tooling as part of production.
 
 Zero production audit findings mean no advisory currently reported by the npm registry for this resolved production tree. They do not prove deployment configuration, authorization, image-server exploit resistance, RLS, or hosted recovery correctness. Root integration must still run the full check/build, verify relevant real browser workflows, and record independent review before acceptance. No beta, hosted write, or deployment is authorized by this checkpoint.
+
+## R03.2 mounted browser editor acceptance
+
+The additive `e2e/local-editor/playwright.config.ts`, `editor.spec.ts`, and `scripts/verify-editor-local.mjs` gate mounts the **actual** `RichTextEditor`, its toolbar, and `MentionList` with the patched Tiptap React dependency. The source components are not stubbed or changed. Run:
+
+```powershell
+npm.cmd run test:e2e -- --config e2e/local-editor/playwright.config.ts
+```
+
+The local gate passed **one Playwright spec / 12 meaningful assertions** at desktop 1280×900 and narrow mobile 320×844. It verifies original synthetic content, editor focus/ring, HTML paste preserving bold/HTTPS and rejecting the exercised JavaScript/script/image/event-handler payload, real toolbar formatting/focus return, `@` character keyboard selection, `#` page keyboard selection, distinct mention IDs/labels/triggers/routes, serialized JSON simulated save/page reload, and toolbar wrapping with no document horizontal overflow. It does not claim all possible malicious paste payloads are safe. Screenshots for both mention suggestions and reloaded editors were inspected.
+
+The paste payload uses a browser `ClipboardEvent` with `DataTransfer` into the actual mounted ProseMirror paste handler; the operating-system clipboard is not exercised. Mention search uses synthetic HTTP responses on the exact local API route, with checked character/page query parameters. The fixture's `onChange` serializes actual editor output, and its save button stores that JSON in account-free local sessionStorage; a real page reload remounts the same JSON. This **does not test the product's authorized database persistence, account/campaign membership, hosted API, or content UAT**.
+
+The worker used actual `app/globals.css` compiled through installed PostCSS/Tailwind, SHA-256 `f0226475f0526cfc1d72ecf07be57577697eda7f52f8a61163392c257406d6a4`. It did not mount Next's root layout, font loader, or a production Next server. When `.next/BUILD_ID` exists, the same gate automatically selects that worktree's `.next/static/chunks/*.css`; direct invocation also accepts `--css-dir <directory>`. Integration should repeat this gate against the final production build CSS.
+
+The successful run recorded server PID 29320 / parent 44932 / port 60234 and Chrome PID 30500 / parent 29320 / browser control port 60235, starting 2026-10-12T00:41:53Z. Zero page errors and remote requests were recorded. Cleanup confirmed both ports refused connections and the owned browser process exited. Each attempt records its own process metadata and cleanup results in `test-results/editor-local/evidence.json`, including failures. Snapshots are `desktop-page-suggestions.png`, `mobile-page-suggestions.png`, `desktop-reloaded.png`, and `mobile-reloaded.png` there. No Next server, environment file, credential, hosted setup, or provider operation was used.
+
+Preparation passed `npm run typecheck`; final `npm run lint` passed with zero warnings, and `git diff --check` passed. Full suite/build and built-CSS reacceptance remain the root's combined integration gate. Two harness corrections preceded acceptance: await toolbar requestAnimationFrame focus before typing, and use 320px to exercise wrapping because the toolbar fits on one row at 390px. No product defect or product source edit was needed.
