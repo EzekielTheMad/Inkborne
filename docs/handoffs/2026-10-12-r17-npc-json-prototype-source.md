@@ -167,3 +167,16 @@ listener counts; paused readback23captured identities including wrappers,
 zero exact live task processes and task listeners. Heavy slot released to root
 pending correction review. No build/full/browser/install/network/SQL/provider
 activity; final acceptance is incomplete.
+
+Independent review approved7f3f021; released restored four-suite repeat at clean
+a51060ba94b229939cf64bfc7407aba08d048b97 PASS4files/80tests (codec60,
+review6, preview4, admission10). Production bytes and semantic assertions remain
+unchanged. Sequential `npm.cmd run typecheck` then failed solely with TS2322 at
+codec.test.ts:80: the it.each callback returned NpcJsonDiagnostic rather than
+Awaitable<void>. TEST-ONLY53bb0a4f82987ec16f8e9253ee32166cefa45d71 wraps the
+same refusal call in a block; input vectors/assertions are unchanged. Preserve
+typecheck-initial stdout/stderr/receipt, and focused-after PASS separately from
+the earlier259 failures. No repeat/typecheck/lint after this correction until
+independent review/release. Readback45captured identities, zero exact live task
+processes/listeners; heavy slot free. Source correction is untested at this
+checkpoint; no browser/build/full/SQL/provider/network activity is claimed.
