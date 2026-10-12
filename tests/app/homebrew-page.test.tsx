@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   listOwnedMonsters: vi.fn(),
   listOwnedTraits: vi.fn(),
   listOwnedFeatures: vi.fn(),
+  listOwnedNpcs: vi.fn(),
   getUser: vi.fn(),
 }));
 
@@ -27,6 +28,7 @@ vi.mock("@/lib/supabase/homebrew-backgrounds-server", () => ({
 }));
 vi.mock("@/lib/supabase/homebrew-races-server", () => ({ listOwnedHomebrewRaces: mocks.listOwnedRaces }));
 vi.mock("@/lib/supabase/homebrew-monsters-server", () => ({ listOwnedHomebrewMonsters: mocks.listOwnedMonsters }));
+vi.mock("@/lib/supabase/homebrew-npcs-server", () => ({ listOwnedHomebrewNpcs: mocks.listOwnedNpcs }));
 vi.mock("@/lib/supabase/homebrew-traits-server", () => ({ listOwnedHomebrewTraits: mocks.listOwnedTraits }));
 vi.mock("@/lib/supabase/homebrew-passive-features-server", () => ({ listOwnedHomebrewPassiveFeatures: mocks.listOwnedFeatures }));
 vi.mock("@/lib/supabase/homebrew-armors-server", () => ({ listOwnedHomebrewArmors: mocks.listOwnedArmors }));
@@ -51,6 +53,20 @@ const spellData = {
 };
 
 describe("HomebrewPage", () => {
+  it("discovers private NPCs with current loaded-row links without a success query", async () => {
+    mocks.listOwnedNpcs.mockResolvedValue([{ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "Original NPC", version: 2, data: { schema_version: 1 } }]);
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("My NPCs")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Edit Original NPC" })).toHaveAttribute("href", "/homebrew/npcs/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/edit");
+    expect(screen.getByRole("link", { name: "Create NPC" })).toHaveAttribute("href", "/homebrew/npcs/new");
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+  it("NPC load refusal stays an error, preserves other families and never shows empty success", async () => {
+    mocks.listOwnedNpcs.mockRejectedValue(Error("Synthetic unsupported NPC"));
+    render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Your homebrew NPCs could not be loaded.")).toBeVisible();
+    expect(screen.queryByText("Write your first private rule")).toBeNull();
+  });
   it("discovers standalone private features with unverified association and exact edit link", async () => {
     mocks.listOwnedFeatures.mockResolvedValue([{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Original Cadence", version: 2, data: { class: "unverified-workshop", level: 3, description: "Original standalone note." } }]);
     render(await HomebrewPage({ searchParams: Promise.resolve({}) }));
@@ -66,6 +82,7 @@ describe("HomebrewPage", () => {
     expect(screen.getByText("Original Blade")).toBeVisible(); expect(screen.queryByText("Write your first private rule")).not.toBeInTheDocument();
   });
   beforeEach(() => {
+    mocks.listOwnedNpcs.mockResolvedValue([]);
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null });
     mocks.listOwnedSpells.mockResolvedValue([]);
     mocks.listOwnedFeats.mockResolvedValue([]);

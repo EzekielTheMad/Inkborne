@@ -15,6 +15,7 @@ import { listOwnedHomebrewItems } from "@/lib/supabase/homebrew-items-server";
 import { listOwnedHomebrewMagicItems } from "@/lib/supabase/homebrew-magic-items-server";
 import { listOwnedHomebrewSpells } from "@/lib/supabase/homebrew-spells-server";
 import { listOwnedHomebrewMonsters } from "@/lib/supabase/homebrew-monsters-server";
+import { listOwnedHomebrewNpcs } from "@/lib/supabase/homebrew-npcs-server";
 import { createClient } from "@/lib/supabase/server";
 
 interface HomebrewPageProps {
@@ -27,7 +28,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   if (!user) redirect("/login");
 
   const query = await searchParams;
-  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult, racesResult, monstersResult, traitsResult, featuresResult] = await Promise.allSettled([
+  const [spellsResult, featsResult, backgroundsResult, magicItemsResult, itemsResult, weaponsResult, armorsResult, racesResult, monstersResult, traitsResult, featuresResult, npcsResult] = await Promise.allSettled([
     listOwnedHomebrewSpells(),
     listOwnedHomebrewFeats(),
     listOwnedHomebrewBackgrounds(),
@@ -39,6 +40,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     listOwnedHomebrewMonsters(),
     listOwnedHomebrewTraits(),
     listOwnedHomebrewPassiveFeatures(),
+    listOwnedHomebrewNpcs(),
   ]);
   const spells = spellsResult.status === "fulfilled" ? spellsResult.value : [];
   const feats = featsResult.status === "fulfilled" ? featsResult.value : [];
@@ -47,6 +49,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
   const monsters = monstersResult.status === "fulfilled" ? monstersResult.value : [];
   const traits = traitsResult.status === "fulfilled" ? traitsResult.value : [];
   const features = featuresResult.status === "fulfilled" ? featuresResult.value : [];
+  const npcs = npcsResult.status === "fulfilled" ? npcsResult.value : [];
   const armors = armorsResult.status === "fulfilled" ? armorsResult.value : [];
   const weapons = weaponsResult.status === "fulfilled" ? weaponsResult.value : [];
   const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
@@ -98,6 +101,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
       ? "A new homebrew version was saved. Existing character pins are unchanged."
       : null;
   const completelyEmpty = spells.length === 0
+    && npcs.length === 0
     && feats.length === 0
     && backgrounds.length === 0
     && magicItems.length === 0
@@ -118,7 +122,8 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
     && racesResult.status === "fulfilled"
     && monstersResult.status === "fulfilled"
     && traitsResult.status === "fulfilled"
-    && featuresResult.status === "fulfilled";
+    && featuresResult.status === "fulfilled"
+    && npcsResult.status === "fulfilled";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7">
@@ -146,6 +151,7 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
           </Link>
           <Link href="/homebrew/races/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create race</Link>
           <Link href="/homebrew/monsters/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create monster</Link>
+          <Link href="/homebrew/npcs/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create NPC</Link>
           <Link href="/homebrew/traits/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create trait</Link>
           <Link href="/homebrew/features/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create passive feature</Link>
           <Link href="/homebrew/armors/new" className={buttonVariants({ variant: "outline" })}><Plus className="size-4" />Create armor</Link>
@@ -462,6 +468,15 @@ export default async function HomebrewPage({ searchParams }: HomebrewPageProps) 
         </section>
       ) : null}
 
+      {npcsResult.status === "rejected" ? <HomebrewLoadError label="NPCs" /> : npcs.length > 0 ? (
+        <section aria-labelledby="owned-npcs-heading" className="space-y-3"><h2 id="owned-npcs-heading" className="j-folio">My NPCs</h2>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{npcs.map(npc => <div key={npc.id} className="j-card-paper min-w-0 space-y-3 p-5">
+            <h3 className="j-display text-lg [overflow-wrap:anywhere]">{npc.name}</h3><p className="text-xs text-muted-foreground">{npc.data.occupation ?? "Narrative template"}</p>
+            <div className="flex gap-2"><Badge variant="outline">Private</Badge><Badge variant="secondary">v{npc.version}</Badge></div>
+            <div className="flex flex-wrap gap-3 text-sm"><Link href={`/homebrew/npcs/${npc.id}/edit`} className="text-accent underline">Edit {npc.name}</Link>
+              <Link href={`/library/${npc.id}`} className="text-accent underline">View NPC</Link></div>
+          </div>)}</div></section>
+      ) : null}
       {monstersResult.status === "rejected" ? <HomebrewLoadError label="monsters" /> : monsters.length > 0 ? (
         <section aria-labelledby="owned-monsters-heading" className="space-y-3">
           <h2 id="owned-monsters-heading" className="j-folio">My monsters</h2>
