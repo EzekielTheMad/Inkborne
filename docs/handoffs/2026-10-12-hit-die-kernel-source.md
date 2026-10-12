@@ -1,5 +1,17 @@
 # R09.3a source checkpoint — UNVERIFIED
 
+## Released offline checks and independent review hold
+
+On clean support/model source `aeea1e404c98f45fc9714a7f535b19a71888446f`, the released narrow gate passed **5 files / 139 tests**, typecheck and zero-warning lint. These are model/static/pure-calculation checks only; SQL remains unexecuted and all production prerequisites remain blocked. The original source `ec5b4d6c443f87e0c4c007b7ad77466ed2c2bfa7` remains an immutable UNVERIFIED checkpoint.
+
+Existing-lock `npm.cmd ci --ignore-scripts --no-audit --no-fund` installed 804 packages in 32 seconds. The first focused run preserved 18 failures / 121 passes: the new synthetic system omitted required nonempty collections. Test-only `16a8d11` supplied actual required proficiency/content/creation/sheet collections without changing assertions or product code; 139 passed. Typecheck then identified five unsupported bigint literal sites under the repository's existing target. Constructor-only `aeea1e4` changed them to `BigInt(...)` without changing tsconfig or arithmetic; typecheck and the same 139 checks passed, followed by lint. Package/lock files and staged SQL were unchanged by both corrections.
+
+Receipts are external at `../verification/r09-kernel-20261012`: exact command/source/status/start/end, stdout/stderr, PID birth/parent/command/cwd/listening ports, machine before/after metrics, cleanup readback and archived failed/prior runs. Final focused run was 4.75 seconds, aggregate processes 434 to 434, working set 25.81 to 25.69 GB, global listeners 41 to 41 (includes unrelated tasks). Every completed gate reported no remaining task-owned process/listener; lint completed at `2026-10-12T16:11:34.7793543Z`, readback `16:11:34.7826944Z`, with zero task-owned PIDs/listeners. No task process was killed.
+
+Independent review subsequently blocked integration on two source issues: response interpretation lacked expected-request correlation/source-status consistency, and the offline model omitted the SQL guard requiring planner acceptance-check time not exceed native acceptance. Reproduction tests are committed separately at `f8b7cd1680dbaa862b439d97358a505e3d5ca8f5`; the product source is still the tested `aeea1e4`. They are intentionally pending a failing-before run and scoped correction when root releases the next heavy slot. Prior passing checks do not resolve these blockers. No extra test/runtime/database operation was started during root's combined-check hold.
+
+## Original source-only record
+
 Base `4003a45d7607d719151b07d4ecbe16725914d662`, following independent acceptance of the amended [kernel plan](../specs/2026-10-12-hit-die-kernel-plan.md). This checkpoint contains only new staged SQL, strict service-internal receipt/response schemas, an offline transition model, model/static test sources and an additive staged README section. Root is sole integrator; original plan commits and all old equipment/pure-model receipts are preserved.
 
 The SQL installation is one transaction. It creates a NOLOGIN/NOBYPASSRLS isolated function owner with schema USAGE and narrow table/column privileges, refuses inherited schema CREATE, transfers function ownership through deployment authority and revokes caller/default execution before commit. RPCs are service-only; gate is initially false with no runtime update grant. The production dependency-reader body unconditionally raises unavailable. No model fixture switch, input snapshot, browser flag or changed gate closes that seam.
