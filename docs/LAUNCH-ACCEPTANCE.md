@@ -13,7 +13,9 @@ R11's independent review found no blocking issue. Its exact three source commits
 (`6bbd17d`, `4cbd70b`, `3d61ff3`) were cherry-picked as `82bfdb1`, `fb6f14c`,
 `72fb420`. Current database types, lockfile, equipment, ability and state paths were
 preserved. The combined focused run passed **8 files / 46 tests** at `72fb420`.
-Full/build/browser validation is in progress; actual database acceptance remains open.
+The first integration full check passed **230 files / 2,315 tests** at `72fb420`.
+Later changes require a new combined check/build/browser gate; actual database
+acceptance remains open.
 Nonsecret receipts are in sibling `verification/launch-20261012/`.
 
 Victor answered the scope and durable-gameplay questions on 2026-10-12 UTC:
@@ -50,21 +52,37 @@ are prepared. G1 permission was requested for one shared-engine startup and thre
 exact image pulls/metadata reads only; the full runtime/SQL/fixtures/ephemeral
 credential package remains separate G2 preparation. Unanswered G1 is not approval.
 
-R03.1 security preparation found **11 production dependency issues** in the current
-lockfile (one critical, eight high, two moderate). Official Next.js advisories were
-verified. A bounded isolated worker is applying Next/ESLint `16.3.8`, coherent
-Tiptap `3.30.5`, compatible editor/image/transitive fixes and patched existing
-overrides; its first updated production-only audit reports zero issues. It is not
-yet reviewed/integrated/accepted. Inherited development-tool findings remain
-explicit; no blanket audit fix, major downgrade or unrelated cleanup was selected.
+R03.1 removed the **11 production dependency issues** (one critical, eight high,
+two moderate). Independently reviewed source `4048184` was integrated as `8fc7a3b`:
+Next/ESLint `16.3.8`, coherent Tiptap `3.30.5` and scoped compatible transitive
+patches. The updated production-only audit reports **zero**; the full audit still
+reports **24 development-tool findings**, including one critical through shadcn's
+MCP/Express/proxy-addr chain. That remaining risk is open, not accepted or hidden.
+The real mounted editor harness was reviewed/integrated as `2bca782`; its 12 offline
+checks still require a final combined-source run with build CSS.
 
-Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. This planning pass changes no product, runtime, database or hosting.
+Additional reviewed local checkpoints:
+
+| Child | Integrated commit(s) / source | Evidence and remaining boundary |
+| --- | --- | --- |
+| R12.1 ordinary items | `91bf266`, `ff39986`; source `889afdf`, `c2b7132` | Private create/edit and constrained CAS, effects and finite numeric roundtrip preserved; focused tests and offline forms. Actual database/owner/version races remain open. |
+| R23.1 print/PDF | `06ddf31`, `40f13ab`; source `d9bdae4`, `f84d391` | Owner-only allowlisted loaded snapshot, exact-pin completeness and identity guards. Six Letter/A4 Chrome PDFs, 33 rendered/inspected pages. Loaded values are not an atomic/latest DB snapshot; native dialog, live data and other browser engines remain untested. |
+| R08.1 canonical weapons | `736b1d6`; source `bb7fa3d` | Six failing-before regressions corrected: nested range crash, fabricated print damage, wrong ability/category proficiency. Shared sheet/print helper; 53 focused tests, actual RollPopover/dice-engine crit browser test and six rerendered PDFs. Special ability/monk/versatile modes remain open. |
+| R07.1 runtime preparation | `16880b4`, `7331248`; source `d54cd3b`, `248b80d` | Frozen exact-source replay/stage harness, explicit G2 target/manifest authorization and complete grant-table privilege assertions; 33 injected tests. No Docker/SQL execution or product concurrency fixtures; not PostgreSQL acceptance. |
+| R09.1 writer plan | `fffea05`; source `aabf2d0` | Independently challenged writer/fence/revision/expiry/recovery plan. Pure hit-die model child in progress; no provider routing, RPC or database authority enabled. |
+
+Root corrected the print effect cleanup warning at `3bfc90b`; the existing five
+focus/title/guard tests passed. R12.2 private weapon authoring is in independent
+local development; R21.1 is inventory/planning for the documented M6 mechanics.
+These are implementation checkpoints, not complete milestone or beta acceptance.
+
+Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 
 ## Finite scope and decisions
 
 **User-selected project-wide objective:** complete ALL documented M1-M8 milestones (including M5.5) and account for every documented PRD requirement, including P1-P3. Every documented ambition must have an explicit included/completed/deferred/out-of-scope disposition; all included requirements must be accepted. Deferral or removal requires an explicit dated Victor decision, remains visible, and cannot be described as implemented. No documented requirement disappears merely because it was not selected for an earlier beta. This finite documented scope is not a license to invent new features.
 
-**Recommended v1 boundary, pending Victor:** the PRD's explicit MVP list (accounts, D&D 5e guided builder/sheet/spells/inventory, campaigns, structured species/subclass/spell/item/feat authoring, print-friendly PDF export, responsive web and its stated second-system proof), plus the privacy/durability/backup/feedback and M8 release gates. Retain already-shipped narrative/wiki functionality. Stage the broader M5/M6 work and M7 PDF *importing* after this first public beta where the roadmap permits, while continuing their project-wide queue. This is a recommendation, not an approved exclusion. Until scope is resolved, ambiguous requirements remain open and prevent an unconditional launch-complete verdict.
+**Selected beta sequence:** every included M1-M8 milestone, including M5/M6 and M7 PDF importing, precedes beta. Daggerheart and public publishing are explicitly deferred from first beta and retained in the total project backlog. Already-shipped narrative/wiki functionality is retained. Unselected P1-P3 contracts remain explicit open decisions; no blanket exclusion or acceptance is inferred.
 
 | Decision | Conflict / concrete choice | Recommended resolution and execution effect |
 | --- | --- | --- |
