@@ -352,8 +352,8 @@ are synthetic placeholders; this is no hosted/provider acceptance.
 | R12 standalone traits | Integrated through `bc6a4b2`; actual-form harness `8496083` / `821eb1a` passed **28 checks / 16 screenshots** at the exact current build. Strong source/transitive-byte/lock guards and OS process-birth checks passed; mobile rejection/locked edit and desktop saved-ID navigation failure were inspected. | Simulated action/navigation/list/reload. Raw-effect preservation, uncertain CREATE acknowledgement and no duplicate reinsertion are locally covered; PostgreSQL ownership/version/CAS remain open. |
 | R21 advanced binding | Advisory source `ad73021` / `1a3acf4` includes 88 focused cases and is in the 3,461-test combined run. Exact captured feature/grant/controller provenance and native resource state are modeled. | No production parser/provider/CastChoice/UI/SQL consumer; Mystic Arcanum, Spell Mastery and Signature Spells are not accepted gameplay implementations. |
 | R12 passive feature authoring | Approved source through `ff3e452` integrated through `02c7b53`; six files / 145 narrow tests. Reviewed actual-form harness `5fedd62` integrated as `b4e308f`; **44 checks / 44 screenshots** passed with that exact build's CSS/fonts. | Standalone association is explicitly unverified. Writes, navigation and readback are simulated; no feature application/grant/reference/mechanics or database acceptance is implied. |
-| R09 staged hit-die kernel | Plan `ade6a34` / `4003a45`, corrected source `859d3db` and handoff `cbeb963` independently approved; integrated through `26e674e`. **144 focused tests**, typecheck/lint passed, then combined `b4e308f` acceptance below. | No SQL/PGlite execution. Default-off gate and unavailable production dependency reader prevent acceptance. Next reader/writer plan `77c4af8` requires concrete token-expiry, graph/order/CAS and cascade-role amendments before implementation. Lifecycle and real PostgreSQL recovery remain open. |
-| R06 saved ASI consumer parity | Plan `b172882` / `6fcd21e` passed independent challenge; scoped implementation is underway in `../r06-asi-consumer-worker`. | Required evidence DTO, nullable feat-grant provenance, durable fingerprint, six finite abilities and stale-callback/whole-rest side-effect guards must pass exact source and actual-consumer acceptance. New class authoring additionally needs original-primary-role proof and precise starting-save grant classification; inventory `1cb0b47` is blocked, not an implementation approval. |
+| R09 staged hit-die kernel | Plan `ade6a34` / `4003a45`, corrected source `859d3db` and handoff `cbeb963` independently approved; integrated through `26e674e`. **144 focused tests**, typecheck/lint and historical combined `b4e308f` acceptance. Kernel fixture amendments `3a9ec34` / `f385002` preserve all 36 assertions, now passing. | No SQL/PGlite execution. Reader/writer amended plan `3a34169` is integrated; source `5367243` / correction `6662133` reviewed for explicitly unready staged scope only, untested and unintegrated. Actual shared ASI/spell authority binding, Auth, thirteen writer readiness families, lifetime and PostgreSQL acceptance remain open. |
+| R06 saved ASI consumer parity | Independently reviewed worker chain through `f680749` integrated through `b2e45de`; worker **68 focused / 205 cascade tests**, typecheck/lint passed. Actual earned-choice DTO, nullable grant provenance, fingerprint, six finite abilities and stale-callback/whole-rest guards are present. | Fresh root `f385002` typecheck/lint pass, combined tests fail as recorded below. Canonical actual-consumer browser preparation underway; no SQL or hosted acceptance. Class prerequisite plan `87e3a30` permits C1 pure work only; original-role producer, precise manifest authority and actual C2 consumers are still mandatory before new class authoring. |
 
 Monster and trait harnesses recorded zero page errors, blocked/unexpected remote
 requests and cleanup leaks. Exact server/browser PID, birth, parent and command
@@ -434,8 +434,37 @@ stale success reuse. Narrow builder rerun passed **27 controls**, zero page erro
 or remote requests, one Playwright case in 13.1 seconds, eighteen identities and
 empty cleanup. Production source was unchanged. This is generic editor/CAS proof,
 not canonical six-ability D&D/ASI evidence. A fresh combined check after this harness
-change remains due with the next source integration; do not call the original
+change subsequently passed at `259bcd8`: **305 files / 3,645 tests**, typecheck,
+zero-warning lint, 152.80 seconds tests, 351 identities and empty cleanup. Do not call the original
 three-case core run green or all 43 controls one exact-source run.
+
+### ASI integration and preserved combined failure — 2026-10-12 UTC
+
+Reviewed ASI worker chain `c6a66cd` / `0981675` / `1e8a6ec` / `822b034` /
+`129e768` / `c37e5b3` / `c2b2099` / `f680749` is integrated through `b2e45de`.
+Worker receipts retain the original admission, provenance, CON-formula, Background
+draft/state, nested picker and dependency fixture failures, followed by 68 focused
+and 205 cascade passes, typecheck/lint. These are separate from root acceptance.
+
+Root `b2e45de` combined check first stopped at a kernel class fixture missing
+required nullable `feature_grant_id`. Fixture-only `3a9ec34` added null, then
+preserved **18 failures / 18 passes**: its old CON-only schema/base cannot establish
+six-ability mechanics. Independently approved fixture-only `f385002` adds the other
+five neutral base scores and schema abilities, leaving CON14 and every one of 36
+assertions unchanged. Narrow kernel rerun passed **36/36**, seven identities and
+empty cleanup; no production guard or receipt/native-clock/revision oracle changed.
+
+Clean `f385002853fb4a200615dde55ff13b8204f6128b` ran `npm.cmd run check` with
+four workers: typecheck and zero-warning lint passed; **24 files failed / 289
+passed**, **168 tests failed / 3,546 passed**, **14 unhandled errors**, 177.29
+seconds tests. Recorded 365 process identities, empty process/listener readback.
+Exact failed logs/result/resource/cleanup remain in sibling `verification/launch-20261012`.
+Older partial-score/schema fixtures, absent mechanics mock contracts, selectors
+colliding with new status disclosures and server snapshot mocks are being
+classified; fixture repair must preserve original behavioral oracles and explicit
+negative evidence. Product defects require separate failing-before corrections.
+Canonical actual ASI browser/source-asset binding and print reacceptance remain due.
+No SQL, engine, container, hosted write, deployment or publication occurred.
 
 Updated 2026-10-12 UTC. This is the single durable development backlog and completion ledger. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the operating entrypoint; [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [GAME-PLAN](GAME-PLAN.md) and existing specs define requirements. The October 11 bounded queue is complete; the project is not. The active continuation above includes local product changes; no runtime, hosted database or publication action has occurred.
 

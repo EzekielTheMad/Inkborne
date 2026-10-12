@@ -4,7 +4,7 @@
 
 The human executed the project kickoff. Sole integration worktree remains
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, now
-on local branch `codex/launch-integration-20261011`. Product source through `b4e308f`
+on local branch `codex/launch-integration-20261011`. Product source through `b2e45de`
 includes reviewed private magic-item/item/weapon/armor/core-race/trait/passive-feature/monster authoring, raw metadata and
 effects preservation, print/PDF export, canonical weapon calculations, validated
 single-source slots, exact selected subclass sources and per-acquisition casting math, explicit race-score
@@ -53,18 +53,27 @@ CSS/fonts and explicitly simulated actions/readback/navigation. Fresh slot five
 and casting six cases also passed. Broader core retained one fixture failure/two
 passes; independently reviewed harness-only `9fb0877` then passed all 27 original
 builder checks after supplying missing schema collections. All failures/readbacks
-are retained, with no owned processes/listeners. That later harness change awaits
-the next combined check; it is not canonical six-ability ASI acceptance.
+are retained, with no owned processes/listeners. Clean `259bcd8` subsequently passed
+the combined check, **305 files / 3,645 tests**, typecheck and lint. This remains
+generic builder evidence, not canonical six-ability ASI acceptance.
 The staged hit-die kernel through `26e674e` passed independent correction review
 and **144 modeled/static tests**, typecheck/lint before combined acceptance;
 its dependency reader is deliberately unavailable and production stays disabled.
-Saved ASI consumer-parity plan `6fcd21e` passed independent challenge; its isolated
-worker is implementing the bounded actual-consumer repair. New class authoring is
+Saved ASI source/corrections through worker `f680749` passed independent review,
+68 focused and 205 cascade tests, then integrated through `b2e45de`. Complete
+earned-choice evidence, six finite abilities, permanent/live CON and retained
+callback/rest guards are present. Root kernel fixtures needed ordinary null grant
+provenance and six neutral abilities; all 36 assertions remain unchanged and pass
+at `f385002`. Its combined gate passed typecheck/lint but failed **168 tests in
+24 files**, with **3,546 passing / 14 unhandled errors**. Older consumer fixture,
+mock and selector failures are being classified/repaired; no combined or canonical
+ASI browser acceptance is claimed. Recorded 365 process identities exited with
+empty process/listener readback. New class authoring is
 blocked on verified original-primary-role provenance and precise starting-save
 grant occurrence classification; empty/edit-only classes cannot satisfy it.
 Development audit remains eight
 unpatched high findings / zero critical, production zero; no residual risk is
-accepted. Saved ASI parity remains a separate documented gap. The
+accepted. Saved ASI actual-browser and database acceptance remain open. The
 [concrete runtime dry run](specs/2026-10-12-equipment-runtime-plan.md)
 is reviewable. G1 engine startup/image pulls were requested; no approval or runtime
 execution is inferred. G2 full SQL/fixture/ephemeral credential execution and G3-G5
