@@ -17,7 +17,11 @@ proof passed, all451 identities exited. Magic inner34/36 passed, but whole gate
 FAILED600,000ms during final dependency proof; all612 identities exited/listeners
 zero. Preserve failures; finite outer-budget amendment needs review. Auth/DAL/
 actions/cache/persistence remain simulated; SQL/current authority unaccepted.
-M1 corrected96081a3 is source-approved and owns narrow tests/type/lint. M5
+M1 corrected5d7916 passed66 tests/typecheck/lint, all19 observed identities absent,
+listeners/model temporary directories zero. Six exact worker blobs integrated
+throughbe54bf0; protected helpers/SQL/package bytes unchanged. Native and root
+combined acceptance remain open. Magic finite900s amendment3f8a835 is independently
+approved; retry UNRUN. M5
 1825fe2/a316454 is source-approved/default-off; tests and explicit repeat editing
 remain. Reviewed C2/private-proof and save-bonus plans are frozen; actual bonus
 source advances in ../save-bonus-consumer-worker. M7/import pauses stay in force.

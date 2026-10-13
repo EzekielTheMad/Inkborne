@@ -15,7 +15,10 @@ lint and synthetic build. All349 check/22 build identities exited/listeners zero
 R13 offline24/38/final proof passed, all451 identities exited. Magic inner34/36
 passed but whole gate FAILED600,000ms during final dependency proof; all612
 identities exited. Preserve failures; challenge finite outer-budget amendment.
-M1 corrected96081a3 is source-approved and owns narrow tests/type/lint. M5
+M1 corrected5d7916 passed66/typecheck/lint with all19 identities/listeners/model
+temporary directories absent; six exact worker blobs integrated throughbe54bf0,
+protected helpers/SQL/package unchanged. Root combined/native acceptance open.
+Magic finite900s amendment3f8a835 is independently approved, retry UNRUN. M5
 1825fe2/a316454 is source-approved/default-off; tests and repeat-edit remain open.
 Reviewed C2/private-proof and numeric-save plans are frozen; actual bonus source
 advances in ../save-bonus-consumer-worker. Root alone integrates, one heavy lane.

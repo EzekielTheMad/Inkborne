@@ -44,9 +44,15 @@ phases. All612 outer identities exited/listeners zero. Inner results are NOT
 whole-gate acceptance. Preserve failure receipts/artifacts. A finite outer-budget
 amendment needs independent challenge; form waits/oracles/proofs stay unchanged.
 
-M1 corrected additive runner96081a3 over42247aa passed exact-source review:
-required/forbidden cross-role EXECUTE and exported pipeline controls are present.
-Narrow tests/typecheck/lint own the heavy slot; native execution is UNRUN. M5
+M1 corrected additive runner96081a3 over42247aa passed exact-source review.
+First64 controls preserved60PASS/4FAIL plus owned type errors; lint passed.
+Reviewed5d7916 fixes correlated settled completion evidence/narrowing and only two
+local cap-test budgets. Corrected **66 tests/typecheck/lint PASS**, all19 observed
+identities absent/listeners/model temporary directories zero. Original failures
+remain. Tested handoff018b5c3 integrated throughbe54bf0: six Git blobs equal worker,
+all12 receipt files/manifest58c76ec5450453421976432dc3d96951b8d227d4472d0fb64fe0498a01dcf9d6
+verified. Protected R07 helpers/migrations/staged SQL/package/lock unchanged.
+Root combined acceptance is pending; native execution remains UNRUN. M5
 default-off instance source1825fe2/correctiona316454 passed source review: operation
 lifetime/committed readiness, stale replies and malformed reads corrected. Tests
 and explicit confirmed-save-to-fresh-latest editing remain open; SQL unapplied.
@@ -59,6 +65,12 @@ Seven production paths and one authorized print fixture are scoped; gates/instal
 UNRUN. Ring/cloak inventory acquisition, numeric death saves, genuine class
 producers/reader/compiler/all13 writers/copy remain required separate gaps.
 M7 and monster/NPC imports remain paused; M8 follows included core acceptance.
+
+Independent review approved exact root3f8a835's ONLY Magic outer600→900-second
+budget/historical handoff amendment. Product waits/oracles/full fresh dependency
+proof/source/force-cleanup guards unchanged. Retry UNRUN. Bonus locked install
+passed804 packages/43seconds; allthree process identities absent/listeners zero,
+package/lock unchanged. This is dependency setup, not source/product acceptance.
 
 The following records preserve earlier failures and their corrections.
 
