@@ -10,6 +10,13 @@ in the backlog and the JSON prototype unused. Do not pursue a PDF layout decisio
 or build another importer until resumed. Earlier PDF-before-beta instructions are
 superseded for active execution; no broader removal or post-beta timing is assumed.
 
+Current integrated source through `53b09cc` adds reviewed Magic save-acknowledgment
+recovery and ordinary-item campaign sharing/offline harness. Magic worker143,
+typecheck/lint and exact eight-blob integration proof passed; all40 processes
+exited. R13 corrected narrow gates are active after independently reviewed
+test-only/fixture-only repairs; original failures remain preserved. Root owns
+combined check/build and both fresh actual-form browser gates. SQL is unapplied.
+
 Main_PC resume directory:
 
 ```text

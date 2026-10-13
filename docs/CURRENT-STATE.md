@@ -45,6 +45,13 @@ is independently approved and owns narrow baseline/tests; earlier test-factory
 errors remain excluded from substantive before evidence. Older authoring families
 still need uncertainty/snapshot/draft-binding acceptance.
 
+Later integrated source through `53b09cc` includes Magic acknowledgment recovery
+(eight blobs equal reviewed `f313c1b`, worker143/type/lint passed, all40 processes
+gone) and ordinary-item campaign sharing plus its reviewed offline harness.
+Test-only mock/notice and fixture revalidation corrections passed root independent
+review; corrected R13 narrow checks are running. Full combined/build and fresh
+actual-form browser gates remain pending. Staged sharing SQL is unapplied.
+
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.
 

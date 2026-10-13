@@ -26,6 +26,24 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Continued core work — 2026-10-13
 
+Magic-item acknowledgment source is now integrated through `b8f1d44`. All eight
+source/test Git blobs match reviewed worker `f313c1b`; its final gate-manifest
+SHA256 is `D06195860ACA5D9BAC1B3FF7FDDF4EB674AB6FD68FA7524A307DDA52B514B62E`.
+The corrected baseline produced **32 substantive failures / three positives**;
+restored source passed **four files / 143 tests**, typecheck and zero-warning lint.
+All 40 recorded process identities exited, owned listeners zero. The original
+setup/lint failures remain preserved. Root combined and new actual-form browser
+acceptance are pending; no database or exactly-once claim.
+
+R13 ordinary-item campaign-sharing source `4710fe8` / `b569b8f` and independently
+reviewed offline harness `919066d` are integrated as `f2a4819` / `95ce6c7` /
+`7952aae`. Root independently approved and integrated test-only `ab1fde4` /
+fixture-only `c0f09b5` as `25ef20f` / `53b09cc`: the mock reset no longer returns
+a Vitest teardown, both legitimate pin notices must remain visible, and modeled
+revalidation now registers outside render. Product bytes and all browser
+assertions remain unchanged. The first narrow run (192/195) and fixture lint
+failures are preserved; corrected narrow gates are running. SQL is staged only.
+
 P1b.2 source `bdc9086` and qualified lookup correction `bf171408` passed independent
 class and original authority-family review. Integrated as `9ad6f9f` / `221b1e3`;
 tested handoff `0517fde` as `881dfc9`. All six source/test Git blobs match reviewed
@@ -1220,7 +1238,7 @@ Before saying the **total documented project** is finished, every documented amb
 1. **Review M1 integration now (R11):** refresh both Git common directories/clean states; review full PR99-derived delta plus `3d61ff3`; integrate in a new local branch off current core, preserving A1/equipment/conditional types. Run combined focused/full/build/offline magic-item/core checks and independent review. No push or deployment. Ordinary local integration does not need a second permission question.
 2. **Batch actual decisions/approvals early:** present S1-S5 and prepared G1-G5 requests, with concrete target/version/operation/resource manifest where ready. Resolve E1 supported bind/CLI/version details before asking to start it. Keep working on unambiguous R12/R23 inventory and missing forms/print/acceptance harnesses while access is pending.
 3. **Enable the real evidence lane (R07/R09/R11):** after actual runtime approval, replay full frozen migrations + reviewed stage on isolated PostgreSQL 17/Supabase; inspect baseline grants/triggers/ASI copy and multiple real connections. Fix discovered code/SQL-file defects locally; apply only approved fixture/schema operations to the named disposable target. Do not “repair” live history.
-4. **Continue milestone implementation:** authoring families and selected import matrix -> M5 types -> remaining M6 adapters; M7 follows S4 and can run independently where dependencies permit. Use measured requirement gaps to formulate the next bounded task even when the original local queue is empty. Plans without corresponding implementation/acceptance do not close rows.
+4. **Continue milestone implementation:** prioritize remaining M1–M6 work, including M5.5, then M8. M7 PDF importing and proposed monster/NPC imports are paused; retain their requirements without further implementation or input-matrix prompting. Use measured requirement gaps to formulate the next bounded task even when the original local queue is empty. Plans without corresponding implementation/acceptance do not close rows.
 5. **Accept then release:** real browser->API->DB privacy/correctness/recovery tests, feedback and ops; approved publication of exact candidate, then verify actual deployed routes and record launch sign-off. Loop defect resolution and acceptance until the scope gate below passes.
 
 ## Grouped approvals: exact operation, target, risk, cleanup
