@@ -26,6 +26,25 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Continued core work — 2026-10-13
 
+Root `6e09f6a` combined check preserved one strict-lint unused-variable warning
+after typecheck; Vitest did not run. All10 recorded identities exited. Reviewed
+root-only `b2bae28` removes just the unused path declaration; Magic worker mirrored
+it as `671d3e7`. At `b2bae28`, combined typecheck/zero-warning lint passed and
+Vitest preserved **one failure / 4,528 passes (345 files)** with two workers:
+the sequential sharing fixture submitted after a changed label without waiting
+for its still-pending button. All351 observed identities exited/listeners zero.
+Independent diagnosis found no demonstrated product defect. Reviewed `4e7d4a7`
+adds two pure enabled-button waits before existing single submissions; all
+version/call-count/same-tick/uncertainty assertions and timeouts remain. Corrected
+three-suite gate passed **36 tests**, all eight observed identities exited.
+Fresh full-check acceptance remains pending; original failures are retained.
+
+M1 source `42247aa` is held for exact cross-owner EXECUTE assertions (recorded
+ACL text alone is insufficient) and meaningful exported lineage/freeze/runtime/
+cap/first-failure pipeline tests. Corrections remain within its six new files;
+no native execution or acceptance. M5 instance source implementation is underway
+in its separate worker, with dedicated receipts/CAS and no R09 journal coupling.
+
 Current gate source is integrated through `8b62b8e`: the Magic actual-form harness
 and its bounded complete installed-runtime correction `e51b957` passed independent
 review; all14 Magic production/test/harness blobs match the frozen worker.
