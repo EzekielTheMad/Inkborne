@@ -15,6 +15,7 @@ import {
 import { ConfirmActionButton } from "@/components/campaigns/confirm-action-button";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+import { CAMPAIGN_MONSTERS_ENABLED } from "@/lib/campaigns/monster-instance-schema";
 
 interface CampaignPageProps {
   params: Promise<{ id: string }>;
@@ -132,6 +133,10 @@ export default async function CampaignPage({ params, searchParams }: CampaignPag
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <main className="space-y-6">
+          {isOwner && CAMPAIGN_MONSTERS_ENABLED ? <section className="j-card-paper p-4">
+            <h2 className="j-display text-xl">Monsters · DM only</h2>
+            <Link href={`/campaigns/${campaign.id}/monsters`} className="mt-2 inline-block underline">Manage monster instances</Link>
+          </section> : null}
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
