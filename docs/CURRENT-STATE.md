@@ -1,6 +1,6 @@
 # Inkborne current work
 
-## Active execution — 2026-10-12 UTC
+## Active execution — 2026-10-13 UTC
 
 Priority update — Victor, 2026-10-13 (America/Phoenix): **pause M7 PDF importing;
 continue M1–M6, including M5.5; M8 follows that core work.** M7 stays in the
@@ -10,7 +10,22 @@ unused, with no app upload or saving path. These decisions supersede the older
 pending-format and PDF-before-beta execution instructions below. Existing PDF
 export and shipped spell/feat importer behavior remain in scope for preservation.
 
-Latest combined source84b1834 passed **345 files /4,529 tests**, typecheck,
+Current tested core9f848d4 passed **357 files /4,770 tests /three UNVERIFIED M5
+skips**, typecheck/zero-warning lint and synthetic build. All368 check/22 build
+identities exited/listeners zero. Magic's reviewed retry passed the WHOLE offline
+34-case/36-screen/font gate with full final equality and zero errors; all739
+recorded identities exited/listeners zero. Real Auth/DAL/persistence remain modeled.
+All21 integrated M5 blobs match62a86a2;45 receipt hashes and80 earlier exact-process
+readbacks verified. Native/three stress acceptance stays open; flags remain off.
+Reviewed M5 browser preparation is integrated; its first narrow typecheck retained
+one descriptor Buffer parse TS2345. Approved UTF-8 correction775 is integrated
+through28bd0c0, retry/full measured browser allocation pending. Bonus browser/PDF
+source995 awaits three finite harness corrections;30/43/eight counts are UNRUN.
+M6 plan326 has both reviews for private storage/read/disabled command preparation
+only; stable occurrence/positive issuance/copy/casting/native acceptance remain open.
+Use LAUNCH-ACCEPTANCE.md for exact sources and preserved failures. No live changes.
+
+Earlier combined source84b1834 passed **345 files /4,529 tests**, typecheck,
 zero-warning lint and fresh synthetic build. All349 check/22 build identities
 exited/listeners zero. R13 offline24 cases/38 screenshots/font samples and final
 proof passed, all451 identities exited. Magic inner34/36 passed, but whole gate

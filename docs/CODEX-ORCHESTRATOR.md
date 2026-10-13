@@ -1,6 +1,6 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-12 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
+Updated 2026-10-13 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
 
 ## Resume and ownership
 
@@ -10,7 +10,21 @@ in the backlog and the JSON prototype unused. Do not pursue a PDF layout decisio
 or build another importer until resumed. Earlier PDF-before-beta instructions are
 superseded for active execution; no broader removal or post-beta timing is assumed.
 
-Latest combined source84b1834 passed345 files/4,529 tests, typecheck/zero-warning
+Current tested core9f848d4 passed357 files/4,770 tests plus three UNVERIFIED M5
+skips, typecheck/lint/build; all368 check/22 build identities exited/listeners zero.
+Magic whole offline retry34/36/full final equality passed, all739 identities exited.
+Auth/DAL/persistence remain modeled. All21 M5 source blobs/45 receipt hashes matched;
+native/three stress requirements remain open and flags off. Reviewed M5 browser
+preparation is integrated; first604 typecheck retained one Buffer parse TS2345,
+allfive identities exited. Reviewed UTF-8 fix775 is integrated28bd0c0, retry pending.
+Bonus browser/PDF995 is held for three finite infrastructure corrections; intended
+30 cases/43 screens/eight exports remain UNRUN. M6 plan326 has both owner/reviewer
+approvals for private storage/read/unconditionally disabled command preparation;
+no positive issuer, copy bridge, choices privilege, casting or G2 acceptance.
+Root owns the single heavy lane. Continue source/review and actual measured gates,
+preserving all earlier failed receipts. No runtime provisioning or live mutation.
+
+Earlier combined source84b1834 passed345 files/4,529 tests, typecheck/zero-warning
 lint and synthetic build. All349 check/22 build identities exited/listeners zero.
 R13 offline24/38/final proof passed, all451 identities exited. Magic inner34/36
 passed but whole gate FAILED600,000ms during final dependency proof; all612

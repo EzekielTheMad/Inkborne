@@ -1,6 +1,6 @@
 # Inkborne project-wide acceptance ledger
 
-## Active continuation — 2026-10-12 UTC
+## Active continuation — 2026-10-13 UTC
 
 ### Latest human priority — 2026-10-13 (America/Phoenix)
 
@@ -24,7 +24,49 @@ candidate was `81629ce` (339 files / 4,266 tests plus build and eight local JSON
 browser cases); later source children are not yet combined acceptance. No SQL,
 hosted write, deployment or publication is authorized by this sequencing change.
 
-### Continued core work — 2026-10-13
+### Current core checkpoint — 2026-10-13
+
+Tested core source `9f848d4658ac9c523d548d51c0f5a19710de95d8` passed
+`npm.cmd run check`: **357 files / 4,770 passed / three skipped**, typecheck and
+zero-warning lint. Fresh synthetic build passed. All368 check/22 build recorded
+process identities exited; owned listener readbacks were empty. The three skips
+are retained **UNVERIFIED** M5 stress requirements, not acceptance or waivers.
+
+The reviewed Magic900-second test-budget retry at SAME9f passed the **whole**
+offline gate:34 cases/36 screenshots/36 font samples, complete final rendered
+proof equality, zero page/blocked/unexpected requests and closed browser/server
+ports. All739 recorded identities exited/listeners zero. Desktop saved and mobile
+lost-response views were inspected. Receipt wall time20:11:27–20:26:36 UTC remains
+recorded; no measured900-second allocation for the separate M5/bonus gates is
+inferred. Preserve the preceding84b600-second whole failure and its inner results.
+Auth/DAL/cache/persistence are modeled; no native or hosted authority is accepted.
+
+M5 disabled source through worker62a86a2 is integrated through9f: all21 Git blobs
+match, all45 aggregate receipt hashes verified (manifest
+324DAE06989BE4CC88A1B2B19DB360C75D25CB9E84E069AFD0903518FE534177), and all80 earlier
+exact process identities were independently absent. Worker ordinary134PASS/three
+UNVERIFIED skips, corrected typecheck/lint passed. Flags remain off/SQL unapplied.
+Reviewed browser source2cb/288 plus mounted-byte evidence14ea is integrated locally.
+Its three immediate native-transition probes retain every old-enabled-DOM/parser/
+operation oracle; none has run. First root604 narrow typecheck retained one TS2345
+Buffer-to-JSON parse error, allfive identities exited. Independently approved775
+explicitly decodes UTF-8 AFTER the unchanged raw SHA check; integrated28bd0c0,
+retry pending. Full measured allocation/build/descriptor/browser proof remains open.
+
+Numeric-save production remains the reviewed7acc integration. Prepared bonus
+browser/PDF source995 is held for bounded stop/QA cleanup, bundle-size proof and
+fresh inventories of BOTH QA output directories. Original six PDF fixtures and
+verifier remain preserved; prepared30 cases/43 screens/eight PDFs are UNRUN.
+M6 first-selection plan32675eb passed both reviews for private storage/strict
+readers/compiled unconditional-refusal seams only. Stable earned-occurrence
+lineage, positive issuance, choices-write privileges, copy bridge, casting and G2
+remain unavailable; valid exhausted selections must remain readable without reset.
+
+M1–M6 including M5.5 remain the active sequence. M7 and proposed monster/NPC imports
+stay paused; M8 follows core acceptance. No provisioning, SQL execution, provider
+write, merge, publication or deployment occurred. Source preparation is ongoing.
+
+### Historical core checkpoints — 2026-10-13
 
 Latest combined source `84b1834fa07491b7f07b4deb76693cfb19535575` passed
 **345 files / 4,529 tests**, typecheck and zero-warning lint with two workers.
