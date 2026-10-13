@@ -1,4 +1,24 @@
-# R12 magic-item acknowledgment — UNRUN offline harness handoff
+# R12 magic-item acknowledgment — source and first failed offline gate
+
+## First root execution and finite outer-budget correction
+
+Root84b1834's first explicit gate FAILED at600,000ms during the wrapper's final
+fresh installed-runtime proof, after34 desktop/mobile cases/36 screenshots/font
+samples passed. Inner failure=null, final matchedRenderedProof=true, page/blocked/
+unexpected errors zero; Chrome/both ports closed. Whole-gate acceptance remains
+open. All612 recorded OS process identities exited, owned listener readback zero.
+Preserve external launch-20261012 magicack failure receipts and original artifacts.
+
+The guarded run occupied approximately12 minutes including entry proof; initial
+render52:39UTC, cases complete53:07, inner final proof56:02, gate exit58:08.
+The fresh installed closure includes27 packages/86 edges/11,121 files/358,871,558
+bytes across required phases. Independent reviewer approved ONLY a finite outer
+900-second budget, based on that observation. Config changes600,000→900,000ms;
+no product/field/response/reload wait, oracle, retry, complete fresh proof, source
+guard, OS/port readback or force-cleanup rule changes. No caching/proof bypass.
+The amended whole gate is UNRUN; root must bind a fresh exact-source build first.
+
+The source-preparation record below is historical.
 
 2026-10-13. Owned r12-magic-ack-worker / codex/r12-magic-save-ack.
 Six-file source checkpoint34a750f1679024229509aeec8f35a3215fe9a381. This handoff is a
@@ -19,13 +39,13 @@ PASS464f6e7 and lint PASS66a575f cover the earlier producer child, not these new
 
 Intended explicit package-script entry:
 `npm.cmd run test:e2e -- --config e2e/local-magic-ack/playwright.config.ts`.
-Default config remains untouched/off. One worker, no retry, finite timeout600s;
+Default config remains untouched/off. One worker, no retry, finite timeout900s;
 runner uses one private Chrome server and one loopback HTTP port. No build/dev/
 install/provider fallback. Native ESM .spec.mjs permits entry proof before its
 own dynamic @playwright/test import, without top-level await in a CJS TS spec.
 Playwright package-script driver/config bootstrap is still the external tool
 boundary; its installed package tree is checked before private runner/helper use.
-The authorized outer600s budget accommodates repeated full installed-closure/source
+The earlier authorized outer600s budget attempted repeated installed-closure/source
 proofs. It does not increase product/field/action/reload waits, change cases, cache
 or skip a guard, or accept a slow product workflow. The earlier240s source was unrun
 here; root's separate R13 pre-render timeout informed this config-only adjustment.
