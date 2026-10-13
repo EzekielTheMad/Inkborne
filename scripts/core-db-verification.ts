@@ -61,7 +61,7 @@ export type CoreJournal = {
   resourcesBefore?: unknown; resourcesAfter?: unknown; limits: typeof LIMITS;
 };
 export type ModelBindings = { kind: "injected-model"; scratch: string; bootstrapSha256: string; now?: () => number };
-const refuse = (message: string): never => { throw new Error("Core profile refusal: " + message); };
+function refuse(message: string): never { throw new Error("Core profile refusal: " + message); }
 const object = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) refuse("malformed nonsecret evidence");
   return value as Record<string, unknown>;
@@ -235,6 +235,13 @@ export async function observedCommand(options: {
       || record.cwd !== process.cwd() || !equal(record.args, options.command.args)) refuse("actual owned birth/parent/command capture unavailable");
   } catch { captureFailed = true; }
   const { result } = await settled;
+  const completedRecords = options.records(), completed = completedRecords.at(-1);
+  const completionMatches = Boolean(record && completed && completedRecords.length === before + 1
+    && record.pid === completed.pid && record.parentPid === completed.parentPid && record.cwd === completed.cwd
+    && record.executable === completed.executable && record.startedUTC === completed.startedUTC && equal(record.args, completed.args)
+    && typeof completed.finishedUTC === "string" && /^\d{4}-\d\d-\d\dT.*Z$/.test(completed.finishedUTC)
+    && Number.isFinite(Date.parse(completed.finishedUTC)));
+  const receiptRecord = completionMatches && completed ? completed : record;
   let absent = false;
   try {
     if (identity) {
@@ -245,10 +252,10 @@ export async function observedCommand(options: {
     }
   } catch { captureFailed = true; }
   const sqlstate = result ? /(?:ERROR:|FATAL:)\s+([0-9A-Z]{5})\b/.exec(result.stderr ?? "")?.[1] : undefined;
-  options.save({ ...(record ?? { pid: -1, parentPid: process.pid, cwd: process.cwd(), executable: "", args: [], startedUTC: new Date().toISOString() }),
+  options.save({ ...(receiptRecord ?? { pid: -1, parentPid: process.pid, cwd: process.cwd(), executable: "", args: [], startedUTC: new Date().toISOString() }),
     ...(identity ? { osIdentity: identity } : {}), absent,
     ...(result ? { resultCode: result.code } : {}), ...(sqlstate ? { sqlstate } : {}) });
-  if (captureFailed || !identity || !absent || !result || !options.records().at(-1)?.finishedUTC) refuse("uncertain child identity/completion; preserve evidence; no further command");
+  if (captureFailed || !identity || !absent || !result || !completionMatches) refuse("uncertain child identity/completion; preserve evidence; no further command");
   return result;
 }
 function unchangedCounts(before: Audit, after: Audit) {

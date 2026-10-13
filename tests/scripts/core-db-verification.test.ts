@@ -40,7 +40,7 @@ describe("additive profile admission model; no OS/Docker/SQL execution", () => {
   });
   it("rejects missing explicit confirmation and changed target/budget", () => {
     expect(() => validateCoreApproval(manifest, approval(), "")).toThrow();
-    expect(() => validateCoreApproval({ ...manifest, limits: { ...LIMITS, commands: 501 } } as CoreManifest, approval(), coreManifestHash(manifest))).toThrow();
+    expect(() => validateCoreApproval({ ...manifest, limits: { ...LIMITS, commands: 501 } } as unknown as CoreManifest, approval(), coreManifestHash(manifest))).toThrow();
     expect(() => validateCoreApproval({ ...manifest, target: { ...TARGET, context: "default" } } as unknown as CoreManifest, approval(), coreManifestHash(manifest))).toThrow();
   });
   it("actual native entry refuses inherited/absent G2 before source/OS/transport work", async () => {
@@ -50,7 +50,7 @@ describe("additive profile admission model; no OS/Docker/SQL execution", () => {
     expect(transport).not.toHaveBeenCalled(); expect(capture).not.toHaveBeenCalled(); expect(resources).not.toHaveBeenCalled(); expect(save).not.toHaveBeenCalled();
   });
 });
-function commandModel(kind: "success" | "fast" | "reject" | "alive" | "reused" | "wrong-parent") {
+function commandModel(kind: "success" | "fast" | "reject" | "alive" | "reused" | "wrong-parent" | "unfinished" | "completion-drift") {
   const command: Command = { args: ["--context", TARGET.context, "info"], timeoutMs: 30_000 };
   const records: ReturnType<typeof runtimeProcessRecords> = [];
   const record = { pid: 9001, parentPid: process.pid, cwd: process.cwd(), executable: "MODELED_DOCKER", args: command.args, startedUTC: "2026-10-13T17:00:00Z" };
@@ -58,7 +58,9 @@ function commandModel(kind: "success" | "fast" | "reject" | "alive" | "reused" |
   const saved: unknown[] = []; let read = 0;
   const transport: Transport = async () => {
     records.push(record);
-    await Promise.resolve(); Object.assign(record, { finishedUTC: "2026-10-13T17:00:01Z" });
+    await Promise.resolve();
+    if (kind !== "unfinished") Object.assign(record, { finishedUTC: "2026-10-13T17:00:01Z" });
+    if (kind === "completion-drift") record.executable = "DRIFTED_MODEL_EXECUTABLE";
     if (kind === "reject") throw Error("Modeled transport failure after exit; private raw detail");
     return { code: 0, stdout: "{}" };
   };
@@ -80,15 +82,16 @@ describe("injected OS observer protocol; never invokes nativeObserver", () => {
     const model = commandModel("success");
     expect(await observedCommand(model)).toMatchObject({ code: 0 });
     expect(model.observer.capture).toHaveBeenCalledTimes(2);
-    expect(model.saved).toMatchObject([{ osIdentity: { pid: 9001 }, absent: true, resultCode: 0 }]);
+    expect(model.saved).toMatchObject([{ osIdentity: { pid: 9001 }, absent: true, resultCode: 0, finishedUTC: "2026-10-13T17:00:01Z" }]);
   });
-  it.each(["fast", "reject", "alive", "wrong-parent"] as const)("stops uncertain on %s with evidence; no guessed identity or extra kill", async kind => {
+  it.each(["fast", "reject", "alive", "wrong-parent", "unfinished", "completion-drift"] as const)("stops uncertain on %s with evidence; no guessed identity or extra kill", async kind => {
     const model = commandModel(kind);
     await expect(observedCommand(model)).rejects.toThrow("uncertain");
     expect(model.saved).toHaveLength(1);
     expect(JSON.stringify(model.saved)).not.toContain("private raw detail");
     if (kind === "fast") expect(model.saved[0]).not.toHaveProperty("osIdentity");
     if (kind === "reject") expect(model.saved[0]).toMatchObject({ absent: true });
+    if (kind === "unfinished" || kind === "completion-drift") expect(model.saved[0]).not.toHaveProperty("finishedUTC");
   });
   it("preserves an unrelated reused PID instead of treating it as the old child", async () => {
     const model = commandModel("reused");
@@ -205,7 +208,7 @@ function makeLineage(count = 2): Lineage {
     manifestSha256: fixtureManifestHash(fixtureManifest), operations: ["fixtures", "cleanup"] };
   const common: Omit<FixtureJournal, "steps" | "audits" | "status"> = { version: 1, scope: fixtureManifest.scope,
     sourceSha: fixtureManifest.sourceSha, manifestSha256: fixtureManifestHash(fixtureManifest), containerId: resourceIds.containerId,
-    state: { ids: Object.fromEntries(Object.keys(BUDGETS).map(key => [key, []])) as FixtureJournal["state"]["ids"] }, processes: [] };
+    state: { ids: Object.fromEntries(Object.keys(BUDGETS).map(key => [key, []])) as unknown as FixtureJournal["state"]["ids"] }, processes: [] };
   const fixtureComplete: FixtureJournal = { ...common, status: "fixtures-complete",
     steps: ["preflight", ...PHASES].map(phase => ({ phase, outcome: "passed" })),
     audits: Array.from({ length: PHASES.length + 2 }, () => modelAudit(count)) };
@@ -405,8 +408,8 @@ describe("actual executeCore pipeline with injected MODEL boundaries; not native
     expect(result.processes.every(record => record.osIdentity && record.absent && record.finishedUTC)).toBe(true);
     expect(run.journals[0]).toMatchObject({ status: "incomplete", processes: [] });
   });
-  it.each(["stage-D2", "missing-D4-bridge", "extra-finalizer", "malformed-matrix", "object", "cap", "after-exit", "fast-child", "time", "evidence", "journal", "commands"] as const)(
-    "retains the first incomplete/uncertain receipt and makes no later stage command: %s", async fault => {
+  for (const fault of ["stage-D2", "missing-D4-bridge", "extra-finalizer", "malformed-matrix", "object", "cap", "after-exit", "fast-child", "time", "evidence", "journal", "commands"] as const) {
+    it("retains the first incomplete/uncertain receipt and makes no later stage command: " + fault, async () => {
       const run = pipeline(fault);
       await expect(executeCore(run.options)).rejects.toThrow("uncertain");
       const attempted = run.sqlStages.map(sql => run.commands.filter(command => command.stdin === sql).length);
@@ -422,7 +425,10 @@ describe("actual executeCore pipeline with injected MODEL boundaries; not native
       if (fault === "after-exit") expect(run.journals.at(-1)!.processes.at(-1)).toMatchObject({ absent: true, finishedUTC: "2026-10-13T17:00:01Z" });
       if (fault === "stage-D2") expect(run.journals.at(-1)!.steps.at(-1)).toMatchObject({ name: STAGES[1], outcome: "uncertain", sqlstate: "23514" });
       writeEvidence(lineage);
-    });
+    // Only the two controls that deliberately perform large bounded model work
+    // need more than the default 5s. Production caps and every oracle are unchanged.
+    }, fault === "evidence" || fault === "commands" ? 15_000 : 5_000);
+  }
   it("refuses changed raw predecessor bytes, despite semantically identical JSON, before transport", async () => {
     const run = pipeline(), original = readFileSync(files.cleanup);
     try {

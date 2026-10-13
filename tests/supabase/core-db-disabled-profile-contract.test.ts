@@ -37,6 +37,9 @@ describe("core disabled profile SOURCE contract; not SQL execution", () => {
     expect(runner).toContain("durationMs: 900_000, commands: 500");
     expect(runner).toContain("evidenceBytes: 10 * 1024 * 1024");
     expect(runner).toContain("captureFailed || !identity || !absent || !result");
+    expect(runner).toContain("const completedRecords = options.records()");
+    expect(runner).toContain("completedRecords.length === before + 1");
+    expect(runner).toContain("const receiptRecord = completionMatches && completed ? completed : record");
     expect(runner).toContain("journal.status = \"uncertain\"");
     expect(runner).toContain("Never continue after observer or journal uncertainty");
     expect(runner).not.toContain("taskkill"); expect(runner).not.toContain(".kill(");
