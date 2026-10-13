@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { startTransition } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const actions = vi.hoisted(() => ({ commit: vi.fn(), resolve: vi.fn(), preview: vi.fn(), push: vi.fn() }));
 vi.mock("@/app/(app)/campaigns/[id]/monsters/actions", () => ({ commitCampaignMonster: actions.commit, resolveCampaignMonster: actions.resolve, previewCampaignMonster: actions.preview }));
@@ -88,19 +89,28 @@ describe("actual DM monster form with simulated transport only", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Add monster instance" })).toBeEnabled()); expect(actions.preview).toHaveBeenLastCalledWith(MC.campaign, MC.source, 2);
   });
   it.each(["saved", "uncertain", "error"])("native settlement-gap submit after immediate %s cannot replace lifetime operation/intent/marker", async (status) => {
+    let responseObserved = false;
     actions.commit.mockImplementation((_campaign, input: FormData) => {
       const request = instanceIntentFromForm(input);
-      return Promise.resolve(status === "saved" ? { status, receipt: monsterReceipt(request) } : { status, message: "Simulated initial prewrite refusal or uncertainty." });
+      // Actual parser access proves the async response path resumed; a still-pending
+      // promise/ref cannot make this scheduling control accidentally pass.
+      return Promise.resolve(status === "saved" ? { status, get receipt() { responseObserved = true; return monsterReceipt(request); } }
+        : { status, get message() { responseObserved = true; return "Simulated initial prewrite refusal or uncertainty."; } });
     });
     await createForm(); const form = screen.getByLabelText("Instance name").closest("form")!;
     const markerKey = `inkborne:campaign-monster:v1:${MC.owner}:${MC.campaign}:create`;
     let original!: ReturnType<typeof instanceIntentFromForm>;
     await act(async () => {
-      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      // Deliberately defer the initial pending/operation render with the real React
+      // transition scheduler; ordinary discrete submit otherwise already commits it.
+      startTransition(() => form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
       original = instanceIntentFromForm(actions.commit.mock.calls[0][1]);
       await Promise.resolve(); await Promise.resolve();
-      // Deliberately bypass fireEvent's act wrapper: DOM pending=false has NOT committed.
+      // Response is settled but the old enabled controls have not committed updates.
+      // This is a scheduling control, not a claim that every normal submit delays.
+      expect(responseObserved).toBe(true);
       expect(form.querySelector("fieldset")!.disabled).toBe(false);
+      if (status === "saved") expect(JSON.parse(sessionStorage.getItem(markerKey)!).saved_id).toBe(MC.instance);
       expect(JSON.parse(sessionStorage.getItem(markerKey)!).operation_id).toBe(original.operation_id);
       form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
       expect(actions.commit).toHaveBeenCalledTimes(1);

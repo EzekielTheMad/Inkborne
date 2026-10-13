@@ -317,3 +317,33 @@ unchanged before/after `7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139
 No cleanup kill needed. Typecheck/lint and all further gates stopped after first
 failure; root heavy slot explicitly released. Native SQL/Auth/G2/provider acceptance
 unchanged and unrun. Freeze fixture+handoff for independent review BEFORE rerun.
+
+## Second narrow run — scheduling precondition failure, correction UNRUN
+
+Exact clean 0aec1242c911bc35f92ba413fd37f483b6b83f03 fixture-only correction was
+independently approved before rerunning the same seven-suite command/maxWorkers2.
+Exit1,9.48s: 134passed/3failed (137); six suites passed, mounted form39cases had
+three failures ONLY at settlement-gap enabled-DOM precondition. Actual discrete
+initial submit already committed pending=true, so expected fieldset.disabled=false
+was false reasoning about test scheduling; those three controls never reached their
+one-call/original-identity assertions. All repeat-edit/route cases passed, without
+claiming native server/DB authority. No assertion is removed or reversed to green.
+
+Prepared test-only correction places FIRST actual native submit dispatch inside
+real React startTransition within existing async act, deliberately delaying its
+pending/operation render. Response getters record access by the ACTUAL parser;
+assert observed response (and saved-ID storage for saved case) before the SECOND
+native dispatch. Enabled old DOM, one-call, original operation/intent/marker and
+post-commit refusal/replay controls stay intact. This is an explicit adversarial
+React scheduling control, not a claim that ordinary discrete submits always defer.
+Product source and canonical fixtures stay unchanged. Correction is UNRUN and
+requires exact review before rerun; no semantic-before result is claimed.
+
+Preserved focused-0aec-second stdout/stderr/process/result in the same local
+evidence directory; focused-0aec-second.manifest.json SHA256
+`575A551693CB31EB482514F6E903FEB4C416073447480738AF7FD53D92FC286C`.
+All12 captured OS identities freshly absent, owned listeners0; global processes
+508→498, CPU48→41%, free memory4604524→4979564KiB. Lock SHA256 unchanged7225AA…A2EB6.
+No kills or other worktree writes. Typecheck/lint remain unrun; gates stopped and
+heavy slot released pending independent correction review. Native/default-off
+boundaries and all missing G2/G3 acceptance remain unchanged.
