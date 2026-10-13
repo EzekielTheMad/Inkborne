@@ -9,7 +9,11 @@ import { getRedirectError } from "next/dist/client/components/redirect";
 const ID = "33333333-3333-4333-8333-333333333333", OWNER = "11111111-1111-4111-8111-111111111111";
 const idle = { status: "idle" as const, message: "" };
 function edit(version = "1") { const f = new FormData(); f.set("id", ID); f.set("expected_version", version); return f; }
-beforeEach(() => { vi.resetAllMocks(); mocks.redirect.mockImplementation((url: string) => { throw Error(`REDIRECT:${url}`); }); mocks.getUser.mockResolvedValue({ data: { user: { id: OWNER } }, error: null }); });
+beforeEach(() => {
+  // Reset per-case behavior without erasing the module-level createClient factory.
+  vi.clearAllMocks(); mocks.create.mockReset(); mocks.update.mockReset(); mocks.revalidatePath.mockReset(); mocks.redirect.mockReset(); mocks.getUser.mockReset();
+  mocks.redirect.mockImplementation((url: string) => { throw Error(`REDIRECT:${url}`); }); mocks.getUser.mockResolvedValue({ data: { user: { id: OWNER } }, error: null });
+});
 describe("magic-item action exact acknowledgment", () => {
   it("redirects missing/auth-error actors before content mutations", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null }); await expect(createHomebrewMagicItem(idle, new FormData())).rejects.toThrow("REDIRECT:/login"); expect(mocks.create).not.toHaveBeenCalled();
