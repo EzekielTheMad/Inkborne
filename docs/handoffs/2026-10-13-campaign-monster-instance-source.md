@@ -503,3 +503,46 @@ A2EB6. Type global count465→465,CPU35→63%,freeKiB6811748→6720504; lint465�
 CPU29→57%,freeKiB6802456→6992864. No kills; lane released after readback. All first
 failures, pass receipts and unverified acceptance items remain preserved. No native
 SQL/Auth/engine/provider/network/build/full/browser or unrelated source changes ran.
+
+## Observed final local gates — disabled integration ONLY
+
+After independent exactd43 comment-only approval, ONLY `npm.cmd run lint` reran
+at clean d43c3b688abeb4e4765b4f46ba62aa915b5b73dc: exit0, outer receipt39.80s.
+Observed local closure therefore binds focused134PASSED/3SKIPPED at4faca (7files,
+Vitest8.84s), typecheckPASS at6b793, lintPASS atd43. Root explicitly required no
+test rerun after the type-only fixture annotation or type rerun after comment-only
+lint exception. These are exact separate source heads, not a claim all three gates
+ran on one HEAD. Final source changes after each successful gate are reviewed
+type/comment annotations only; root owns exact combined integration gates.
+
+All9 gate executions across7 source heads and failures are retained:
+
+| Exact source HEAD | Gate | Observed result |
+| --- | --- | --- |
+| 5f124136f7142e16b8e9f8a9087c928e044f8a90 | seven focused | exit1; six collection failures, static6passed |
+| 0aec1242c911bc35f92ba413fd37f483b6b83f03 | seven focused | exit1;134passed/3failed setup |
+| 587c1456a3714bfd61da96e1729fd2094acc96a6 | seven focused | exit1;134passed/3failed setup, parser observed |
+| 0e8eab9ee6cfd27abeb16bbe59061a1398345bb5 | seven focused | exit1;134passed/3failed setup, parser observed |
+| 4faca6e2189ffb15dfaf03a646ffc040c4d281ca | seven focused; typecheck |134passed/3SKIPPED; exit2 two fixture TS2345 errors |
+| 6b793fe8b3e35e4e6ac2297509a2f4ec5023f5c6 | typecheck; lint | type exit0; lint exit1 single intentional hard-nav warning |
+| d43c3b688abeb4e4765b4f46ba62aa915b5b73dc | lint | exit0 |
+
+Aggregate final-manifest.json SHA256
+`324DAE06989BE4CC88A1B2B19DB360C75D25CB9E84E069AFD0903518FE534177`
+in test-results/m5-campaign-monsters-local binds all stdout/stderr, source/process/
+resource/result receipts, prior failure manifests, gate-index-final.json and fresh
+final-readback-d43.json. Gate index retains exact commands/UTC starts/ends/source
+status and OS birth/PID/parent/command/inherited-cwd identity receipts. Final fresh
+readback2026-10-13T19:57:19Z confirms ALL80 recorded identities absent and recorded-
+PID listeners0; no kills needed. Lint515→520processes,CPU25→34%,freeKiB6645196→
+6642812; fresh readback507processes/CPU52%/free6673512KiB. Lock SHA256 unchanged
+7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6 in all9 gates.
+Heavy slot explicitly released immediately after final readback. This final tested
+handoff is docs-only; code/test/fixture/SQL bytes remain d43 source.
+
+This permits LOCAL DISABLED SOURCE integration only. M5-STRESS-SAVED, M5-STRESS-
+UNCERTAIN, M5-STRESS-ERROR remain required UNVERIFIED items with exact retained
+bodies/names/oracles;134passed/3skipped is NOT137passed or a waiver. Product/native
+flags are FALSE. Actual browser/source-build acceptance, native G2/G3 Auth/RLS/
+transaction/recovery/fault/concurrency/cascade proof and reviewed enablement remain
+open. No SQL/engine/provider/network/hosted operation or M5-complete claim follows.
