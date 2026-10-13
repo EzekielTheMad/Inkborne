@@ -10,6 +10,23 @@ unused, with no app upload or saving path. These decisions supersede the older
 pending-format and PDF-before-beta execution instructions below. Existing PDF
 export and shipped spell/feat importer behavior remain in scope for preservation.
 
+Latest combined tested source **236ebcf** passed focused60/three files,
+typecheck, zero-warning lint, **361 files / 4,887 tests / three UNVERIFIED M5
+skips**, and production build. All10 focused/371 check/22 build recorded identities
+exited. The disabled first-class observation stage is integrated after both reviews;
+it issues no positive proof or parent write and remains unapplied/Auth denied.
+
+Third M5 guard attempt failed on native `ancestry-missing`; fresh absence was
+proved, but local release still did not produce `close`. Exact supervisor cleanup
+and independent readback confirmed all42 originals absent/no listeners. Guard,
+44 browser cases and measured allocations remain unaccepted; no fourth run is
+released. Materializer owner/privilege/trigger metadata under G2 is the next native
+prerequisite. Docker API remains unavailable as observed22:30 UTC; G1/G2 approval
+is pending. Saving-bonus measurement remains on FIRST-bootstrap clock HOLD.
+See [236ebcf checkpoint](handoffs/2026-10-13-core-checkpoint-236ebcf.md).
+
+Preserved earlier checkpoints follow.
+
 Latest combined tested source **`710c3fc`** passed typecheck, zero-warning lint,
 **360 files / 4,862 tests / three UNVERIFIED M5 skips**, and a fresh production
 build. All 386 check / 22 build identities exited. Reviewed fresh-character

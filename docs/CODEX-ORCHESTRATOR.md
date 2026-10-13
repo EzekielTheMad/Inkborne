@@ -10,6 +10,21 @@ in the backlog and the JSON prototype unused. Do not pursue a PDF layout decisio
 or build another importer until resumed. Earlier PDF-before-beta instructions are
 superseded for active execution; no broader removal or post-beta timing is assumed.
 
+Latest combined tested source **236ebcf** passed focused60, typecheck/lint,
+361 files/4,887 tests with three UNVERIFIED M5 skips, and production build.
+All10 focused/371 check/22 build recorded identities exited. Both reviewed class
+prerequisite sourcefa57 and guard correctione63 are integrated, with five exact
+source blob matches. Class stage remains unapplied/unavailable; no actual issuer.
+Third guard run failed `ancestry-missing` and missing close after proved absence;
+exact one-off supervisor cleanup ended all42 recorded originals/listeners. No fourth
+guard run is released and no measured/browser/native acceptance exists.
+Next materializer work requires bounded original-owner/privilege/trigger metadata
+capture under G2, not ownership guesses from migrations. G1/G2 remain unapproved;
+Docker API was unavailable22:30 UTC. Saving-bonus measurement remains worker-only
+on FIRST-bootstrap clock HOLD. See [latest checkpoint](handoffs/2026-10-13-core-checkpoint-236ebcf.md).
+
+Preserved earlier checkpoints follow.
+
 Latest combined tested source **710c3fc** passed typecheck/lint,360 files/4,862
 tests with three UNVERIFIED M5 skips, and production build. All386 check/22 build
 identities exited. Reviewed fresh-bootstrap source is integrated, staged/off/unapplied.

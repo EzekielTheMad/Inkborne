@@ -26,6 +26,39 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Current core checkpoint — 2026-10-13
 
+Latest combined tested source **`236ebcfec319bef476a0de6ddcabdb998c9c3121`**
+passed focused **60 tests / three files**, then `npm.cmd run check`: typecheck,
+zero-warning lint, **361 files / 4,887 passed / three UNVERIFIED M5 skips**.
+Production build passed at the same clean source. All 10 focused / 371 check /
+22 build recorded identities exited. Five integrated source blobs match both
+reviewed workers; app, components, lib, migrations and package files were unchanged.
+
+Disabled first-class revision-observation stage `fa57f71` is integrated after M1
+and original R09 source approval. It preserves independent input/proof refusals,
+separate observed versus finalized receipt checks, original owners/security modes
+and two narrow cross-owner EXECUTE pairs. It implements no writer or positive
+proof issuer. Native SQL, Auth and actual acquisition remain unverified.
+
+Reviewed guard correction `e63bc3d` is integrated and its actual third guard-only
+attempt **FAILED**: the native observer classified `ancestry-missing`; child exit
+and fresh recorded-identity absence were observed, but local handle release did
+not produce `close` within 40 seconds. The supervisor required separate exact
+held-object cleanup. Independent readback at 22:54:28 UTC found all 42 recorded
+identities absent and zero listeners. Descriptor SHA256
+`11b10c57de41e51f53c109c03d9fb000f9b4aa30ea6e3c877683d66f54ba1eca`
+remains pending; no phase allocation, cancellation adapter or browser acceptance
+follows. Preserve all three failed runs; no fourth run is released.
+
+Next class materializer work is blocked on original owner/privilege/trigger
+capture under G2. A bounded catalog-only query is prepared; it reads no user rows
+or application function bodies and invokes no application functions. Docker API
+was unavailable in the read-only 22:30 UTC check. G1/G2 remain unapproved.
+Saving-bonus measurement remains worker-only on FIRST-bootstrap clock HOLD.
+See [latest checkpoint](handoffs/2026-10-13-core-checkpoint-236ebcf.md) and
+[native metadata prerequisite](handoffs/2026-10-13-class-materializer-native-metadata.md).
+
+### Preserved earlier checkpoint — 710c3fc
+
 Latest combined tested source **`710c3fcf6e85cbaeb46b72f38b7d835e4eab59ec`**
 passed `npm.cmd run check`: typecheck, zero-warning lint, **360 files / 4,862
 passed / three UNVERIFIED M5 skips**. The production build passed at the same
