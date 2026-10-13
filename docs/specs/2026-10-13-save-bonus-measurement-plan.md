@@ -82,7 +82,7 @@ All nine phases must be actually observed before a complete measurement is usabl
 | --- | --- |
 | wrapperEntry | External npm/framework startup and discovery plus builtin wrapper bootstrap, owned/inherited/runtime entry proof; record startup separately within this phase. |
 | runnerEntry | Actual child launch, builtin bootstrap, all repeated source/runtime/assets/transitive proofs, bundle preparation and private HTTP/Chrome startup. |
-| cases | All30 actual desktop/mobile cases,43 screenshots/font samples in the existing matrix; retain request/state/pin/refusal/privacy/native-RNG oracles. |
+| cases | All30 actual desktop/mobile cases and their existing screenshots/font samples; combined case/export count remains43. Retain request/state/pin/refusal/privacy/native-RNG oracles. |
 | exports | All six original Letter/A4 exports plus the two actual+1 provider exports, original assertions and unchanged provider raw-pin/state snapshot. |
 | originalQA | Unchanged original verifier on all six exports, every rendered page/contact sheet and actual native process receipts. No Python-module hash claim for this verifier. |
 | bonusQA | Existing bonus verifier on both exports, exact six values, geometry/privacy, every page/contact sheet, reported byte hashes and its actual module receipts. |
