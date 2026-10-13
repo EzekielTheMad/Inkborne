@@ -19,12 +19,48 @@ format implementation. Existing supported spell/feat MPMB behavior and import
 provenance safeguards remain preserved.
 
 Continue ordinary-item campaign sharing, magic-item acknowledgement recovery and
-private class-provenance source/review/testing within M3/M4. Current accepted local
-candidate remains `81629ce` (339 files / 4,266 tests plus build and eight local JSON
+private class-provenance source/review/testing within M3/M4. Earlier accepted local
+candidate was `81629ce` (339 files / 4,266 tests plus build and eight local JSON
 browser cases); later source children are not yet combined acceptance. No SQL,
 hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Continued core work — 2026-10-13
+
+Latest combined source `84b1834fa07491b7f07b4deb76693cfb19535575` passed
+**345 files / 4,529 tests**, typecheck and zero-warning lint with two workers.
+Fresh synthetic build passed. All349 check/22 build identities exited, listeners
+zero. R13's offline gate passed **24 desktop/mobile cases /38 screenshots /38 font
+samples**, full final equality and zero page/blocked/unexpected errors. All451
+identities exited/listeners zero. Root inspected desktop workflow and mobile
+workflow/uncertainty/draft views. Auth/DAL/RPC/cache/time/reload remain modeled;
+SQL/current authority/concurrency remain unaccepted.
+
+Magic's first explicit actual-form whole gate at SAME84b is **FAILED**: outer
+600,000ms expired during complete dependency-proof finalization. Inner34 cases/
+36 screenshots/font samples passed: failure=null, errors zero, final
+matchedRenderedProof=true, Chrome/both ports closed. Installed closure is27
+packages/86 edges/11,121 files/358,871,558 bytes, compared freshly across required
+phases. All612 outer identities exited/listeners zero. Inner results are NOT
+whole-gate acceptance. Preserve failure receipts/artifacts. A finite outer-budget
+amendment needs independent challenge; form waits/oracles/proofs stay unchanged.
+
+M1 corrected additive runner96081a3 over42247aa passed exact-source review:
+required/forbidden cross-role EXECUTE and exported pipeline controls are present.
+Narrow tests/typecheck/lint own the heavy slot; native execution is UNRUN. M5
+default-off instance source1825fe2/correctiona316454 passed source review: operation
+lifetime/committed readiness, stale replies and malformed reads corrected. Tests
+and explicit confirmed-save-to-fresh-latest editing remain open; SQL unapplied.
+
+Class-save prerequisite/private-proof plans bd05fe8/3085239 and numeric save-bonus
+plan/correction0d1d94f/5b76418 passed independent plan review, not new authority or
+C2 activation. Actual bonus source advances in ../save-bonus-consumer-worker,
+codex/saving-throw-bonus-consumers, base353858c (84b plus exact approved docs).
+Seven production paths and one authorized print fixture are scoped; gates/install
+UNRUN. Ring/cloak inventory acquisition, numeric death saves, genuine class
+producers/reader/compiler/all13 writers/copy remain required separate gaps.
+M7 and monster/NPC imports remain paused; M8 follows included core acceptance.
+
+The following records preserve earlier failures and their corrections.
 
 Root `6e09f6a` combined check preserved one strict-lint unused-variable warning
 after typecheck; Vitest did not run. All10 recorded identities exited. Reviewed

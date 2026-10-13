@@ -10,7 +10,18 @@ in the backlog and the JSON prototype unused. Do not pursue a PDF layout decisio
 or build another importer until resumed. Earlier PDF-before-beta instructions are
 superseded for active execution; no broader removal or post-beta timing is assumed.
 
-Current integrated source through `53b09cc` adds reviewed Magic save-acknowledgment
+Latest combined source84b1834 passed345 files/4,529 tests, typecheck/zero-warning
+lint and synthetic build. All349 check/22 build identities exited/listeners zero.
+R13 offline24/38/final proof passed, all451 identities exited. Magic inner34/36
+passed but whole gate FAILED600,000ms during final dependency proof; all612
+identities exited. Preserve failures; challenge finite outer-budget amendment.
+M1 corrected96081a3 is source-approved and owns narrow tests/type/lint. M5
+1825fe2/a316454 is source-approved/default-off; tests and repeat-edit remain open.
+Reviewed C2/private-proof and numeric-save plans are frozen; actual bonus source
+advances in ../save-bonus-consumer-worker. Root alone integrates, one heavy lane.
+No native SQL/provider acceptance or live changes follow from offline simulations.
+
+Earlier integrated source through `53b09cc` adds reviewed Magic save-acknowledgment
 recovery and ordinary-item campaign sharing/offline harness. Magic worker143,
 typecheck/lint and exact eight-blob integration proof passed; all40 processes
 exited. R13 195/type/lint passed after reviewed test-only/fixture-only repairs,
@@ -27,7 +38,7 @@ C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification
 ```
 
 Active branch `codex/launch-integration-20261011`. Verify actual HEAD/status before
-editing. Latest full check/build is `81629ce` (339 files / 4,266 tests), after local
+editing. Earlier full check/build is `81629ce` (339 files / 4,266 tests), after local
 NPC JSON integration; 374 check and 24 build identities exited. JSON browser8/8
 screens/font samples and final whole artifact equality passed, 234 identities
 exited, owned listeners empty. SQL is unapplied/Auth unavailable/all13 readiness

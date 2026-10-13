@@ -10,7 +10,19 @@ unused, with no app upload or saving path. These decisions supersede the older
 pending-format and PDF-before-beta execution instructions below. Existing PDF
 export and shipped spell/feat importer behavior remain in scope for preservation.
 
-Current local acceptance: `81629ce` passed **339 files / 4,266 tests**, typecheck,
+Latest combined source84b1834 passed **345 files /4,529 tests**, typecheck,
+zero-warning lint and fresh synthetic build. All349 check/22 build identities
+exited/listeners zero. R13 offline24 cases/38 screenshots/font samples and final
+proof passed, all451 identities exited. Magic inner34/36 passed, but whole gate
+FAILED600,000ms during final dependency proof; all612 identities exited/listeners
+zero. Preserve failures; finite outer-budget amendment needs review. Auth/DAL/
+actions/cache/persistence remain simulated; SQL/current authority unaccepted.
+M1 corrected96081a3 is source-approved and owns narrow tests/type/lint. M5
+1825fe2/a316454 is source-approved/default-off; tests and explicit repeat editing
+remain. Reviewed C2/private-proof and save-bonus plans are frozen; actual bonus
+source advances in ../save-bonus-consumer-worker. M7/import pauses stay in force.
+
+Earlier local acceptance: `81629ce` passed **339 files / 4,266 tests**, typecheck,
 zero-warning lint and build after local NPC JSON prototype integration. Its eight
 desktop/mobile browser cases, eight screenshots/font samples, final source/build
 equality and empty errors/owned cleanup passed. All 374 check, 24 build and 234
@@ -45,7 +57,7 @@ is independently approved and owns narrow baseline/tests; earlier test-factory
 errors remain excluded from substantive before evidence. Older authoring families
 still need uncertainty/snapshot/draft-binding acceptance.
 
-Later integrated source through `53b09cc` includes Magic acknowledgment recovery
+Earlier integrated source through `53b09cc` includes Magic acknowledgment recovery
 (eight blobs equal reviewed `f313c1b`, worker143/type/lint passed, all40 processes
 gone) and ordinary-item campaign sharing plus its reviewed offline harness.
 Test-only mock/notice and fixture revalidation corrections passed root independent
