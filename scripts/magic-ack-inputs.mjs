@@ -52,30 +52,125 @@ export async function verifyMagicAckHelpers(root) {
     installedRuntime: await runtimeProof(root, rootCheckout) };
 }
 async function runtimeProof(root, rootCheckout) {
-  const lock = JSON.parse(await fs.readFile(path.join(root, "package-lock.json"), "utf8"));
-  const packages = [], nodeExecutable = { path: process.execPath, version: process.version, sha256: magicAckSha(await fs.readFile(process.execPath)) };
-  // Next's actually executed browser closure is captured below. Other executable
-  // Node/browser package trees (including esbuild native binary) are byte-bound.
-  for (const name of ["esbuild", "@esbuild/win32-x64", "next", "react", "react-dom", "playwright", "playwright-core", "@playwright/test", "zod"]) {
-    const directory = path.join(root, "node_modules", name), relativePackage = `node_modules/${name}`;
-    const bytes = await fs.readFile(path.join(directory, "package.json")), version = JSON.parse(bytes.toString("utf8")).version;
-    assert.equal(version, lock.packages[relativePackage].version); assert.equal(magicAckSha(bytes), magicAckSha(await fs.readFile(path.join(rootCheckout, relativePackage, "package.json"))));
-    const inputs = [];
-    async function visit(current) {
-      for (const entry of (await fs.readdir(current, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
-        assert.equal(entry.isSymbolicLink(), false, "Runtime package symlinks refused");
-        const absolute = path.join(current, entry.name);
-        if (entry.isDirectory()) { await visit(absolute); continue; }
-        const relativePath = path.relative(root, absolute).replaceAll(path.sep, "/"), actual = await fs.readFile(absolute);
-        assert.equal(magicAckSha(actual), magicAckSha(await fs.readFile(path.join(rootCheckout, relativePath))));
-        inputs.push({ relativePath, sha256: magicAckSha(actual), bytes: actual.length });
+  // Installed Node resolution + full file-set/raw-byte binding, following the
+  // reviewed R13 walker. All work stays within finite lock-described packages.
+  const limits = { maxPackages: 256, maxEdges: 4096, maxFiles: 60_000, maxEntries: 120_000, maxBytes: 1_073_741_824,
+    maxFileBytes: 268_435_456, maxDepth: 32, maxMetadataBytes: 1_048_576, maxLockBytes: 8_388_608, maxLockPackages: 4096, maxNodeBytes: 268_435_456 };
+  const roots = ["esbuild", "playwright", "playwright-core", "@playwright/test", "next", "react", "react-dom", "zod"];
+  assert.equal(process.platform, "win32", "This private process harness supports Windows only");
+  const platform = { os: process.platform, cpu: process.arch, libc: null };
+  const counts = { packages: 0, edges: 0, files: 0, entries: 0, bytes: 0 }, packages = [], edges = [], visited = new Set();
+  const stat = async absolute => { try { return await fs.lstat(absolute); } catch (error) { if (error.code === "ENOENT") return null; throw error; } };
+  async function pair(relative) {
+    assert.ok(relative.startsWith("node_modules/") || relative === "node_modules");
+    assert.ok(relative.split("/").every(part => part && part !== "." && part !== ".."));
+    const worker = await stat(path.join(root, relative)), built = await stat(path.join(rootCheckout, relative));
+    assert.equal(Boolean(worker), Boolean(built), `Installed runtime existence differs: ${relative}`);
+    if (!worker) return null;
+    assert.equal(worker.isSymbolicLink(), false, `Worker runtime symlink refused: ${relative}`);
+    assert.equal(built.isSymbolicLink(), false, `Root runtime symlink refused: ${relative}`);
+    assert.equal(worker.isDirectory(), built.isDirectory()); assert.equal(worker.isFile(), built.isFile());
+    return { worker, built };
+  }
+  async function candidate(relative) {
+    const parts = relative.split("/"); assert.ok(parts.length <= limits.maxDepth);
+    for (let length = 1; length <= parts.length; length++) {
+      const entry = await pair(parts.slice(0, length).join("/")); if (!entry) return false;
+      assert.ok(entry.worker.isDirectory(), `Package ancestor is not a directory: ${relative}`);
+    }
+    // An existing closer package directory without metadata could shadow an
+    // ancestor through Node's index.js fallback; never silently skip it.
+    const metadata = await pair(`${relative}/package.json`); assert.ok(metadata, `Installed candidate lacks package.json: ${relative}`);
+    assert.ok(metadata.worker.isFile()); return true;
+  }
+  async function bytes(relative, budget) {
+    const info = await pair(relative); assert.ok(info && info.worker.isFile());
+    assert.ok(info.worker.size <= budget && info.built.size <= budget, `Runtime file size exceeds bound: ${relative}`);
+    assert.equal(info.worker.size, info.built.size);
+    const worker = await fs.readFile(path.join(root, relative)), built = await fs.readFile(path.join(rootCheckout, relative));
+    assert.equal(worker.length, info.worker.size); assert.equal(built.length, info.built.size); assert.equal(magicAckSha(worker), magicAckSha(built), `Installed raw bytes differ: ${relative}`);
+    return worker;
+  }
+  const lockPath = path.join(root, "package-lock.json"), rootLockPath = path.join(rootCheckout, "package-lock.json");
+  const lockInfo = await fs.lstat(lockPath), rootLockInfo = await fs.lstat(rootLockPath);
+  assert.ok(lockInfo.isFile() && rootLockInfo.isFile() && !lockInfo.isSymbolicLink() && !rootLockInfo.isSymbolicLink());
+  assert.ok(lockInfo.size <= limits.maxLockBytes && rootLockInfo.size <= limits.maxLockBytes);
+  const lockBytes = await fs.readFile(lockPath); assert.equal(magicAckSha(lockBytes), magicAckSha(await fs.readFile(rootLockPath)));
+  const lock = JSON.parse(lockBytes.toString("utf8")); assert.ok(lock.packages && Object.keys(lock.packages).length <= limits.maxLockPackages);
+  const nodeInfo = await fs.lstat(process.execPath); assert.ok(nodeInfo.isFile() && !nodeInfo.isSymbolicLink() && nodeInfo.size <= limits.maxNodeBytes);
+  const nodeExecutable = { path: process.execPath, version: process.version, bytes: nodeInfo.size, sha256: magicAckSha(await fs.readFile(process.execPath)) };
+  function constraints(entry) { return { os: entry?.os ?? [], cpu: entry?.cpu ?? [], libc: entry?.libc ?? [] }; }
+  function compatible(entry) {
+    return Object.entries(constraints(entry)).every(([field, values]) => {
+      assert.ok(Array.isArray(values) && values.every(value => typeof value === "string"));
+      const actual = platform[field], positive = values.filter(value => !value.startsWith("!"));
+      return !values.includes(`!${actual}`) && (!positive.length || positive.includes("any") || positive.includes(actual));
+    });
+  }
+  function packageName(name) { assert.match(name, /^(?:@[a-zA-Z0-9_-][a-zA-Z0-9._-]*\/)?[a-zA-Z0-9_-][a-zA-Z0-9._-]*$/); }
+  async function resolve(from, name) {
+    packageName(name); let directory = path.join(root, from); const attempted = [];
+    while (directory === root || directory.startsWith(root + path.sep)) {
+      if (path.basename(directory) !== "node_modules") {
+        const relative = path.relative(root, path.join(directory, "node_modules", name)).replaceAll(path.sep, "/"); attempted.push(relative);
+        assert.ok(attempted.length <= limits.maxDepth);
+        if (await candidate(relative)) return { resolved: relative, attempted };
+      }
+      if (directory === root) break; directory = path.dirname(directory);
+    }
+    return { resolved: null, attempted };
+  }
+  async function packageClosure(relative, depth = 0) {
+    if (visited.has(relative)) return; assert.ok(depth <= limits.maxDepth); visited.add(relative);
+    counts.packages++; assert.ok(counts.packages <= limits.maxPackages); assert.ok(await candidate(relative), `Required runtime package absent: ${relative}`);
+    const locked = lock.packages[relative]; assert.ok(locked && typeof locked.version === "string", `Package not described by lock: ${relative}`);
+    const metadataBytes = await bytes(`${relative}/package.json`, limits.maxMetadataBytes), metadata = JSON.parse(metadataBytes.toString("utf8"));
+    assert.equal(metadata.version, locked.version); assert.equal(typeof metadata.name, "string"); if (locked.name) assert.equal(metadata.name, locked.name);
+    for (const key of ["dependencies", "optionalDependencies", "peerDependencies", "peerDependenciesMeta"]) assert.deepEqual(metadata[key] ?? {}, locked[key] ?? {}, `Installed declarations differ from lock: ${relative}/${key}`);
+    assert.deepEqual(constraints(metadata), constraints(locked)); assert.equal(compatible(locked), true, `Installed package contradicts current platform: ${relative}`);
+    const inputs = [], directories = [];
+    async function walk(current, level) {
+      assert.ok(level <= limits.maxDepth); const info = await pair(current); assert.ok(info);
+      counts.entries++; assert.ok(counts.entries <= limits.maxEntries);
+      if (info.worker.isDirectory()) {
+        const entries = async checkout => {
+          const names = [], directory = await fs.opendir(path.join(checkout, current));
+          for await (const entry of directory) { assert.ok(names.length < limits.maxEntries - counts.entries, `Directory entry bound exceeded: ${current}`); names.push(entry.name); }
+          return names.sort();
+        };
+        const workerEntries = await entries(root), rootEntries = await entries(rootCheckout);
+        assert.deepEqual(workerEntries, rootEntries, `Installed directory/file set differs: ${current}`); assert.ok(workerEntries.length <= limits.maxEntries - counts.entries);
+        directories.push({ relativePath: current, entries: workerEntries });
+        for (const entry of workerEntries) await walk(`${current}/${entry}`, level + 1);
+      } else {
+        assert.ok(info.worker.isFile()); assert.ok(info.worker.size <= limits.maxFileBytes && counts.bytes + info.worker.size <= limits.maxBytes);
+        counts.files++; assert.ok(counts.files <= limits.maxFiles); const actual = await bytes(current, limits.maxFileBytes); counts.bytes += actual.length;
+        inputs.push({ relativePath: current, bytes: actual.length, sha256: magicAckSha(actual) });
       }
     }
-    if (name !== "next") await visit(directory);
-    else inputs.push({ relativePath: `${relativePackage}/package.json`, sha256: magicAckSha(bytes), bytes: bytes.length });
-    packages.push({ name, version, inputs, packageJsonSha256: magicAckSha(bytes) });
+    await walk(relative, 0);
+    packages.push({ name: metadata.name, relativePath: relative, version: metadata.version, platformConstraints: constraints(locked), packageJsonSha256: magicAckSha(metadataBytes), directories, inputs });
+    const declarations = [];
+    for (const [name, spec] of Object.entries(metadata.dependencies ?? {})) if (!Object.hasOwn(metadata.optionalDependencies ?? {}, name)) declarations.push({ name, spec, kind: "dependency", optional: false });
+    for (const [name, spec] of Object.entries(metadata.optionalDependencies ?? {})) declarations.push({ name, spec, kind: "optionalDependency", optional: true });
+    for (const [name, spec] of Object.entries(metadata.peerDependencies ?? {})) declarations.push({ name, spec, kind: "peer", optional: metadata.peerDependenciesMeta?.[name]?.optional === true });
+    declarations.sort((a, b) => `${a.kind}:${a.name}`.localeCompare(`${b.kind}:${b.name}`));
+    for (const declaration of declarations) {
+      assert.equal(typeof declaration.spec, "string"); counts.edges++; assert.ok(counts.edges <= limits.maxEdges);
+      const resolution = await resolve(relative, declaration.name), omittedCandidates = resolution.attempted.filter(candidate => Object.hasOwn(lock.packages, candidate)).map(candidate => ({ relativePath: candidate, version: lock.packages[candidate].version, platformConstraints: constraints(lock.packages[candidate]), compatible: compatible(lock.packages[candidate]) }));
+      if (!resolution.resolved) {
+        assert.equal(declaration.optional, true, `Required declared dependency missing: ${relative}/${declaration.name}`);
+        edges.push({ from: relative, ...declaration, ...resolution, status: omittedCandidates.length && omittedCandidates.every(entry => !entry.compatible) ? "platform-omitted" : "optional-not-installed", omittedCandidates });
+      } else {
+        assert.ok(lock.packages[resolution.resolved], `Resolved installed dependency unbound to lock: ${resolution.resolved}`);
+        edges.push({ from: relative, ...declaration, ...resolution, status: "installed", omittedCandidates: [] }); await packageClosure(resolution.resolved, depth + 1);
+      }
+    }
   }
-  return { nodeExecutable, packages };
+  for (const name of roots) await packageClosure(`node_modules/${name}`);
+  packages.sort((a, b) => a.relativePath.localeCompare(b.relativePath)); edges.sort((a, b) => `${a.from}:${a.kind}:${a.name}`.localeCompare(`${b.from}:${b.kind}:${b.name}`));
+  const closure = { nodeExecutable, roots, platform, limits, counts, packages, edges };
+  return { ...closure, closureSha256: magicAckSha(JSON.stringify(closure)) };
 }
 export async function loadMagicAckAssets(root, manifestPath) {
   const proof = await verifyMagicAckHelpers(root), rootCheckout = path.resolve(root, "../equipment-verification");

@@ -19,12 +19,16 @@ PASS464f6e7 and lint PASS66a575f cover the earlier producer child, not these new
 
 Intended explicit package-script entry:
 `npm.cmd run test:e2e -- --config e2e/local-magic-ack/playwright.config.ts`.
-Default config remains untouched/off. One worker, no retry, finite timeout240s;
+Default config remains untouched/off. One worker, no retry, finite timeout600s;
 runner uses one private Chrome server and one loopback HTTP port. No build/dev/
 install/provider fallback. Native ESM .spec.mjs permits entry proof before its
 own dynamic @playwright/test import, without top-level await in a CJS TS spec.
 Playwright package-script driver/config bootstrap is still the external tool
 boundary; its installed package tree is checked before private runner/helper use.
+The authorized outer600s budget accommodates repeated full installed-closure/source
+proofs. It does not increase product/field/action/reload waits, change cases, cache
+or skip a guard, or accept a slow product workflow. The earlier240s source was unrun
+here; root's separate R13 pre-render timeout informed this config-only adjustment.
 
 Artifact directory: test-results/magic-ack-local/.
 Manifest: test-results/magic-ack-local/production-artifacts.json (or explicit
@@ -67,10 +71,35 @@ metafile input is checked against captured bytes and mounted root bytes. The thr
 explicit action/router/anchor synthetic modules have captured executed-body hashes
 and resolveDir=root; all other live boundaries refuse. Eight core paths remain
 fixed independently even though actions/DAL are modeled and not browser-bundled.
-Installed node executable/version/hash and exact lock/package version/tree byte
-proof covers esbuild/native-win32 executable, React/ReactDOM, Playwright/core/test,
-Zod; Next package metadata plus every actual bundled Next input is checked. Runtime
-files must match current root; symlinks refused. No credentials/env file is read.
+The initial fixed-nine-package proof was rejected at independent review and is
+superseded by the local bounded lock-described installed closure. Required roots
+are esbuild, Playwright/core/test, FULL Next, React/ReactDOM and Zod. Recursive
+actual Node-style nearest-package lookup walks package-local, nested and ancestor
+node_modules within the workspace. Every installed declared dependency, optional
+dependency and peer is lock/version/declaration-bound and recursively covered;
+optionalDependencies override a duplicate ordinary dependency declaration. Required
+absence refuses; optional/optional-peer absence records attempted paths, lock
+platform constraints and platform-omitted versus optional-not-installed. Existing
+closer directories missing package.json refuse rather than silently choosing an
+ancestor's package. Windows OS/CPU and non-applicable libc are explicit.
+
+Every closure package includes its COMPLETE directory-entry/file set and original
+file bytes, including all Next files and selected native packages. Worker/root
+directory sets must match exactly, so root-only extra files fail. Both sides and
+all lookup ancestors reject symlinks, non-file/non-directory entries and type drift.
+Metadata declarations/platform constraints must match the lock. Node executable
+version/size/SHA remains bound. No network/install/semver re-resolution or text
+normalization is used. Installed-package counts are derived from the proof, not9.
+Spec asserts root membership, declared-edge integrity, package/file/entry/byte totals,
+full Next browser helper membership and closure digest, while preserving every
+34case/36screen/action/pin/field/response/initialIPC/disk/final/force oracle.
+
+Finite caps:256packages,4096edges,60000files,120000entries,1GiB total package bytes,
+256MiB per file/Node executable,32dependency/directory/lookup depth,1MiB metadata,
+8MiB lock and4096lock entries. Directory streaming bounds collection before
+recursive traversal; sizes are checked before reads. Proof records limits/counts,
+ordered installed packages/edges and explicit optional omissions. No unbounded
+filesystem walk, fallback, cache or skipped full proof. No credentials/env read.
 
 Initial complete artifact envelope is retained before rendering in private IPC
 AND initial-rendered-proof.json, with captured-inputs.json, esbuild metafile and

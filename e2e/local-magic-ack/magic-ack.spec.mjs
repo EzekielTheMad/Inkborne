@@ -51,7 +51,21 @@ test("actual magic-item form with complete rendered proof and private cleanup", 
     await rebindRenderedProof();
     expect(result.artifacts.sourceCommit).toBe(result.artifacts.currentRootHead);
     expect(result.artifacts.harnessFiles).toHaveLength(6); expect(result.artifacts.magicSourceFiles).toHaveLength(8); expect(result.artifacts.magicHelperDependencies).toHaveLength(2);
-    expect(result.artifacts.installedRuntime.packages).toHaveLength(9); expect(result.artifacts.installedRuntime.nodeExecutable.sha256).toMatch(/^[a-f0-9]{64}$/);
+    const runtime = result.artifacts.installedRuntime, installed = runtime.packages.map(item => item.relativePath);
+    expect(runtime.roots).toEqual(["esbuild", "playwright", "playwright-core", "@playwright/test", "next", "react", "react-dom", "zod"]);
+    for (const name of runtime.roots) expect(installed).toContain(`node_modules/${name}`);
+    expect(new Set(installed).size).toBe(runtime.packages.length); expect(runtime.counts.packages).toBe(runtime.packages.length); expect(runtime.counts.edges).toBe(runtime.edges.length);
+    expect(runtime.counts.files).toBe(runtime.packages.reduce((total, item) => total + item.inputs.length, 0));
+    expect(runtime.counts.entries).toBe(runtime.packages.reduce((total, item) => total + item.inputs.length + item.directories.length, 0));
+    expect(runtime.counts.bytes).toBe(runtime.packages.reduce((total, item) => total + item.inputs.reduce((bytes, file) => bytes + file.bytes, 0), 0));
+    for (const [count, limit] of [["packages", "maxPackages"], ["edges", "maxEdges"], ["files", "maxFiles"], ["entries", "maxEntries"], ["bytes", "maxBytes"]]) expect(runtime.counts[count]).toBeLessThanOrEqual(runtime.limits[limit]);
+    expect(runtime.edges.every(edge => installed.includes(edge.from) && ["dependency", "optionalDependency", "peer"].includes(edge.kind)
+      && (edge.status === "installed" ? installed.includes(edge.resolved) : edge.resolved === null && edge.optional
+        && ["platform-omitted", "optional-not-installed"].includes(edge.status)
+        && (edge.status !== "platform-omitted" || edge.omittedCandidates.length > 0 && edge.omittedCandidates.every(item => item.compatible === false))))).toBe(true);
+    const { closureSha256, ...declaredClosure } = runtime; expect(closureSha256).toBe(magicAckSha(JSON.stringify(declaredClosure)));
+    expect(runtime.packages.find(item => item.relativePath === "node_modules/next").inputs.some(input => input.relativePath === "node_modules/next/dist/client/components/unstable-rethrow.browser.js")).toBe(true);
+    expect(runtime.platform).toEqual({ os: "win32", cpu: process.arch, libc: null }); expect(runtime.nodeExecutable.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(result.artifacts.dependencyLockSha256).toMatch(/^[a-f0-9]{64}$/); expect(result.artifacts.fixtureBundleSha256).toMatch(/^[a-f0-9]{64}$/);
     for (const item of result.artifacts.magicHelperDependencies) expect(item.expected).toBe(item.relativePath === "scripts/npc-process.mjs" ? "0841bda7b9e785280e684030bf4fe900d81465e5" : "e4058f8a31cd911583a312e59fedcf4c3fd4adae");
     for (const required of ["components/library/magic-item-form.tsx", "lib/homebrew/magic-item-form.ts", "lib/schemas/content-types/magic-item.ts", "lib/schemas/effects.ts", "lib/schemas/content.ts", "lib/supabase/content-definitions-parser.ts"])
