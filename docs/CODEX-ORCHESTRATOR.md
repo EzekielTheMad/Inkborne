@@ -13,9 +13,12 @@ superseded for active execution; no broader removal or post-beta timing is assum
 Current integrated source through `53b09cc` adds reviewed Magic save-acknowledgment
 recovery and ordinary-item campaign sharing/offline harness. Magic worker143,
 typecheck/lint and exact eight-blob integration proof passed; all40 processes
-exited. R13 corrected narrow gates are active after independently reviewed
-test-only/fixture-only repairs; original failures remain preserved. Root owns
-combined check/build and both fresh actual-form browser gates. SQL is unapplied.
+exited. R13 195/type/lint passed after reviewed test-only/fixture-only repairs,
+all80 processes gone. Root full d3f5ed6 retained two failures/4,527 passes; reviewed
+old-route mock repair19e0d79 plus unchanged monster tests passed23 at11d2df9.
+No timeout increase/product change; all369 full/eight focused processes exited.
+M1 additive profile plan53b69fc has both owner reviews and is integrated. Root owns
+fresh combined check/build and both actual-form browser gates. SQL is unapplied.
 
 Main_PC resume directory:
 

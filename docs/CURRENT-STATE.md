@@ -49,8 +49,13 @@ Later integrated source through `53b09cc` includes Magic acknowledgment recovery
 (eight blobs equal reviewed `f313c1b`, worker143/type/lint passed, all40 processes
 gone) and ordinary-item campaign sharing plus its reviewed offline harness.
 Test-only mock/notice and fixture revalidation corrections passed root independent
-review; corrected R13 narrow checks are running. Full combined/build and fresh
-actual-form browser gates remain pending. Staged sharing SQL is unapplied.
+review; R13 12 suites/195 tests/type/lint passed, all80 processes gone. Root full
+`d3f5ed6` preserved two failures/4,527 passes: unchanged monster timeout and missing
+old-route campaign-access mock. Reviewed test-only `19e0d79` and unchanged monster
+tests passed three suites/23 tests at `11d2df9`; no timeout or product change.
+All369 full and eight focused processes exited. M1 profile plan53b69fc has both
+owner reviews and is integrated; additive local preparation proceeds. Full
+combined/build and actual-form browser acceptance are still pending. SQL unapplied.
 
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.

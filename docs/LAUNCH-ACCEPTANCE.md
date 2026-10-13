@@ -42,7 +42,30 @@ fixture-only `c0f09b5` as `25ef20f` / `53b09cc`: the mock reset no longer return
 a Vitest teardown, both legitimate pin notices must remain visible, and modeled
 revalidation now registers outside render. Product bytes and all browser
 assertions remain unchanged. The first narrow run (192/195) and fixture lint
-failures are preserved; corrected narrow gates are running. SQL is staged only.
+failures are preserved. Corrected source passed **12 suites / 195 tests**,
+typecheck and zero-warning lint; all 80 recorded identities absent/listeners zero.
+Tested handoff `1a8965e` is integrated as `a9ce9dc`; its manifest SHA256 is
+`752808C577529B7857CBE74B3E14CA3E33497A2A44E876D88933D3D57D197995`.
+SQL is staged only.
+
+Root full check at clean `d3f5ed6` passed typecheck/lint but preserved **two failures /
+4,527 passing tests (345 files)**: unchanged monster-form roundtrip exceeded its
+five-second limit under four workers, and the old item-route fixture omitted the
+new campaign-access mock export. All 369 recorded processes exited/listeners zero.
+Root test-only `19e0d79` passed independent review: preserve the four original
+route assertions, explicitly model campaign access and panel props, and verify
+denied routes never read campaign metadata. The separate actual-form/panel suite
+is unchanged. At clean `11d2df9`, the three affected suites passed **23 tests**
+with two workers and unchanged timeouts; all eight process identities exited.
+Contention is a plausible explanation for the monster timeout, not a proved cause.
+Fresh combined/build and both browser gates remain pending.
+
+M1 additive disabled-install profile plan `53b69fc` is integrated as `11d2df9`
+after independent runtime/class and original R09 owner review. Only its local
+runner/assertion/test preparation is authorized; original R07 manifests/receipts,
+83 migrations and equipment remain frozen. Native G1/G2/G5 approval and real
+database acceptance remain open. New profile never proves unreachable Auth,
+class-history, locking, replay or writer-cutover bodies.
 
 P1b.2 source `bdc9086` and qualified lookup correction `bf171408` passed independent
 class and original authority-family review. Integrated as `9ad6f9f` / `221b1e3`;
