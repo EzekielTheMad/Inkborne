@@ -116,3 +116,40 @@ existing immutable DELETE guards can refuse cascades. No destructive cleanup or
 guard relaxation. Genuine add-class/level/subclass/remove/reorder/compiler, equipment
 composition/copy/campaign/app activation/all-writer recovery/C2 remain separate
 required work; this source child is no live repair or M4/M6 completion.
+
+## HOLD0e finite preflight correction — UNRUN
+
+Original0e5b215eb7b13483a999f3bce8efffc92eb75208 stays immutable. M1 held exactly
+two preflight omissions, while transaction sequencing/refusal/ACL/replay and all23
+body fingerprints were approved; these are SOURCE findings, not executed failures.
+Only these same three new files change. No gates/runtime/SQL/Node/network occurred.
+
+All23 reused original headers were inspected from the fixed dependency files: every
+one explicitly SET search_path='' (including kernel SQL helpers); none intentionally
+omits function configuration. New preflight requires EXACT proconfig text array
+['search_path=""'], refusing missing/extra/nonempty configurations. Native metadata
+encoding is inferred from explicit original GUC syntax, NOT live catalog proof.
+It additionally binds original language(sql/plpgsql), exact scalar return type,
+proretset:false/prokind:function and source-declared volatility(default VOLATILE,
+STABLE or IMMUTABLE). Source/owner/prosecdef/EXECUTE checks remain; the23 MD5s are
+unchanged. Static controls derive these facts from actual frozen headers, not new
+empty-path claims about an unconfigured original. No base function is modified.
+
+Exact native private trigger inventory now covers four actual relations/eight
+original noninternal triggers. Acceptance and transition BEFORE INSERT/UPDATE/DELETE
+guards are31; their original deferred AFTER INSERT/UPDATE closures are21 and initially
+deferred. Origin's protected row guard is31 with EXACT two NUL-terminated args
+origin + character_id, alongside unchanged joint AFTER UPDATE dispatch17. Creation
+receipt INSERT guard7 has EXACT creation_receipt + verified_actor_id,operation_id
+key args; immutable UPDATE/DELETE guard27 has no args. All are enabled O, per-row,
+exact function attachment and original timing/deferral; no private column filter.
+Catalog tgargs hex/tgnargs/tgattr and full per-table JSON inventory must match, so
+disabled/removed/extra/retargeted/wrong-mode/key-argument wiring refuses. No trigger
+is added, replaced, reenabled or relaxed. Static test derives all eight expectations
+from actual original P1a/joint CREATE TRIGGER DDL and compares staged catalog tuples;
+this is source-bound wiring validation, not PostgreSQL execution/RI/role evidence.
+
+All8 new SECURITY DEFINER/empty-path owners, exact15+8 INSERT columns/five EXECUTE
+pairs, independent false NEW admission, native Auth denial/all13false and original
+receipt-FIRST system/gate/revision-independent recovery are unchanged. Tests/type/
+lint/SQL compile and native installation remain UNRUN; both reviews precede gates.

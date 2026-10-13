@@ -26,37 +26,41 @@ DO $$ DECLARE class_oid oid; authority_oid oid; item record; actual jsonb; BEGIN
     OR EXISTS(SELECT 1 FROM private.character_writer_readiness_v1 WHERE ready) THEN
     RAISE EXCEPTION 'Isolated original owners/RLS/disabled prerequisites required' USING ERRCODE='42501';
   END IF;
-  -- Exact normalized frozen prosrc/owner checks, populated from fixed Git bodies.
+  -- Exact frozen prosrc, owner, execution mode AND explicit configuration.
+  -- Every one of these 23 original headers explicitly sets search_path=''.
   FOR item IN SELECT * FROM (VALUES
 -- FROZEN_FUNCTIONS_BEGIN
-    ('private.require_class_origin_auth_v1(jsonb)','inkborne_class_origin_owner','34837118aa95bedd7fd9a85d8b066e9d',false),
-    ('private.class_origin_receipt_shape_v1(jsonb)','inkborne_class_origin_owner','30f47e0eaae199b33be22761ba4536cf',false),
-    ('private.class_origin_exact_keys_v1(jsonb,text[])','inkborne_class_origin_owner','601e304fe6b551afc032bfdbe8139d3e',false),
-    ('private.class_origin_uuid_v1(jsonb)','inkborne_class_origin_owner','5720f1938f6622f2d6584e77beb02411',false),
-    ('private.class_origin_instant_v1(jsonb)','inkborne_class_origin_owner','48bf7ab8e7701266e9b11bd40ee90722',false),
-    ('private.class_origin_decimal_v1(text)','inkborne_class_origin_owner','bff8ecc025cda61e34936581f78c953c',false),
-    ('private.class_origin_row_scope_v1(text,jsonb,uuid,uuid)','inkborne_class_origin_owner','84678f1b56b436c22035d0705b861fc6',false),
-    ('private.class_origin_row_key_v1(text,jsonb)','inkborne_class_origin_owner','2e522faea8c8aef01accae2ea9907120',false),
-    ('private.class_origin_ids_match_v1(uuid[],uuid[])','inkborne_class_origin_owner','28f6163efe12e99757a3edc470c31edb',false),
-    ('private.class_origin_protected_row_guard_v1()','inkborne_class_origin_owner','632bd1c54c3ce2d0a9fb0662ae6b34f1',true),
-    ('private.class_origin_row_transition_guard_v1()','inkborne_class_origin_owner','98948e6536641b7d8df05b991e824503',true),
-    ('private.class_origin_immutable_v1()','inkborne_class_origin_owner','5909a75f2762f4e153b5ce5cc95c2115',false),
-    ('private.class_origin_finalize_bootstrap_v1(uuid)','inkborne_class_origin_owner','33eb67f9610636fbe8d2f21a7a2db81b',false),
-    ('private.class_origin_finalize_acceptance_v1(uuid)','inkborne_class_origin_owner','b6a63f555d25eb7b375702310b95126c',true),
-    ('private.class_origin_read_final_graph_v1(uuid,uuid[])','inkborne_class_origin_owner','3e860cbfbeacc9594d1dbcb7ec2d28ec',false),
-    ('private.class_origin_assert_common_v1(uuid)','inkborne_class_origin_owner','4dece7fee387eba47f6b77133960350c',false),
-    ('private.class_origin_deferred_finalizer_v1()','inkborne_class_origin_owner','48058f01ba8e27be3794a627c4655e2f',true),
-    ('private.class_origin_acceptance_guard_v1()','inkborne_class_origin_owner','74549af21275768d4ac44585fec72e03',true),
-    ('private.hit_die_context_shape_v1(jsonb)','inkborne_hit_die_authority_owner','f244630700c62b63f5185ba59a2b36d5',false),
-    ('private.require_verified_hit_die_auth_v1(jsonb)','inkborne_hit_die_authority_owner','972773f897b4f6630b5d7c948a0c851c',false),
-    ('private.lock_character_writer_guard_v1()','inkborne_hit_die_authority_owner','f7efb029110ebb9e486b1a3b9b8f8779',false),
-    ('private.hit_die_exact_keys_v1(jsonb,text[])','inkborne_hit_die_kernel_owner','38eec7b37a3f5e1741fe00e66e5c0f89',false),
-    ('private.hit_die_native_v1(timestamp with time zone)','inkborne_hit_die_kernel_owner','11f0c36f37912dc882eba9238b709c8c',false)
+    ('private.require_class_origin_auth_v1(jsonb)','inkborne_class_origin_owner','34837118aa95bedd7fd9a85d8b066e9d',false,'plpgsql','void','v'),
+    ('private.class_origin_receipt_shape_v1(jsonb)','inkborne_class_origin_owner','30f47e0eaae199b33be22761ba4536cf',false,'plpgsql','boolean','i'),
+    ('private.class_origin_exact_keys_v1(jsonb,text[])','inkborne_class_origin_owner','601e304fe6b551afc032bfdbe8139d3e',false,'sql','boolean','i'),
+    ('private.class_origin_uuid_v1(jsonb)','inkborne_class_origin_owner','5720f1938f6622f2d6584e77beb02411',false,'plpgsql','boolean','i'),
+    ('private.class_origin_instant_v1(jsonb)','inkborne_class_origin_owner','48bf7ab8e7701266e9b11bd40ee90722',false,'plpgsql','boolean','i'),
+    ('private.class_origin_decimal_v1(text)','inkborne_class_origin_owner','bff8ecc025cda61e34936581f78c953c',false,'plpgsql','boolean','i'),
+    ('private.class_origin_row_scope_v1(text,jsonb,uuid,uuid)','inkborne_class_origin_owner','84678f1b56b436c22035d0705b861fc6',false,'sql','boolean','i'),
+    ('private.class_origin_row_key_v1(text,jsonb)','inkborne_class_origin_owner','2e522faea8c8aef01accae2ea9907120',false,'sql','jsonb','i'),
+    ('private.class_origin_ids_match_v1(uuid[],uuid[])','inkborne_class_origin_owner','28f6163efe12e99757a3edc470c31edb',false,'sql','boolean','i'),
+    ('private.class_origin_protected_row_guard_v1()','inkborne_class_origin_owner','632bd1c54c3ce2d0a9fb0662ae6b34f1',true,'plpgsql','trigger','v'),
+    ('private.class_origin_row_transition_guard_v1()','inkborne_class_origin_owner','98948e6536641b7d8df05b991e824503',true,'plpgsql','trigger','v'),
+    ('private.class_origin_immutable_v1()','inkborne_class_origin_owner','5909a75f2762f4e153b5ce5cc95c2115',false,'plpgsql','trigger','v'),
+    ('private.class_origin_finalize_bootstrap_v1(uuid)','inkborne_class_origin_owner','33eb67f9610636fbe8d2f21a7a2db81b',false,'plpgsql','void','v'),
+    ('private.class_origin_finalize_acceptance_v1(uuid)','inkborne_class_origin_owner','b6a63f555d25eb7b375702310b95126c',true,'plpgsql','void','v'),
+    ('private.class_origin_read_final_graph_v1(uuid,uuid[])','inkborne_class_origin_owner','3e860cbfbeacc9594d1dbcb7ec2d28ec',false,'plpgsql','jsonb','v'),
+    ('private.class_origin_assert_common_v1(uuid)','inkborne_class_origin_owner','4dece7fee387eba47f6b77133960350c',false,'plpgsql','jsonb','v'),
+    ('private.class_origin_deferred_finalizer_v1()','inkborne_class_origin_owner','48058f01ba8e27be3794a627c4655e2f',true,'plpgsql','trigger','v'),
+    ('private.class_origin_acceptance_guard_v1()','inkborne_class_origin_owner','74549af21275768d4ac44585fec72e03',true,'plpgsql','trigger','v'),
+    ('private.hit_die_context_shape_v1(jsonb)','inkborne_hit_die_authority_owner','f244630700c62b63f5185ba59a2b36d5',false,'plpgsql','boolean','s'),
+    ('private.require_verified_hit_die_auth_v1(jsonb)','inkborne_hit_die_authority_owner','972773f897b4f6630b5d7c948a0c851c',false,'plpgsql','void','v'),
+    ('private.lock_character_writer_guard_v1()','inkborne_hit_die_authority_owner','f7efb029110ebb9e486b1a3b9b8f8779',false,'plpgsql','void','v'),
+    ('private.hit_die_exact_keys_v1(jsonb,text[])','inkborne_hit_die_kernel_owner','38eec7b37a3f5e1741fe00e66e5c0f89',false,'sql','boolean','i'),
+    ('private.hit_die_native_v1(timestamp with time zone)','inkborne_hit_die_kernel_owner','11f0c36f37912dc882eba9238b709c8c',false,'sql','text','s')
 -- FROZEN_FUNCTIONS_END
-  ) frozen(signature,owner_name,body_md5,is_definer) LOOP
-    IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_roles r ON r.oid=p.proowner
+  ) frozen(signature,owner_name,body_md5,is_definer,language_name,return_type,volatility) LOOP
+    IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_roles r ON r.oid=p.proowner JOIN pg_catalog.pg_language l ON l.oid=p.prolang
       WHERE p.oid=pg_catalog.to_regprocedure(item.signature) AND r.rolname=item.owner_name
-      AND p.prosecdef=item.is_definer AND pg_catalog.md5(pg_catalog.replace(p.prosrc,E'\r\n',E'\n'))=item.body_md5)
+      AND p.prosecdef=item.is_definer AND p.proconfig IS NOT DISTINCT FROM ARRAY['search_path=""']::text[]
+      AND l.lanname=item.language_name AND p.prorettype=pg_catalog.to_regtype(item.return_type)
+      AND NOT p.proretset AND p.prokind='f' AND p.provolatile::text=item.volatility
+      AND pg_catalog.md5(pg_catalog.replace(p.prosrc,E'\r\n',E'\n'))=item.body_md5)
       OR NOT pg_catalog.has_function_privilege(CASE WHEN item.owner_name='inkborne_class_origin_owner' THEN class_oid ELSE authority_oid END,
         pg_catalog.to_regprocedure(item.signature),'EXECUTE') THEN
       RAISE EXCEPTION 'Frozen function source/owner/effective capability drift: %',item.signature USING ERRCODE='42501';
@@ -109,6 +113,19 @@ DO $$ DECLARE class_oid oid; authority_oid oid; item record; actual jsonb; BEGIN
     IF NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE tgname=item.name AND tgrelid=item.relation::regclass AND tgdeferrable AND tginitdeferred
       AND tgenabled='O' AND tgfoid='private.class_origin_deferred_finalizer_v1()'::regprocedure) THEN
       RAISE EXCEPTION 'Original deferred closure absent' USING ERRCODE='42501'; END IF;
+  END LOOP;
+  -- Exact bounded ORIGINAL wiring, including the original joint UPDATE dispatch.
+  -- Five required guard groups are not proved by body fingerprints alone.
+  FOR item IN SELECT * FROM (VALUES
+    ('private.class_writer_acceptance_v1','{"class_origin_acceptance_guard":[31,"O","private.class_origin_acceptance_guard_v1()",false,false,0,"",""],"class_origin_acceptance_closure":[21,"O","private.class_origin_deferred_finalizer_v1()",true,true,0,"",""]}'::jsonb),
+    ('private.class_writer_row_transitions_v1','{"class_origin_row_transition_guard":[31,"O","private.class_origin_row_transition_guard_v1()",false,false,0,"",""],"class_origin_transition_closure":[21,"O","private.class_origin_deferred_finalizer_v1()",true,true,0,"",""]}'::jsonb),
+    ('private.character_class_origin_v1','{"class_origin_origin_guard":[31,"O","private.class_origin_protected_row_guard_v1()",false,false,2,"6f726967696e006368617261637465725f696400",""],"class_origin_metadata_revision_dispatch":[17,"O","private.class_origin_metadata_revision_dispatch_v1()",false,false,0,"",""]}'::jsonb),
+    ('private.character_creation_commands_v1','{"class_origin_creation_receipt_guard":[7,"O","private.class_origin_protected_row_guard_v1()",false,false,2,"6372656174696f6e5f726563656970740076657269666965645f6163746f725f69642c6f7065726174696f6e5f696400",""],"class_origin_creation_receipt_immutable":[27,"O","private.class_origin_immutable_v1()",false,false,0,"",""]}'::jsonb)
+  ) wiring(relation,expected) LOOP
+    SELECT pg_catalog.jsonb_object_agg(t.tgname,pg_catalog.jsonb_build_array(t.tgtype,t.tgenabled,t.tgfoid::regprocedure::text,
+      t.tgdeferrable,t.tginitdeferred,t.tgnargs,pg_catalog.encode(t.tgargs,'hex'),t.tgattr::text)) INTO actual
+      FROM pg_catalog.pg_trigger t WHERE t.tgrelid=item.relation::regclass AND NOT t.tgisinternal;
+    IF actual IS DISTINCT FROM item.expected THEN RAISE EXCEPTION 'Original private bootstrap trigger wiring drift: %',item.relation USING ERRCODE='42501'; END IF;
   END LOOP;
 END $$;
 

@@ -41,18 +41,25 @@ describe("fresh bootstrap actual staged source STATIC controls; NO SQL/native au
       expect(stage).toContain(blob);
     }
   });
-  it("checks 23 actual frozen function bodies/owner modes and existing effective privileges", () => {
-    const tuples = [...stage.matchAll(/\('private\.([^']+)','([^']+)','([0-9a-f]{32})',(true|false)\)/g)];
+  it("checks 23 actual frozen bodies, owners, exact proconfig, language/return/volatility and effective privileges", () => {
+    const tuples = [...stage.matchAll(/\('private\.([^']+)','([^']+)','([0-9a-f]{32})',(true|false),'([^']+)','([^']+)','([isv])'\)/g)];
     expect(tuples).toHaveLength(23);
-    for (const [, signature, owner, md5, isDefiner] of tuples) {
+    for (const [, signature, owner, md5, isDefiner, language, returnType, volatility] of tuples) {
       const name = signature.split("(")[0];
       const source = name === "class_origin_acceptance_guard_v1" ? joint : owner === "inkborne_hit_die_kernel_owner" ? kernel
         : owner === "inkborne_hit_die_authority_owner" ? authority : p1;
       const frozen = definition(source, name);
       expect(createHash("md5").update(frozen.body).digest("hex")).toBe(md5);
       expect(frozen.header.includes("SECURITY DEFINER")).toBe(isDefiner === "true");
+      expect(frozen.header).toMatch(/SET search_path\s*=\s*''\s*$/);
+      expect(frozen.header.match(/LANGUAGE\s+(\w+)/)?.[1].toLowerCase()).toBe(language);
+      expect(frozen.header.match(/RETURNS\s+(\w+)/)?.[1].toLowerCase()).toBe(returnType);
+      expect(/\bIMMUTABLE\b/.test(frozen.header) ? "i" : /\bSTABLE\b/.test(frozen.header) ? "s" : "v").toBe(volatility);
     }
     expect(stage).toContain("p.prosecdef=item.is_definer");
+    expect(stage).toContain("p.proconfig IS NOT DISTINCT FROM ARRAY['search_path=\"\"']::text[]");
+    expect(stage).toContain("l.lanname=item.language_name AND p.prorettype=pg_catalog.to_regtype(item.return_type)");
+    expect(stage).toContain("NOT p.proretset AND p.prokind='f' AND p.provolatile::text=item.volatility");
     expect(stage).toContain("has_function_privilege(CASE WHEN item.owner_name");
     expect(stage).toContain("'private.hit_die_exact_keys_v1(jsonb,text[])','inkborne_hit_die_kernel_owner'");
     expect(stage).toContain("'private.hit_die_native_v1(timestamp with time zone)','inkborne_hit_die_kernel_owner'");
@@ -118,6 +125,42 @@ describe("fresh bootstrap actual staged source STATIC controls; NO SQL/native au
     expect(stage).not.toMatch(/ALTER TABLE|CREATE TRIGGER|CREATE CONSTRAINT TRIGGER/);
     expect(body("create_empty_class_origin_character_v1")).toContain("PERFORM private.class_origin_finalize_acceptance_v1(acceptance)");
     expect(p1).toContain("PERFORM private.class_origin_finalize_bootstrap_v1(p_acceptance)");
+  });
+  it("binds ALL original private trigger attachment/modes/args, not just function fingerprints", () => {
+    const start = stage.indexOf("-- Exact bounded ORIGINAL wiring");
+    const end = stage.indexOf(") wiring(relation,expected)", start);
+    expect(start).toBeGreaterThan(0); expect(end).toBeGreaterThan(start);
+    const declared = Object.fromEntries([...stage.slice(start, end).matchAll(/\('(private\.[^']+)','([^']+)'::jsonb\)/g)]
+      .map(([, relation, raw]) => [relation, JSON.parse(raw)]));
+    const relations = ["private.class_writer_acceptance_v1", "private.class_writer_row_transitions_v1",
+      "private.character_class_origin_v1", "private.character_creation_commands_v1"];
+    expect(Object.keys(declared)).toEqual(relations);
+    const frozen: Record<string, Record<string, unknown[]>> = Object.fromEntries(relations.map(relation => [relation, {}]));
+    const ddl = `${p1}\n${joint}`;
+    const matches = ddl.matchAll(/CREATE (CONSTRAINT )?TRIGGER (\w+)\s+(BEFORE|AFTER)\s+([\s\S]*?)\s+ON\s+(private\.\w+)\s+([\s\S]*?)EXECUTE FUNCTION (private\.\w+)\(([^)]*)\);/g);
+    for (const [, constraint, name, timing, events, relation, tail, fn, argumentsSql] of matches) {
+      if (!relations.includes(relation)) continue;
+      expect(tail).toContain("FOR EACH ROW"); expect(events).not.toContain(" OF ");
+      const args = [...argumentsSql.matchAll(/'([^']*)'/g)].map(([, value]) => value);
+      const mode = 1 + (timing === "BEFORE" ? 2 : 0) + (events.includes("INSERT") ? 4 : 0)
+        + (events.includes("DELETE") ? 8 : 0) + (events.includes("UPDATE") ? 16 : 0);
+      frozen[relation][name] = [mode, "O", `${fn}()`, Boolean(constraint) && tail.includes("DEFERRABLE"),
+        Boolean(constraint) && tail.includes("INITIALLY DEFERRED"), args.length,
+        Buffer.from(args.map(value => `${value}\0`).join(""), "utf8").toString("hex"), ""];
+    }
+    expect(Object.values(frozen).reduce((count, triggers) => count + Object.keys(triggers).length, 0)).toBe(8);
+    expect(declared).toEqual(frozen);
+    expect(stage.slice(end)).toContain("t.tgdeferrable,t.tginitdeferred,t.tgnargs,pg_catalog.encode(t.tgargs,'hex'),t.tgattr::text");
+    expect(stage.slice(end)).toContain("WHERE t.tgrelid=item.relation::regclass AND NOT t.tgisinternal");
+    expect(stage.slice(end)).toContain("IF actual IS DISTINCT FROM item.expected THEN RAISE EXCEPTION 'Original private bootstrap trigger wiring drift");
+    // These declaration counterexamples differ from original wiring; not native DML tests.
+    expect(frozen["private.character_class_origin_v1"].class_origin_origin_guard).toEqual([
+      31, "O", "private.class_origin_protected_row_guard_v1()", false, false, 2,
+      Buffer.from("origin\0character_id\0").toString("hex"), "",
+    ]);
+    expect(frozen["private.character_creation_commands_v1"].class_origin_creation_receipt_guard[6]).toBe(
+      Buffer.from("creation_receipt\0verified_actor_id,operation_id\0").toString("hex"));
+    expect(frozen["private.character_creation_commands_v1"].class_origin_creation_receipt_immutable[0]).toBe(27);
   });
   it("actual transaction journal/proof INSERTs precede native parent, origin/receipt/order and finalization", () => {
     const sql = body("create_empty_class_origin_character_v1");
