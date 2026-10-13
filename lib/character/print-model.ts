@@ -1,6 +1,6 @@
 import type { CharacterContextValue } from "@/lib/character/character-context";
 import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions-parser";
-import { formatModifier, getSaveModifier, getSkillModifier } from "@/lib/sheet/helpers";
+import { formatModifier, resolveSavingThrowModifier, getSkillModifier } from "@/lib/sheet/helpers";
 import { getWeaponAttack, getWeaponDisplay } from "@/lib/sheet/weapon-attack";
 import { getItemData } from "@/lib/inventory/helpers";
 import { resolveCastingMath } from "@/lib/spells/casting-math";
@@ -8,7 +8,7 @@ import { assertAbilityMechanics, getConfirmedAbilityModifier } from "@/lib/chara
 
 export interface PrintEntry { name: string; details: string; description: string; pin: string }
 export type CharacterPrintInput = Pick<CharacterContextValue,
-  "character" | "schema" | "evalResult" | "mechanics" | "assertMechanics" | "state" | "isOwner" | "hasSheet" | "reloadRequired" |
+  "character" | "schema" | "evalResult" | "savingThrowBonus" | "mechanics" | "assertMechanics" | "state" | "isOwner" | "hasSheet" | "reloadRequired" |
   "patchState" | "rollPersistencePending" | "rollPersistenceUncertain" | "pendingConcentrationCheck" |
   "contentRefs" | "contentSnapshotsComplete" | "inventory" | "currency" | "spells" | "slotResolution" | "maxSlots" | "slotState" | "pactSlotLevel" |
   "hitDicePools" | "resources" | "casterInfo" | "concentration" | "maxHp">;
@@ -52,7 +52,7 @@ function assertIdentity(row: { character_id?: string; content_definitions?: Pars
  * character narrative, arbitrary JSON, DM notes, campaign pages or item notes. */
 export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = new Date().toISOString()): CharacterPrintModel {
   const { character, schema, evalResult: result, state } = ctx;
-  ctx.assertMechanics({ computed: ["proficiency_bonus", "initiative"], values: [ctx.maxHp] });
+  ctx.assertMechanics({ computed: ["proficiency_bonus", "initiative"], values: [ctx.maxHp], savingThrows: schema.ability_scores.map(entry => entry.slug) });
   assertAbilityMechanics(ctx.mechanics, result, schema, { abilities: schema.ability_scores.map(entry => entry.slug), computed: ["proficiency_bonus", "initiative"], values: [ctx.maxHp] });
   if (!ctx.isOwner || !ctx.hasSheet) throw new Error("Print is available for your completed character sheets.");
   const resolution = ctx.slotResolution;
@@ -71,12 +71,18 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
   }
   for (const row of [...ctx.contentRefs, ...ctx.inventory, ...ctx.spells]) assertIdentity(row, character);
   for (const ref of ctx.contentRefs) pin(ref.content_id, ref.content_version, ref.content_definitions);
-  const bonus = result.computed.proficiency_bonus ?? 0;
+  const bonus = result.computed.proficiency_bonus;
   const abilityMod = (slug: string) => {
     const modifier = getConfirmedAbilityModifier(result, schema, slug);
     if (modifier === null) throw new Error("A saved ability modifier is unavailable.");
     return modifier;
   };
+  const saves = new Map(schema.ability_scores.map(ability => {
+    const savingThrow = resolveSavingThrowModifier(abilityMod(ability.slug), bonus, result.grants,
+      `saving_throw_${ability.slug}`, ctx.savingThrowBonus);
+    if (savingThrow.status !== "available") throw new Error(savingThrow.reason);
+    return [ability.slug, savingThrow.modifier] as const;
+  }));
   const skills = [...schema.skills].sort((a, b) => a.name.localeCompare(b.name)).map(skill => {
     const modifier = getSkillModifier(abilityMod(skill.ability), bonus, result.grants, skill.slug);
     return { name: skill.name, modifier: formatModifier(modifier), passive: 10 + modifier };
@@ -119,7 +125,7 @@ export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = 
     name: character.name,
     identity: `${character.game_systems.name} | Level ${character.level} | ${classNames.join(" / ")} | ${label(character.choices.race ?? "")} | ${label(character.choices.background ?? "")}`,
     capturedAt,
-    abilities: schema.ability_scores.map(ability => ({ name: ability.name, score: result.stats[ability.slug] ?? 10, modifier: formatModifier(abilityMod(ability.slug)), save: formatModifier(getSaveModifier(abilityMod(ability.slug), bonus, result.grants, `saving_throw_${ability.slug}`)) })),
+    abilities: schema.ability_scores.map(ability => ({ name: ability.name, score: result.stats[ability.slug] ?? 10, modifier: formatModifier(abilityMod(ability.slug)), save: formatModifier(saves.get(ability.slug)!) })),
     skills,
     stats,
     proficiencies: [...new Set(result.grants.filter(grant => grant.value === "proficient" || grant.value === "expertise").map(grant => `${label(grant.stat)} (${grant.value})`))],

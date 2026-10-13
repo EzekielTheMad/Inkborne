@@ -2,6 +2,7 @@ import type { CharacterPrintInput } from "@/lib/character/print-model";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { weaponDataSchema } from "@/lib/schemas/content-types/weapon";
 import { featureDataSchema } from "@/lib/schemas/content-types/feature";
+import { resolveSavingThrowBonus } from "@/lib/sheet/helpers";
 
 /** Original, rights-safe renderer fixtures. These model loaded evaluated values;
  * they do not establish rule-engine parity or live character hydration. */
@@ -15,7 +16,7 @@ export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrin
     skills: [{ slug: "arcana", name: "Arcana", ability: "intelligence" }, { slug: "athletics", name: "Athletics", ability: "strength" }, { slug: "perception", name: "Perception", ability: "wisdom" }], proficiency_levels: [], derived_stats: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [],
   };
   const character = { id, user_id: "owner", system_id: "system", campaign_id: "campaign", name: kind === "martial" ? "Mara Stonepath" : kind === "caster" ? "Iven Lanternkeeper" : "Tess Manyroads", visibility: "private" as const, archived: false, level: 5, base_stats: {}, choices: { classes: [{ slug: kind === "martial" ? "fighter" : "wizard", level: 5 }], race: "human", background: "courier" }, state: {}, narrative: { backstory: "FORBIDDEN_NARRATIVE" }, narrative_rich: { backstory_dm_notes: { type: "doc", content: [{ type: "text", text: "FORBIDDEN_DM" }] } }, created_at: "2026-10-11", primary_color: null, game_systems: { id: "system", slug: "dnd-5e-2014", name: "D&D 5e 2014", schema_definition: schema } } as CharacterPrintInput["character"];
-  const ctx: CharacterPrintInput = {
+  const ctx: Omit<CharacterPrintInput, "savingThrowBonus"> = {
     mechanics: { status: "available", capUnverified: false }, assertMechanics: () => {},
     character, schema, isOwner: true, hasSheet: true, reloadRequired: false, contentSnapshotsComplete: true,
     patchState: Object.assign(async () => true, { hasPendingWrites: () => false, runAction: async () => undefined }) as unknown as CharacterPrintInput["patchState"],
@@ -58,5 +59,6 @@ export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrin
     });
   }
   ctx.character.base_stats = Object.fromEntries(schema.ability_scores.map(ability => [ability.slug, ctx.evalResult.stats[ability.slug]]));
-  return ctx;
+  return { ...ctx, savingThrowBonus: resolveSavingThrowBonus(ctx.evalResult, ctx.schema,
+    ctx.contentRefs.flatMap(row => row.content_definitions.effects)) };
 }

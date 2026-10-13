@@ -45,13 +45,17 @@ export function CharacterPrintAction() {
   }, [model]);
   if (!ctx.isOwner || !ctx.hasSheet) return null;
   const mathUnavailable = ctx.mechanics.status !== "available" || ctx.casterInfo.castingMathStatus === "unavailable";
-  const busy = ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending || ctx.rollPersistenceUncertain || !!ctx.pendingConcentrationCheck || !ctx.contentSnapshotsComplete || ctx.slotResolution?.status !== "available" || mathUnavailable;
+  const savesUnavailable = ctx.savingThrowBonus?.status !== "available";
+  const busy = ctx.reloadRequired || ctx.patchState.hasPendingWrites() || ctx.rollPersistencePending || ctx.rollPersistenceUncertain || !!ctx.pendingConcentrationCheck || !ctx.contentSnapshotsComplete || ctx.slotResolution?.status !== "available" || mathUnavailable || savesUnavailable;
   return <>
     <div className="flex flex-wrap items-center justify-end gap-2 border-b border-border px-4 py-2">
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
-      {busy ? <p className="text-xs text-muted-foreground">{ctx.slotResolution?.status !== "available" ? "Spell slots are unavailable. Reload or restore saved class content before printing." : mathUnavailable ? "Casting values are unavailable. Reload or restore saved ability/class content before printing." : !ctx.contentSnapshotsComplete ? "Saved content is incomplete. Reload before printing." : "Finish saving and resolve pending play actions to print."}</p> : null}
+      {busy && !savesUnavailable ? <p className="text-xs text-muted-foreground">{ctx.slotResolution?.status !== "available" ? "Spell slots are unavailable. Reload or restore saved class content before printing." : mathUnavailable ? "Casting values are unavailable. Reload or restore saved ability/class content before printing." : !ctx.contentSnapshotsComplete ? "Saved content is incomplete. Reload before printing." : "Finish saving and resolve pending play actions to print."}</p> : null}
+      {savesUnavailable && <p role="status" className="text-xs text-muted-foreground">
+        {ctx.savingThrowBonus?.status === "unavailable" ? ctx.savingThrowBonus.reason : "Saving throw inputs are incomplete. Reload before printing."}
+      </p>}
       <Button ref={triggerRef} variant="outline" size="sm" disabled={busy} onClick={() => {
-        try { const captured = buildCharacterPrintModel(ctx); snapshotGuard.current = () => ctx.assertMechanics(); setModel(captured); setError(null); }
+        try { const captured = buildCharacterPrintModel(ctx); snapshotGuard.current = () => ctx.assertMechanics({ savingThrows: ctx.schema.ability_scores.map(entry => entry.slug) }); setModel(captured); setError(null); }
         catch (cause) { setError(cause instanceof Error ? cause.message : "The character could not be prepared for printing."); }
       }}>Print / Save PDF</Button>
     </div>

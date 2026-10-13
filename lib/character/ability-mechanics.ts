@@ -23,7 +23,11 @@ export function getConfirmedAbilityModifier(result: EvaluationResult, schema: Sy
   const value = declarations.length ? result.computed[name] : Math.floor((result.stats[ability] - 10) / 2);
   return Number.isFinite(value) ? value : null;
 }
-export interface MechanicsRequirement { abilities?: readonly string[]; computed?: readonly string[]; values?: readonly number[] }
+export interface MechanicsRequirement {
+  abilities?: readonly string[]; computed?: readonly string[]; values?: readonly number[];
+  /** Ability saves additionally depend on the provider's admitted evaluated bonus. */
+  savingThrows?: readonly string[];
+}
 export function assertAbilityMechanics(readiness: AbilityMechanics, result: EvaluationResult, schema: SystemSchemaDefinition, requirement: MechanicsRequirement = {}): void {
   if (readiness.status !== "available") throw new Error(readiness.reason);
   if ((requirement.abilities ?? []).some(slug => getConfirmedAbilityModifier(result, schema, slug) === null)

@@ -17,7 +17,7 @@ import type { PendingConcentrationCheck } from "@/lib/active-effects/concentrati
 import { buildConcentrationSaveRequest } from "@/lib/active-effects/concentration";
 import { collectRollModifiers } from "@/lib/active-effects/helpers";
 import { rollModifierKindFor } from "@/lib/rolls/requests";
-import { formatModifier, getSaveModifier } from "@/lib/sheet/helpers";
+import { formatModifier, resolveSavingThrowModifier } from "@/lib/sheet/helpers";
 import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
 import {
   useActiveEffects,
@@ -42,7 +42,7 @@ import {
  */
 export function ConcentrationPrompt() {
   const { concentration, pendingCheck, resolveCheck } = useConcentration();
-  const { evalResult, schema } = useCharacter();
+  const { evalResult, schema, savingThrowBonus } = useCharacter();
   const { state, patchState } = useCharacterState();
   const { roll, assertMechanics } = useRolls();
   const { activeEffects } = useActiveEffects();
@@ -65,17 +65,19 @@ export function ConcentrationPrompt() {
   if (!pendingCheck || !concentration) return null;
 
   const { grants, computed } = evalResult;
-  const conMod = getConfirmedAbilityModifier(evalResult, schema, "constitution") ?? Number.NaN;
-  const proficiencyBonus = computed.proficiency_bonus ?? 0;
-  const saveModifier = getSaveModifier(
+  const conMod = getConfirmedAbilityModifier(evalResult, schema, "constitution");
+  const proficiencyBonus = computed.proficiency_bonus;
+  const savingThrow = resolveSavingThrowModifier(
     conMod,
     proficiencyBonus,
     grants,
     "saving_throw_constitution",
+    savingThrowBonus,
   );
+  const saveModifier = savingThrow.status === "available" ? savingThrow.modifier : Number.NaN;
 
   function handleRollSave() {
-    if (!pendingCheck || !concentration || failedRollCheck === pendingCheck) return;
+    if (!pendingCheck || !concentration || failedRollCheck === pendingCheck || savingThrow.status !== "available") return;
     const check = pendingCheck;
     let rolled = false;
     setSaveError(null);
@@ -84,13 +86,13 @@ export function ConcentrationPrompt() {
       // The roll insert is still separate from the conditional drop save below.
       const result = await patchState.runAction(state, () => {
         if (currentCheck.current !== check) throw new Error("The pending concentration check changed before this roll.");
-        assertMechanics({ abilities: ["constitution"], computed: ["proficiency_bonus"], values: [saveModifier, check.dc] });
+        assertMechanics({ abilities: ["constitution"], computed: ["proficiency_bonus"], values: [saveModifier, check.dc], savingThrows: ["constitution"] });
         const generated = roll(buildConcentrationSaveRequest(
           concentration.spell_name,
           saveModifier,
           check,
           collectRollModifiers(activeEffects, rollModifierKindFor("concentration")),
-        ), { abilities: ["constitution"], computed: ["proficiency_bonus"], values: [saveModifier, check.dc] });
+        ), { abilities: ["constitution"], computed: ["proficiency_bonus"], values: [saveModifier, check.dc], savingThrows: ["constitution"] });
         rolled = true;
         return { patch: {}, result: generated };
       });
@@ -131,6 +133,7 @@ export function ConcentrationPrompt() {
         </DialogHeader>
 
         {saveError?.check === pendingCheck && <p role="alert" className="text-sm text-destructive">{saveError.message}</p>}
+        {savingThrow.status !== "available" && <p role="status" className="text-sm text-muted-foreground">{savingThrow.reason}</p>}
         <DialogFooter>
           <Button variant="outline" disabled={pending} onClick={() => void resolveCheck("keep")}>
             Keep
@@ -138,8 +141,8 @@ export function ConcentrationPrompt() {
           <Button variant="outline" disabled={pending} onClick={dropManually}>
             Drop
           </Button>
-          <Button disabled={pending || failedRollCheck === pendingCheck} onClick={handleRollSave}>
-            Roll CON Save ({formatModifier(saveModifier)})
+          <Button disabled={pending || failedRollCheck === pendingCheck || savingThrow.status !== "available"} onClick={handleRollSave}>
+            Roll CON Save ({savingThrow.status === "available" ? formatModifier(saveModifier) : "Unavailable"})
           </Button>
         </DialogFooter>
       </DialogContent>

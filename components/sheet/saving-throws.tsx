@@ -1,11 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { formatModifier, isProficient, getSaveModifier } from "@/lib/sheet/helpers";
+import { formatModifier, resolveSavingThrowModifier } from "@/lib/sheet/helpers";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import { getConfirmedAbilityModifier } from "@/lib/character/ability-mechanics";
+import { useCharacter } from "@/lib/character/character-context";
 
 interface SavingThrowsProps {
   schema: SystemSchemaDefinition;
@@ -13,20 +14,25 @@ interface SavingThrowsProps {
 }
 
 export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
+  const { savingThrowBonus } = useCharacter();
   const { grants, computed } = evalResult;
-  const proficiencyBonus = computed.proficiency_bonus ?? 0;
+  const proficiencyBonus = computed.proficiency_bonus;
 
   return (
     <div className="rounded-lg border border-border bg-card p-3 space-y-2">
       <h3 className="text-accent font-semibold text-sm uppercase tracking-wide">
         Saving Throws
       </h3>
+      {savingThrowBonus?.status !== "available" && <p role="status" className="text-xs text-muted-foreground">
+        {savingThrowBonus?.reason ?? "Saving throw inputs are incomplete. Reload before rolling."}
+      </p>}
       <div className="grid grid-cols-2 gap-1.5">
         {schema.ability_scores.map((ability) => {
           const saveSlug = `saving_throw_${ability.slug}`;
-          const abilityMod = getConfirmedAbilityModifier(evalResult, schema, ability.slug) ?? Number.NaN;
-          const proficient = isProficient(grants, saveSlug);
-          const modifier = getSaveModifier(abilityMod, proficiencyBonus, grants, saveSlug);
+          const savingThrow = resolveSavingThrowModifier(getConfirmedAbilityModifier(evalResult, schema, ability.slug),
+            proficiencyBonus, grants, saveSlug, savingThrowBonus);
+          const proficient = savingThrow.status === "available" && savingThrow.proficient;
+          const modifier = savingThrow.status === "available" ? savingThrow.modifier : Number.NaN;
 
           return (
             <RollPopover
@@ -34,7 +40,8 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
               kind="save"
               label={`${ability.name} Save`}
               modifier={modifier}
-              mechanicsRequirement={{ abilities: [ability.slug], computed: ["proficiency_bonus"], values: [modifier] }}
+              mechanicsRequirement={{ abilities: [ability.slug], computed: ["proficiency_bonus"], values: [modifier], savingThrows: [ability.slug] }}
+              disabled={savingThrow.status !== "available"}
               ariaLabel={`Roll ${ability.name} saving throw`}
               className={cn(
                 "flex items-center gap-1.5 rounded-md border px-2 py-1 text-left",
@@ -49,9 +56,9 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
                   "text-xs leading-none select-none",
                   proficient ? "text-character-fg" : "text-muted-foreground",
                 )}
-                aria-label={proficient ? "Proficient" : "Not proficient"}
+                aria-label={savingThrow.status !== "available" ? "Saving throw unavailable" : proficient ? "Proficient" : "Not proficient"}
               >
-                {proficient ? "●" : "○"}
+                {savingThrow.status !== "available" ? "—" : proficient ? "●" : "○"}
               </span>
 
               {/* Ability abbreviation */}
@@ -71,8 +78,10 @@ export function SavingThrows({ schema, evalResult }: SavingThrowsProps) {
                   proficient ? "text-character-fg" : "text-muted-foreground",
                 )}
               >
-                {formatModifier(modifier)}
+                {savingThrow.status === "available" ? formatModifier(modifier) : "Unavailable"}
               </span>
+              {savingThrow.status !== "available" && savingThrowBonus?.status === "available"
+                && <span className="text-xs text-muted-foreground">{savingThrow.reason}</span>}
             </RollPopover>
           );
         })}

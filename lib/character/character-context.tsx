@@ -21,6 +21,7 @@ import type {
   StructuredSources,
 } from "@/lib/engine/evaluator";
 import { evaluate } from "@/lib/engine/evaluator";
+import { resolveSavingThrowBonus, resolveSavingThrowModifier, type SavingThrowBonus } from "@/lib/sheet/helpers";
 import { resolveAbilityMechanics, assertAbilityMechanics, getConfirmedAbilityModifier, type AbilityMechanics, type MechanicsRequirement } from "@/lib/character/ability-mechanics";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { Effect } from "@/lib/types/effects";
@@ -167,6 +168,7 @@ export interface CharacterContextValue {
 
   // Evaluation
   evalResult: EvaluationResult;
+  savingThrowBonus: SavingThrowBonus;
   mechanics: AbilityMechanics;
   mechanicsToken: object;
   assertMechanics: (requirement?: MechanicsRequirement) => void;
@@ -404,29 +406,27 @@ export function CharacterProvider({
     [activeEffects],
   );
 
-  // Derived: evaluation result
+  const evaluationEffects = useMemo(() => [
+    ...allEffects, ...equippedArmorEffects, ...activeEffectEffects,
+  ], [allEffects, equippedArmorEffects, activeEffectEffects]);
+  // Derived: evaluation result, retaining the same ordered bonus admission inputs.
   const evalResult = useMemo(() => {
-    const combinedEffects = [
-      ...allEffects,
-      ...equippedArmorEffects,
-      ...activeEffectEffects,
-    ];
     return evaluate(
       baseStatsWithLevel,
-      combinedEffects,
+      evaluationEffects,
       schema,
       structuredSources,
       derivedState as Record<string, unknown>,
     );
   }, [
     baseStatsWithLevel,
-    allEffects,
-    equippedArmorEffects,
-    activeEffectEffects,
+    evaluationEffects,
     schema,
     structuredSources,
     derivedState,
   ]);
+  const savingThrowBonus = useMemo(() => resolveSavingThrowBonus(evalResult, schema, evaluationEffects),
+    [evalResult, schema, evaluationEffects]);
 
   const currency = (state.currency as Currency) ?? DEFAULT_CURRENCY;
   const [spells, setSpells] = useState<CharacterSpell[]>(initialSpells);
@@ -435,8 +435,8 @@ export function CharacterProvider({
     [baseStatsWithLevel, allEffects, schema, structuredSources, state]);
   const mechanics = useMemo(() => resolveAbilityMechanics(baseStatsWithLevel, evalResult, schema, permanentResult), [baseStatsWithLevel, evalResult, schema, permanentResult]);
   const mechanicsSnapshot = useMemo(() => ({ character, contentRefs, contentSnapshotsComplete, schema, structuredSources, baseStatsWithLevel, allEffects,
-    derivedState, inventory, mechanics, evalResult, permanentResult, maxHp, isOwner, spells, pendingConcentrationCheck }),
-  [character, contentRefs, contentSnapshotsComplete, schema, structuredSources, baseStatsWithLevel, allEffects, derivedState, inventory, mechanics, evalResult, permanentResult, maxHp, isOwner, spells, pendingConcentrationCheck]);
+    derivedState, inventory, mechanics, evalResult, evaluationEffects, savingThrowBonus, permanentResult, maxHp, isOwner, spells, pendingConcentrationCheck }),
+  [character, contentRefs, contentSnapshotsComplete, schema, structuredSources, baseStatsWithLevel, allEffects, derivedState, inventory, mechanics, evalResult, evaluationEffects, savingThrowBonus, permanentResult, maxHp, isOwner, spells, pendingConcentrationCheck]);
   const committedMechanics = useRef(mechanicsSnapshot);
   useLayoutEffect(() => { committedMechanics.current = mechanicsSnapshot; }, [mechanicsSnapshot]);
   const assertMechanics = useCallback((requirement: MechanicsRequirement = {}) => {
@@ -444,7 +444,12 @@ export function CharacterProvider({
     if (committedMechanics.current !== mechanicsSnapshot) throw new Error("Saved mechanical inputs changed. Use the current loaded controls before trying again.");
     if (!isOwner || !contentSnapshotsComplete) throw new Error("Complete owned saved mechanics are required for this action.");
     assertAbilityMechanics(mechanics, evalResult, schema, requirement);
-  }, [mechanicsSnapshot, isOwner, contentSnapshotsComplete, mechanics, evalResult, schema, patchState, state]);
+    for (const ability of requirement.savingThrows ?? []) {
+      const savingThrow = resolveSavingThrowModifier(getConfirmedAbilityModifier(evalResult, schema, ability),
+        evalResult.computed.proficiency_bonus, evalResult.grants, `saving_throw_${ability}`, savingThrowBonus);
+      if (savingThrow.status !== "available") throw new Error(savingThrow.reason);
+    }
+  }, [mechanicsSnapshot, isOwner, contentSnapshotsComplete, mechanics, evalResult, schema, patchState, state, savingThrowBonus]);
 
   // --- Spells ---
 
@@ -668,6 +673,7 @@ export function CharacterProvider({
   const recordRoll = useCallback(
     (request: RollRequest, requireConfirmation = false, requirement?: MechanicsRequirement) => {
       if (["check", "save", "attack", "initiative", "hit_die", "concentration"].includes(request.kind) && !requirement) throw new Error("This derived roll needs current saved mechanical inputs.");
+      if (["save", "concentration"].includes(request.kind) && !requirement?.savingThrows?.length) throw new Error("This saving throw needs its current evaluated bonus inputs.");
       if (requirement) assertMechanics(requirement);
       // Active-effect roll modifiers (Bless +1d4, Bane -1d4…) are collected
       // by the roll SURFACES (RollPopover, ConcentrationPrompt) via
@@ -785,6 +791,7 @@ export function CharacterProvider({
     reloadRequired,
     patchState,
     evalResult,
+    savingThrowBonus,
     portrait,
     setPortrait,
     inventory,
@@ -871,6 +878,7 @@ export function useCharacter() {
     isDm: ctx.isDm,
     hasSheet: ctx.hasSheet,
     evalResult: ctx.evalResult,
+    savingThrowBonus: ctx.savingThrowBonus,
     mechanics: ctx.mechanics,
     mechanicsToken: ctx.mechanicsToken,
     assertMechanics: ctx.assertMechanics,

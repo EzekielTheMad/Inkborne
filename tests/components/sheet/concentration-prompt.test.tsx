@@ -6,6 +6,9 @@ import type { ActiveEffect } from "@/lib/types/active-effects";
 import type { ConcentrationState } from "@/lib/types/spells";
 import type { RollRequest } from "@/lib/dice/types";
 import { raceParitySchema } from "../../fixtures/r06-race-parity";
+import { resolveSavingThrowBonus } from "@/lib/sheet/helpers";
+import { collectActiveEffects } from "@/lib/active-effects/helpers";
+import type { EvaluationResult } from "@/lib/engine/evaluator";
 
 // ---------------------------------------------------------------------------
 // Context mocks
@@ -46,7 +49,8 @@ vi.mock("@/lib/character/character-context", () => ({
     resolveCheck,
     dropPatch: {},
   }),
-  useCharacter: () => ({ evalResult: mockEvalResult, schema: raceParitySchema }),
+  useCharacter: () => ({ evalResult: mockEvalResult, schema: raceParitySchema,
+    savingThrowBonus: resolveSavingThrowBonus(mockEvalResult as unknown as EvaluationResult, raceParitySchema, collectActiveEffects(mockActiveEffects)) }),
   useCharacterState: () => ({ state: {}, patchState: { runAction: async (_state: unknown, compute: () => { result: unknown }) => compute().result } }),
   // Positive component fixture injects mechanics; provider refusal is separate.
   useRolls: () => ({ rolls: [], roll, assertMechanics: vi.fn() }),
