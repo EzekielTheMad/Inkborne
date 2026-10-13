@@ -2,8 +2,9 @@
 
 2026-10-12. Sole writer in r12-passive-feature-worker/codex/r12-passive-features,
 basis f2da01426d174dc51eba8fe441d508a5587f3f86. Independent plan approval preceded
-this source. Source preparation ONLY; all tests/typecheck/lint/SQL/runtime unrun
-under root's heavy hold. No install, network/provider, SQL/PGlite, browser/server,
+this source. At initial source freeze all tests/typecheck/lint/SQL/runtime were
+unrun under root's heavy hold; the later released local gates are recorded below.
+No install, network/provider, SQL/PGlite, browser/server,
 Auth/readiness activation, product imports or other-worktree changes.
 
 Seven additive paths:
@@ -85,4 +86,39 @@ Review correction over immutable bdc9086: replay SELECT now aliases its table an
 qualifies command.receipt/character_id/operation_id, avoiding the local receipt
 variable collision under default plpgsql.variable_conflict=error. Model/static
 guards require that exact qualified lookup. No other SQL bodies/privileges/proofs
-changed; correction gates and SQL execution remain unrun under the heavy hold.
+changed; at correction freeze gates and SQL execution were unrun under the hold.
+
+## Released narrow acceptance — 2026-10-13
+
+Both owner families independently approved bdc9086 plus bf171408 namespace/source-
+binding correction before root released the exclusive narrow slot. All commands
+ran sequentially on CLEAN bf1714081846d3ae1a497b68c7d10414edb106ed; no code/test
+correction, failed gate or assertion change occurred during verification:
+
+- `npm.cmd test -- tests/lib/character/class-origin-confirmation.test.ts tests/supabase/class-origin-confirmation-staged-contract.test.ts tests/lib/character/class-origin-command-model.test.ts tests/supabase/class-origin-staged-contract.test.ts tests/lib/character/class-origin-joint-revision.test.ts tests/supabase/class-origin-joint-revision-staged-contract.test.ts --maxWorkers=2`
+  — PASS6 files/172 tests, exit0; Vitest28.06s.
+- `npm.cmd run typecheck` — PASS, exit0.
+- `npm.cmd run lint` — PASS, exit0, zero warnings under the package script.
+
+Original first stdout/stderr/process/resource/cleanup receipts are preserved at
+`C:/Users/kaios/Documents/Codex/2026-10-11/task-2/verification/r06-class-origin-confirmation-20261013/`.
+Manifest `manifest.json` SHA256
+`B4584A133A9E3AAD5A7A0C4238E42A3E61F2E6D75B7DF1ECBB439CA74B6267FD` binds clean tested
+source, six exact worktree-byte/Git blobs, commands, resource snapshots and actual
+OS birth/PID/parent/command/launch cwd/start for21 observed process identities.
+Each gate and fresh final readback found remainingOwned0 and ownedListeners0.
+Global process count484→468, free physical memory5450664→5758532KiB and CPU48→53%
+are recorded system observations, not an attribution of unrelated activity.
+The manifest also binds the frozen Git-object R09 authority dependency1d028063.
+
+This completion commit changes only this handoff; tested source stays byte-identical
+to bf171408. Heavy slot was explicitly released after final readback; no further
+worker gates or background work remain. Package full check/build/browser belong to
+root's subsequent combined acceptance, and were not run in this narrow slot.
+
+The172 assertions prove local source binding/reference behavior only. Static
+constructor/token removal is not semantic native-before evidence; genuine injected
+context/expiry/history/access negatives remain separate pure-model controls. No SQL
+or PGlite execution, positive Auth, provider read/write, actual receipt persistence,
+native role/RLS/trigger/lock/time/rollback/concurrency or gameplay cutover is proved.
+All earlier Auth/readiness/bootstrap/compiler/all-writer/copy/G2/C1v2/C2 gaps remain.
