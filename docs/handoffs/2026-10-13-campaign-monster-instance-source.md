@@ -412,3 +412,36 @@ owned listeners0, no cleanup kill needed; processes471→469, CPU28→35%, free 
 Heavy slot explicitly released immediately after readback. This final follow-up
 is docs-only; all0e8 source/test/SQL/default-off bytes unchanged. M5/native G2/G3/
 recovery acceptance and tests/type/lint closure are still incomplete.
+
+## Independent pending disposition — LOCAL DISABLED SOURCE ONLY
+
+Root/m1 explicitly approved marking exactly three retained stress cases `.skip`,
+UNVERIFIED, after the bounded attempts. Their complete bodies, scheduling setup,
+response getter/ID, enabled-DOM, original UUID/intent/marker, one-call, committed
+definite-refusal and same-operation replay oracles are preserved unchanged. No
+assertion is removed/reversed, no product behavior or scaffolding is added. This
+is NOT M5 acceptance, a risk waiver, stress proof or native/default-gate enablement.
+The three generated cases remain required acceptance items:
+
+- **M5-STRESS-SAVED — UNVERIFIED:** `actual DM monster form with simulated transport only > native settlement-gap submit after immediate saved cannot replace lifetime operation/intent/marker`.
+- **M5-STRESS-UNCERTAIN — UNVERIFIED:** `actual DM monster form with simulated transport only > native settlement-gap submit after immediate uncertain cannot replace lifetime operation/intent/marker`.
+- **M5-STRESS-ERROR — UNVERIFIED:** `actual DM monster form with simulated transport only > native settlement-gap submit after immediate error cannot replace lifetime operation/intent/marker`.
+
+Exact failed setup condition in each collected attempt: after two Promise microticks,
+actual parser responseObserved=true but `form.querySelector("fieldset").disabled`
+was true; oracle requires false (old enabled controls before second native submit).
+The test stops there before second dispatch/lifetime oracles; ordinary pending,
+recovery and explicit accepted repeat-edit positives do NOT prove that stress gap.
+Required closure remains actual browser/native proof of settlement-gap duplicate
+admission and original-operation/intent/marker retention, saved/uncertain denial,
+and definite initial refusal release only after matching committed settlement;
+same-operation recovery stays explicit. Root canonical ledger will retain these
+requirements after its integration unfreeze. No native/runtime approval is inferred.
+
+All four immutable attempts remain preserved:5f fixture collection failure with
+only static6passed;0aec,587,0e8 each collected134passed/3failed. Future narrow output
+is EXPECTED134passed/3SKIPPED, not137passed; this is NOT observed yet. This skip-only
+test line/comments plus handoff requires exact source review BEFORE any gate;
+typecheck/lint and new focused count remain UNRUN. Product/native gates remain
+FALSE. All11 production paths, fixture0aec, staged SQL, DAL/schema/ACL/dependencies
+are unchanged. No processes/heavy/SQL/network/runtime work ran for this disposition.
