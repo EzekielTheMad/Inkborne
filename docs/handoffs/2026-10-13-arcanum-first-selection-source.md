@@ -138,3 +138,35 @@ changes the modeled parent system, observes full-history refusal, then preserves
 original receipt replay/resolve and raw spent state. Native history-policy acceptance
 and any future system-change writer fence remain unproved. Exhaustion, v1 copy refusal,
 unconditional NEW refusal and all13false/Auth denial are unchanged.
+
+## First bounded gates at reviewed ee3d261 — retained import failure
+
+Both source-family reviewers approved ee3d261ce203124a316f41777e4eea2a813d0848.
+With one explicitly released exclusive lane, frozen clean source ran exactly:
+
+- npm.cmd test -- tests/spells/arcanum-selection.test.ts
+  tests/supabase/arcanum-selection-staged.test.ts tests/spells/advanced-binding.test.ts
+  --maxWorkers=2: exit1; existing advanced-binding88 PASS, two new suites FAILED
+  import/setup with ZERO collected tests. durable-hit-die-kernel-model.ts imports
+  server-only, whose default test resolution throws before either suite collects.
+  This is neither a semantic invariant failure nor native SQL compilation evidence.
+- npm.cmd run typecheck: exit0, PASS.
+- npm.cmd run lint: exit0, PASS with zero warnings allowed.
+
+Original first stdout/stderr/process/result receipts are retained under this worker's
+test-results/arcanum-first-selection-local. Immutable manifest.json SHA256:
+4C01349F9043C72273D1D6C146B69EC88D154B722F1737CA5C28795CCD0CA874.
+Each receipt binds source/status, exact command/cwd/start/end and actual OS PID,
+parent PID, CreationDate/birth and command line; before/after process count, memory,
+CPU load/listeners and lock hashes are recorded. Process counts focused469→468,
+typecheck468→469, lint504→473 are system-wide samples, not task attribution. Final
+fresh readback found all18 recorded identities absent and ZERO owned listeners.
+No forced cleanup was needed. package-lock SHA256 stayed identical for all gates;
+source remained clean/frozen. The heavy lane was explicitly released immediately.
+
+No self-fix or retry occurred. Smallest proposed TEST-only correction for separate
+source review: hoisted vi.mock("server-only", () => ({})) in the two new entrypoints,
+matching existing server-only model/server-DAL tests. Original production/server
+boundary, source model, parser, stage and every assertion remain unchanged. Narrow
+rerun needs explicit review/resource release. All new Arcanum semantic controls are
+still UNRUN, source-only disabled; no PostgreSQL/RLS/Auth/issuance acceptance follows.
