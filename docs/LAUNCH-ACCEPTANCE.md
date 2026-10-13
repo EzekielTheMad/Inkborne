@@ -26,6 +26,40 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Current core checkpoint — 2026-10-13
 
+Latest combined tested source **`710c3fcf6e85cbaeb46b72f38b7d835e4eab59ec`**
+passed `npm.cmd run check`: typecheck, zero-warning lint, **360 files / 4,862
+passed / three UNVERIFIED M5 skips**. The production build passed at the same
+clean source using synthetic build credentials. All 386 check and 22 build
+recorded identities exited; owned readbacks were empty.
+
+The genuine fresh-character bootstrap is integrated from reviewed source `4694b2d`
+and tested handoff `ac67f98`. Its focused 35 tests, typecheck and lint passed;
+21 receipt hashes and 17 original process identities were independently checked.
+This is staged, unavailable SQL: no native execution, actual character creation,
+class acquisition, writer cutover or Auth acceptance is implied.
+
+M5 has a real pending descriptor for this source, SHA256
+`89e78f557f32c3213712fc549957a0fec48a4020fb6d133de75975e8581f1972`.
+Two guard-only attempts **failed**. The first stopped before fork on a relative
+launcher command; its 18 recorded identities exited. A reviewed absolute-path
+driver correction reached the child, then a native observer error stopped the
+child in built-in source binding. Its supervisor stalled awaiting close. A separate
+reviewed one-off cleanup terminated only that exact held supervisor after proving
+no descendants or listeners; all 55 recorded identities were independently absent
+at 22:25:47 UTC. The parser's first zero-action refusal is preserved. This cleanup
+does not accept the guard, its cancellation adapter, phase allocations, or the
+44 browser cases. No browser, server, bundle execution or SQL ran in these attempts.
+
+The saving-throw measurement correction `ade9854` / handoff `e9ac35f` remains in
+its worker. Finite source fixes passed review and byte checks; FIRST-bootstrap
+residual-clock assurance remains **HOLD**, so no measurement release or integration
+is inferred. The ordinary 30-case / 43-screenshot / eight-PDF gate remains UNRUN.
+The first-class prerequisite plan `bc9ec36` passed M1 plan review; original-owner
+review is pending before source work. Native materializers and the actual issuer
+remain separate requirements. See [checkpoint evidence](handoffs/2026-10-13-core-checkpoint-710c3fc.md).
+
+### Preserved earlier checkpoint — 534b5d8
+
 Latest combined tested source `534b5d87d99fd3d3b5dea3ea7ebddb1bdc759173` passed
 `npm.cmd run check` with two workers: **359 files / 4,839 passed / three skipped**,
 typecheck and zero-warning lint. The three skips remain UNVERIFIED M5 stress

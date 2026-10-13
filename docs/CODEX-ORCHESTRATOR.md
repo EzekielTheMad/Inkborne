@@ -10,6 +10,20 @@ in the backlog and the JSON prototype unused. Do not pursue a PDF layout decisio
 or build another importer until resumed. Earlier PDF-before-beta instructions are
 superseded for active execution; no broader removal or post-beta timing is assumed.
 
+Latest combined tested source **710c3fc** passed typecheck/lint,360 files/4,862
+tests with three UNVERIFIED M5 skips, and production build. All386 check/22 build
+identities exited. Reviewed fresh-bootstrap source is integrated, staged/off/unapplied.
+Two M5 guard-only attempts failed; the second's stalled supervisor was separately
+cleaned by exact held-object identity and all55 originals independently absent.
+Pending descriptor89e78f exists; guard/phase/browser/native acceptance remains open.
+Do not retry before reviewed observer-diagnostic/exit-versus-close correction.
+Saving-bonus sourceade9854/e9ac35f remains worker-only with FIRST-bootstrap clock
+HOLD and no measurement release. First-class prerequisite planbc9ec36 awaits
+original R09 review after M1 approval; source work remains held until both reviews.
+See [current checkpoint](handoffs/2026-10-13-core-checkpoint-710c3fc.md).
+
+Preserved earlier checkpoint follows.
+
 Latest combined tested source `534b5d8` passed359 files/4,839 tests with three
 UNVERIFIED M5 skips, typecheck/lint and fresh synthetic build. All378 check/22 build
 identities exited/listeners empty. M6 exact seven-blob/28-receipt/36-identity proof

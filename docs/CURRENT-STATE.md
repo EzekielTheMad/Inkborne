@@ -10,6 +10,23 @@ unused, with no app upload or saving path. These decisions supersede the older
 pending-format and PDF-before-beta execution instructions below. Existing PDF
 export and shipped spell/feat importer behavior remain in scope for preservation.
 
+Latest combined tested source **`710c3fc`** passed typecheck, zero-warning lint,
+**360 files / 4,862 tests / three UNVERIFIED M5 skips**, and a fresh production
+build. All 386 check / 22 build identities exited. Reviewed fresh-character
+bootstrap source is integrated and locally checked; staged SQL remains unavailable
+and unapplied. No actual class acquisition or native acceptance follows.
+
+Both M5 guard-only attempts failed; the second's child exited and its stalled
+supervisor required exact held-object cleanup. Independent final readback found
+all 55 recorded identities absent and no listeners. The pending descriptor exists,
+but guard timing/cancellation/browser acceptance remains open. Saving-throw
+measurement fixes remain in their worker with FIRST-bootstrap clock HOLD; its
+30 cases / 43 screenshots / eight PDFs remain UNRUN. First-class prerequisite
+plan `bc9ec36` is under original-owner review after M1 approval. Details and
+preserved failures: [710c3fc checkpoint](handoffs/2026-10-13-core-checkpoint-710c3fc.md).
+
+Preserved earlier checkpoint follows.
+
 Latest combined tested source `534b5d8` passed **359 files / 4,839 tests / three
 UNVERIFIED M5 skips**, typecheck and zero-warning lint with two workers; fresh
 synthetic build passed. All 378 check/22 build identities exited, with empty owned
