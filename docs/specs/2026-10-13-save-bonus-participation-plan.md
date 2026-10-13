@@ -62,6 +62,12 @@ effect list. Canonical effect validation remains admission only; raw arrays unch
   string, dice string or mechanical grant op is unsupported for this numeric target,
   never accepted as evaluator's implicit0. Conservative refusal includes an
   unsupported raw candidate even if inactive; no condition interpretation is invented.
+  A saving_throw_bonus formula with tag ac_formula is also unavailable: actual
+  evaluator.ts:268–290 routes every such tagged formula to armor_class regardless
+  of its stat. Its absent bonus result cannot be accepted as neutral0. Validate
+  this raw routing conflict before the absence/computed branches, including when
+  another numeric bonus already exists. Do not remove the tag, rerun the formula,
+  change AC or rewrite the evaluator; retain the raw entry for recovery/review.
   Valid fractional intermediate operands may remain in the evaluator, but the final
   evaluated bonus and final ability+PB+bonus modifier must be safe integers.
 - Existing dice/parser.ts permits plain integer modifiers, not decimal terms.
@@ -140,6 +146,7 @@ failure and exact finally source-byte restoration, with separate before/after SH
 | Absent, explicit0, negative; two distinct +1 effects | Neutral absent/zero retained; negative reduces; evaluator's +2 aggregate consumed once, no content/effect dedup or helper sum. Raw sources/order unchanged. |
 | Existing condition true/false; inactive/expired active entries | Use actual saved/derived state and collection; true +1, false/expired neutral0; no helper predicate rewrite. |
 | set/add/multiply plus formula-last; declared computed target | Consume evaluator's exact finite integer output; preserve nonlinear ordering. Unique declared computed value wins; missing/duplicate/nonfinite declarations never fallback. |
+| Real evaluate of formula stat saving_throw_bonus, expr1, with/without tag ac_formula | Untagged actual evaluation produces bonus1 and the proficient CON modifier +5. Tagged evaluation has no bonus key under the shipped schema, but raw admission must make all six saves unavailable rather than accept neutral0/+4. Repeat with an existing numeric bonus to prevent a convenient-value fallback; original routing/tag/effects and AC result remain untouched. |
 | Numeric-looking/dice string, unsupported op, fractional output, overflow sum | Unavailable before RNG/log/DAL/window; no rounding/clamping/default0. Valid fractional intermediate yielding integer is a positive control. |
 | CON +1 and active roll_save 1d4/-1d4 | Requests retain one flat +1 contribution plus one rider occurrence/attribution; advantage/disadvantage and existing keep/drop recovery remain. Paper modifier contains no rolled rider. |
 | Retained save/CON/print after active input/state/proof-only change | Zero protected side effects; original logs/state unchanged. Independent action and manual CON controls remain usable. |

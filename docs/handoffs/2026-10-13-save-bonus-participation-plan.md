@@ -19,6 +19,13 @@ Class role, legacy save_ namespace, C1v2/P1/source proof and G2 remain open. Pro
 baseline exercises actual producer→evaluate→provider/consumers with complete
 canonical fixtures and unchanged no-bonus positives, not fabricated stats alone.
 
+Finite review correction over preserved0d1d94f: refuse a saving_throw_bonus formula
+tagged ac_formula before any absent-neutral0/computed admission. Actual fixed-root
+evaluator routes that tag to armor_class regardless of stat. Paired real-evaluate
+expr1 controls require untagged bonus1/+5 positive versus tagged unavailable,
+including a preexisting bonus; no formula rerun/tag cleanup/evaluator or AC rewrite.
+These controls remain proposed/unrun; only the two owned plan docs were amended.
+
 All tests/UI and before/after controls are proposed/unrun. Only local Git/file reads
 and these docs were performed; no Node/tests/type/lint/build/install/server/browser/
 native observer/SQL/network/provider/secrets or process startup. Freeze docs for
