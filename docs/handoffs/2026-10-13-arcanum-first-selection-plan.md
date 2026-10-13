@@ -1,35 +1,42 @@
-# M6 first-selection discovery and plan freeze — docs only
+# M6 first-selection amended plan freeze — compile-disabled, docs only
 
-Frozen inspected root9f848d4658ac9c523d548d51c0f5a19710de95d8; sole writer existing
-M5 worker at62a86a23fa5c040cf62eb7ab475b64aefbc5e364. ONLY new owned plan and this
-handoff. All M5 source/test/receipt history and other worktrees preserved. No Node,
-npm/tests/SQL/network/runtime/credentials/flags/browser/build or helpers edited.
+Discovery frozen root9f848d4658ac9c523d548d51c0f5a19710de95d8; originalddae proposal
+retained immutable in Git. Sole writer M5 worker62a frozen production/history; ONLY
+its two new Arcanum plan/handoff docs amended. No Node/npm/tests/SQL/network/runtime,
+credentials/flags/build/browser/provider or other worktree edits.
 
-Actual advanced casting is blocked: advisory model has no production consumer;
-CastChoice/dialog/provider still ordinary payments and state-only CAS; no protected
-durable selected-spell binding/producer lineage. Current refs DO expose feature_grant_id
-and counted ASI grants (older handoff claim stale), but original advanced descriptor
-is stripped and these rows do not prove private/native authority.
+m1 HOLD corrections incorporated with original R09-owner additive-skeleton boundary:
 
-Recommend privately captured immutable FIRST choice keyed by exact earned grant,
-raw controller/feature/spell pin closure, immutable idempotent receipt and same-
-operation recovery; genuine choice projection for shared revision (no manual bump,
-P1 confirm-origin event or bootstrap). Copy needs target ID remapping, original +
-immediate lineage and current spent-use continuity; legacy absent proof unavailable.
-No diagnostic-only player status substitute, replacement or cast activation.
+1. Feature grants can delete/recreate; UUID generation is not earned occurrence.
+   Require future protected stable earned_occurrence_id/origin bridge. Missing bridge,
+   retained choice+new generation, slug/version/order/time similarity all unavailable.
+   Freeze full reciprocal selection/original receipt tuple with deferrable composite
+   FKs. V1 first_choice ONLY: copy-produced captures/pointers refuse. Later versioned
+   bridge preserves original root + immediate mapping and spent-state continuity,
+   without inventing a fresh human receipt.
+2. Current advanced cast resolver rejects spent>=1; do NOT reuse it for first-choice
+   admission/read. Valid exhausted choice remains captured/readable without spending,
+   reset/hiding or cast-ready claim. Malformed/colliding usage fails current eligibility.
+3. First code child ONLY new private storage/strict schemas/counted raw reader and
+   compiled command/resolve seams. Three canonical/lineage/order readiness functions
+   return literal false and unconditional prerequisite refusal has no positive branch.
+   Select replay comes immediately after actual Auth/exclusive guard/owned-parent+
+   current expiry recheck, before ALL NEW lineage/source/order/revision restrictions.
+   Original actor/time/revisions retained. No issuance/projection/choices privilege.
 
-Proposed next source: new additive unapplied arcanum-first-selection.sql, strict
-internal selection schema, original fixtures and source-bound model/static tests.
-All objects/functions and same-transaction ACL order require original R09-owner
-AND m1 challenge BEFORE implementation. New stage cannot invent missing protected
-canonical/materializer lineage, fresh order/union locks or live Auth. These remain
-explicit refusal/prerequisites; all13 readiness false/Auth always unavailable.
-Later graph/projection/writer/copy/issuer and G2 closure, real chooser/payment/effects/
-concentration receipt workflow and Mastery/Signature remain required. First-selection
-storage is a proposed technical policy; replacement/respec/legacy/reset changes
-need separate product decisions. No new user permission or runtime approval inferred.
+Exact signatures/returns/table tuple/FK/trigger/definition/ownership/revoke order and
+NEW source paths are frozen in docs/specs/2026-10-13-arcanum-first-selection-plan.md.
+Current R09 grants UPDATE(state,action_revision), NOT choices; current full graph
+excludes private bindings/spell versions. Later original-owner extension must add
+narrow genuine choices participation + full stable source/count/order/permission
+union and all writer/provenance/canonical/Auth/copy/lifecycle gates before positives.
+No call-old-reader-then-append-locks, manual bump/P1 metadata event/readiness14/public
+RPC/app/parser/base stage changes. All13false/Authunavailable remain untouched.
 
-Exact proposed paths, source evidence, lifetime/replay/read contracts and measurable
-controls: docs/specs/2026-10-13-arcanum-first-selection-plan.md. This is a plan for
-independent challenge, not reviewed implementation-ready authority or M6 completion.
-Validation this turn: source inspection and git diff --check only.
+Source model/static tests must bind actual constant refusal/entry/read bodies;
+recorded fixtures are modeled rows, no positive SQL/runtime authority claim. Product
+replacement/respec/legacy/reset or changed copy-use policies remain separate decisions.
+This narrowed source child is not M6 acceptance or complete selection/casting producer.
+
+Validation this turn: read frozen Git source and git diff --check only. Freeze amended
+exact two-doc diff for renewed m1 and original R09-owner challenge BEFORE code/gates.
