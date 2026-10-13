@@ -7,7 +7,7 @@ import { campaignMonsterContext, commitCampaignMonsterInstance, getCampaignMonst
 import { instanceIntentForm } from "@/lib/campaigns/monster-instance-form";
 import { MC, monsterCreate, monsterDetail, monsterPreview, monsterReceipt } from "@/tests/fixtures/campaign-monster-instances";
 const campaign = { id: MC.campaign, name: "Original bridge", owner_id: MC.owner, system_id: MC.system };
-function database(replies: unknown[] = [campaign, { id: MC.system }], rpcData: unknown = null, rpcError: null | { code: string } = null,
+function database(replies: unknown[] = [campaign, { id: MC.system }], rpcData?: unknown, rpcError: null | { code: string } = null,
   user: { id: string; is_anonymous?: boolean } | null = { id: MC.owner }) {
   const calls: { table: string; filters: unknown[][] }[] = [];
   const client = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }) }, rpc: vi.fn().mockResolvedValue({ data: rpcData, error: rpcError }),
@@ -79,5 +79,18 @@ describe("campaign monster DAL: mocked transport/query proof only", () => {
     expect(await listCampaignMonsterSources(MC.campaign, "%_")).toHaveLength(1);
     expect(db.calls[2].filters).toContainEqual(["or", `scope.eq.platform,and(scope.eq.personal,owner_id.eq.${MC.owner})`]);
     expect(db.calls[2].filters).toContainEqual(["ilike", "name", "%\\%\\_%"]); expect(db.calls[2].filters).toContainEqual(["limit", 100]);
+  });
+  it.each([null, undefined, false, 0, ""])("refuses malformed successful source array %s rather than false empty", async (raw) => {
+    database([campaign, { id: MC.system }, raw]); await expect(listCampaignMonsterSources(MC.campaign)).rejects.toThrow();
+  });
+  it("genuine successful empty source array remains empty", async () => {
+    database([campaign, { id: MC.system }, []]); expect(await listCampaignMonsterSources(MC.campaign)).toEqual([]);
+  });
+  it.each([undefined, false, 0, ""])("refuses malformed successful detail %s rather than false not-found", async (raw) => {
+    database([campaign], raw); await expect(getCampaignMonsterInstance(MC.campaign, MC.instance)).rejects.toThrow();
+  });
+  it("only explicit native null means no owned instance; valid positive detail remains admitted", async () => {
+    database([campaign], null); expect(await getCampaignMonsterInstance(MC.campaign, MC.instance)).toBeNull();
+    database([campaign], monsterDetail()); expect(await getCampaignMonsterInstance(MC.campaign, MC.instance)).toEqual(monsterDetail());
   });
 });

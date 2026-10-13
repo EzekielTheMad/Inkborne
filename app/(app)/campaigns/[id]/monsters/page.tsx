@@ -37,7 +37,7 @@ export default async function CampaignMonstersPage({ params, searchParams }: {
     <section className="min-w-0 space-y-3"><h2 className="j-display text-xl">Add a monster instance</h2>
       <p className="text-sm">Up to 100 matching sources are listed. Filter source names to find another template.</p>
       {sourceResult.status === "rejected" ? <p role="alert">New monster sources are unavailable. Existing instance and operation recovery remain available; new acquisition is blocked.</p> : null}
-      <MonsterInstanceForm key={`${ctx.ownerId}:${id}:create`} campaignId={id} ownerId={ctx.ownerId} sources={sources} />
+      <MonsterInstanceForm key={`${ctx.ownerId}:${id}:create`} campaignId={id} ownerId={ctx.ownerId} systemId={ctx.campaign.system_id} sources={sources} />
     </section>
   </div>;
 }

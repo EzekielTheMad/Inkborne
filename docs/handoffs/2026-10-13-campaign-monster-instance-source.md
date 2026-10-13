@@ -142,3 +142,38 @@ lost-response/campaign-cascade/real session-owner privacy acceptance; reviewed g
 enablement. Shared sources/cross-owner lifecycle, full native descriptive parity if
 required, imports, automation, other M5 instance families and launch remain open.
 This source does NOT make M5 or the project complete or authorize external actions.
+
+## Source-only HOLD correction over immutable1825fe2
+
+Synchronous lifetime operation/intent/accepted-receipt/ever-uncertain refs now admit
+submit; React-rendered locked state is additional presentation, never the sole
+admission. Matching call-token pending=false layout commit releases the mutex.
+Initial definite prewrite refusal retains original refs/marker through settlement,
+then clears only at that matching committed state; uncertainty never clears them.
+Explicit same-operation replay remains available after committed settlement.
+
+Committed mounted owner/campaign/editor/system/source-list refs and separate preview
+request/selection tokens bind replies. Stale preview/context/version/system tuples
+cannot update draft or silently pin. Command reply validation uses ORIGINAL scope,
+operation and immutable captured intent; accepted old-context receipts retain their
+saved ID under original scoped storage, without applying data to a different editor.
+If a newer operation occupies that active marker, its marker is preserved and the
+older accepted ID is retained in a separate operation-scoped accepted metadata key
+(ID only, no raw receipt/notes/source; no new database recovery journal or RPC).
+Same-editor accepted old-source receipt is shown even if source version later changed.
+
+DAL source list requires an actual array; null/undefined/false/scalar no-error data
+is unavailable, not []. Native detail null alone means not found; undefined/false/
+0/empty string are malformed and refused. Genuine [] and null positives are prepared.
+Mounted native settlement-gap saved/uncertain/prewrite-refusal controls assert
+uncommitted DOM plus ONE call/original UUID/intent/marker; stale preview and accepted
+old-context/source controls and strict DAL read cases are added. All remain UNRUN.
+Only owned form, two route prop bindings, DAL, focused tests and this handoff changed;
+SQL/ACL/default gates/source schemas/package lock remain exact1825 bytes. No gates,
+network, SQL/runtime, new processes or other worktree writes.
+
+Separate observed follow-on: ordinary edit after a confirmed saved receipt needs
+an explicit fresh server latest-detail editor mount; current accepted edit marker
+blocks subsequent HP edits. Root requires a finite reviewed proposal AFTER this
+HOLD correction freeze. No new transition/auto-rebase/unknown marker clearing has
+been implemented here; this source is still incomplete for repeat-edit acceptance.

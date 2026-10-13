@@ -34,7 +34,7 @@ export async function getCampaignMonsterInstance(campaignId: string, instanceId:
   if (!ctx || !z.string().uuid().safeParse(instanceId).success) return null;
   const { data, error } = await ctx.client.rpc("get_campaign_monster_instance_v1", { target_campaign_id: campaignId, target_instance_id: instanceId });
   if (error) throw new Error("The instance could not be loaded.");
-  if (!data) return null;
+  if (data === null) return null;
   const row = instanceDetailSchema.parse(data);
   if (row.id !== instanceId || row.campaign_id !== campaignId || row.system_id !== ctx.campaign.system_id) throw new Error("Unexpected instance identity.");
   const parsed = admittedMonsterSnapshot(row.source_snapshot, row.system_id, row.source_content_id, row.source_version);
@@ -49,8 +49,8 @@ export async function listCampaignMonsterSources(campaignId: string, search = ""
   const escaped = search.replace(/[\\%_]/g, "\\$&");
   const { data, error } = await ctx.client.from("content_definitions").select("id,name,version").eq("system_id", ctx.campaign.system_id)
     .eq("content_type", "monster").eq("is_retired", false).or(`scope.eq.platform,and(scope.eq.personal,owner_id.eq.${ctx.ownerId})`).ilike("name", `%${escaped}%`).order("name").order("id").limit(100);
-  if (error) throw new Error("Monster sources could not be loaded.");
-  return z.array(z.object({ id: z.string().uuid(), name: z.string().min(1).max(200), version: z.number().int().min(1).max(2147483647) })).max(100).parse(data ?? []);
+  if (error || !Array.isArray(data)) throw new Error("Monster sources could not be loaded.");
+  return z.array(z.object({ id: z.string().uuid(), name: z.string().min(1).max(200), version: z.number().int().min(1).max(2147483647) })).max(100).parse(data);
 }
 export async function previewCampaignMonsterSource(campaignId: string, sourceId: string, version: number) {
   const ctx = await campaignMonsterContext(campaignId);

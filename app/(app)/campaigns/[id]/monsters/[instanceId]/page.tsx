@@ -12,6 +12,6 @@ export default async function CampaignMonsterDetail({ params }: { params: Promis
   if (!initial) notFound();
   return <div className="min-w-0 space-y-6"><Link href={`/campaigns/${id}/monsters`}>Back to monster roster</Link>
     <h1 className="j-display text-3xl [overflow-wrap:anywhere]">{initial.name}</h1>
-    <MonsterInstanceForm key={`${ctx.ownerId}:${id}:${instanceId}`} campaignId={id} ownerId={ctx.ownerId} initial={initial} />
+    <MonsterInstanceForm key={`${ctx.ownerId}:${id}:${instanceId}`} campaignId={id} ownerId={ctx.ownerId} systemId={ctx.campaign.system_id} initial={initial} />
   </div>;
 }
