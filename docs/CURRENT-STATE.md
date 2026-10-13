@@ -2,6 +2,14 @@
 
 ## Active execution — 2026-10-12 UTC
 
+Priority update — Victor, 2026-10-13 (America/Phoenix): **pause M7 PDF importing;
+continue M1–M6, including M5.5; M8 follows that core work.** M7 stays in the
+backlog, with no extraction/layout/import implementation while paused. Proposed
+monster/NPC imports are also paused; the completed local JSON prototype remains
+unused, with no app upload or saving path. These decisions supersede the older
+pending-format and PDF-before-beta execution instructions below. Existing PDF
+export and shipped spell/feat importer behavior remain in scope for preservation.
+
 Current local acceptance: `81629ce` passed **339 files / 4,266 tests**, typecheck,
 zero-warning lint and build after local NPC JSON prototype integration. Its eight
 desktop/mobile browser cases, eight screenshots/font samples, final source/build
@@ -25,7 +33,7 @@ and corrected harness `2594379` are integrated through `d4fc0a7`; all 16 changed
 Git blobs match the approved worker. Test-only realm/void corrections are included;
 80 worker tests/type/lint and the combined/browser gates above passed. Earlier
 59 realm failures and TS2322 remain preserved, not erased by later acceptance.
-Human format preference, app upload/commit and PDF matrix remain pending.
+Monster/NPC import work and M7's PDF matrix are paused by the decisions above.
 Instances, companion mechanics and R19 remain open.
 R13 ordinary-item sharing and P1b.2 private confirmation producer plans are
 independently approved; source proceeds in isolated workers, no tests or SQL yet.

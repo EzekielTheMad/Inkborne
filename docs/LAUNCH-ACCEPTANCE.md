@@ -2,6 +2,28 @@
 
 ## Active continuation — 2026-10-12 UTC
 
+### Latest human priority — 2026-10-13 (America/Phoenix)
+
+Victor explicitly said: "Let's pause on M7 but continue on the rest. I think we
+need to focus on M1-M6 before we can do M8." Prioritize **M1–M6 including M5.5,
+then M8**. **M7/R22 PDF importing is paused**, retained in the project backlog.
+Its earlier before-beta instruction is superseded for active execution; do not
+implement extraction/layout/import or pursue the pending input matrix until
+resumed. No automatic post-beta schedule or implementation completion is inferred.
+Character print/PDF export remains distinct and preserved.
+
+Victor also said to skip the proposed monster/NPC imports for now. Pause those
+R16/R17 import children, retain them in the backlog and keep the completed local
+JSON reader/profile prototype unused. No app upload/staging/commit path or further
+format implementation. Existing supported spell/feat MPMB behavior and import
+provenance safeguards remain preserved.
+
+Continue ordinary-item campaign sharing, magic-item acknowledgement recovery and
+private class-provenance source/review/testing within M3/M4. Current accepted local
+candidate remains `81629ce` (339 files / 4,266 tests plus build and eight local JSON
+browser cases); later source children are not yet combined acceptance. No SQL,
+hosted write, deployment or publication is authorized by this sequencing change.
+
 The human requested execution of the attached kickoff. The sole integration owner
 resumed the clean recorded worktree at `628283318394f08992d7fc397390119611cc03ab`
 and created local branch `codex/launch-integration-20261011` in that same worktree.
@@ -1072,14 +1094,14 @@ Updated 2026-10-12 UTC. This is the single durable development backlog and compl
 
 **User-selected project-wide objective:** complete ALL documented M1-M8 milestones (including M5.5) and account for every documented PRD requirement, including P1-P3. Every documented ambition must have an explicit included/completed/deferred/out-of-scope disposition; all included requirements must be accepted. Deferral or removal requires an explicit dated Victor decision, remains visible, and cannot be described as implemented. No documented requirement disappears merely because it was not selected for an earlier beta. This finite documented scope is not a license to invent new features.
 
-**Selected beta sequence:** every included M1-M8 milestone, including M5/M6 and M7 PDF importing, precedes beta. Daggerheart and public publishing are explicitly deferred from first beta and retained in the total project backlog. Already-shipped narrative/wiki functionality is retained. Unselected P1-P3 contracts remain explicit open decisions; no blanket exclusion or acceptance is inferred.
+**Selected execution sequence:** Victor's 2026-10-13 priority is M1–M6 (including M5.5), then M8; M7 PDF importing is paused in the backlog. This supersedes the earlier active PDF-before-beta instruction without inventing a new post-beta deadline. Daggerheart and public publishing remain explicitly deferred from first beta. Monster/NPC import work is paused. Already-shipped narrative/wiki functionality is retained. Unselected P1-P3 contracts remain explicit open decisions; no blanket exclusion or acceptance is inferred.
 
 | Decision | Conflict / concrete choice | Recommended resolution and execution effect |
 | --- | --- | --- |
-| S1 | Launch sequencing | Victor selected every included milestone before beta on 2026-10-12 UTC. No staged midpoint is selected. |
+| S1 | Launch sequencing | Updated by Victor on 2026-10-13 (America/Phoenix): focus M1–M6 including M5.5 before M8; M7 is paused. No launch or deployment authorization is implied. |
 | S2 | Daggerheart / second-system timing | Victor explicitly deferred Daggerheart from first beta on 2026-10-12 UTC; retain R24 in project backlog. Preserve system-agnostic architecture; generic schemas do not prove second-system play. |
 | S3 | Public publishing timing | Victor explicitly deferred public publishing from first beta on 2026-10-12 UTC; retain R26. Private/campaign sharing continues; public visibility/redaction/licensing/moderation still needs a later contract. |
-| S4 | M7 PDF importing | Victor selected PDF importing before beta on 2026-10-12 UTC. Supported input matrix is pending; define finite rights-safe fixtures, extraction/review/corrections/provenance and existing calculation/commit gates. Unsupported layouts stay explicit. This is distinct from character export. |
+| S4 | M7 PDF importing | Victor explicitly paused M7 on 2026-10-13 (America/Phoenix), superseding the earlier active before-beta instruction. Retain R22 and its future input/extraction/review/commit requirements; no work or input-matrix prompting until resumed. Character PDF export is distinct. |
 | S5 | P1-P3 ambitions, 2024 content, public licensing and pricing remain open. | Confirm which belong to this release/project target. Keep explicit deferred records; no new payments/analytics/public distribution by implication. Ordinary implementation choices within a selected requirement are the orchestrator's job. |
 
 Batch these scope choices early; continue unambiguous M1/core/M4/print work while answers are pending. Ask only where the answer changes the product contract. Do not ask permission for routine local code/SQL-file edits, offline tests, review or planning within the chosen task.
@@ -1104,7 +1126,7 @@ Stage columns: **I** implemented source; **T** tested at stated boundary; **G** 
 | M5 monsters/library NPCs/companions/sidekicks: R16-R19 | P / monster, NPC and template local / P / - / open | [Roadmap M5](ROADMAP.md), [monster plan](specs/2026-10-12-monster-foundation-plan.md), [NPC plan](specs/2026-10-12-private-npc-authoring-plan.md), [companion plan](specs/2026-10-12-companion-library-foundation-plan.md). Monster/NPC Library and private authoring are integrated with offline acceptance. Companion templates are integrated with 22 offline cases at `414f49e`; sidekicks remain unimplemented. Imports, DM instances and real authority remain; existing relationships retain their identity. |
 | M5.5 campaigns + narrative: R20 | foundation / local+H / yes / H / H, current open | [Campaign design](specs/2026-07-19-campaign-foundation-design.md), [backlinks](specs/2026-07-19-campaign-backlinks-design.md), [timeline/relationships](specs/2026-07-19-character-timeline-relationships.md). Reaccept real DM/player membership, private/shared content, copy/assignment and revision conflicts on candidate. Optional publishing/presence remain S3/S5 decisions. |
 | M6 advanced spellcasting: R21 | P / some local / P / H subset / open | [Arcane Recovery implementation](../lib/rest/arcane-recovery.ts), [its tests](../tests/rest/arcane-recovery.test.ts), roadmap M6. Recovery has code; inventory Mystic Arcanum, Spell Mastery, Signature Spells and Eldritch Knight/Arcane Trickster progression before adding missing UI/rules. |
-| M7 PDF import: R22 | -/U / - / - / - / open S4 | Roadmap M7 and [existing import architecture](../lib/import). Supported PDF extraction -> review/repair -> immutable commit -> calculation/character parity required. Keep provenance and unsupported-input errors; paid AI/provider choices are not implicit. |
+| M7 PDF import: R22 | -/U / - / - / - / paused S4 | Victor paused M7 on 2026-10-13. Retain [Roadmap M7](ROADMAP.md) and [import architecture](../lib/import) requirements for later resume: supported extraction -> review/repair -> immutable commit -> calculation parity. No current implementation or layout prompting. |
 | M8 public beta/community launch: R23-R27 | P / P / P / splash only+H / open | Roadmap M8, [release checklist](RELEASE-READINESS.md), [alpha evidence](alpha). Current performance/accessibility/onboarding/feedback/ops audits, rights/licensing/scope and actual reviewed deployment/auth acceptance remain. Splash readiness is not app launch. |
 
 ## Requirement backlog and acceptance
@@ -1134,7 +1156,7 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R19 M5 | Expert/Spellcaster/Warrior sidekicks. [Roadmap](ROADMAP.md), [builder domain](../lib/builder). I=-/U/T=-/G=-/D=-/A=open. | Simplified archetype/level schemas and render/build/play behavior; entitled catalog/DM use and isolation/level/progression tests. Do not equate generic full-PC code with accepted sidekick rules. |
 | R20 PRD §6/§8; M5.5 | Campaign membership/roles/invites/assignment; rich backstory/personality, wiki/backlinks/timeline/relationships/secrets. [Campaign spec](specs/2026-07-19-campaign-foundation-design.md), [DM-note boundary](specs/2026-07-19-character-dm-notes-boundary.md), [narrative](../components/narrative). I=foundation/T=H+local/G=yes/D=H/A=current open. | One real DM/player campaign with linked characters/wiki; permitted read-only DM view, privacy, conflicting revisions, copy/leave/removal/invite rotation and portrait/storage permissions. Optional live presence/public wiki waits S3/S5. |
 | R21 M6 | Reviewed single-source slots and per-acquisition casting math are integrated; [M6 inventory](handoffs/2026-10-11-m6-advanced-spellcasting-inventory.md), [source casting](handoffs/2026-10-11-source-casting-ability.md). I=P/T=local+slots browser/G=P/D=H subset/A=open. | Subclass profile plan must preserve shipped object-tier grants; advanced exact selected-spell payment/usage choices and current real conflict/recovery acceptance remain. Retain Arcane Recovery; no duplicate counter or guessed subclass unlock. |
-| R22 M7 | Supported PDF content import through reviewed M4 pipeline. [Roadmap](ROADMAP.md), [import domain](../lib/import). I=-/U/T=-/G=-/D=-/A=open S4. | Finite layouts/types/fixtures; reproducible extraction/provenance, manual corrections, validation/audit/calculation and atomic immutable commit. Reject unsupported inputs safely. No autonomous paid AI or broad external content ingestion. |
+| R22 M7 | Supported PDF content import through reviewed M4 pipeline. [Roadmap](ROADMAP.md), [import domain](../lib/import). I=-/U/T=-/G=-/D=-/A=paused S4. | Paused by Victor on 2026-10-13. Retain finite layouts/types/fixtures, extraction/provenance, correction, validation and atomic immutable commit for later resume; no active PDF importer work or decision prompt. |
 | R23 PRD §10 P0/MVP | Owner print/PDF snapshot is integrated; six Letter/A4 fixture PDFs, 33 inspected pages and privacy/margin checks passed. [Sheet source](../components/sheet), active receipts above. I=yes bounded/T=local PDFs/G=yes/D=-/A=open. | Reaccept after calculation changes, then real approved-account snapshots/native dialog and supported browser/device behavior. Loaded values are not an atomic DB snapshot. Character JSON/fillable-standard/campaign exports remain separate undecided ambitions. |
 | R24 PRD §2 P0/MVP | Second playable SRD system (Daggerheart) and schema/system selection. [PRD](../inkborne-prd.md), [system schema](../lib/schemas/system.ts). I=generic registry, second U/T=generic/G=P/D=5e only known/A=deferred first beta S2. | Victor explicitly deferred first-beta Daggerheart on 2026-10-12; retain total project backlog. Later approved system/content/version/license matrix and end-to-end creation/calculation/sheet/homebrew/print fixtures without 5e leakage remain. |
 | R25 M8 | Current performance, accessibility, onboarding and feedback-driven polish. [Roadmap](ROADMAP.md), [design references](design-briefs), [alpha records](alpha). I=P/T=P/G=P/D=H/A=open. | Measure representative current routes/data shapes/devices, agree budgets from evidence, resolve material findings; test signup->builder->play->recovery plus accessibility, register real feedback/disposition. No made-up users, load results or blanket “polished” verdict. |

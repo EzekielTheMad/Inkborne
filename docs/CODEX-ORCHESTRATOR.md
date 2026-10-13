@@ -4,6 +4,12 @@ Updated 2026-10-12 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Victor's latest priority, 2026-10-13 (America/Phoenix): pause M7 and proposed
+monster/NPC imports; prioritize M1–M6 including M5.5, then M8. Keep paused imports
+in the backlog and the JSON prototype unused. Do not pursue a PDF layout decision
+or build another importer until resumed. Earlier PDF-before-beta instructions are
+superseded for active execution; no broader removal or post-beta timing is assumed.
+
 Main_PC resume directory:
 
 ```text
@@ -28,7 +34,7 @@ source. Test-only realm/void corrections are included, worker80/type/lint and ro
 combined/browser gates passed. Preserve original failed receipts. R13 item sharing
 and P1b.2 confirmation source workers proceed under reviewed plans; next R12
 magic-item acknowledgement plan is preparing. Root owns serialized heavy slots.
-Format preference/app upload/durable commit and PDF matrix remain pending.
+Monster/NPC import activation and M7's PDF matrix are paused, not pending prompts.
 Root owns serialized heavy slots. Continue ready source/review/gates. This worktree shares Git
 with `..\dev-candidate`, not original `C:\Projects\Inkborne` Git. No live changes.
 
