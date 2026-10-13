@@ -215,3 +215,31 @@ Source inspection/Git whitespace checks only. No Node/npm/tests/type/lint/build/
 browser/budget measurement/network/SQL execution. The new scheduling stimulus and
 all acceptance/resource claims remain UNVERIFIED. Full measured900000ms allocation
 and independent exact source review remain prerequisites before runtime release.
+
+## Source-only mounted-byte preflight after approved 28810e7
+
+2026-10-13: initial six harness projections differed under actual system Git
+core.autocrlf=true, with text/eol/filter/encoding/ident attributes unspecified.
+Canonical indexes were ALL LF, while mounted files were LF/mixed. Exact restore
+and forced checkout-index initially skipped clean stat identities. Original raw
+files were preserved beneath the ignored preflight run; only the six owned targets
+were regenerated through exact288 Git restore, then parent-authorized
+git add --renormalize -- ONLYsix refreshed the index. No canonical blob changed.
+Actual mounted representation is now CRLF and matches cat-file --filters exactly.
+
+Strict final14 checks PASS: six owned raw/index/HEAD/projected bytes and unchanged
+normalized old/current text; eight actual inherited-helper/fixture/form checks
+across worker and root. Actual attributes/core configuration unchanged. Worker was
+clean28810e783596a93499718385d5a0af0623d0b44d; root remained frozen
+9f848d4658ac9c523d548d51c0f5a19710de95d8. No source/oracle/guard change.
+
+Ignored receipt directory:
+test-results/campaign-monster-source-preflight-20261013/run-20261013T201816119.
+final-receipt.json SHA256
+7698a67368bf8a2e28fc2d7806a7550172cc348c3717dd7f3011618b9141c086.
+First failed receipt.json SHA256
+fa0274eb567d27763840ca594040558d6045feae6eb58a6f8f13e493f8d90a1b
+and raw-before-normalization copies remain preserved. The first observer emitted
+nonterminating empty-array Join errors; the strict final observer uses Stop and
+explicit empty-array checks. Its fresh complete proof is the accepted byte result.
+No Node/npm/browser/runtime/budget measurement/SQL/network or descriptor generation.
