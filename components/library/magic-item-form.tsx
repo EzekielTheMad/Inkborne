@@ -246,7 +246,7 @@ export function MagicItemForm({ mode, initialValue }: MagicItemFormProps) {
             Changes create a new immutable version. Library readers discover the latest version.
           </p>
         )}
-        {(drift || !identityReady) && <p role="alert">This form's identity or version changed. Your draft is kept. Reload to discard it and load the current record.</p>}
+        {(drift || !identityReady) && <p role="alert">This form&apos;s identity or version changed. Your draft is kept. Reload to discard it and load the current record.</p>}
         {state.status !== "idle" && state.message && (
           <p ref={summary} tabIndex={-1} role="alert" className="text-sm text-destructive">{state.message}</p>
         )}
