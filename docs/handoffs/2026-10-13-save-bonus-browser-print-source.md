@@ -128,3 +128,37 @@ OS print dialog, physical printer, mobile print interoperability, live Auth/DAL/
 persistence/G2 remain unverified. M7 importing stays paused. Inventory magic source
 collection, death-save participation, C2/class roles/namespaces/P1 authority remain
 separate. This checkpoint is source preparation only, ready for exact review.
+
+## Source-byte-only checkout preflight at9955194
+
+Root separately authorized Git/file byte inspection only; no runtime or measurement.
+At exact995519403bd24f9240d36f1e7e6ec971d1e8c265, six new executable workfiles had
+LF bytes differing from Git's current checkout projection; save-bonus-inputs.mjs
+already matched. Initial raw files and exact projection bytes for all seven are
+preserved in ignored test-results/save-bonus-byte-preflight/*.before.bin and
+*.projection.bin, with initial.json/config/attribute/hash records. core.autocrlf
+is true from the existing Git system config; other queried settings/attributes
+were unset/unspecified. No Git config was changed.
+
+Regenerated only the six mismatched owned targets from exact995 cat-file --filters
+projection, without modifying canonical source text. The first script's final
+clean check failed because those six appeared as stat-only M entries while both
+content diffs were empty and every normalized hash still equaled995. Preserve
+final-before-stat-refresh.json and initial-script-failure.json. Scoped ordinary
+git add -- on those six refreshed index stat data; no --renormalize was needed.
+Seven normalized OIDs AND stage0 OIDs remained identical to995 throughout.
+
+Read-only follow-up final-after-stat-refresh.json passes strict7 raw SHA256 versus
+checkout projection, normalized Git OID and index OID checks with clean Git. Eleven
+untouched helpers/producers/neutral print fixture/original verifier likewise pass
+raw/projection/canonical/index checks. Root read-only comparison at
+9f848d4658ac9c523d548d51c0f5a19710de95d8 confirms those eleven root HEAD+index OIDs
+and actual raw SHA256 equal the worker.0841/e405 helpers and seven a807 producer
+blobs remain unchanged; no other worktree was written.
+
+Ignored manifest test-results/save-bonus-byte-preflight/manifest.json SHA256:
+EE4F7B6A1B5EB2D1AEE604546BFF552CDA0769A06F21A31C24E937700187563F.
+It binds initial bytes/failures, both scripts and strict final/read-only-root
+receipts. This handoff-only successor records evidence; all seven canonical source
+blobs remain exact995. Node/Python/npm/tests/gates/descriptor approval, source
+imports and browser/measurement remain UNRUN/UNREADY pending separate release.
