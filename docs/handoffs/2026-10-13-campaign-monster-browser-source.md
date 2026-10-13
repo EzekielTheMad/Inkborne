@@ -161,3 +161,57 @@ Only Git/source inspection and whitespace checks for this correction. No Node,
 npm/test/type/lint/build/browser/network/SQL execution. All44 outcomes, runtime
 closure behavior, failed-case capture and cooperative stop are UNVERIFIED. The
 shared900000ms full allocation and actual guard measurements remain pending.
+
+## Separate case08 stimulus correction after approved 2cb5f69
+
+2cb5f69's five source-guard corrections were independently approved; its case08
+stimulus remained held because HTTP response/submit-exit/readyHeld polling first
+committed the disabled DOM. That original source and receipt remain preserved.
+This amendment changes only the case08 immediate action model/probe/followups and
+the actual original-fixture browser dependency admission. No runtime gate.
+
+Separately, authorized local dependency commit
+db48edd11b73602e48920299da2b3b726af1bc76 integrates exactly the two reviewed blobs:
+fixture from6b793fe8b3e35e4e6ac2297509a2f4ec5023f5c6 and form from
+d43c3b688abeb4e4765b4f46ba62aa915b5b73dc. Only a create return-type narrowing and
+one approved eslint comment changed; every other original0aec producer is intact.
+The fixed exception map is unchanged. No unreviewed parent/source was copied.
+
+Case08's three modes now return explicitly MODELED immediate replies at the actual
+action boundary. The actual FormData mapper/request schema, original MC fixture
+IDs/digest, monsterReceipt builder, receipt schema and response parser validate
+each reply. A Proxy only records the unchanged real form parser's later status
+property access; initial fixture validation cannot set that observation. The
+actual saved effect must be observed via the original operation's saved-ID storage
+marker. No DOM/disabled flag/state/ref/guard/scheduler is manufactured or changed.
+Calls are recorded before the model's tuple checks, so they cannot hide a second
+native request. Source/RPC/ledger/Auth remain explicitly modeled, not DB receipts.
+
+After ordinary source preview/draft preparation, ONE browser.evaluate performs
+the first native SubmitEvent inside the real imported React startTransition,
+awaits at most eight native Promise microticks to observe actual parser access
+(and saved marker when applicable), captures the current old enabled DOM, then
+dispatches the second native SubmitEvent and captures call/intent/marker evidence
+before returning to a host task. No HTTP/fetch, host poll, held release or scheduler
+substitution occurs between the first submit and probe. The normal HTTP/held
+transport paths and every other case remain unchanged.
+
+All three modes still REQUIRE initial enabled controls, real response consumption,
+old enabled fieldset/button, original UUID/full intent/marker and exactly one call
+at the probe. If Chrome cannot observe the genuine precommit condition within that
+bounded microtick window, FAIL/UNVERIFIED; retain actual trace/gaps/immediate reply,
+DOM and screenshot through the existing failed-case capture. No skip or oracle flip.
+
+After real committed settlement, saved lifetime still blocks later native submits;
+uncertain Check observes modeled absence and explicit replay uses the exact original
+operation/intent; definite initial refusal clears only after the matching layout
+commit and a deliberate later command must use a different native UUID. Those
+followup calls do not replace the required one-call precommit evidence. The overall
+matrix remains exactly44 required case receipts/screens/font samples, no additions
+or silent omissions. Browser binding now also requires the actual original fixture
+module already frozen by the reviewed source exception.
+
+Source inspection/Git whitespace checks only. No Node/npm/tests/type/lint/build/
+browser/budget measurement/network/SQL execution. The new scheduling stimulus and
+all acceptance/resource claims remain UNVERIFIED. Full measured900000ms allocation
+and independent exact source review remain prerequisites before runtime release.

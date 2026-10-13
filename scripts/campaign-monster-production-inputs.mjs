@@ -12,7 +12,8 @@ export const campaignMonsterSourceAmendments = {
 export const campaignMonsterProcessHelper = { relativePath: "scripts/npc-process.mjs", reviewedAnchor: "846860209041819deb27b1547c06a77720ad3037", reviewedGitBlobOid: "0841bda7b9e785280e684030bf4fe900d81465e5" };
 const assetHelper = { relativePath: "scripts/passive-feature-production-assets.mjs", reviewedAnchor: "5fedd6222eeb97c11f7645dac580cbebee845311", reviewedGitBlobOid: "e4058f8a31cd911583a312e59fedcf4c3fd4adae" };
 const bundledRequired = ["components/campaigns/monster-instance-form.tsx", "components/campaigns/monster-instance-panel.tsx",
-  "components/compendium/monster-stat-block.tsx", "lib/campaigns/monster-instance-schema.ts", "lib/campaigns/monster-instance-form.ts"];
+  "components/compendium/monster-stat-block.tsx", "lib/campaigns/monster-instance-schema.ts", "lib/campaigns/monster-instance-form.ts",
+  "tests/fixtures/campaign-monster-instances.ts"];
 const required = ["lib/campaigns/monster-instance-schema.ts", "lib/campaigns/monster-instance-form.ts",
   "lib/supabase/campaign-monster-instances-server.ts", "lib/supabase/campaign-monster-instances.types.ts",
   "app/(app)/campaigns/[id]/monsters/actions.ts", "app/(app)/campaigns/[id]/monsters/page.tsx",

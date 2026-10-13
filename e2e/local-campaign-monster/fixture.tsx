@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { MonsterInstanceForm } from "@/components/campaigns/monster-instance-form";
 import { MonsterInstancePanel } from "@/components/campaigns/monster-instance-panel";
 import { instanceIntentFromForm } from "@/lib/campaigns/monster-instance-form";
 import { admittedMonsterSnapshot, instanceDetailSchema, instanceSummarySchema, sourcePreviewSchema,
-  type InstanceDetail, type SourcePreview } from "@/lib/campaigns/monster-instance-schema";
+  instanceRequestSchema, instanceReceiptSchema, parseInstanceActionResponse, sameInstanceIntent,
+  type InstanceDetail, type InstanceReceipt, type InstanceRequest, type SourcePreview } from "@/lib/campaigns/monster-instance-schema";
+import { MC, monsterReceipt } from "@/tests/fixtures/campaign-monster-instances";
 
 type Props = { campaignId: string; ownerId: string; systemId: string; initial?: InstanceDetail;
   sources?: { id: string; name: string; version: number }[]; generation: string; role: string; unavailable?: string; rows: unknown[] };
@@ -15,6 +17,8 @@ const input = JSON.parse(document.getElementById("model-props")!.textContent!) a
 let renderProps = (_next: Props) => {}; // Filled before actions can be invoked.
 function bridge() {
   const calls: Trace[] = [], propsReceived: Props[] = [], gaps: unknown[] = [];
+  const immediate: { mode: string; intent: InstanceRequest; responseConsumed: boolean; reply: unknown }[] = [];
+  const immediateRequests = new Map<string, InstanceRequest>(), immediateReceipts = new Map<string, InstanceReceipt>();
   let held: Held | null = null, previewHeld: Held | null = null;
   let mode = input.scenario;
   async function api(kind: string, data: unknown) {
@@ -33,21 +37,53 @@ function bridge() {
     });
   }
   return {
-    calls, propsReceived, gaps,
+    calls, propsReceived, gaps, immediate,
+    startTransition, // The actual React implementation; no scheduler replacement.
     navigationFailure: false,
     mode(value: string) { mode = value; },
     api,
     commit(campaign: string, form: FormData) {
       const intent = instanceIntentFromForm(form);
       calls.push({ kind: "commit", campaign, intent: structuredClone(intent) });
-      return transport("commit", { campaign, intent, mode }, ["hold", "settlement-saved", "settlement-uncertain", "settlement-refusal", "late"].includes(mode));
+      if (["settlement-saved", "settlement-uncertain", "settlement-refusal", "settlement-replay"].includes(mode)) {
+        // Case08 ONLY: explicitly modeled immediate action, no HTTP/held barrier.
+        // The real form still awaits and validates this reply with its own parser.
+        const request = instanceRequestSchema.parse(intent);
+        if (campaign !== MC.campaign || request.command !== "create" || request.source_id !== MC.source || request.source_version !== 1 || request.source_digest !== MC.digest)
+          throw Error("Immediate original-fixture correspondence refused");
+        const original = immediateRequests.get(request.operation_id);
+        if (original && !sameInstanceIntent(original, request)) throw Error("Immediate modeled operation changed intent");
+        if (mode === "settlement-replay" && !original) throw Error("Immediate replay lacks original intent");
+        immediateRequests.set(request.operation_id, structuredClone(request));
+        let reply: unknown;
+        if (mode === "settlement-uncertain") reply = { status: "uncertain", message: "Immediate modeled response unavailable." };
+        else if (mode === "settlement-refusal") reply = { status: "error", message: "Definite immediate modeled prewrite refusal." };
+        else {
+          const accepted = immediateReceipts.get(request.operation_id) ?? instanceReceiptSchema.parse(monsterReceipt(request));
+          immediateReceipts.set(request.operation_id, accepted); reply = { status: "saved", receipt: accepted };
+        }
+        const validated = parseInstanceActionResponse(reply, campaign, request.operation_id, request);
+        const record = { mode, intent: structuredClone(request), responseConsumed: false, reply: structuredClone(validated) };
+        immediate.push(record);
+        return Promise.resolve(new Proxy(validated, { get(object, property, receiver) {
+          if (property === "status") record.responseConsumed = true;
+          return Reflect.get(object, property, receiver);
+        } }));
+      }
+      return transport("commit", { campaign, intent, mode }, ["hold", "late"].includes(mode));
     },
     preview(campaign: string, source: string, version: number) {
       calls.push({ kind: "preview", campaign, source, version });
       return transport("preview", { campaign, source, version }, mode === "hold-preview");
     },
     resolve(campaign: string, operation: string) {
-      calls.push({ kind: "resolve", campaign, operation }); return transport("resolve", { campaign, operation, mode }, false);
+      calls.push({ kind: "resolve", campaign, operation });
+      if (mode.startsWith("settlement-")) {
+        if (campaign !== MC.campaign || !immediateRequests.has(operation)) throw Error("Immediate resolver correspondence refused");
+        const receipt = immediateReceipts.get(operation);
+        return Promise.resolve(parseInstanceActionResponse(receipt ? { status: "saved", receipt } : { status: "absent" }, campaign, operation));
+      }
+      return transport("resolve", { campaign, operation, mode }, false);
     },
     readyHeld() { return held?.response !== undefined; },
     readyPreview() { return previewHeld?.response !== undefined; },

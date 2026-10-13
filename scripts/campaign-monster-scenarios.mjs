@@ -10,7 +10,7 @@ const MC = { campaign: "10000000-0000-4000-8000-000000000001", owner: "10000000-
 const key = edit => "inkborne:campaign-monster:v1:" + MC.owner + ":" + MC.campaign + ":" + (edit ? MC.instance : "create");
 async function model(page, kind, data = {}) { return page.evaluate(({ kind, data }) => window.campaignMonster.api(kind, data), { kind, data }); }
 async function trace(page) { return page.evaluate(() => ({ calls: window.campaignMonster.calls, gaps: window.campaignMonster.gaps, props: window.campaignMonster.props,
-  received: window.campaignMonster.propsReceived, storage: Object.fromEntries(Object.keys(sessionStorage).map(key => [key, sessionStorage.getItem(key)])) })); }
+  immediate: window.campaignMonster.immediate, received: window.campaignMonster.propsReceived, storage: Object.fromEntries(Object.keys(sessionStorage).map(key => [key, sessionStorage.getItem(key)])) })); }
 async function eventually(page, predicate, argument) { await page.waitForFunction(predicate, argument, { timeout: 5000 }); }
 async function createReady(page) {
   await page.locator("select[name=source]").selectOption(MC.source);
@@ -22,14 +22,41 @@ async function submit(page, count = 1) {
   await page.evaluate(count => { const form = document.querySelector("form"); for (let i = 0; i < count; i++) form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true })); }, count);
 }
 async function saved(page) { await page.getByRole("link", { name: "Saved instance " + MC.instance, exact: true }).waitFor({ timeout: 5000 }); }
-async function gap(page) {
-  await eventually(page, () => window.campaignMonster.readyHeld());
-  await page.evaluate(() => window.campaignMonster.release(true));
-  await eventually(page, () => window.campaignMonster.gaps.length === 1);
-  const seen = await trace(page); assert.equal(seen.gaps[0].promiseSettled, true);
-  assert.equal(seen.gaps[0].sourceResponseObserved, true, "Actual source must consume the response before settlement attempt");
-  assert.equal(seen.gaps[0].originalEnabledDom, true, "Original enabled-DOM condition is UNPROVEN; pending-only controls cannot substitute");
-  assert.equal(seen.calls.filter(call => call.kind === "commit").length, 1);
+async function gap(page, mode) {
+  // ONE evaluation: no fetch, polling, held release or host-task barrier between
+  // the first native submit, actual response consumption and second submit.
+  const probe = await page.evaluate(async ({ mode, storageKey }) => {
+    const bridge = window.campaignMonster, form = document.querySelector("form");
+    bridge.mode(mode);
+    const initialEnabled = !!form && !form.querySelector("fieldset").disabled && !form.querySelector('button[type="submit"]').disabled;
+    bridge.startTransition(() => form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true })));
+    const original = structuredClone(bridge.calls.find(call => call.kind === "commit")?.intent);
+    let ticks = 0, sourceResponseObserved = false, savedEffectObserved = false;
+    for (; ticks < 8; ticks++) {
+      await Promise.resolve(); // Native microtick only; no scheduler substitution.
+      sourceResponseObserved = bridge.immediate[0]?.responseConsumed === true;
+      const marker = JSON.parse(sessionStorage.getItem(storageKey) ?? "null");
+      savedEffectObserved = marker?.saved_id === "10000000-0000-4000-8000-000000000005";
+      if (sourceResponseObserved && (mode !== "settlement-saved" || savedEffectObserved)) break;
+    }
+    const fieldset = form.querySelector("fieldset"), button = form.querySelector('button[type="submit"]');
+    const markerBefore = JSON.parse(sessionStorage.getItem(storageKey) ?? "null");
+    const captured = { mode, ticks, immediateBoundary: "Explicit modeled reply; actual request/receipt validation and React/native events",
+      initialEnabled, sourceResponseObserved, savedEffectObserved,
+      originalEnabledDom: !fieldset.disabled && !button.disabled,
+      originalIntent: original, markerBefore, callsBefore: bridge.calls.filter(call => call.kind === "commit").length };
+    bridge.startTransition(() => form.dispatchEvent(new SubmitEvent("submit", { bubbles: true, cancelable: true })));
+    Object.assign(captured, { markerAfter: JSON.parse(sessionStorage.getItem(storageKey) ?? "null"),
+      intentAfter: structuredClone(bridge.calls.find(call => call.kind === "commit")?.intent),
+      callsAfter: bridge.calls.filter(call => call.kind === "commit").length });
+    bridge.gaps.push(captured); return captured;
+  }, { mode, storageKey: key(false) });
+  assert.equal(probe.initialEnabled, true); assert.equal(probe.sourceResponseObserved, true, "Actual parser access unproved before host task");
+  if (mode === "settlement-saved") assert.equal(probe.savedEffectObserved, true, "Actual accepted storage effect unproved");
+  assert.equal(probe.originalEnabledDom, true, "Original enabled-DOM condition is UNPROVEN; pending-only controls cannot substitute");
+  assert.ok(probe.originalIntent?.operation_id); assert.equal(probe.markerBefore?.operation_id, probe.originalIntent.operation_id);
+  assert.equal(probe.markerAfter?.operation_id, probe.originalIntent.operation_id); assert.deepEqual(probe.intentAfter, probe.originalIntent);
+  assert.equal(probe.callsBefore, 1); assert.equal(probe.callsAfter, 1); return probe;
 }
 async function inspectFonts(page, viewport) {
   const sample = await page.evaluate(async () => {
@@ -117,11 +144,25 @@ export async function runCampaignMonsterCases(options) {
         } else if (scenario === "settlement-gap") {
           for (const mode of ["settlement-saved", "settlement-uncertain", "settlement-refusal"]) {
             // Independent fixtures for three outcomes, not product recovery.
-            await page.evaluate(() => sessionStorage.clear()); await model(page, "control", {}); await page.reload(); await createReady(page); await page.evaluate(mode => window.campaignMonster.mode(mode), mode);
-            await submit(page); await gap(page); const seen = await trace(page);
-            if (mode === "settlement-saved") await saved(page);
-            else if (mode === "settlement-uncertain") check(JSON.parse(seen.storage[key(false)]).operation_id, seen.calls.find(call => call.kind === "commit").intent.operation_id);
-            else await eventually(page, key => sessionStorage.getItem(key) === null, key(false));
+            await page.evaluate(() => sessionStorage.clear()); await model(page, "control", {}); await page.reload(); await createReady(page);
+            const probe = await gap(page, mode);
+            if (mode === "settlement-saved") {
+              await saved(page); await submit(page, 2); check((await trace(page)).calls.filter(call => call.kind === "commit").length, 1);
+            } else if (mode === "settlement-uncertain") {
+              await page.getByRole("button", { name: "Check campaign monsters", exact: true }).click();
+              await eventually(page, () => document.body.textContent.includes("No receipt was found"));
+              check(JSON.parse((await trace(page)).storage[key(false)]).operation_id, probe.originalIntent.operation_id);
+              await page.evaluate(() => window.campaignMonster.mode("settlement-replay"));
+              await page.getByRole("button", { name: "Resubmit same operation", exact: true }).click(); await saved(page);
+              const commits = (await trace(page)).calls.filter(call => call.kind === "commit");
+              check(commits.length, 2); check(commits[1].intent, probe.originalIntent);
+            } else {
+              await eventually(page, key => sessionStorage.getItem(key) === null, key(false));
+              await eventually(page, () => !document.querySelector("fieldset").disabled);
+              await page.evaluate(() => window.campaignMonster.mode("settlement-saved")); await submit(page); await saved(page);
+              const commits = (await trace(page)).calls.filter(call => call.kind === "commit"); check(commits.length, 2);
+              check(commits[1].intent.operation_id !== probe.originalIntent.operation_id, true);
+            }
           }
           assertionCount++;
         } else if (scenario === "lost-absence" || scenario === "reload") {
