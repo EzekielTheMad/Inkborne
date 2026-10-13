@@ -219,3 +219,16 @@ complete finals, any fresh pre-force proof, native cleanup and wrapper readback
 still require measured root review before runtime release. No measured budget
 receipts exist in this worker; runtime/measurement remain UNREADY. No source or
 runtime release is inferred from this checkpoint or elapsed time.
+Static executable-byte receipt for correction46c62b60f222c89dda267b3af391487953d8378a:
+all seven own executable raw bytes equal the exact Git checkout projection;
+canonical/index OIDs match and all eleven untouched dependencies likewise match.
+No mismatch, regeneration, renormalization or Git config change occurred. The
+reused ignored script retains a stale copied console caption mentioning995;
+initial.json and final.json explicitly record46c, and manifest.json preserves this
+attribution caveat. Original995 receipts were not overwritten. No syntax/runtime
+or acceptance execution is implied by the Git/file inspection.
+
+Ignored test-results/save-bonus-review-correction-byte-preflight/manifest.json
+SHA256:8AE39DB17362A4FFF6A52DDB115C490E4ABE6EED2899E798DA7E3DEC0B27C5E3.
+Final.json SHA256:2154A135BD6A192FDF3C97BA12EBA64E8F274DF8A91F981807425251D6823D82.
+This docs-only successor leaves correction46c executable blobs unchanged.
