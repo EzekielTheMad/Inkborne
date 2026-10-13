@@ -60,7 +60,7 @@ then complete input/runtime proof before inherited helpers/framework/scenario us
 TS config contains no top-level await; mjs avoids the old TS/CJS loader hazard.
 
 Owned runtime function is the reviewed Magic recursive lock-described algorithm
-copied verbatim except hash-helper name: full Next and actual resolved declared
+copied with hash-helper rename and the owned stop/deadline checkpoints: full Next and actual resolved declared
 dependency/optional/peer closure, root+worker exact file/directory sets, both symlink
 refusal, platform/absent optional records, NodeexecSHA and finite caps. No inherited
 helper or general QA refactor.0841/e405 helpers bind fixed exact Git blobs BEFORE
@@ -81,10 +81,10 @@ Early cooperative IPC stop precedes preflight awaits; bounded10sec recovery.
 Any force requires fresh whole rendered proof plus identical actual OSbirth/PID/
 parent/command. Missing identity/proof refuses force. Both ports/browser exit and
 fresh PID readbacks are assertions; Python/Poppler actual births/commands/children
-and output/module hashes are recorded. A missed rapid native renderer identity is
+and output hashes are recorded. The original verifier does NOT record Python-module hashes; only the bonus verifier records them. A missed rapid native renderer identity is
 a genuine HOLD/failure, never fabricated wall-clock birth or accepted cleanup.
 
-Initial rendered proof is sent IPC and written disk, including both output hashes,
+Initial rendered proof is sent IPC and written disk, including both output hashes and byte counts/caps,
 metafile/captured bytes, CSS map and complete source/runtime/assets/font envelope.
 Runner AND wrapper freshly rebind the WHOLE envelope after teardown; wrapper also
 does so before force. Success and failed-case paths preserve logs/screens/DOM and
@@ -113,7 +113,7 @@ current root integration/build, budget proof and explicit UI/heavy release.
 The second bundle reuses unchanged original print harness/context shim/fixtures,
 with actual current production CSS/fonts/map and preserved original open/focus/
 privacy/print-media/width/Escape/recovery assertions. Six martial/caster/long
-Letter/A4 PDFs go in original-print; unchanged e2e/print/verify-pdfs.py is invoked
+Letter/A4 PDFs go in six separate original-print/<kind>-<paper> directories; unchanged e2e/print/verify-pdfs.py is invoked
 as the separate originalQA command. Two actual canonical+1 provider exports go in
 bonus-print; the new verifier requires exact six rows (CON+5 vs neutral+4), real
 paper sizes/margins, no private/control/rider text, every page rendered/contact
@@ -162,3 +162,60 @@ It binds initial bytes/failures, both scripts and strict final/read-only-root
 receipts. This handoff-only successor records evidence; all seven canonical source
 blobs remain exact995. Node/Python/npm/tests/gates/descriptor approval, source
 imports and browser/measurement remain UNRUN/UNREADY pending separate release.
+
+## Separate exact995 review correction — SOURCE ONLY, UNRUN
+
+This successor addresses only the three finite review groups in the owned binder,
+runner and wrapper, plus this handoff. The original six PDF data/assertions and
+original verifier remain byte-identical; fixture, scenarios, config and new bonus
+verifier are unchanged from995. No runtime, measurement, syntax execution, tests,
+Node/Python/npm, build, browser, server, SQL or network was run for this correction.
+Git whitespace/source-scope and raw checkout checks are static evidence only.
+
+Builtin stop handlers now install in BOTH entries before manifest/source awaits.
+Wrapper binds one absolute900000ms deadline into runner argv. Owned source,
+installed closure and transitive input walks require deadline/stop checkpoints;
+case/export boundaries and native QA polling do likewise. Phase timers cooperatively
+close the private browser and reject acceptance; repeated exports share their
+aggregate allowance. Cleanup proof uses reserved deadlines while still allowing
+cooperative close after an ordinary stop. Product waits remain10sec.
+
+QA identity capture is capped32 and never rebased. On refusal/timeout, a bounded
+wait is followed only when necessary by fresh WHOLE rendered proof, exact current
+birth/PID/parent/command and executable-path checks. Only individually verified
+owned Python/Poppler PIDs are forced; no unknown descendant expansion or executable
+name kill. Known renderers are checked even if Python exited first. Missing birth,
+identity or fresh proof refuses force; partial logs/remaining identities persist.
+Wrapper cooperative wait/force/readback and QA cleanup are recorded, not omitted
+from the combined forceAndCleanup allowance. Wrapper force keeps the reviewed
+exact private runner-tree guard and repeats full rendered proof before force.
+RunnerFinal and wrapperFinal each still execute their fresh complete source,
+installed runtime, root HEAD/index/raw/config, build/CSS/font, served output,
+metafile/mounted input and CSS-module mapping proof. Proof failure cannot become
+acceptance or a guessed force permission.
+
+Initial IPC AND disk envelopes now contain exactly two bundle byte sizes/SHA256,
+16MiB each/32MiB total caps,8MiB metafile and8192-input caps, plus native run ID and
+source/build/harness/source-proof binding. Immutable served buffers must match
+those initial lengths/hashes. Both fresh finals reopen and compare them; no cache,
+HEAD fallback, stylesheet fallback or skipped inherited proof is introduced.
+
+New qa-inventory.json is an exact bounded set for BOTH QA roots: six original
+PDFs and six distinct contact sheets, two bonus PDFs/contact sheets, every page
+PNG, both QA reports and both render-process receipts. Caps are256files,
+32directories, depth4,128MiB/file,512MiB total,8MiB/report,64pages/PDF and128pages
+total. Unexpected files/directories, symlinks, missing pages, noncontiguous page
+numbers, mismatched PDFs/report hashes or bonus reported PNG/contact hashes fail.
+The inventory binds the initial rendered proof/run ID/root source/BUILD_ID/own
+freeze and unchanged bonus provider raw-pin/state snapshot. Runner reopens it
+inside runnerFinal; wrapper independently reopens BOTH full directories after
+teardown and deep-compares the complete inventory with runner evidence and disk
+receipt before acceptance. Original verifier module-hash coverage is NOT claimed.
+
+Thirty prepared actual-consumer cases,43 screenshots/fonts and eight prepared PDF
+exports retain all existing oracles; zero accepted observations are claimed.
+Historical33pages remain historical. Actual phase allocations including BOTH
+complete finals, any fresh pre-force proof, native cleanup and wrapper readback
+still require measured root review before runtime release. No measured budget
+receipts exist in this worker; runtime/measurement remain UNREADY. No source or
+runtime release is inferred from this checkpoint or elapsed time.
