@@ -258,3 +258,18 @@ unchanged. This correction and this handoff are the sole changed paths. Mounted
 spec bytes are checked against exact Git checkout projection before freezing.
 No Node/npm/typecheck/test/runtime/budget measurement/SQL/network execution.
 Independent exact review precedes root integration and any retry.
+
+## Two lint-only corrections after root 118 gate
+
+Parent reports root118 typecheck PASS, then zero-warning lint retained exactly two
+warnings: fixture.tsx:17 unused placeholder parameter and playwright.config.ts:18
+anonymous default-export object. Its five observed lint identities exited and
+listeners were zero. Preserve the first failure; this worker ran neither gate.
+
+The same placeholder callback signature/no-op now explicitly consumes _next with
+void _next. The identical config object is assigned to named config, then default
+exported. No rule suppression, guards/deadlines/oracles/source maps or behavior
+changes; production/helpers remain untouched. Only fixture/config and this handoff
+change. Exact-six mounted byte/index/checkout projections are checked before final
+freeze. No Node/npm/type/lint/test/runtime/SQL/network execution; M1 exact review
+precedes root integration and retry.

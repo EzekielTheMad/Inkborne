@@ -15,6 +15,7 @@ assert.deepEqual(input.nodeRuntime, { executable: process.execPath, version: pro
   executedSha256: createHash("sha256").update(readFileSync(process.execPath)).digest("hex") });
 assert.equal(input.phaseAllocation?.status, "root-reviewed-measured");
 assert.equal(input.phaseAllocation.wholeMs, 900000);
-export default { testDir: ".", testMatch: "campaign-monster.spec.mts", workers: 1, retries: 0,
+const config = { testDir: ".", testMatch: "campaign-monster.spec.mts", workers: 1, retries: 0,
   timeout: 900000, reporter: "list", outputDir: "../../test-results/campaign-monster-playwright",
   expect: { timeout: 5000 } };
+export default config;

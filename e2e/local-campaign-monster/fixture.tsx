@@ -14,7 +14,7 @@ type Held = { response?: unknown; observed?: boolean; resolve: (value: unknown) 
 type Trace = { kind: string; campaign: string; intent?: unknown; operation?: string; source?: string; version?: number };
 declare global { interface Window { campaignMonster: ReturnType<typeof bridge>; __m5Executed?: boolean } }
 const input = JSON.parse(document.getElementById("model-props")!.textContent!) as { props: Props; scenario: string };
-let renderProps = (_next: Props) => {}; // Filled before actions can be invoked.
+let renderProps = (_next: Props) => { void _next; }; // Filled before actions can be invoked.
 function bridge() {
   const calls: Trace[] = [], propsReceived: Props[] = [], gaps: unknown[] = [];
   const immediate: { mode: string; intent: InstanceRequest; responseConsumed: boolean; reply: unknown }[] = [];
