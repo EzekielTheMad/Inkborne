@@ -447,3 +447,30 @@ test line/comments plus handoff requires exact source review BEFORE any gate;
 typecheck/lint and new focused count remain UNRUN. Product/native gates remain
 FALSE. All11 production paths, fixture0aec, staged SQL, DAL/schema/ACL/dependencies
 are unchanged. No processes/heavy/SQL/network/runtime work ran for this disposition.
+
+## Observed pending-gate run; fixture type annotation correction UNRUN
+
+After exact skip-only/accuracy review and explicit root lane release, same seven-suite
+package command/maxWorkers2 at clean4faca6e2189ffb15dfaf03a646ffc040c4d281ca exited0,
+8.84s:7suites passed,134tests passed/3SKIPPED (137). This is the observed count, NOT
+137passed or closure of the three UNVERIFIED M5 stress/native requirements. Their
+bodies/names/oracles and default-off product/native flags remain unchanged.
+
+Sequential `npm.cmd run typecheck` exited2: two TS2345 test-only errors at
+monster-instance-schema.test.ts34 and monster-instance-stage-model.test.ts22.
+Shared fixture monsterCreate declared InstanceRequest's create|update union despite
+always returning literal command:create; spreading name therefore admits a type-level
+update alternative that cannot have that top-level property. Minimal correction
+narrows ONLY its return annotation to Extract<InstanceRequest,{command:"create"}>.
+No runtime fixture value, assertion, test body, product/schema/SQL behavior changes.
+This correction is UNRUN and frozen for independent review BEFORE rerun. Lint did
+not run after type failure; no full/build/browser/SQL/native validation ran.
+
+Local focused-type-4faca.manifest.json SHA256
+`0FB678F3E0529AFF293EA50D9D4080B8727F98B65583F69447B7F38EF96779B8` binds focused and
+type stdout/stderr/process/result under the existing evidence directory. Focused
+12/type5 captured OS identities absent and both owned-listener readbacks0; lock
+SHA256 unchanged7225AA…A2EB6. Focused global processes465→466,CPU57→65%,freeKiB
+6853812→6827752; type466→468,CPU27→59%,freeKiB6950856→6716916. No kills needed;
+heavy slot released immediately. All prior failed receipts preserved. Remaining
+type/lint/review/root combined gates and M5/G2/G3/recovery acceptance remain open.

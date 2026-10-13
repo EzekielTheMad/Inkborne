@@ -15,7 +15,7 @@ export function monsterSnapshot() {
     scope_snapshot: "personal", owner_id_snapshot: MC.owner, created_at: "2026-10-13T12:00:00Z" };
 }
 export function monsterPreview(): SourcePreview { return { source_id: MC.source, source_version: 1, system_id: MC.system, source_digest: MC.digest, declared_max_hp: 17, snapshot: monsterSnapshot() }; }
-export function monsterCreate(): InstanceRequest { return { command_version: 1, operation_id: MC.operation, command: "create", source_id: MC.source,
+export function monsterCreate(): Extract<InstanceRequest, { command: "create" }> { return { command_version: 1, operation_id: MC.operation, command: "create", source_id: MC.source,
   source_version: 1, source_digest: MC.digest, name: "Bridge sentinel", current_hp: 0, notes: "Original private note." }; }
 export function monsterDetail(revision = "0"): InstanceDetail { return { id: MC.instance, campaign_id: MC.campaign, system_id: MC.system, name: "Bridge sentinel",
   current_hp: 0, declared_max_hp: 17, notes: "Original private note.", archived: false, revision, source_content_id: MC.source,
