@@ -18,7 +18,9 @@ Plan proposes one actual consumer adapter with scoped save availability and reta
 callback guards, preserving ordered raw pins/effects/nonclass grants/state/ASI/race/
 HP and manual concentration controls. It depends on C1v2 and a real complete-or-
 unavailable ClassSaveSourceProof reader: current P1 raw graph/copy/receipt shapes
-cannot be fabricated into advisory C1v1 evidence. Actual producer/compiler/writer/
+cannot be fabricated into advisory C1v1 evidence. The full proof remains server-
+internal; only finite entitled calculation input/status/staleness projection reaches
+clients, never private journals/Auth/acceptance records. Actual producer/compiler/writer/
 copy/Auth/source entitlement and G2 gates remain prerequisites; no new class or
 zero-save shortcut, origin inference, legacy normalization or default activation.
 

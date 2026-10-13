@@ -71,6 +71,15 @@ BIGINT revisions, INT4 pin versions and the reviewed finite P1/C1 JSON and row
 bounds. Resolve their differing graph/collector capacities before implementing
 the adapter; exceeding supported capacity is unavailable, never silent truncation.
 
+This full proof is server-internal. Private creation/class journals, raw Auth or
+acceptance records and operational evidence never become client props or paper
+output. C1v2 validates them server-side, then emits a finite client calculation
+projection: existing entitled public pin/source/effect arrays in their order,
+six save statuses/reasons, admitted projection indices and nonsecret loaded
+character/system/revision/input identity. That UI identity is a staleness guard,
+not writer authorization. Changed optimistic class inputs invalidate the projection
+until a fresh coherent entitled read; the browser cannot mint authoritative proof.
+
 One coherent protected reader must prove the returned revisions/order/rows belong
 to the same admitted document and recheck current ownership/use entitlement after
 waits. A successful ordinary content-ref/ASI read alone cannot establish that.
@@ -156,7 +165,7 @@ Then one finite **C2.1 actual consumer child**, after those dependencies are met
   availability extension to the existing class-role schema and `ability-mechanics.ts`.
 - Actual reader projection in `lib/supabase/content-refs.ts`; sheet server
   `app/(app)/characters/[id]/page.tsx`, `components/character/character-page-client.tsx`
-  and `lib/character/character-context.tsx` carry the full proof and evaluate the
+  and `lib/character/character-context.tsx` carry only the finite client projection and evaluate the
   projection once; append armor/active effects in their existing relative order.
 - Existing builder step server pages/read props and clients under
   `app/(app)/characters/[id]/builder/{class,abilities,race,background}` plus
