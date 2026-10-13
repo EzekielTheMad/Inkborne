@@ -42,4 +42,22 @@ describe("core disabled profile SOURCE contract; not SQL execution", () => {
     expect(runner).not.toContain("taskkill"); expect(runner).not.toContain(".kill(");
     expect(runner).toContain("mode === \"freeze\"");
   });
+  it("binds effective typed owner bridges and rejects explicit foreign grants/delegation", () => {
+    for (const token of ["pg_catalog.has_function_privilege(api_role,signature,'EXECUTE') IS DISTINCT FROM expected_execute",
+      "PUBLIC function EXECUTE widening", "entry.is_grantable", "Foreign EXECUTE ACL or delegate grant option", "acl_grantees",
+      "private.class_origin_metadata_delta_v1(uuid)", "private.class_origin_consume_metadata_revision_v1(uuid)", "private.class_origin_assert_metadata_revision_v1(uuid)",
+      "private.apply_class_metadata_revision_v1(uuid)", "private.class_confirmation_private_inputs_v1(uuid,uuid)", "private.lock_class_confirmation_sources_v1(jsonb,uuid,uuid)"])
+      expect(assertions).toContain(token);
+    expect(assertions).toContain("Everything else is false, including authority -> base class finalizer");
+    expect(runner).toContain("exact effective stage function EXECUTE matrix mismatch");
+    expect(runner).toContain("exact explicit function EXECUTE ACL inventory mismatch");
+    expect(runner).toContain("argument_types");
+  });
+  it("CLI and native adapters refuse injected model manifests regardless of modeled approval", () => {
+    expect(runner).toContain('manifest.execution !== "native"');
+    expect(runner).toContain("CLI refuses injected-model manifests regardless of modeled approval");
+    expect(runner).toContain("options.transport === actualTransport || options.observer === nativeObserver");
+    expect(runner).toContain("const equipment = freezeSource(root)");
+    expect(runner).not.toContain("skipFreeze"); expect(runner).not.toContain("skipLineage");
+  });
 });

@@ -2,7 +2,7 @@
 BEGIN READ ONLY;
 DO $check$
 DECLARE stage integer:=current_setting('inkborne.core.stage')::integer; candidate text; api_role text; signature text;
-  owner_role text; relation_oid oid; column_name text; actual_count bigint; permission text; result jsonb; message text; trigger_key text;
+  owner_role text; relation_oid oid; column_name text; actual_count bigint; permission text; result jsonb; message text; trigger_key text; expected_execute boolean;
   synthetic jsonb:='{"context_version":1,"actor_id":"09090000-2026-4a12-8e00-000000000001","session_id":"09090000-2026-4a12-8e00-000000000002","jwt_expires_at":"9999-12-31T23:59:59.000000Z"}';
 BEGIN
   IF current_database()<>'postgres' OR current_user<>'postgres' OR session_user<>'postgres' OR stage NOT BETWEEN 1 AND 5 THEN
@@ -22,17 +22,39 @@ BEGIN
       IF NOT EXISTS(SELECT FROM pg_catalog.pg_proc WHERE oid=signature::regprocedure AND EXISTS(SELECT FROM unnest(proconfig) AS config_entry(value) WHERE config_entry.value IN ('search_path=','search_path=""'))) THEN
         RAISE EXCEPTION 'Runtime function search path drift' USING ERRCODE='23514';
       END IF;
-      FOREACH api_role IN ARRAY ARRAY['anon','authenticated','service_role'] LOOP
-        IF (api_role='service_role' AND stage=1 AND signature IN (
-          'read_hit_die_receipt_v1(uuid,jsonb,text)','resolve_hit_die_snapshot_v1(uuid,uuid)',
-          'commit_hit_die_v1(uuid,jsonb,jsonb,jsonb,text,timestamp with time zone)',
-          'public.read_hit_die_receipt_v1(uuid,jsonb,text)','public.resolve_hit_die_snapshot_v1(uuid,uuid)',
-          'public.commit_hit_die_v1(uuid,jsonb,jsonb,jsonb,text,timestamp with time zone)'))
-          OR (api_role='service_role' AND stage>=2 AND pG_catalog.to_regprocedure(signature) IN (
-            pg_catalog.to_regprocedure('public.read_hit_die_graph_v1(jsonb,uuid)'),pg_catalog.to_regprocedure('public.patch_character_state_at_revision_v1(jsonb,uuid,text,jsonb)'))) THEN
-          IF NOT pg_catalog.has_function_privilege(api_role,signature,'EXECUTE') THEN RAISE EXCEPTION 'Selected disabled wrapper inaccessible' USING ERRCODE='42501'; END IF;
-        ELSIF pg_catalog.has_function_privilege(api_role,signature,'EXECUTE') THEN
-          RAISE EXCEPTION 'Unexpected caller EXECUTE in private family' USING ERRCODE='42501';
+      IF EXISTS(SELECT FROM pg_catalog.pg_proc p CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(p.proacl,pg_catalog.acldefault('f',p.proowner))) entry
+        WHERE p.oid=signature::regprocedure AND entry.grantee=0 AND entry.privilege_type='EXECUTE') THEN
+        RAISE EXCEPTION 'PUBLIC function EXECUTE widening' USING ERRCODE='42501';
+      END IF;
+      IF EXISTS(SELECT FROM pg_catalog.pg_proc p CROSS JOIN LATERAL pg_catalog.aclexplode(COALESCE(p.proacl,pg_catalog.acldefault('f',p.proowner))) entry
+        WHERE p.oid=signature::regprocedure AND entry.privilege_type='EXECUTE' AND entry.grantee<>p.proowner
+          AND (entry.is_grantable OR NOT EXISTS(SELECT FROM pg_catalog.pg_roles grantee WHERE grantee.oid=entry.grantee
+            AND grantee.rolname IN ('anon','authenticated','service_role','inkborne_hit_die_kernel_owner','inkborne_hit_die_authority_owner','inkborne_class_origin_owner')))) THEN
+        RAISE EXCEPTION 'Foreign EXECUTE ACL or delegate grant option' USING ERRCODE='42501';
+      END IF;
+      FOR api_role IN SELECT rolname FROM pg_catalog.pg_roles WHERE rolname IN
+        ('anon','authenticated','service_role','inkborne_hit_die_kernel_owner','inkborne_hit_die_authority_owner','inkborne_class_origin_owner') LOOP
+        expected_execute:=api_role=owner_role;
+        IF api_role='service_role' AND ((stage=1 AND signature::regprocedure IN (
+          pg_catalog.to_regprocedure('public.read_hit_die_receipt_v1(uuid,jsonb,text)'),
+          pg_catalog.to_regprocedure('public.resolve_hit_die_snapshot_v1(uuid,uuid)'),
+          pg_catalog.to_regprocedure('public.commit_hit_die_v1(uuid,jsonb,jsonb,jsonb,text,timestamptz)')))
+          OR (stage>=2 AND signature::regprocedure IN (
+            pg_catalog.to_regprocedure('public.read_hit_die_graph_v1(jsonb,uuid)'),
+            pg_catalog.to_regprocedure('public.patch_character_state_at_revision_v1(jsonb,uuid,text,jsonb)')))) THEN expected_execute:=true; END IF;
+        IF stage>=2 AND api_role='inkborne_hit_die_authority_owner' AND signature::regprocedure IN (
+          pg_catalog.to_regprocedure('private.hit_die_exact_keys_v1(jsonb,text[])'),pg_catalog.to_regprocedure('private.hit_die_native_v1(timestamptz)'),
+          pg_catalog.to_regprocedure('private.hit_die_millis_v1(timestamptz)'),pg_catalog.to_regprocedure('private.hit_die_deadline_v1(jsonb,timestamptz)')) THEN expected_execute:=true; END IF;
+        IF stage>=3 AND api_role='inkborne_class_origin_owner' AND signature::regprocedure=pg_catalog.to_regprocedure('private.lock_character_writer_guard_v1()') THEN expected_execute:=true; END IF;
+        IF stage>=4 AND api_role='inkborne_hit_die_authority_owner' AND signature::regprocedure IN (
+          pg_catalog.to_regprocedure('private.class_origin_metadata_delta_v1(uuid)'),pg_catalog.to_regprocedure('private.class_origin_consume_metadata_revision_v1(uuid)'),
+          pg_catalog.to_regprocedure('private.class_origin_assert_metadata_revision_v1(uuid)')) THEN expected_execute:=true; END IF;
+        IF stage>=4 AND api_role='inkborne_class_origin_owner' AND signature::regprocedure=pg_catalog.to_regprocedure('private.apply_class_metadata_revision_v1(uuid)') THEN expected_execute:=true; END IF;
+        IF stage>=5 AND api_role='inkborne_hit_die_authority_owner' AND signature::regprocedure=pg_catalog.to_regprocedure('private.class_confirmation_private_inputs_v1(uuid,uuid)') THEN expected_execute:=true; END IF;
+        IF stage>=5 AND api_role='inkborne_class_origin_owner' AND signature::regprocedure=pg_catalog.to_regprocedure('private.lock_class_confirmation_sources_v1(jsonb,uuid,uuid)') THEN expected_execute:=true; END IF;
+        -- Everything else is false, including authority -> base class finalizer.
+        IF pg_catalog.has_function_privilege(api_role,signature,'EXECUTE') IS DISTINCT FROM expected_execute THEN
+          RAISE EXCEPTION 'Exact effective cross-owner EXECUTE matrix mismatch' USING ERRCODE='42501';
         END IF;
       END LOOP;
     END LOOP;
@@ -166,7 +188,17 @@ SELECT pg_catalog.jsonb_build_object('profile','core-db-disabled-install-v1','st
   'database',current_database(),'actor',current_user,'backend_pid',pg_catalog.pg_backend_pid(),
   'metadata',(SELECT coalesce(jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'schema',n.nspname,'name',p.proname,'owner',r.rolname,
     'definition_md5',pg_catalog.md5(pg_catalog.pg_get_functiondef(p.oid)),'source_md5',pg_catalog.md5(p.prosrc),
-    'security_definer',p.prosecdef,'settings',p.proconfig,'acl',p.proacl::text) ORDER BY p.oid::regprocedure::text),'[]'::jsonb)
+    'security_definer',p.prosecdef,'settings',p.proconfig,'acl',p.proacl::text,
+    'acl_grantees',(SELECT coalesce(jsonb_agg(grantee.rolname ORDER BY grantee.rolname),'[]'::jsonb)
+      FROM pg_catalog.aclexplode(COALESCE(p.proacl,pg_catalog.acldefault('f',p.proowner))) permission
+      JOIN pg_catalog.pg_roles grantee ON grantee.oid=permission.grantee WHERE permission.privilege_type='EXECUTE'),
+    'argument_types',(SELECT coalesce(jsonb_agg(type_ns.nspname||'.'||type_row.typname ORDER BY args.position),'[]'::jsonb)
+      FROM unnest(p.proargtypes::oid[]) WITH ORDINALITY AS args(type_oid,position)
+      JOIN pg_catalog.pg_type type_row ON type_row.oid=args.type_oid JOIN pg_catalog.pg_namespace type_ns ON type_ns.oid=type_row.typnamespace),
+    'execute',(SELECT jsonb_object_agg(executor.rolname,pg_catalog.has_function_privilege(executor.oid,p.oid,'EXECUTE')) FROM pg_catalog.pg_roles executor
+      WHERE executor.rolname IN ('anon','authenticated','service_role','inkborne_hit_die_kernel_owner','inkborne_hit_die_authority_owner','inkborne_class_origin_owner'))
+      || pg_catalog.jsonb_build_object('PUBLIC',EXISTS(SELECT FROM pg_catalog.aclexplode(COALESCE(p.proacl,pg_catalog.acldefault('f',p.proowner))) permission
+        WHERE permission.grantee=0 AND permission.privilege_type='EXECUTE'))) ORDER BY p.oid::regprocedure::text),'[]'::jsonb)
     FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_roles r ON r.oid=p.proowner JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace WHERE r.rolname IN
     ('inkborne_hit_die_kernel_owner','inkborne_hit_die_authority_owner','inkborne_class_origin_owner')),
   'constraints',(SELECT coalesce(jsonb_agg(jsonb_build_object('table',c.conrelid::regclass::text,'name',c.conname,'deferrable',c.condeferrable,
