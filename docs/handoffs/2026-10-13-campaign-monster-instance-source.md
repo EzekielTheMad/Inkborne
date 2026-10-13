@@ -474,3 +474,32 @@ SHA256 unchanged7225AA…A2EB6. Focused global processes465→466,CPU57→65%,fr
 6853812→6827752; type466→468,CPU27→59%,freeKiB6950856→6716916. No kills needed;
 heavy slot released immediately. All prior failed receipts preserved. Remaining
 type/lint/review/root combined gates and M5/G2/G3/recovery acceptance remain open.
+
+## Type pass; single intentional hard-navigation lint policy warning preserved
+
+Root exact6b793 fixture annotation review approved remaining sequential gates only.
+At clean6b793fe8b3e35e4e6ac2297509a2f4ec5023f5c6 `npm.cmd run typecheck` exited0.
+No focused rerun was needed after a type-only annotation; actual4faca134passed/
+3skipped remains the reported observed focused result. Then `npm.cmd run lint`
+exited1 due solely to one recommended Next rule warning (0 errors):
+@next/next/no-location-assign-relative-destination at actual form's deliberate
+globalThis.location.assign(target). max-warnings=0 makes that warning a gate failure.
+Installed rule source explicitly flags relative hard navigation mechanically.
+
+Reviewed repeat-edit design deliberately requires native navigation for a fresh
+current-owner server read and new component lifetime after validated saved receipt.
+Smallest proposed correction is ONE eslint-disable-next-line for this exact call
+with that rationale; runtime code, URL/receipt/storage/mutex/restore and tests stay
+unchanged. No global lint configuration or alternative alias evades the rule. This
+scoped policy exception is UNRUN and frozen for exact source review before lint
+rerun. Native cache/owner/session/navigation proof remains unrun; a comment does not
+certify it or close the three skipped stress requirements/default-off gates.
+
+type-lint-6b793.manifest.json SHA256
+`ED1A7CDEA519ABFBE3ABC56D54E9827F8F8A0E06BF6799B6F8202133FE9749C8` binds both gate
+stdout/stderr/process/result in the existing local evidence directory. Both type5/
+lint5 OS identities absent, owned listeners0, package-lock SHA256 unchanged7225AA…
+A2EB6. Type global count465→465,CPU35→63%,freeKiB6811748→6720504; lint465→467,
+CPU29→57%,freeKiB6802456→6992864. No kills; lane released after readback. All first
+failures, pass receipts and unverified acceptance items remain preserved. No native
+SQL/Auth/engine/provider/network/build/full/browser or unrelated source changes ran.

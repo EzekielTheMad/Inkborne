@@ -225,6 +225,7 @@ export function MonsterInstanceForm({ campaignId, ownerId, systemId, initial, so
       if (raw !== null) { sessionStorage.removeItem(storageKey); removed = true; }
       const target = `/campaigns/${campaignId}/monsters/${saved.instance_id}?${new URLSearchParams({ editAfter: saved.operation_id })}`;
       setMessage("Saved receipt retained. Opening a fresh latest instance editor…");
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Accepted receipt requires a fresh owner-checked server request and new editor mount.
       globalThis.location.assign(target); // Hard navigation, new owner-checked server read and mount.
       // Return/hang is not evidence of a new editor; old lifetime stays locked.
     } catch {
