@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const actions = vi.hoisted(() => ({ commit: vi.fn(), resolve: vi.fn(), preview: vi.fn(), push: vi.fn() }));
 vi.mock("@/app/(app)/campaigns/[id]/monsters/actions", () => ({ commitCampaignMonster: actions.commit, resolveCampaignMonster: actions.resolve, previewCampaignMonster: actions.preview }));
 vi.mock("next/navigation", async (original) => ({ ...(await original<typeof import("next/navigation")>()), useRouter: () => ({ push: actions.push }) }));
@@ -7,6 +7,7 @@ import { MonsterInstanceForm } from "@/components/campaigns/monster-instance-for
 import { instanceIntentFromForm } from "@/lib/campaigns/monster-instance-form";
 import { MC, monsterDetail, monsterPreview, monsterReceipt } from "@/tests/fixtures/campaign-monster-instances";
 beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); actions.preview.mockResolvedValue({ status: "preview", preview: monsterPreview() }); actions.resolve.mockResolvedValue({ status: "absent" }); });
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 async function createForm() {
   const mounted = render(<MonsterInstanceForm campaignId={MC.campaign} ownerId={MC.owner} systemId={MC.system} sources={[{ id: MC.source, name: "Mossglass Sentinel", version: 1 }]} />);
   await waitFor(() => expect(screen.getByLabelText("Monster source")).toBeEnabled());
@@ -167,5 +168,101 @@ describe("actual DM monster form with simulated transport only", () => {
     await act(async () => finish({ status: "saved", receipt: monsterReceipt(original) }));
     expect(JSON.parse(sessionStorage.getItem(key)!)).toEqual(newer);
     expect(JSON.parse(sessionStorage.getItem(`${key}:accepted:${original.operation_id}`)!)).toEqual({ operation_id: original.operation_id, saved_id: MC.instance });
+  });
+});
+
+const editMarkerKey = `inkborne:campaign-monster:v1:${MC.owner}:${MC.campaign}:${MC.instance}`;
+async function acceptedEdit(noop = false) {
+  actions.commit.mockImplementation(async (_campaign, input: FormData) => {
+    const request = instanceIntentFromForm(input); const receipt = monsterReceipt(request);
+    if (noop && actions.commit.mock.calls.length === 1 && request.command === "update") { receipt.outcome = "noop"; receipt.readback.revision = request.expected_revision; }
+    return { status: "saved", receipt };
+  });
+  const mounted = render(<MonsterInstanceForm campaignId={MC.campaign} ownerId={MC.owner} systemId={MC.system} initial={monsterDetail("0")} />);
+  await waitFor(() => expect(screen.getByRole("button", { name: "Save instance" })).toBeEnabled());
+  if (!noop) fireEvent.change(screen.getByLabelText(/Current HP/), { target: { value: "4" } });
+  submit(); await screen.findByRole("button", { name: "Edit latest instance" });
+  const original = instanceIntentFromForm(actions.commit.mock.calls[0][1]);
+  return { mounted, original, savedMarker: { operation_id: original.operation_id, saved_id: MC.instance } };
+}
+describe("explicit accepted edit transition with simulated navigation and server reads only", () => {
+  it.each([false, true])("persists accepted ID before marker clear, locks old editor and permits a second deliberate fresh edit (noop=%s)", async (noop) => {
+    const { mounted, original, savedMarker } = await acceptedEdit(noop);
+    const metadataKey = `${editMarkerKey}:accepted:${original.operation_id}`;
+    const events: string[] = []; const set = Storage.prototype.setItem; const remove = Storage.prototype.removeItem;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) { if (key === metadataKey) events.push("persist"); set.call(this, key, value); });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key) { if (key === editMarkerKey) events.push("clear"); remove.call(this, key); });
+    const assign = vi.fn(() => {
+      events.push("navigate"); expect(JSON.parse(sessionStorage.getItem(metadataKey)!)).toEqual(savedMarker);
+      expect(sessionStorage.getItem(editMarkerKey)).toBeNull();
+    }); vi.stubGlobal("location", { assign });
+    fireEvent.click(screen.getByRole("button", { name: "Edit latest instance" }));
+    expect(events).toEqual(["persist", "clear", "navigate"]);
+    expect(assign).toHaveBeenCalledWith(`/campaigns/${MC.campaign}/monsters/${MC.instance}?editAfter=${original.operation_id}`);
+    expect(screen.getByRole("button", { name: "Edit latest instance" })).toBeDisabled();
+    submit(); expect(actions.commit).toHaveBeenCalledTimes(1); // A returned/hung navigation leaves this lifetime locked.
+    mounted.unmount();
+    // Deliberately supplied fresh read is simulated; actual route correspondence is tested separately.
+    const latest = { ...monsterDetail(noop ? "0" : "3"), current_hp: noop ? 0 : 7 };
+    render(<MonsterInstanceForm campaignId={MC.campaign} ownerId={MC.owner} systemId={MC.system} initial={latest} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Save instance" })).toBeEnabled());
+    expect(screen.getByLabelText(/Current HP/)).toHaveValue(latest.current_hp);
+    fireEvent.change(screen.getByLabelText(/Current HP/), { target: { value: "9" } }); submit();
+    await waitFor(() => expect(actions.commit).toHaveBeenCalledTimes(2));
+    const next = instanceIntentFromForm(actions.commit.mock.calls[1][1]);
+    expect(next).toMatchObject({ command: "update", expected_revision: latest.revision, patch: { current_hp: 9 } });
+    expect(next.operation_id).not.toBe(original.operation_id);
+    expect(sessionStorage.getItem(metadataKey)).toBe(JSON.stringify(savedMarker));
+  });
+  it("navigation throw restores only the absent original marker, retains receipt/link, and explicit retry never saves again", async () => {
+    const { original, savedMarker } = await acceptedEdit();
+    const assign = vi.fn(() => { throw new Error("native navigation failed"); }); vi.stubGlobal("location", { assign });
+    fireEvent.click(screen.getByRole("button", { name: "Edit latest instance" }));
+    expect(JSON.parse(sessionStorage.getItem(editMarkerKey)!)).toEqual(savedMarker);
+    expect(JSON.parse(sessionStorage.getItem(`${editMarkerKey}:accepted:${original.operation_id}`)!)).toEqual(savedMarker);
+    expect(screen.getByRole("link", { name: /Saved instance/ })).toHaveAttribute("href", `/campaigns/${MC.campaign}/monsters/${MC.instance}`);
+    expect(screen.getByRole("button", { name: "Edit latest instance" })).toBeEnabled();
+    submit(); fireEvent.click(screen.getByRole("button", { name: "Edit latest instance" }));
+    expect(assign).toHaveBeenCalledTimes(2); expect(actions.commit).toHaveBeenCalledTimes(1);
+  });
+  it("navigation throw never overwrites a newer marker created during navigation", async () => {
+    const { original } = await acceptedEdit(); const newer = JSON.stringify({ operation_id: MC.foreign });
+    const assign = vi.fn(() => { sessionStorage.setItem(editMarkerKey, newer); throw new Error("navigation failed after newer marker"); }); vi.stubGlobal("location", { assign });
+    fireEvent.click(screen.getByRole("button", { name: "Edit latest instance" }));
+    expect(sessionStorage.getItem(editMarkerKey)).toBe(newer);
+    expect(sessionStorage.getItem(`${editMarkerKey}:accepted:${original.operation_id}`)).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit latest instance" }));
+    expect(assign).toHaveBeenCalledTimes(1); expect(sessionStorage.getItem(editMarkerKey)).toBe(newer); submit(); expect(actions.commit).toHaveBeenCalledTimes(1);
+  });
+  it.each(["newer", "malformed", "foreign-saved-id", "persist-fault", "read-fault", "clear-fault"])("%s refuses transition without clearing protected marker or resubmitting", async (mode) => {
+    const { original } = await acceptedEdit();
+    const raw = mode === "newer" ? JSON.stringify({ operation_id: MC.foreign }) : mode === "malformed" ? "broken-json"
+      : mode === "foreign-saved-id" ? JSON.stringify({ operation_id: original.operation_id, saved_id: MC.foreign }) : sessionStorage.getItem(editMarkerKey)!;
+    sessionStorage.setItem(editMarkerKey, raw);
+    const set = Storage.prototype.setItem; const get = Storage.prototype.getItem; const remove = Storage.prototype.removeItem;
+    if (mode === "persist-fault") vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) { if (key.includes(":accepted:")) throw new Error("storage full"); set.call(this, key, value); });
+    if (mode === "read-fault") vi.spyOn(Storage.prototype, "getItem").mockImplementation(function (this: Storage, key) { if (key === editMarkerKey) throw new Error("storage unavailable"); return get.call(this, key); });
+    if (mode === "clear-fault") vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key) { if (key === editMarkerKey) throw new Error("storage clear denied"); remove.call(this, key); });
+    const assign = vi.fn(); vi.stubGlobal("location", { assign }); fireEvent.click(screen.getByRole("button", { name: "Edit latest instance" }));
+    expect(assign).not.toHaveBeenCalled(); expect(get.call(sessionStorage, editMarkerKey)).toBe(raw);
+    expect(screen.getByRole("button", { name: "Save instance" })).toBeDisabled(); submit(); expect(actions.commit).toHaveBeenCalledTimes(1);
+  });
+  it("accepted proof permits absent marker transition, but unresolved reload/absence never does", async () => {
+    const { mounted } = await acceptedEdit(); sessionStorage.removeItem(editMarkerKey);
+    const assign = vi.fn(); vi.stubGlobal("location", { assign }); fireEvent.click(screen.getByRole("button", { name: "Edit latest instance" })); expect(assign).toHaveBeenCalledTimes(1);
+    mounted.unmount(); sessionStorage.setItem(editMarkerKey, JSON.stringify({ operation_id: MC.foreign }));
+    render(<MonsterInstanceForm campaignId={MC.campaign} ownerId={MC.owner} systemId={MC.system} initial={monsterDetail("5")} />);
+    await screen.findByText(/original intent is unavailable after reload/); fireEvent.click(screen.getByRole("button", { name: "Check campaign monsters" }));
+    await screen.findByText(/No receipt was found/); expect(screen.queryByRole("button", { name: "Edit latest instance" })).toBeNull();
+    expect(sessionStorage.getItem(editMarkerKey)).toBe(JSON.stringify({ operation_id: MC.foreign })); submit(); expect(actions.commit).toHaveBeenCalledTimes(1);
+  });
+  it("uncertain original edit keeps its operation through receipt absence and exposes no accepted transition", async () => {
+    actions.commit.mockRejectedValue(new Error("response lost"));
+    render(<MonsterInstanceForm campaignId={MC.campaign} ownerId={MC.owner} systemId={MC.system} initial={monsterDetail()} />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Save instance" })).toBeEnabled()); submit();
+    await screen.findByRole("button", { name: "Check campaign monsters" }); const marker = sessionStorage.getItem(editMarkerKey);
+    fireEvent.click(screen.getByRole("button", { name: "Check campaign monsters" })); await screen.findByText(/No receipt was found/);
+    expect(screen.queryByRole("button", { name: "Edit latest instance" })).toBeNull(); expect(sessionStorage.getItem(editMarkerKey)).toBe(marker);
+    submit(); expect(actions.commit).toHaveBeenCalledTimes(1);
   });
 });

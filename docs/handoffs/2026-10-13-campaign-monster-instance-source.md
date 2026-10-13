@@ -242,3 +242,54 @@ marker remains recovery-only; stale/invalid latest revision/detail/receipt misma
 unavailable. Test actual form controls/route functions, not a standalone DTO claim.
 No implementation, tests, navigation, browser, heavy or runtime work ran for this
 proposal. Freeze for independent source-plan challenge before bounded implementation.
+
+## Approved repeat-edit follow-on — implemented source, UNVERIFIED
+
+Independent approval of exact b038a0a authorized only the four source/test paths
+above plus this handoff. This follow-on implements **Edit latest instance** after
+an accepted edit receipt, with synchronous mounted owner/campaign/editor/system,
+operation/receipt/target correspondence and navigation mutex. Accepted ID metadata
+is persisted under its original scoped operation key BEFORE clearing only a
+matching active marker. Newer/malformed markers or storage faults refuse the
+transition; absent marker is sufficient only WITH the retained accepted receipt.
+The old form never clears lifetime intent/operation/receipt or admits another save.
+Thrown navigation restores the original marker only when absent, preserves the
+saved link/accepted metadata, and permits explicit navigation retry. Returned or
+hung navigation keeps that editor locked. No automatic retry or rebase occurs.
+
+The existing detail route now accepts scalar lowercase UUID `editAfter`, resolves
+its accepted receipt before latest detail, and checks exact campaign/instance plus
+fresh owner/detail system identity and bigint revision >= receipt revision. It
+uses the actual latest detail values and an operation-specific mount key even for
+no-op saves. Current source acquisition is never requested for existing embedded
+historical detail or receipt replay. Uncertain markers still force recovery-only
+client admission when the URL is entered directly; this route never clears storage.
+
+Installed Next guides read: route-segment-config, caching-without-cache-components,
+page, and connection. Repository next.config.ts does not enable cacheComponents;
+`dynamic = "force-dynamic"` follows the installed previous-cache-model guide and
+requires each detail request to read freshly. This configured behavior is not
+native cookie/session/RLS/cache runtime proof. React checklist: transition writes
+occur only on explicit click, ref mutex protects synchronous clicks, native button retains the
+saved link/status, storage holds IDs only, and dependent resolver→detail reads are
+intentionally sequential. No new dependency or shared state is introduced.
+
+Prepared mounted controls cover updated/no-op first save→explicit transition→new
+editor with independently supplied latest revision→second manual HP command;
+persist/clear/navigation order; hung and thrown navigation; absent restoration
+without overwriting newer markers; malformed/foreign/newer markers; storage
+persist/read/clear faults; and unresolved edit/reload absence staying locked.
+Route controls cover scalar UUID/duplicate parameter rejection, owner denial,
+receipt-before-detail ordering, foreign/missing/malformed/absent receipt refusal,
+older/invalid/foreign latest detail refusal, >2^53 exact revisions, unchanged no-op
+generation, and historical source continuity without fresh acquisition. Transport,
+navigation, owner/DAL reads and fresh mount are simulated in these tests; they do
+not prove a server request, native transaction, real Auth or persistence.
+
+Only the approved four source/test paths and this handoff changed from b038a0a.
+`git diff --check` is the sole static check so far. All npm tests/typecheck/lint,
+browser/full/build, SQL/native/provider/runtime validation remain UNRUN on root's
+heavy hold. SQL/ACL/DAL/schema/mapper/dependencies, default-off gate and all other
+worktrees are unchanged. Freeze this exact source for independent review before
+gates. M5 workflow source is reviewable; M5 and native G2/G3/recovery acceptance
+remain incomplete.

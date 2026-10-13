@@ -25,6 +25,7 @@ export function MonsterInstanceForm({ campaignId, ownerId, systemId, initial, so
   const busy = useRef(false); const hasUncertainty = useRef(false);
   const sequence = useRef(0); const flight = useRef<{ token: number; key: string; done: boolean; releaseOperation: boolean } | null>(null);
   const [settledToken, setSettledToken] = useState(0); const [canReplay, setCanReplay] = useState(false);
+  const navigation = useRef(false); const [openingLatest, setOpeningLatest] = useState(false);
   const [ready, setReady] = useState(false); const [pending, setPending] = useState(false);
   const [operation, setOperation] = useState<string | null>(null); const [receipt, setReceipt] = useState<InstanceReceipt | null>(null);
   const [message, setMessage] = useState(""); const [conflict, setConflict] = useState(false);
@@ -204,6 +205,34 @@ export function MonsterInstanceForm({ campaignId, ownerId, systemId, initial, so
       }
     }
   }
+  function editLatest() {
+    const saved = acceptedReceipt.current; const view = current.current;
+    if (!initial || !receipt || !saved || busy.current || navigation.current || !view.mounted || view.key !== storageKey || view.key !== originalContext
+      || view.ownerId !== ownerId || view.campaignId !== campaignId || view.editorId !== initial.id || view.systemId !== systemId || systemId !== originalSystem
+      || saved.operation_id !== operationId.current || saved.operation_id !== receipt.operation_id || saved.instance_id !== initial.id
+      || saved.instance_id !== receipt.instance_id || saved.campaign_id !== campaignId) return;
+    // Revalidate captured accepted correspondence; uncertainty without accepted proof never reaches here.
+    const checked = parseInstanceActionResponse({ status: "saved", receipt: saved }, campaignId, saved.operation_id, intent.current ?? undefined);
+    if (checked.status !== "saved") return;
+    navigation.current = true; setOpeningLatest(true);
+    const markerValue = JSON.stringify({ operation_id: saved.operation_id, saved_id: saved.instance_id });
+    let removed = false;
+    try {
+      sessionStorage.setItem(`${storageKey}:accepted:${saved.operation_id}`, markerValue);
+      const raw = sessionStorage.getItem(storageKey);
+      const marker = raw === null ? null : JSON.parse(raw) as { operation_id?: unknown; saved_id?: unknown } | null;
+      if (raw !== null && (!marker || Array.isArray(marker) || marker.operation_id !== saved.operation_id || (marker.saved_id !== undefined && marker.saved_id !== saved.instance_id))) throw new Error("Active recovery marker does not match accepted operation");
+      if (raw !== null) { sessionStorage.removeItem(storageKey); removed = true; }
+      const target = `/campaigns/${campaignId}/monsters/${saved.instance_id}?${new URLSearchParams({ editAfter: saved.operation_id })}`;
+      setMessage("Saved receipt retained. Opening a fresh latest instance editor…");
+      globalThis.location.assign(target); // Hard navigation, new owner-checked server read and mount.
+      // Return/hang is not evidence of a new editor; old lifetime stays locked.
+    } catch {
+      if (removed) { try { if (sessionStorage.getItem(storageKey) === null) sessionStorage.setItem(storageKey, markerValue); } catch { /* Accepted ID metadata/lifetime still retained. */ } }
+      navigation.current = false; setOpeningLatest(false);
+      setMessage("Saved instance retained. The latest editor could not open or its recovery marker changed. Use the saved link or explicitly retry; no save was resubmitted.");
+    }
+  }
   if (storageKey !== originalContext || systemId !== originalSystem) return <p role="alert">Editor identity changed. Earlier operations remain recoverable in their original editor; no draft or receipt is applied here.</p>;
   let statBlock = null;
   try {
@@ -249,6 +278,7 @@ export function MonsterInstanceForm({ campaignId, ownerId, systemId, initial, so
       {receipt ? <div className="flex flex-wrap gap-2">
         <Button type="button" onClick={() => { try { router.push(`/campaigns/${campaignId}/monsters/${receipt.instance_id}`); } catch { setMessage("Saved. Navigation failed; use the saved instance link."); } }}>Open saved instance</Button>
         <Link href={`/campaigns/${campaignId}/monsters/${receipt.instance_id}`}>Saved instance {receipt.instance_id}</Link>
+        {initial ? <Button type="button" variant="outline" disabled={pending || openingLatest} onClick={editLatest}>Edit latest instance</Button> : null}
         {!initial ? <Button type="button" variant="outline" onClick={() => {
           if (busy.current || !acceptedReceipt.current || acceptedReceipt.current.operation_id !== receipt.operation_id) return;
           try { sessionStorage.removeItem(storageKey); } catch { setMessage("Saved instance retained. Recovery storage could not clear; do not start another instance here."); return; }
