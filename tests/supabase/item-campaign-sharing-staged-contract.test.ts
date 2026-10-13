@@ -1,32 +1,45 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-const normalize = (value: string) => value.replace(/
-/g, "
-");
+const normalize = (value: string) => value.replace(/\r\n/g, "\n");
 const base = normalize(readFileSync("supabase/migrations/20260722044333_background_authoring_sharing.sql", "utf8"));
 const sql = normalize(readFileSync("supabase/staged/item-campaign-sharing.sql", "utf8"));
+
+function assertSnapshotContract(source: string) {
+  const update = source.indexOf("UPDATE public.content_definitions AS definition");
+  const snapshot = source.indexOf("SELECT snapshot_row.*");
+  const result = source.indexOf("RETURN NEXT;");
+  expect(update).toBeGreaterThanOrEqual(0);
+  expect(snapshot).toBeGreaterThanOrEqual(0);
+  expect(result).toBeGreaterThanOrEqual(0);
+  expect(update).toBeLessThan(snapshot); expect(snapshot).toBeLessThan(result);
+  expect(source).toContain("snapshot_row.content_id = locked_definition.id AND snapshot_row.version = item_expected_version");
+  for (const key of ["system_id", "content_type", "source", "owner_id", "slug", "name", "scope", "data", "effects"]) expect(source).toContain("item_snapshot." + key + "_snapshot");
+  expect(source).toContain("version IS DISTINCT FROM item_expected_version");
+  expect(source).toContain("scope IS DISTINCT FROM derived_scope");
+  expect(source).toContain("RAISE EXCEPTION 'Exact ordinary item written snapshot unavailable'");
+  expect(source).not.toContain("EXCEPTION WHEN"); expect(source).not.toContain("UPDATE public.characters");
+}
+
 describe("UNAPPLIED item sharing SQL source contract (no SQL engine)", () => {
   it("preserves exact original three-type bodies/grants after removing isolated item-only checks", () => {
-    const core = sql.slice(sql.indexOf("-- Extend the existing"), sql.lastIndexOf("
-COMMIT;"))
-      .replace(/  -- BEGIN ITEM [^
-]+
-[sS]*?  -- END ITEM [^
-]+
-/g, "")
+    const core = sql.slice(sql.indexOf("-- Extend the existing"), sql.lastIndexOf("\nCOMMIT;"))
+      .replace(/  -- BEGIN ITEM [^\n]+\n[\s\S]*?  -- END ITEM [^\n]+\n/g, "")
       .replaceAll("('spell', 'feat', 'background', 'item')", "('spell', 'feat', 'background')");
     expect(core.trim()).toBe(base.trim());
     expect(sql).toContain("BEGIN;"); expect(sql.trimEnd()).toMatch(/COMMIT;$/);
   });
   it("checks exact same-transaction RETURNING version/scope/snapshot before any success row", () => {
-    const update = sql.indexOf("UPDATE public.content_definitions AS definition"), snapshot = sql.indexOf("SELECT snapshot_row.*"), result = sql.indexOf("RETURN NEXT;");
-    expect(update).toBeLessThan(snapshot); expect(snapshot).toBeLessThan(result);
-    expect(sql).toContain("snapshot_row.content_id = locked_definition.id AND snapshot_row.version = item_expected_version");
-    for (const key of ["system_id", "content_type", "source", "owner_id", "slug", "name", "scope", "data", "effects"]) expect(sql).toContain(`item_snapshot.${key}_snapshot`);
-    expect(sql).toContain("version IS DISTINCT FROM item_expected_version");
-    expect(sql).toContain("scope IS DISTINCT FROM derived_scope");
-    expect(sql).toContain("RAISE EXCEPTION 'Exact ordinary item written snapshot unavailable'");
-    expect(sql).not.toContain("EXCEPTION WHEN"); expect(sql).not.toContain("UPDATE public.characters");
+    assertSnapshotContract(sql);
+  });
+  it.each([
+    "snapshot_row.content_id = locked_definition.id AND snapshot_row.version = item_expected_version",
+    "item_snapshot.effects_snapshot",
+    "version IS DISTINCT FROM item_expected_version",
+    "scope IS DISTINCT FROM derived_scope",
+    "RAISE EXCEPTION 'Exact ordinary item written snapshot unavailable'",
+  ])("static oracle detects removal of mandatory snapshot source %s", clause => {
+    expect(sql).toContain(clause);
+    expect(() => assertSnapshotContract(sql.replaceAll(clause, "REMOVED_REQUIRED_SOURCE"))).toThrow();
   });
   it("retains actual owner/member/import/CAS locks plus bounded item published-system and exhaustion guards", () => {
     for (const clause of ["FOR UPDATE;", "FOR KEY SHARE;", "FOR SHARE;", "locked_definition.version IS DISTINCT FROM expected_version",

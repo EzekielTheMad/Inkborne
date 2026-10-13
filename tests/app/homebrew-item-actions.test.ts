@@ -15,7 +15,9 @@ vi.mock("@/lib/supabase/homebrew-items-server", () => ({
   setHomebrewItemCampaignShare: mocks.share,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
-vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/navigation", async importOriginal => ({
+  ...await importOriginal<typeof import("next/navigation")>(), redirect: mocks.redirect,
+}));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({ auth: { getUser: mocks.getUser } }),
 }));
@@ -104,7 +106,7 @@ describe("ordinary item sharing action", () => {
     for (const [key, value] of Object.entries({ content_id: contentId, campaign_id: campaignId, enabled, expected_version: version })) form.set(key, value);
     return form;
   }
-  beforeEach(() => { vi.clearAllMocks(); mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null }); });
+  beforeEach(() => { vi.clearAllMocks(); mocks.share.mockReset(); mocks.revalidatePath.mockReset(); mocks.getUser.mockResolvedValue({ data: { user: { id: "user-id" } }, error: null }); });
   it("authenticates before any sharing helper", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
     await expect(toggleHomebrewItemCampaignShare(idle, input())).rejects.toThrow("REDIRECT:/login"); expect(mocks.share).not.toHaveBeenCalled();
@@ -117,7 +119,7 @@ describe("ordinary item sharing action", () => {
   });
   it("returns exact confirmed identity/selection/written version and invalidates only its catalog/edit/campaign paths", async () => {
     mocks.share.mockResolvedValue({ contentId, version: 2, scope: "shared", sharedCampaignCount: 1 });
-    expect(await toggleHomebrewItemCampaignShare(idle, input())).toMatchObject({ status: "idle", contentId, campaignId, enabled: true, version: 2 });
+    expect(await toggleHomebrewItemCampaignShare(idle, input())).toMatchObject({ status: "idle", contentId, campaignId, enabled: true, expectedVersion: 1, version: 2 });
     expect(mocks.share).toHaveBeenCalledExactlyOnceWith(contentId, campaignId, true, 1);
     expect(mocks.revalidatePath.mock.calls.map(([path]) => path)).toEqual(["/homebrew", "/library", `/homebrew/items/${contentId}/edit`, `/campaigns/${campaignId}/settings`]);
   });
@@ -130,5 +132,32 @@ describe("ordinary item sharing action", () => {
     mocks.share.mockResolvedValue({ status: "uncertain", message: "Reload latest access." });
     expect(await toggleHomebrewItemCampaignShare(idle, input())).toMatchObject({ status: "uncertain", contentId, campaignId, enabled: true });
     expect(mocks.share).toHaveBeenCalledOnce(); expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+  it("freezes ordinary transport rejection with the exact requested tuple", async () => {
+    mocks.share.mockRejectedValue(new Error("response lost"));
+    expect(await toggleHomebrewItemCampaignShare(idle, input())).toMatchObject({ status: "uncertain", contentId, campaignId, enabled: true, expectedVersion: 1 });
+    expect(mocks.share).toHaveBeenCalledOnce(); expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+  it("treats ordinary post-RPC cache failure as uncertainty without repeating the accepted RPC", async () => {
+    mocks.share.mockResolvedValue({ contentId, version: 2, scope: "shared", sharedCampaignCount: 1 });
+    mocks.revalidatePath.mockImplementation(() => { throw new Error("cache failed"); });
+    const result = await toggleHomebrewItemCampaignShare(idle, input());
+    expect(result).toMatchObject({ status: "uncertain", contentId, campaignId, enabled: true, expectedVersion: 1 });
+    expect(result).not.toHaveProperty("version");
+    expect(await toggleHomebrewItemCampaignShare(result, input())).toBe(result);
+    expect(mocks.share).toHaveBeenCalledOnce();
+  });
+  it.each(["NEXT_REDIRECT;replace;/login;307;", "NEXT_HTTP_ERROR_FALLBACK;404"])("preserves actual Next control flow %s", async digest => {
+    const signal = Object.assign(new Error("framework signal"), { digest });
+    mocks.share.mockRejectedValue(signal);
+    await expect(toggleHomebrewItemCampaignShare(idle, input())).rejects.toBe(signal);
+    expect(mocks.share).toHaveBeenCalledOnce(); expect(mocks.revalidatePath).not.toHaveBeenCalled();
+  });
+  it("preserves actual Next control flow from post-RPC cache invalidation", async () => {
+    const signal = Object.assign(new Error("framework signal"), { digest: "NEXT_REDIRECT;replace;/login;307;" });
+    mocks.share.mockResolvedValue({ contentId, version: 2, scope: "shared", sharedCampaignCount: 1 });
+    mocks.revalidatePath.mockImplementation(() => { throw signal; });
+    await expect(toggleHomebrewItemCampaignShare(idle, input())).rejects.toBe(signal);
+    expect(mocks.share).toHaveBeenCalledOnce();
   });
 });

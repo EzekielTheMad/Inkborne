@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
+import { unstable_rethrow } from "next/navigation";
 import { RefreshCw, ShieldCheck, Users } from "lucide-react";
 
 import {
@@ -20,8 +21,30 @@ interface ItemSharingPanelProps {
   campaigns: HomebrewItemCampaignOption[];
 }
 
-type PanelState = HomebrewItemShareActionState & { baseline?: string; campaignStates?: Record<string, boolean> };
+type ShareRequest = { contentId: string; campaignId: string; enabled: boolean; expectedVersion: number };
+type PanelState = HomebrewItemShareActionState & { baseline?: string; campaignStates?: Record<string, boolean>; commitToken?: number };
 const initialState: PanelState = { status: "idle", message: "" };
+
+function uncertain(request: ShareRequest): HomebrewItemShareActionState {
+  return { status: "uncertain", message: "Campaign access could not be confirmed. Reload latest access before making another change.", ...request };
+}
+
+// Transported action results are untrusted until they acknowledge this exact request.
+function admitActionResult(value: unknown, request: ShareRequest): HomebrewItemShareActionState | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (typeof row.status !== "string" || !["idle", "error", "conflict", "uncertain"].includes(row.status) || typeof row.message !== "string" || !row.message.trim() || row.message.length > 2000) return null;
+  if (row.contentId !== request.contentId || row.campaignId !== request.campaignId || row.enabled !== request.enabled || row.expectedVersion !== request.expectedVersion) return null;
+  const keys = ["status", "message", "contentId", "campaignId", "enabled", "expectedVersion"];
+  if (row.status === "idle") {
+    keys.push("version", "scope", "sharedCampaignCount");
+    if (typeof row.version !== "number" || !Number.isInteger(row.version) || row.version < 1 || row.version > 2147483647 || (row.version !== request.expectedVersion && row.version !== request.expectedVersion + 1)) return null;
+    if (row.scope !== "personal" && row.scope !== "shared") return null;
+    if (typeof row.sharedCampaignCount !== "number" || !Number.isSafeInteger(row.sharedCampaignCount) || row.sharedCampaignCount < 0 || (row.scope === "shared") !== (row.sharedCampaignCount > 0) || (request.enabled && row.sharedCampaignCount === 0)) return null;
+  }
+  if (Object.keys(row).some(key => !keys.includes(key))) return null;
+  return row as HomebrewItemShareActionState;
+}
 
 function versionEffect(
   shared: boolean,
@@ -74,12 +97,38 @@ export function ItemSharingPanel({
   // Fresh server access props supersede the local overlay; uncertainty still
   // requires explicit reload. No overlay is a permission or write authority.
   const baseline = JSON.stringify([contentId, version, scope, sharedCampaignCount, campaigns]);
+  const submission = useRef({ busy: false, blocked: false, token: 0 });
   const [state, action, pending] = useActionState(async (previous: PanelState, data: FormData): Promise<PanelState> => {
-    const result = await toggleHomebrewItemCampaignShare(previous, data);
-    const campaignStates: Record<string, boolean> = previous.baseline === baseline && previous.contentId === contentId ? { ...previous.campaignStates } : {};
-    if (result.status === "idle" && result.campaignId && typeof result.enabled === "boolean") campaignStates[result.campaignId] = result.enabled;
-    return { ...result, baseline, campaignStates };
+    const token = submission.current.token;
+    const priorApplies = previous.baseline === baseline && previous.contentId === contentId;
+    const campaignStates: Record<string, boolean> = priorApplies ? { ...previous.campaignStates } : {};
+    const campaignId = String(data.get("campaign_id") ?? "");
+    const campaign = campaigns.find(option => option.id === campaignId);
+    const request = { contentId, campaignId, enabled: data.get("enabled") === "true", expectedVersion: Number(data.get("expected_version")) };
+    const submittedVersion = priorApplies ? previous.version ?? version : version;
+    const rawEnabled = data.get("enabled");
+    let result = uncertain(request);
+    if (data.get("content_id") === contentId && campaign && (rawEnabled === "true" || rawEnabled === "false") && request.enabled !== (campaignStates[campaignId] ?? campaign.shared) && request.expectedVersion === submittedVersion && Number.isInteger(submittedVersion) && submittedVersion >= 1 && submittedVersion <= 2147483647) {
+      try {
+        result = admitActionResult(await toggleHomebrewItemCampaignShare(previous, data), request) ?? uncertain(request);
+      } catch (error) {
+        try { unstable_rethrow(error); }
+        finally { submission.current.blocked = true; }
+      }
+    }
+    // Block immediately, before React schedules the returned state. Do not reopen
+    // the native submit gate in a promise finally/settlement callback.
+    if (result.status === "uncertain" || result.status === "conflict") submission.current.blocked = true;
+    if (result.status === "idle") campaignStates[campaignId] = request.enabled;
+    return { ...result,
+      version: result.version ?? submittedVersion,
+      scope: result.scope ?? (priorApplies ? previous.scope ?? scope : scope),
+      sharedCampaignCount: result.sharedCampaignCount ?? (priorApplies ? previous.sharedCampaignCount ?? sharedCampaignCount : sharedCampaignCount),
+      baseline, campaignStates, commitToken: token };
   }, initialState);
+  useEffect(() => {
+    if (!pending && state.commitToken === submission.current.token && !submission.current.blocked) submission.current.busy = false;
+  }, [pending, state.commitToken]);
   const applies = state.contentId === contentId && state.baseline === baseline;
   const currentVersion = applies ? state.version ?? version : version;
   const currentScope = applies ? state.scope ?? scope : scope;
@@ -143,7 +192,10 @@ export function ItemSharingPanel({
                     {versionEffect(shared, currentScope, currentSharedCampaignCount, currentVersion)}
                   </p>
                 </div>
-                <form action={action} onSubmit={event => { if (pending || unresolved) event.preventDefault(); }} className="shrink-0">
+                <form action={action} onSubmit={event => {
+                  if (pending || unresolved || submission.current.busy || submission.current.blocked) event.preventDefault();
+                  else { submission.current.busy = true; submission.current.token += 1; }
+                }} className="shrink-0">
                   <input type="hidden" name="content_id" value={contentId} />
                   <input type="hidden" name="campaign_id" value={campaign.id} />
                   <input type="hidden" name="enabled" value={String(!shared)} />

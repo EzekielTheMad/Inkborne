@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ get: vi.fn(), access: vi.fn(), user: vi.fn() }));
 vi.mock("@/lib/supabase/homebrew-items-server", () => ({ getOwnedHomebrewItem: mocks.get, getHomebrewItemCampaignAccess: mocks.access }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { getUser: mocks.user } }) }));
-vi.mock("next/navigation", () => ({ redirect: (url: string) => { throw Error(`redirect:${url}`); }, notFound: () => { throw Error("not found"); } }));
+vi.mock("next/navigation", async importOriginal => ({ ...await importOriginal<typeof import("next/navigation")>(), redirect: (url: string) => { throw Error(`redirect:${url}`); }, notFound: () => { throw Error("not found"); } }));
 vi.mock("@/app/(app)/homebrew/items/actions", () => ({ createHomebrewItem: vi.fn(), updateHomebrewItem: vi.fn(), toggleHomebrewItemCampaignShare: vi.fn() }));
 import EditItemPage from "@/app/(app)/homebrew/items/[id]/edit/page";
 import { CompendiumDetail } from "@/components/compendium/compendium-detail";

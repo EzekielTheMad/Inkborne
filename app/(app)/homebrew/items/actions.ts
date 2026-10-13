@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 
 import {
   createHomebrewItemRecord,
@@ -19,6 +19,7 @@ export type HomebrewItemShareActionState = {
   contentId?: string;
   campaignId?: string;
   enabled?: boolean;
+  expectedVersion?: number;
   version?: number;
   scope?: "personal" | "shared";
   sharedCampaignCount?: number;
@@ -80,11 +81,18 @@ export async function toggleHomebrewItemCampaignShare(previous: HomebrewItemShar
     return { status: "error", message: "Campaign access could not be identified. Reload latest access." };
   }
   const enabled = rawEnabled === "true";
-  const result = await setHomebrewItemCampaignShare(contentId, campaignId, enabled, expectedVersion);
-  if ("status" in result) return { ...result, contentId, campaignId, enabled };
-  revalidateHomebrewCatalog();
-  revalidatePath(`/homebrew/items/${result.contentId}/edit`);
-  revalidatePath(`/campaigns/${campaignId}/settings`);
-  return { status: "idle", message: enabled ? "Campaign access granted." : "Campaign access removed.",
-    ...result, campaignId, enabled };
+  const request = { contentId, campaignId, enabled, expectedVersion };
+  try {
+    const result = await setHomebrewItemCampaignShare(contentId, campaignId, enabled, expectedVersion);
+    if ("status" in result) return { ...result, ...request };
+    revalidateHomebrewCatalog();
+    revalidatePath("/homebrew/items/" + result.contentId + "/edit");
+    revalidatePath("/campaigns/" + campaignId + "/settings");
+    return { status: "idle", message: enabled ? "Campaign access granted." : "Campaign access removed.",
+      ...result, ...request };
+  } catch (error) {
+    unstable_rethrow(error);
+    // The RPC may have committed before its response or cache invalidation failed.
+    return { status: "uncertain", message: "Campaign access could not be confirmed. Reload latest access before making another change.", ...request };
+  }
 }
