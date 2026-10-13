@@ -26,6 +26,19 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Current core checkpoint — 2026-10-13
 
+Later M5 harness static corrections775/50ec are reviewed/integrated; typecheck and
+zero-warning lint passed, five identities exited for each gate. Combined rootb89
+preserved **4,769PASS/oneFAIL/threeUNVERIFIED skips (357 files)**: the unchanged M1
+injected missing-identity case exceeded its local5s at5,013ms. All389 identities
+exited/listeners zero. SAMEb89 unchanged narrow repeat passed66 tests/two files,
+all21 identities exited/listeners zero. Source review found two real synchronous
+Git/source admission passes before the immediate model refusal, no child lifecycle
+poll/sleep/native SQL. A local15s budget for ONLY that fault is prepared for exact
+independent review; body/oracles and native900000ms/500-command/10MiB caps unchanged.
+Earlier9f acceptance and both failure/repeat receipts remain separate. Bonus46c
+source corrections now passed review;30/43/eight runtime results remain UNRUN.
+M6 source828dfee is frozen for both reviewers; no source/runtime acceptance yet.
+
 Tested core source `9f848d4658ac9c523d548d51c0f5a19710de95d8` passed
 `npm.cmd run check`: **357 files / 4,770 passed / three skipped**, typecheck and
 zero-warning lint. Fresh synthetic build passed. All368 check/22 build recorded

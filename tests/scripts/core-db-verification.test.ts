@@ -425,9 +425,9 @@ describe("actual executeCore pipeline with injected MODEL boundaries; not native
       if (fault === "after-exit") expect(run.journals.at(-1)!.processes.at(-1)).toMatchObject({ absent: true, finishedUTC: "2026-10-13T17:00:01Z" });
       if (fault === "stage-D2") expect(run.journals.at(-1)!.steps.at(-1)).toMatchObject({ name: STAGES[1], outcome: "uncertain", sqlstate: "23514" });
       writeEvidence(lineage);
-    // Only the two controls that deliberately perform large bounded model work
-    // need more than the default 5s. Production caps and every oracle are unchanged.
-    }, fault === "evidence" || fault === "commands" ? 15_000 : 5_000);
+    // Large model controls and the missing-identity case's two real Git/source
+    // admission passes get a local 15s budget. Native caps and every oracle stay unchanged.
+    }, fault === "evidence" || fault === "commands" || fault === "fast-child" ? 15_000 : 5_000);
   }
   it("refuses changed raw predecessor bytes, despite semantically identical JSON, before transport", async () => {
     const run = pipeline(), original = readFileSync(files.cleanup);
