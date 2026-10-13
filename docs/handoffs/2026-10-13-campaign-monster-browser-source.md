@@ -99,3 +99,65 @@ receipt has executed. Review source first, then separately release ordinary gate
 and root-owned current combined/build prerequisites. Native G2/G3, real privacy,
 transaction/source/lifecycle/recovery and M5 completion remain open. M7/PDF importer
 stays paused. No new provider service/dependency/config/gate activation.
+
+## Separate source correction after b6de392 HOLD
+
+The original unverified b6de392 checkpoint remains preserved. Parent released only
+five finite source corrections, with no runtime or heavy gate. Current owned paths
+are fixture.tsx, playwright.config.ts, campaign-monster.spec.mts (explicit ESM,
+renamed from .ts), and the three original campaign-monster .mjs scripts. Config,
+both builtin bootstrap inventories and owned descriptor map use the .mts name.
+No package/global loader or production source is changed by this correction.
+
+Runtime closure now locally reuses the reviewed Magic runtimeProof semantics from
+immutable a82dc609:scripts/magic-ack-inputs.mjs, blob
+e55c0d9db5401c1e649fe28a425d1ebce69ec834 (source copied, not imported/executed).
+Limits remain 256 packages/4096 edges/60000 files/120000 entries/1GiB total bytes,
+256MiB per file/Node executable, depth32, metadata1MiB, lock8MiB/4096 entries.
+Full worker/root metadata/declarations/platform/lock/raw file and directory sets,
+Node resolution attempted candidates, optional override and omission, peers and
+optional peers, existing nearer metadata omission and symlink refusal remain
+mandatory. Adds root and path-ancestor symlink/realpath checks; roots retain tsx
+alongside the original esbuild/Playwright/Next/React/Zod set. No cache or finite
+guard weakening is introduced.
+
+The actually served fixture.js is read once into a private buffer with SHA/size
+(maximum16MiB) in the initial disk+IPC whole proof. HTTP serves those frozen bytes,
+never rereads a mutable output file. Fresh runner/wrapper/force rebinds reread the
+disk output and compare SHA/size with that exact original artifact before whole
+deep equality. Model bundle continues to receive its original independent proof.
+
+Failed setup or assertion captures actual trace/gaps/storage/received props, DOM,
+body text and screenshot before closing the context; capture errors are explicit.
+Failed evidence remains false and is not counted toward44 success. In particular,
+case08's actual response consumption plus original enabled DOM remains required
+for saved, uncertain and refusal outcomes. No skip/pending-only substitute.
+
+Builtin-only cooperative stop listeners now precede expensive runner/wrapper
+bootstrap. Bootstrap and phase checkpoints yield to IPC, refuse stop or expired
+deadline/reserve, and check again before any server/browser startup. Stop during a
+startup is detected on return and triggers normal teardown; later phases cannot
+start another server/browser. Missing initial proof still forbids force. Source
+caps/normal-stop behavior do not imply actual measured budget or cleanup proof.
+
+Modeled editAfter admission requires exactly one scalar canonical lowercase UUID
+when present, refuses duplicate/empty/unknown query parameters, and binds latest
+detail ID/campaign/system to the route and current modeled system. Case17 retains
+valid accepted setup and adds malformed/duplicate/uppercase query, foreign route
+and mismatched detail identity controls. This remains a disclosed server model,
+not native Next/Auth route acceptance.
+
+Two separately reviewed producer exceptions are now explicitly frozen:
+tests/fixtures/campaign-monster-instances.ts at
+6b793fe8b3e35e4e6ac2297509a2f4ec5023f5c6 (type-only create union narrowing), and
+components/campaigns/monster-instance-form.tsx at
+d43c3b688abeb4e4765b4f46ba62aa915b5b73dc (lint comment on reviewed hard navigation).
+All other eleven-path producer/fixture identities retain0aec. The external
+descriptor must carry exactly this exception map. Mounted worker product files
+have not been edited/copied here; parent must integrate these reviewed dependency
+bytes before any bound run. Until then equality must refuse, never fall back.
+
+Only Git/source inspection and whitespace checks for this correction. No Node,
+npm/test/type/lint/build/browser/network/SQL execution. All44 outcomes, runtime
+closure behavior, failed-case capture and cooperative stop are UNVERIFIED. The
+shared900000ms full allocation and actual guard measurements remain pending.

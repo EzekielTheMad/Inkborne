@@ -5,6 +5,10 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 
 export const campaignMonsterSourceCheckpoint = "0aec1242c911bc35f92ba413fd37f483b6b83f03";
+export const campaignMonsterSourceAmendments = {
+  "tests/fixtures/campaign-monster-instances.ts": "6b793fe8b3e35e4e6ac2297509a2f4ec5023f5c6",
+  "components/campaigns/monster-instance-form.tsx": "d43c3b688abeb4e4765b4f46ba62aa915b5b73dc",
+};
 export const campaignMonsterProcessHelper = { relativePath: "scripts/npc-process.mjs", reviewedAnchor: "846860209041819deb27b1547c06a77720ad3037", reviewedGitBlobOid: "0841bda7b9e785280e684030bf4fe900d81465e5" };
 const assetHelper = { relativePath: "scripts/passive-feature-production-assets.mjs", reviewedAnchor: "5fedd6222eeb97c11f7645dac580cbebee845311", reviewedGitBlobOid: "e4058f8a31cd911583a312e59fedcf4c3fd4adae" };
 const bundledRequired = ["components/campaigns/monster-instance-form.tsx", "components/campaigns/monster-instance-panel.tsx",
@@ -16,7 +20,7 @@ const required = ["lib/campaigns/monster-instance-schema.ts", "lib/campaigns/mon
   "components/campaigns/monster-instance-form.tsx", "components/campaigns/monster-instance-panel.tsx",
   "supabase/staged/campaign-monster-instances.sql"];
 export const campaignMonsterHarnessFiles = ["e2e/local-campaign-monster/fixture.tsx", "e2e/local-campaign-monster/playwright.config.ts",
-  "e2e/local-campaign-monster/campaign-monster.spec.ts", "scripts/campaign-monster-production-inputs.mjs",
+  "e2e/local-campaign-monster/campaign-monster.spec.mts", "scripts/campaign-monster-production-inputs.mjs",
   "scripts/campaign-monster-scenarios.mjs", "scripts/verify-campaign-monster-local.mjs"];
 const fixtureFiles = ["tests/fixtures/campaign-monster-instances.ts"];
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -70,7 +74,8 @@ export async function bindCampaignMonsterHarnessFiles(root, paths = campaignMons
   assert.match(anchor ?? "", /^[a-f0-9]{40}$/, "Explicit reviewed checkpoint required; no HEAD fallback");
   const rootCheckout = path.resolve(root, "../equipment-verification"), receipts = [];
   for (const relativePath of paths) {
-    const gitBlobOid = git(root, ["rev-parse", `${anchor}:${relativePath}`]).toString().trim();
+    const sourceAnchor = anchor === campaignMonsterSourceCheckpoint ? campaignMonsterSourceAmendments[relativePath] ?? anchor : anchor;
+    const gitBlobOid = git(root, ["rev-parse", `${sourceAnchor}:${relativePath}`]).toString().trim();
     const canonical = git(root, ["cat-file", "blob", gitBlobOid]);
     const checkoutIdentities = []; let executedSha256, checkoutRepresentation;
     for (const [role, checkout] of [["worker", root], ["root", rootCheckout]]) {
@@ -86,7 +91,7 @@ export async function bindCampaignMonsterHarnessFiles(root, paths = campaignMons
       if (executedSha256) assert.equal(sha(raw), executedSha256, `Worker/root mounted harness differs: ${relativePath}`);
       executedSha256 = sha(raw); checkoutIdentities.push({ role, headBlobOid, indexBlobOid });
     }
-    receipts.push({ relativePath, gitBlobOid, gitBlobSha256: sha(canonical), executedSha256, checkoutIdentities, checkoutRepresentation });
+    receipts.push({ relativePath, sourceAnchor, gitBlobOid, gitBlobSha256: sha(canonical), executedSha256, checkoutIdentities, checkoutRepresentation });
   }
   return receipts;
 }
@@ -152,15 +157,21 @@ export async function bindCampaignMonsterProjectInputs(root, metafile, captured,
 /** Final re-read of full inherited/owned executable closure, captured product
  * bytes, current root/build/assets/lock/config. Fresh receipts must equal those
  * used for rendering; no acceptance from an earlier successful guard alone. */
-export async function rebindCampaignMonsterInputs(root, manifestPath, processReceipt, metafile, captured, artifacts, modelBundle) {
+export async function rebindCampaignMonsterInputs(root, manifestPath, processReceipt, metafile, captured, artifacts, modelBundle, fixtureBundle) {
   const fresh = await loadCampaignMonsterProductionAssets(root, manifestPath, processReceipt);
   Object.assign(fresh.artifacts, await bindCampaignMonsterProjectInputs(root, metafile, captured, fresh.artifacts));
   assert.ok(modelBundle, "Actual server-model generated bundle proof required");
   const modelInputs = await bindCampaignMonsterProjectInputs(root, modelBundle.metafile, new Map(modelBundle.captured), fresh.artifacts, fixtureFiles);
   fresh.artifacts.modelBundle = { ...modelBundle, inputs: modelInputs };
   assert.equal(sha(await fs.readFile(modelBundle.outputPath)), modelBundle.outputSha256);
+  assert.ok(fixtureBundle && Number.isSafeInteger(fixtureBundle.outputBytes) && fixtureBundle.outputBytes > 0 && fixtureBundle.outputBytes <= 16_777_216, "Served browser bundle proof required");
+  const browserInfo = await fs.lstat(fixtureBundle.outputPath);
+  assert.ok(browserInfo.isFile() && !browserInfo.isSymbolicLink()); assert.equal(browserInfo.size, fixtureBundle.outputBytes);
+  const browserBytes = await fs.readFile(fixtureBundle.outputPath);
+  assert.equal(browserBytes.length, fixtureBundle.outputBytes); assert.equal(sha(browserBytes), fixtureBundle.outputSha256, "Served browser bundle changed on disk");
+  fresh.artifacts.fixtureBundle = fixtureBundle;
   assert.deepEqual(fresh.artifacts, artifacts, "Final source/build/runtime closure differs from rendered inputs");
-  return { artifacts: fresh.artifacts, metafile, captured: [...captured].sort(([a], [b]) => a.localeCompare(b)), modelBundle };
+  return { artifacts: fresh.artifacts, metafile, captured: [...captured].sort(([a], [b]) => a.localeCompare(b)), modelBundle, fixtureBundle };
 }
 
 /** Capture exactly the bytes supplied to esbuild, including installed runtime. */
@@ -180,62 +191,135 @@ export function campaignMonsterProjectInputPlugin(root, captured) {
  * installed file in each lock-described transitive package before dynamic import.
  * Do not derive trust from only package versions or newline-normalized bytes. */
 export async function bindCampaignMonsterRuntime(root) {
-  const rootCheckout = path.resolve(root, "../equipment-verification");
-  const lock = JSON.parse(await fs.readFile(path.join(root, "package-lock.json"), "utf8"));
-  const visited = new Set(), receipts = [];
-  async function packageClosure(relativePath) {
-    if (visited.has(relativePath)) return; visited.add(relativePath);
-    const packageFile = path.join(root, relativePath, "package.json");
-    const metadata = JSON.parse(await fs.readFile(packageFile, "utf8"));
-    assert.equal(metadata.version, lock.packages[relativePath]?.version, "Unbound installed package " + relativePath);
-    const files = [];
-    async function walk(relative) {
-      const actual = path.join(root, relative), info = await fs.lstat(actual);
-      const rootInfo = await fs.lstat(path.join(rootCheckout, relative));
-      assert.equal(info.isSymbolicLink(), false, "Runtime symlink refused " + relative);
-      assert.equal(rootInfo.isSymbolicLink(), false, "Root runtime symlink refused " + relative);
-      assert.equal(info.isDirectory(), rootInfo.isDirectory());
-      if (info.isDirectory()) {
-        const entries = await fs.readdir(actual);
-        const rootEntries = await fs.readdir(path.join(rootCheckout, relative));
-        assert.deepEqual(entries.sort(), rootEntries.sort(), "Installed runtime file set differs");
-        for (const entry of entries) await walk(path.join(relative, entry));
+  root = path.resolve(root); const rootCheckout = path.resolve(root, "../equipment-verification");
+  // Root and every path ancestor must be actual directories, never reparse links.
+  for (const checkout of [root, rootCheckout]) {
+    let ancestor = checkout;
+    while (true) {
+      const info = await fs.lstat(ancestor); assert.ok(info.isDirectory() && !info.isSymbolicLink(), "Runtime root/ancestor symlink refused");
+      const parent = path.dirname(ancestor); if (parent === ancestor) break; ancestor = parent;
+    }
+    assert.equal(await fs.realpath(checkout), checkout, "Runtime root resolves elsewhere");
+  }
+  // Installed Node resolution + full file-set/raw-byte binding, following the
+  // reviewed R13 walker. All work stays within finite lock-described packages.
+  const limits = { maxPackages: 256, maxEdges: 4096, maxFiles: 60_000, maxEntries: 120_000, maxBytes: 1_073_741_824,
+    maxFileBytes: 268_435_456, maxDepth: 32, maxMetadataBytes: 1_048_576, maxLockBytes: 8_388_608, maxLockPackages: 4096, maxNodeBytes: 268_435_456 };
+  const roots = ["esbuild", "playwright", "playwright-core", "@playwright/test", "next", "react", "react-dom", "zod", "tsx"];
+  assert.equal(process.platform, "win32", "This private process harness supports Windows only");
+  const platform = { os: process.platform, cpu: process.arch, libc: null };
+  const counts = { packages: 0, edges: 0, files: 0, entries: 0, bytes: 0 }, packages = [], edges = [], visited = new Set();
+  const stat = async absolute => { try { return await fs.lstat(absolute); } catch (error) { if (error.code === "ENOENT") return null; throw error; } };
+  async function pair(relative) {
+    assert.ok(relative.startsWith("node_modules/") || relative === "node_modules");
+    assert.ok(relative.split("/").every(part => part && part !== "." && part !== ".."));
+    const worker = await stat(path.join(root, relative)), built = await stat(path.join(rootCheckout, relative));
+    assert.equal(Boolean(worker), Boolean(built), `Installed runtime existence differs: ${relative}`);
+    if (!worker) return null;
+    assert.equal(worker.isSymbolicLink(), false, `Worker runtime symlink refused: ${relative}`);
+    assert.equal(built.isSymbolicLink(), false, `Root runtime symlink refused: ${relative}`);
+    assert.equal(worker.isDirectory(), built.isDirectory()); assert.equal(worker.isFile(), built.isFile());
+    return { worker, built };
+  }
+  async function candidate(relative) {
+    const parts = relative.split("/"); assert.ok(parts.length <= limits.maxDepth);
+    for (let length = 1; length <= parts.length; length++) {
+      const entry = await pair(parts.slice(0, length).join("/")); if (!entry) return false;
+      assert.ok(entry.worker.isDirectory(), `Package ancestor is not a directory: ${relative}`);
+    }
+    // An existing closer package directory without metadata could shadow an
+    // ancestor through Node's index.js fallback; never silently skip it.
+    const metadata = await pair(`${relative}/package.json`); assert.ok(metadata, `Installed candidate lacks package.json: ${relative}`);
+    assert.ok(metadata.worker.isFile()); return true;
+  }
+  async function bytes(relative, budget) {
+    const info = await pair(relative); assert.ok(info && info.worker.isFile());
+    assert.ok(info.worker.size <= budget && info.built.size <= budget, `Runtime file size exceeds bound: ${relative}`);
+    assert.equal(info.worker.size, info.built.size);
+    const worker = await fs.readFile(path.join(root, relative)), built = await fs.readFile(path.join(rootCheckout, relative));
+    assert.equal(worker.length, info.worker.size); assert.equal(built.length, info.built.size); assert.equal(sha(worker), sha(built), `Installed raw bytes differ: ${relative}`);
+    return worker;
+  }
+  const lockPath = path.join(root, "package-lock.json"), rootLockPath = path.join(rootCheckout, "package-lock.json");
+  const lockInfo = await fs.lstat(lockPath), rootLockInfo = await fs.lstat(rootLockPath);
+  assert.ok(lockInfo.isFile() && rootLockInfo.isFile() && !lockInfo.isSymbolicLink() && !rootLockInfo.isSymbolicLink());
+  assert.ok(lockInfo.size <= limits.maxLockBytes && rootLockInfo.size <= limits.maxLockBytes);
+  const lockBytes = await fs.readFile(lockPath); assert.equal(sha(lockBytes), sha(await fs.readFile(rootLockPath)));
+  const lock = JSON.parse(lockBytes.toString("utf8")); assert.ok(lock.packages && Object.keys(lock.packages).length <= limits.maxLockPackages);
+  const nodeInfo = await fs.lstat(process.execPath); assert.ok(nodeInfo.isFile() && !nodeInfo.isSymbolicLink() && nodeInfo.size <= limits.maxNodeBytes);
+  const nodeExecutable = { path: process.execPath, version: process.version, bytes: nodeInfo.size, sha256: sha(await fs.readFile(process.execPath)) };
+  function constraints(entry) { return { os: entry?.os ?? [], cpu: entry?.cpu ?? [], libc: entry?.libc ?? [] }; }
+  function compatible(entry) {
+    return Object.entries(constraints(entry)).every(([field, values]) => {
+      assert.ok(Array.isArray(values) && values.every(value => typeof value === "string"));
+      const actual = platform[field], positive = values.filter(value => !value.startsWith("!"));
+      return !values.includes(`!${actual}`) && (!positive.length || positive.includes("any") || positive.includes(actual));
+    });
+  }
+  function packageName(name) { assert.match(name, /^(?:@[a-zA-Z0-9_-][a-zA-Z0-9._-]*\/)?[a-zA-Z0-9_-][a-zA-Z0-9._-]*$/); }
+  async function resolve(from, name) {
+    packageName(name); let directory = path.join(root, from); const attempted = [];
+    while (directory === root || directory.startsWith(root + path.sep)) {
+      if (path.basename(directory) !== "node_modules") {
+        const relative = path.relative(root, path.join(directory, "node_modules", name)).replaceAll(path.sep, "/"); attempted.push(relative);
+        assert.ok(attempted.length <= limits.maxDepth);
+        if (await candidate(relative)) return { resolved: relative, attempted };
+      }
+      if (directory === root) break; directory = path.dirname(directory);
+    }
+    return { resolved: null, attempted };
+  }
+  async function packageClosure(relative, depth = 0) {
+    if (visited.has(relative)) return; assert.ok(depth <= limits.maxDepth); visited.add(relative);
+    counts.packages++; assert.ok(counts.packages <= limits.maxPackages); assert.ok(await candidate(relative), `Required runtime package absent: ${relative}`);
+    const locked = lock.packages[relative]; assert.ok(locked && typeof locked.version === "string", `Package not described by lock: ${relative}`);
+    const metadataBytes = await bytes(`${relative}/package.json`, limits.maxMetadataBytes), metadata = JSON.parse(metadataBytes.toString("utf8"));
+    assert.equal(metadata.version, locked.version); assert.equal(typeof metadata.name, "string"); if (locked.name) assert.equal(metadata.name, locked.name);
+    for (const key of ["dependencies", "optionalDependencies", "peerDependencies", "peerDependenciesMeta"]) assert.deepEqual(metadata[key] ?? {}, locked[key] ?? {}, `Installed declarations differ from lock: ${relative}/${key}`);
+    assert.deepEqual(constraints(metadata), constraints(locked)); assert.equal(compatible(locked), true, `Installed package contradicts current platform: ${relative}`);
+    const inputs = [], directories = [];
+    async function walk(current, level) {
+      assert.ok(level <= limits.maxDepth); const info = await pair(current); assert.ok(info);
+      counts.entries++; assert.ok(counts.entries <= limits.maxEntries);
+      if (info.worker.isDirectory()) {
+        const entries = async checkout => {
+          const names = [], directory = await fs.opendir(path.join(checkout, current));
+          for await (const entry of directory) { assert.ok(names.length < limits.maxEntries - counts.entries, `Directory entry bound exceeded: ${current}`); names.push(entry.name); }
+          return names.sort();
+        };
+        const workerEntries = await entries(root), rootEntries = await entries(rootCheckout);
+        assert.deepEqual(workerEntries, rootEntries, `Installed directory/file set differs: ${current}`); assert.ok(workerEntries.length <= limits.maxEntries - counts.entries);
+        directories.push({ relativePath: current, entries: workerEntries });
+        for (const entry of workerEntries) await walk(`${current}/${entry}`, level + 1);
       } else {
-        assert.ok(info.isFile()); const bytes = await fs.readFile(actual);
-        assert.equal(sha(bytes), sha(await fs.readFile(path.join(rootCheckout, relative))), "Installed runtime raw bytes differ");
-        files.push({ relativePath: relative.replaceAll(path.sep, "/"), bytes: bytes.length, sha256: sha(bytes) });
+        assert.ok(info.worker.isFile()); assert.ok(info.worker.size <= limits.maxFileBytes && counts.bytes + info.worker.size <= limits.maxBytes);
+        counts.files++; assert.ok(counts.files <= limits.maxFiles); const actual = await bytes(current, limits.maxFileBytes); counts.bytes += actual.length;
+        inputs.push({ relativePath: current, bytes: actual.length, sha256: sha(actual) });
       }
     }
-    await walk(relativePath);
-    receipts.push({ relativePath, version: metadata.version, files });
-    for (const [name, optional] of [
-      ...Object.keys(metadata.dependencies ?? {}).map(name => [name, false]),
-      ...Object.keys(metadata.optionalDependencies ?? {}).map(name => [name, true]),
-    ]) {
-      let directory = path.join(root, relativePath), candidate;
-      while (directory.startsWith(path.resolve(root))) {
-        const possible = path.join(directory, "node_modules", name);
-        try { await fs.access(path.join(possible, "package.json")); candidate = path.relative(root, possible).replaceAll(path.sep, "/"); break; }
-        catch (error) { if (error.code !== "ENOENT") throw error; }
-        if (directory === path.resolve(root)) break; directory = path.dirname(directory);
+    await walk(relative, 0);
+    packages.push({ name: metadata.name, relativePath: relative, version: metadata.version, platformConstraints: constraints(locked), packageJsonSha256: sha(metadataBytes), directories, inputs });
+    const declarations = [];
+    for (const [name, spec] of Object.entries(metadata.dependencies ?? {})) if (!Object.hasOwn(metadata.optionalDependencies ?? {}, name)) declarations.push({ name, spec, kind: "dependency", optional: false });
+    for (const [name, spec] of Object.entries(metadata.optionalDependencies ?? {})) declarations.push({ name, spec, kind: "optionalDependency", optional: true });
+    for (const [name, spec] of Object.entries(metadata.peerDependencies ?? {})) declarations.push({ name, spec, kind: "peer", optional: metadata.peerDependenciesMeta?.[name]?.optional === true });
+    declarations.sort((a, b) => `${a.kind}:${a.name}`.localeCompare(`${b.kind}:${b.name}`));
+    for (const declaration of declarations) {
+      assert.equal(typeof declaration.spec, "string"); counts.edges++; assert.ok(counts.edges <= limits.maxEdges);
+      const resolution = await resolve(relative, declaration.name), omittedCandidates = resolution.attempted.filter(candidate => Object.hasOwn(lock.packages, candidate)).map(candidate => ({ relativePath: candidate, version: lock.packages[candidate].version, platformConstraints: constraints(lock.packages[candidate]), compatible: compatible(lock.packages[candidate]) }));
+      if (!resolution.resolved) {
+        assert.equal(declaration.optional, true, `Required declared dependency missing: ${relative}/${declaration.name}`);
+        edges.push({ from: relative, ...declaration, ...resolution, status: omittedCandidates.length && omittedCandidates.every(entry => !entry.compatible) ? "platform-omitted" : "optional-not-installed", omittedCandidates });
+      } else {
+        assert.ok(lock.packages[resolution.resolved], `Resolved installed dependency unbound to lock: ${resolution.resolved}`);
+        edges.push({ from: relative, ...declaration, ...resolution, status: "installed", omittedCandidates: [] }); await packageClosure(resolution.resolved, depth + 1);
       }
-      let rootDirectory = path.join(rootCheckout, relativePath), rootCandidate;
-      while (rootDirectory.startsWith(path.resolve(rootCheckout))) {
-        const possible = path.join(rootDirectory, "node_modules", name);
-        try { await fs.access(path.join(possible, "package.json")); rootCandidate = path.relative(rootCheckout, possible).replaceAll(path.sep, "/"); break; }
-        catch (error) { if (error.code !== "ENOENT") throw error; }
-        if (rootDirectory === path.resolve(rootCheckout)) break; rootDirectory = path.dirname(rootDirectory);
-      }
-      assert.equal(candidate, rootCandidate, "Worker/root Node dependency resolution or optional absence differs");
-      if (!candidate) {
-        assert.ok(optional, "Missing required Node executable dependency " + name);
-        receipts.push({ absentOptional: name, from: relativePath }); continue;
-      }
-      await packageClosure(candidate);
     }
   }
-  for (const name of ["esbuild", "playwright", "playwright-core", "@playwright/test", "next", "react", "react-dom", "zod", "tsx"]) await packageClosure("node_modules/" + name);
-  return receipts;
+  for (const name of roots) await packageClosure(`node_modules/${name}`);
+  packages.sort((a, b) => a.relativePath.localeCompare(b.relativePath)); edges.sort((a, b) => `${a.from}:${a.kind}:${a.name}`.localeCompare(`${b.from}:${b.kind}:${b.name}`));
+  const closure = { nodeExecutable, roots, platform, limits, counts, packages, edges };
+  return { ...closure, closureSha256: sha(JSON.stringify(closure)) };
 }
 export async function verifyCampaignMonsterEntry(root) {
   const descriptor = await reviewedDescriptor(root);
@@ -268,6 +352,7 @@ export async function reviewedDescriptor(root) {
   const value = JSON.parse(bytes);
   assert.equal(value.kind, "independently-reviewed-offline-m5-v1");
   assert.equal(value.producerCheckpoint, campaignMonsterSourceCheckpoint);
+  assert.deepEqual(value.producerAmendments, campaignMonsterSourceAmendments);
   assert.match(value.harnessCheckpoint ?? "", /^[a-f0-9]{40}$/); assert.match(value.rootSourceSha ?? "", /^[a-f0-9]{40}$/);
   assert.deepEqual(Object.keys(value.harnessBlobs ?? {}).sort(), [...campaignMonsterHarnessFiles].sort());
   for (const relative of campaignMonsterHarnessFiles) assert.equal(git(root, ["rev-parse", value.harnessCheckpoint + ":" + relative]).toString().trim(), value.harnessBlobs[relative]);

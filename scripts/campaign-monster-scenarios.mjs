@@ -51,6 +51,7 @@ export async function runCampaignMonsterCases(options) {
   const { browser, origin, output, evidence, screenshots, fontEvidence, pageErrors, networkErrors, diagnostics, allowedAssets, deadline } = options;
   for (const [size, viewport] of [["desktop", { width: 1440, height: 1000 }], ["mobile", { width: 390, height: 844 }]]) {
     for (const [index, scenario] of CASES.entries()) {
+      await options.checkpoint("case " + size + ":" + scenario);
       assert.ok(Date.now() < deadline, "Browser case deadline; preserve full proof reserves");
       const context = await browser.newContext({ viewport }), page = await context.newPage();
       page.on("pageerror", error => pageErrors.push(error.message));
@@ -59,17 +60,18 @@ export async function runCampaignMonsterCases(options) {
         const request = route.request(), url = new URL(request.url());
         const permitted = url.origin === origin && (["/fixture", "/fixture.js", "/favicon.ico"].includes(url.pathname)
           || allowedAssets.includes(url.pathname) || /^\/__model\/(control|inspect|preview|resolve|commit)$/.test(url.pathname)
-          || url.pathname === "/campaigns/" + MC.campaign + "/monsters/" + MC.instance);
+          || ["/campaigns/" + MC.campaign + "/monsters/" + MC.instance, "/campaigns/" + MC.foreign + "/monsters/" + MC.instance,
+            "/campaigns/" + MC.campaign + "/monsters/" + MC.foreign].includes(url.pathname));
         if (!permitted) { networkErrors.push({ path: url.pathname, origin: url.origin }); return route.abort(); } return route.continue();
       });
       const edit = ["archive", "restore", "second-edit", "noop", "repeat-failure", "historical-source"].includes(scenario);
-      await options.configure({ initial: edit, mode: "normal" });
-      await page.goto(origin + "/fixture");
-      if (edit) await eventually(page, () => !document.querySelector("fieldset")?.disabled);
-      else await createReady(page);
       let assertionCount = 0;
       const check = (actual, expected) => { assertionCount++; assert.deepEqual(actual, expected); };
       try {
+        await options.configure({ initial: edit, mode: "normal" });
+        await page.goto(origin + "/fixture");
+        if (edit) await eventually(page, () => !document.querySelector("fieldset")?.disabled);
+        else await createReady(page);
         if (scenario === "create") {
           await submit(page); await saved(page); const seen = await trace(page), committed = seen.calls.filter(call => call.kind === "commit");
           check(committed.length, 1); check(committed[0].intent.current_hp, 0); check(committed[0].intent.source_version, 1);
@@ -253,16 +255,30 @@ export async function runCampaignMonsterCases(options) {
         } else if (scenario === "editAfter-refusal") {
           await page.goto(origin + "/campaigns/" + MC.campaign + "/monsters/" + MC.instance + "?editAfter=" + MC.foreign);
           await page.getByRole("alert").waitFor(); check(await page.locator("form").count(), 0); check((await trace(page)).calls.filter(call => call.kind === "commit").length, 0);
+          for (const suffix of ["?editAfter=bad", "?editAfter=", "?editAfter=" + MC.foreign + "&editAfter=" + MC.foreign,
+            "?editAfter=A0000000-0000-4000-8000-000000000007", "?editAfter=" + MC.foreign + "&unknown=1"]) {
+            await model(page, "control", {});
+            await page.goto(origin + "/campaigns/" + MC.campaign + "/monsters/" + MC.instance + suffix);
+            await page.getByRole("alert").waitFor(); check(await page.locator("form").count(), 0); check((await trace(page)).calls.filter(call => call.kind === "route-resolve").length, 0);
+          }
           await model(page, "control", { initial: true }); await page.goto(origin + "/fixture");
           await eventually(page, () => !document.querySelector("fieldset")?.disabled); await page.locator("input[name=current_hp]").fill("2"); await submit(page); await saved(page);
           const accepted = await model(page, "inspect"), receipt = accepted.receipts[0], operation = receipt.operation_id;
           await page.evaluate(() => sessionStorage.clear());
-          for (const kind of ["foreign", "malformed", "stale", "invalid-detail"]) {
+          for (const route of ["/campaigns/" + MC.foreign + "/monsters/" + MC.instance, "/campaigns/" + MC.campaign + "/monsters/" + MC.foreign]) {
+            await model(page, "control", { initial: true, detail: accepted.detail, receiptOverrides: [[operation, receipt]] });
+            await page.goto(origin + route + "?editAfter=" + operation);
+            await page.getByRole("alert").waitFor(); check(await page.locator("form").count(), 0); check((await trace(page)).calls.filter(call => call.kind === "commit").length, 0);
+          }
+          for (const kind of ["foreign", "malformed", "stale", "invalid-detail", "detail-id", "detail-campaign", "detail-system"]) {
             const changed = structuredClone(receipt), detail = structuredClone(accepted.detail);
             if (kind === "foreign") changed.campaign_id = MC.foreign;
             if (kind === "malformed") delete changed.canonical_intent;
             if (kind === "stale") detail.revision = "0";
             if (kind === "invalid-detail") detail.source_snapshot.effects_snapshot = [{}];
+            if (kind === "detail-id") detail.id = MC.foreign;
+            if (kind === "detail-campaign") detail.campaign_id = MC.foreign;
+            if (kind === "detail-system") detail.system_id = MC.foreign;
             await model(page, "control", { initial: true, detail, receiptOverrides: [[operation, changed]] });
             await page.goto(origin + "/campaigns/" + MC.campaign + "/monsters/" + MC.instance + "?editAfter=" + operation);
             await page.getByRole("alert").waitFor(); check(await page.locator("form").count(), 0); check((await trace(page)).calls.filter(call => call.kind === "commit").length, 0);
@@ -323,6 +339,19 @@ export async function runCampaignMonsterCases(options) {
         const sample = await inspectFonts(page, viewport), filename = size + "-" + String(index + 1).padStart(2, "0") + "-" + scenario + ".png";
         await page.screenshot({ path: path.join(output, filename) }); screenshots.push(filename); fontEvidence.push({ size, scenario, ...sample });
         evidence.push({ size, scenario, assertionCount, passed: true, boundaries: "Auth/RPC/ledger/owner/source/cache modeled", actual: await trace(page) });
+      } catch (error) {
+        // Preserve the actual failed precondition before closing this document.
+        const stem = size + "-" + String(index + 1).padStart(2, "0") + "-" + scenario + "-FAILED";
+        const captureErrors = []; let actual = null, dom = null, bodyText = null, image = null;
+        try { actual = await trace(page); } catch (failure) { captureErrors.push("trace: " + failure.message); }
+        try { dom = await page.content(); bodyText = await page.locator("body").innerText(); } catch (failure) { captureErrors.push("DOM: " + failure.message); }
+        try { image = stem + ".png"; await page.screenshot({ path: path.join(output, image) }); } catch (failure) { captureErrors.push("screenshot: " + failure.message); image = null; }
+        await fs.writeFile(path.join(output, stem + ".json"), JSON.stringify({ size, scenario, expectedCaseCount: 44, assertionCount,
+          passed: false, failure: error.message, actual, dom, bodyText, screenshot: image, captureErrors,
+          requiredSettlementPrecondition: scenario === "settlement-gap" ? "Consumed actual response + original enabled DOM before matching layout commit; never waived" : null,
+          boundaries: "Auth/RPC/ledger/owner/source/cache modeled" }, null, 2), { flag: "wx" });
+        evidence.push({ size, scenario, assertionCount, passed: false, failure: error.message, actual, screenshot: image, captureErrors });
+        throw error;
       } finally { await context.close(); }
     }
   }
