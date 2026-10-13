@@ -177,3 +177,37 @@ sentinel, not kernel/schema/parser/validators/authority/source-model behavior. E
 assertion and all production modules are unchanged. First evidence/manifest above
 remain immutable. This correction is UNRUN and awaits independent source review
 before any repeat gate/resource release.
+
+## Reviewed setup retry — local modeled/static gates PASS
+
+M1 approved exact baaa8b7a224b1000ee2180f939043b42eeca3938; source stayed clean
+and frozen for the explicitly released sequential lane. Same three-file npm.cmd
+test command above with --maxWorkers=2 exited0: THREE files,157 tests PASS. Then
+npm.cmd run typecheck exited0 and npm.cmd run lint exited0. No additional tests,
+full/build/browser/install/SQL/PGlite/native/engine/network/provider gate ran.
+The import setup correction changes only the server-only package sentinel in tests;
+actual kernel/schema/parser/model/stage and every assertion ran unchanged.
+
+All retry stdout/stderr/process/result receipts are separate *-baaa8b7 files, leaving
+first failure and original immutable manifest unchanged. Aggregate receipt manifest:
+test-results/arcanum-first-selection-local/aggregate-baaa8b7.json SHA256
+EE5DBECA774A22A1EB936C7FCDA1E05A0E837FDF486BF885A23C3DECFA2000F0.
+It hashes all saved first/retry evidence plus final-readback-baaa8b7.json. Original
+manifest SHA256 still4C01349F9043C72273D1D6C146B69EC88D154B722F1737CA5C28795CCD0CA874.
+
+Each gate records actual OS PID/birth/parent/command, inherited worker cwd/start/end,
+source/status and lock hashes, before/after CPU load, physical memory, process count
+and listeners. Retry system-wide process samples focused468→468, typecheck513→509,
+lint507→466 are not task attribution. Exact identity-based fresh final readback found
+ALL36 combined first/retry recorded identities absent and ZERO owned listeners;
+no forced kill was needed. All six gate lock hashes are unchanged. The lane was
+released immediately after readback, before this docs-only checkpoint.
+
+These are LOCAL modeled/static semantics, parser and source-binding checks. Earlier
+UNRUN statements describe historical freezes and first setup failure; the latest
+approved retry now exercised their controls. Token-removal/owner-declaration controls
+remain STATIC binding, not native semantic reproduction. SQL has not been compiled
+or executed; effective native roles/RLS, reciprocal RI/lifetime, concurrent locks,
+verified Auth, lineage producer, choices writer and full private graph union remain
+unproved. All13 readiness false, unconditional Auth denial/NEW refusal, copy refusal,
+no app imports/positive issuance and outstanding M6 gameplay prerequisites are intact.
