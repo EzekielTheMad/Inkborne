@@ -66,15 +66,51 @@ Root's monotonic clock enforces the outer cap; UTC correlates receipts and never
 replaces elapsed measurement. Local process monotonic durations are retained with
 UTC bounds/process identities; do not assume Node/.NET tick origins are identical.
 
-Propose a measurement-only whole cap1800000ms for review. Provisional phase maxima:
-wrapperEntry300000, runnerEntry600000, cases180000, exports180000,
-originalQA180000, bonusQA180000, runnerFinal600000, wrapperFinal600000,
-forceAndCleanup300000. These are observation ceilings, NOT allocated full-run
-timings and NOT a claim that their sum fits either outer budget. The whole cap
-dominates. Reserve enough reviewed time for complete finals/proofs/cleanup before
-starting later work; if a reserve cannot be maintained, stop work and record an
-incomplete measurement. No product timeout exceeds existing10000ms, no retries,
-case reduction, export omission, skipped proof, cache or source fallback.
+Propose a bounded ONE-OFF measurement-only whole cap1800000ms (30min) for review,
+separate from the unchanged ordinary900000ms cap. Historical Magic observations
+are approximately379s combined entry,28s cases and301s combined finals:708s.
+Those are planning context, NOT observed bonus receipts, and do not measure native
+PDF/QA, the additional full force-proof probe, or all this run's cleanup. Reserve
+450s for three unknown150s export/originalQA/bonusQA ceilings,180s for the unknown
+additional complete proof component, and120s for native cleanup/readbacks. This
+adds750s; the remaining342s is explicit headroom across known-category ceilings.
+708+750+342=1800s motivates a finite observation window rather than an arbitrary
+doubling or an ordinary runtime approval. Unknown costs may exceed these ceilings;
+then the observation is incomplete/HOLD, not evidence that the missing work costs0.
+
+Proposed exclusive ceilings (ms), summing EXACTLY1800000:
+
+| Phase | Ceiling | Rationale/reservation |
+| --- | ---: | --- |
+| wrapperEntry | 240000 | Includes external startup and actual wrapper proof. Together with runnerEntry,540s allows161s over the historical379s entry total; their actual split is unknown. |
+| runnerEntry | 300000 | All repeated runner entry proof/build/start work, not another restarted whole clock. |
+| cases | 90000 | Historical28s plus62s planning headroom; all30 cases retained. |
+| exports | 150000 | Unobserved eight-export ceiling, no asserted completion time. |
+| originalQA | 150000 | Unobserved six-original QA work; cleanup/proof time is charged separately below. |
+| bonusQA | 150000 | Unobserved two-bonus QA work; cleanup/proof time is charged separately below. |
+| runnerFinal | 210000 | Complete fresh final/inventory; no claim that the historical301s total splits evenly. |
+| wrapperFinal | 210000 | Independent complete fresh final/inventory. Together finals420s provide119s over historical301s; either210s cap can still HOLD. |
+| forceAndCleanup | 300000 | Fixed sub-reserves:180000 for ALL actual full force-proof/proof-only calls,120000 for ALL native waits/close/force/readbacks/final I/O. Neither may borrow the other's reserve silently. |
+
+The initial mandatory proof/cleanup reservation is210000+210000+180000+120000=
+720000ms, leaving1080000ms for startup/entries/cases/eight exports/two QAs, rather
+than the prior erroneous300000ms work window. The six work ceilings sum exactly
+1080000. No600000 final reserve is retained while declaring a smaller hidden reserve.
+
+Maintain a run-bound reservation ledger. Before admitting EACH phase, IPC probe or
+native spawn, require external monotonic remaining time >= that operation's full
+unspent declared ceiling PLUS every remaining mandatory phase/sub-reserve; initially
+all nine total1800000. Keep the full210000 for each unfinished final, full remaining
+180000 proof component and120000 cleanup component, plus the ceilings of other
+unstarted work phases. Actual elapsed consumes its owning component exactly once;
+completed work releases only genuinely unused capacity. A prediction, empty branch,
+missing measurement or unobserved forced-kill path releases no future reservation.
+During work enforce both its own remaining ceiling and the whole remaining-reserve
+boundary. If either cannot be maintained, stop new work and perform complete reserved
+finals/cleanup as possible, recording missing phases and a truthful incomplete HOLD.
+No temporary cap increase or reserve borrowing; any proposal needs new source/release
+review. No product timeout exceeds existing10000ms, retries, case reduction, export
+omission, skipped proof, cache or source fallback.
 
 All nine phases must be actually observed before a complete measurement is usable:
 
@@ -87,8 +123,8 @@ All nine phases must be actually observed before a complete measurement is usabl
 | originalQA | Unchanged original verifier on all six exports, every rendered page/contact sheet and actual native process receipts. No Python-module hash claim for this verifier. |
 | bonusQA | Existing bonus verifier on both exports, exact six values, geometry/privacy, every page/contact sheet, reported byte hashes and its actual module receipts. |
 | runnerFinal | After teardown, complete fresh source/runtime/root/build/assets/fonts/bundle/metafile/CSS-map proof and bounded BOTH-QA output inventory, equal initial rendered proof. |
-| wrapperFinal | Its independent complete fresh final proof, reopening both QA directories and deepEqual against runner evidence/disk inventory. Any actual pre-force complete proof is a separately timed component, not hidden or replaced by a helper check. |
-| forceAndCleanup | QA cooperative wait/individual native cleanup, browser/HTTP close, wrapper stop/wait/identity/ancestry checks, any force, package exit, resource/PID/listener/port readbacks and final receipt I/O. |
+| wrapperFinal | Its independent complete fresh final proof, reopening both QA directories and deepEqual against runner evidence/disk inventory. It does not consume the separate force-proof reserve. |
+| forceAndCleanup | ALL actual full pre-force/proof-only rebinds in its180000 proof component; QA cooperative wait/individual native cleanup, browser/HTTP close, wrapper stop/wait/identity/ancestry checks, any force, package exit, resource/PID/listener/port readbacks and final receipt I/O in its120000 native component. |
 
 Keep both inclusive raw intervals and exclusive ownership components so nested QA
 cleanup is not silently counted twice in a proposed allocation. Record external
@@ -107,12 +143,18 @@ force. Do not deliberately force a healthy browser just to produce a timing.
 To measure the expensive force-proof component without a kill, add a finite
 measurement-only IPC checkpoint after runner teardown/final evidence, before its
 exit. The runner remains alive cooperatively, with no browser/HTTP/QA work active.
-Wrapper invokes the SAME full rebind used before force, measures it separately and
+Wrapper invokes the SAME full rebind used before force, measures it separately in
+the180000 forceAndCleanup proof component and
 checks the actual still-live runner identity. It records proof-only:true,
 forceInvoked:false, then acknowledges exit. The normal wrapper final still runs
 independently after exit. Bound this handshake by the reviewed phase/whole deadline;
 stop/deadline takes precedence. It certifies only proof cost/identity observation,
-not Windows taskkill behavior or an interruption outcome. No new cached proof or
+not Windows taskkill behavior or an interruption outcome. All proof calls, including
+an unexpected real pre-force call, consume that SAME aggregate180000 ceiling; no
+extra unreserved proof may be appended after a healthy probe. If another fresh full
+proof cannot fit the remaining declared component/whole reservation, refuse normal
+force and record HOLD; only a separately reviewed failed-run cancellation adapter
+can supply its distinct strict failure cleanup policy. No new cached proof or
 alternate acceptance oracle. This additional measurement work is reported honestly
 and is not presented as ordinary-mode elapsed time.
 
