@@ -1,4 +1,6 @@
-# R06 saving_throw_bonus consumer source — UNVERIFIED
+# R06 saving_throw_bonus consumer source — narrow gates passed; full/UI pending
+
+## Initial source checkpoint (historical, before released gates)
 
 Own isolated save-bonus-consumer-worker/codex/saving-throw-bonus-consumers, clean
 base353858cd7b5d8013f7d005bee4b69eba1bf5023b. Approved plan0d1d94f plus exact routing
@@ -126,3 +128,38 @@ regular expressions (same Roll/Advantage/Disadvantage names), plus this handoff.
 All assertions, fixtures and seven production bytes stay unchanged. No repeated
 test/type/lint command has run after the correction. Exact-source review and
 release are required before continuation; heavy lane is released after readback.
+
+## Approved correction: released typecheck/lint at9e28c36
+
+Root independently approved exact9e28c36a23391076e1992715be61b37a77749042;
+its three anchored role-name selectors retain all semantic assertions and the
+seven a807 production files byte-identically. No repeat of the unchanged113-test
+suite was required by the released scope. Parent combined check will cover final
+selectors; preserve the exact a807 semantic-test attribution above.
+
+At clean9e28, sequential `npm.cmd run typecheck` **PASS exit0**, followed by
+`npm.cmd run lint` **PASS exit0, zero warnings**. Original failed a807 typecheck
+receipt remains intact. New command logs/OS identities/birth/parent/cmd/assigned
+cwd/start/resources and per-command absence are in
+`test-results/save-bonus-narrow/{typecheck-9e28,lint-9e28}.{stdout.log,stderr.log,receipt.json}`.
+Each command captured five process identities, all absent with no owned listener.
+Fresh combined readback `final-readback-9e28.json` confirms all34 sampled identities
+across five commands absent, owned listeners0, clean Git9e28. Parent helper/control
+shell lifetime is not counted as a sampled package-command descendant.
+No processes were force-killed. Whole-host resource snapshots include unrelated
+activity; they are measurements, not an attribution of its process/memory deltas.
+Package/lock unchanged from353; raw lock SHA256:
+`7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6`.
+
+Immutable aggregate ignored `test-results/save-bonus-narrow/manifest-tested.json`
+binds preserved baseline/restoration/pass/failure/new-gate logs, command helpers,
+resource/process receipts and final readback. SHA256:
+`A4879B9FC30157D30DBB2848968CED762E420F7A59B7A7E56D7B211AF3D6A454`.
+It records separate semanticTestSHA a807 and typecheckLintSHA9e28; this docs-only
+successor does not change production, fixtures or assertions.
+
+Released narrow work is complete; heavy slot returned immediately after readback.
+No fullcheck/build/browser/SQL/Auth/provider-UAT/network/native receipt execution
+occurred. Root owns integration, combined gates, actual desktop/mobile save/CON
+acceptance and newly bound six-PDF rendering. Inventory magic source collection,
+death saves, C2 roles/namespaces/P1 authority and G2 remain explicit open boundaries.
