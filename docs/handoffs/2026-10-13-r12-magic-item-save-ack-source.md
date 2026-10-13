@@ -79,8 +79,11 @@ Original mapper trim/blank-category/absent-checkbox/hidden-authority controls an
 actual React native-reset settlement positives remain. Positive auth/scoping/effect
 omit controls use real synthetic UUID/envelopes. Model PostgREST response routing
 supports actual old and repaired query shapes, freezes/echoes supplied server ID
-and slug, and supplies a valid DB-generated ID for the old CREATE path. Wrong return
-fixtures are otherwise valid under the old generic row parser; canonical mechanical
+and slug, and supplies a valid DB-generated ID for the old CREATE path. Wrong returned
+id/owner/system/retired/version/name/slug/data/effects are otherwise valid under the
+old generic row parser and reproduce admission. Wrong content_type=spell/source=srd/
+scope=shared already fail its literal envelope: they reproduce old retryable-error
+to post-write uncertainty classification, not old wrong-row acceptance. Canonical mechanical
 formula/conditional/narrative effects are validated before raw-preservation checks.
 
 Future authorized failing-before must temporarily restore ONLY base816 actual

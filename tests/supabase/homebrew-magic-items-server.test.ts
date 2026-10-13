@@ -98,11 +98,13 @@ describe("magic-item exact private save", () => {
 });
 
 describe("actual-old-export acknowledgment baseline controls", () => {
-  // All bad-return fixtures remain otherwise valid under the old row parser.
+  // id/owner/system/retired/version/name/slug/data/effects pass the old row parser:
+  // those reproduce wrong-row admission. content_type=spell/source=srd/scope=shared
+  // already fail its literals: those reproduce retryable-error -> uncertain classification.
   it.each([
     ["id", OTHER], ["owner_id", OTHER], ["system_id", OTHER], ["content_type", "spell"], ["source", "srd"], ["scope", "shared"], ["is_retired", true], ["version", 2],
     ["name", "Another synthetic item"], ["slug", "another-synthetic-item"], ["data", { ...controls, description: "A different description." }], ["effects", [{ type: "mechanical", stat: "strength", op: "add", value: 1 }]],
-  ])("does not acknowledge otherwise-valid wrong create %s", async (key, value) => {
+  ])("wrong create %s is uncertain (old admission or retryable-error classification)", async (key, value) => {
     const d = db({ createReturn: r => ({ ...r, [key as string]: value }) });
     expect(await createHomebrewMagicItemRecord(form())).toMatchObject({ status: "uncertain" }); expect(writes(d.calls)).toHaveLength(1);
   });
