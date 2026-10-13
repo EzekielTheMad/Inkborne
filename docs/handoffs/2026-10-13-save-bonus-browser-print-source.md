@@ -232,3 +232,17 @@ Ignored test-results/save-bonus-review-correction-byte-preflight/manifest.json
 SHA256:8AE39DB17362A4FFF6A52DDB115C490E4ABE6EED2899E798DA7E3DEC0B27C5E3.
 Final.json SHA256:2154A135BD6A192FDF3C97BA12EBA64E8F274DF8A91F981807425251D6823D82.
 This docs-only successor leaves correction46c executable blobs unchanged.
+## Separate NarrativeData fixture correction — SOURCE ONLY
+
+Root fb9 typecheck observed TS2353 at fixture.tsx:57: NarrativeData has no
+backstory field. Replace only that field name with the actual motivation field,
+retaining the identical FORBIDDEN_NARRATIVE value. NarrativeData.motivation is
+omitted by the actual print model. No cast, production type change, removal of
+privacy data or assertion relaxation is used; all math/state/pins and every
+output/privacy oracle are unchanged. These two provider exports now exercise
+plain narrative motivation exclusion, NOT rich DM-note exclusion. No richer
+coverage is claimed for them; the original six fixtures/verifier stay unchanged.
+The root failure receipt remains root-owned and is not overwritten. This bounded
+source correction is untested here; no Node/Python/npm/type/lint/test/browser/
+measurement or other runtime was launched. Seven mounted-byte checks follow the
+new exact committed fixture source; old995/46c receipts stay immutable.
