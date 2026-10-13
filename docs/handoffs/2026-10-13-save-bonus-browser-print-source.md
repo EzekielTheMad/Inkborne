@@ -246,3 +246,11 @@ The root failure receipt remains root-owned and is not overwritten. This bounded
 source correction is untested here; no Node/Python/npm/type/lint/test/browser/
 measurement or other runtime was launched. Seven mounted-byte checks follow the
 new exact committed fixture source; old995/46c receipts stay immutable.
+Exact d9d6a0f85753d5460f64f022f61274a98c07b467 static byte check passes all
+seven mounted executable files and eleven untouched dependencies. Initial raw
+mismatches0, regenerated0, no config changes; canonical/index/projection agree,
+Git clean. Receipt root: test-results/save-bonus-narrative-correction-byte-preflight.
+Manifest.json SHA256:786371BA8A894EF923820E3183EADF41A6AE4E6FD3273BEE1BF5020ACB7670C8.
+Final.json SHA256:8B035B8C45503DB816A11F1ED8D324BEFEC14E40A10BC09E817FCC1BDB395161.
+This docs-only successor does not change d9d6 executable source. No runtime or
+syntax/typecheck/PDF/browser result is claimed; exact-source review remains pending.
