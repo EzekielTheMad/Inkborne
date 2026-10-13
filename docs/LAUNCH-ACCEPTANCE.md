@@ -26,6 +26,39 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Current core checkpoint — 2026-10-13
 
+Current integrated source `28966b4388509a17b5e5ee6ec9e2d5cc0c9bccb1` passed
+`npm.cmd run typecheck` and `npm.cmd run lint`; all five recorded process identities
+exited for each gate, with no remaining owned processes. All eight saving-throw
+browser/print harness blobs match reviewed worker `ac6578f`; its valid narrative
+fixture uses the declared `motivation` field. The preceding unsupported `backstory`
+type failure remains preserved. These are static gates, not the prepared 30 browser
+cases, 43 screenshots or eight PDF exports, which remain UNRUN. Fresh combined
+check/build and measured browser allocations remain open.
+
+The local 15-second M1 missing-identity test budget in `30632ac` passed independent
+source review; assertions and native verification caps are unchanged. Combined
+verification of that correction remains pending. The failed full check and same-
+source narrow repeat below remain separate evidence.
+
+M6 disabled first-selection source `ee3d261` passed both source reviews. Its first
+narrow gate passed the existing 88 advanced-binding tests but failed collection of
+the two new suites on the `server-only` test sentinel; zero new tests collected.
+Typecheck and lint passed, and all 18 recorded identities exited with no owned
+listeners. Manifest SHA256 is
+`4C01349F9043C72273D1D6C146B69EC88D154B722F1737CA5C28795CCD0CA874`.
+The separate TEST-only correction `baaa8b7` passed independent review: conventional
+hoisted sentinel mocks in the two entrypoints, with every actual validator, model,
+parser, stage and assertion unchanged. A focused retry is authorized in the sole
+heavy lane; results and root integration remain pending. Native SQL, current Auth,
+positive issuance, copy and casting acceptance remain open.
+
+M5 guard measurement preparation `7bd6608` is frozen for source review only. It
+adds two new files and preserves the six reviewed browser harness files. No probe,
+descriptor generation, browser cases or acceptance promotion has run. A guaranteed
+bound through inherited synchronous operations remains unverified.
+
+### Preserved preceding checkpoints — 2026-10-13
+
 Later M5 harness static corrections775/50ec are reviewed/integrated; typecheck and
 zero-warning lint passed, five identities exited for each gate. Combined rootb89
 preserved **4,769PASS/oneFAIL/threeUNVERIFIED skips (357 files)**: the unchanged M1

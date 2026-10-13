@@ -10,6 +10,23 @@ unused, with no app upload or saving path. These decisions supersede the older
 pending-format and PDF-before-beta execution instructions below. Existing PDF
 export and shipped spell/feat importer behavior remain in scope for preservation.
 
+Current integrated source `28966b4` passed typecheck and zero-warning lint; all five
+recorded identities exited for each gate. Reviewed saving-throw harness and valid
+motivation fixture match all eight worker blobs. Browser/PDF 30/43/eight results
+remain UNRUN; fresh combined check/build and measured allocations are pending.
+The separately reviewed M1 local test-budget correction preserves every oracle and
+native cap; its combined retry remains pending.
+
+M6 disabled source `ee3d261` passed both reviews. First focused execution passed 88
+existing tests but failed collection of the two new suites on the server-only
+sentinel, with zero new tests collected; typecheck/lint passed and all 18 identities
+exited/listeners zero. Reviewed TEST-only setup correction `baaa8b7` preserves actual
+validators/model/stage/assertions. Its focused retry is the sole heavy lane; root
+integration and all native/positive-issuance acceptance remain pending. M5 guard
+measurement preparation `7bd6608` awaits source review and has never run.
+
+Preserved earlier checkpoints follow; their pending descriptions are historical.
+
 Current tested core9f848d4 passed **357 files /4,770 tests /three UNVERIFIED M5
 skips**, typecheck/zero-warning lint and synthetic build. All368 check/22 build
 identities exited/listeners zero. Magic's reviewed retry passed the WHOLE offline

@@ -10,6 +10,22 @@ in the backlog and the JSON prototype unused. Do not pursue a PDF layout decisio
 or build another importer until resumed. Earlier PDF-before-beta instructions are
 superseded for active execution; no broader removal or post-beta timing is assumed.
 
+Current integrated source `28966b4` passed typecheck and zero-warning lint; all five
+observed identities exited per gate. Saving-throw harness/fixture match all eight
+reviewed worker blobs. Its browser/PDF gates remain UNRUN, and fresh combined
+check/build and measured allocations remain pending. The M1 local test-budget
+correction is independently reviewed with unchanged native caps/oracles.
+
+M6 source `ee3d261` passed both reviews; first gate retained 88 existing passes and
+zero collected new tests after a server-only setup failure. Typecheck/lint passed,
+all 18 identities exited/listeners zero. Reviewed TEST-only correction `baaa8b7`
+preserves every actual validator/model/stage/assertion. Worker owns the sole heavy
+lane for focused retry; integrate only after exact source/evidence verification.
+M5 guard measurement preparation `7bd6608` is source-review-only, unrun and pending.
+No native SQL/Auth/positive issuance, deployment or live mutation is accepted.
+
+Preserved earlier checkpoints follow; their pending descriptions are historical.
+
 Current tested core9f848d4 passed357 files/4,770 tests plus three UNVERIFIED M5
 skips, typecheck/lint/build; all368 check/22 build identities exited/listeners zero.
 Magic whole offline retry34/36/full final equality passed, all739 identities exited.
