@@ -103,7 +103,7 @@ describe("actual DM monster form with simulated transport only", () => {
     await act(async () => {
       // Deliberately defer the initial pending/operation render with the real React
       // transition scheduler; ordinary discrete submit otherwise already commits it.
-      startTransition(() => form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+      startTransition(() => { form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); });
       original = instanceIntentFromForm(actions.commit.mock.calls[0][1]);
       await Promise.resolve(); await Promise.resolve();
       // Response is settled but the old enabled controls have not committed updates.

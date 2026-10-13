@@ -347,3 +347,9 @@ All12 captured OS identities freshly absent, owned listeners0; global processes
 No kills or other worktree writes. Typecheck/lint remain unrun; gates stopped and
 heavy slot released pending independent correction review. Native/default-off
 boundaries and all missing G2/G3 acceptance remain unchanged.
+
+Exact8749 test review identified ONLY its expression callback returning dispatchEvent's
+boolean, incompatible with installed React TransitionFunction's void/undefined contract.
+Correction uses a block callback with no return; scheduling and every oracle stay
+unchanged. This test-only line plus handoff remains UNRUN for quick exact review.
+Product5f/fixture0aec/SQL/default-off bytes remain unchanged; no heavy work executed.
