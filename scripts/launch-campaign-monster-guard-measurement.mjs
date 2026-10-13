@@ -149,7 +149,34 @@ async function osSnapshot(pid, expectedBirth = null) {
   const birthPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?Z$/;
   if (expectedBirth !== null) assert.match(expectedBirth, birthPattern);
   const birthCheck = expectedBirth === null ? "$true" : `$target.CreationDate.ToUniversalTime().ToString('o') -eq '${expectedBirth}'`;
-  const code = `$ErrorActionPreference='Stop';$rows=@(Get-CimInstance Win32_Process);$target=$rows|Where-Object ProcessId -eq ${pid};$matches=$target -and (${birthCheck});$observer=$rows|Where-Object ProcessId -eq $PID;$ids=[Collections.Generic.HashSet[int]]::new();if($matches){$null=$ids.Add(${pid});do{$added=$false;foreach($row in $rows){if($ids.Contains([int]$row.ParentProcessId) -and $ids.Add([int]$row.ProcessId)){$added=$true}}}while($added)};$project={param($p)@{pid=$p.ProcessId;parentPid=$p.ParentProcessId;birthUtc=$p.CreationDate.ToUniversalTime().ToString('o');command=$p.CommandLine}};$all=@(Get-Process);@{target=$(if($matches){&$project $target}elseif($target){@{pid=$target.ProcessId;birthUtc=$target.CreationDate.ToUniversalTime().ToString('o')}}else{$null});observer=$(if($observer){&$project $observer}else{$null});descendants=@($rows|Where-Object {$ids.Contains([int]$_.ProcessId)}|ForEach-Object {&$project $_});listeners=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue|Where-Object {$ids.Contains([int]$_.OwningProcess)}|Select-Object OwningProcess,LocalAddress,LocalPort);resources=@{timeUtc=(Get-Date).ToUniversalTime().ToString('o');processCount=$all.Count;workingSetBytes=($all|Measure-Object WorkingSet64 -Sum).Sum;cpuSeconds=($all|Measure-Object CPU -Sum).Sum;listenerCount=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue).Count}}|ConvertTo-Json -Depth 8 -Compress`;
+  const code = `$ErrorActionPreference='Stop'
+$rows=@(Get-CimInstance Win32_Process);$byId=@{}
+foreach($row in $rows){$key=[int]$row.ProcessId;if($byId.ContainsKey($key)){throw 'Ambiguous current PID snapshot'};$byId[$key]=$row}
+$target=$byId[${pid}];$matches=$target -and (${birthCheck});$observer=$byId[[int]$PID];$owned=@{}
+if($matches){
+  $rootParent=$byId[[int]$target.ParentProcessId]
+  if(!$target.CreationDate -or !$target.CommandLine -or !$rootParent -or !$rootParent.CreationDate -or !$rootParent.CommandLine -or $rootParent.CreationDate.ToUniversalTime().Ticks -gt $target.CreationDate.ToUniversalTime().Ticks){throw 'Unproved current root parent identity'}
+  $owned[[int]$target.ProcessId]=$target
+  do{
+    $added=$false
+    foreach($row in $rows){
+      $rowId=[int]$row.ProcessId;$parentId=[int]$row.ParentProcessId
+      if($owned.ContainsKey($parentId) -and !$owned.ContainsKey($rowId)){
+        $parent=$byId[$parentId];$admittedParent=$owned[$parentId]
+        if(!$parent -or !$parent.CreationDate -or !$parent.CommandLine -or !$row.CreationDate -or !$row.CommandLine -or $rowId -eq $parentId){throw 'Missing current ancestry identity'}
+        if($parent.ParentProcessId -ne $admittedParent.ParentProcessId -or $parent.CreationDate.ToUniversalTime().Ticks -ne $admittedParent.CreationDate.ToUniversalTime().Ticks -or $parent.CommandLine -ne $admittedParent.CommandLine){throw 'Changed current ancestry parent'}
+        if($parent.CreationDate.ToUniversalTime().Ticks -gt $row.CreationDate.ToUniversalTime().Ticks){throw 'Older orphan cannot be task-owned'}
+        $owned[$rowId]=$row;$added=$true
+      }
+    }
+  }while($added)
+  if($owned.ContainsKey([int]$target.ParentProcessId)){throw 'Ancestry cycle refused'}
+}
+# Project command lines ONLY after the whole admitted graph passes identity and
+# native parent<=child birth checks. Reused root projects birth metadata only.
+$project={param($p)@{pid=$p.ProcessId;parentPid=$p.ParentProcessId;birthUtc=$p.CreationDate.ToUniversalTime().ToString('o');command=$p.CommandLine}}
+$all=@(Get-Process)
+@{target=$(if($matches){&$project $target}elseif($target){@{pid=$target.ProcessId;birthUtc=$target.CreationDate.ToUniversalTime().ToString('o')}}else{$null});observer=$(if($observer){&$project $observer}else{$null});descendants=@($rows|Where-Object {$owned.ContainsKey([int]$_.ProcessId)}|ForEach-Object {&$project $_});listeners=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue|Where-Object {$owned.ContainsKey([int]$_.OwningProcess)}|Select-Object OwningProcess,LocalAddress,LocalPort);resources=@{timeUtc=(Get-Date).ToUniversalTime().ToString('o');processCount=$all.Count;workingSetBytes=($all|Measure-Object WorkingSet64 -Sum).Sum;cpuSeconds=($all|Measure-Object CPU -Sum).Sum;listenerCount=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue).Count}}|ConvertTo-Json -Depth 8 -Compress`;
   const value = JSON.parse((await command("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", code])).toString("utf8"));
   assert.ok(value.observer?.command && value.observer?.birthUtc); assert.equal(value.observer.parentPid, process.pid); assert.match(value.observer.birthUtc, birthPattern);
   result.observers.push({ ...value.observer, cwdKnownFromLaunch: upstream, capturedUtc: new Date().toISOString() });

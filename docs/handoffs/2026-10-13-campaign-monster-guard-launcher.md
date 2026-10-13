@@ -112,3 +112,26 @@ still refuses. No other launcher behavior/probe/harness/helper changed. Original
 6eb source and source-preflight receipt remain preserved; no runtime failure or
 passing measurement is invented. This correction is source-only and awaits
 independent exact re-review before root integration/execution.
+
+## Second review correction: stale-parent ancestry
+
+M1 additionally held the6eb snapshot because PID-only descendant expansion can
+admit an older orphan after its creator PID is reused. The NEW launcher's native
+observer now builds unique current identity records; verifies root/current-parent
+existence and birth order; verifies each admitted current parent identity and
+native parent<=child birth before adding a child; and refuses missing/changed/
+duplicate identities, older orphan links or cycles. It projects task-owned
+command lines only AFTER the whole admitted graph validates. An ambiguous link
+fails observation and produces uncertainty instead of storing unrelated command
+lines as task-owned. Reused root readback still emits only PID/birth metadata.
+This remains sampled observation, not a complete lifetime inventory or force
+policy; native behavior is unrun.
+
+Read-only inspection also confirms the SAME stale-parent risk in unchanged
+50ec85df5b293d03d18f38c9d36f5b8615e956f6 inputs module's ownedSnapshot:
+it validates root birth, then expands HashSet PID membership using parent PID
+alone and projects all matched commands. The7bd probe copies those rows into
+its own evidence. An older orphan linked to a reused admitted PID can therefore
+be logged as task-owned. Neither old input module nor probe was edited here.
+A separately authorized finite ancestry amendment is required before runtime;
+the launcher's corrected observer does not repair that inherited child path.
