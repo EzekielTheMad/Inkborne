@@ -21,6 +21,17 @@ lock/runtime/file-set proof, raw/index/config checks before imports, full initia
 IPC/disk versus freshly rebound final artifact deepEqual, current clean root build
 CSS/fonts and exact OSbirth cleanup remain required. No arbitrary HEAD fallback.
 
+Independent R09 review of69f00c3 held only the original600s outer budget. This
+separate docs amendment proposes shared900000ms, provisional until root-reviewed
+ACTUAL phase allocation covers entry, cases, eight exports, BOTH QA commands,
+BOTH runner/wrapper fresh complete finals, pre-force/helper identity and cleanup.
+Prior Magic entry379s+finals301s already exceeds600s. If the full measured allocation
+does not fit, HOLD; no cache/skip/oracle weakening/product-wait increase. Measurement
+and runtime still require explicit root release. Exact source touchset remains six
+new JS/TS files plus one new bonus Python verifier; original verify-pdfs.py is
+unchanged and invoked by the second QA command. Implementation waits for the next
+explicit assignment after docs re-review.
+
 Preserve six original print fixture values/oracles and export/render fresh six real
 Letter/A4 PDFs; previous33 pages are historical. Separately export two real +1
 provider PDFs and extract six admitted save rows, including CON+5 vs neutral+4.

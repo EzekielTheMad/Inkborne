@@ -44,13 +44,24 @@ One bounded offline fixture/runner, with no app route or production change:
   rights-safe values from tests/fixtures/save-bonus-consumers.ts; no Node seed-reader
   import in the browser, no hand-authored evaluated CharacterStats or ready flag.
 - e2e/local-save-bonus/{save-bonus.spec.mjs,playwright.config.ts}: one private runner,
-  workers1/retries0, explicit offline entry, finite outer600s budget for repeated
-  source/runtime proofs (product waits remain bounded independently).
+  workers1/retries0, explicit offline entry, proposed shared outer900000ms budget.
+  This is provisional phase capacity, not evidence that the complete run fits.
+  Prior Magic measured entry379s plus finals301s already exceeds600s. Before full
+  release, root must review ACTUAL measured allocation for entry proofs, finite
+  cases, eight PDF exports, both QA commands, BOTH runner/wrapper fresh complete
+  final proofs, fresh pre-force proof/helper identity and cooperative cleanup.
+  Preserve phase timestamps and time remaining at each boundary. If that complete
+  allocation does not fit900000ms, HOLD for review; no cache, skipped proof, reduced
+  scenario/oracle or increased product wait. Product waits remain individually
+  bounded; cleanup includes the separate10sec cooperative stop allowance. Measurement
+  or runtime is itself subject to explicit root release, not authorized by this plan.
 - scripts/{save-bonus-inputs,save-bonus-scenarios,verify-save-bonus-local}.mjs:
   scoped binding, existing boundary patterns and finite UI/PDF orchestration.
 - e2e/local-save-bonus/verify-bonus-pdfs.py: two separate +1 PDF extraction/geometry/
   privacy checks using already available verification libraries/Poppler; no install.
-  Original six keep existing verify-pdfs.py unchanged in a separate input directory.
+  Original six keep existing verify-pdfs.py unchanged in a separate input directory
+  and second QA command. Exact harness touchset is six new JS/TS files plus this
+  one new bonus Python verifier; no old/general helper or original verifier rewrite.
 - Focused guard-contract tests and a tested handoff only as needed after review.
 
 Do not change the old ASI/casting/play/print runners or generic QA helpers. Within
