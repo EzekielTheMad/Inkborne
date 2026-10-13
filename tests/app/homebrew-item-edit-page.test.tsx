@@ -35,7 +35,9 @@ describe("actual owned item edit page and real form/panel (Auth/DAL simulated)",
     expect(screen.getByText("Shared homebrew · version 2")).toBeVisible();
     expect(screen.getByLabelText("Name")).toHaveValue(item.name);
     expect(screen.getByRole("button", { name: "Stop sharing with Original Group" })).toBeEnabled();
-    expect(screen.getByText(/Existing character inventory pins keep their saved version/)).toBeVisible();
+    const pinNotices = screen.getAllByText(/Existing character inventory pins keep their saved version/);
+    expect(pinNotices).toHaveLength(2);
+    for (const notice of pinNotices) expect(notice).toBeVisible();
   });
   it("rejects a foreign/unavailable owned item before any campaign metadata read", async () => {
     mocks.get.mockResolvedValue(null);

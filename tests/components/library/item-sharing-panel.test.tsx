@@ -9,7 +9,7 @@ const campaigns = [
   { id: "55555555-5555-4555-8555-555555555555", name: "Original Weekend", shared: false, eligible: true },
 ];
 const base = { contentId, version: 1, scope: "personal" as const, sharedCampaignCount: 0, campaigns };
-beforeEach(() => share.mockReset());
+beforeEach(() => { share.mockReset(); });
 describe("actual ItemSharingPanel with simulated server action", () => {
   it("submits exact campaign/content/version and retains both confirmed toggles with current share version", async () => {
     share.mockImplementation(async (_previous, data: FormData) => ({ status: "idle", message: "Confirmed original fixture.",
