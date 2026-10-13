@@ -153,3 +153,45 @@ All8 new SECURITY DEFINER/empty-path owners, exact15+8 INSERT columns/five EXECU
 pairs, independent false NEW admission, native Auth denial/all13false and original
 receipt-FIRST system/gate/revision-independent recovery are unchanged. Tests/type/
 lint/SQL compile and native installation remain UNRUN; both reviews precede gates.
+
+## Reviewed bounded local gates — PASS, no native SQL
+
+Both source owners approved4694b2d195edf0e91ef6193c6cc85a014dd6e6fa. Frozen clean
+source ran exclusively through the root-owned external run-gate.ps1, verified SHA256
+0EAAFE124ED07731ACCCD30428610287D2191738EAD3BF035CCF655BEB0974FA, whose discovery
+checks actual owned parent birth before child adoption. No older PID-only helper.
+Sequential commands at that SAME source/status:
+
+- freshbootstrap: npm.cmd test -- tests/supabase/class-origin-fresh-bootstrap-staged.test.ts
+  tests/supabase/class-origin-staged-contract.test.ts --maxWorkers=2 — exit0,
+  TWO files/35 tests PASS. These are STATIC source contracts, not PostgreSQL semantics.
+- typecheck: npm.cmd run typecheck — exit0, PASS.
+- lint: npm.cmd run lint — exit0, PASS, zero warnings allowed.
+
+No failures, self-fixes/retries/extra suites/full/build/browser/install/network/SQL/
+compiler/container/provider/flags occurred. All prior UNRUN statements above describe
+their historical source freezes; only these bounded local gates now ran.
+
+Each gate's fresh stdout/stderr/process/result/cleanup/resources was immediately
+copied from the root receipt directory into NEW worker test-results/class-origin-
+fresh-bootstrap-local/*-4694b2d.* before later gates could overwrite root names.
+Root wrapper preserved its prior receipt history automatically. Own manifest-
+4694b2d.json hashes21 files, including wrapper/preflight/final-readback and all18
+copied receipts. Immutable aggregate SHA256:
+83EFC309CAAB6A3970AB6BDA29CF4FE6F84ABF6BFE853689821EDB11583FE73F.
+
+Actual OS birth/PID/parent/command, inherited workspace, start/end, source/status,
+ports and machine process/working-set/free-memory/cumulative-CPU/listener samples
+are retained. Process samples freshbootstrap440→441, typecheck439→439, lint438→438
+include unrelated machine activity, not task attribution; listening samples47→47
+each are machine-wide. Gate discovery observed7+5+5 identities; final independent
+fresh readback found ALL17 recorded identities absent and ZERO owned listeners.
+No force/kill was needed. Aggregate preflight/final package-lock SHA256 matched and
+source stayed frozen/clean through all gates. The exclusive lane was released
+immediately after final readback, before this docs-only tested checkpoint.
+
+Native proconfig/catalog/trigger formatting, PostgreSQL compilation, Auth/roles/RLS,
+RI/deferred commit/concurrent duplicates/fault rollback and actual receipt recovery
+remain UNVERIFIED. SQL is unapplied, every NEW admission always refuses, Auth always
+denies and class gate/all13 readiness remain false. This local pass is no live
+bootstrap/authority/app activation or M4/M6 acceptance.
