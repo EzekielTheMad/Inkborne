@@ -428,8 +428,10 @@ The three generated cases remain required acceptance items:
 - **M5-STRESS-ERROR — UNVERIFIED:** `actual DM monster form with simulated transport only > native settlement-gap submit after immediate error cannot replace lifetime operation/intent/marker`.
 
 Exact failed setup condition in each collected attempt: after two Promise microticks,
-actual parser responseObserved=true but `form.querySelector("fieldset").disabled`
-was true; oracle requires false (old enabled controls before second native submit).
+`form.querySelector("fieldset").disabled` was true; oracle requires false (old enabled
+controls before second native submit). The0aec attempt had no responseObserved
+instrumentation. Explicit actual-parser getter observation/assertion was added8749
+and succeeded in587/0e8 before their enabled-DOM precondition failures.
 The test stops there before second dispatch/lifetime oracles; ordinary pending,
 recovery and explicit accepted repeat-edit positives do NOT prove that stress gap.
 Required closure remains actual browser/native proof of settlement-gap duplicate
