@@ -102,13 +102,13 @@ export const arcanumReadSchema = z.strictObject({
     && BigInt(value.counts.selections) === BigInt(value.selections.length)
     && BigInt(value.counts.receipts) === BigInt(value.receipts.length) && value.selections.length === value.receipts.length;
   for (const c of value.selections) {
-    if (c.character_id !== value.character_id || selections.has(c.selection_id) || occurrences.has(c.earned_occurrence_id)) valid = false;
+    if (c.character_id !== value.character_id || c.system_id !== value.system_id || selections.has(c.selection_id) || occurrences.has(c.earned_occurrence_id)) valid = false;
     selections.add(c.selection_id); occurrences.add(c.earned_occurrence_id);
     const pair = value.receipts.filter(r => r.selection_id === c.selection_id && r.character_id === c.character_id);
     if (pair.length !== 1 || !sameArcanumJson(pair[0].capture, c)) valid = false;
   }
   for (const r of value.receipts) {
-    if (r.character_id !== value.character_id || operations.has(r.operation_id) || !selections.has(r.selection_id)) valid = false;
+    if (r.character_id !== value.character_id || r.capture.system_id !== value.system_id || operations.has(r.operation_id) || !selections.has(r.selection_id)) valid = false;
     operations.add(r.operation_id);
   }
   if (!valid) ctx.addIssue({ code: "custom", message: "Incomplete or foreign reciprocal selection graph" });

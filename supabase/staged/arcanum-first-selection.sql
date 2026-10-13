@@ -1,17 +1,30 @@
 -- M6 v1 SOURCE ONLY / UNAPPLIED / UNVERIFIED. No positive issuer or app entry.
 -- Install after unchanged R09 authority; all13false/Authdeny remain unchanged.
 BEGIN;
-DO $$ DECLARE owner_oid oid; required text; BEGIN
+DO $$ DECLARE owner_oid oid; kernel_oid oid; required text; BEGIN
   SELECT r.oid INTO owner_oid FROM pg_catalog.pg_roles r WHERE r.rolname='inkborne_hit_die_authority_owner'
     AND NOT(r.rolcanlogin OR r.rolsuper OR r.rolbypassrls OR r.rolinherit OR r.rolcreaterole OR r.rolcreatedb OR r.rolreplication);
   IF owner_oid IS NULL OR EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members m WHERE m.roleid=owner_oid OR m.member=owner_oid)
-    OR pg_catalog.has_schema_privilege(owner_oid,'public','CREATE') OR pg_catalog.has_schema_privilege(owner_oid,'private','CREATE') THEN
+    OR pg_catalog.has_schema_privilege(owner_oid,'public','CREATE') OR pg_catalog.has_schema_privilege(owner_oid,'private','CREATE')
+    OR NOT pg_catalog.has_schema_privilege(owner_oid,'public','USAGE') OR NOT pg_catalog.has_schema_privilege(owner_oid,'private','USAGE') THEN
     RAISE EXCEPTION 'Isolated original authority owner required' USING ERRCODE='42501';
   END IF;
   FOREACH required IN ARRAY ARRAY['private.hit_die_context_shape_v1(jsonb)','private.require_verified_hit_die_auth_v1(jsonb)',
-    'private.lock_character_writer_guard_v1()','private.hit_die_exact_keys_v1(jsonb,text[])','private.hit_die_native_v1(timestamp with time zone)'] LOOP
-    IF pg_catalog.to_regprocedure(required) IS NULL OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.oid=pg_catalog.to_regprocedure(required) AND p.proowner=owner_oid) THEN
+    'private.lock_character_writer_guard_v1()'] LOOP
+    IF pg_catalog.to_regprocedure(required) IS NULL OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.oid=pg_catalog.to_regprocedure(required) AND p.proowner=owner_oid)
+      OR NOT pg_catalog.has_function_privilege(owner_oid,pg_catalog.to_regprocedure(required),'EXECUTE') THEN
       RAISE EXCEPTION 'Frozen helper/owner prerequisite absent' USING ERRCODE='42501';
+    END IF;
+  END LOOP;
+  -- Frozen kernel helpers keep their original owner. Existing authority EXECUTE
+  -- and schema USAGE are checked, never newly granted or transferred here.
+  SELECT r.oid INTO kernel_oid FROM pg_catalog.pg_roles r WHERE r.rolname='inkborne_hit_die_kernel_owner'
+    AND NOT(r.rolcanlogin OR r.rolsuper OR r.rolbypassrls OR r.rolinherit OR r.rolcreaterole OR r.rolcreatedb OR r.rolreplication);
+  IF kernel_oid IS NULL THEN RAISE EXCEPTION 'Frozen kernel owner absent' USING ERRCODE='42501'; END IF;
+  FOREACH required IN ARRAY ARRAY['private.hit_die_exact_keys_v1(jsonb,text[])','private.hit_die_native_v1(timestamp with time zone)'] LOOP
+    IF pg_catalog.to_regprocedure(required) IS NULL OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p WHERE p.oid=pg_catalog.to_regprocedure(required) AND p.proowner=kernel_oid)
+      OR NOT pg_catalog.has_function_privilege(owner_oid,pg_catalog.to_regprocedure(required),'EXECUTE') THEN
+      RAISE EXCEPTION 'Frozen kernel helper/effective authority EXECUTE absent' USING ERRCODE='42501';
     END IF;
   END LOOP;
   IF NOT pg_catalog.has_table_privilege(owner_oid,'public.characters','SELECT')
@@ -166,7 +179,11 @@ LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS $$ DECLARE c pu
   SELECT pg_catalog.count(*),COALESCE(pg_catalog.jsonb_agg(r.receipt ORDER BY r.selection_id),'[]'::jsonb) INTO n_r,receipts FROM private.character_arcanum_selection_receipts_v1 r WHERE r.character_id=c.id;
   SELECT EXISTS(SELECT 1 FROM private.character_arcanum_selections_v1 s FULL JOIN private.character_arcanum_selection_receipts_v1 r
     ON r.character_id=s.character_id AND r.selection_id=s.selection_id AND r.operation_id=s.operation_id
-    WHERE (s.character_id=c.id OR r.character_id=c.id) AND (s.selection_id IS NULL OR r.selection_id IS NULL OR NOT private.arcanum_receipt_correspondence_v1(s.capture,r.receipt))) INTO mismatch;
+    WHERE (s.character_id=c.id OR r.character_id=c.id) AND (s.selection_id IS NULL OR r.selection_id IS NULL
+      OR s.system_id IS DISTINCT FROM c.system_id OR r.system_id IS DISTINCT FROM c.system_id
+      OR s.capture->>'system_id' IS DISTINCT FROM c.system_id::text OR r.capture->>'system_id' IS DISTINCT FROM c.system_id::text
+      OR r.receipt->'capture'->>'system_id' IS DISTINCT FROM c.system_id::text
+      OR NOT private.arcanum_receipt_correspondence_v1(s.capture,r.receipt))) INTO mismatch;
   IF n_c<>n_r OR mismatch THEN RAISE EXCEPTION 'reciprocal_graph_unavailable' USING ERRCODE='23514'; END IF;
   result:=pg_catalog.jsonb_build_object('status','read','read_version',1,'character_id',c.id,'system_id',c.system_id,'revision',c.action_revision::text,'native_read_at',private.hit_die_native_v1(pg_catalog.clock_timestamp()),'counts',pg_catalog.jsonb_build_object('selections',n_c::text,'receipts',n_r::text),'selections',captures,'receipts',receipts,'state',c.state,'current_eligibility',pg_catalog.jsonb_build_object('status','unavailable','reason','prerequisites_unimplemented'));
   IF pg_catalog.octet_length(result::text)>8388608 THEN RAISE EXCEPTION 'read_budget_exceeded' USING ERRCODE='22023'; END IF;

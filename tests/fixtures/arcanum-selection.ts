@@ -30,3 +30,16 @@ export function recordedArcanumFixture(tier: 6 | 7 | 8 | 9 = 6, spent: unknown =
     phase: { current_actor_id: subclassOwnerId, before_at: "2026-10-13T20:10:00.000001Z",
       return_at: "2026-10-13T20:10:00.000002Z", expires_at: "2026-10-13T20:11:00.000001Z" } };
 }
+
+// Internally coherent foreign-system history: every immutable snapshot and the
+// reciprocal original receipt agree. Only the CURRENT parent system differs.
+// This is an injected negative, not a producer or canonical system migration.
+export function foreignSystemArcanumPair(fixture: ReturnType<typeof recordedArcanumFixture>) {
+  const capture = structuredClone(fixture.capture);
+  capture.system_id = originalId(9900);
+  for (const raw of [capture.controller_snapshot, capture.feature_snapshot, capture.spell_snapshot]) {
+    raw.system_id_snapshot = capture.system_id;
+  }
+  const receipt = { ...structuredClone(fixture.receipt), capture: structuredClone(capture) };
+  return { capture, receipt };
+}

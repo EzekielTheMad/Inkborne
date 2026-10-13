@@ -102,3 +102,39 @@ Proposed later narrow commands (NOT RUN): npm.cmd test -- tests/spells/arcanum-s
 tests/supabase/arcanum-selection-staged.test.ts tests/spells/advanced-binding.test.ts
 --maxWorkers=2, then package typecheck/lint after exact reviews/resource release.
 No PGlite/SQL execution, full/build/browser or new permission follows this freeze.
+
+## HOLD828 finite source correction — UNRUN
+
+Original source828dfee1bd6fd7aa665a59d07ffd0dd093a88e21 stays immutable. Independent
+review identified a wrong prerequisite ownership matrix and missing current-system
+correlation; these were source-review findings, not executed PostgreSQL/test failures.
+The correction touches only these same seven new owned M6 paths. All validation
+commands above remain UNRUN; git diff --check is source hygiene only.
+
+The preflight preserves actual original ownership: context_shape, verified Auth and
+writer guard belong to inkborne_hit_die_authority_owner; exact_keys(jsonb,text[])
+and native_v1(timestamptz) belong to inkborne_hit_die_kernel_owner. It checks existing
+effective authority EXECUTE for both groups and public/private schema USAGE. Frozen
+hit-die-transaction.sql declares those two kernel owners (lines334/337); unchanged
+hit-die-authority-and-writers.sql declares three authority owners (353–355), schema
+USAGE (7) and kernel-helper EXECUTE to authority (78). Static controls read these
+actual predecessor declarations. No helper transfer, base edit or privilege grant.
+Native effective roles/ACL/source installation still require G2 acceptance.
+
+The full current-history reader now rejects physical selection/receipt system IDs,
+both capture payloads or nested receipt capture system differing from the locked
+parent.system_id. TypeScript requires every capture/receipt system equal the read
+DTO system; the source-bound model binds those actual SQL clauses and admits the
+same DTO. Prepared negatives rebuild BOTH capture and receipt with all three raw
+snapshot systems self-consistently foreign, and substitute only the top-level DTO
+system. Internal capture/receipt schema positives distinguish current-parent binding
+from an already-invalid raw pair. Raw arrays and state stay unchanged on refusal.
+
+V1 current graph policy is fail-closed if retained history differs from the current
+parent system; this is not a system migration/adoption mechanism. Individual original
+receipt selection/resolve recovery still occurs FIRST, bypassing NEW current-system,
+source, lineage and revision gates under current owner/Auth/expiry. A prepared control
+changes the modeled parent system, observes full-history refusal, then preserves exact
+original receipt replay/resolve and raw spent state. Native history-policy acceptance
+and any future system-change writer fence remain unproved. Exhaustion, v1 copy refusal,
+unconditional NEW refusal and all13false/Auth denial are unchanged.

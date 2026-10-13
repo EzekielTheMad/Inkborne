@@ -23,6 +23,9 @@ const physicalColumns = ["schema_version", "capture_kind", "character_id", "sele
  * Real entry is bound to original Auth denial. Only original tests can inject
  * recorded rows/phase clocks; there is no production import or positive issuer. */
 export function arcanumSelectionSourceModel(sql: string, authoritySql: string, rows: StoredRows) {
+  requireTokens(sql, ["p.proowner=owner_oid", "p.proowner=kernel_oid", "r.rolname='inkborne_hit_die_kernel_owner'",
+    "pg_catalog.has_function_privilege(owner_oid,pg_catalog.to_regprocedure(required),'EXECUTE')",
+    "NOT pg_catalog.has_schema_privilege(owner_oid,'public','USAGE')", "NOT pg_catalog.has_schema_privilege(owner_oid,'private','USAGE')"]);
   const prefix = arcanumFunctionBody(sql, "lock_arcanum_parent_v1");
   requireTokens(prefix, ["SECURITY DEFINER SET search_path=''", "private.require_verified_hit_die_auth_v1(p_verified_context)",
     "private.lock_character_writer_guard_v1()", "parent.id=p_character_id", "parent.user_id=(p_verified_context->>'actor_id')::uuid FOR UPDATE", "pg_catalog.clock_timestamp()>="]);
@@ -41,6 +44,9 @@ export function arcanumSelectionSourceModel(sql: string, authoritySql: string, r
     if (name !== "read_locked_arcanum_selection_v1") requireTokens(body, ["SELECT command.receipt,selection.capture", "WHERE command.character_id=c.id AND command.operation_id=", "private.arcanum_receipt_correspondence_v1"]);
   }
   const select = arcanumFunctionBody(sql, "select_arcanum_spell_v1");
+  requireTokens(arcanumFunctionBody(sql, "read_locked_arcanum_selection_v1"), ["s.system_id IS DISTINCT FROM c.system_id", "r.system_id IS DISTINCT FROM c.system_id",
+    "s.capture->>'system_id' IS DISTINCT FROM c.system_id::text", "r.capture->>'system_id' IS DISTINCT FROM c.system_id::text",
+    "r.receipt->'capture'->>'system_id' IS DISTINCT FROM c.system_id::text"]);
   if (select.indexOf("SELECT command.receipt") >= select.indexOf("result:=private.arcanum_prerequisite_refusal_v1")) throw new Error("Replay must precede NEW prerequisite refusal");
   for (const name of ["arcanum_immutable_row_v1", "arcanum_pair_closure_v1"]) {
     requireTokens(arcanumFunctionBody(sql, name), ["SECURITY DEFINER SET search_path=''", "parent.id=", "NEW.character_id"]);

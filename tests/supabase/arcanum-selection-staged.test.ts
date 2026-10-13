@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { arcanumFunctionBody } from "@/tests/spells/arcanum-selection-source-model";
 
 const sql = readFileSync("supabase/staged/arcanum-first-selection.sql", "utf8");
+const authority = readFileSync("supabase/staged/hit-die-authority-and-writers.sql", "utf8");
+const kernel = readFileSync("supabase/staged/hit-die-transaction.sql", "utf8");
 const names = ["arcanum_request_shape_v1", "arcanum_capture_shape_v1", "arcanum_receipt_correspondence_v1",
   "arcanum_canonical_ready_v1", "arcanum_lineage_ready_v1", "arcanum_order_ready_v1", "arcanum_prerequisite_refusal_v1",
   "lock_arcanum_parent_v1", "read_locked_arcanum_selection_v1", "select_arcanum_spell_v1", "resolve_arcanum_selection_v1",
@@ -39,6 +41,25 @@ describe("actual staged Arcanum v1 STATIC source only; no PostgreSQL compile/run
       expect(sql).toMatch(new RegExp(`ALTER FUNCTION private\\.${name}\\([^;]*\\) OWNER TO inkborne_hit_die_authority_owner;`));
       expect(sql).toMatch(new RegExp(`REVOKE ALL ON FUNCTION private\\.${name}\\([^;]*\\) FROM PUBLIC,anon,authenticated,service_role;`));
     }
+  });
+  it("preserves actual frozen authority/kernel helper owners and checks existing effective rights", () => {
+    for (const signature of ["hit_die_context_shape_v1(jsonb)", "require_verified_hit_die_auth_v1(jsonb)", "lock_character_writer_guard_v1()"]) {
+      expect(authority).toContain(`ALTER FUNCTION private.${signature} OWNER TO inkborne_hit_die_authority_owner;`);
+    }
+    for (const signature of ["hit_die_exact_keys_v1(jsonb, text[])", "hit_die_native_v1(timestamptz)"]) {
+      expect(kernel).toContain(`ALTER FUNCTION private.${signature} OWNER TO inkborne_hit_die_kernel_owner;`);
+    }
+    expect(authority).toContain("GRANT USAGE ON SCHEMA public, private TO inkborne_hit_die_authority_owner;");
+    expect(authority).toContain("GRANT EXECUTE ON FUNCTION private.hit_die_exact_keys_v1(jsonb,text[]), private.hit_die_native_v1(timestamptz)");
+    const preflight = sql.slice(0, sql.indexOf("CREATE TABLE"));
+    expect(preflight).toContain("r.rolname='inkborne_hit_die_kernel_owner'");
+    expect(preflight).toContain("p.proowner=owner_oid"); expect(preflight).toContain("p.proowner=kernel_oid");
+    expect(preflight.match(/has_function_privilege\(owner_oid,pg_catalog.to_regprocedure\(required\),'EXECUTE'\)/g)).toHaveLength(2);
+    for (const schema of ["public", "private"]) expect(preflight).toContain(`NOT pg_catalog.has_schema_privilege(owner_oid,'${schema}','USAGE')`);
+    expect(preflight).toContain("'private.lock_character_writer_guard_v1()'] LOOP");
+    expect(preflight).toContain("ARRAY['private.hit_die_exact_keys_v1(jsonb,text[])','private.hit_die_native_v1(timestamp with time zone)'] LOOP");
+    expect(sql).not.toMatch(/ALTER FUNCTION private\.hit_die_|ALTER FUNCTION private\.require_verified_hit_die_auth|ALTER FUNCTION private\.lock_character_writer_guard/);
+    expect(sql).not.toMatch(/^\s*GRANT\s/m);
   });
   it("keeps both reciprocal deferred identity FKs, occurrence uniqueness and no grant/catalog cascade", () => {
     expect(sql).toContain("UNIQUE(character_id,earned_occurrence_id)");
@@ -97,5 +118,12 @@ describe("actual staged Arcanum v1 STATIC source only; no PostgreSQL compile/run
     expect(body).toContain("'selections',n_c::text,'receipts',n_r::text"); expect(body).toContain("'revision',c.action_revision::text");
     expect(body).toContain("'state',c.state"); expect(body).toContain("'reason','prerequisites_unimplemented'");
     expect(body).not.toContain("feature_uses"); expect(body).not.toContain("resolveAdvancedBinding");
+    for (const token of ["s.system_id IS DISTINCT FROM c.system_id", "r.system_id IS DISTINCT FROM c.system_id",
+      "s.capture->>'system_id' IS DISTINCT FROM c.system_id::text", "r.capture->>'system_id' IS DISTINCT FROM c.system_id::text",
+      "r.receipt->'capture'->>'system_id' IS DISTINCT FROM c.system_id::text"]) expect(body).toContain(token);
+    for (const name of ["select_arcanum_spell_v1", "resolve_arcanum_selection_v1"]) {
+      const replay = arcanumFunctionBody(sql, name);
+      expect(replay).not.toContain("c.system_id"); expect(replay).not.toContain("read_locked_arcanum_selection_v1");
+    }
   });
 });

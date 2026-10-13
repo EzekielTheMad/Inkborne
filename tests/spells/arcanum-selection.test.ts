@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { arcanumCaptureSchema, arcanumReceiptSchema, parseArcanumRead, parseArcanumRequest,
   sameArcanumJson, ARCANUM_READ_MAX_BYTES } from "@/lib/spells/arcanum-selection-schema";
-import { recordedArcanumFixture } from "@/tests/fixtures/arcanum-selection";
+import { recordedArcanumFixture, foreignSystemArcanumPair } from "@/tests/fixtures/arcanum-selection";
 import { originalId } from "@/tests/fixtures/subclass-casting";
 import { arcanumSelectionSourceModel } from "./arcanum-selection-source-model";
 
@@ -78,6 +78,28 @@ describe("actual-staged-body-bound POST-prefix MODEL phases only", () => {
     expect(f.model.selectAfterPrefixForTest(f.request, phase)).toEqual({ status: "recorded", receipt: f.receipt });
     expect(f.model.resolveAfterPrefixForTest(f.request.operation_id, phase)).toEqual({ status: "recorded", receipt: f.receipt });
     expect(f.receipt.original_actor_id).not.toBe(phase.current_actor_id); expect(f.receipt.accepted_at).toBe("2026-10-13T20:00:00.000001Z");
+  });
+  it("self-consistent foreign-system capture AND receipt cannot become current-parent history", () => {
+    const f = fixture(), pair = foreignSystemArcanumPair(f);
+    expect(arcanumCaptureSchema.parse(pair.capture)).toEqual(pair.capture);
+    expect(arcanumReceiptSchema.parse(pair.receipt)).toEqual(pair.receipt);
+    f.rows.captures = [pair.capture]; f.rows.receipts = [pair.receipt];
+    const before = structuredClone(f.rows);
+    expect(() => f.model.readRecordedAfterPrefixForTest(f.phase)).toThrow("Incomplete or foreign reciprocal selection graph");
+    expect(f.rows).toEqual(before);
+  });
+  it("top-level read-system substitution cannot relabel a valid original pair", () => {
+    const f = fixture(), read = f.model.readRecordedAfterPrefixForTest(f.phase);
+    expect(parseArcanumRead(read)).toEqual(read);
+    expect(() => parseArcanumRead({ ...read, system_id: originalId(9900) })).toThrow("Incomplete or foreign reciprocal selection graph");
+  });
+  it("current-parent system change refuses full history but preserves receipt-FIRST select/resolve recovery", () => {
+    const f = fixture(); f.rows.parent.system_id = originalId(9900);
+    const before = structuredClone(f.rows);
+    expect(() => f.model.readRecordedAfterPrefixForTest(f.phase)).toThrow("Incomplete or foreign reciprocal selection graph");
+    expect(f.model.selectAfterPrefixForTest(f.request, f.phase)).toEqual({ status: "recorded", receipt: f.receipt });
+    expect(f.model.resolveAfterPrefixForTest(f.request.operation_id, f.phase)).toEqual({ status: "recorded", receipt: f.receipt });
+    expect(f.rows).toEqual(before);
   });
   it("new generation/same occurrence cannot become an empty selection slot or positive first choice", () => {
     const f = fixture(); const current = { ...f.request, operation_id: originalId(9998), feature_grant_id: originalId(9999) };
