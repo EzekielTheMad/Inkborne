@@ -80,16 +80,35 @@ for guaranteed cleanup until a separate cancellation policy is reviewed.
 Normal scoped task-owned cleanup is authorized, but the existing measured-only
 force adapter cannot be reused/bypassed: it expects measured/rendered proof and
 the actual browser runner command. This probe is pending/unrendered and has a
-different command. A proposed NEW guard-only cancellation policy would require
-fresh independently bound launcher/probe/six harness/helpers, full installed
-runtime/root clean source/descriptor evidence, exact root child OS birth/parent/
-command and complete CURRENT descendant ancestry/birth/command. Recheck every
-identity immediately before narrowly targeted termination; PID-only lookup,
-sampled inventory, a result receipt, hidden children, changed source or missing
-identity must refuse. Closed/reused root means no termination. That policy is
-source-review-only here; no code or authorization to execute it is implied.
-Actual native bound/capture/all-process completeness remain unverified.
+different command. The separately proposed guard-only cancellation predicate
+applies ONLY to a FAILED run and proves actual resource ownership; it does not
+need fonts/build/test receipts or full installed package closure. It requires
+the recorded fork PID, OS birth, parent, exact executable/argv/command and cwd
+known from that launch. It must obtain a COMPLETE fresh current descendant
+graph with valid parent links and parent birth <= child birth, then immediately
+recheck root and each individual leaf's exact birth/parent/command before
+leaf-first narrowly targeted termination. Closed/reused/changed/missing root,
+graph gaps, ancestry/birth inconsistency or missing identity refuse. A sampled
+inventory or result receipt never substitutes for that ownership proof. Every
+target then needs exact old-identity absence and owned-port closure proof.
+No old adapter is invoked, no900000 deadline is expanded and no termination
+can yield measurement or browser acceptance. This is a DOCS-ONLY proposal:
+no force implementation/execution is included. Native bounded observation and
+complete graph capture remain unverified.
 
 This launcher measures no cases and cannot satisfy44 browser outcomes, actual
 case08 old-enabled conditions or a full measured allocation. Pending status and
 all production gates remain unchanged. Full browser release remains root-owned.
+
+## Review correction after preserved6eb source
+
+M1 source review held6eb048ebd2b5b1173d9092ac77b161eec21bd590 because
+the direct Git-config execFile loop could spawn after stop/deadline by flooring
+an exhausted budget to1ms. Each config spawn now first yields through the shared
+stop/deadline/reserve checkpoint, then explicitly requires no stop and positive
+remaining time with120000 reservation. Its timeout uses that checked value
+without a1ms fallback. Git exit1 still means absent config; every other error
+still refuses. No other launcher behavior/probe/harness/helper changed. Original
+6eb source and source-preflight receipt remain preserved; no runtime failure or
+passing measurement is invented. This correction is source-only and awaits
+independent exact re-review before root integration/execution.

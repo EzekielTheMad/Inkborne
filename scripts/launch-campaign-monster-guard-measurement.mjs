@@ -127,8 +127,11 @@ async function bootstrap() {
       for (const key of ["core.autocrlf", "core.eol", "core.safecrlf", "core.attributesfile"]) {
         // Git exit 1 means absent config. Use the bounded native call without
         // conflating absence with any other command failure.
+        await checkpoint(`Git config spawn ${relative} ${key}`);
+        const configRemaining = remaining();
+        assert.ok(!stopRequested && configRemaining > 0 && configRemaining >= 120000, "No stop/deadline/reserve bypass for Git config spawn");
         config[key] = await new Promise((resolve, reject) => execFile("git", ["-C", checkout, "config", "--show-origin", "--get", key],
-          { cwd: upstream, timeout: Math.max(1, Math.min(30000, remaining())), maxBuffer: 65536, windowsHide: true },
+          { cwd: upstream, timeout: Math.min(30000, configRemaining), maxBuffer: 65536, windowsHide: true },
           (error, stdout) => { if (error && error.code !== 1) reject(Error("Git config read failed")); else resolve(error ? null : stdout.trim()); }));
       }
       const current = { attributes, config }; if (representation) assert.deepEqual(current, representation); representation = current;
