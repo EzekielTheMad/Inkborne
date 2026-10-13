@@ -54,8 +54,8 @@ The saving-throw measurement correction `ade9854` / handoff `e9ac35f` remains in
 its worker. Finite source fixes passed review and byte checks; FIRST-bootstrap
 residual-clock assurance remains **HOLD**, so no measurement release or integration
 is inferred. The ordinary 30-case / 43-screenshot / eight-PDF gate remains UNRUN.
-The first-class prerequisite plan `bc9ec36` passed M1 plan review; original-owner
-review is pending before source work. Native materializers and the actual issuer
+The first-class prerequisite plan `bc9ec36` passed M1 and original R09 owner
+review. Its disabled revision-observation source child is underway. Native materializers and the actual issuer
 remain separate requirements. See [checkpoint evidence](handoffs/2026-10-13-core-checkpoint-710c3fc.md).
 
 ### Preserved earlier checkpoint — 534b5d8

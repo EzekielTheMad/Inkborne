@@ -69,8 +69,8 @@ Static eight-executable/eleven-protected-input checks and finite correction revi
 passed, but FIRST-bootstrap residual-clock assurance remains HOLD. No measurement
 release, measured allocation, browser or PDF result exists.
 
-First-class prerequisite planbc9ec36 passed M1 review. Original R09 owner review
-is pending; no child-A source or actual add_class issuer exists yet. Genuine
+First-class prerequisite plan bc9ec36 passed M1 and original R09 owner review.
+Its disabled source child is underway; no actual add_class issuer exists yet. Genuine
 ordinary-write provenance, pre-finalized consumption observation, finalized
 receipt closure, stable planned materializer identities and order participation
 remain separate requirements. Do not substitute the old multi-request builder

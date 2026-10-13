@@ -18,8 +18,8 @@ cleaned by exact held-object identity and all55 originals independently absent.
 Pending descriptor89e78f exists; guard/phase/browser/native acceptance remains open.
 Do not retry before reviewed observer-diagnostic/exit-versus-close correction.
 Saving-bonus sourceade9854/e9ac35f remains worker-only with FIRST-bootstrap clock
-HOLD and no measurement release. First-class prerequisite planbc9ec36 awaits
-original R09 review after M1 approval; source work remains held until both reviews.
+HOLD and no measurement release. First-class prerequisite plan bc9ec36 passed
+M1 and original R09 review; its disabled revision-observation source child is underway.
 See [current checkpoint](handoffs/2026-10-13-core-checkpoint-710c3fc.md).
 
 Preserved earlier checkpoint follows.

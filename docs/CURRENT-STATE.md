@@ -22,7 +22,7 @@ all 55 recorded identities absent and no listeners. The pending descriptor exist
 but guard timing/cancellation/browser acceptance remains open. Saving-throw
 measurement fixes remain in their worker with FIRST-bootstrap clock HOLD; its
 30 cases / 43 screenshots / eight PDFs remain UNRUN. First-class prerequisite
-plan `bc9ec36` is under original-owner review after M1 approval. Details and
+plan `bc9ec36` passed both owner reviews; its disabled source child is underway. Details and
 preserved failures: [710c3fc checkpoint](handoffs/2026-10-13-core-checkpoint-710c3fc.md).
 
 Preserved earlier checkpoint follows.
