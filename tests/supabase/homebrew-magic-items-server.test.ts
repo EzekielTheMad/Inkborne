@@ -127,9 +127,10 @@ describe("raw metadata edit CAS", () => {
     effects.forEach(e => expect(effectSchema.safeParse(e).success).toBe(true));
     const raw = { ...controls, source_refs: [{ slug: "synthetic" }], custom: { nested: [1, 0, null] } };
     const d = db({ original: { ...row(), data: raw, effects } }); const f = form({ name: "New Compass" }); f.set("data", "forged"); f.set("effects", "forged");
-    expect(await updateHomebrewMagicItemRecord(ID, 1, f)).toMatchObject({ status: "saved", operation: "edit", id: ID, version: 2 });
+    const result = await updateHomebrewMagicItemRecord(ID, 1, f);
     expect(writes(d.calls)).toHaveLength(1); const update = writes(d.calls)[0];
     expect(update.payload).toEqual({ name: "New Compass", data: raw }); expect(update.payload).not.toHaveProperty("effects"); scope(update, ID, 1);
+    expect(result).toMatchObject({ status: "saved", operation: "edit", id: ID, version: 2 });
     expect(d.calls.at(-1)?.filters).toContainEqual(["version", 2]);
     expect(raw).toEqual({ ...controls, source_refs: [{ slug: "synthetic" }], custom: { nested: [1, 0, null] } });
     expect(effects[0]).toHaveProperty("extension", { manual: true });
