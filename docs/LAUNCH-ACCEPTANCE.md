@@ -26,6 +26,52 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Current core checkpoint — 2026-10-13
 
+Latest combined tested source `534b5d87d99fd3d3b5dea3ea7ebddb1bdc759173` passed
+`npm.cmd run check` with two workers: **359 files / 4,839 passed / three skipped**,
+typecheck and zero-warning lint. The three skips remain UNVERIFIED M5 stress
+requirements. Fresh synthetic build passed at the same clean source. All 378 check
+and 22 build recorded identities exited; owned process/listener readbacks were empty.
+
+M6's seven final source/handoff blobs match reviewed worker `9a9d2f0`; all 28
+aggregate receipt hashes and all 36 original-plus-retry process identities were
+independently checked. Worker focused **157 tests / three files**, typecheck and
+lint passed at `baaa8b7`. Aggregate SHA256 is
+`EE5DBECA774A22A1EB936C7FCDA1E05A0E837FDF486BF885A23C3DECFA2000F0`.
+First collection failure and its manifest remain immutable. Existing app, engine,
+character, DAL, importer, migration and package paths were unchanged by this M6
+integration. Private staged SQL remains unapplied, Auth denied and all 13 readiness
+families false; no selection issuer, casting, copy or native acceptance follows.
+
+M5 guard-only preparation `7bd6608` passed independent review and is integrated;
+its six original harness files remain unchanged. Fresh M5 and save-bonus asset
+manifests bind the tested build's generated HTML/font classes, three CSS files and
+19 assets. Neither browser/PDF gate nor guard measurement ran. Pending descriptor
+preparation preserved two setup refusals: first a multiple-Node-path selection
+error, then the clean-worker guard while the separately authorized launcher was
+being written. The one-line first-PATH correction passed review; no descriptor was
+created. A separately reviewed launcher and actual measured allocations remain
+required. Do not infer a measured budget from this static/build checkpoint.
+
+All eight saving-throw browser/print source blobs match reviewed worker `ac6578f`;
+its prepared **30 cases / 43 screenshots / eight PDFs remain UNRUN**. The original
+fixture type failure, M1 full-check timeout and same-source narrow recovery remain
+preserved. The independently reviewed local 15-second M1 test-budget correction is
+included in the passing combined check; native caps and every oracle are unchanged.
+
+Next genuine producer is empty fresh-character bootstrap. Initial plan `42ef8db`
+was held for missing definer-owner details and direct-DML admission bypass. The
+docs-only successor `10e295c` proposes exact cross-family capabilities and independent
+always-unavailable NEW parent/order admission; both-family challenge is pending.
+No issuer code or privilege change is accepted. Creation, class acquisition and
+earned-feature lineage remain separate transactions; existing rows are not adopted.
+
+Read-only runtime observation at 21:23 UTC found Docker's desktop-linux API pipe
+unavailable and 178.9 GiB free on C:. No engine startup, image pull, provisioning,
+native SQL, provider write, publication or deployment occurred. G1/G2 authority and
+actual database/Auth/concurrency/rollback/restore acceptance remain open.
+
+### Preserved earlier static preparation — 2026-10-13
+
 Current integrated source `28966b4388509a17b5e5ee6ec9e2d5cc0c9bccb1` passed
 `npm.cmd run typecheck` and `npm.cmd run lint`; all five recorded process identities
 exited for each gate, with no remaining owned processes. All eight saving-throw

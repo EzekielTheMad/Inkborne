@@ -10,6 +10,24 @@ unused, with no app upload or saving path. These decisions supersede the older
 pending-format and PDF-before-beta execution instructions below. Existing PDF
 export and shipped spell/feat importer behavior remain in scope for preservation.
 
+Latest combined tested source `534b5d8` passed **359 files / 4,839 tests / three
+UNVERIFIED M5 skips**, typecheck and zero-warning lint with two workers; fresh
+synthetic build passed. All 378 check/22 build identities exited, with empty owned
+readbacks. M6 seven final worker blobs, 28 receipt hashes and 36 worker identities
+were independently verified; focused 157 tests passed and first setup failure is
+preserved. New SQL remains staged/unapplied, Auth denied and all 13 readiness false.
+
+M5 guard preparation passed source review; current-build M5/bonus HTML/font/CSS/asset
+binding passed. Measurements, 44 M5 browser cases and 30/43/eight bonus browser/PDF
+results remain UNRUN. Pending descriptor setup refusals are preserved; no descriptor
+was created. Launcher preparation and measured budget acceptance remain pending.
+The genuine empty-bootstrap plan's first review held definer/direct-DML admission
+gaps; corrected docs-only `10e295c` awaits both owners. No issuer or privileges changed.
+Docker API was unavailable in a read-only 21:23 UTC check; no startup/pull/SQL/live
+action occurred. Continue unaffected local source work, retain G1/G2 acceptance gaps.
+
+Preserved earlier static preparation follows.
+
 Current integrated source `28966b4` passed typecheck and zero-warning lint; all five
 recorded identities exited for each gate. Reviewed saving-throw harness and valid
 motivation fixture match all eight worker blobs. Browser/PDF 30/43/eight results

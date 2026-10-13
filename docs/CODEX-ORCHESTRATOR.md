@@ -10,6 +10,23 @@ in the backlog and the JSON prototype unused. Do not pursue a PDF layout decisio
 or build another importer until resumed. Earlier PDF-before-beta instructions are
 superseded for active execution; no broader removal or post-beta timing is assumed.
 
+Latest combined tested source `534b5d8` passed359 files/4,839 tests with three
+UNVERIFIED M5 skips, typecheck/lint and fresh synthetic build. All378 check/22 build
+identities exited/listeners empty. M6 exact seven-blob/28-receipt/36-identity proof
+passed; focused157 passed, first failure preserved. SQL unapplied/Auth denied/all13false.
+M5 guard preparation is source-approved; real built HTML/fonts/CSS/assets are bound
+for M5 and bonus. Measurement/full browser/PDF acceptance remains UNRUN. Two pending
+descriptor setup refusals are preserved; no descriptor exists. Root owns release of
+reviewed launcher and actual allocations, never accept timing assumptions as proof.
+
+Next genuine empty-bootstrap plan10e295c addresses initial42ef definer/direct-DML
+HOLD and awaits both-family review. No issuer/privilege changes are implemented.
+Docker API is unavailable by fresh read-only observation; G1/G2 startup/provisioning/
+SQL/Auth and native acceptance remain unapproved. Continue local source/review work;
+M7/creature imports stay paused and M8 follows accepted core. No live changes.
+
+Preserved earlier static preparation follows.
+
 Current integrated source `28966b4` passed typecheck and zero-warning lint; all five
 observed identities exited per gate. Saving-throw harness/fixture match all eight
 reviewed worker blobs. Its browser/PDF gates remain UNRUN, and fresh combined
