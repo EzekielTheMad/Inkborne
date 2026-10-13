@@ -418,13 +418,52 @@ export async function loadCampaignMonsterProcess(root, entryProof) {
       return { pid: identity.pid, originalBirthUtc: identity.birthUtc, absent: !fresh || fresh.birthUtc !== identity.birthUtc, freshBirthUtc: fresh?.birthUtc ?? null };
     },
     async ownedSnapshot(identity) {
+      const birthPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?Z$/;
+      assert.ok(Number.isSafeInteger(identity?.pid) && identity.pid > 0);
+      assert.ok(Number.isSafeInteger(identity.parentPid) && identity.parentPid > 0 && identity.parentPid !== identity.pid);
+      assert.match(identity.birthUtc ?? "", birthPattern);
+      assert.ok(typeof identity.command === "string" && identity.command.trim().length > 0 && identity.command.length <= 32768);
       assert.deepEqual(await verifyCampaignMonsterInheritedHelper(root, campaignMonsterProcessHelper), entryProof.inheritedHelpers[1]);
-      const code = "$taskRows=@(Get-CimInstance Win32_Process);$taskRoot=$taskRows|Where-Object ProcessId -eq " + identity.pid
-        + ";if(!$taskRoot -or $taskRoot.CreationDate.ToUniversalTime().ToString('o') -ne '" + identity.birthUtc
-        + "'){exit 3};$taskIds=[Collections.Generic.HashSet[int]]::new();$null=$taskIds.Add(" + identity.pid
-        + ");do{$taskAdded=$false;foreach($taskRow in $taskRows){if($taskIds.Contains([int]$taskRow.ParentProcessId) -and $taskIds.Add([int]$taskRow.ProcessId)){$taskAdded=$true}}}while($taskAdded);@($taskRows|Where-Object {$taskIds.Contains([int]$_.ProcessId)}|ForEach-Object {@{pid=$_.ProcessId;parentPid=$_.ParentProcessId;birthUtc=$_.CreationDate.ToUniversalTime().ToString('o');command=$_.CommandLine}})|ConvertTo-Json -Compress";
-      const rows = JSON.parse(execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", code], { encoding: "utf8", windowsHide: true, timeout: 30000 }));
-      return (Array.isArray(rows) ? rows : [rows]).map(row => ({ ...row, cwdKnownFromLaunch: row.pid === identity.pid ? root : null, capturedUtc: new Date().toISOString() }));
+      // Expected command travels through UTF-8 stdin, never native command args.
+      // No task-owned command projection occurs before all ancestry checks pass.
+      const code = `$ErrorActionPreference='Stop'
+[Console]::InputEncoding=[Text.UTF8Encoding]::new($false);[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)
+$taskExpected=[Console]::In.ReadToEnd()|ConvertFrom-Json
+$taskRows=@(Get-CimInstance Win32_Process);$taskById=@{}
+foreach($taskRow in $taskRows){$taskKey=[int]$taskRow.ProcessId;if($taskById.ContainsKey($taskKey)){throw 'Ambiguous current PID snapshot'};$taskById[$taskKey]=$taskRow}
+$taskRoot=$taskById[[int]$taskExpected.pid]
+if(!$taskRoot -or !$taskRoot.CreationDate -or !$taskRoot.CommandLine -or $taskRoot.ParentProcessId -ne $taskExpected.parentPid -or $taskRoot.CreationDate.ToUniversalTime().ToString('o') -cne $taskExpected.birthUtc -or $taskRoot.CommandLine -cne $taskExpected.command){throw 'Exact current root identity unavailable'}
+$taskRootParent=$taskById[[int]$taskRoot.ParentProcessId]
+if(!$taskRootParent -or !$taskRootParent.CreationDate -or !$taskRootParent.CommandLine -or $taskRootParent.CreationDate.ToUniversalTime().Ticks -gt $taskRoot.CreationDate.ToUniversalTime().Ticks){throw 'Unproved current root parent'}
+$taskOwned=@{};$taskOwned[[int]$taskRoot.ProcessId]=$taskRoot
+do{
+  $taskAdded=$false
+  foreach($taskRow in $taskRows){
+    $taskId=[int]$taskRow.ProcessId;$taskParentId=[int]$taskRow.ParentProcessId
+    if($taskOwned.ContainsKey($taskParentId) -and !$taskOwned.ContainsKey($taskId)){
+      $taskParent=$taskById[$taskParentId];$taskAdmittedParent=$taskOwned[$taskParentId]
+      if(!$taskParent -or !$taskParent.CreationDate -or !$taskParent.CommandLine -or !$taskRow.CreationDate -or !$taskRow.CommandLine -or $taskId -eq $taskParentId){throw 'Missing current ancestry identity'}
+      if($taskParent.ParentProcessId -ne $taskAdmittedParent.ParentProcessId -or $taskParent.CreationDate.ToUniversalTime().Ticks -ne $taskAdmittedParent.CreationDate.ToUniversalTime().Ticks -or $taskParent.CommandLine -cne $taskAdmittedParent.CommandLine){throw 'Changed current ancestry parent'}
+      if($taskParent.CreationDate.ToUniversalTime().Ticks -gt $taskRow.CreationDate.ToUniversalTime().Ticks){throw 'Older orphan cannot be task-owned'}
+      $taskOwned[$taskId]=$taskRow;$taskAdded=$true
+    }
+  }
+}while($taskAdded)
+if($taskOwned.ContainsKey([int]$taskRoot.ParentProcessId)){throw 'Ancestry cycle refused'}
+@($taskRows|Where-Object {$taskOwned.ContainsKey([int]$_.ProcessId)}|ForEach-Object {@{pid=$_.ProcessId;parentPid=$_.ParentProcessId;birthUtc=$_.CreationDate.ToUniversalTime().ToString('o');command=$_.CommandLine}})|ConvertTo-Json -Compress`;
+      const rows = JSON.parse(execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", code], {
+        input: JSON.stringify({ pid: identity.pid, parentPid: identity.parentPid, birthUtc: identity.birthUtc, command: identity.command }),
+        encoding: "utf8", windowsHide: true, timeout: 30000, maxBuffer: 4 * 1024 * 1024,
+      }));
+      const snapshot = Array.isArray(rows) ? rows : [rows], ids = new Set();
+      for (const row of snapshot) {
+        assert.ok(Number.isSafeInteger(row?.pid) && row.pid > 0 && !ids.has(row.pid)); ids.add(row.pid);
+        assert.ok(Number.isSafeInteger(row.parentPid) && row.parentPid > 0 && row.parentPid !== row.pid);
+        assert.match(row.birthUtc ?? "", birthPattern); assert.ok(typeof row.command === "string" && row.command.length > 0);
+      }
+      const currentRoot = snapshot.find(row => row.pid === identity.pid); assert.ok(currentRoot);
+      for (const key of ["pid", "parentPid", "birthUtc", "command"]) assert.equal(currentRoot[key], identity[key]);
+      return snapshot.map(row => ({ ...row, cwdKnownFromLaunch: row.pid === identity.pid ? root : null, capturedUtc: new Date().toISOString() }));
     },
     async forceOwnedTree(identity, freshFullRenderedProof, stillRunning) {
       await requireMeasuredBudget(entryProof.descriptor);

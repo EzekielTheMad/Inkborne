@@ -135,3 +135,36 @@ its own evidence. An older orphan linked to a reused admitted PID can therefore
 be logged as task-owned. Neither old input module nor probe was edited here.
 A separately authorized finite ancestry amendment is required before runtime;
 the launcher's corrected observer does not repair that inherited child path.
+
+## Separately authorized inherited snapshot amendment
+
+Root subsequently authorized this exact finite child-path correction. Only
+scripts/campaign-monster-production-inputs.mjs ownedSnapshot and this handoff
+change. The other FIVE original harness canonical blobs remain exact50ec; probe
+7bd and new launcher/source receipts remain preserved. No npc-process helper,
+scenario/oracle/config/producer/stage/package or force method is modified.
+
+Before any native snapshot, ownedSnapshot validates caller PID/parent positive
+safe integers, canonical UTC birth shape and nonempty exact command. The native
+observer accepts expected identity over UTF-8 stdin, not executable arguments;
+compares actual root PID/parent/native birth/exact case-sensitive command; and
+uses unique fresh current PID records with native parent<=child birth checks for
+every admitted link. Missing/duplicate/changed identities, older orphans and
+cycles refuse BEFORE command-line projection. Native root parent must also be
+present and temporally valid. Returned rows preserve original snapshot ordering,
+known root cwd and unknown descendant cwd. JS additionally checks returned unique
+identities and exact root correspondence before returning to the actual probe.
+
+This amends the REAL helper called by7bd's observe(), not a substitute model.
+Current PID records are one native snapshot, not proof of complete lifetime
+coverage or an immediately rechecked termination graph. The existing30s native
+timeout remains; native syntax/Unicode/birth/capture/race/absence behavior is
+UNVERIFIED because no script/Node/npm/test/runtime was executed. Required later
+controls include valid parent-child, exact root mismatch, older orphan under
+reused parent PID, missing identity, duplicate PID and cycle. No modeled tests
+or positive native receipts are invented in this source-only amendment.
+
+The six-file harness checkpoint must advance explicitly ONLY after independent
+review, with exact old5/new1 canonical/index/mounted proof. No descriptor is
+generated or silently advanced here. No-force deadline cleanup remains HOLD;
+the separately proposed FAILED-run cancellation policy remains unimplemented.
