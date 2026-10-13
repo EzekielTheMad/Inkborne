@@ -74,6 +74,33 @@ package/lock unchanged. This is dependency setup, not source/product acceptance.
 
 The following records preserve earlier failures and their corrections.
 
+At548e62b, the combined M1+numeric-save source passed typecheck/zero-warning lint,
+but full tests retained **4,635PASS/oneFAIL (350 files)**: unchanged offline race
+esbuild preparation exceeded its default5s at5,013ms. All389 observed identities
+exited/listeners zero. Same-source focused race+monster gate passed20 tests with
+unchanged deadlines, allsix identities absent. Independent review approved a
+local15s deadline for ONLY the bundle-preparation test, which launches no UI and
+measures no product response. Inputs/plugins/errors/parser/stub assertions and
+other global/native/product waits unchanged; amended combined gate is pending.
+Original failure and focused pass remain separate immutable receipts.
+
+Numeric-save sourcea807 plus typed-selector9e28 and tested handoff7acc22 are now
+integrated through548e62b: all14 Git blobs equal worker and all aggregate manifest
+files verified (SHA256A4879B9FC30157D30DBB2848968CED762E420F7A59B7A7E56D7B211AF3D6A454).
+Five substantive old-seven-API numeric failures/one no-bonus positive and exact raw
+restoration observed; restored113 tests and correctedtype/lint passed, all34
+sampled identities absent/listeners zero/lock unchanged. Engine/parser/schemas/SQL/
+dependencies unchanged. Fresh actual browser/CON and print/PDF acceptance remain.
+
+M5 source remains unintegrated/default-off. Four preserved attempts could not
+observe the old enabled-DOM settlement setup (the first also failed collection).
+The three exact stress bodies/oracles are now explicitly skipped UNVERIFIED and
+tracked as M5-STRESS-SAVED/UNCERTAIN/ERROR in the worker handoff, not passes/waivers.
+At4faca6e actual ordinary result134PASS/threeSKIP was observed; two fixture union
+typing errors led to reviewed type-only6b793fe correction, type/lint pending.
+Actual browser case08 retains all three required preconditions; no44-case success
+may be inferred by omitting them. Neither product/native gate may be enabled.
+
 Root `6e09f6a` combined check preserved one strict-lint unused-variable warning
 after typecheck; Vitest did not run. All10 recorded identities exited. Reviewed
 root-only `b2bae28` removes just the unused path declaration; Magic worker mirrored

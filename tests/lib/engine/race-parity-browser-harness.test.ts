@@ -40,7 +40,7 @@ describe("bounded offline race parity fixture preparation", () => {
     expect(result.errors).toEqual([]);
     expect(result.outputFiles[0].text).toContain("Offline writes prohibited");
     expect(result.outputFiles[0].text).toContain("Actual canonical definition/snapshot parser rejected");
-  });
+  }, 15_000);
   it("requires completed production CSS and a matching explicit BUILD_ID; no globals fallback", async () => {
     await productionFixture(async (folder, receipt) => {
       await expect(loadProductionStyles(receipt)).rejects.toThrow(/no CSS/);
