@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ItemForm } from "@/components/library/item-form";
 import { ItemSharingPanel } from "@/components/library/item-sharing-panel";
@@ -15,7 +15,6 @@ const calls: Array<{ kind: string; request?: Request; fields?: Record<string, Fo
 const shared = new Set<string>(latest ? [campaignA] : []);
 let storedVersion = latest ? 2 : 1;
 let finish: ((value: unknown) => void) | undefined;
-let revalidate: ((kind: string) => void) | undefined;
 const bridge = {
   scenario, calls, navigation,
   submit: async (mode: string, _previous: unknown, form: FormData): Promise<unknown> => {
@@ -35,7 +34,8 @@ const bridge = {
     if (scenario === "malformed") return undefined;
     if (scenario === "lost") throw Error("Modeled ordinary action transport response lost");
     const priorCount = shared.size;
-    request.enabled ? shared.add(request.campaignId) : shared.delete(request.campaignId);
+    if (request.enabled) shared.add(request.campaignId);
+    else shared.delete(request.campaignId);
     if ((priorCount === 0) !== (shared.size === 0)) storedVersion++;
     localStorage.setItem("item-sharing-latest", "2");
     if (scenario === "cache-loss") throw Error("Modeled ordinary post-RPC cache loss");
@@ -47,17 +47,22 @@ const bridge = {
     if (!finish) throw Error("No pending modeled response");
     finish({ status: "idle", message: "Modeled pending acknowledgement.", contentId, campaignId: campaignA, enabled: true, expectedVersion: latest ? 2 : 1, version: 2, scope: "shared", sharedCampaignCount: 1 });
   },
-  revalidate: (kind: string) => { if (!revalidate) throw Error("Fixture not mounted"); revalidate(kind); },
+  revalidate: (kind: string) => { window.dispatchEvent(new CustomEvent("item-sharing-revalidate", { detail: kind })); },
 };
 Object.assign(window, { itemSharing: bridge });
 function Fixture() {
   const [identity, setIdentity] = useState({ id: contentId, version: latest ? 2 : 1 });
   const [access, setAccess] = useState({ version: latest ? 2 : 1, scope: latest ? "shared" as const : "personal" as const, count: latest ? 1 : 0, sharedA: latest });
-  revalidate = kind => {
-    if (kind === "identity") setIdentity({ id: "66666666-6666-4666-8666-666666666666", version: identity.version });
-    else if (kind === "access") setAccess({ version: 3, scope: "personal", count: 0, sharedA: false });
-    else setIdentity({ ...identity, version: identity.version + 1 });
-  };
+  useEffect(() => {
+    const revalidate = (event: Event) => {
+      const kind = (event as CustomEvent<string>).detail;
+      if (kind === "identity") setIdentity(current => ({ id: "66666666-6666-4666-8666-666666666666", version: current.version }));
+      else if (kind === "access") setAccess({ version: 3, scope: "personal", count: 0, sharedA: false });
+      else setIdentity(current => ({ ...current, version: current.version + 1 }));
+    };
+    window.addEventListener("item-sharing-revalidate", revalidate);
+    return () => window.removeEventListener("item-sharing-revalidate", revalidate);
+  }, []);
   return <div className="mx-auto max-w-4xl space-y-7">
     <p className="text-sm">Offline actual ItemForm and ItemSharingPanel. Auth, owner/member access, reads, actions, RPCs, cache, database clocks and reload data are modeled. No live write or database acceptance.</p>
     <p role="status">Modeled loaded version {latest ? 2 : 1}</p>
