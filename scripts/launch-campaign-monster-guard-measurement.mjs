@@ -62,10 +62,11 @@ async function checkpoint(label, reserve = 120000) {
   assert.equal(stopRequested, false, `Stop before ${label}`);
   assert.ok(remaining() >= reserve, `Shared deadline/reservation before ${label}`);
 }
-function command(executable, args, maxBuffer = limits.nativeOutputBytes) {
-  assert.ok(remaining() > 0, "No remaining deadline for native command");
+function command(executable, args, maxBuffer = limits.nativeOutputBytes, commandDeadline = deadline) {
+  const available = Math.min(deadline, commandDeadline) - Date.now();
+  assert.ok(Number.isSafeInteger(commandDeadline) && available > 0, "No remaining scoped deadline for native command");
   return new Promise((resolve, reject) => execFile(executable, args,
-    { cwd: upstream, windowsHide: true, timeout: Math.max(1, Math.min(30000, remaining())), maxBuffer, encoding: "buffer" },
+    { cwd: upstream, windowsHide: true, timeout: Math.min(30000, available), maxBuffer, encoding: "buffer" },
     (error, stdout) => { if (error) reject(Error(`${path.basename(executable)} failed (${error.code ?? error.name}); bounded native observation unavailable`));
       else if (!Buffer.isBuffer(stdout)) reject(Error("Expected raw native output bytes")); else resolve(stdout); }));
 }
@@ -149,7 +150,8 @@ async function bootstrap() {
   }
   return { descriptorPath: selected, descriptorSha256: digest, descriptor, proof, workerHead: await text(worker, ["rev-parse", "HEAD"]) };
 }
-async function osSnapshot(pid, expectedBirth = null) {
+async function osSnapshot(pid, expectedBirth = null, observationDeadline = deadline) {
+  assert.ok(Number.isSafeInteger(observationDeadline) && Math.min(deadline, observationDeadline) > Date.now(), "Observation deadline exhausted");
   assert.ok(Number.isSafeInteger(pid) && pid > 0);
   const birthPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?Z$/;
   if (expectedBirth !== null) assert.match(expectedBirth, birthPattern);
@@ -182,7 +184,8 @@ if($matches){
 $project={param($p)@{pid=$p.ProcessId;parentPid=$p.ParentProcessId;birthUtc=$p.CreationDate.ToUniversalTime().ToString('o');command=$p.CommandLine}}
 $all=@(Get-Process)
 @{target=$(if($matches){&$project $target}elseif($target){@{pid=$target.ProcessId;birthUtc=$target.CreationDate.ToUniversalTime().ToString('o')}}else{$null});observer=$(if($observer){&$project $observer}else{$null});descendants=@($rows|Where-Object {$owned.ContainsKey([int]$_.ProcessId)}|ForEach-Object {&$project $_});listeners=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue|Where-Object {$owned.ContainsKey([int]$_.OwningProcess)}|Select-Object OwningProcess,LocalAddress,LocalPort);resources=@{timeUtc=(Get-Date).ToUniversalTime().ToString('o');processCount=$all.Count;workingSetBytes=($all|Measure-Object WorkingSet64 -Sum).Sum;cpuSeconds=($all|Measure-Object CPU -Sum).Sum;listenerCount=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue).Count}}|ConvertTo-Json -Depth 8 -Compress`;
-  const value = JSON.parse((await command("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", code])).toString("utf8"));
+  const value = JSON.parse((await command("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", code], limits.nativeOutputBytes, observationDeadline)).toString("utf8"));
+  assert.ok(Date.now() < Math.min(deadline, observationDeadline), "Observation completed after its scoped deadline");
   assert.ok(value.observer?.command && value.observer?.birthUtc); assert.equal(value.observer.parentPid, process.pid); assert.match(value.observer.birthUtc, birthPattern);
   result.observers.push({ ...value.observer, cwdKnownFromLaunch: upstream, capturedUtc: new Date().toISOString() });
   assert.ok(result.observers.length <= limits.identities);
@@ -271,8 +274,11 @@ public sealed class GuardLease : IDisposable {
     } catch { Dispose(); throw; }
   }
   public bool Alive() { uint value=WaitForSingleObject(handle,0); if(value==258) return true; if(value==0) return false; throw new Win32Exception(Marshal.GetLastWin32Error()); }
-  public void TerminateAndWait(uint ms) {
+  public void TerminateAndWait(uint ms, long actionDeadline) {
     if(ms==0 || ms>2000 || !Alive()) throw new InvalidOperationException("Closed handle or invalid bounded wait");
+    // Alive and Console progress flushing can block. This final check is AFTER
+    // those operations and immediately before the irreversible held-object call.
+    if(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()>=actionDeadline-(long)ms) throw new InvalidOperationException("Action deadline or reserved wait exhausted");
     if(!TerminateProcess(handle,125)) throw new Win32Exception(Marshal.GetLastWin32Error());
     if(WaitForSingleObject(handle,ms)!=0) throw new InvalidOperationException("Termination completion unproved");
   }
@@ -359,7 +365,7 @@ try {
     if(!$leafRow -or $leafRow.ParentProcessId -ne $old.ParentProcessId -or $leafRow.CommandLine -cne $old.CommandLine -or $leafRow.CreationDate.ToUniversalTime().Ticks -ne $old.CreationDate.ToUniversalTime().Ticks){throw 'Immediate leaf recheck failed'}
     Correlate $leases[$leaf] $leafRow;Budget ([int]$request.waitMs)
     Emit @{type='before-individual-handle-termination';pid=$leaf;creationFileTime=([string]$leases[$leaf].CreationFileTime);failed=$true}
-    $leases[$leaf].TerminateAndWait([uint32]$request.waitMs);$done[$leaf]=$true;$actions++
+    $leases[$leaf].TerminateAndWait([uint32]$request.waitMs,[long]$request.actionDeadline);$done[$leaf]=$true;$actions++
     Emit @{type='exact-held-object-signaled';pid=$leaf;creationFileTime=([string]$leases[$leaf].CreationFileTime);actions=$actions;acceptance=$false}
   }
   Budget;$post=@(Get-CimInstance Win32_Process)
@@ -375,9 +381,10 @@ try {
 finally{foreach($lease in $leases.Values){$lease.Dispose()}}
 `;
 
-async function nativeGuard(mode, maximumMs) {
+async function nativeGuard(mode, maximumMs, scopedEnd = deadline) {
   assert.ok(childIdentity && boot && remaining() > 0);
-  const actionDeadline = Math.min(deadline - (mode === "cancel" ? cancellationBudget.readbackMs : 0), Date.now() + maximumMs);
+  assert.ok(Number.isSafeInteger(scopedEnd));
+  const actionDeadline = Math.min(deadline, scopedEnd, Date.now() + maximumMs);
   assert.ok(actionDeadline > Date.now());
   const payload = { mode, failed: mode === "cancel", root: childIdentity, knownCwd: worker,
     executable: boot.descriptor.nodeRuntime.executable, argv: [boot.descriptor.nodeRuntime.executable, ...result.fork.commandArguments],
@@ -386,8 +393,10 @@ async function nativeGuard(mode, maximumMs) {
   const nativeJob = { mode, atUtc: new Date().toISOString(), actionDeadline, completed: false };
   result.nativeJobs ??= []; result.nativeJobs.push(nativeJob); await persist();
   await new Promise((resolve, reject) => {
+    const spawnRemaining = actionDeadline - Date.now();
+    assert.ok(spawnRemaining > 0, "No residual native action budget after evidence persistence");
     const job = execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", nativeGuardProgram],
-      { cwd: upstream, windowsHide: true, timeout: Math.min(maximumMs, actionDeadline - Date.now()), maxBuffer: 1024 * 1024, encoding: "buffer" },
+      { cwd: upstream, windowsHide: true, timeout: Math.min(maximumMs, spawnRemaining), maxBuffer: 1024 * 1024, encoding: "buffer" },
       (error) => { nativeJob.completed = true; nativeJob.errorCode = error?.code ?? null; if (error) reject(Error("Native guard refused, timed out or partially failed; retained events are not cleanup acceptance")); else resolve(); });
     nativeJob.pid = job.pid; nativeJob.parentPid = process.pid; nativeJob.cwdKnownFromLaunch = upstream;
     job.stdout.on("data", bytes => {
@@ -423,23 +432,31 @@ function scheduleCancellation() {
 }
 async function cancelFailedGuard() {
   if (closed || cancellationStarted) return;
+  assert.ok(Number.isSafeInteger(stopRequestedAt));
+  const cancellationEnd = Math.min(deadline, stopRequestedAt + 120000);
+  result.cancellationWindow = { firstStopUtc: new Date(stopRequestedAt).toISOString(), endUtc: new Date(cancellationEnd).toISOString() };
   cancellationStarted = true; clearInterval(sampler); await sampleWork;
   assert.ok(stopRequested && Date.now() >= stopRequestedAt + cancellationBudget.graceMs);
-  const nativeAllowance = Math.min(cancellationBudget.nativeMs, remaining() - cancellationBudget.readbackMs);
+  const nativeEnd = Math.min(cancellationEnd - cancellationBudget.readbackMs, Date.now() + cancellationBudget.nativeMs);
+  const nativeAllowance = nativeEnd - Date.now();
   assert.ok(nativeAllowance >= 1000, "No remaining same-deadline cancellation/readback reservation");
   assert.ok(childIdentity.creationFileTime && childIdentity.parentPid === process.pid && result.fork.cwdKnownFromLaunch === worker);
   result.failures.push({ label: "FAILED-run-cancellation", message: "Cooperative grace expired; any termination keeps this run failed", atUtc: new Date().toISOString() });
   result.state = "failed-or-uncertain"; process.exitCode = 1; await persist();
-  const events = await nativeGuard("cancel", nativeAllowance);
+  const events = await nativeGuard("cancel", nativeAllowance, nativeEnd);
   const completed = events.at(-1); assert.equal(completed?.type, "cancellation-finished-failed-only"); assert.equal(completed.acceptance, false);
   const graph = events.find(event => event.type === "complete-current-provider-graph"); assert.ok(graph && graph.targets.length <= cancellationBudget.targetCount);
-  result.cancellation = { events, acceptance: false, targets: graph.targets, finishedUtc: new Date().toISOString() };
+  const readbackStart = Date.now(), readbackEnd = Math.min(cancellationEnd, readbackStart + cancellationBudget.readbackMs);
+  assert.ok(readbackEnd > readbackStart, "Cancellation readback reservation exhausted");
+  result.cancellation = { events, acceptance: false, targets: graph.targets, finishedUtc: new Date().toISOString(),
+    nativeEndUtc: new Date(nativeEnd).toISOString(), readbackEndUtc: new Date(readbackEnd).toISOString() };
   for (const target of graph.targets) {
-    assert.ok(remaining() > 0); const readback = await osSnapshot(target.pid, target.birthUtc);
+    assert.ok(Date.now() < readbackEnd); const readback = await osSnapshot(target.pid, target.birthUtc, readbackEnd);
     result.readbacks.push({ expected: target, originalIdentityAbsent: readback.originalIdentityAbsent, cancellation: true });
     assert.equal(readback.originalIdentityAbsent, true);
   }
-  result.resourcesAfterCancellation = (await osSnapshot(process.pid)).resources;
+  result.resourcesAfterCancellation = (await osSnapshot(process.pid, null, readbackEnd)).resources;
+  assert.ok(Date.now() < readbackEnd && Date.now() < cancellationEnd, "Cancellation closure exceeded its first-stop budget");
   result.cancellation.independentReadbackComplete = true; await persist();
 }
 try {

@@ -247,3 +247,27 @@ requires an explicit completion wait, supplied by
 [QueryFullProcessImageNameW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-queryfullprocessimagenamew)
 and [CommandLineToArgvW](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw)
 provide executable/argv correlation.
+
+## Finite timing corrections after preserved7281 source
+
+M1 held7281f53b31ed27e0725a07c764329856023b636b for two timing groups;
+its source and source-only receipt remain preserved. Ownership, stable handles,
+original native FILETIME, graph/cap/partial-event/no-acceptance policy is unchanged.
+
+Cancellation now ends at min(T+900000,FIRSTstop+120000), including cooperative
+grace and awaited sampleWork. After that wait, nativeEnd is the smaller of
+cancellationEnd-40000 and now+60000; insufficient residual budget refuses before
+spawning/action. Evidence persistence cannot consume the budget then spawn with
+zero/negative timeout: positive native residual is checked again immediately
+before execFile. ReadbackEnd=min(cancellationEnd,readbackStart+40000) is passed
+through EVERY cancellation target and resource osSnapshot into its native runner.
+Each observer requires positive scoped remaining time, uses its scoped timeout,
+and rejects late completion. No later target/resource call gets the whole900000
+window as a substitute. Unresolved cleanup remains failed/supervised uncertain.
+
+The final action/wait-reservation check is now INSIDE TerminateAndWait, after
+Alive() and after the caller's potentially blocking Console Emit/flush, directly
+before TerminateProcess on the held object. Equality/exhausted reservation refuses
+without irreversible action. The bounded wait still uses the same object and
+<=2s allowance. No descriptor/status/runtime/termination/Node/compiler/test
+execution occurred; exact source re-review precedes any runtime release.
