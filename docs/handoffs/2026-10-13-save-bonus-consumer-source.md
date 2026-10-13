@@ -102,3 +102,27 @@ left running; no runtime cleanup/port or peak-resource proof is claimed. Frozen
 source awaits independent exact review, narrow release and eventual actual UI.
 The unit controls capture a retained provider roll/guard and actual print callback;
 retained open-CON desktop/mobile interaction remains an explicit browser gate.
+
+## First released narrow sequence: a807ed96d6f459148dd4a20e77b3450a9ca4f8ad
+
+2026-10-13. Exact seven old353858c production blobs were installed temporarily
+together and only the dedicated old-API suite ran: **five substantive numeric
+failures / one valid no-bonus positive**. Card, actual ordinary/CON requests,
+paper model and actual preview omitted the evaluated+1. No constructor/import
+failure. All seven original raw bytes were restored in finally with matching
+SHA256, Git clean. Observed six OS process identities; remaining0/listeners0.
+
+Restored eight-suite `npm.cmd test -- … --maxWorkers=2` passed **113 tests**;
+stdout records exact eight paths, stderr empty. Captured13 OS identities;
+remaining0/listeners0. These pass results apply to a807, not a later correction.
+Sequential `npm.cmd run typecheck` at a807 failed TS2769 at three test-only role
+queries: ByRoleOptions has no `exact` field. Captured five identities;
+remaining0/listeners0. Lint not run. Original logs and identities/resources remain
+in ignored `test-results/save-bonus-narrow/{old-seven-api-a807,restored-focused-a807,
+typecheck-a807}.*`; baseline restoration receipt separately lists all raw hashes.
+
+Finite correction changes only the three selectors to anchored accessible-name
+regular expressions (same Roll/Advantage/Disadvantage names), plus this handoff.
+All assertions, fixtures and seven production bytes stay unchanged. No repeated
+test/type/lint command has run after the correction. Exact-source review and
+release are required before continuation; heavy lane is released after readback.

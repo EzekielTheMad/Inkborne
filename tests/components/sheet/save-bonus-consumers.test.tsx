@@ -84,7 +84,7 @@ describe("actual save bonus consumers with synthetic canonical loaded inputs", (
     });
     render(<Tree fixture={f} />);
     fireEvent.click(screen.getByRole("button", { name: "Roll Constitution saving throw" }));
-    fireEvent.click(await screen.findByRole("button", { name: mode, exact: true }));
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${mode}$`) }));
     expect(executeRoll).toHaveBeenCalledTimes(1);
     const request = vi.mocked(executeRoll).mock.calls[0][0];
     expect(request.expression).toBe("1d20+5+1d4-1d4");

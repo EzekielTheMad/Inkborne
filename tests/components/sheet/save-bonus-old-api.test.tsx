@@ -57,7 +57,7 @@ describe("old-API-compatible actual producer/provider/consumer bonus workflow", 
     mount(null);
     const button = screen.getByRole("button", { name: "Roll Constitution saving throw" });
     expect(button).toBeEnabled(); expect(button).toHaveTextContent("+4");
-    fireEvent.click(button); fireEvent.click(await screen.findByRole("button", { name: "Roll", exact: true }));
+    fireEvent.click(button); fireEvent.click(await screen.findByRole("button", { name: /^Roll$/ }));
     expect(executeRoll).toHaveBeenCalledWith(expect.objectContaining({ kind: "save", expression: "1d20+4" }));
     expect(buildCharacterPrintModel(loaded).abilities.find(entry => entry.name === "Constitution")?.save).toBe("+4");
   });
@@ -69,7 +69,7 @@ describe("old-API-compatible actual producer/provider/consumer bonus workflow", 
     mount(1);
     const button = screen.getByRole("button", { name: "Roll Constitution saving throw" });
     expect(button).toBeEnabled(); fireEvent.click(button);
-    fireEvent.click(await screen.findByRole("button", { name: "Roll", exact: true }));
+    fireEvent.click(await screen.findByRole("button", { name: /^Roll$/ }));
     expect(executeRoll).toHaveBeenCalledTimes(1);
     expect(insertRoll).toHaveBeenCalledTimes(1);
     expect(executeRoll).toHaveBeenCalledWith(expect.objectContaining({ kind: "save", expression: "1d20+5" }));
