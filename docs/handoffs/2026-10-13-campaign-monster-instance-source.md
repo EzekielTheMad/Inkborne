@@ -353,3 +353,32 @@ boolean, incompatible with installed React TransitionFunction's void/undefined c
 Correction uses a block callback with no return; scheduling and every oracle stay
 unchanged. This test-only line plus handoff remains UNRUN for quick exact review.
 Product5f/fixture0aec/SQL/default-off bytes remain unchanged; no heavy work executed.
+
+## Third narrow run preserved; approved outside-act scheduling correction UNRUN
+
+Approved587c145 rerun of the same seven-suite command/maxWorkers2 exited1,8.49s:
+134passed/3failed (137). ResponseObserved succeeded; the three enabled-old-DOM
+preconditions still failed before their lifetime assertions, despite startTransition
+inside async act. No product defect/native proof or semantic-before result is claimed.
+focused-587-third stdout/stderr/process/result are preserved; manifest SHA256
+`A92EF2ACEC9C71D29DD81AB6F911562A1F6FB3D190515DB615EFF6A7C8ECFF6A`.
+All12 OS identities absent/owned listeners0, global count467→468, CPU29→27%,
+free memory7160772→7076640KiB, lock SHA256 unchanged7225AA…A2EB6. Type/lint stopped.
+
+Root/m1 approved finite TEST-only proposal: installed react-dom-client.development.js
+scheduleCallback$1 reads ReactSharedInternals.actQueue directly (lines18749ff);
+when null it calls the normal Scheduler. Warning flag is a separate check in
+warnIfUpdatesNotWrappedWithActDEV, not the scheduling selector. No internals or
+Scheduler are modified. FIRST native startTransition block callback is now OUTSIDE
+act, followed by ONLY two Promise microticks, observed-parser/saved-ID/enabled-DOM/
+original-operation/intent/marker assertions and SECOND native dispatch before a
+host task. Existing one-call and committed refusal/same-operation replay controls
+remain intact. IS_REACT_ACT_ENVIRONMENT=false suppresses only stress-window warnings;
+finally restores its EXACT prior own property descriptor (or prior absence), then
+always awaits actual act flush even on assertion failure. No hooks/ref/DOM/timer,
+Input or Scheduler mocks. Product/fixture/source SQL bytes unchanged.
+
+This correction is source-only UNRUN, frozen for exact review before gates. If the
+next enabled-DOM precondition fails, preserve/STOP; no additional scaffolding or
+assertion flipping is authorized. Prior failures remain immutable and fully
+distinguished from the prepared scheduling control and native acceptance gaps.

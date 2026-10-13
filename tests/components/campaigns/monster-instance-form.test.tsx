@@ -100,9 +100,13 @@ describe("actual DM monster form with simulated transport only", () => {
     await createForm(); const form = screen.getByLabelText("Instance name").closest("form")!;
     const markerKey = `inkborne:campaign-monster:v1:${MC.owner}:${MC.campaign}:create`;
     let original!: ReturnType<typeof instanceIntentFromForm>;
-    await act(async () => {
+    const actFlag = "IS_REACT_ACT_ENVIRONMENT";
+    const previousActDescriptor = Object.getOwnPropertyDescriptor(globalThis, actFlag);
+    // Warning suppression ONLY. Real React scheduler/actQueue, refs and DOM remain untouched.
+    Object.defineProperty(globalThis, actFlag, { configurable: true, enumerable: previousActDescriptor?.enumerable ?? true, writable: true, value: false });
+    try {
       // Deliberately defer the initial pending/operation render with the real React
-      // transition scheduler; ordinary discrete submit otherwise already commits it.
+      // transition scheduler OUTSIDE act, whose queue otherwise commits it during awaits.
       startTransition(() => { form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); });
       original = instanceIntentFromForm(actions.commit.mock.calls[0][1]);
       await Promise.resolve(); await Promise.resolve();
@@ -116,7 +120,12 @@ describe("actual DM monster form with simulated transport only", () => {
       expect(actions.commit).toHaveBeenCalledTimes(1);
       expect(instanceIntentFromForm(actions.commit.mock.calls[0][1])).toEqual(original);
       expect(JSON.parse(sessionStorage.getItem(markerKey)!).operation_id).toBe(original.operation_id);
-    });
+    } finally {
+      try {
+        if (previousActDescriptor) Object.defineProperty(globalThis, actFlag, previousActDescriptor);
+        else Reflect.deleteProperty(globalThis, actFlag);
+      } finally { await act(async () => {}); } // Always flush genuine queued React work, including assertion failure.
+    }
     if (status === "error") {
       expect(sessionStorage.getItem(markerKey)).toBeNull();
       submit(); await waitFor(() => expect(actions.commit).toHaveBeenCalledTimes(2));
