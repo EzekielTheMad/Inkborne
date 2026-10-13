@@ -19,6 +19,7 @@ describe("actual ItemSharingPanel with simulated server action", () => {
     expect(Object.fromEntries(new FormData(firstForm))).toEqual({ content_id: contentId, campaign_id: campaigns[0].id, enabled: "true", expected_version: "1" });
     fireEvent.submit(firstForm);
     await screen.findByRole("button", { name: "Stop sharing with Original Tuesday" });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Share with Original Weekend" })).toBeEnabled());
     const secondForm = screen.getByRole("button", { name: "Share with Original Weekend" }).closest("form")!;
     expect(new FormData(secondForm).get("expected_version")).toBe("2"); fireEvent.submit(secondForm);
     await screen.findByRole("button", { name: "Stop sharing with Original Weekend" });
@@ -40,6 +41,7 @@ describe("actual ItemSharingPanel with simulated server action", () => {
     render(<ItemSharingPanel {...base} />);
     fireEvent.submit(screen.getByRole("button", { name: "Share with Original Tuesday" }).closest("form")!);
     await screen.findByRole("button", { name: "Stop sharing with Original Tuesday" });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Share with Original Weekend" })).toBeEnabled());
     const second = screen.getByRole("button", { name: "Share with Original Weekend" }).closest("form")!;
     fireEvent.submit(second); expect(await screen.findByRole("alert")).toHaveTextContent("Membership denied.");
     expect(screen.getByRole("button", { name: "Stop sharing with Original Tuesday" })).toBeEnabled();
