@@ -1,6 +1,6 @@
-# No-force campaign monster guard launcher
+# Guard-only measurement launcher and failed-run cancellation
 
-Source-only preparation from clean worker
+Initial no-force source-only preparation from clean worker
 `7bd6608c2ec5cbff0ee476eadf1def0976e17ef0`. Own only this new handoff and new
 `scripts/launch-campaign-monster-guard-measurement.mjs`. Probe, six harness paths,
 helpers, producer/stages/packages and prior receipts remain unchanged. No Node,
@@ -68,9 +68,9 @@ identity and descriptor, rebinds fresh builtin source and records resources.
 Exit/result alone cannot certify cleanup. Root supervisor must independently
 confirm this launcher's own exit. All observed evidence is preserved on failure.
 
-## Stuck-child HOLD and separate proposed cancellation policy
+## Historical no-force child and proposed cancellation policy
 
-No force implementation exists here. A still-live child remains supervised;
+No force implementation existed in the initial6eb source. A still-live child remains supervised;
 parent requests normal stop and preserves failed/uncertain evidence. It does
 not detach/unref the child, kill by name, guess birth or claim closure. Waiting
 for natural close may remain live beyond900000; the gate stays failed and no
@@ -92,8 +92,9 @@ graph gaps, ancestry/birth inconsistency or missing identity refuse. A sampled
 inventory or result receipt never substitutes for that ownership proof. Every
 target then needs exact old-identity absence and owned-port closure proof.
 No old adapter is invoked, no900000 deadline is expanded and no termination
-can yield measurement or browser acceptance. This is a DOCS-ONLY proposal:
-no force implementation/execution is included. Native bounded observation and
+can yield measurement or browser acceptance. At that checkpoint it was DOCS-ONLY;
+the separately authorized SOURCE implementation below supersedes that status.
+Native bounded observation and
 complete graph capture remain unverified.
 
 This launcher measures no cases and cannot satisfy44 browser outcomes, actual
@@ -166,5 +167,83 @@ or positive native receipts are invented in this source-only amendment.
 
 The six-file harness checkpoint must advance explicitly ONLY after independent
 review, with exact old5/new1 canonical/index/mounted proof. No descriptor is
-generated or silently advanced here. No-force deadline cleanup remains HOLD;
-the separately proposed FAILED-run cancellation policy remains unimplemented.
+generated or silently advanced here. Atc499, no-force deadline cleanup remained
+HOLD and the FAILED-run cancellation policy was unimplemented; current source
+follows below.
+
+## Current separately authorized failed-run handle cancellation SOURCE
+
+Root authorized implementation only in this launcher/handoff, based on M1's
+reviewed ownership predicate. The original browser/measured-only adapter and
+all six c499 harness/probe/helper/package/stage bytes remain unchanged. Current
+source is UNVERIFIED: no Node/npm/PowerShell compilation/script/test/runtime,
+descriptor generation, termination, browser/server, provider or SQL occurred.
+Primary Microsoft documentation was consulted read-only for the native API.
+
+The launcher descriptor kind must explicitly advance after source review to
+independently-reviewed-failed-guard-cancellation-v2 with its exact source/OID/raw
+bindings. Pending-measurement status remains mandatory; no measured or accepted
+status is emitted. Root owns descriptor/check/build/lane release. Existing
+initial capture now additionally obtains exact native creation FILETIME/image
+and parsed known fork argv through a private, stock PowerShell Add-Type C# shim.
+No new packages, privilege elevation, SeDebugPrivilege or provider are used.
+
+The original fork PID/parent/command/CIM UTC birth and known launch cwd remain
+required. Native capture uses GetProcessTimes for the100ns creation value,
+QueryFullProcessImageNameW for the executable and CommandLineToArgvW for the
+exact known executable+script+deadline argv; LocalFree releases argv memory.
+CIM exposes microseconds. The narrow profile only corroborates CIM ticks when
+they bound the native creation tick in the same10-tick microsecond interval;
+unsupported correspondence refuses. It NEVER rounds a CIM timestamp into the
+original native FILETIME. Original FILETIME is retained as a decimal string,
+and cancellation must match it exactly on a newly acquired stable process
+handle. This precision/profile and native capture are untested.
+
+One T+900000 deadline remains. Cooperative stop is first;20s grace precedes
+any failed-run cancellation. Within the original120s reservation, native work
+has at most60s and preserves40s for independent absence/ports/resources. Late
+scheduling reduces native allowance, never expands T. A helper has a bounded
+async execFile timeout; native budget checks precede reads/actions and reserve
+the <=2s individual wait. Maximum16 targets,128 progress events and1MiB native
+output. Partial NDJSON events are persisted before each action and after each
+held-object wait, so errors/timeouts cannot silently become successful cleanup.
+
+Only an already failed/stopped run can enter cancellation. It uses a FRESH full
+current Win32_Process provider graph, unique identities, exact root checks,
+current parent links and parent<=child births; sampled observed rows are NEVER
+its scope. Before any action it opens noninheritable process handles with only
+QUERY_LIMITED_INFORMATION, SYNCHRONIZE and TERMINATE on the proved targets.
+All rights/creation/image failures refuse; no guessed birth or broad-name/tree
+kill. Native100ns parent birth also must precede each child's native birth.
+
+Each action rebuilds the current graph and refuses new/missing/changed/stale
+members; rechecks the current root and chosen leaf immediately; then terminates
+that held PROCESS OBJECT individually, leaf-first. It waits on the same handle
+to prove that object signaled. Closed/reused/missing root refuses further acts.
+All handles close in finally. Post-action unknown possible children within a
+terminated parent's life interval or target-PID listeners make closure unproved;
+they are not killed or silently adopted. Independent parent absence/readback
+and resources follow under the same remaining deadline. A terminated run always
+stays failed, even if all targets signal and readback succeeds.
+
+Native job PID/parent/actual CIM birth/command/known cwd are emitted before
+Add-Type; UTF-8 identity payload travels through stdin. Compilation/OS observer
+availability/speed, helper/compiler transient inventory, access rights, race
+behavior and completeness of provider enumeration remain UNVERIFIED. A refused
+or partial cancellation leaves exact evidence and supervision; no detach/unref,
+extra fallback, future native action after deadline or all-process completeness
+claim repairs it. Guaranteed cleanup remains HOLD pending independent source
+review and actual bounded observation. No fonts/build/tests/full package proof
+is reexecuted to authorize ownership cleanup.
+
+Primary API basis: [OpenProcess](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess)
+and [process object handles](https://learn.microsoft.com/en-us/windows/win32/procthread/process-handles-and-identifiers)
+describe the held object and handle rights/lifetime;
+[GetProcessTimes](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes)
+and [CIM_DATETIME](https://learn.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime)
+define100ns versus microsecond precision. [TerminateProcess](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
+requires an explicit completion wait, supplied by
+[WaitForSingleObject](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject).
+[QueryFullProcessImageNameW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-queryfullprocessimagenamew)
+and [CommandLineToArgvW](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-commandlinetoargvw)
+provide executable/argv correlation.
