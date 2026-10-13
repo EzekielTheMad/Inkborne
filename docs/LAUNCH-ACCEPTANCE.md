@@ -26,6 +26,34 @@ hosted write, deployment or publication is authorized by this sequencing change.
 
 ### Continued core work — 2026-10-13
 
+Current gate source is integrated through `8b62b8e`: the Magic actual-form harness
+and its bounded complete installed-runtime correction `e51b957` passed independent
+review; all14 Magic production/test/harness blobs match the frozen worker.
+Intended34 desktop/mobile cases/36 screenshots remain UNRUN. R13's first browser
+attempt at `dcda49d` exhausted its240-second outer budget during complete dependency
+proofs, before any render/Chrome/case; all166 recorded identities absent/listeners
+zero. Independently reviewed `b7469c3` gives only that outer budget600 seconds;
+the Magic correction uses the same proactive outer bound. All product waits,
+form assertions and source/cleanup guards remain unchanged. Root's next gate
+sequence is combined check with two workers, fresh synthetic build, then the two
+explicit offline browser configs; no database/provider route is exercised.
+
+M1 additive runner source `42247aa` is frozen in `../r13-item-sharing-worker` on
+`codex/core-db-verification`, unintegrated and awaiting independent review/gates.
+It adds six files only; original R07, protected migrations/stages and product
+bytes are unchanged. Native observer/SQL/profile behavior is UNRUN.
+M5 campaign-instance plan `c8f2b4c` / correction `6074992` passed independent
+re-review and is integrated as `c78ee18` / `9eafb0b`. The correction removes R09
+coupling, uses platform/owned personal sources, and preserves the same operation
+and intent after uncertainty. Native validation is bounded honestly; full
+canonical parser admission remains required for preview/render. Actual DM-only
+instance storage/DAL/form/routes are being implemented in isolated
+`../m5-campaign-monster-worker`, branch `codex/campaign-monster-instances`, clean
+base `72296a3`. Its locked install passed804 packages/41seconds; allthree process
+identities exited and lock SHA256 remained
+`7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6`.
+No instance/source/native/browser acceptance is inferred from that setup.
+
 Magic-item acknowledgment source is now integrated through `b8f1d44`. All eight
 source/test Git blobs match reviewed worker `f313c1b`; its final gate-manifest
 SHA256 is `D06195860ACA5D9BAC1B3FF7FDDF4EB674AB6FD68FA7524A307DDA52B514B62E`.
