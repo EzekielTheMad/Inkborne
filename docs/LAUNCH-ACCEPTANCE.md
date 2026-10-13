@@ -24,6 +24,43 @@ candidate remains `81629ce` (339 files / 4,266 tests plus build and eight local 
 browser cases); later source children are not yet combined acceptance. No SQL,
 hosted write, deployment or publication is authorized by this sequencing change.
 
+### Continued core work — 2026-10-13
+
+P1b.2 source `bdc9086` and qualified lookup correction `bf171408` passed independent
+class and original authority-family review. Integrated as `9ad6f9f` / `221b1e3`;
+tested handoff `0517fde` as `881dfc9`. All six source/test Git blobs match reviewed
+`bf171408`; ignored root identity receipt is
+`test-results/class-confirmation-integration-source-proof.json`.
+
+Worker `npm.cmd test` on confirmation/P1a/joint model+static suites with
+`--maxWorkers=2` passed **six files / 172 tests**, 28.06 seconds. Typecheck and
+zero-warning lint passed at the same clean source. All **21** recorded process
+identities absent, owned listeners zero. Evidence manifest is sibling
+`verification/r06-class-origin-confirmation-20261013/manifest.json`, verified
+SHA256 `B4584A133A9E3AAD5A7A0C4238E42A3E61F2E6D75B7DF1ECBB439CA74B6267FD`.
+Root combined check/build remain pending. Constructor/token-removal checks are
+STATIC binding, not semantic before/native SQL evidence. SQL remains unapplied,
+Auth unavailable, all13 readiness false; bootstrap/compiler/all writers/copy/C2
+and real PostgreSQL acceptance remain mandatory.
+
+R13 source `4710fe8` initially held action-result uncertainty/correlation,
+synchronous duplicate-submit protection and malformed static-test literals.
+Correction `b569b8f` passed independent review; actual SQL/DAL/mounted item-form
+bytes and original three-family SQL core/grants remain unchanged. Its narrow
+gates are queued behind magic-item acknowledgement checks; separate actual-form
+browser harness is source-only. No SQL execution or real sharing acceptance.
+
+Magic-item source `2532f7c` passed independent review. Attribution-only `5d8d672`
+preserves all assertions and labels wrong type/source/scope as old retryable-error
+classification cases, not old wrong-row acceptance. Initial baseline had 33
+failures / two positives / 78 filtered skips: **28 substantive DAL/UI failures**
+and **five action test-factory setup errors**, excluded from product evidence.
+Exact source restoration and eight absent process identities/listeners zero were
+verified. Test-only `464f6e7` retains the module client factory while resetting
+per-case mocks; independent review approved. Repeated baseline and restored
+focused/type/lint gates are active, original failed receipts preserved. This
+record does not claim those pending gates passed.
+
 The human requested execution of the attached kickoff. The sole integration owner
 resumed the clean recorded worktree at `628283318394f08992d7fc397390119611cc03ab`
 and created local branch `codex/launch-integration-20261011` in that same worktree.

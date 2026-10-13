@@ -35,10 +35,15 @@ Git blobs match the approved worker. Test-only realm/void corrections are includ
 59 realm failures and TS2322 remain preserved, not erased by later acceptance.
 Monster/NPC import work and M7's PDF matrix are paused by the decisions above.
 Instances, companion mechanics and R19 remain open.
-R13 ordinary-item sharing and P1b.2 private confirmation producer plans are
-independently approved; source proceeds in isolated workers, no tests or SQL yet.
-Magic-item save acknowledgement hardening is the next bounded R12 plan; older
-authoring families still need uncertainty/snapshot/draft-binding acceptance.
+P1b.2 reviewed source `bdc9086` / qualified-lookup correction `bf171408` is now
+integrated through `881dfc9`, six exact source/test Git blobs matched. Worker
+six-file/172-test/typecheck/lint gates passed; all 21 process identities absent,
+listeners zero. Combined root acceptance is pending; SQL remains unapplied and
+Auth/readiness disabled. R13 sharing correction `b569b8f` is independently approved,
+separate browser harness preparation is source-only. Magic-item source `2532f7c`
+is independently approved and owns narrow baseline/tests; earlier test-factory
+errors remain excluded from substantive before evidence. Older authoring families
+still need uncertainty/snapshot/draft-binding acceptance.
 
 Earlier integration checkpoints follow; the ledger retains their failures and
 subsequent corrections.
