@@ -77,7 +77,8 @@ closure callbacks stay armed and call the unchanged bootstrap finalizer at COMMI
    selection/revision test blocks terminal recovery. Target missing/deleted or no
    longer owned refuses; replay does not manufacture a replacement character.
 3. Only NEW work locks the actual requested system row FOR SHARE under R09 authority
-   and rechecks exact ID/slug/published status after waits. No campaign/member lock
+   after independently unavailable NEW admission checks described below. The
+   blueprint rechecks exact ID/slug/published status after waits. No campaign/member lock
    is needed for explicitly null campaign. Recheck native Auth immediately before
    acceptance. Allocate target and acceptance UUIDs with native gen_random_uuid;
    capture finite native created_at=transaction_timestamp() (the existing now()
@@ -155,7 +156,16 @@ installed AFTER unchanged kernel→authority→P1a→joint→confirmation stages
 original object-owner families review the entire new stage. No base file/function
 replacement, role transfer/new role/membership/schema CREATE/public routine grant.
 
-Define these NEW private objects with empty qualified search_path:
+EVERY following NEW function is explicitly SECURITY DEFINER SET search_path='',
+with fully qualified relations/functions and the exact original owner below. No
+SECURITY INVOKER fallback is assumed for caller, RLS policy or cross-family helper
+contexts. Native preflight verifies existing isolated role flags, no memberships,
+effective schema USAGE and dependency EXECUTE, table RLS visibility and that neither
+runtime role owns public.characters or private.character_projection_order_v1.
+Otherwise refuse installation for separate owner/RLS challenge; never assume
+deployment/table ownership or silently add FORCE RLS/transfer table ownership.
+
+Define these NEW private objects:
 
 - authority owner: class_bootstrap_verified_prefix_v1(jsonb) RETURNS uuid; native
   Auth/guard/expiry only. lock_class_bootstrap_system_v1(jsonb,uuid) RETURNS jsonb;
@@ -172,6 +182,50 @@ Define these NEW private objects with empty qualified search_path:
   resolve_empty_class_origin_creation_v1(jsonb,uuid) RETURNS jsonb; actual private
   orchestration/immutable receipt recovery. These callable seams always fail Auth
   in this source child; no bypass parameter or test-only positive issuer.
+
+Exact cross-family EXECUTE pairs, and NO other new function/table access:
+
+| Owner | Exact signature | Sole cross-family EXECUTE recipient |
+| --- | --- | --- |
+| inkborne_hit_die_authority_owner | private.class_bootstrap_verified_prefix_v1(jsonb) | inkborne_class_origin_owner |
+| inkborne_hit_die_authority_owner | private.lock_class_bootstrap_system_v1(jsonb,uuid) | inkborne_class_origin_owner |
+| inkborne_hit_die_authority_owner | private.initialize_empty_class_order_v1(uuid) | inkborne_class_origin_owner |
+| inkborne_class_origin_owner | private.class_origin_empty_parent_allowed_v1(public.characters) | None; its own parent's INSERT policy only |
+| inkborne_class_origin_owner | private.class_origin_empty_order_allowed_v1(private.character_projection_order_v1) | inkborne_hit_die_authority_owner |
+| inkborne_class_origin_owner | private.class_origin_empty_order_inputs_v1(uuid) | inkborne_hit_die_authority_owner |
+| inkborne_class_origin_owner | private.create_empty_class_origin_character_v1(jsonb,jsonb) | None |
+| inkborne_class_origin_owner | private.resolve_empty_class_origin_creation_v1(jsonb,uuid) | None |
+
+## Independent NEW admission refusal, not journal-as-authority
+
+The native producer's transaction above is the proposed unreachable body behind
+disabled admission; structurally consistent journals/proofs cannot activate it.
+BOTH parent/order policy validators independently read the existing class-owned
+class_origin_gate_v1 singleton and return false unless enabled; the unchanged gate
+has enabled:false and CHECK(NOT enabled). Even after that check, each explicitly
+returns false for unconditional native-bootstrap-admission unavailability. There
+is NO positive issuer/admission branch or accepted-context boolean in this child.
+These policies therefore deny direct NEW INSERT by the isolated runtime roles even
+when a forged current-xid journal, preinsert proof and two consumed transitions are
+self-consistent. Existing table owner/RLS bypass is rejected in preflight as above.
+
+class_origin_empty_order_inputs_v1 independently performs that same class gate check
+then raises bootstrap_admission_unavailable BEFORE inspecting/returning any NEW
+proof projection. initialize_empty_class_order_v1 invokes this exact class-owned
+validator before any order INSERT and has no alternate positive path. Prefix and
+system helpers explicitly call unchanged require_verified_hit_die_auth_v1, which
+always raises; create/resolve explicitly call unchanged require_class_origin_auth_v1,
+which always raises. The source preflight also verifies all13 readiness rows exist
+and are false without granting the class owner readiness SELECT/mutation. Changing
+journal content, consumed flags, role identity or one gate cannot yield admission.
+Any future positive admission/gate/source activation requires a separately reviewed
+authority contract; these source-only refusal branches are not silently enabled.
+
+These NEW gate/default-readiness/source checks NEVER enter the historical receipt
+prefix. Original receipt lookup/replay stays before NEW admission/system/proof/order/
+revision restrictions, preserving original actor/time/initial counters under actual
+current owner/Auth/expiry. Replay remains practically unavailable while Auth denies,
+but is not coupled to a NEW-work gate if genuine native Auth is later reviewed.
 
 Explicit necessary ACL amendments, all SOURCE proposals requiring joint challenge:
 
@@ -218,7 +272,11 @@ journal; changing receipt; immutable original replay after later revisions or sy
 retirement; expiry during guard wait/before receipt return; same-op concurrent conflict,
 one-target replay; fault after EACH actual phase and at deferred COMMIT leaves no
 partial parent/origin/order/receipt/journal; unauthorized direct DML under every real
-role, including alternate writer attempt to forge protected pending proof.
+role, including direct isolated class-owner parent INSERT and authority-owner order
+INSERT with self-consistent forged pending proof/two consumed transitions. Assert
+false INSERT policy admission, direct order-input/helper unavailable, no rows/counter
+changes and unchanged Auth/class gate/all13false; role flags alone are not proof.
+Historical receipt replay controls must not acquire/check NEW gates or system locks.
 
 Stage rollback before activation removes ONLY this new stage's exact objects and
 new column privileges/policies under reviewed deployment authority, preserving all
