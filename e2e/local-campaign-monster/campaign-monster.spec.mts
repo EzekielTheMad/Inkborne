@@ -17,7 +17,7 @@ async function bootstrap(root: string) {
   const file = process.env.INKBORNE_M5_REVIEW_DESCRIPTOR, digest = process.env.INKBORNE_M5_REVIEW_DESCRIPTOR_SHA256;
   assert.ok(file && path.isAbsolute(file)); assert.match(digest ?? "", /^[a-f0-9]{64}$/);
   const bytes = await fs.readFile(file); assert.equal(hash(bytes), digest);
-  const input = JSON.parse(bytes); assert.equal(input.kind, "independently-reviewed-offline-m5-v1");
+  const input = JSON.parse(bytes.toString("utf8")); assert.equal(input.kind, "independently-reviewed-offline-m5-v1");
   assert.equal(input.producerCheckpoint, "0aec1242c911bc35f92ba413fd37f483b6b83f03");
   assert.deepEqual(input.nodeRuntime, { executable: process.execPath, version: process.version, executedSha256: hash(await fs.readFile(process.execPath)) });
   assert.match(input.harnessCheckpoint, /^[a-f0-9]{40}$/);

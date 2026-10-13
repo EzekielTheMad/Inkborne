@@ -243,3 +243,18 @@ and raw-before-normalization copies remain preserved. The first observer emitted
 nonterminating empty-array Join errors; the strict final observer uses Stop and
 explicit empty-array checks. Its fresh complete proof is the accepted byte result.
 No Node/npm/browser/runtime/budget measurement/SQL/network or descriptor generation.
+
+## Single parse type correction after root 604ad55 failure
+
+Parent reports narrow root typecheck at604ad55 failed only
+campaign-monster.spec.mts:20 (TS2345, JSON.parse received NonSharedBuffer).
+Its five observed process identities exited and listeners were clear. Preserve
+that original failure; this worker did not rerun or independently certify the gate.
+
+Only that parse now decodes the ALREADY SHA256-checked buffer with
+bytes.toString("utf8") before JSON.parse. Actual raw hashing remains before decode;
+descriptor/self/source maps, deadlines, guards, case matrix and every oracle stay
+unchanged. This correction and this handoff are the sole changed paths. Mounted
+spec bytes are checked against exact Git checkout projection before freezing.
+No Node/npm/typecheck/test/runtime/budget measurement/SQL/network execution.
+Independent exact review precedes root integration and any retry.
