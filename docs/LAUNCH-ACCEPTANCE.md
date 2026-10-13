@@ -70,6 +70,21 @@ unavailable and 178.9 GiB free on C:. No engine startup, image pull, provisionin
 native SQL, provider write, publication or deployment occurred. G1/G2 authority and
 actual database/Auth/concurrency/rollback/restore acceptance remain open.
 
+### Current read-only hosted metadata — 2026-10-13 21:37 UTC
+
+Connected project `Inkborne` (`etcaodglvcspcmwecyxq`, us-west-1) reported
+ACTIVE_HEALTHY. Its inventory has 69 recorded migrations; the repository has 83
+migration files. Sixteen local migration names are unmatched, but name comparison
+does not establish effective schema gaps: `characters.primary_color` is present
+despite its unmatched migration name. Hosted `characters` has the expected 15 base
+columns and no staged `action_revision`; refs include `feature_grant_id`, and grant
+rows retain their current generation/controller/feature fields without protected
+earned-occurrence lineage. RLS is enabled on these three tables by metadata.
+No user rows, policies, real Auth or workflow outcomes were read/tested. No hosted
+mutation or stage application occurred. Metadata evidence SHA256:
+`1F7FDB5350A1A129D6F4239B8FBAC762D89457912E6A4AA55D9481A366A10F03`;
+see [read-only evidence limits](handoffs/2026-10-13-hosted-core-metadata.md).
+
 ### Preserved earlier static preparation — 2026-10-13
 
 Current integrated source `28966b4388509a17b5e5ee6ec9e2d5cc0c9bccb1` passed
@@ -1454,12 +1469,12 @@ Stage columns: **I** implemented source; **T** tested at stated boundary; **G** 
 | Milestone / requirement IDs | I / T / G / D / A now | Evidence and concrete remaining exit |
 | --- | --- | --- |
 | M1 consolidation + operations: R01-R04 | P / local+H / P / H / open | [Current release checklist](RELEASE-READINESS.md), [backup implementation/runbook](../infra/backup/README.md). Local defects fixed; candidate publication, provider/admin acceptance, fresh scheduled backup/offsite evidence and actual restore drill remain. |
-| M2 visual implementation: R05 | yes / offline+H / yes / H / H, current open | [Journey references](design-briefs/design_handoff_journey_alpha/README.md), merged #67, current 53 offline checks. Preserve design; accept current desktop/mobile/tablet auth/dashboard/builder/sheet flows and accessibility rather than rebuild. |
+| M2 visual implementation: R05 | yes / offline+H / yes / H / H, current open | [Journey references](design-briefs/design_handoff_journey_alpha/README.md), merged #67 and historical 53 offline checks. Current desktop/mobile/tablet auth/dashboard/builder/sheet journeys and accessibility still require acceptance after later gameplay changes. Preserve the established design. |
 | M3 gameplay: R06-R09 | P / local+model+H / P / H / open | [Gameplay plan](specs/2026-07-15-m3-gameplay-foundations-plan.md), [durable gaps/contract](specs/2026-10-11-durable-roll-state-contract.md), [equipment evidence](handoffs/2026-10-11-equipment-postgres-wasm.md). Core play is present; atomic equipment/full-trigger/concurrency and durable roll/state outcomes remain. Fresh real builder-to-play acceptance required. |
 | M4 homebrew/import/compendium: R10-R15 | P / local+H / P / H subset / open | [Spell](specs/2026-07-20-m4-private-homebrew-spell.md), [feat](specs/2026-07-21-m4-private-homebrew-feat.md), [background](specs/2026-07-21-m4-background-authoring-sharing.md), [compendium](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [MPMB parity](specs/2026-07-21-mpmb-representative-parity.md). Remaining authoring families, magic-item integration, sharing/custom-type decisions and supported importer coverage; don't declare whole M4 shipped. |
-| M5 monsters/library NPCs/companions/sidekicks: R16-R19 | P / monster, NPC and template local / P / - / open | [Roadmap M5](ROADMAP.md), [monster plan](specs/2026-10-12-monster-foundation-plan.md), [NPC plan](specs/2026-10-12-private-npc-authoring-plan.md), [companion plan](specs/2026-10-12-companion-library-foundation-plan.md). Monster/NPC Library and private authoring are integrated with offline acceptance. Companion templates are integrated with 22 offline cases at `414f49e`; sidekicks remain unimplemented. Imports, DM instances and real authority remain; existing relationships retain their identity. |
+| M5 monsters/library NPCs/companions/sidekicks: R16-R19 | P / local+model / P / - / open | [Roadmap M5](ROADMAP.md), [monster plan](specs/2026-10-12-monster-foundation-plan.md), [NPC plan](specs/2026-10-12-private-npc-authoring-plan.md), [companion plan](specs/2026-10-12-companion-library-foundation-plan.md). Library/private authoring and read-only companion templates have local acceptance. DM monster instances are staged/default-off with 134 focused passes and three UNVERIFIED stress requirements; their 44 browser cases and native authority remain open. Playable NPC actors, companion lifecycle/transformations/summons and sidekicks remain. Monster/NPC imports are paused; existing story relationships retain their identity. |
 | M5.5 campaigns + narrative: R20 | foundation / local+H / yes / H / H, current open | [Campaign design](specs/2026-07-19-campaign-foundation-design.md), [backlinks](specs/2026-07-19-campaign-backlinks-design.md), [timeline/relationships](specs/2026-07-19-character-timeline-relationships.md). Reaccept real DM/player membership, private/shared content, copy/assignment and revision conflicts on candidate. Optional publishing/presence remain S3/S5 decisions. |
-| M6 advanced spellcasting: R21 | P / some local / P / H subset / open | [Arcane Recovery implementation](../lib/rest/arcane-recovery.ts), [its tests](../tests/rest/arcane-recovery.test.ts), roadmap M6. Recovery has code; inventory Mystic Arcanum, Spell Mastery, Signature Spells and Eldritch Knight/Arcane Trickster progression before adding missing UI/rules. |
+| M6 advanced spellcasting: R21 | P / local+model / P / H subset / open | [Inventory](handoffs/2026-10-11-m6-advanced-spellcasting-inventory.md), [Arcane Recovery](../lib/rest/arcane-recovery.ts), [disabled Arcanum source](handoffs/2026-10-13-arcanum-first-selection-source.md). Slots/source/subclass math and recovery have local acceptance. Arcanum storage/read/recovery and unconditional command refusal passed 157 focused tests; positive selection issuance, exact payment/casting, stable earned-feature lineage, copy and native authority remain open. Spell Mastery and Signature Spells remain unimplemented. |
 | M7 PDF import: R22 | -/U / - / - / - / paused S4 | Victor paused M7 on 2026-10-13. Retain [Roadmap M7](ROADMAP.md) and [import architecture](../lib/import) requirements for later resume: supported extraction -> review/repair -> immutable commit -> calculation parity. No current implementation or layout prompting. |
 | M8 public beta/community launch: R23-R27 | P / P / P / splash only+H / open | Roadmap M8, [release checklist](RELEASE-READINESS.md), [alpha evidence](alpha). Current performance/accessibility/onboarding/feedback/ops audits, rights/licensing/scope and actual reviewed deployment/auth acceptance remain. Splash readiness is not app launch. |
 
