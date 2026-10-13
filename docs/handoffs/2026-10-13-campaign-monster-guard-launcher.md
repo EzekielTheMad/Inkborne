@@ -271,3 +271,73 @@ before TerminateProcess on the held object. Equality/exhausted reservation refus
 without irreversible action. The bounded wait still uses the same object and
 <=2s allowance. No descriptor/status/runtime/termination/Node/compiler/test
 execution occurred; exact source re-review precedes any runtime release.
+
+## Source correction after the preserved failed native measurement
+
+Root's second guard-only run1791929826036-149208 used the approved af7 launcher,
+7bd probe and c499 inherited input binder. The receipt records sampler native
+exit1 failures at22:17:28/29, then the probe's cooperative failure during builtin
+raw input binding. Probe151260 exited1 at22:17:29.706; child close never arrived.
+The old launcher watched close alone, attempted later cancellation of the absent
+probe, safely refused with actions0, and remained a supervisor awaiting close.
+The native observer's precise original predicate is UNKNOWN: command() discarded
+stderr, so this correction must not label that failure as an ancestry/provider
+cause or loosen a predicate to make the next run pass.
+
+Root preserved the135ms/actions0 one-off parser refusal and reviewed its finite
+PS7 integer/timestamp/PID-reuse correction. Root reports the exact supervisor149208
+held-handle cleanup issued one action after fresh52-original absence/no descendant/
+listener checks; its fresh native creation FILETIME134364034259819842 lay inside
+the original CIM microsecond interval, not a retrospectively recorded initial
+FILETIME. Independent root22:25:47 readback found all55 originals naturally gone.
+These are failed-run hygiene facts, not guard measurement/phase/browser acceptance.
+Original source/receipts and ignored one-off scripts remain preserved.
+
+Only this launcher and this handoff change. Native observation failures now retain
+a finite structured reason/phase envelope, executable basename, sanitized exit-code
+classification and captured stderr byte count/SHA256/buffer bound. Raw stderr is
+never written: it can contain command arguments, unrelated command lines or other
+data. Recognized reasons cover the ORIGINAL duplicate/root-parent/missing-parent/
+changed-parent/older-orphan/cycle predicates and the new absence-birth check.
+Unrecognized OS/provider/projection failures remain classified unknown/fallback;
+no guessed diagnosis. Normal/native predicates remain strict. Captured hashes/counts
+describe the bounded callback buffer, not guaranteed complete native stderr after
+timeout or maxBuffer failure.
+
+Actual child exit is recorded separately from close and stops sampling and new
+cancellation scheduling. A pending cancellation rechecks exit after awaited samples
+and again immediately before native spawn; an already started native action retains
+the original stable-handle/root-alive restrictions. No absent-child fallback or new
+termination adapter is introduced. Existing native120s first-stop reservation and
+whole900000ms cap are unchanged.
+
+Exited-child close drain ends at min(T+900000,exit+40000,FIRSTstop+120000 when stopped).
+A normal close gets at most2000ms inside that same window. Stalled closure fails
+the run; existing sample/IPC evidence awaits, one fresh native census and persistence
+all consume the same end without resets. A bounded batch independently compares
+the original child and every recorded descendant's exact PID/native UTC birth;
+historical PID reuse is represented by separate PID/birth identities. The fresh
+census still refuses duplicate current PIDs. A current reused PID yields birth
+metadata only; no unrelated command line is projected. Every original must be absent
+and known PID listeners empty. Missing birth, malformed/truncated/reordered batch,
+present original, provider failure, late completion or exhausted time refuses release.
+
+ONLY after that proof and a positive residual check following persistence may the
+launcher destroy its own child stdout/stderr streams and disconnect its local IPC
+channel. It waits for actual close under the remaining original drain deadline.
+No OS process is terminated, live child detached/unref'd or failed outcome repaired.
+If absence/closure cannot be proved, the receipt explicitly records supervisor HOLD
+and awaits later natural close/root-owned exact cleanup; it cannot guarantee cleanup
+or use a fresh budget. Retained close/exit alone cannot establish full guard success.
+
+Verification for this correction is SOURCE ONLY. No Node/npm/native observer,
+compiler, cleanup, test, browser, measurement, descriptor generation or third probe
+was executed by this worker. Needed independent review controls: exact structured
+refusals vs arbitrary stderr redaction; nonzero exit/no close with original absence;
+remaining recorded child/refused provider/late evidence requiring HOLD; normal close
+without false success; exit racing scheduled cancellation; one40000ms end and original
+FIRSTstop/whole caps. Actual runtime and bounded native availability remain UNVERIFIED.
+The six M5 harness files, probe, inherited helpers, producer/form/fixture, assets,
+package/lock, M1 source and staged SQL remain byte-unchanged. Root owns reviewed
+checkpoint/descriptor updates and any later finite runtime release; no third probe
+or measured status is authorized by this source handoff.

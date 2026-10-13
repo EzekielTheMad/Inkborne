@@ -15,18 +15,21 @@ const relativeLauncher = "scripts/launch-campaign-monster-guard-measurement.mjs"
 const output = path.join(upstream, "test-results/campaign-monster-guard-launcher", `run-${startedAt}-${process.pid}`);
 const limits = { logBytes: 4 * 1024 * 1024, ipcMessageBytes: 64 * 1024 * 1024, ipcTotalBytes: 128 * 1024 * 1024, ipcMessages: 8, identities: 4096, nativeOutputBytes: 4 * 1024 * 1024, diskReceiptBytes: 16 * 1024 * 1024 };
 const cancellationBudget = { graceMs: 20000, nativeMs: 60000, readbackMs: 40000, targetCount: 16, waitPerTargetMs: 2000 };
+const closeBudget = { naturalMs: 2000, wholeDrainMs: 40000 };
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const result = { kind: "pending-unrendered-guard-launcher-v1", acceptance: false, rendered: false, state: "preparing",
   startedUtc: new Date(startedAt).toISOString(), deadlineUtc: new Date(deadline).toISOString(), stopUtc: new Date(stopAt).toISOString(),
   limits, worker, root: upstream, phases: [], failures: [], observed: [], observers: [], ipc: [], readbacks: [], logs: { receivedBytes: 0, retainedBytes: 0, overflow: false },
   nativeBound: "UNVERIFIED: asynchronous observer availability/speed and short-lived identity coverage require actual observation",
   completeness: "sampled identities; never used as cancellation graph authority", ownExitReadback: "root supervisor must read back launcher exit", forcePolicy: "FAILED-guard-only-handle-policy-v2", cancellationBudget };
-let ready = false, stopRequested = false, child, childIdentity, selfIdentity, boot, childOutput, childResult, closed = false;
+let ready = false, stopRequested = false, child, childIdentity, selfIdentity, boot, childOutput, childResult, closed = false, exited = false;
 let sampler, sampling = false, sampleWork = Promise.resolve(), ipcChain = Promise.resolve(), writes = Promise.resolve(), ipcBytes = 0, ipcCount = 0;
 const logHashes = { stdout: createHash("sha256"), stderr: createHash("sha256") };
-let observationIdentity, resolveClose;
+let observationIdentity, resolveClose, resolveExit, exitedAt, settlementWork;
 let stopRequestedAt, cancellationTimer, cancellationStarted = false, cancellationWork = Promise.resolve();
 const childClosed = new Promise(resolve => { resolveClose = resolve; });
+const childExited = new Promise(resolve => { resolveExit = resolve; });
+const nativeReasons = new Set(["ambiguous-pid", "root-parent-unproved", "ancestry-missing", "ancestry-parent-changed", "older-orphan", "ancestry-cycle", "absence-birth-unavailable", "provider-or-projection-error"]);
 
 function remaining() { return deadline - Date.now(); }
 async function persist() {
@@ -35,7 +38,7 @@ async function persist() {
   await writes;
 }
 async function fail(label, error) {
-  result.failures.push({ label, message: error?.message ?? String(error), atUtc: new Date().toISOString() });
+  result.failures.push({ label, message: error?.message ?? String(error), ...(error?.nativeDiagnostic ? { nativeDiagnostic: error.nativeDiagnostic } : {}), atUtc: new Date().toISOString() });
   result.state = "failed-or-uncertain"; process.exitCode = 1;
   requestStop(label); await persist();
 }
@@ -43,7 +46,7 @@ function requestStop(reason) {
   stopRequested = true;
   stopRequestedAt ??= Date.now();
   result.stopRequested ??= { reason, atUtc: new Date().toISOString() };
-  if (child?.connected) {
+  if (child?.connected && !exited) {
     try { child.send({ type: "stop" }, error => { if (error) { result.stopDeliveryFailure = error.message; void persist(); } }); }
     catch (error) { result.stopDeliveryFailure = error.message; }
   }
@@ -67,7 +70,25 @@ function command(executable, args, maxBuffer = limits.nativeOutputBytes, command
   assert.ok(Number.isSafeInteger(commandDeadline) && available > 0, "No remaining scoped deadline for native command");
   return new Promise((resolve, reject) => execFile(executable, args,
     { cwd: upstream, windowsHide: true, timeout: Math.min(30000, available), maxBuffer, encoding: "buffer" },
-    (error, stdout) => { if (error) reject(Error(`${path.basename(executable)} failed (${error.code ?? error.name}); bounded native observation unavailable`));
+    (error, stdout, stderr) => { if (error) {
+      const bytes = Buffer.isBuffer(stderr) ? stderr : Buffer.alloc(0);
+      let classification = "unclassified-native-error", nativePhase = null;
+      // Never retain arbitrary native error text: it can include arguments or
+      // unrelated command lines. Only our finite structured envelope is admitted.
+      if (bytes.length > 0 && bytes.length <= 1024) {
+        try {
+          const refusal = JSON.parse(bytes.toString("utf8").trim());
+          if (refusal.kind === "inkborne-native-observation-refusal-v1" && nativeReasons.has(refusal.reason)
+            && ["process-census", "owned-ancestry", "projection-and-resources"].includes(refusal.phase)
+            && Object.keys(refusal).length === 3) { classification = refusal.reason; nativePhase = refusal.phase; }
+        } catch { /* Hash/count remain useful; raw text is deliberately omitted. */ }
+      }
+      const code = Number.isSafeInteger(error.code) ? error.code : ["ETIMEDOUT", "ENOENT", "EACCES", "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"].includes(error.code) ? error.code : "native-error";
+      const rejected = Error(`${path.basename(executable)} failed (${code}); native refusal: ${classification}`);
+      rejected.nativeDiagnostic = { executable: path.basename(executable), code, classification, nativePhase,
+        stderrCapturedBytes: bytes.length, stderrCapturedSha256: sha(bytes), capturedBufferBound: maxBuffer };
+      reject(rejected);
+    }
       else if (!Buffer.isBuffer(stdout)) reject(Error("Expected raw native output bytes")); else resolve(stdout); }));
 }
 async function git(checkout, args) { return command("git", ["-C", checkout, ...args]); }
@@ -150,19 +171,30 @@ async function bootstrap() {
   }
   return { descriptorPath: selected, descriptorSha256: digest, descriptor, proof, workerHead: await text(worker, ["rev-parse", "HEAD"]) };
 }
-async function osSnapshot(pid, expectedBirth = null, observationDeadline = deadline) {
+async function osSnapshot(pid, expectedBirth = null, observationDeadline = deadline, absenceIdentities = []) {
   assert.ok(Number.isSafeInteger(observationDeadline) && Math.min(deadline, observationDeadline) > Date.now(), "Observation deadline exhausted");
   assert.ok(Number.isSafeInteger(pid) && pid > 0);
   const birthPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?Z$/;
   if (expectedBirth !== null) assert.match(expectedBirth, birthPattern);
+  assert.ok(Array.isArray(absenceIdentities) && absenceIdentities.length <= limits.identities);
+  const absenceKeys = new Set();
+  for (const identity of absenceIdentities) {
+    assert.ok(Number.isSafeInteger(identity.pid) && identity.pid > 0); assert.match(identity.birthUtc, birthPattern);
+    const key = `${identity.pid}/${identity.birthUtc}`; assert.ok(!absenceKeys.has(key)); absenceKeys.add(key);
+  }
+  const absenceSource = absenceIdentities.map(identity => `@{pid=${identity.pid};birth='${identity.birthUtc}'}`).join(",");
   const birthCheck = expectedBirth === null ? "$true" : `$target.CreationDate.ToUniversalTime().ToString('o') -eq '${expectedBirth}'`;
   const code = `$ErrorActionPreference='Stop'
+function Refuse([string]$reason){throw ('INKBORNE_NATIVE_REFUSAL:'+ $reason)}
+$phase='process-census'
+try{
 $rows=@(Get-CimInstance Win32_Process);$byId=@{}
-foreach($row in $rows){$key=[int]$row.ProcessId;if($byId.ContainsKey($key)){throw 'Ambiguous current PID snapshot'};$byId[$key]=$row}
+foreach($row in $rows){$key=[int]$row.ProcessId;if($byId.ContainsKey($key)){Refuse 'ambiguous-pid'};$byId[$key]=$row}
 $target=$byId[${pid}];$matches=$target -and (${birthCheck});$observer=$byId[[int]$PID];$owned=@{}
+$phase='owned-ancestry'
 if($matches){
   $rootParent=$byId[[int]$target.ParentProcessId]
-  if(!$target.CreationDate -or !$target.CommandLine -or !$rootParent -or !$rootParent.CreationDate -or !$rootParent.CommandLine -or $rootParent.CreationDate.ToUniversalTime().Ticks -gt $target.CreationDate.ToUniversalTime().Ticks){throw 'Unproved current root parent identity'}
+  if(!$target.CreationDate -or !$target.CommandLine -or !$rootParent -or !$rootParent.CreationDate -or !$rootParent.CommandLine -or $rootParent.CreationDate.ToUniversalTime().Ticks -gt $target.CreationDate.ToUniversalTime().Ticks){Refuse 'root-parent-unproved'}
   $owned[[int]$target.ProcessId]=$target
   do{
     $added=$false
@@ -170,20 +202,37 @@ if($matches){
       $rowId=[int]$row.ProcessId;$parentId=[int]$row.ParentProcessId
       if($owned.ContainsKey($parentId) -and !$owned.ContainsKey($rowId)){
         $parent=$byId[$parentId];$admittedParent=$owned[$parentId]
-        if(!$parent -or !$parent.CreationDate -or !$parent.CommandLine -or !$row.CreationDate -or !$row.CommandLine -or $rowId -eq $parentId){throw 'Missing current ancestry identity'}
-        if($parent.ParentProcessId -ne $admittedParent.ParentProcessId -or $parent.CreationDate.ToUniversalTime().Ticks -ne $admittedParent.CreationDate.ToUniversalTime().Ticks -or $parent.CommandLine -ne $admittedParent.CommandLine){throw 'Changed current ancestry parent'}
-        if($parent.CreationDate.ToUniversalTime().Ticks -gt $row.CreationDate.ToUniversalTime().Ticks){throw 'Older orphan cannot be task-owned'}
+        if(!$parent -or !$parent.CreationDate -or !$parent.CommandLine -or !$row.CreationDate -or !$row.CommandLine -or $rowId -eq $parentId){Refuse 'ancestry-missing'}
+        if($parent.ParentProcessId -ne $admittedParent.ParentProcessId -or $parent.CreationDate.ToUniversalTime().Ticks -ne $admittedParent.CreationDate.ToUniversalTime().Ticks -or $parent.CommandLine -ne $admittedParent.CommandLine){Refuse 'ancestry-parent-changed'}
+        if($parent.CreationDate.ToUniversalTime().Ticks -gt $row.CreationDate.ToUniversalTime().Ticks){Refuse 'older-orphan'}
         $owned[$rowId]=$row;$added=$true
       }
     }
   }while($added)
-  if($owned.ContainsKey([int]$target.ParentProcessId)){throw 'Ancestry cycle refused'}
+  if($owned.ContainsKey([int]$target.ParentProcessId)){Refuse 'ancestry-cycle'}
 }
 # Project command lines ONLY after the whole admitted graph passes identity and
 # native parent<=child birth checks. Reused root projects birth metadata only.
 $project={param($p)@{pid=$p.ProcessId;parentPid=$p.ParentProcessId;birthUtc=$p.CreationDate.ToUniversalTime().ToString('o');command=$p.CommandLine}}
+$phase='projection-and-resources'
+$requests=@(${absenceSource});$absence=@()
+foreach($request in $requests){
+  $current=$byId[[int]$request.pid]
+  if($current -and !$current.CreationDate){Refuse 'absence-birth-unavailable'}
+  $birth=$(if($current){$current.CreationDate.ToUniversalTime().ToString('o')}else{$null})
+  $expectedTicks=[DateTimeOffset]::Parse($request.birth,[Globalization.CultureInfo]::InvariantCulture,[Globalization.DateTimeStyles]::None).UtcDateTime.Ticks
+  $absence+=@(@{pid=$request.pid;expectedBirthUtc=$request.birth;originalIdentityAbsent=(!$current -or $current.CreationDate.ToUniversalTime().Ticks -ne $expectedTicks);currentBirthUtc=$birth})
+}
+$knownListeners=@()
+if($requests.Count){$knownIds=@($requests|ForEach-Object {[int]$_.pid});$knownListeners=@(Get-NetTCPConnection -State Listen -ErrorAction Stop|Where-Object {$knownIds -contains [int]$_.OwningProcess}|Select-Object OwningProcess,LocalAddress,LocalPort)}
 $all=@(Get-Process)
-@{target=$(if($matches){&$project $target}elseif($target){@{pid=$target.ProcessId;birthUtc=$target.CreationDate.ToUniversalTime().ToString('o')}}else{$null});observer=$(if($observer){&$project $observer}else{$null});descendants=@($rows|Where-Object {$owned.ContainsKey([int]$_.ProcessId)}|ForEach-Object {&$project $_});listeners=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue|Where-Object {$owned.ContainsKey([int]$_.OwningProcess)}|Select-Object OwningProcess,LocalAddress,LocalPort);resources=@{timeUtc=(Get-Date).ToUniversalTime().ToString('o');processCount=$all.Count;workingSetBytes=($all|Measure-Object WorkingSet64 -Sum).Sum;cpuSeconds=($all|Measure-Object CPU -Sum).Sum;listenerCount=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue).Count}}|ConvertTo-Json -Depth 8 -Compress`;
+@{target=$(if($matches){&$project $target}elseif($target){@{pid=$target.ProcessId;birthUtc=$target.CreationDate.ToUniversalTime().ToString('o')}}else{$null});observer=$(if($observer){&$project $observer}else{$null});descendants=@($rows|Where-Object {$owned.ContainsKey([int]$_.ProcessId)}|ForEach-Object {&$project $_});listeners=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue|Where-Object {$owned.ContainsKey([int]$_.OwningProcess)}|Select-Object OwningProcess,LocalAddress,LocalPort);absenceReadbacks=$absence;knownPidListeners=$knownListeners;resources=@{timeUtc=(Get-Date).ToUniversalTime().ToString('o');processCount=$all.Count;workingSetBytes=($all|Measure-Object WorkingSet64 -Sum).Sum;cpuSeconds=($all|Measure-Object CPU -Sum).Sum;listenerCount=@(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue).Count}}|ConvertTo-Json -Depth 8 -Compress
+}catch{
+  $reason='provider-or-projection-error';$message=$_.Exception.Message
+  if($message.StartsWith('INKBORNE_NATIVE_REFUSAL:')){$reason=$message.Substring(24)}
+  [Console]::Error.WriteLine((@{kind='inkborne-native-observation-refusal-v1';reason=$reason;phase=$phase}|ConvertTo-Json -Compress))
+  exit 7
+}`;
   const value = JSON.parse((await command("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", code], limits.nativeOutputBytes, observationDeadline)).toString("utf8"));
   assert.ok(Date.now() < Math.min(deadline, observationDeadline), "Observation completed after its scoped deadline");
   assert.ok(value.observer?.command && value.observer?.birthUtc); assert.equal(value.observer.parentPid, process.pid); assert.match(value.observer.birthUtc, birthPattern);
@@ -197,7 +246,7 @@ $all=@(Get-Process)
   return value;
 }
 async function sample() {
-  if (sampling || !childIdentity || closed || remaining() <= 0) return;
+  if (sampling || !childIdentity || closed || exited || remaining() <= 0) return;
   sampling = true;
   try {
     const value = await osSnapshot(childIdentity.pid, childIdentity.birthUtc);
@@ -209,6 +258,74 @@ async function sample() {
     await persist();
   } catch (error) { await fail("sampled-os-observation", error); }
   finally { sampling = false; }
+}
+async function boundedAwait(promise, end, label) {
+  assert.ok(Number.isSafeInteger(end) && end > Date.now(), `${label}: no remaining scoped time`);
+  let timer;
+  try {
+    return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(Error(`${label}: scoped wait exhausted`)), end - Date.now()); })]);
+  } finally { clearTimeout(timer); }
+}
+async function closeBefore(end) {
+  if (closed) return true;
+  let timer;
+  try { return await Promise.race([childClosed.then(() => true), new Promise(resolve => { timer = setTimeout(() => resolve(false), Math.max(0, end - Date.now())); })]); }
+  finally { clearTimeout(timer); }
+}
+function settleChild() {
+  settlementWork ??= (async () => {
+    await Promise.race([childClosed, childExited]);
+    if (closed) return;
+    // Exit is separate from stdio/IPC closure. It never certifies a measurement
+    // or licenses termination of an absent process. Close drain/proof is charged
+    // to the original deadline and, if stopped, FIRSTstop+120s.
+    const end = Math.min(deadline, exitedAt + closeBudget.wholeDrainMs, stopRequestedAt === undefined ? deadline : stopRequestedAt + 120000);
+    result.closeDrain = { exitedAtUtc: new Date(exitedAt).toISOString(), endUtc: new Date(end).toISOString(), closeBudget, acceptance: false };
+    try {
+      assert.ok(exited && result.exit && childIdentity, "Exited-child identity is missing; release refused");
+      if (await closeBefore(Math.min(end - 5000, Date.now() + closeBudget.naturalMs))) {
+        assert.ok(Date.now() < end, "Natural close completed after close-drain deadline"); return;
+      }
+      await fail("exited-child-close-stalled", Error("Exit observed but stdio/IPC did not close normally; run remains failed"));
+      // No extra grace or 40s reset after the failure/persistence wait.
+      assert.ok(Date.now() < end, "No residual exited-child drain budget");
+      await boundedAwait(sampleWork, end, "existing sample completion before dead-child proof");
+      await boundedAwait(ipcChain, end, "existing IPC evidence before dead-child proof");
+      if (closed) return;
+      const identities = [], seen = new Set();
+      for (const identity of [childIdentity, ...result.observed]) {
+        const key = `${identity.pid}/${identity.birthUtc}`;
+        if (!seen.has(key)) { seen.add(key); identities.push({ pid: identity.pid, birthUtc: identity.birthUtc }); }
+      }
+      const proof = await osSnapshot(childIdentity.pid, childIdentity.birthUtc, end, identities);
+      assert.equal(proof.originalIdentityAbsent, true);
+      assert.ok(Array.isArray(proof.absenceReadbacks) && proof.absenceReadbacks.length === identities.length);
+      for (let index = 0; index < identities.length; index += 1) {
+        const expected = identities[index], actual = proof.absenceReadbacks[index];
+        assert.equal(actual.pid, expected.pid); assert.equal(actual.expectedBirthUtc, expected.birthUtc); assert.equal(actual.originalIdentityAbsent, true);
+      }
+      assert.deepEqual(proof.knownPidListeners, []);
+      result.closeDrain.absenceProof = { readbacks: proof.absenceReadbacks, knownPidListeners: proof.knownPidListeners, observedAtUtc: proof.resources.timeUtc };
+      await persist();
+      assert.ok(exited && Date.now() < end, "Dead-child release after proof persistence exhausted scoped deadline");
+      // This closes only the launcher's local pipe/channel objects after fresh
+      // original child + recorded descendant absence. No OS process is killed,
+      // no live child is detached/unref'd, and failed status cannot be repaired.
+      result.closeDrain.localHandleRelease = { atUtc: new Date().toISOString(), stdout: Boolean(child.stdout), stderr: Boolean(child.stderr), ipc: child.connected };
+      child.stdout?.destroy(); child.stderr?.destroy();
+      if (child.connected) child.disconnect();
+      assert.equal(await closeBefore(end), true, "Dead-child local handles did not close within scoped drain");
+      assert.ok(Date.now() < end); result.closeDrain.closedAfterAbsentHandleRelease = true; await persist();
+    } catch (error) {
+      result.cleanupUncertain = error.message;
+      result.supervisedHold = { reason: "Exited-child absence/close drain unproved; no further release/native action", atUtc: new Date().toISOString(), endUtc: new Date(end).toISOString() };
+      await fail("exited-child-close-drain-unproved", error);
+      // Explicit supervisor HOLD, not a detached live child or guessed cleanup.
+      // Only a later natural close/root-owned exact cleanup can end this wait.
+      await childClosed;
+    }
+  })();
+  return settlementWork;
 }
 function childEnvironment() {
   const environment = {};
@@ -383,6 +500,7 @@ finally{foreach($lease in $leases.Values){$lease.Dispose()}}
 
 async function nativeGuard(mode, maximumMs, scopedEnd = deadline) {
   assert.ok(childIdentity && boot && remaining() > 0);
+  if (mode === "cancel") assert.equal(exited, false, "No cancellation after actual child exit");
   assert.ok(Number.isSafeInteger(scopedEnd));
   const actionDeadline = Math.min(deadline, scopedEnd, Date.now() + maximumMs);
   assert.ok(actionDeadline > Date.now());
@@ -395,6 +513,7 @@ async function nativeGuard(mode, maximumMs, scopedEnd = deadline) {
   await new Promise((resolve, reject) => {
     const spawnRemaining = actionDeadline - Date.now();
     assert.ok(spawnRemaining > 0, "No residual native action budget after evidence persistence");
+    if (mode === "cancel") assert.equal(exited, false, "Actual child exit before native cancellation spawn");
     const job = execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", nativeGuardProgram],
       { cwd: upstream, windowsHide: true, timeout: Math.min(maximumMs, spawnRemaining), maxBuffer: 1024 * 1024, encoding: "buffer" },
       (error) => { nativeJob.completed = true; nativeJob.errorCode = error?.code ?? null; if (error) reject(Error("Native guard refused, timed out or partially failed; retained events are not cleanup acceptance")); else resolve(); });
@@ -423,7 +542,7 @@ async function nativeGuard(mode, maximumMs, scopedEnd = deadline) {
   return events;
 }
 function scheduleCancellation() {
-  if (!stopRequested || cancellationStarted || cancellationTimer || !childIdentity?.creationFileTime || closed) return;
+  if (!stopRequested || cancellationStarted || cancellationTimer || !childIdentity?.creationFileTime || closed || exited) return;
   const due = stopRequestedAt + cancellationBudget.graceMs;
   cancellationTimer = setTimeout(() => {
     cancellationTimer = undefined;
@@ -431,11 +550,12 @@ function scheduleCancellation() {
   }, Math.max(0, due - Date.now()));
 }
 async function cancelFailedGuard() {
-  if (closed || cancellationStarted) return;
+  if (closed || exited || cancellationStarted) return;
   assert.ok(Number.isSafeInteger(stopRequestedAt));
   const cancellationEnd = Math.min(deadline, stopRequestedAt + 120000);
   result.cancellationWindow = { firstStopUtc: new Date(stopRequestedAt).toISOString(), endUtc: new Date(cancellationEnd).toISOString() };
   cancellationStarted = true; clearInterval(sampler); await sampleWork;
+  if (exited || closed) { result.cancellationSkipped = "Actual child exit during existing sample completion"; await persist(); return; }
   assert.ok(stopRequested && Date.now() >= stopRequestedAt + cancellationBudget.graceMs);
   const nativeEnd = Math.min(cancellationEnd - cancellationBudget.readbackMs, Date.now() + cancellationBudget.nativeMs);
   const nativeAllowance = nativeEnd - Date.now();
@@ -471,7 +591,12 @@ try {
   result.fork = { pid: child.pid, parentPid: process.pid, commandArguments: [probe, "--shared-deadline", String(deadline)], cwdKnownFromLaunch: worker, atUtc: new Date().toISOString() };
   child.stdout.on("data", bytes => log("stdout", bytes)); child.stderr.on("data", bytes => log("stderr", bytes));
   child.on("error", error => { void fail("child-error", error); });
-  child.on("exit", (code, signal) => { result.exit = { code, signal, atUtc: new Date().toISOString() }; void persist(); });
+  child.on("exit", (code, signal) => {
+    exited = true; exitedAt = Date.now(); clearInterval(sampler); clearTimeout(cancellationTimer); cancellationTimer = undefined;
+    result.exit = { code, signal, atUtc: new Date(exitedAt).toISOString() }; resolveExit();
+    if (code !== 0 || signal) void fail("child-exit", Error("Actual child exited unsuccessfully; cancellation of an exited child is forbidden"));
+    else void persist();
+  });
   child.on("close", (code, signal) => { closed = true; result.close = { code, signal, atUtc: new Date().toISOString() }; resolveClose(); });
   // IPC may arrive during independent native capture; queue it behind capture,
   // never substitute the child's reported identity for fresh parent observation.
@@ -494,8 +619,8 @@ try {
   scheduleCancellation();
   result.childProcess = { ...childIdentity, cwdKnownFromLaunch: worker, capturedUtc: new Date().toISOString() };
   for (const row of initial.descendants) result.observed.push({ ...row, cwdKnownFromLaunch: row.pid === child.pid ? worker : null, capturedUtc: new Date().toISOString() });
-  sampler = setInterval(() => { if (!sampling) sampleWork = sample(); }, 2000); await persist();
-  await childClosed; clearInterval(sampler); await sampleWork; await ipcChain; await writes;
+  if (!exited && !closed) sampler = setInterval(() => { if (!sampling && !exited) sampleWork = sample(); }, 2000); await persist();
+  await settleChild(); clearInterval(sampler); await sampleWork; await ipcChain; await writes;
   assert.ok(remaining() > 0, "Child completed after whole deadline; native cleanup remains unproved");
   assert.ok(result.exit?.code === 0 && result.close?.code === 0 && !result.exit.signal && !result.close.signal);
   assert.ok(childResult && childOutput); assert.equal(childResult.state, "unrendered-guard-components-complete");
@@ -526,13 +651,13 @@ try {
 finally {
   clearInterval(sampler);
   if (child && !closed) {
-    requestStop("launcher-failure"); result.cleanupUncertain = "Child has not closed; only proved failed-run handle cancellation is permitted. Refused/stuck child remains supervised; no guaranteed cleanup.";
+    requestStop("launcher-failure"); result.cleanupUncertain ??= exited
+      ? "Actual child exit is recorded; local close drain requires fresh absence, otherwise supervisor HOLD"
+      : "Live child has not closed; only proved failed-run handle cancellation is permitted. Refused/stuck child remains supervised; no guaranteed cleanup.";
     await persist();
-    // Never detach/unref a live child and call cleanup complete. If it is stuck,
-    // this await can remain live if ownership/handle cancellation refuses.
-    // No new native calls after
-    // the deadline; late natural close is retained but cannot repair the gate.
-    await childClosed;
+    // Actual exit uses bounded close drain + independent absence first. A live
+    // or absence-unproved child remains explicitly supervised; no detach/unref.
+    await settleChild();
     result.lateClose = result.close; result.state = "failed-or-uncertain"; process.exitCode = 1;
   }
   clearTimeout(stopTimer); clearTimeout(deadlineTimer); clearTimeout(cancellationTimer);
