@@ -1,7 +1,8 @@
 # R16/M5 — campaign-owned DM monster instances
 
-2026-10-13, PLAN ONLY. Sole documentation writer in r12-passive-feature-worker,
-clean basis53b69fc85afa537fd3582c776a3bd9534373ee38. Frozen source inventory ONLY:
+2026-10-13, PLAN ONLY. Review amendment over frozen c8f2b4c; only this spec and
+its handoff changed. Sole documentation writer in r12-passive-feature-worker,
+original basis53b69fc85afa537fd3582c776a3bd9534373ee38. Frozen source inventory ONLY:
 d3f5ed63778386246b6c1b440dd820a346ca92af, read through Git objects while root owns
 full check. No root/worktree source writes, implementation, dependencies, gates,
 network, SQL/runtime, credentials or new background work. Independent challenge
@@ -37,7 +38,7 @@ Other included M5 types/instances and real acceptance remain open, not dropped.
 | `components/compendium/monster-stat-block.tsx` | Takes only MonsterData, displays declared AC/HP/actions/saves/etc, escapes untrusted text, preserves ordered entries/zero modifiers. No current HP override or command execution belongs inside it. |
 | `20260720171627_content_version_pinning_and_rls.sql` | Immutable snapshot envelope and source version; definition owner FK now ON DELETE CASCADE and version follows definition deletion. A new catalog FK would tie campaign instance lifetime to another owner's account/content. |
 | Existing character can_use_content_version | Character-specific authorization/fallback; cannot invent a monster character/ref or use historical pin-read permission as fresh instance acquisition. |
-| `supabase/staged/item-campaign-sharing.sql` | Only spell/feat/background/item sharing support; no monster sharing/API expansion is inferred. Existing legitimate shared source may be admitted only for this exact campaign. |
+| `supabase/staged/item-campaign-sharing.sql` | Only spell/feat/background/item sharing producers exist; no monster sharing RPC exists and authenticated content_shares DML is revoked. First acquisition permits only platform or current-owner personal monsters, even if a shared monster is generally readable. |
 
 No new human product decision blocks this first child. Current-owner DM control,
 historical snapshot continuity, explicit manual HP and reversible archive follow
@@ -81,11 +82,14 @@ Native delete/history guard accepts cascade ONLY when the actual campaign is abs
 under an internal all-row read; caller RLS invisibility cannot manufacture absence.
 Campaign-delete RI order/rollback and profile lifecycle need actual G2/G3 proof.
 
-Existing source edits/revocation/retirement/catalog-owner deletion never rewrite
+Existing source edits/retirement/catalog deletion never rewrite
 an accepted instance or its embedded source. The current campaign owner controls
 read/edit/replay through campaign authority, not original created_by. Ordinary
 owner transfer is currently prohibited; any later accepted transfer must explicitly
 carry these DM-only assets as part of that separate lifecycle contract.
+Shared-source acquisition and cross-owner account lifecycle remain future work,
+with their own entitlement/lock/cleanup acceptance; no positive shared-source or
+foreign catalog-owner account-deletion fixture is claimed by this first profile.
 
 ## Source admission is a prerequisite, not caller attestation
 
@@ -95,23 +99,29 @@ nonempty effect. Effectful templates remain readable in the existing Library but
 receive a clear unsupported-instance message; no automated effect semantics are
 invented. Future supported effectful instance profiles remain a named requirement.
 
-Native validation must cover every current monsterDataSchema required/optional/
-null/strict-key invariant: six abilities1..30, taxonomy sizes/damage/vision/movement,
-finite integer bounds, hover/fly, attack kind/reach/range/long ordering, damage
-average-or-display-text, ordered sections and legendary/lair constraints. Strings
-need JS-compatible UTF16 bounds and nonblank semantics, without rewriting raw text.
-Original canonical parsers are reused in DAL/rendering; native source validators
-are a separately reviewed implementation prerequisite, not a new generic evaluator.
+This is a manual HP/notes entity, not an engine-authoritative creature. Native
+validation certifies the exact locked current definition/version identity, system,
+active platform/current-owner personal entitlement, version/digest correspondence,
+explicit data_snapshot.schema_version=1, explicit effects_snapshot=[], bounded complete raw
+snapshot, finite declared/current HP, command controls and revision. It does not
+duplicate every Zod descriptive/action invariant in SQL or claim full parity.
+The existing complete canonical envelope/parser plus monsterDataSchema is mandatory
+for source preview and every instance stat-block render. Malformed descriptive
+data fails closed with an unavailable-source/stat-block message; do not invent
+defaults or render a partially admitted block. Raw bytes/ordered arrays/absence
+remain preserved. Complete native descriptive-schema parity, if later required,
+is a separately reviewed requirement, not first-child engine authority.
 
 Instance source budget: original Zod data<=65536 UTF8 bytes; native additionally
 requires data_snapshot::text<=65536 bytes and full version-row JSONB text<=131072
 bytes, bounded name/slug envelope<=200 UTF16 units. SQL's conservative text budget
 can reject some JS-valid maximum payloads because of representation whitespace;
 report unsupported-source explicitly, never claim exact budget equivalence or
-truncate. Original >60KiB/all-fields fixtures must be measured at G2. Semantic
-validator parity applies to this explicit common representable subset. Unknown
-schema versions/data keys, explicit null for optional nonnull fields, partial
-envelopes and malformed taxonomies fail BEFORE any command write.
+truncate. Original >60KiB/all-fields fixtures must be measured at G2. Unsupported
+format, nonempty/missing effects, broken locked identity/digest, raw budget or HP
+bounds fail natively before writes. Unknown data keys, null/optional semantics and
+malformed descriptive taxonomies/actions are refused by the full canonical parser
+in preview/render; these tests do not establish equivalent native SQL rejection.
 
 NEW authenticated source-preview RPC reads an EXACT content/version tuple under
 current campaign-owner/source permission locks, validates native profile, returns
@@ -122,15 +132,16 @@ No JS-admitted boolean, client snapshot, calculated HP or service-role actor inp
 
 Fresh create requires current active definition.version equal the shown exact
 source_version, complete snapshot identity/system/type/slug correspondence and
-matching preview digest. Both current AND snapshot entitlement must be platform,
-same authenticated owner, or legitimate shared access in THIS target campaign;
+matching preview digest. Both current AND snapshot entitlement must be platform
+or personal scope owned by the current authenticated campaign owner;
 same-system published dnd-5e-2014 must be uniquely selected. No another-campaign
-union, linked-character fallback, current-v2 substitution or automatic repin.
+union, shared-source acquisition, linked-character fallback, current-v2 substitution
+or automatic repin. Shared/cross-owner source support remains separately tracked.
 Existing instance read/update/replay uses its immutable embedded snapshot after
 access loss; it does not reacquire a template. Imported/unsupported rights profiles
 remain unavailable, with no importer or public distribution added.
 
-## Native commands, authorization and shared lock order
+## Native commands, authorization and dedicated lock order
 
 Use a new NOLOGIN/NOBYPASSRLS/NOINHERIT function owner with no runtime CREATE or
 caller membership. Cookie-authenticated DAL uses getUser and the SAME signed-in
@@ -153,20 +164,29 @@ subset of name/current_hp/notes/archived. No authority/provenance/source on upda
 Unknown/duplicate/File controls and cumulative relevant form+intent>40KiB reject
 before parse. No number conversion for revision and no unbounded snapshot request.
 
-Reuse the EXACT existing private.lock_character_writer_guard_v1 exclusive helper
-as source-access prefix; this stage therefore depends on frozen R09 authority/kernel
-installation, without changing their source/readiness/roles. New runtime owner
-needs separately reviewed EXECUTE plus SELECT/UPDATE(marker) lock-only guard
-policies; no guard mutation. Original R09 owner must challenge this new ACL bridge.
-Stable prefix after native signed-in context: shared guard; definition ID (create/
-preview only), system, campaign, exact share/member source-access rows, version
-tuple, then target instance on update. Use FOR SHARE source locks that block
-permission changes, current parent owner/system recheck after waits. This matches
-existing definition-before-campaign sharing order; do not invert it with a campaign
-FOR UPDATE while waiting on catalog edits. Current campaign owner is sufficient,
-membership dm labels never authorize. No alternate/optional fallback guard.
+Use dedicated transaction-scoped operation serialization derived internally from
+the validated campaign UUID and operation UUID, plus the receipt natural-key
+uniqueness constraint. Proposed mechanism: pg_advisory_xact_lock over a fixed
+campaign-monster-v1 namespace and those UUIDs; no caller lock key. Hash collisions
+can only serialize unrelated commands, never authorize them. No character writer
+guard, R09/P1 installation dependency, shared-role ACL bridge or action_revision
+participation: this child mutates no character and no observed lock cycle proves
+a global character guard necessary. Different operations on the same instance
+serialize through its FOR UPDATE row lock and expected_revision CAS.
 
-Replay prefix: signed-in user→shared guard→current campaign-owner eligibility READ
+Fresh create/preview uses definition FOR SHARE→system FOR SHARE→campaign FOR SHARE
+→exact version FOR SHARE, in that order, rechecking current owner/system and
+platform/personal entitlement after waits. Exact frozen native writer evidence:
+set_content_campaign_share in supabase/staged/item-campaign-sharing.sql locks the
+definition FOR UPDATE, then system FOR SHARE, then campaign FOR KEY SHARE; ordinary
+owned definition edits update the definition row; campaign edits update the campaign
+row and protect_campaign_identity forbids owner/system replacement. No monster
+share/member access row is needed for this narrower source profile. Do not acquire
+campaign first and then wait for a source definition. Current campaign owner is
+sufficient; membership dm labels never authorize. These are transaction locks,
+not proof of future writer/lifecycle participation; native lock behavior needs G2.
+
+Replay prefix: signed-in user→dedicated operation lock→current campaign-owner eligibility READ
 (without an early row lock)→operation lookup. If a receipt exists, FOR SHARE-lock
 the actual campaign and recheck current owner BEFORE intent-conflict classification
 or any receipt return. Matching receipt returns BEFORE all fresh-source/expected-
@@ -174,18 +194,22 @@ version/revision/exhaustion gates, preserving original actor/time. If no receipt
 exists, CREATE acquires definition→system→campaign FOR SHARE in that order, then
 rechecks ownership before further access/version locks or mutation; it never holds
 a campaign lock while waiting for a source definition. Update has no catalog
-acquisition and locks campaign→instance. The shared guard serializes all accepted
-instance command/receipt producers; direct receipt DML is denied. Native replay/
+acquisition and locks campaign→instance. Every commit and resolver for that operation
+uses the same transaction lock; direct receipt DML is denied. Native replay/
 ownership/unique-command races and any nonparticipating writer still need G2.
 No global writer-ready or phantom/access/lifecycle closure is claimed.
 
 Single atomic commit derives locked source snapshot/max HP/current owner and native
 time, inserts ONE instance and ONE receipt on create, or locks instance/compares
 expected_revision then updates only declared patch fields and inserts ONE receipt.
-Source/member/share drift or stale expected revision refuses without partial writes.
+Source owner/scope/retirement/current-version drift or stale expected revision
+refuses without partial writes.
 No-op records a stable no-op outcome at the same revision; changed update requires
 exact+1 and native readback. Exhausted revision refuses changed work but not replay.
-No sequential insert→receipt or confirm-only read followed by unfenced creation,
+Resolver locks the SAME operation before receipt inspection; it can wait for an
+in-flight commit. An absent receipt is only an observation, never cancellation or
+proof that a delayed original request cannot still commit. No sequential
+insert→receipt or confirm-only read followed by unfenced creation,
 catch/fallback retry, manual counter assignment or silent rollback of used evidence.
 
 Only RPC mutation capability, authenticated owner-only SELECT RLS on instances via
@@ -214,22 +238,27 @@ Controlled draft/operation UUID persists while pending; disable duplicate action
 preserve values/order/native reset protections. Rejected/lost/missing/malformed
 response means UNCERTAIN, never success/retry-new-operation. Explicit Check campaign
 monsters resolves the SAME operation under current owner and validated intent.
-Only confirmed absence AND explicit user acknowledgement permits a new manual
-attempt; unknown/error remains blocked. Saved ID survives failed navigation so
-retry cannot insert again. Conflict keeps draft plus Reload latest without silently
+Even confirmed absence or user acknowledgement does NOT permit a new UUID after
+uncertainty: retain the SAME operation and immutable submitted intent for explicit
+resolution/replay, without automatic retries or replacement by the editable draft.
+A new UUID while that original command is unresolved requires a native cancellation/
+tombstone fence, outside this first scope. Unknown/error remains blocked. Saved ID
+survives failed navigation so retry cannot insert again. Conflict keeps draft plus
+Reload latest without silently
 reapplying an old HP/notes overwrite. Archive/restore is explicit same CAS path.
 
 ## Finite implementation and acceptance children
 
-1. Pure original instance/request/result/mapper fixtures and native admission
-   profile proposal with actual schema/taxonomy parity controls; no app routing.
-2. Unapplied staged transaction/storage/RLS/source admission/receipt/guard text;
-   independent campaign/content/R09-owner challenge, strict source/model tests.
-   No migration filename/CLI or SQL execution before separately approved G2.
-3. DAL/controlled form/actions/list/detail/DM CampaignPage integration gated off;
-   focused auth/response/conflict tests and reviewed offline actual form harness
-   using current production CSS/fonts with simulated actions ONLY.
-4. Separate authorized native and real browser→API→DB owner/player/private-data/
+1. One bounded useful implementation child: dedicated atomic storage/create/update/
+   resolve receipts/CAS and native identity/manual-state bounds, plus actual DM-only
+   list/detail/controlled form/DAL/actions/CampaignPage integration. Strict DTO,
+   original fixtures and source-bound models support this child; pure DTO completion
+   alone does not satisfy it. Freeze/review unapplied SQL under campaign/content
+   owners before integration; no R09 guard/ACL modification. No migration filename,
+   CLI or SQL execution before separately authorized G2. Product gate stays off.
+   Focused auth/response/conflict/parser tests and reviewed offline actual form
+   harness use current production CSS/fonts with simulated actions ONLY.
+2. Separate authorized native and real browser→API→DB owner/player/private-data/
    version/access-race/lost-response/cleanup proof, then reviewed activation.
 
 Proposed exact future touchset: new lib/campaigns/monster-instance-schema.ts,
@@ -246,22 +275,30 @@ slots, independent source reviews before integration; no heavy work in planning.
 Measurable positives: platform/own template exact v1 with later catalog v2, explicit
 HP0/max and Unicode name/notes, two intentional same-template instances, concurrent
 same-op one ID/receipt, changed-op distinct IDs, CAS no-op/+1, archive/reload/replay,
-source retirement/revocation/deletion after capture retains full source/notes.
+own/platform source retirement/edit/catalog deletion after capture retains source/notes.
 Negatives: player/non-owner dm-labelled/foreign/anonymous, other campaign/system,
-missing/duplicate published system, unsupported schema/effects/null/unknown keys,
-oversize/native budget differences, malformed attack/legendary fields, forged raw
-snapshot/digest/actor/maxHP, changed operation intent, stale/exhausted revisions,
+missing/duplicate published system, shared/cross-owner source even if readable,
+unsupported format/effects/native bounds; canonical preview/render rejection of
+null/unknown keys/malformed attack/legendary fields, oversize/native budget
+differences, forged raw snapshot/digest/actor/maxHP, changed operation intent,
+stale/exhausted revisions,
 source catalog/access drift after waits and revoked current campaign ownership.
 Inject faults at instance/receipt boundary and after commit-response loss; compare
 both tables and unrelated character/catalog/campaign state. G2 barriers/locks and
 expected SQLSTATE/readback must distinguish genuine denial from arbitrary failure.
 
-Real lifecycle checks include catalog-owner account deletion and campaign deletion
+Recovery negatives must include confirmed-absent receipt followed by a delayed
+original commit: only same-operation immutable-intent resolution/replay is allowed,
+with one instance/receipt. No new-UUID acknowledgement shortcut or automatic retry.
+
+Real lifecycle checks include own/platform catalog deletion and campaign deletion
 with subordinate instance/receipt cascade only, no orphan/deletion of player data;
 no caller-hidden-row absence shortcut. Frontend tests cover pending/native reset,
 uncertainty/manual recovery/navigation failure, stale props/draft binding, mobile
 control reachability and no DM data in player HTML/network serialization. Schema
-mirrors/model/offline actions never count as native transaction/RLS/Auth proof.
+models/offline actions never count as native transaction/RLS/Auth proof. Shared-
+source/cross-owner account deletion acceptance is later work, not a positive first-
+profile fixture; existing ownership-transfer prohibitions are unchanged.
 
 This closes only a bounded monster campaign-management child when all its own
 gates pass. It does not complete M5, imports, NPC/companion/sidekick instances,
