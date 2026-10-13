@@ -173,7 +173,7 @@ async function runtimeProof(root, rootCheckout) {
   return { ...closure, closureSha256: magicAckSha(JSON.stringify(closure)) };
 }
 export async function loadMagicAckAssets(root, manifestPath) {
-  const proof = await verifyMagicAckHelpers(root), rootCheckout = path.resolve(root, "../equipment-verification");
+  const proof = await verifyMagicAckHelpers(root);
   const helper = await import("./passive-feature-production-assets.mjs");
   const result = await helper.loadPassiveFeatureProductionAssets(root, manifestPath);
   assert.equal(result.artifacts.currentRootHead, proof.rootHead);
