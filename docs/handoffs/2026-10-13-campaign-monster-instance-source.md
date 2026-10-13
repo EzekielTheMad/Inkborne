@@ -382,3 +382,33 @@ This correction is source-only UNRUN, frozen for exact review before gates. If t
 next enabled-DOM precondition fails, preserve/STOP; no additional scaffolding or
 assertion flipping is authorized. Prior failures remain immutable and fully
 distinguished from the prepared scheduling control and native acceptance gaps.
+
+## Final bounded scheduling attempt — STOP, remaining condition UNPROVEN
+
+Independent exact0e8eab9 review approved the outside-act control before root released
+the final bounded attempt. Same seven-suite package command/maxWorkers2 at clean
+0e8eab9ee6cfd27abeb16bbe59061a1398345bb5 exited1,8.63s:134passed/3failed (137).
+Six suites passed; mounted form39cases had36passed and the same three stress
+preconditions failed. Actual responseObserved succeeded; old fieldset was already
+disabled instead of remaining enabled before second native dispatch. Therefore
+these three enabled-old-DOM settlement-gap lifetime assertions remain UNPROVEN.
+Passing ordinary pending/duplicate/recovery and repeat-edit/route controls are
+retained but cannot substitute for that exact adversarial condition. No product
+invariant failure, semantic-before or native SQL/Auth proof is claimed from these
+scheduling precondition failures. No disabled assertion was flipped or removed.
+
+Per root's final bound: STOP. No additional scheduling scaffold/source rewrite,
+retry or assertion reversal; no typecheck/lint/full/build/browser run. Existing
+red controls/source remain frozen for root's next explicit acceptance decision.
+All prior failure receipts remain immutable, including first fixture collection
+failure5f, collected134/137 at0aec, and collected134/137 at587.
+
+Preserved focused-0e8-fourth stdout/stderr/process/result manifest SHA256
+`7BE4E0B8968BC395C7D48BD17F87D915E47AFEF04BDC6947482D696B5689A563` under
+test-results/m5-campaign-monsters-local. Actual12 OS identities freshly absent,
+owned listeners0, no cleanup kill needed; processes471→469, CPU28→35%, free memory
+6559972→6681052KiB. Package-lock SHA256 remained
+7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6.
+Heavy slot explicitly released immediately after readback. This final follow-up
+is docs-only; all0e8 source/test/SQL/default-off bytes unchanged. M5/native G2/G3/
+recovery acceptance and tests/type/lint closure are still incomplete.
