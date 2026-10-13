@@ -177,3 +177,68 @@ an explicit fresh server latest-detail editor mount; current accepted edit marke
 blocks subsequent HP edits. Root requires a finite reviewed proposal AFTER this
 HOLD correction freeze. No new transition/auto-rebase/unknown marker clearing has
 been implemented here; this source is still incomplete for repeat-edit acceptance.
+
+## Repeat-edit transition proposal ONLY — quick review before implementation
+
+Basis clean a316454; both initial HOLD groups independently source-approved, all
+tests still UNRUN. Smallest follow-on uses the existing resolve/get-detail RPCs and
+one deliberate new editor mount; no new RPC, SQL, journal, authority or auto-rebase.
+
+1. In edit mode only, after validated saved/no-op receipt is committed, show
+   **Edit latest instance**. Existing saved-instance link remains available. Button
+   admission synchronously requires no active call/navigation transition, current
+   mounted owner/campaign/editor/system correspondence, and acceptedReceipt ref
+   matching committed receipt/operation and this instance. Unknown/uncertain/absent/
+   error/conflict without accepted receipt never exposes or admits this transition.
+2. On explicit click, first persist accepted operation+saved instance ID in its
+   existing operation-scoped accepted metadata key. Inspect active marker: only
+   the accepted operation may be removed (optional saved_id must match). A newer,
+   malformed or unavailable marker refuses navigation/clearing. If the marker is
+   already absent, accepted receipt still permits this deliberate transition;
+   absence alone NEVER permits it. Do not clear the lifetime accepted receipt,
+   intent or operation refs in the old form. Keep that form locked through failure.
+3. Navigate via ordinary native `window.location.assign` to the internal detail
+   URL `/campaigns/{campaign}/monsters/{instance}?editAfter={acceptedOperation}`.
+   Use validated UUIDs/URLSearchParams, not arbitrary destination input. Hard
+   navigation deliberately obtains a new server render and new client mount.
+   On a thrown navigation failure retain receipt/ID/link, restore the original
+   active marker ONLY if absent (never overwrite newer operation), and release
+   the navigation mutex so **Edit latest instance** can explicitly retry. If a
+   navigation hangs, remain locked with the same saved link/evidence; no new save.
+4. Detail route remains default-off and cookie-authenticated current-owner-only.
+   `editAfter` is one strict scalar canonical UUID, not read authority. Make this
+   route explicitly dynamic/no cached detail response. Resolve that operation
+   using existing owner-checked resolver BEFORE get-detail; require a validated
+   saved receipt whose campaign/instance matches this route. Absent/refused/error/
+   malformed resolution produces unavailable, never an editor reset. Then obtain
+   the actual latest record through existing get-detail (full canonical snapshot
+   admission), require current revision >= original receipt revision using bigint,
+   and render the fresh values/revision. No guessed +1, historic receipt readback
+   substitution or Library repin. A later concurrent edit is still native CAS.
+5. Form key adds the validated accepted operation to owner/campaign/instance:
+   `{owner}:{campaign}:{instance}:{editAfter || initial}`. This is a deliberate
+   generation boundary even for a no-op at the same revision. Fresh component
+   starts from actual server record; its ordinary storage read still checks any
+   active operation marker. A manually entered editAfter URL cannot clear an
+   uncertain marker or bypass recovery: the server does not touch session storage.
+   Old accepted reply metadata cannot recreate a cleared active marker or overwrite
+   a newer operation (a316 guard already enforces that).
+
+Exact follow-on touchset: owned monster-instance-form.tsx, detail page.tsx, mounted
+form and page tests, this handoff only. Existing source/DAL/SQL/ACL/schema/default-
+off gates unchanged. No new generic navigation or recovery subsystem. Optional
+`editAfter` changes page props/key only; current-cookie session and native owner
+checks remain on every existing RPC. Native session/RLS/freshness proof stays G2/G3.
+
+Prepared acceptance required before claiming repeat-edit: accepted edit→explicit
+button→existing resolver+fresh detail→new mount with exact current revision→second
+manual HP/notes/archive command; no-op→new mount despite unchanged revision;
+unrelated concurrent revision newer than receipt, with fresh CAS/refusal; source
+retirement/edit preserves embedded source. Negative controls: uncertainty/absent/
+malformed/foreign receipt cannot clear; changed editor/owner/system, newer active
+marker and storage failure refuse; navigation throw/hang retains saved ID and old
+locked draft, retry cannot resubmit old save; direct editAfter URL with unresolved
+marker remains recovery-only; stale/invalid latest revision/detail/receipt mismatch
+unavailable. Test actual form controls/route functions, not a standalone DTO claim.
+No implementation, tests, navigation, browser, heavy or runtime work ran for this
+proposal. Freeze for independent source-plan challenge before bounded implementation.
