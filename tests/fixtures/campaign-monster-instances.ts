@@ -5,7 +5,7 @@ export const MC = { campaign: "10000000-0000-4000-8000-000000000001", owner: "10
   instance: "10000000-0000-4000-8000-000000000005", operation: "10000000-0000-4000-8000-000000000006",
   foreign: "10000000-0000-4000-8000-000000000007", digest: "a".repeat(64) };
 // Original synthetic narrative and declared values; no copied book text or rolled defaults.
-export const mossglassSentinel = monsterDataSchema.parse({ schema_version: 1, size: "medium", creature_type: "moss construct",
+export const mossglassSentinel = monsterDataSchema.parse({ schema_version: 1, size: "Medium", creature_type: "moss construct",
   armor_class: { value: 14, notes: "Declared bark shell" }, hit_points: { average: 17, dice_text: "Declared seventeen" }, speed: { walk: 20 },
   ability_scores: { strength: 12, dexterity: 8, constitution: 15, intelligence: 4, wisdom: 11, charisma: 6 },
   saving_throws: { wisdom: 0, charisma: -2 }, traits: [{ name: "Still lamp", description: "An original lamp watches a mossy bridge. <script>literal only</script>" }], actions: [] });

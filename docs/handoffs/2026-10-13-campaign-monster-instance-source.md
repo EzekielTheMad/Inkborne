@@ -293,3 +293,27 @@ heavy hold. SQL/ACL/DAL/schema/mapper/dependencies, default-off gate and all oth
 worktrees are unchanged. Freeze this exact source for independent review before
 gates. M5 workflow source is reviewable; M5 and native G2/G3/recovery acceptance
 remain incomplete.
+
+## First narrow run — fixture admission failure preserved, correction UNRUN
+
+Exact clean 5f124136f7142e16b8e9f8a9087c928e044f8a90 was independently reviewed
+before root released the exclusive narrow slot. Command (existing package script):
+`npm.cmd test -- tests/campaigns/monster-instance-schema.test.ts tests/campaigns/monster-instance-stage-model.test.ts tests/supabase/campaign-monster-instances-staged.test.ts tests/supabase/campaign-monster-instances-server.test.ts tests/components/campaigns/monster-instance-form.test.tsx tests/app/campaign-monster-actions.test.ts tests/app/campaign-monster-pages.test.tsx --maxWorkers=2`.
+Exit1, 30.20s: six suites failed collection at original shared fixture admission;
+one static-stage suite passed6/6. Actual unchanged monsterDataSchema uses canonical
+CREATURE_SIZES with `Medium`; original fixture declared lowercase `medium`. No
+behavioral regression result or semantic-before proof can be inferred from these
+collection failures. Correction changes ONLY that fixture value to `Medium`, not
+schema/product logic/SQL/assertions. Correction itself remains UNRUN for exact review.
+
+Preserved local evidence directory: test-results/m5-campaign-monsters-local.
+focused-5f-first stdout/stderr/process/result and source.json are hashed in
+focused-5f-first.manifest.json, SHA256
+`0371C32C8DDC261F1A5234C4AD75534458CE8F55BBBAB50C99203E34C45E80D8`.
+Outer helper records actual OS birth/PID/parent/command, inherited cwd and UTC start;
+12 captured identities freshly absent after exit, owned listeners0. Global process
+count503→468, CPU43→63%, free physical memory5166192→5021460KiB. Package lock SHA256
+unchanged before/after `7225AA9026EB747C5626204C9E5E5901809F95B33A1AACABA35CD139E86A2EB6`.
+No cleanup kill needed. Typecheck/lint and all further gates stopped after first
+failure; root heavy slot explicitly released. Native SQL/Auth/G2/provider acceptance
+unchanged and unrun. Freeze fixture+handoff for independent review BEFORE rerun.
