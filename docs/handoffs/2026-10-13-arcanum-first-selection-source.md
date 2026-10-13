@@ -170,3 +170,10 @@ matching existing server-only model/server-DAL tests. Original production/server
 boundary, source model, parser, stage and every assertion remain unchanged. Narrow
 rerun needs explicit review/resource release. All new Arcanum semantic controls are
 still UNRUN, source-only disabled; no PostgreSQL/RLS/Auth/issuance acceptance follows.
+
+The separately authorized setup correction adds only the conventional hoisted
+server-only mock and vi import to the two new test entrypoints. It mocks the package
+sentinel, not kernel/schema/parser/validators/authority/source-model behavior. Every
+assertion and all production modules are unchanged. First evidence/manifest above
+remain immutable. This correction is UNRUN and awaits independent source review
+before any repeat gate/resource release.

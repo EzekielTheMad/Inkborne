@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+vi.mock("server-only", () => ({}));
 import { arcanumCaptureSchema, arcanumReceiptSchema, parseArcanumRead, parseArcanumRequest,
   sameArcanumJson, ARCANUM_READ_MAX_BYTES } from "@/lib/spells/arcanum-selection-schema";
 import { recordedArcanumFixture, foreignSystemArcanumPair } from "@/tests/fixtures/arcanum-selection";
