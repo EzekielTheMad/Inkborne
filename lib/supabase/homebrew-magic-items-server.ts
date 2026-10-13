@@ -1,339 +1,142 @@
 import "server-only";
-
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
-
-import {
-  mapHomebrewMagicItemFormData,
-  type HomebrewMagicItemFormValue,
-} from "@/lib/homebrew/magic-item-form";
-import {
-  magicItemDataSchema,
-  type MagicItemData,
-} from "@/lib/schemas/content-types/magic-item";
+import { mapHomebrewMagicItemFormData, mergeMagicItemEdit, magicItemUncertainty, magicItemVersionSchema, MAGIC_ITEM_VERSION_MAX, type MagicItemActionState } from "@/lib/homebrew/magic-item-form";
+import { magicItemDataSchema, type MagicItemData } from "@/lib/schemas/content-types/magic-item";
+import { effectSchema } from "@/lib/schemas/effects";
+import { parseContentDefinition, parseContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 
-const HOMEBREW_SYSTEM_SLUG = "dnd-5e-2014";
-const HOMEBREW_SELECT =
-  "id, system_id, content_type, slug, name, data, effects, source, scope, owner_id, version, created_at, is_retired";
-
-type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
-
-export interface HomebrewMagicItemRecord {
-  id: string;
-  system_id: string;
-  content_type: "magic_item";
-  slug: string;
-  name: string;
-  data: MagicItemData;
-  effects: unknown[];
-  source: "homebrew";
-  scope: "personal";
-  owner_id: string;
-  version: number;
-  created_at: string;
-  is_retired: boolean;
+const SELECT = "id, system_id, content_type, slug, name, data, effects, source, scope, owner_id, version, created_at, is_retired";
+const SNAPSHOT = "content_id, version, system_id_snapshot, content_type_snapshot, slug_snapshot, name_snapshot, data_snapshot, effects_snapshot, source_snapshot, scope_snapshot, owner_id_snapshot";
+const envelope = z.object({ id: z.uuid(), system_id: z.uuid(), content_type: z.literal("magic_item"), slug: z.string().min(1), name: z.string().min(1),
+  data: z.record(z.string(), z.unknown()), effects: z.array(z.unknown()), source: z.literal("homebrew"), scope: z.literal("personal"), owner_id: z.uuid(),
+  version: magicItemVersionSchema, created_at: z.string().min(1), is_retired: z.literal(false) });
+type RawRow = z.infer<typeof envelope>;
+export interface HomebrewMagicItemRecord extends Omit<RawRow, "data"> { data: MagicItemData }
+export type HomebrewMagicItemMutationResult = MagicItemActionState;
+export type HomebrewMagicItemMutationResponse = MagicItemActionState;
+const fail = (message: string, fieldErrors?: Record<string, string[]>): MagicItemActionState => ({ status: "error", message, ...(fieldErrors ? { fieldErrors } : {}) });
+function admit(raw: unknown, owner: string, system: string): RawRow {
+  const row = envelope.parse(raw);
+  magicItemDataSchema.parse(row.data);
+  z.array(effectSchema).parse(row.effects); // Validation only: do not serialize stripped validator output.
+  if (row.owner_id !== owner || row.system_id !== system || !parseContentDefinition(raw)) throw Error("Unsupported private magic item");
+  // The validators may strip extension keys. Keep the admitted original JSON,
+  // including nested metadata and raw effect fields, for comparisons/merges.
+  const original = raw as { data: Record<string, unknown>; effects: unknown[] };
+  return { ...row, data: original.data, effects: original.effects };
 }
-
-export type HomebrewMagicItemMutationResult = {
-  status: "idle" | "error" | "conflict";
-  message?: string;
-  fieldErrors?: Record<string, string[]>;
-};
-
-export type HomebrewMagicItemMutationResponse =
-  | HomebrewMagicItemRecord
-  | HomebrewMagicItemMutationResult;
-
-const rowEnvelopeSchema = z.object({
-  id: z.string().uuid(),
-  system_id: z.string().uuid(),
-  content_type: z.literal("magic_item"),
-  slug: z.string().min(1),
-  name: z.string().min(1),
-  data: z.unknown(),
-  effects: z.array(z.unknown()),
-  source: z.literal("homebrew"),
-  scope: z.literal("personal"),
-  owner_id: z.string().uuid(),
-  version: z.number().int().positive(),
-  created_at: z.string().min(1),
-  is_retired: z.boolean(),
-});
-
-function parseRecord(value: unknown): HomebrewMagicItemRecord {
-  const envelope = rowEnvelopeSchema.safeParse(value);
-  if (!envelope.success) {
-    throw new Error("The database returned an invalid homebrew magic-item row.");
-  }
-
-  const data = magicItemDataSchema.safeParse(envelope.data.data);
-  if (!data.success) {
-    throw new Error("The database returned invalid homebrew magic-item data.");
-  }
-
-  return { ...envelope.data, data: data.data };
+function record(row: RawRow): HomebrewMagicItemRecord {
+  return { ...row, data: magicItemDataSchema.parse(row.data) };
 }
-
-function failure(
-  message: string,
-  fieldErrors?: Record<string, string[]>,
-): HomebrewMagicItemMutationResult {
-  return { status: "error", message, ...(fieldErrors ? { fieldErrors } : {}) };
+async function session() {
+  const client = await createClient();
+  const { data: { user }, error } = await client.auth.getUser();
+  if (error || !user || !z.uuid().safeParse(user.id).success) throw Error("Authentication required");
+  return { client, owner: user.id };
 }
-
-async function authenticatedSession(): Promise<
-  | { supabase: ServerSupabaseClient; userId: string }
-  | null
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) return null;
-  return { supabase, userId: user.id };
+async function context(auth: Awaited<ReturnType<typeof session>>) {
+  const { data, error } = await auth.client.from("game_systems").select("id").eq("slug", "dnd-5e-2014").eq("status", "published").single();
+  const system = z.object({ id: z.uuid() }).safeParse(data);
+  if (error || !system.success) throw Error("Canonical published system unavailable");
+  return { ...auth, system: system.data.id };
 }
-
-async function requireAuthenticatedSession() {
-  const session = await authenticatedSession();
-  if (!session) throw new Error("Authentication required.");
-  return session;
+type Context = Awaited<ReturnType<typeof context>>;
+function owned(ctx: Context) {
+  return ctx.client.from("content_definitions").select(SELECT).eq("owner_id", ctx.owner).eq("system_id", ctx.system)
+    .eq("content_type", "magic_item").eq("source", "homebrew").eq("scope", "personal").eq("is_retired", false);
 }
-
-async function resolvePublishedSystem(
-  supabase: ServerSupabaseClient,
-): Promise<{ id: string } | null> {
-  const { data, error } = await supabase
-    .from("game_systems")
-    .select("id")
-    .eq("slug", HOMEBREW_SYSTEM_SLUG)
-    .eq("status", "published")
-    .maybeSingle();
-
-  if (error || !data) return null;
-  const parsed = z.object({ id: z.string().uuid() }).safeParse(data);
-  return parsed.success ? parsed.data : null;
+export async function listOwnedHomebrewMagicItems(): Promise<HomebrewMagicItemRecord[]> {
+  const ctx = await context(await session());
+  const { data, error } = await owned(ctx).order("name");
+  if (error || !Array.isArray(data)) throw Error("Magic item list unavailable");
+  return data.map(raw => record(admit(raw, ctx.owner, ctx.system)));
 }
-
-function slugify(name: string): string {
-  const base = name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "homebrew-magic-item";
-
+export async function getOwnedHomebrewMagicItem(id: string): Promise<HomebrewMagicItemRecord | null> {
+  const auth = await session();
+  if (!z.uuid().safeParse(id).success) return null;
+  const ctx = await context(auth);
+  const { data, error } = await owned(ctx).eq("id", id).maybeSingle();
+  if (error) throw Error("Magic item unavailable");
+  if (!data) return null;
+  const row = admit(data, ctx.owner, ctx.system);
+  if (row.id !== id) throw Error("Magic item identity mismatch");
+  return record(row);
+}
+function slugify(name: string) {
+  const base = name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "homebrew-magic-item";
   return `${base}-${randomUUID().slice(0, 8)}`;
 }
-
-function validateMappedMagicItem(value: HomebrewMagicItemFormValue):
-  | { data: MagicItemData }
-  | { failure: HomebrewMagicItemMutationResult } {
-  const data = magicItemDataSchema.safeParse(value.data);
-  if (!data.success) {
-    return {
-      failure: failure("The magic item contains unsupported structured data."),
-    };
-  }
-  return { data: data.data };
+async function confirmPin(ctx: Context, row: RawRow) {
+  const { data, error } = await ctx.client.from("content_versions").select(SNAPSHOT).eq("content_id", row.id).eq("version", row.version)
+    .eq("owner_id_snapshot", ctx.owner).eq("system_id_snapshot", ctx.system).eq("content_type_snapshot", "magic_item")
+    .eq("source_snapshot", "homebrew").eq("scope_snapshot", "personal").single();
+  const pin = !error && parseContentVersionSnapshot(data);
+  const raw = data as { data_snapshot?: unknown; effects_snapshot?: unknown } | null;
+  if (!pin || pin.id !== row.id || pin.version !== row.version || pin.owner_id !== ctx.owner || pin.system_id !== ctx.system
+    || pin.content_type !== "magic_item" || pin.source !== "homebrew" || pin.scope !== "personal" || pin.name !== row.name || pin.slug !== row.slug
+    || !isDeepStrictEqual(raw?.data_snapshot, row.data) || !isDeepStrictEqual(raw?.effects_snapshot, row.effects)) throw Error("Exact saved snapshot unavailable");
+  // This confirms an exact immutable version, not latest/private status after a concurrent edit.
 }
-
-async function validateServerContext(
-  supabase: ServerSupabaseClient,
-): Promise<
-  | { systemId: string }
-  | { failure: HomebrewMagicItemMutationResult }
-> {
-  const system = await resolvePublishedSystem(supabase);
-  if (!system) {
-    return { failure: failure("The D&D 5e (2014) system is unavailable.") };
-  }
-  return { systemId: system.id };
-}
-
-function databaseMutationFailure(error: { code?: string } | null) {
-  if (error?.code === "23505") {
-    return failure(
-      "The magic-item identity conflicted with another save. Please try again.",
-    );
-  }
-  return failure("The magic item could not be saved. Please try again.");
-}
-
-export async function listOwnedHomebrewMagicItems(): Promise<
-  HomebrewMagicItemRecord[]
-> {
-  const { supabase, userId } = await requireAuthenticatedSession();
-  const system = await resolvePublishedSystem(supabase);
-  if (!system) throw new Error("The D&D 5e (2014) system is unavailable.");
-
-  const { data, error } = await supabase
-    .from("content_definitions")
-    .select(HOMEBREW_SELECT)
-    .eq("owner_id", userId)
-    .eq("system_id", system.id)
-    .eq("source", "homebrew")
-    .eq("content_type", "magic_item")
-    .eq("scope", "personal")
-    .eq("is_retired", false)
-    .order("name");
-
-  if (error) throw error;
-  return (data ?? []).map(parseRecord);
-}
-
-export async function getOwnedHomebrewMagicItem(
-  id: string,
-): Promise<HomebrewMagicItemRecord | null> {
-  const { supabase, userId } = await requireAuthenticatedSession();
-  const parsedId = z.string().uuid().safeParse(id);
-  if (!parsedId.success) return null;
-
-  const system = await resolvePublishedSystem(supabase);
-  if (!system) throw new Error("The D&D 5e (2014) system is unavailable.");
-  const { data, error } = await supabase
-    .from("content_definitions")
-    .select(HOMEBREW_SELECT)
-    .eq("id", parsedId.data)
-    .eq("owner_id", userId)
-    .eq("system_id", system.id)
-    .eq("source", "homebrew")
-    .eq("content_type", "magic_item")
-    .eq("scope", "personal")
-    .eq("is_retired", false)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data ? parseRecord(data) : null;
-}
-
-export async function createHomebrewMagicItemRecord(
-  formData: FormData,
-): Promise<HomebrewMagicItemMutationResponse> {
-  const session = await authenticatedSession();
-  if (!session) {
-    return failure("Sign in before creating a homebrew magic item.");
-  }
-
-  const parsed = mapHomebrewMagicItemFormData(formData);
-  if (!parsed.success) {
-    return failure(
-      "Check the highlighted fields and try again.",
-      parsed.fieldErrors,
-    );
-  }
-
-  const content = validateMappedMagicItem(parsed.data);
-  if ("failure" in content) return content.failure;
-
-  const context = await validateServerContext(session.supabase);
-  if ("failure" in context) return context.failure;
-
-  const { data, error } = await session.supabase
-    .from("content_definitions")
-    .insert({
-      system_id: context.systemId,
-      content_type: "magic_item",
-      slug: slugify(parsed.data.name),
-      name: parsed.data.name,
-      data: content.data as unknown as Json,
-      effects: [],
-      source: "homebrew",
-      scope: "personal",
-      owner_id: session.userId,
-    })
-    .select(HOMEBREW_SELECT)
-    .single();
-
-  if (error || !data) return databaseMutationFailure(error);
+async function missing(ctx: Context, id: string, expected: number, issued: boolean): Promise<MagicItemActionState> {
   try {
-    return parseRecord(data);
-  } catch {
-    return failure("The magic item could not be saved. Please try again.");
-  }
+    const { data, error } = await owned(ctx).eq("id", id).maybeSingle();
+    if (error || !data) return issued ? magicItemUncertainty("edit") : fail("This private magic item is unavailable. No update was attempted.");
+    const row = admit(data, ctx.owner, ctx.system);
+    if (row.id === id && row.version > expected) return { status: "conflict", message: "This magic item changed in another session. Your draft is kept. Reload before saving." };
+  } catch { /* Inconclusive rereads never authorize a retry or pretend to prove a newer version. */ }
+  return issued ? magicItemUncertainty("edit") : fail("This private magic item could not be identified. No update was attempted.");
 }
-
-export async function updateHomebrewMagicItemRecord(
-  id: string,
-  expectedVersion: number,
-  formData: FormData,
-): Promise<HomebrewMagicItemMutationResponse> {
-  const session = await authenticatedSession();
-  if (!session) {
-    return failure("Sign in before updating a homebrew magic item.");
-  }
-
-  const identity = z.object({
-    id: z.string().uuid(),
-    expectedVersion: z.number().int().positive(),
-  }).safeParse({ id, expectedVersion });
-  if (!identity.success) {
-    return failure("The magic-item identifier or version is invalid.");
-  }
-
-  const parsed = mapHomebrewMagicItemFormData(formData);
-  if (!parsed.success) {
-    return failure(
-      "Check the highlighted fields and try again.",
-      parsed.fieldErrors,
-    );
-  }
-
-  const content = validateMappedMagicItem(parsed.data);
-  if ("failure" in content) return content.failure;
-
-  const context = await validateServerContext(session.supabase);
-  if ("failure" in context) return context.failure;
-
-  const { data, error } = await session.supabase
-    .from("content_definitions")
-    .update({
-      name: parsed.data.name,
-      data: content.data as unknown as Json,
-    })
-    .eq("id", identity.data.id)
-    .eq("owner_id", session.userId)
-    .eq("system_id", context.systemId)
-    .eq("source", "homebrew")
-    .eq("content_type", "magic_item")
-    .eq("scope", "personal")
-    .eq("is_retired", false)
-    .eq("version", identity.data.expectedVersion)
-    .select(HOMEBREW_SELECT)
-    .maybeSingle();
-
-  if (error) return databaseMutationFailure(error);
-  if (data) {
-    try {
-      return parseRecord(data);
-    } catch {
-      return failure("The magic item could not be saved. Please try again.");
-    }
-  }
-
-  const { data: current, error: lookupError } = await session.supabase
-    .from("content_definitions")
-    .select("id, version")
-    .eq("id", identity.data.id)
-    .eq("owner_id", session.userId)
-    .eq("system_id", context.systemId)
-    .eq("source", "homebrew")
-    .eq("content_type", "magic_item")
-    .eq("scope", "personal")
-    .eq("is_retired", false)
-    .maybeSingle();
-
-  if (lookupError) return databaseMutationFailure(lookupError);
-  if (current) {
-    return {
-      status: "conflict",
-      message:
-        "This magic item changed in another session. Reload it before saving again.",
-    };
-  }
-
-  return failure("This homebrew magic item could not be found.");
+export async function createHomebrewMagicItemRecord(form: FormData): Promise<MagicItemActionState> {
+  let auth: Awaited<ReturnType<typeof session>>;
+  try { auth = await session(); } catch { return fail("Sign in before creating a homebrew magic item."); }
+  const mapped = mapHomebrewMagicItemFormData(form);
+  if (!mapped.success) return fail("Check the highlighted fields.", mapped.fieldErrors);
+  let ctx: Context;
+  try { ctx = await context(auth); } catch { return fail("The published D&D 5e (2014) system is unavailable. No create was attempted."); }
+  const id = randomUUID(), slug = slugify(mapped.data.name), { name, data: draft } = mapped.data;
+  try {
+    const { data, error } = await ctx.client.from("content_definitions").insert({ id, slug, system_id: ctx.system, content_type: "magic_item", name,
+      data: draft as unknown as Json, effects: [], source: "homebrew", scope: "personal", owner_id: ctx.owner }).select(SELECT).single();
+    if (error || !data) return magicItemUncertainty("create");
+    const row = admit(data, ctx.owner, ctx.system);
+    if (row.id !== id || row.slug !== slug || row.version !== 1 || row.name !== name || !isDeepStrictEqual(row.data, draft) || !isDeepStrictEqual(row.effects, [])) return magicItemUncertainty("create");
+    await confirmPin(ctx, row);
+    return { status: "saved", operation: "create", id, version: 1 };
+  } catch { return magicItemUncertainty("create"); }
+}
+export async function updateHomebrewMagicItemRecord(id: string, expectedVersion: number, form: FormData): Promise<MagicItemActionState> {
+  let auth: Awaited<ReturnType<typeof session>>;
+  try { auth = await session(); } catch { return fail("Sign in before editing a homebrew magic item."); }
+  if (!z.uuid().safeParse(id).success || !magicItemVersionSchema.safeParse(expectedVersion).success) return fail("The magic-item identifier or version is invalid.");
+  const mapped = mapHomebrewMagicItemFormData(form);
+  if (!mapped.success) return fail("Check the highlighted fields.", mapped.fieldErrors);
+  let ctx: Context;
+  try { ctx = await context(auth); } catch { return fail("The published D&D 5e (2014) system is unavailable. No update was attempted."); }
+  let original: RawRow, merged: ReturnType<typeof mergeMagicItemEdit>;
+  try {
+    const { data, error } = await owned(ctx).eq("id", id).eq("version", expectedVersion).maybeSingle();
+    if (error) return fail("The magic item could not be read. No update was attempted.");
+    if (!data) return await missing(ctx, id, expectedVersion, false);
+    original = admit(data, ctx.owner, ctx.system);
+    if (original.id !== id || original.version !== expectedVersion) return fail("Magic-item identity or version mismatch. No update was attempted.");
+    merged = mergeMagicItemEdit(original.name, original.data, mapped.data);
+    if (original.name === merged.name && isDeepStrictEqual(original.data, merged.data)) return { status: "unchanged", id, version: expectedVersion, message: "This invocation did not write a new version: no controls changed." };
+    if (expectedVersion === MAGIC_ITEM_VERSION_MAX) return fail("This magic item has reached its version limit. No update was attempted.");
+  } catch { return fail("This magic item contains unsupported data or could not be read. No update was attempted."); }
+  try {
+    const { data, error } = await ctx.client.from("content_definitions").update({ name: merged.name, data: merged.data as Json })
+      .eq("id", id).eq("owner_id", ctx.owner).eq("system_id", ctx.system).eq("content_type", "magic_item").eq("source", "homebrew")
+      .eq("scope", "personal").eq("is_retired", false).eq("version", expectedVersion).select(SELECT).maybeSingle();
+    if (error) return magicItemUncertainty("edit");
+    if (!data) return await missing(ctx, id, expectedVersion, true);
+    const row = admit(data, ctx.owner, ctx.system);
+    if (row.id !== id || row.slug !== original.slug || row.created_at !== original.created_at || row.version !== expectedVersion + 1
+      || row.name !== merged.name || !isDeepStrictEqual(row.data, merged.data) || !isDeepStrictEqual(row.effects, original.effects)) return magicItemUncertainty("edit");
+    await confirmPin(ctx, row);
+    return { status: "saved", operation: "edit", id, version: row.version };
+  } catch { return magicItemUncertainty("edit"); }
 }

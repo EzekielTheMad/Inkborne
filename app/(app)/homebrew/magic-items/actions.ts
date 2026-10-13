@@ -1,58 +1,42 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-
-import {
-  createHomebrewMagicItemRecord,
-  updateHomebrewMagicItemRecord,
-  type HomebrewMagicItemMutationResult,
-} from "@/lib/supabase/homebrew-magic-items-server";
+import { redirect, unstable_rethrow } from "next/navigation";
+import { z } from "zod";
+import { acceptMagicItemResponse, magicItemUncertainty, mapMagicItemEditIdentity, type MagicItemActionState } from "@/lib/homebrew/magic-item-form";
+import { createHomebrewMagicItemRecord, updateHomebrewMagicItemRecord } from "@/lib/supabase/homebrew-magic-items-server";
 import { createClient } from "@/lib/supabase/server";
 
-export type HomebrewMagicItemActionState = HomebrewMagicItemMutationResult;
-
+export type HomebrewMagicItemActionState = MagicItemActionState;
 async function requireUser() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const client = await createClient();
+  const { data: { user }, error } = await client.auth.getUser();
+  if (error || !user || !z.uuid().safeParse(user.id).success) redirect("/login");
 }
-
-function revalidateHomebrewCatalog() {
-  revalidatePath("/homebrew");
-  revalidatePath("/library");
-}
-
-export async function createHomebrewMagicItem(
-  _previousState: HomebrewMagicItemActionState,
-  formData: FormData,
-): Promise<HomebrewMagicItemActionState> {
-  await requireUser();
-  const result = await createHomebrewMagicItemRecord(formData);
-  if ("status" in result) return result;
-
-  revalidateHomebrewCatalog();
-  redirect(`/homebrew?created=${encodeURIComponent(result.id)}`);
-}
-
-export async function updateHomebrewMagicItem(
-  _previousState: HomebrewMagicItemActionState,
-  formData: FormData,
-): Promise<HomebrewMagicItemActionState> {
-  await requireUser();
-  const id = String(formData.get("id") ?? "");
-  const expectedVersion = Number(formData.get("expected_version"));
-  if (!id || !Number.isInteger(expectedVersion) || expectedVersion < 1) {
-    return {
-      status: "error",
-      message: "This magic item could not be identified. Reload and try again.",
-    };
+function refreshSaved(state: MagicItemActionState): MagicItemActionState {
+  if (state.status !== "saved") return state;
+  try {
+    revalidatePath("/homebrew"); revalidatePath("/library");
+    if (state.operation === "edit") revalidatePath(`/homebrew/magic-items/${state.id}/edit`);
+  } catch (error) {
+    unstable_rethrow(error);
+    return { ...state, message: "The exact saved version is confirmed, but the catalog refresh failed. Check Homebrew; do not repeat this save." };
   }
-
-  const result = await updateHomebrewMagicItemRecord(id, expectedVersion, formData);
-  if ("status" in result) return result;
-
-  revalidateHomebrewCatalog();
-  revalidatePath(`/homebrew/magic-items/${result.id}/edit`);
-  redirect(`/homebrew?updated=${encodeURIComponent(result.id)}`);
+  return state;
+}
+export async function createHomebrewMagicItem(_previous: MagicItemActionState, form: FormData): Promise<MagicItemActionState> {
+  await requireUser();
+  let state: MagicItemActionState;
+  try { state = acceptMagicItemResponse(await createHomebrewMagicItemRecord(form), "create"); }
+  catch (error) { unstable_rethrow(error); return magicItemUncertainty("create"); }
+  return refreshSaved(state);
+}
+export async function updateHomebrewMagicItem(_previous: MagicItemActionState, form: FormData): Promise<MagicItemActionState> {
+  await requireUser();
+  const identity = mapMagicItemEditIdentity(form);
+  if (!identity) return { status: "error", message: "This magic item could not be identified. Reload before saving.", fieldErrors: { form: ["Invalid identifier or expected version."] } };
+  let state: MagicItemActionState;
+  try { state = acceptMagicItemResponse(await updateHomebrewMagicItemRecord(identity.id, identity.expectedVersion, form), "edit", identity.id, identity.expectedVersion); }
+  catch (error) { unstable_rethrow(error); return magicItemUncertainty("edit"); }
+  return refreshSaved(state);
 }
