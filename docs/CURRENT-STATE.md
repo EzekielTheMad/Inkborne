@@ -2,12 +2,25 @@
 
 ## Active execution — 2026-10-21 UTC
 
+**First-class dependency descriptor implemented, staged only.** Reviewed source
+`cae1499` resolves exact frozen class features/spells, dormant grants and hypothetical
+level-one projections without allocating IDs or changing character state. All 30
+focused PostgreSQL-WASM differential tests pass. It is not installed in native or
+hosted PostgreSQL and has no application caller. Native allocation, plan-aware
+materialization and the actual choices writer remain the next class-acquisition
+children. [Scope, evidence and remaining work](handoffs/2026-10-21-class-dependency-descriptor.md).
+The independent G2 source/ACL challenge also passed within its captured limits;
+six trigger-function body bindings remain uncaptured. Vercel and the M7 pause remain.
+Executable checkpoint `4b35ec7` passed the full project check: typecheck,
+zero-warning lint, **362 files / 4920 passes / three UNVERIFIED M5 skips**.
+All424 observed identities exited; no server, browser workflow or deployment ran.
+
 **G2 baseline/catalog COMPLETE** at clean executable source 29b6cc8: actual
 PostgreSQL 17.11 initialized, both official migration jobs exited zero, all 83
 application migrations plus assertions/catalog audit passed (85 steps/one audit).
 All 13 materializer bodies/settings match source; actual local owner is postgres,
 with effective role privileges and 11 trigger rows captured. This removes the
-owner-unknown discovery blocker; independent challenge and actual B source remain.
+owner-unknown discovery blocker; actual B allocation/materialization source remains.
 All six owned resources and 543 recorded clients/controller were removed/absent.
 Vercel hosting unchanged; M7/creature importing paused; M1–M6/M5.5 precede M8.
 See [native completion](handoffs/2026-10-21-g2-baseline-complete.md) and

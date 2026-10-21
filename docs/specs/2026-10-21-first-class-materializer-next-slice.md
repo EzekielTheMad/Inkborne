@@ -1,10 +1,38 @@
-# Next first-class materializer slice — native facts available, design only
+# First-class materializer slices — dependency calculation implemented
 
 Continue M1/M3/M4/M6 from source 29b6cc8 and the
 [completed G2 baseline](../handoffs/2026-10-21-g2-baseline-complete.md).
-This narrows the next source decision; it does not implement an issuer, replace
-materializers, grant permissions or authorize another native profile. Retain the
+The dependency calculation described below is now staged source; B1–B3 remain
+ordered implementation work. This implements no issuer, replaces no materializers,
+grants no runtime permissions and authorizes no native profile. Retain the
 reviewed [prerequisite A contract](2026-10-13-first-class-acquisition-prerequisites.md).
+
+## Implemented dependency calculation before B1
+
+`supabase/staged/class-first-acquisition-dependencies.sql` defines the read-only
+`private.resolve_first_class_dependencies_v1(uuid,uuid,integer)`. Its exact target
+and class version select accessible same-system frozen content; these arguments
+are calculation context, not actor/ownership/bootstrap evidence. Complete dormant
+feature/spell grants retain minimum unlock and first source ordinal. Raw native
+snapshot rows retain fields the TypeScript parser discards. Hypothetical level-one
+feature contexts and physical spell defaults follow the original SQL projections.
+Current arbitrary character choices do not become calculation authority.
+
+It intentionally admits finite well-formed manifests only: strict feature strings,
+integer-text numeric feature levels1–20, native object/array/string spell forms,
+4096 raw references per family/candidate domain/exact versions (controller included),
+and a 4MiB complete output bound. Missing/inaccessible dependencies refuse23503;
+malformed22023; bounds54000; highest feature-rank ties23514. Historical spell slugs
+that select one active content ID also refuse23514 because canonical representative
+selection would require grant IDs not yet allocated. Duplicate same-slug references
+merge harmlessly. No recursion, missing-entry skip or truncation is allowed.
+
+Atomic CREATE/OWNER/REVOKE fails on an existing object, uses STABLE SECURITY INVOKER,
+empty search_path and postgres ownership, with execution revoked from PUBLIC,
+anon, authenticated and service_role. No new runtime-role grant or caller exists.
+Native installation must verify actual default ACLs and resulting privileges;
+the offline model is not native privilege acceptance. Source/fixture review passed
+and 30 focused differential tests passed. [Evidence/limits](../handoffs/2026-10-21-class-dependency-descriptor.md).
 
 ## Resolved prerequisite and its limits
 
@@ -21,8 +49,11 @@ Hosted metadata must be captured separately before any hosted cutover.
 The staged class and authority roles were absent in this baseline. Their declared
 rights remain source contracts, not newly observed native rights. Original owner
 OID 16384 is run-local evidence; future installation checks must resolve and bind
-the actual owner on the selected target. Independent owner/trigger/ACL challenge
-is still required before releasing B source.
+the actual owner on the selected target. Independent review has now checked the
+13 bodies/metadata, 52 privilege rows and all11 trigger declarations. Only five
+trigger function bodies/bindings were among those13; six others and native
+column-name/WHEN/constraint relationships remain uncaptured. The descriptor's
+source review does not release a positive B1/B2 acquisition path.
 
 ## Finite child boundaries
 

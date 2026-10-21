@@ -1,6 +1,20 @@
 # Starting-equipment transaction: local review stage
 
-`starting-equipment-transaction.sql` is SQL text for review, not an applied or CLI-generated migration. It is outside `supabase/migrations` intentionally. The complete file now executes in a synthetic in-memory PostgreSQL-WASM fixture with 45 checks; see the [October 11 executable checkpoint](../../docs/handoffs/2026-10-11-equipment-postgres-wasm.md). Full Supabase migration-chain replay, multi-connection tests and hosted execution remain outstanding. The API/table declarations in `lib/supabase/database.types.ts` are hand-maintained staged declarations, not hosted-generated types.
+## First-class dependency descriptor — separate calculation stage
+
+`class-first-acquisition-dependencies.sql` is additive review text, outside the
+migration chain and unused by the app. Its invoker/stable function resolves an
+exact accessible class snapshot and complete feature/spell dependencies, including
+dormant grants, into bounded raw descriptors. It allocates no IDs, writes no rows,
+accepts no operation and proves no actor or bootstrap lineage. It refuses ambiguous
+feature ranks and active historical spell aliases whose representative depends on
+future grant IDs. Creation/ownership/revocation is atomic and grants no application
+execution. Thirty offline PostgreSQL-WASM tests compare admitted outputs against
+original SQL materializers/projection INSERTs; actual installation, RLS/Auth,
+concurrency, allocation and gameplay remain unverified. See the
+[checkpoint](../../docs/handoffs/2026-10-21-class-dependency-descriptor.md).
+
+`starting-equipment-transaction.sql` is SQL text for review, not an applied or CLI-generated migration. It is outside `supabase/migrations` intentionally. The complete file now executes in a synthetic in-memory PostgreSQL-WASM fixture with 45 checks; see the [October 11 executable checkpoint](../../docs/handoffs/2026-10-11-equipment-postgres-wasm.md). G2 has since passed replay of all 83 frozen baseline migrations; native staged-equipment installation, multi-connection tests and hosted execution remain outstanding. The API/table declarations in `lib/supabase/database.types.ts` are hand-maintained staged declarations, not hosted-generated types.
 
 The application uses `INKBORNE_ATOMIC_STARTING_EQUIPMENT=true` only as a future server rollout gate; its default is off. No environment file was changed. New character creation uses one trusted create/eligible transaction when enabled and never falls back following its failure. The unused `lib/supabase/characters.ts` creation helper remains a legacy path, does not create eligibility and must not be used to promise first-award eligibility. With the gate off, ordinary creation remains possible but creates no eligible marker. Equipment confirmation has no sequential fallback in either gate state. Legacy unconfirmed/no-marker characters require an explicit reconciliation policy.
 

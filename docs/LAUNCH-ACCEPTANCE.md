@@ -2,6 +2,28 @@
 
 ## Active continuation — 2026-10-21 UTC
 
+### First-class dependency calculation — staged implementation, acceptance open
+
+Source `cae1499` adds only an internal invoker/stable descriptor, with no runtime
+caller or grants to application actors. It resolves complete dormant feature/spell
+grants and exact raw snapshots, and describes hypothetical level-one projections.
+Independent source/fixture review passed; 30 focused PostgreSQL-WASM tests compare
+the admitted calculation with original SQL materializers/projection INSERTs and
+exercise malformed, access, tie and bound refusals. A discovered whole-row alias
+bug was fixed; the first two failing tests are preserved. This is no native graph
+allocation, locked provenance, acceptance/receipt producer or choices writer.
+[Detailed checkpoint and limits](handoffs/2026-10-21-class-dependency-descriptor.md).
+Full project check at executable checkpoint `4b35ec7`: typecheck/zero-warning lint,
+**362 files / 4920 passed / three UNVERIFIED M5 skips**. All424 observed identities
+exited. No new build or E2E claim; the new calculation has no application caller.
+
+Independent review of the existing G2 evidence passed the 13 function bodies/
+metadata, 52 privilege rows and 11 trigger declarations. Five trigger function
+bindings were captured; six other bodies/bindings, native column-name mappings,
+WHEN/constraint relationships and actual stage execution remain future preflight.
+No native profile was rerun. M1–M6/M5.5 continue; M7/creature imports stay paused,
+Vercel remains the host, and M8 follows core acceptance.
+
 ### G2 baseline/catalog COMPLETE — native source 29b6cc8
 
 After the preserved bootstrap failures/correction, actual PostgreSQL17.11 and both

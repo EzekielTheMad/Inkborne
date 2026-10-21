@@ -4,11 +4,24 @@ Updated 2026-10-21 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Latest source child: reviewed dependency descriptor `cae1499`, with 30 focused
+PostgreSQL-WASM differential tests passing. It computes full dormant grants/raw
+snapshots and level-one projections; it allocates no native rows and is staged,
+uninstalled and unused by the app. Independent G2 challenge passed the captured
+13-function/52-privilege/11-trigger evidence; uncaptured trigger bindings remain
+an installation preflight requirement. Continue B1 actual protected allocation,
+then B2 materializers/B3 choices writer; do not turn this calculation into positive
+acquisition authority. [Checkpoint](handoffs/2026-10-21-class-dependency-descriptor.md).
+Vercel remains the host; M1–M6/M5.5 priority and M7 pause are unchanged.
+Full check passed at executable checkpoint `4b35ec7`: typecheck/lint,
+362 files / 4920 tests / three UNVERIFIED M5 skips; all424 observed identities
+exited. Documentation-only successor records this result; no native stages ran.
+
 Latest result: **G2 baseline/catalog COMPLETE** at native source29b6cc8.
 PostgreSQL17.11, both official migration jobs, all83 app migrations and85-step
 baseline/audit passed. All13 original functions match source and are actually
 postgres-owned locally; effective ACLs and11 triggers captured. The owner-unknown
-discovery blocker is removed; independent challenge/B implementation still open.
+discovery blocker is removed; B allocation/materialization implementation remains open.
 All six resources and543 recorded clients/controller gone, shared G1 engine/cache
 retained. No staged gameplay/fixtures/hosted/provider acceptance or deployment.
 Use [native completion](handoffs/2026-10-21-g2-baseline-complete.md) and
