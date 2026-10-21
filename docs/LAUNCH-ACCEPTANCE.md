@@ -2,6 +2,30 @@
 
 ## Active continuation — 2026-10-21 UTC
 
+### G2 baseline/catalog COMPLETE — native source 29b6cc8
+
+After the preserved bootstrap failures/correction, actual PostgreSQL17.11 and both
+official migration jobs passed. All **83 frozen application migrations**, R07
+preflight/assertions/catalog audit passed: **85 steps, one audit, complete true**.
+60 audited tables/counts; only Auth77/Storage70 official history counts nonempty.
+13 fixed materializer function bodies/security declarations match source; native
+owner is postgres in this disposable cluster. Effective privileges/default ACLs
+and 11 enabled trigger rows captured. Root comparison is not independent review.
+
+All three containers, internal network and two volumes removed; independent
+same-daemon readback found zero containers and only preserved default networks/
+unrelated volume. All 543 recorded clients plus controller absent. Shared G1
+engine/cache remain running as approved. Full check passed **4,890 / 361 files**,
+typecheck/lint; three M5 stress requirements remain UNVERIFIED, not waived.
+
+[Exact source, receipts, limitations](handoffs/2026-10-21-g2-baseline-complete.md).
+[Next B design slice](specs/2026-10-21-first-class-materializer-next-slice.md)
+now uses observed owner/capability facts. Actual acquisition, staged gameplay,
+equipment fixtures/races, native disabled-profile/source installation and browser/
+provider/hosted acceptance remain open. No broader SQL profile or deployment is
+authorized by this baseline-only run. Vercel stays the host; M7/creature importing
+stay paused and M1–M6/M5.5 precede M8. Earlier pending G2 status below is historical.
+
 ### Approved G2 baseline attempt — FAILED, correction prepared
 
 Victor approved the original prepared baseline/catalog scope in this chat.

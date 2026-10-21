@@ -2,6 +2,20 @@
 
 ## Active execution — 2026-10-21 UTC
 
+**G2 baseline/catalog COMPLETE** at clean executable source 29b6cc8: actual
+PostgreSQL 17.11 initialized, both official migration jobs exited zero, all 83
+application migrations plus assertions/catalog audit passed (85 steps/one audit).
+All 13 materializer bodies/settings match source; actual local owner is postgres,
+with effective role privileges and 11 trigger rows captured. This removes the
+owner-unknown discovery blocker; independent challenge and actual B source remain.
+All six owned resources and 543 recorded clients/controller were removed/absent.
+Vercel hosting unchanged; M7/creature importing paused; M1–M6/M5.5 precede M8.
+See [native completion](handoffs/2026-10-21-g2-baseline-complete.md) and
+[next materializer slice](specs/2026-10-21-first-class-materializer-next-slice.md).
+No gameplay stages, fixtures, hosted writes, deployment or provider acceptance.
+
+The failed original bootstrap and local correction below are preserved history.
+
 G2 update: Victor approved the prepared baseline-only step. Native startup
 **FAILED** because the reduced bootstrap omitted official `98-webhooks.sql`, which
 creates a role required by `99-roles.sql`. Both fresh startup attempts stopped

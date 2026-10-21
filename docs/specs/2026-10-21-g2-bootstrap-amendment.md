@@ -1,5 +1,10 @@
 # G2 bootstrap correction — same approved disposable baseline
 
+Completed update: the corrected frozen source29b6cc8 passed the native baseline,
+both official jobs, all83 app migrations, assertions and catalog capture, followed
+by exact owned teardown. See [completion evidence](../handoffs/2026-10-21-g2-baseline-complete.md).
+The preparation text below is retained as the amendment disclosed before that run.
+
 Victor's current G2 authorization covers the baseline/catalog test and exact owned
 teardown. Root treats completing its official initialization as a routine local
 correction within that authorization: same disposable target, services, resource

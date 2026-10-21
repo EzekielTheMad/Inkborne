@@ -1,4 +1,14 @@
-# Class materializer ownership — bounded G2 capture, UNEXECUTED
+# Class materializer ownership — bounded capture and historical query
+
+October21 update: this exact 13-signature query was executed in the authorized
+disposable G2 baseline at source29b6cc8. All13 functions were actually postgres-owned
+locally, and root body/declaration comparison passed13/13. Effective role/schema/
+function privileges, default ACLs and11 trigger rows were captured. See
+[native facts, receipts and limits](2026-10-21-g2-baseline-complete.md).
+No application command was invoked by the catalog reads; independent-family
+challenge and B implementation remain open. Earlier UNEXECUTED/UNKNOWN statements
+below describe the October13 preparation and are superseded only for this local
+baseline, not for hosted targets or future source/role changes.
 
 Discovery used fixed root710c3fc source, still unchanged at tested236ebcf. It read
 maintained files/Git only. No SQL, provider query, function invocation, user-row

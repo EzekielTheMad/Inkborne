@@ -4,6 +4,18 @@ Updated 2026-10-21 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Latest result: **G2 baseline/catalog COMPLETE** at native source29b6cc8.
+PostgreSQL17.11, both official migration jobs, all83 app migrations and85-step
+baseline/audit passed. All13 original functions match source and are actually
+postgres-owned locally; effective ACLs and11 triggers captured. The owner-unknown
+discovery blocker is removed; independent challenge/B implementation still open.
+All six resources and543 recorded clients/controller gone, shared G1 engine/cache
+retained. No staged gameplay/fixtures/hosted/provider acceptance or deployment.
+Use [native completion](handoffs/2026-10-21-g2-baseline-complete.md) and
+[next finite B design](specs/2026-10-21-first-class-materializer-next-slice.md).
+M1–M6/M5.5 remain priority, M7/creature imports paused, hosting Vercel.
+The failed attempts/correction paragraphs below are preserved history.
+
 Latest G2 result: original baseline-only scope approved, native initialization
 FAILED on the missing official webhooks prerequisite. No application replay or
 owner capture occurred; all owned resources and recorded processes were removed.
