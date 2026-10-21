@@ -290,10 +290,10 @@ BEGIN
       IF jsonb_array_length(versions) >= 4096 THEN
         RAISE EXCEPTION 'First class exact version bound exceeded' USING ERRCODE = '54000';
       END IF;
-      SELECT to_jsonb(version) INTO version_snapshot
-      FROM public.content_versions AS version
-      WHERE version.content_id = selected_candidate.content_id
-        AND version.version = selected_candidate.version;
+      SELECT to_jsonb(snapshot) INTO version_snapshot
+      FROM public.content_versions AS snapshot
+      WHERE snapshot.content_id = selected_candidate.content_id
+        AND snapshot.version = selected_candidate.version;
       versions := versions || jsonb_build_array(version_snapshot);
       version_keys := version_keys || jsonb_build_object(version_key, true);
       IF octet_length(versions::text) > 4194304 THEN
@@ -381,10 +381,10 @@ BEGIN
       IF jsonb_array_length(versions) >= 4096 THEN
         RAISE EXCEPTION 'First class exact version bound exceeded' USING ERRCODE = '54000';
       END IF;
-      SELECT to_jsonb(version) INTO version_snapshot
-      FROM public.content_versions AS version
-      WHERE version.content_id = selected_candidate.content_id
-        AND version.version = selected_candidate.version;
+      SELECT to_jsonb(snapshot) INTO version_snapshot
+      FROM public.content_versions AS snapshot
+      WHERE snapshot.content_id = selected_candidate.content_id
+        AND snapshot.version = selected_candidate.version;
       versions := versions || jsonb_build_array(version_snapshot);
       version_keys := version_keys || jsonb_build_object(version_key, true);
       IF octet_length(versions::text) > 4194304 THEN
