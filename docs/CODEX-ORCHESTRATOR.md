@@ -4,6 +4,18 @@ Updated 2026-10-21 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Latest G2 result: original baseline-only scope approved, native initialization
+FAILED on the missing official webhooks prerequisite. No application replay or
+owner capture occurred; all owned resources and recorded processes were removed.
+Local Compose/guard correction requires exactly five mounts and passed 63 focused
+tests; corrected successor fixture passed 60/60. Final full check passed
+typecheck/lint, 361 files/4,890 tests with three UNVERIFIED skips and all 398
+observed identities exited. Preserve the first full check's ten fixture failures.
+The [amended native scope](specs/2026-10-21-g2-bootstrap-amendment.md) adds
+the complete pinned official `98-webhooks.sql`; do not run it under the old freeze.
+See [preserved failures](handoffs/2026-10-21-g2-bootstrap-failure.md). Materializer,
+M5 guard/bonus and hosted acceptance holds remain. Vercel/M7 priorities unchanged.
+
 October 21 update: Victor explicitly approved **G1**, retained **Vercel hosting**
 and reaffirmed **M1–M6 with M7 paused**. G1 is now complete: daemon and three
 digest/platform-verified images ready, no test containers/credentials/SQL, all

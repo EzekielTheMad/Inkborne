@@ -313,6 +313,7 @@ function runtimeResult(command: Command): Result {
     mounts: [
       { Type: "volume", Name: TARGET.volumes[0], Destination: "/var/lib/postgresql/data", RW: true },
       { Type: "volume", Name: TARGET.volumes[1], Destination: "/etc/postgresql-custom", RW: true },
+      { Type: "bind", Source: TARGET.scratch + "\\bootstrap\\98-webhooks.sql", Destination: "/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql", RW: false },
       { Type: "bind", Source: TARGET.scratch + "\\bootstrap\\99-roles.sql", Destination: "/docker-entrypoint-initdb.d/init-scripts/99-roles.sql", RW: false },
       { Type: "bind", Source: TARGET.scratch + "\\sql", Destination: "/e1-sql", RW: false },
     ] };

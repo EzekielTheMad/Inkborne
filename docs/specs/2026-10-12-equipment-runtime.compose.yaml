@@ -26,6 +26,12 @@ services:
         source: db-config
         target: /etc/postgresql-custom
       - type: bind
+        source: ./bootstrap/98-webhooks.sql
+        target: /docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
         source: ./bootstrap/99-roles.sql
         target: /docker-entrypoint-initdb.d/init-scripts/99-roles.sql
         read_only: true

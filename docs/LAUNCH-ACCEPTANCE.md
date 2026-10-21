@@ -2,6 +2,29 @@
 
 ## Active continuation — 2026-10-21 UTC
 
+### Approved G2 baseline attempt — FAILED, correction prepared
+
+Victor approved the original prepared baseline/catalog scope in this chat.
+One preflight timeout and two fresh DB initialization failures are preserved;
+the diagnostic attempt showed missing `supabase_functions_admin`, required by
+the official roles file. The reduced recipe omitted official `98-webhooks.sql`.
+No Auth/Storage job or application migration ran. Temporary DB initialization SQL
+did run before failure. All owned containers/network/volumes were removed; all
+95 recorded clients and three controllers were independently absent.
+
+Local candidate now adds the full pinned official prerequisite and exact fifth
+read-only mount; 63 focused transport tests passed. Native baseline, class-owner
+metadata and gameplay acceptance remain UNVERIFIED. Final `npm.cmd run check`
+passed typecheck, zero-warning lint, 361 files / 4,890 tests with three UNVERIFIED
+M5 skips; all 398 observed identities exited. Preserve the first full check's
+ten legacy-fixture failures; focused core recovery passed 60/60 with 43 exited.
+The [initialization correction](specs/2026-10-21-g2-bootstrap-amendment.md) adds the
+complete official prerequisite inside the same approved disposable baseline.
+Use a new freeze, preserve old failures and infer no hosted/stage authority.
+[Failure receipts and limits](handoffs/2026-10-21-g2-bootstrap-failure.md).
+Vercel remains the host; M1–M6/M5.5 precede M8, M7/creature importing stay paused.
+Earlier statements that G2 was entirely unapproved are historical.
+
 ### Latest human approval and runtime checkpoint
 
 Victor: "Okay, go ahead with G1. Keep hosting on Vercel and continue working on

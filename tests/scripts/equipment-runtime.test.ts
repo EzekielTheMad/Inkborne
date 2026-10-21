@@ -48,6 +48,7 @@ function metadata() {
     mounts: [
       { Type: "volume", Name: TARGET.volumes[0], Destination: "/var/lib/postgresql/data", RW: true },
       { Type: "volume", Name: TARGET.volumes[1], Destination: "/etc/postgresql-custom", RW: true },
+      { Type: "bind", Source: `${TARGET.scratch}\\bootstrap\\98-webhooks.sql`, Destination: "/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql", RW: false },
       { Type: "bind", Source: `${TARGET.scratch}\\bootstrap\\99-roles.sql`, Destination: "/docker-entrypoint-initdb.d/init-scripts/99-roles.sql", RW: false },
       { Type: "bind", Source: `${TARGET.scratch}\\sql`, Destination: "/e1-sql", RW: false },
     ] };
@@ -109,6 +110,16 @@ describe("frozen-source boundary", () => {
   });
 });
 describe("real runtime transport boundary", () => {
+  it.each(["missing", "writable", "other-source"])("refuses %s official webhook bootstrap before SQL", async mismatch => {
+    const { approved } = approval(); const wrong = metadata();
+    const index = wrong.mounts.findIndex(mount => mount.Destination.endsWith("98-webhooks.sql"));
+    if (mismatch === "missing") wrong.mounts.splice(index, 1);
+    if (mismatch === "writable") wrong.mounts[index].RW = true;
+    if (mismatch === "other-source") wrong.mounts[index].Source = `${TARGET.scratch}\\bootstrap\\unapproved.sql`;
+    const run = transport({ container: wrong });
+    await expect(verifyRuntime(run, approved)).rejects.toThrow(/mount/);
+    expect(run.mock.calls.some(([command]) => command.args[2] === "exec")).toBe(false);
+  });
   it.each(["name","ports","mount","network","running"])("refuses %s mismatch before any SQL", async mismatch => {
     const { approved } = approval(); const wrong = metadata();
     if(mismatch === "name") wrong.name="/Inkborne";

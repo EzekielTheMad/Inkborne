@@ -122,10 +122,11 @@ export async function verifyRuntime(transport: Transport, approval: Pick<Runtime
   const image = record(parseJson(await checked(transport, docker(["image", "inspect", "--format", '{"id":{{json .Id}},"digests":{{json .RepoDigests}},"os":{{json .Os}},"architecture":{{json .Architecture}}}', approval.imageId]))));
   if (image.id !== approval.imageId || image.os !== "linux" || image.architecture !== "amd64"
       || !Array.isArray(image.digests) || !image.digests.includes(TARGET.image)) refusal("unpinned runtime image");
-  if (!Array.isArray(container.mounts) || container.mounts.length !== 4) refusal("unexpected mount count");
+  if (!Array.isArray(container.mounts) || container.mounts.length !== 5) refusal("unexpected mount count");
   const expectedMounts = [
     { type: "volume", name: TARGET.volumes[0], destination: "/var/lib/postgresql/data", rw: true },
     { type: "volume", name: TARGET.volumes[1], destination: "/etc/postgresql-custom", rw: true },
+    { type: "bind", source: `${TARGET.scratch}\\bootstrap\\98-webhooks.sql`, destination: "/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql", rw: false },
     { type: "bind", source: `${TARGET.scratch}\\bootstrap\\99-roles.sql`, destination: "/docker-entrypoint-initdb.d/init-scripts/99-roles.sql", rw: false },
     { type: "bind", source: `${TARGET.scratch}\\sql`, destination: "/e1-sql", rw: false },
   ];

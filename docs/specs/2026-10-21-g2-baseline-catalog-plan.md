@@ -1,6 +1,16 @@
 # G2 proposed first slice — disposable baseline and catalog capture
 
-Prepared October 21, 2026. **NOT APPROVED OR EXECUTED.** G1 is complete;
+Historical frozen proposal at source `e860e6960bf8833411890532bdba9009fd18d13c`.
+Victor subsequently approved this baseline-only scope on October 21. Actual
+execution **FAILED during official database initialization**, before either job
+or application migration replay. The four-mount recipe omitted official
+`98-webhooks.sql`, required by `99-roles.sql`. See
+[failure evidence](../handoffs/2026-10-21-g2-bootstrap-failure.md) and the
+[unexecuted amendment](2026-10-21-g2-bootstrap-amendment.md). The original freeze
+and failures remain immutable; the current Compose now contains the proposed
+fifth mount and cannot be executed against the old approval/freeze.
+
+Original proposal follows. Prepared October 21, 2026. G1 is complete;
 Vercel remains the host. This narrows the larger October 12 G2 proposal to its
 first useful prerequisite. It does not replace R07 receipt formats or authorize
 the original equipment stage, fixtures, races, fault injection or disabled core

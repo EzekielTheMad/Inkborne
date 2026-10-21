@@ -2,6 +2,21 @@
 
 ## Active execution — 2026-10-21 UTC
 
+G2 update: Victor approved the prepared baseline-only step. Native startup
+**FAILED** because the reduced bootstrap omitted official `98-webhooks.sql`, which
+creates a role required by `99-roles.sql`. Both fresh startup attempts stopped
+before job/application migrations; all owned resources were removed and read back
+absent. A prior metadata timeout and all failures are preserved. No baseline or
+class-owner capture exists. The local recipe/strict mount guard is corrected;
+63 focused tests passed. The [amendment](specs/2026-10-21-g2-bootstrap-amendment.md)
+adds the complete pinned official prerequisite for a fresh corrected freeze within
+the existing disposable-baseline authorization; no new user response is claimed.
+Final project check passed typecheck/lint, 361 files / 4,890 tests with three
+UNVERIFIED M5 skips; all 398 observed identities exited. The first ten old-fixture
+failures and corrected focused 60/60 recovery are preserved in the handoff.
+See [native failure evidence](handoffs/2026-10-21-g2-bootstrap-failure.md).
+This supersedes the older G2-unapproved wording below only for the original scope.
+
 Victor approved G1 and reaffirmed Vercel hosting, M1–M6 priority and M7 pause.
 **G1 completed:** Linux Docker engine started once; all three pinned linux/amd64
 images verified. No test containers, credentials or SQL; shared engine/cache
