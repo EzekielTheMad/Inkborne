@@ -1,6 +1,17 @@
 # Inkborne current work
 
-## Active execution — 2026-10-13 UTC
+## Active execution — 2026-10-21 UTC
+
+Victor approved G1 and reaffirmed Vercel hosting, M1–M6 priority and M7 pause.
+**G1 completed:** Linux Docker engine started once; all three pinned linux/amd64
+images verified. No test containers, credentials or SQL; shared engine/cache
+remain running as approved. The next M1 prerequisite is original materializer
+owner/privilege metadata from a disposable baseline. Its narrowed G2 package is
+prepared, **not approved/executed**; no staged SQL or hosted changes are authorized.
+See [G1 receipt](handoffs/2026-10-21-g1-complete.md) and
+[G2 baseline/catalog dry run](specs/2026-10-21-g2-baseline-catalog-plan.md).
+
+The October 13 evidence below is historical; its pending G1 status is superseded.
 
 Priority update — Victor, 2026-10-13 (America/Phoenix): **pause M7 PDF importing;
 continue M1–M6, including M5.5; M8 follows that core work.** M7 stays in the

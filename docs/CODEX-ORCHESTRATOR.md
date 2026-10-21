@@ -1,8 +1,18 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-13 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
+Updated 2026-10-21 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
 
 ## Resume and ownership
+
+October 21 update: Victor explicitly approved **G1**, retained **Vercel hosting**
+and reaffirmed **M1–M6 with M7 paused**. G1 is now complete: daemon and three
+digest/platform-verified images ready, no test containers/credentials/SQL, all
+pull clients exited. Leave shared engine/cache running as approved. See
+[G1 evidence](handoffs/2026-10-21-g1-complete.md).
+Prepare/seek only the [bounded G2 baseline/catalog slice](specs/2026-10-21-g2-baseline-catalog-plan.md)
+next; it remains unapproved and is needed before original-owner materializer work.
+No stage, fixtures, hosted action or deployment follows from G1. Historical G1
+pending/unavailable statements below are superseded. Other holds remain in force.
 
 Victor's latest priority, 2026-10-13 (America/Phoenix): pause M7 and proposed
 monster/NPC imports; prioritize M1–M6 including M5.5, then M8. Keep paused imports

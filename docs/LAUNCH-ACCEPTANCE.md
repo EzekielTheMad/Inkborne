@@ -1,6 +1,25 @@
 # Inkborne project-wide acceptance ledger
 
-## Active continuation — 2026-10-13 UTC
+## Active continuation — 2026-10-21 UTC
+
+### Latest human approval and runtime checkpoint
+
+Victor: "Okay, go ahead with G1. Keep hosting on Vercel and continue working on
+M1–M6, with M7 paused." **G1 completed** on October 21: installed Linux engine
+started once and three pinned linux/amd64 images verified; 637,510,394 combined
+Docker-reported image bytes, disk floor respected, all pull clients absent.
+No test containers/network/volumes, credentials, SQL or hosted changes. Shared
+daemon/cache remain running as approved. [Receipt and limitations](handoffs/2026-10-21-g1-complete.md).
+
+M1–M6 including M5.5 precede M8; M7 and proposed creature imports stay paused.
+Next native prerequisite is original class materializer ownership/privilege/trigger
+metadata. A [narrow G2 baseline/catalog package](specs/2026-10-21-g2-baseline-catalog-plan.md)
+is prepared, **unapproved/unexecuted**. Staged SQL, fixtures, G3 hosted work,
+backup/restore, deployment and publication remain separate. Local executable
+acceptance stays at 236ebcf; G1 is provisioning evidence only.
+
+Earlier dated status below is preserved history; G1 approval/completion above
+supersedes older statements that G1 was pending or Docker unavailable.
 
 ### Latest human priority — 2026-10-13 (America/Phoenix)
 
