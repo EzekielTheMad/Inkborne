@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 
-test("actual creation UI retains originals across reload, retry and account transitions offline", async () => {
+test("actual creation and first-class UI retain originals across reload, retry and account transitions offline", async () => {
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), observedStartedUtc: new Date().toISOString(), port: null }));
   const child = spawn(process.execPath, ["scripts/verify-creation-local.mjs"], { cwd: process.cwd(), windowsHide: true });
   let output = "";
@@ -14,9 +14,9 @@ test("actual creation UI retains originals across reload, retry and account tran
     const result = JSON.parse(await readFile("test-results/creation-local/evidence.json", "utf8"));
     expect(result.status).toBe("passed"); expect(result.liveSupabase).toBe(false); expect(result.realNextServer).toBe(false);
     expect(result.pageErrors).toEqual([]); expect(result.blockedRemoteRequests).toEqual([]);
-    expect(result.evidence).toHaveLength(14);
+    expect(result.evidence).toHaveLength(30);
     for (const viewport of ["desktop", "mobile"]) {
-      expect(result.evidence.filter((row: { viewport: string; passed: boolean }) => row.viewport === viewport && row.passed)).toHaveLength(7);
+      expect(result.evidence.filter((row: { viewport: string; passed: boolean }) => row.viewport === viewport && row.passed)).toHaveLength(15);
     }
     expect(result.cleanup).toEqual({ browserClosed: true, browserProcessExited: true, httpClosed: true, portClosed: true, controlPortClosed: true });
   } finally {

@@ -31,8 +31,9 @@ let result = { simulated: true, liveSupabase: false, realNextServer: false, stat
 const A = "10000000-0000-4000-8000-000000000001", B = "10000000-0000-4000-8000-000000000004";
 const TARGET = "10000000-0000-4000-8000-000000000003";
 const pendingKey = account => "inkborne:pending-creation:v1:" + account;
+const pendingClassKey = account => "inkborne:pending-first-class:v1:" + account + ":" + TARGET;
 const stubs = {
-  "next/navigation": "export function useRouter(){return {push(to){window.fixture.navigation.push(to)}}}",
+  "next/navigation": "export function useRouter(){return {push(to){window.fixture.navigation.push(to);window.fixture.navigate?.(to)}}}",
   "next/link": "import React from 'react';export default function Link({children,...props}){return React.createElement('a',props,children)}",
   "@/lib/supabase/client": "export function createClient(){return {auth:{onAuthStateChange(callback){window.fixture.authChange=callback;return {data:{subscription:{unsubscribe(){if(window.fixture.authChange===callback)window.fixture.authChange=null}}}}}}}}",
 };
@@ -40,14 +41,16 @@ const fixtureSource = String.raw`
   import React,{useState} from 'react';
   import {createRoot} from 'react-dom/client';
   import {OriginCreationForm} from '@/app/(app)/characters/new/origin-form';
+  import {FirstClassForm} from '@/app/(app)/characters/[id]/builder/first-class/first-class-form';
   import {CreationSessionBoundary} from '@/components/auth/creation-session-boundary';
   import {getCreationScope,persistPendingCreation} from '@/lib/character/pending-creation-storage';
+  import {persistPendingFirstClass} from '@/lib/character/pending-first-class-storage';
   const A='10000000-0000-4000-8000-000000000001',B='10000000-0000-4000-8000-000000000004';
   const system='10000000-0000-4000-8000-000000000005',target='10000000-0000-4000-8000-000000000003';
   const storedAccount=sessionStorage.getItem('fixture-account');
   const initial=storedAccount==='signed-out'?null:storedAccount===B?B:A;
   window.fixture={calls:JSON.parse(sessionStorage.getItem('fixture-calls')||'[]'),navigation:[],authChange:null,
-    createMode:'pending',checkMode:'absent',deferred:[],account:initial,staleWrite:null,signOutAttempts:0};
+    createMode:'pending',checkMode:'absent',classMode:'pending',classCheckMode:'absent',deferred:[],account:initial,staleWrite:null,signOutAttempts:0};
   const fixture=window.fixture;
   function send(kind,expectedAccount,intent){
     const lease=getCreationScope(),clone=JSON.parse(JSON.stringify(intent));
@@ -61,8 +64,25 @@ const fixtureSource = String.raw`
     if(mode==='pending')return new Promise(resolve=>fixture.deferred.push({resolve:()=>resolve(answer('confirmed'))}));
     return Promise.resolve(answer(mode));
   }
+  function sendClass(kind,expectedAccount,intent){
+    const lease=getCreationScope(),clone=JSON.parse(JSON.stringify(intent));
+    const raw=sessionStorage.getItem('inkborne:pending-first-class:v1:'+expectedAccount+':'+target);
+    if(!raw||JSON.stringify(JSON.parse(raw).intent)!==JSON.stringify(clone))throw Error('No exact durable original class before action');
+    fixture.calls.push({kind,expectedAccount,intent:clone,storedBeforeRequest:true});
+    sessionStorage.setItem('fixture-calls',JSON.stringify(fixture.calls));
+    fixture.staleWrite=()=>persistPendingFirstClass(clone,lease,sessionStorage);
+    const answer=mode=>mode==='confirmed'?{status:'confirmed',account_id:expectedAccount,operation_id:clone.operation_id,character_id:target}
+      :mode==='mismatch'?{status:'confirmed',account_id:expectedAccount,operation_id:clone.operation_id,character_id:system}:{status:mode};
+    const mode=kind==='class-save'?fixture.classMode:fixture.classCheckMode;
+    if(mode==='pending')return new Promise(resolve=>fixture.deferred.push({resolve:()=>resolve(answer('confirmed'))}));
+    return Promise.resolve(answer(mode));
+  }
   function App(){
     const [account,setAccount]=useState(initial);
+    const [stage,setStage]=useState(sessionStorage.getItem('fixture-stage')||'creation');
+    const [available,setAvailable]=useState(true);
+    fixture.navigate=to=>{if(to.endsWith('/builder/first-class')){sessionStorage.setItem('fixture-stage','class');setStage('class')}};
+    fixture.hideCatalog=()=>setAvailable(false);
     fixture.changeAccount=id=>{
       sessionStorage.setItem('fixture-account',id);
       fixture.account=id;fixture.authChange?.('SIGNED_IN',{user:{id}});setAccount(id);
@@ -73,10 +93,13 @@ const fixtureSource = String.raw`
       fixture.account=null;fixture.authChange?.('SIGNED_OUT',null);setAccount(null);
     };
     fixture.seedCurrentPending=intent=>persistPendingCreation(intent,getCreationScope(),sessionStorage);
+    fixture.seedClassPending=intent=>persistPendingFirstClass(intent,getCreationScope(),sessionStorage);
     return <main><h1>Local creation behavior fixture</h1>
       <p>Simulated Auth and actions; real creation form and account boundary.</p>
       <CreationSessionBoundary accountId={account}/>
-      {account?<OriginCreationForm accountId={account}
+      {account?stage==='class'?<FirstClassForm accountId={account} characterId={target} canStart={available}
+        classes={available?[{id:system,name:'Fighter',version:1}]:[]}
+        submitAction={intent=>sendClass('class-save',account,intent)} checkAction={intent=>sendClass('class-check',account,intent)}/>:<OriginCreationForm accountId={account}
         systems={[{id:system,name:'D&D 5e',slug:'dnd-5e-2014'}]}
         submitAction={intent=>send('create',account,intent)} checkAction={intent=>send('check',account,intent)}/>
         :<p role='status'>Fixture signed out.</p>}
@@ -110,7 +133,7 @@ try {
     assert.ok(!/(^|[\\/])\.env(?:\.|$)|[\\/]@supabase[\\/]|origin-actions|character-command-server/.test(name), "Forbidden bundle input");
     inputs.push({ path: name.replaceAll("\\", "/"), sha256: digest(await fs.readFile(absolute)) });
   }
-  for (const required of ["app/(app)/characters/new/origin-form.tsx", "components/auth/creation-session-boundary.tsx"]) {
+  for (const required of ["app/(app)/characters/new/origin-form.tsx", "app/(app)/characters/[id]/builder/first-class/first-class-form.tsx", "components/auth/creation-session-boundary.tsx"]) {
     assert.ok(inputs.some(row => row.path === required), "Missing actual UI source: " + required);
   }
   result.source = { bundleSha256: digest(code), fixtureSha256: digest(fixtureSource), inputs };
@@ -195,7 +218,7 @@ try {
     await page.evaluate(() => { window.fixture.checkMode = "confirmed"; });
     await page.getByRole("button", { name: "Check result" }).click();
     await page.waitForFunction(() => window.fixture.navigation.length === 1);
-    assert.deepEqual(await page.evaluate(() => window.fixture.navigation), ["/characters/" + TARGET + "/builder"]);
+    assert.deepEqual(await page.evaluate(() => window.fixture.navigation), ["/characters/" + TARGET + "/builder/first-class"]);
     assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingKey(A)), null);
     note("matching simulated owned confirmation alone clears and routes to the saved character");
 
@@ -235,6 +258,85 @@ try {
     });
     assert.deepEqual(await page.evaluate(() => window.fixture.navigation), []);
     note("confirmed sign-out clears and prevents old writes/late navigation");
+
+    const enterClass = async () => {
+      await fresh();
+      await page.evaluate(() => { window.fixture.createMode = "confirmed"; });
+      await page.getByRole("textbox", { name: "What will they be called?" }).fill("Elara");
+      await page.getByRole("button", { name: "Open the notebook" }).click();
+      await page.getByRole("combobox", { name: "First class", exact: true }).waitFor();
+      assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingKey(A)), null);
+    };
+    const saveClass = async () => {
+      await page.getByRole("combobox", { name: "First class", exact: true }).selectOption("10000000-0000-4000-8000-000000000005");
+      await page.getByRole("button", { name: "Save first class", exact: true }).click();
+      await page.waitForFunction(() => window.fixture.calls.some(row => row.kind === "class-save"));
+      return JSON.parse(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)));
+    };
+    await enterClass();
+    const classOriginal = await saveClass();
+    assert.equal(classOriginal.intent.fields.content_version, 1);
+    assert.equal(classOriginal.intent.expected_action_revision, "0");
+    const classBytes = await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A));
+    await page.reload();
+    await page.getByRole("button", { name: "Check class save" }).waitFor();
+    assert.equal(await page.getByRole("combobox").count(), 0);
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), classBytes);
+    note("creation proceeds to real first-class form; complete class intent survives actual reload");
+    await page.evaluate(() => window.fixture.hideCatalog());
+    await page.getByRole("button", { name: "Check class save" }).click();
+    await page.getByRole("status").filter({ hasText: "No saved result was found yet" }).waitFor();
+    await page.evaluate(() => { window.fixture.classMode = "unavailable"; });
+    await page.getByRole("button", { name: "Retry original class save" }).click();
+    await page.getByRole("status").filter({ hasText: "The class save is not confirmed yet" }).waitFor();
+    const classCalls = (await page.evaluate(() => window.fixture.calls)).filter(row => row.kind.startsWith("class-"));
+    assert.deepEqual(classCalls.map(row => row.kind), ["class-save", "class-check", "class-save"]);
+    assert.deepEqual(classCalls.map(row => row.intent), [classOriginal.intent, classOriginal.intent, classOriginal.intent]);
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), classBytes);
+    note("absent class result and uncertain retry retain the same original even without today's catalog");
+    await page.evaluate(() => { window.fixture.classCheckMode = "mismatch"; });
+    await page.getByRole("button", { name: "Check class save" }).click();
+    await page.getByRole("status").filter({ hasText: "did not match your original class choice" }).waitFor();
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), classBytes);
+    note("confirmation for a different character cannot clear the original class save");
+    await page.screenshot({ path: path.join(output, label + "-class-pending.png"), fullPage: true });
+    await page.evaluate(() => { window.fixture.classCheckMode = "confirmed"; });
+    await page.getByRole("button", { name: "Check class save" }).click();
+    await page.getByRole("link", { name: "Open your notebook" }).waitFor();
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), null);
+    note("matching simulated class receipt alone clears the retained class request");
+
+    await enterClass(); const classBeforeSwitch = await saveClass();
+    await page.evaluate(id => window.fixture.changeAccount(id), B);
+    await page.getByRole("combobox", { name: "First class", exact: true }).waitFor();
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), null);
+    await page.evaluate(intent => window.fixture.seedClassPending(intent), classBeforeSwitch.intent);
+    const nextClassBytes = await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(B));
+    assert.equal(await page.evaluate(() => { try { window.fixture.staleWrite(); return false; } catch { return true; } }), true);
+    await page.evaluate(async () => {
+      window.fixture.deferred[0].resolve();
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    await page.waitForFunction(() => document.querySelector('button[type="submit"]')?.disabled === false);
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(B)), nextClassBytes);
+    assert.equal(await page.getByRole("link", { name: "Open your notebook" }).count(), 0);
+    note("account transition invalidates old class writes and ignores the late previous-account receipt");
+
+    await enterClass(); await saveClass();
+    const classBeforeSignout = await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A));
+    await page.evaluate(() => window.fixture.failSignOut());
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), classBeforeSignout);
+    note("failed sign-out preserves the unfinished class save");
+    await page.evaluate(() => window.fixture.confirmSignOut());
+    await page.getByRole("status").filter({ hasText: "Fixture signed out" }).waitFor();
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), null);
+    assert.equal(await page.evaluate(() => { try { window.fixture.staleWrite(); return false; } catch { return true; } }), true);
+    await page.evaluate(async () => {
+      window.fixture.deferred[0].resolve();
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    assert.equal(await page.getByRole("link", { name: "Open your notebook" }).count(), 0);
+    note("confirmed sign-out clears class originals and prevents late accepted callbacks");
     await context.close();
 
     const denied = await browser.newContext({ viewport, serviceWorkers: "block" });
@@ -247,7 +349,7 @@ try {
     await denied.addInitScript(() => {
       const originalSet = Storage.prototype.setItem;
       Storage.prototype.setItem = function (key, value) {
-        if (key.startsWith("inkborne:pending-creation:v1:")) throw new DOMException("Simulated denial", "QuotaExceededError");
+        if (key.startsWith("inkborne:pending-creation:v1:") || key.startsWith("inkborne:pending-first-class:v1:")) throw new DOMException("Simulated denial", "QuotaExceededError");
         return originalSet.call(this, key, value);
       };
     });
@@ -260,6 +362,12 @@ try {
     assert.deepEqual(await deniedPage.evaluate(() => window.fixture.calls), []);
     await deniedPage.screenshot({ path: path.join(output, label + "-storage-denied.png"), fullPage: true });
     note("storage failure blocks the first action entirely");
+    await deniedPage.evaluate(() => window.fixture.navigate('/characters/10000000-0000-4000-8000-000000000003/builder/first-class'));
+    await deniedPage.getByRole("combobox", { name: "First class", exact: true }).selectOption("10000000-0000-4000-8000-000000000005");
+    await deniedPage.getByRole("button", { name: "Save first class", exact: true }).click();
+    await deniedPage.getByRole("status").filter({ hasText: "No new save was sent" }).waitFor();
+    assert.deepEqual(await deniedPage.evaluate(() => window.fixture.calls), []);
+    note("class-intent storage failure sends no class action");
     await denied.close();
   }
   assert.deepEqual(pageErrors, []); assert.deepEqual(blockedRemoteRequests, []);
