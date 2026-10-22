@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { creationUUID, parseCreationIntent, type CreationIntent } from "./pending-creation-schema";
+import { isPendingCommandKey, pendingCommandBelongsToAccount, PENDING_CREATION_PREFIX } from "./pending-command-namespaces";
 
-export const PENDING_CREATION_PREFIX = "inkborne:pending-creation:v1:";
+export { PENDING_CREATION_PREFIX } from "./pending-command-namespaces";
 const accountKey = "inkborne:creation-account:v1";
 const recordSchema = z.strictObject({ storage_version: z.literal(1), account_id: creationUUID, intent: z.unknown() });
 export type PendingCreation = Readonly<{ storage_version: 1; account_id: string; intent: CreationIntent }>;
@@ -28,7 +29,7 @@ function keys(storage: Storage): string[] {
   const result: string[] = [];
   for (let index = 0; index < storage.length; index++) {
     const key = storage.key(index);
-    if (key?.startsWith(PENDING_CREATION_PREFIX)) result.push(key);
+    if (key && isPendingCommandKey(key)) result.push(key);
   }
   return result;
 }
@@ -42,7 +43,7 @@ export function setCreationAccount(accountId: string | null, storage: Storage): 
     if (accountId !== null && !creationUUID.safeParse(accountId).success) throw new Error("Invalid account");
     const previous = storage.getItem(accountKey);
     for (const key of keys(storage)) {
-      if (accountId === null || (previous !== null && previous !== accountId) || key !== creationStorageKey(accountId)) {
+      if (accountId === null || (previous !== null && previous !== accountId) || !pendingCommandBelongsToAccount(key, accountId)) {
         storage.removeItem(key);
       }
     }
