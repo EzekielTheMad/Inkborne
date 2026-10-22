@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { parseFirstClassIntent, type FirstClassIntent, type FirstClassUIResult } from "@/lib/character/first-class-command-schema";
@@ -18,10 +19,11 @@ const confirmedSchema = z.strictObject({ status: z.literal("confirmed"), account
   character_id: creationUUID, operation_id: creationUUID });
 const retained = "Your original class choice is kept. Check its result or retry the original save.";
 
-export function FirstClassForm({ accountId, characterId, classes, canStart, submitAction, checkAction }: {
-  accountId: string; characterId: string; classes: ClassOption[]; canStart: boolean;
+export function FirstClassForm({ accountId, characterId, classes, canStart, hasSavedClass = false, submitAction, checkAction }: {
+  accountId: string; characterId: string; classes: ClassOption[]; canStart: boolean; hasSavedClass?: boolean;
   submitAction: Action; checkAction: Action;
 }) {
+  const router = useRouter();
   const scope = useSyncExternalStore(subscribeCreationScope, getCreationScope, getServerCreationScope);
   const [view, setView] = useState<View>({ epoch: -1, accountId, characterId, pending: null, notice: "", blocked: false });
   const [busy, startTransition] = useTransition();
@@ -73,8 +75,9 @@ export function FirstClassForm({ accountId, characterId, classes, canStart, subm
           return;
         }
         setView({ epoch: lease.epoch, accountId, characterId, pending, blocked: true, confirmed: true,
-          notice: "Your first class is saved. You can return to your notebook." });
+          notice: "Your first class is saved." });
         clearConfirmedFirstClass(pending, lease, window.sessionStorage);
+        router.refresh();
       } catch {
         if (stillHere() && getCreationScope().epoch === lease.epoch) {
           setView(current => ({ ...current, pending, notice: current.confirmed
@@ -108,7 +111,7 @@ export function FirstClassForm({ accountId, characterId, classes, canStart, subm
   if (!ready) return <p role="status">Checking your signed-in browser session… If it changed, reload after signing in.</p>;
   return <div className="space-y-4">
     {view.notice && <p role="status" className="text-sm text-muted-foreground">{view.notice}</p>}
-    {view.confirmed ? <Link href={"/characters/" + characterId + "/builder"}>Open your notebook</Link> : view.pending ? (
+    {view.confirmed ? <Link href={"/characters/" + characterId + "/builder/first-class"}>View saved class</Link> : view.pending ? (
       <div className="space-y-3">
         <p className="text-sm">Waiting for confirmation of your original class choice.</p>
         <div className="flex flex-wrap gap-2">
@@ -128,6 +131,6 @@ export function FirstClassForm({ accountId, characterId, classes, canStart, subm
         </div>
         <Button type="submit" disabled={busy || !classes.length}>Save first class</Button>
       </form>
-    ) : !view.blocked ? <p role="status">This notebook is not ready for a new first-class choice. Open it to review its saved selections.</p> : null}
+    ) : !view.blocked && !hasSavedClass ? <p role="status">This notebook is not ready for a new first-class choice. Open it to review its saved selections.</p> : null}
   </div>;
 }

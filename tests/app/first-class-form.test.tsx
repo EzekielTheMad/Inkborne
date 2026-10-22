@@ -4,6 +4,8 @@ import { FirstClassForm } from "@/app/(app)/characters/[id]/builder/first-class/
 import { parseFirstClassIntent, type FirstClassIntent, type FirstClassUIResult } from "@/lib/character/first-class-command-schema";
 import { firstClassStorageKey, persistPendingFirstClass, readPendingFirstClass } from "@/lib/character/pending-first-class-storage";
 import { getCreationScope, setCreationAccount } from "@/lib/character/pending-creation-storage";
+const router = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 // Actual component and sessionStorage with action doubles. No browser, provider,
 // HTTP/database commit or save acceptance follows from this jsdom fixture.
@@ -30,7 +32,7 @@ function submit() {
   const select = screen.getByRole("combobox", { name: "First class" });
   fireEvent.change(select, { target: { value: content } }); fireEvent.submit(select.closest("form")!);
 }
-beforeEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); setCreationAccount(account, sessionStorage); });
+beforeEach(() => { vi.restoreAllMocks(); router.refresh.mockReset(); sessionStorage.clear(); setCreationAccount(account, sessionStorage); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("retained first-class component", () => {
@@ -61,7 +63,8 @@ describe("retained first-class component", () => {
   it("clears only an exact owned confirmation and shows the saved notebook link", async () => {
     const handlers = actions(); handlers.submit.mockImplementation(async input => confirmed(input.operation_id));
     await open(handlers); submit();
-    await waitFor(() => expect(screen.getByRole("link", { name: "Open your notebook" })).toHaveAttribute("href", `/characters/${target}/builder`));
+    await waitFor(() => expect(screen.getByRole("link", { name: "View saved class" })).toHaveAttribute("href", `/characters/${target}/builder/first-class`));
+    expect(router.refresh).toHaveBeenCalledExactlyOnceWith();
     expect(readPendingFirstClass(account, target, sessionStorage)).toBeNull();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
@@ -127,7 +130,8 @@ describe("retained first-class component", () => {
     const handlers = actions(); handlers.check.mockResolvedValue(confirmed()); await open(handlers);
     vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw Error("denied"); });
     fireEvent.click(screen.getByRole("button", { name: "Check class save" }));
-    await waitFor(() => expect(screen.getByRole("link", { name: "Open your notebook" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("link", { name: "View saved class" })).toBeInTheDocument());
+    expect(router.refresh).not.toHaveBeenCalled();
     expect(readPendingFirstClass(account, target, sessionStorage)?.intent).toEqual(original());
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });

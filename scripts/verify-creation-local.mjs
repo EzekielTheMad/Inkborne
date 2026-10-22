@@ -33,7 +33,7 @@ const TARGET = "10000000-0000-4000-8000-000000000003";
 const pendingKey = account => "inkborne:pending-creation:v1:" + account;
 const pendingClassKey = account => "inkborne:pending-first-class:v1:" + account + ":" + TARGET;
 const stubs = {
-  "next/navigation": "export function useRouter(){return {push(to){window.fixture.navigation.push(to);window.fixture.navigate?.(to)}}}",
+  "next/navigation": "export function useRouter(){return {push(to){window.fixture.navigation.push(to);window.fixture.navigate?.(to)},refresh(){}}}",
   "next/link": "import React from 'react';export default function Link({children,...props}){return React.createElement('a',props,children)}",
   "@/lib/supabase/client": "export function createClient(){return {auth:{onAuthStateChange(callback){window.fixture.authChange=callback;return {data:{subscription:{unsubscribe(){if(window.fixture.authChange===callback)window.fixture.authChange=null}}}}}}}}",
 };
@@ -302,7 +302,7 @@ try {
     await page.screenshot({ path: path.join(output, label + "-class-pending.png"), fullPage: true });
     await page.evaluate(() => { window.fixture.classCheckMode = "confirmed"; });
     await page.getByRole("button", { name: "Check class save" }).click();
-    await page.getByRole("link", { name: "Open your notebook" }).waitFor();
+    await page.getByRole("link", { name: "View saved class" }).waitFor();
     assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(A)), null);
     note("matching simulated class receipt alone clears the retained class request");
 
@@ -319,7 +319,7 @@ try {
     });
     await page.waitForFunction(() => document.querySelector('button[type="submit"]')?.disabled === false);
     assert.equal(await page.evaluate(key => sessionStorage.getItem(key), pendingClassKey(B)), nextClassBytes);
-    assert.equal(await page.getByRole("link", { name: "Open your notebook" }).count(), 0);
+    assert.equal(await page.getByRole("link", { name: "View saved class" }).count(), 0);
     note("account transition invalidates old class writes and ignores the late previous-account receipt");
 
     await enterClass(); await saveClass();
@@ -335,7 +335,7 @@ try {
       window.fixture.deferred[0].resolve();
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     });
-    assert.equal(await page.getByRole("link", { name: "Open your notebook" }).count(), 0);
+    assert.equal(await page.getByRole("link", { name: "View saved class" }).count(), 0);
     note("confirmed sign-out clears class originals and prevents late accepted callbacks");
     await context.close();
 
