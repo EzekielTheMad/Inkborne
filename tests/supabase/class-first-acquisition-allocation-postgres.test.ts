@@ -7,7 +7,8 @@ import { collectClassRoleEffectsFromNativeGraph } from "@/lib/character/class-ro
 import { classOriginGraphSchema, classOriginReceiptSchema, classOriginPlannedTransitionSchema } from "@/lib/character/class-origin-command-schema";
 
 // Offline calculation and exact raw-row/save-evidence compatibility only. No
-// production admission, RLS, materializer triggers, Auth replacement or journal.
+// production admission/RLS/materializer triggers or Auth replacement. Historical
+// rows below are explicitly synthetic; new calculation guards run unchanged.
 const db = new PGlite();
 const target = roleId(1), system = roleId(2), owner = roleId(9), content = roleId(110);
 const feature = roleId(30), dormantFeature = roleId(31), spell = roleId(40), dormantSpell = roleId(41);
@@ -16,6 +17,8 @@ const authority = readFileSync("supabase/staged/hit-die-authority-and-writers.sq
 const featureSql = readFileSync("supabase/migrations/20260720185127_feature_grant_integrity.sql", "utf8");
 const featureTable = readFileSync("supabase/migrations/20260720173545_content_version_policy_performance.sql", "utf8");
 const spellSql = readFileSync("supabase/migrations/20260720185149_feature_spell_grants.sql", "utf8");
+let historicalTransaction = "";
+let fixtureDump: Blob;
 type Row = Record<string, unknown>;
 type Graph = { parent: Row; origin: Row; order: Row; occurrences: Row[]; refs: Row[]; inventory: Row[];
   spells: Row[]; feature_grants: Row[]; spell_grants: Row[]; versions: Row[] };
@@ -77,8 +80,15 @@ beforeAll(async () => {
       in_spellbook boolean NOT NULL,source text NOT NULL,custom_data jsonb,created_at timestamptz NOT NULL,content_version integer,
       spell_grant_id uuid UNIQUE,UNIQUE(character_id,content_id,class_slug));
     CREATE TABLE public.character_inventory(id uuid PRIMARY KEY,character_id uuid,content_id uuid,content_version integer);`);
-  for (const name of ["private.character_class_origin_v1", "private.character_class_occurrences_v1", "private.character_class_commands_v1"]) await db.exec(table(producer, name));
+  for (const name of ["private.character_class_origin_v1", "private.character_class_occurrences_v1", "private.character_class_commands_v1",
+    "private.character_creation_commands_v1", "private.class_writer_acceptance_v1", "private.class_writer_row_transitions_v1"]) await db.exec(table(producer, name));
   for (const name of ["private.character_projection_order_v1", "private.character_writer_guard_v1"]) await db.exec(table(authority, name));
+  await db.exec(table(producer, "private.class_origin_gate_v1"));
+  await db.exec("INSERT INTO private.class_origin_gate_v1(singleton) VALUES(true)");
+  await db.exec(table(authority, "private.character_writer_readiness_v1"));
+  for (const family of ["auth", "order", "state", "character_choices", "refs", "feature_grants", "spell_grants", "inventory", "spells", "shared_rules_access", "version_identity", "copy_award", "lifecycle"]) {
+    await db.query("INSERT INTO private.character_writer_readiness_v1(family) VALUES($1)", [family]);
+  }
   await db.exec("INSERT INTO private.character_writer_guard_v1(singleton) VALUES(true)");
   await db.exec(table(featureTable, "public.character_feature_grants"));
   await db.exec(table(spellSql, "public.character_spell_grants"));
@@ -87,9 +97,13 @@ beforeAll(async () => {
     [authority, "private.lock_character_writer_guard_v1"], [producer, "private.class_origin_ids_match_v1"],
     [producer, "private.class_origin_read_final_graph_v1"], [producer, "private.class_origin_exact_keys_v1"],
     [producer, "private.class_origin_decimal_v1"], [producer, "private.class_origin_uuid_v1"],
-    [producer, "private.class_origin_instant_v1"], [producer, "private.class_origin_receipt_shape_v1"]]) await db.exec(definition(source, name));
+    [producer, "private.class_origin_instant_v1"], [producer, "private.class_origin_receipt_shape_v1"],
+    [producer, "private.require_class_origin_auth_v1"], [authority, "private.require_verified_hit_die_auth_v1"]]) await db.exec(definition(source, name));
   await db.exec(readFileSync("supabase/staged/class-first-acquisition-dependencies.sql", "utf8"));
   await db.exec(readFileSync("supabase/staged/class-first-acquisition-allocation.sql", "utf8"));
+  await db.exec(readFileSync("supabase/staged/class-first-acquisition-calculations.sql", "utf8"));
+  historicalTransaction = (await db.query<{ xid: string }>("SELECT pg_current_xact_id()::text AS xid")).rows[0].xid;
+  fixtureDump = await db.dumpDataDir("gzip");
 }, 30_000);
 beforeEach(async () => {
   await db.exec("BEGIN");
@@ -248,4 +262,230 @@ describe("native first-class allocation and save compatibility: offline calculat
       WHERE p.oid='private.allocate_first_class_save_envelope_v1(jsonb)'::regprocedure`)).rows[0];
     expect(meta).toEqual({ prosecdef: false, provolatile: "v", proconfig: ['search_path=""'], rolname: "postgres", anon: false, authenticated: false, service_role: false });
   });
+});
+
+type BootstrapHistory = { before_parent: Row; before_origin: Row; before_order: Row; creation_receipt_row: Row;
+  bootstrap_acceptance_id: string; bootstrap_journal: Row; bootstrap_transitions: Row[] };
+type Calculation = { calculation_id: string; calculation_kind: string; transaction_id: string; target_character_id: string;
+  subject_owner_id: string; operation_id: string; bootstrap_acceptance_id: string; canonical_intent: Row;
+  bootstrap_history: BootstrapHistory; allocation_envelope: Envelope; created_at: string };
+const bootstrapId = roleId(900);
+async function readHistory() {
+  return (await db.query<{ history: BootstrapHistory }>("SELECT private.read_first_class_bootstrap_history_v1($1) AS history", [target])).rows[0].history;
+}
+async function prepare(request: unknown = intent()) {
+  return (await db.query<{ calculation: Calculation }>("SELECT private.prepare_first_class_calculation_v1($1) AS calculation", [request])).rows[0].calculation;
+}
+async function historyState() {
+  const before = await state();
+  for (const relation of ["private.character_creation_commands_v1", "private.character_class_commands_v1",
+    "private.class_writer_acceptance_v1", "private.class_writer_row_transitions_v1"]) {
+    before[relation] = (await db.query(`SELECT COALESCE(jsonb_agg(to_jsonb(snapshot) ORDER BY to_jsonb(snapshot)::text),'[]') AS rows FROM ${relation} snapshot`)).rows;
+  }
+  return before;
+}
+async function calculationRows() {
+  return (await db.query<{ row: Calculation }>("SELECT to_jsonb(record) AS row FROM private.class_first_allocation_calculations_v1 record ORDER BY calculation_id")).rows.map(row => row.row);
+}
+async function refusal(code: string, action: () => Promise<unknown>) {
+  const before = await historyState(), records = await calculationRows();
+  await db.exec("SAVEPOINT calculation_refusal");
+  await expect(action()).rejects.toMatchObject({ code });
+  await db.exec("ROLLBACK TO SAVEPOINT calculation_refusal; RELEASE SAVEPOINT calculation_refusal");
+  expect(await historyState()).toEqual(before); expect(await calculationRows()).toEqual(records);
+}
+async function seedHistory() {
+  // Manually persisted synthetic historical correspondence. This deliberately
+  // does not call/replace Auth or pretend the disabled bootstrap issuer ran.
+  const parent = (await db.query<{ row: Row }>("SELECT to_jsonb(c)||jsonb_build_object('action_revision',c.action_revision::text) AS row FROM public.characters c WHERE id=$1", [target])).rows[0].row;
+  const origin = (await db.query<{ row: Row }>("SELECT to_jsonb(o)||jsonb_build_object('command_revision',o.command_revision::text) AS row FROM private.character_class_origin_v1 o WHERE character_id=$1", [target])).rows[0].row;
+  const order = (await db.query<{ row: Row }>("SELECT to_jsonb(o)||jsonb_build_object('producer_revision',o.producer_revision::text) AS row FROM private.character_projection_order_v1 o WHERE character_id=$1", [target])).rows[0].row;
+  const instant = (await db.query<{ time: string }>(`SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS time`)).rows[0].time;
+  const receipt = { receipt_version: 1, receipt_kind: "bootstrap_new", operation_id: roleId(4), verified_actor_id: owner,
+    target_character_id: target, accepted_at: instant, canonical_intent: { contract_version: 1, operation_id: roleId(4), command: "create_character",
+      fields: { name: parent.name, system_id: system, campaign_id: null } }, initial_action_revision: "0", initial_class_revision: "0",
+    initial_producer_revision: "0", copy_lineage: null };
+  const creation = { verified_actor_id: owner, operation_id: roleId(4), target_character_id: target, receipt };
+  const transitions = [{ relation_key: "origin", row_key: [target], before_row: null, after_row: origin },
+    { relation_key: "creation_receipt", row_key: [owner, roleId(4)], before_row: null, after_row: creation }];
+  const graph = { parent, origin, order, occurrences: [], refs: [], inventory: [], spells: [], feature_grants: [], spell_grants: [], versions: [] };
+  const journal = { acceptance_id: bootstrapId, transaction_id: historicalTransaction, verified_actor_id: owner, target_character_id: target,
+    acceptance_kind: "bootstrap_new", before_parent: null, before_origin: null,
+    preinsert_proof: { acceptance_id: bootstrapId, target_character_id: target, transaction_id: historicalTransaction, captured_at: instant },
+    expected_graph: graph, planned_transitions: transitions, receipt, revision_transition_consumed: false, finalized: true };
+  await insert("private.character_creation_commands_v1", creation);
+  await insert("private.class_writer_acceptance_v1", journal);
+  for (const transition of transitions) await insert("private.class_writer_row_transitions_v1", { acceptance_id: bootstrapId, ...transition, consumed: true });
+  return { parent, origin, order, creation, journal, transitions };
+}
+
+describe("immutable preacceptance calculations over synthetic bootstrap history, no admission", () => {
+  beforeEach(async () => { await seedHistory(); });
+  it("reads exact original receipt/journal/two-proof correspondence without a future acceptance", async () => {
+    const before = await historyState(), history = await readHistory();
+    expect(history.bootstrap_acceptance_id).toBe(bootstrapId);
+    expect(history.bootstrap_transitions.map(row => row.relation_key)).toEqual(["origin", "creation_receipt"]);
+    expect(history.bootstrap_transitions.every(row => row.consumed === true)).toBe(true);
+    expect(history.before_parent).toEqual(history.bootstrap_journal.expected_graph && (history.bootstrap_journal.expected_graph as Row).parent);
+    expect(await historyState()).toEqual(before); expect(await calculationRows()).toEqual([]);
+  });
+  it("derives and stores the exact complete envelope and history without changing original rows", async () => {
+    const before = await historyState(), calculation = await prepare();
+    expect(calculation.calculation_kind).toBe("unverified_preacceptance_calculation");
+    expect(calculation).toMatchObject({ target_character_id: target, subject_owner_id: owner, operation_id: intent().operation_id,
+      bootstrap_acceptance_id: bootstrapId, canonical_intent: intent() });
+    expect(calculation.transaction_id).toBe(calculation.allocation_envelope.transaction_id);
+    expect(calculation.allocation_envelope.before_parent).toEqual(calculation.bootstrap_history.before_parent);
+    expect(calculation.allocation_envelope.before_origin).toEqual(calculation.bootstrap_history.before_origin);
+    expect(calculation.allocation_envelope.before_order).toEqual(calculation.bootstrap_history.before_order);
+    expect(await calculationRows()).toEqual([calculation]); expect(await historyState()).toEqual(before);
+    expect(calculation.allocation_envelope.expected_graph.feature_grants).toHaveLength(2);
+    expect(calculation.allocation_envelope.expected_graph.spell_grants).toHaveLength(2);
+  });
+  it("reuses only the same transaction's original exact-intent record and refuses changed intent", async () => {
+    const first = await prepare();
+    expect(await prepare()).toEqual(first); expect(await calculationRows()).toHaveLength(1);
+    await refusal("23514", () => prepare({ ...intent(), operation_id: roleId(801) }));
+  });
+  it("same-transaction retrieval returns historical evidence without pretending to revalidate changed sources", async () => {
+    const first = await prepare();
+    await db.query("DELETE FROM public.content_versions WHERE content_id=$1", [feature]);
+    expect(await prepare()).toEqual(first);
+    expect((await prepare()).calculation_kind).toBe("unverified_preacceptance_calculation");
+  });
+  it("rejects caller-provided protected fields even through direct INSERT", async () => {
+    await refusal("42501", () => db.query(`INSERT INTO private.class_first_allocation_calculations_v1(canonical_intent,allocation_envelope)
+      VALUES($1,'{"caller":"forged"}')`, [intent()]));
+    await refusal("42501", () => db.query(`INSERT INTO private.class_first_allocation_calculations_v1(canonical_intent,calculation_kind)
+      VALUES($1,'unverified_preacceptance_calculation')`, [intent()]));
+    await refusal("22023", () => prepare({ ...intent(), actor_id: owner }));
+  });
+  it("derives all protected fields for a direct intent-only INSERT as well", async () => {
+    const record = (await db.query<{ row: Calculation }>(`INSERT INTO private.class_first_allocation_calculations_v1(canonical_intent)
+      VALUES($1) RETURNING to_jsonb(class_first_allocation_calculations_v1) AS row`, [intent()])).rows[0].row;
+    expect(record.calculation_kind).toBe("unverified_preacceptance_calculation");
+    expect(record.allocation_envelope.receipt.canonical_intent).toEqual(intent());
+    expect(await prepare()).toEqual(record);
+  });
+  it.each(["UPDATE", "DELETE", "TRUNCATE"])("rejects %s of retained evidence", async operation => {
+    await prepare();
+    const command = operation === "UPDATE" ? "UPDATE private.class_first_allocation_calculations_v1 SET calculation_kind='verified'"
+      : operation === "DELETE" ? "DELETE FROM private.class_first_allocation_calculations_v1" : "TRUNCATE private.class_first_allocation_calculations_v1";
+    await refusal("42501", () => db.exec(command));
+  });
+  it.each(["missing-creation", "missing-journal", "duplicate-journal", "unfinalized", "wrong-proof-target", "bad-capture-time",
+    "missing-proof", "extra-proof", "unconsumed-proof", "wrong-after-row", "planned-set-mismatch", "changed-parent", "nonempty-order"])("refuses mismatched stored history: %s", async kind => {
+    if (kind === "missing-creation") await db.exec("DELETE FROM private.character_creation_commands_v1");
+    if (kind === "missing-journal") { await db.exec("DELETE FROM private.class_writer_row_transitions_v1"); await db.exec("DELETE FROM private.class_writer_acceptance_v1"); }
+    if (kind === "duplicate-journal") {
+      const journal = (await readHistory()).bootstrap_journal;
+      await insert("private.class_writer_acceptance_v1", { ...journal, acceptance_id: roleId(901), transaction_id: String(BigInt(historicalTransaction) + BigInt(1)) });
+    }
+    if (kind === "unfinalized") await db.exec("UPDATE private.class_writer_acceptance_v1 SET finalized=false");
+    if (kind === "wrong-proof-target") await db.query("UPDATE private.class_writer_acceptance_v1 SET preinsert_proof=jsonb_set(preinsert_proof,'{target_character_id}',to_jsonb($1::text))", [roleId(999)]);
+    if (kind === "bad-capture-time") await db.exec(`UPDATE private.class_writer_acceptance_v1 SET preinsert_proof=jsonb_set(preinsert_proof,'{captured_at}','"infinity"')`);
+    if (kind === "missing-proof") await db.exec("DELETE FROM private.class_writer_row_transitions_v1 WHERE relation_key='origin'");
+    if (kind === "extra-proof") await insert("private.class_writer_row_transitions_v1", { acceptance_id: bootstrapId, relation_key: "class_receipt", row_key: [target, roleId(800)], before_row: null, after_row: {}, consumed: true });
+    if (kind === "unconsumed-proof") await db.exec("UPDATE private.class_writer_row_transitions_v1 SET consumed=false WHERE relation_key='origin'");
+    if (kind === "wrong-after-row") await db.exec(`UPDATE private.class_writer_row_transitions_v1 SET after_row='{}' WHERE relation_key='origin'`);
+    if (kind === "planned-set-mismatch") await db.exec(`UPDATE private.class_writer_acceptance_v1 SET planned_transitions=jsonb_set(planned_transitions,'{0,after_row}','{}')`);
+    if (kind === "changed-parent") await db.exec("UPDATE public.characters SET name='Changed after bootstrap'");
+    if (kind === "nonempty-order") await db.query("UPDATE private.character_projection_order_v1 SET pins=ARRAY[$1::uuid]", [roleId(999)]);
+    await refusal("23514", () => prepare()); expect(await calculationRows()).toEqual([]);
+  });
+  it("preserves the original bootstrap constraint against a fabricated consumed revision", async () => {
+    await refusal("23514", () => db.exec("UPDATE private.class_writer_acceptance_v1 SET revision_transition_consumed=true"));
+    expect(await calculationRows()).toEqual([]);
+  });
+  it("checks existing command identity before NEW history/source conditions and leaves recovery to Auth", async () => {
+    await insert("private.character_class_commands_v1", { character_id: target, operation_id: intent().operation_id, receipt: { historical: true } });
+    await db.exec("DELETE FROM private.character_creation_commands_v1");
+    await db.query("UPDATE public.characters SET choices=$1,action_revision=9", [{ changed: true }]);
+    await refusal("23514", () => prepare());
+    await db.exec("SAVEPOINT prefix_message");
+    await expect(prepare()).rejects.toThrow("existing_command_requires_authenticated_recovery");
+    await db.exec("ROLLBACK TO SAVEPOINT prefix_message; RELEASE SAVEPOINT prefix_message");
+    await db.exec("SAVEPOINT direct_prefix");
+    await expect(db.query("INSERT INTO private.class_first_allocation_calculations_v1(canonical_intent) VALUES($1)", [intent()]))
+      .rejects.toThrow("existing_command_requires_authenticated_recovery");
+    await db.exec("ROLLBACK TO SAVEPOINT direct_prefix; RELEASE SAVEPOINT direct_prefix");
+  });
+  it("rolls back a failed derivation without storing partial evidence", async () => {
+    await db.query("DELETE FROM public.content_versions WHERE content_id=$1", [feature]);
+    await refusal("23503", () => prepare()); expect(await calculationRows()).toEqual([]);
+  });
+  it("enforces native record bounds atomically for large historical data", async () => {
+    // The original journal graph is bounded separately at4MiB. Extra preinsert
+    // data can exceed the new history budget and must not be silently dropped.
+    await db.query("UPDATE private.class_writer_acceptance_v1 SET preinsert_proof=preinsert_proof||jsonb_build_object('raw',$1::text)", ["x".repeat(8 * 1024 * 1024)]);
+    await refusal("54000", () => prepare());
+  });
+  it("has closed table/function ACLs, FORCE RLS and explicitly scoped postgres policy in this model", async () => {
+    const acl = (await db.query<Row>(`SELECT c.relrowsecurity,c.relforcerowsecurity,
+      has_table_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') AS anon,
+      has_table_privilege('authenticated',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') AS authenticated,
+      has_table_privilege('service_role',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') AS service_role
+      FROM pg_class c WHERE c.oid='private.class_first_allocation_calculations_v1'::regclass`)).rows[0];
+    expect(acl).toEqual({ relrowsecurity: true, relforcerowsecurity: true, anon: false, authenticated: false, service_role: false });
+    for (const roleName of ["anon", "authenticated", "service_role"]) {
+      expect((await db.query<{ allowed: boolean }>("SELECT has_function_privilege($1,'private.prepare_first_class_calculation_v1(jsonb)','EXECUTE') AS allowed", [roleName])).rows[0].allowed).toBe(false);
+    }
+    const policies = (await db.query<{ roles: string[] }>("SELECT roles FROM pg_policies WHERE schemaname='private' AND tablename='class_first_allocation_calculations_v1'")).rows;
+    expect(policies).toEqual([{ roles: ["postgres"] }]);
+  });
+  it("uses the explicit owner policy under active RLS in this model", async () => {
+    // PostgreSQL role attributes are not inherited. This transaction-local
+    // fixture role inherits owner privileges/policy, not SUPERUSER/BYPASSRLS.
+    // No native/hosted role, source ownership or policy definition is changed.
+    await db.exec("CREATE ROLE fixture_calculation_owner INHERIT NOSUPERUSER NOBYPASSRLS");
+    await db.exec("GRANT postgres TO fixture_calculation_owner");
+    await db.exec("SET LOCAL ROLE fixture_calculation_owner");
+    const flags = (await db.query<Row>(`SELECT current_user::text AS actor,rolsuper,rolbypassrls,
+      row_security_active('private.class_first_allocation_calculations_v1'::regclass) AS active
+      FROM pg_roles WHERE rolname=current_user`)).rows[0];
+    expect(flags).toEqual({ actor: "fixture_calculation_owner", rolsuper: false, rolbypassrls: false, active: true });
+    const calculation = await prepare();
+    expect(await calculationRows()).toEqual([calculation]);
+  });
+  it.each(["anon", "authenticated", "service_role"])("denies actual calculation calls by %s in this model", async apiRole => {
+    await refusal("42501", async () => {
+      await db.exec(`SET LOCAL ROLE ${apiRole}`);
+      return prepare();
+    });
+  });
+  it("does not enable Auth, acquisition admission or any readiness family", async () => {
+    await prepare();
+    const gates = (await db.query<Row>(`SELECT (SELECT enabled FROM private.class_origin_gate_v1 WHERE singleton) AS enabled,
+      (SELECT count(*)::int FROM private.character_writer_readiness_v1) AS families,
+      (SELECT count(*)::int FROM private.character_writer_readiness_v1 WHERE ready) AS ready`)).rows[0];
+    expect(gates).toEqual({ enabled: false, families: 13, ready: 0 });
+    await refusal("P0001", () => db.query("SELECT private.require_class_origin_auth_v1($1)", [{ actor_id: owner }]));
+    await refusal("P0001", () => db.query("SELECT private.require_verified_hit_die_auth_v1($1)", [{ actor_id: owner }]));
+  });
+  it("retains historical calculations across commits while deriving a fresh record for a new transaction", async () => {
+    // Separate cloned in-memory database: committing this test cannot pollute
+    // the shared rollback fixture or create native/hosted persistence evidence.
+    const isolated = new PGlite({ loadDataDir: fixtureDump });
+    try {
+      await isolated.exec("BEGIN");
+      for (const relation of ["public.characters", "public.content_versions", "private.character_class_origin_v1",
+        "private.character_projection_order_v1", "private.character_creation_commands_v1", "private.class_writer_acceptance_v1",
+        "private.class_writer_row_transitions_v1"]) {
+        const rows = (await db.query<{ row: Row }>(`SELECT to_jsonb(snapshot) AS row FROM ${relation} snapshot`)).rows;
+        for (const row of rows) await isolated.query(`INSERT INTO ${relation} SELECT * FROM jsonb_populate_record(NULL::${relation},$1)`, [row.row]);
+      }
+      const first = (await isolated.query<{ row: Calculation }>("SELECT private.prepare_first_class_calculation_v1($1) AS row", [intent()])).rows[0].row;
+      await isolated.exec("COMMIT; BEGIN");
+      await isolated.query("DELETE FROM public.content_versions WHERE content_id=$1", [feature]);
+      await expect(isolated.query("SELECT private.prepare_first_class_calculation_v1($1)", [intent()])).rejects.toMatchObject({ code: "23503" });
+      await isolated.exec("ROLLBACK; BEGIN");
+      const second = (await isolated.query<{ row: Calculation }>("SELECT private.prepare_first_class_calculation_v1($1) AS row", [intent()])).rows[0].row;
+      expect(second.transaction_id).not.toBe(first.transaction_id); expect(second.calculation_id).not.toBe(first.calculation_id);
+      expect(second.allocation_envelope.acceptance_id).not.toBe(first.allocation_envelope.acceptance_id);
+      const records = (await isolated.query<{ row: Calculation }>("SELECT to_jsonb(record) AS row FROM private.class_first_allocation_calculations_v1 record")).rows.map(row => row.row);
+      expect(records).toHaveLength(2); expect(records).toContainEqual(first); expect(records).toContainEqual(second);
+      expect(records.every(row => row.calculation_kind === "unverified_preacceptance_calculation")).toBe(true);
+      await isolated.exec("ROLLBACK");
+    } finally { await isolated.close(); }
+  }, 15_000);
 });
