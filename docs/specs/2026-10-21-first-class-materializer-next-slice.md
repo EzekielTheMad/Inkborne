@@ -79,6 +79,38 @@ existing postacceptance inputs callback cannot be used to calculate its own grap
 
 ## Resolved prerequisite and its limits
 
+The next calculation-evidence checkpoint is now implemented in
+`supabase/staged/class-first-acquisition-calculations.sql`. Its closed native
+history reader validates the exact original creation receipt/journal/preinsert
+identity and two consumed proof sets against actual empty parent/header/order and
+domains before any future acceptance exists. The insert guard calls that reader,
+then the native allocator, rechecks history/before-state correspondence, and derives
+all stored fields itself. It accepts no caller history, actor, envelope, ID or time.
+Only the strict request's character/operation/content identifiers are inputs.
+
+Records have an immutable `unverified_preacceptance_calculation` kind, native xid,
+target/subject/operation/bootstrap identities, complete history and exact allocation
+envelope. History/envelope/whole-record bounds are8/8/16MiB; request remains32KiB.
+Protected columns have no defaults before the BEFORE INSERT guard. UPDATE/DELETE
+and statement TRUNCATE refuse. FORCE RLS uses an explicit postgres-only policy;
+no application/runtime table or function access is granted. Closed invoker functions
+avoid assuming EXECUTE on original class-owned private helpers. Owner DDL/bypass is
+outside this ordinary-caller protection, and the owner policy is not authentication.
+
+Existing class-command identity refuses before NEW checks and routes no unauthenticated
+receipt return. Same-xid exact-intent calls return the original stored calculation;
+changed intent refuses. A new transaction rechecks/derives fresh evidence rather
+than reusing historical rows. No permanent unique(character,operation) strands an
+intent after a harmless committed calculation. No FK adds constraints to existing
+parent/history deletion, or creates a cycle with the future acceptance journal;
+retention/lifecycle policy must therefore be accepted before native installation.
+
+All 62 focused tests and independent source/fixture review passed. Manually seeded
+offline history is not genuine bootstrap issuance. This storage remains distinct
+from protected verified B1 planning: future native Auth/locks/content/writer closure
+must derive a NEW separately typed plan, not promote/adopt this record or its IDs.
+[Evidence and limitations](../handoffs/2026-10-22-class-calculation-storage.md).
+
 The 13 original materializer/reconciliation/support functions are owned by the
 actual local postgres role, BYPASSRLS but not SUPERUSER. Their source-body/security
 declarations match the frozen migrations. Public reconciliation RPCs are executable

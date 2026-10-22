@@ -1,5 +1,19 @@
 # Starting-equipment transaction: local review stage
 
+## First-class history and immutable calculations — separate evidence stage
+
+`class-first-acquisition-calculations.sql` validates exact original creation
+receipt/journal/proof correspondence before the existing allocator runs. Native
+insert guards retain the exact results in closed, immutable, explicitly unverified
+calculation records. Caller-supplied protected fields, mutation, deletion and
+truncation refuse; no Auth, readiness, existing materializer or runtime grant is
+changed. Same-transaction lookup returns original evidence; new transactions derive
+fresh calculations. This is not a verified plan or an authenticated save. Future
+admission must rederive a separate typed plan under actual Auth/source/writer locks.
+The no-FK retention/lifecycle policy requires acceptance before native installation.
+All 62 focused offline tests passed, including actual active-RLS execution through
+a synthetic inherited owner role. [Checkpoint](../../docs/handoffs/2026-10-22-class-calculation-storage.md).
+
 ## First-class native allocation — calculated save envelope only
 
 `class-first-acquisition-allocation.sql` adds a closed invoker/volatile calculator

@@ -2,6 +2,35 @@
 
 ## Active continuation — 2026-10-22 UTC
 
+### Creation-history correspondence and immutable calculation evidence — staged only
+
+Source `8e113c5` adds a closed native history reader and calculation table. The
+reader checks exact original receipt/journal/preinsert/two-consumed-proof sets
+against the complete actual empty before rows. Before-insert derivation accepts
+only strict intent and constructs every protected field natively; same-transaction
+exact-intent lookup retains original evidence, while a new transaction derives
+anew. An existing class command refuses before NEW history/source checks and
+requires the future authenticated recovery path.
+
+Test checkpoint `5b0da64`: **62 focused tests passed**, 33 new; independent review
+passed. Tests cover direct-insert protection, immutable kind/UPDATE/DELETE/TRUNCATE,
+history mismatches, cross-commit fresh derivation, denied API-role calls and original
+Auth/admission/readiness denials. A fixture owner-role member with SUPERUSER and
+BYPASSRLS false exercised the unchanged owner policy with RLS active. This is
+synthetic offline policy/storage evidence, not native installation or Auth proof.
+No production role or policy was changed. [Receipts and remaining work](handoffs/2026-10-22-class-calculation-storage.md).
+
+Records are fixed `unverified_preacceptance_calculation`, with no adoption path
+into verified planning. A future producer must rederive a new typed plan under
+real Auth/locks/content/fences. Native installation additionally needs retention/
+lifecycle acceptance: this staged evidence intentionally has no live-parent,
+historical-journal or future-acceptance FK. Vercel stays the host; M1–M6/M5.5
+precede M8; M7/creature importing stay paused.
+Full project check at `0ac97c3` passed typecheck/lint,
+**363 files / 4982 tests / three UNVERIFIED M5 skips**; all 435 observed identities
+exited. Preserve the first full run's existing prepared-spell probe failure;
+independently reviewed waitFor synchronization passed isolated19 then the full gate.
+
 ### Native allocation and saving-throw input integration — source complete, admission open
 
 Source `743a4b3` allocates the full finite first-class native row envelope before

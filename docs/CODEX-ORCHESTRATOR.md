@@ -4,6 +4,22 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Latest executable checkpoint `5b0da64`: original bootstrap correspondence reader
+and immutable calculation-only storage (`8e113c5`). All 62 focused tests and
+independent source/fixture reviews passed. Records derive entirely from native
+history/allocation, reject supplied protected fields and remain explicitly
+unverified. Future authenticated planning must freshly derive a separate typed
+plan; never adopt/relabel these records. Same-xid retrieval is historical evidence,
+not current-owner/source revalidation or receipt recovery. Positive B1/B2/B3 and
+native/hosted/browser acceptance remain open. Retention/lifecycle acceptance is
+required before installing this no-FK staged evidence.
+[Current checkpoint](handoffs/2026-10-22-class-calculation-storage.md).
+Vercel hosting and M1–M6/M5.5 priority remain; M7/creature imports stay paused.
+Full gate at `0ac97c3` passed typecheck/lint, 363 files / 4982 tests / three
+UNVERIFIED M5 skips, with all 435 observed identities exited. It includes a reviewed
+existing-provider test synchronization fix; preserve the first failure. Native
+installation or actual authenticated saving is not accepted by these results.
+
 Latest executable source `0a91a3d`: complete native first-class allocation/receipt
 proposal plus graph-to-class-role-save advisory integration. All 29 focused tests
 and independent source/fixture review passed. The exact allocated raw graph matches

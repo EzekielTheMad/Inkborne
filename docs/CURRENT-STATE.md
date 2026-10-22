@@ -2,6 +2,24 @@
 
 ## Active execution — 2026-10-22 UTC
 
+**Original creation-history checks and immutable calculation storage implemented.**
+Executable source `5b0da64` verifies the creation receipt, unique finalized bootstrap
+journal and exactly two consumed proofs before deriving and retaining a complete
+native allocation calculation. Insert guards derive protected fields themselves;
+records remain explicitly unverified and cannot be updated, deleted or truncated.
+All 62 focused tests passed (33 new), including isolated cross-transaction behavior,
+application-role denials and a synthetic inherited-owner policy test under active
+RLS. Independent source/fixture review passed. Actual authenticated save execution
+and verified B1/B2/B3 planning/materialization remain open.
+[Checkpoint and evidence limits](handoffs/2026-10-22-class-calculation-storage.md).
+Vercel is unchanged; M1–M6/M5.5 remain priority and M7/creature imports stay paused.
+Full check at executable source `0ac97c3` passed typecheck, zero-warning lint,
+**363 files / 4982 tests / three UNVERIFIED M5 skips**; all 435 observed identities
+exited. A preexisting provider-probe timing assertion was corrected after the
+preserved first full-suite failure; application behavior/timeouts were unchanged.
+
+Earlier checkpoints follow.
+
 **Native allocation and saving-throw evidence integration implemented, staged only.**
 Executable source `0a91a3d` builds the complete first-class proposed graph with
 native UUIDs/timestamps, ordered dormant/active grants, proposed saved choices,
