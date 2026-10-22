@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { AbilitiesStepClient } from "./abilities-step-client";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { saveBuilderStep } from "../step-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,6 +30,7 @@ export default async function AbilitiesStepPage({ params }: PageProps) {
   }
 
   if (!character || character.user_id !== user.id) notFound();
+  if (characterCreationUIEnabled() && !character.choices?.classes?.length) redirect(`/characters/${id}/builder/first-class`);
 
   const contentSnapshot = await getCharacterContentRefSnapshot(id);
 
@@ -40,6 +43,7 @@ export default async function AbilitiesStepPage({ params }: PageProps) {
       contentRefs={contentSnapshot.refs}
       asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}
+      saveAction={characterCreationUIEnabled() ? saveBuilderStep.bind(null, user.id, id) : undefined}
     />
   );
 }

@@ -26,6 +26,7 @@ import { buildCharacterStructuredSources } from "@/lib/character/structured-sour
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
+import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 
 import { fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 
@@ -78,6 +79,7 @@ interface RaceStepClientProps {
   asiEvidence?: AsiEvidence;
   schema: SystemSchemaDefinition | undefined;
   availableLanguages?: string[];
+  saveAction?: SaveBuilderStep;
 }
 
 export function RaceStepClient({
@@ -90,6 +92,7 @@ export function RaceStepClient({
   schema,
   asiEvidence,
   availableLanguages,
+  saveAction,
 }: RaceStepClientProps) {
   const saveBusy = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -188,6 +191,12 @@ export function RaceStepClient({
     setLocalChoices(newChoices);
 
     try {
+      if (saveAction) {
+        const saved = await saveAction("select_race", { content_id: content.id, content_version: content.version });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       await updateCharacter(characterId, { choices: newChoices });
 
       const oldRaceRef = contentRefs.find(
@@ -229,6 +238,12 @@ export function RaceStepClient({
     setLocalChoices(newChoices);
 
     try {
+      if (saveAction) {
+        const saved = await saveAction("select_subrace", { content_id: subrace.id, content_version: subrace.version });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       await updateCharacter(characterId, { choices: newChoices });
 
       const oldSubraceRef = contentRefs.find(
@@ -268,6 +283,12 @@ export function RaceStepClient({
     setLocalChoices(newChoices);
 
     try {
+      if (saveAction) {
+        const saved = await saveAction("clear_race", {});
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       await updateCharacter(characterId, { choices: newChoices });
 
       const raceRefs = contentRefs.filter(
@@ -302,6 +323,12 @@ export function RaceStepClient({
     setLocalChoices(newChoices);
 
     try {
+      if (saveAction) {
+        const saved = await saveAction("race_choice", { choice_id: choiceId, selections });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
       setLocalChoices(prev);
@@ -321,6 +348,12 @@ export function RaceStepClient({
     setLocalChoices(newChoices);
 
     try {
+      if (saveAction) {
+        const saved = await saveAction("clear_subrace", {});
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       await updateCharacter(characterId, { choices: newChoices });
 
       const oldSubraceRef = contentRefs.find(
@@ -610,10 +643,10 @@ export function RaceStepClient({
           <Button
             className="bg-character-fg text-background hover:opacity-90"
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/class`)
+              router.push(`/characters/${characterId}/builder/${saveAction ? "abilities" : "class"}`)
             }
           >
-            Next: Class
+            Next: {saveAction ? "Abilities" : "Class"}
           </Button>
         </div>
       </fieldset>

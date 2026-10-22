@@ -3,10 +3,12 @@ import type { AsiEvidence } from "@/lib/character/asi-contributions";
 import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { discardAbilityScoreDraft, useAbilityScoreDraft } from "@/lib/builder/use-ability-score-draft";
 import type { AbilityMethod } from "@/lib/supabase/ability-scores-client";
+import { saveCharacterAbilities } from "@/lib/supabase/ability-scores-client";
+import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,6 +30,7 @@ import { STANDARD_ARRAY, POINT_BUY_BUDGET, POINT_BUY_COSTS } from "@/lib/builder
 import { useSaveNavigationGuard } from "@/lib/builder/use-save-navigation-guard";
 
 interface AbilitiesStepClientProps {
+  saveAction?: SaveBuilderStep;
   ownerId: string;
   characterId: string;
   character: {
@@ -56,6 +59,10 @@ interface AbilitiesStepClientProps {
   schema: SystemSchemaDefinition | undefined;
 }
 
+const subscribeToClient = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
+
 export function AbilitiesStepClient(props: AbilitiesStepClientProps) {
   return <AbilitiesEditor key={`${props.ownerId}:${props.characterId}`} {...props} />;
 }
@@ -67,8 +74,12 @@ function AbilitiesEditor({
   contentRefs,
   schema,
   asiEvidence,
+  saveAction,
 }: AbilitiesStepClientProps) {
   const router = useRouter();
+  // SSR controls must not accept an edit before React and the draft queue are
+  // attached; hydration can otherwise replay a select event with its old value.
+  const interactive = useSyncExternalStore(subscribeToClient, clientReady, serverReady);
   const abilities = useMemo(
     () => schema?.ability_scores ?? [],
     [schema?.ability_scores],
@@ -91,6 +102,11 @@ function AbilitiesEditor({
         ? persistedScores : defaultScores(initialMethod),
     },
     { method: character.choices?.ability_method ?? null, scores: persistedScores },
+    saveAction ? async (_target, next, expected) => {
+      const saved = await saveAction("save_abilities", { method: next.method, scores: next.scores,
+        expected_method: expected.method, expected_scores: expected.scores });
+      return { method: next.method, scores: saved.scores };
+    } : saveCharacterAbilities,
   );
   const { method, scores } = draft;
   const arrayAssignments = scores;
@@ -262,7 +278,7 @@ function AbilitiesEditor({
                 key={value}
                 variant={method === value ? "default" : "outline"}
                 size="sm"
-                disabled={hasConflict}
+                disabled={hasConflict || !interactive}
                 aria-pressed={method === value}
                 onClick={() => handleMethodChange(value)}
               >
@@ -306,7 +322,7 @@ function AbilitiesEditor({
                   {method === "standard_array" && (
                     <select
                       aria-label={`${ability.name} score`}
-                      disabled={hasConflict}
+                      disabled={hasConflict || !interactive}
                       value={arrayAssignments[ability.slug] ?? ""}
                       onChange={(e) =>
                         handleStandardArrayAssign(ability.slug, e.target.value)
@@ -344,7 +360,7 @@ function AbilitiesEditor({
                           handlePointBuyChange(ability.slug, -1)
                         }
                         disabled={
-                          hasConflict || (scores[ability.slug] ?? 8) <= 8
+                          hasConflict || !interactive || (scores[ability.slug] ?? 8) <= 8
                         }
                         aria-label={`Decrease ${ability.name}`}
                         className="h-8 w-8 p-0"
@@ -361,7 +377,7 @@ function AbilitiesEditor({
                           handlePointBuyChange(ability.slug, 1)
                         }
                         disabled={
-                          hasConflict || (scores[ability.slug] ?? 8) >= 15
+                          hasConflict || !interactive || (scores[ability.slug] ?? 8) >= 15
                         }
                         aria-label={`Increase ${ability.name}`}
                         className="h-8 w-8 p-0"
@@ -375,7 +391,7 @@ function AbilitiesEditor({
                     <Input
                       type="number"
                       aria-label={`${ability.name} score`}
-                      disabled={hasConflict}
+                      disabled={hasConflict || !interactive}
                       min={1}
                       max={30}
                       value={scores[ability.slug] ?? 10}
@@ -428,10 +444,10 @@ function AbilitiesEditor({
             variant="outline"
             disabled={cannotNavigate}
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/class`)
+              router.push(`/characters/${characterId}/builder/${saveAction ? "race" : "class"}`)
             }
           >
-            Previous: Class
+            Previous: {saveAction ? "Race" : "Class"}
           </Button>
           <Button
             className="bg-character-fg text-background hover:opacity-90"

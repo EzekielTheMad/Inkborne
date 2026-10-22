@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices } from "@/lib/types/character";
+import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 
 const navigation = vi.hoisted(() => ({
   refresh: vi.fn(),
@@ -94,9 +95,11 @@ const pinnedRef = {
 function renderStep({
   choices = { background: "lantern-courier" },
   contentRefs = [pinnedRef],
+  saveAction,
 }: {
   choices?: CharacterChoices;
   contentRefs?: React.ComponentProps<typeof BackgroundStepClient>["contentRefs"];
+  saveAction?: SaveBuilderStep;
 } = {}) {
   return render(
     <BackgroundStepClient
@@ -110,6 +113,7 @@ function renderStep({
       backgrounds={[currentBackground]}
       contentRefs={contentRefs}
       schema={undefined}
+      saveAction={saveAction}
     />,
   );
 }
@@ -123,6 +127,45 @@ describe("BackgroundStepClient", () => {
       selectedContentId: currentBackground.id,
       selectedContentVersion: 2,
     });
+  });
+
+  it("uses the injected atomic selection with an exact tuple and canonical returned choices", async () => {
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: {
+      background: "lantern-courier", ideals: ["A note retained by the server"],
+    } });
+    renderStep({ choices: {}, contentRefs: [], saveAction });
+    fireEvent.click(screen.getByRole("button", { name: "Choose first background" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm background preview" }));
+    await waitFor(() => expect(saveAction).toHaveBeenCalledExactlyOnceWith("select_background", {
+      content_id: currentBackground.id, content_version: currentBackground.version,
+    }));
+    expect(await screen.findByText("Mutable Courier")).toBeVisible();
+    expect(screen.getByPlaceholderText("Enter custom ideals")).toHaveValue("A note retained by the server");
+    expect(setBackgroundMock).not.toHaveBeenCalled(); expect(updateCharacter).not.toHaveBeenCalled();
+    expect(navigation.refresh).toHaveBeenCalled();
+  });
+
+  it("does not fall back to the old background RPC when an injected atomic save refuses", async () => {
+    const saveAction = vi.fn<SaveBuilderStep>().mockRejectedValue(Error("unavailable"));
+    renderStep({ saveAction });
+    fireEvent.click(screen.getByRole("button", { name: "Change Background" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose first background" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm background preview" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("could not be selected");
+    expect(setBackgroundMock).not.toHaveBeenCalled(); expect(updateCharacter).not.toHaveBeenCalled();
+    expect(navigation.refresh).not.toHaveBeenCalled();
+  });
+
+  it("sends only the narrative domain patch and uses canonical choices without a direct parent write", async () => {
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: {
+      background: "lantern-courier", ideals: ["A server-normalized note"],
+    } });
+    renderStep({ saveAction });
+    const input = screen.getByPlaceholderText("Enter custom ideals");
+    fireEvent.change(input, { target: { value: "Keep promises" } }); fireEvent.blur(input);
+    await waitFor(() => expect(saveAction).toHaveBeenCalledExactlyOnceWith("background_narrative", { key: "ideals", values: ["Keep promises"] }));
+    await waitFor(() => expect(input).toHaveValue("A server-normalized note"));
+    expect(updateCharacter).not.toHaveBeenCalled(); expect(setBackgroundMock).not.toHaveBeenCalled();
   });
 
   it("ignores a different saved background before the matching pin", () => {

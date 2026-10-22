@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RaceStepClient } from "@/app/(app)/characters/[id]/builder/race/race-step-client";
 import { AbilitiesStepClient } from "@/app/(app)/characters/[id]/builder/abilities/abilities-step-client";
@@ -8,6 +8,9 @@ import { transformSubraceEntry } from "../../../scripts/transformers/races";
 import { syntheticRacePin, raceParityBase, raceParitySchema, evaluateSyntheticPin, pinnedRaceRef } from "../../fixtures/r06-race-parity";
 import type { Effect } from "@/lib/types/effects";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { updateCharacter } from "@/lib/supabase/character-client";
+import { insertContentRef, removeContentRefById } from "@/lib/supabase/content-refs-client";
 
 // Mock only navigation/persistence and the ability draft boundary. Calculators,
 // actual three builder clients, StatPreview and ClassStepRail stay real.
@@ -24,6 +27,7 @@ vi.mock("@/lib/builder/use-ability-score-draft", () => ({
   }),
 }));
 afterEach(cleanup);
+const raceLabel = raceParitySchema.content_types?.find(type => type.slug === "race")?.name ?? "Race";
 
 function previewScore(abbr: string) {
   const preview = screen.getByText("Stats").parentElement!;
@@ -62,6 +66,36 @@ function classEntry(slug: string, id: string) {
 }
 
 describe("R06.1 actual builder consumers of synthetic immutable race pins", () => {
+  it("saves a selected race through the injected exact-tuple action without split legacy writes", async () => {
+    vi.clearAllMocks(); const { pin } = syntheticRacePin("imported");
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: { race: pin.slug } });
+    render(<RaceStepClient characterId="r06-synthetic-character" character={{ ...character(pin), choices: {} }}
+      races={[pin]} subraces={[]} traits={[]} contentRefs={[]} schema={raceParitySchema} saveAction={saveAction} />);
+    fireEvent.click(screen.getByRole("button", { name: `Preview ${pin.name}` }));
+    fireEvent.click(screen.getByRole("button", { name: `Add ${raceLabel}` }));
+    await waitFor(() => expect(saveAction).toHaveBeenCalledExactlyOnceWith("select_race", { content_id: pin.id, content_version: pin.version }));
+    expect(updateCharacter).not.toHaveBeenCalled(); expect(insertContentRef).not.toHaveBeenCalled(); expect(removeContentRefById).not.toHaveBeenCalled();
+  });
+  it("uses returned canonical choices after an injected clear instead of keeping the optimistic local state", async () => {
+    vi.clearAllMocks(); const { pin } = syntheticRacePin("imported");
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: { race: pin.slug } });
+    render(<RaceStepClient characterId="r06-synthetic-character" character={character(pin)} races={[pin]} subraces={[]} traits={[]}
+      contentRefs={[pinnedRaceRef(pin)]} schema={raceParitySchema} saveAction={saveAction} />);
+    fireEvent.click(screen.getByRole("button", { name: `Change ${raceLabel}` }));
+    await waitFor(() => expect(screen.getByRole("button", { name: `Change ${raceLabel}` })).toBeEnabled());
+    expect(saveAction).toHaveBeenCalledExactlyOnceWith("clear_race", {});
+    expect(updateCharacter).not.toHaveBeenCalled(); expect(insertContentRef).not.toHaveBeenCalled(); expect(removeContentRefById).not.toHaveBeenCalled();
+  });
+  it("does not fall back to split parent/ref writes after the injected race action refuses", async () => {
+    vi.clearAllMocks(); const { pin } = syntheticRacePin("imported");
+    const saveAction = vi.fn<SaveBuilderStep>().mockRejectedValue(Error("unavailable"));
+    render(<RaceStepClient characterId="r06-synthetic-character" character={character(pin)} races={[pin]} subraces={[]} traits={[]}
+      contentRefs={[pinnedRaceRef(pin)]} schema={raceParitySchema} saveAction={saveAction} />);
+    fireEvent.click(screen.getByRole("button", { name: `Change ${raceLabel}` }));
+    expect(await screen.findByText(/This race change could not be confirmed/)).toBeInTheDocument();
+    expect(saveAction).toHaveBeenCalledExactlyOnceWith("clear_race", {});
+    expect(updateCharacter).not.toHaveBeenCalled(); expect(insertContentRef).not.toHaveBeenCalled(); expect(removeContentRefById).not.toHaveBeenCalled();
+  });
   it.each([
     ["dual", 14, 16, 14], ["scores-only", 12, 14, 12], ["effects-only", 12, 14, 12],
     ["imported", 12, 14, 12], ["declared-effects", 12, 14, 12], ["declared-scores", 14, 16, 14],

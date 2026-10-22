@@ -1,0 +1,35 @@
+import { z } from "zod";
+import type { CharacterChoices } from "@/lib/types/character";
+import { equipmentSelectionsSchema } from "./starting-equipment-contract";
+
+const content = z.strictObject({ content_id: z.uuid(), content_version: z.number().int().positive() });
+const choice = z.strictObject({ choice_id: z.string().min(1).max(200),
+  selections: z.array(z.string().min(1).max(300)).max(100) });
+const method = z.enum(["standard_array", "point_buy", "manual"]);
+const scores = z.partialRecord(z.enum(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]), z.number().int().min(1).max(30));
+export const builderStepInputSchema = z.discriminatedUnion("command", [
+  z.strictObject({ command: z.enum(["select_race", "select_subrace", "select_background"]), fields: content }),
+  z.strictObject({ command: z.enum(["clear_race", "clear_subrace"]), fields: z.strictObject({}) }),
+  z.strictObject({ command: z.enum(["race_choice", "background_choice"]), fields: choice }),
+  z.strictObject({ command: z.literal("background_narrative"), fields: z.strictObject({
+    key: z.enum(["personality_traits", "ideals", "bonds", "flaws"]),
+    values: z.array(z.string().min(1).max(2000).refine(value => value.trim().length > 0)).max(20),
+  }) }),
+  z.strictObject({ command: z.literal("save_abilities"), fields: z.strictObject({
+    method, scores, expected_method: method.nullable(), expected_scores: scores,
+  }) }),
+  z.strictObject({ command: z.literal("select_equipment"), fields: equipmentSelectionsSchema.omit({ confirmed: true }) }),
+]);
+export type BuilderStepCommand = z.infer<typeof builderStepInputSchema>["command"];
+export type BuilderStepSaved = { choices: CharacterChoices; scores: Record<string, number> };
+export type SaveBuilderStep = (command: BuilderStepCommand, fields: Record<string, unknown>) => Promise<BuilderStepSaved>;
+
+export const builderStepReceiptSchema = z.strictObject({
+  operation_id: z.uuid(), character_id: z.uuid(), actor_id: z.uuid(), command: z.string(), fields: z.unknown(),
+  saved_choices: z.record(z.string(), z.unknown()), saved_scores: z.record(z.string(), z.number()),
+  action_revision: z.string().regex(/^(0|[1-9][0-9]*)$/),
+});
+export const builderStepResponseSchema = z.discriminatedUnion("status", [
+  z.strictObject({ status: z.enum(["applied", "replayed", "recorded"]), receipt: builderStepReceiptSchema }),
+  z.strictObject({ status: z.literal("absent") }),
+]);

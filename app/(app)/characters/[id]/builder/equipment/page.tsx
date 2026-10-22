@@ -5,6 +5,8 @@ import { redirect, notFound } from "next/navigation";
 import { EquipmentStepClient } from "./equipment-step-client";
 import { startingEquipmentReceiptSchema } from "@/lib/builder/starting-equipment-contract";
 import type { EquipmentCatalogItem } from "@/lib/builder/equipment-choices";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { saveBuilderStep } from "../step-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -31,6 +33,7 @@ export default async function EquipmentStepPage({ params }: PageProps) {
   }
 
   if (!character || character.user_id !== user.id) notFound();
+  if (characterCreationUIEnabled() && !character.choices?.classes?.length) redirect(`/characters/${id}/builder/first-class`);
 
   // Owner-policy read preserves terminal recovery on reload even with disabled
   // new awards, missing pins, consumed inventory or an unavailable catalog.
@@ -98,6 +101,7 @@ export default async function EquipmentStepPage({ params }: PageProps) {
       classContent={classContent}
       backgroundContent={backgroundContent}
       catalog={catalog}
+      saveAction={characterCreationUIEnabled() ? saveBuilderStep.bind(null, user.id, id) : undefined}
     />
   );
 }

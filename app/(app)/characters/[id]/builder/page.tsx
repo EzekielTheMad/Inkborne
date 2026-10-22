@@ -17,6 +17,7 @@ import {
 import { getBuilderStepStatus, builderStepStatusLabels } from "@/lib/builder/step-status";
 import type { CreationStep } from "@/lib/types/system";
 import type { CharacterChoices } from "@/lib/types/character";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -93,7 +94,8 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
           return (
             <Link
               key={step.type}
-              href={`/characters/${id}/builder/${step.type}`}
+              href={`/characters/${id}/builder/${step.type === "class" && characterCreationUIEnabled()
+                && (!character.choices?.classes?.length || character.choices.classes[0]?.occurrence_id) ? "first-class" : step.type}`}
             >
               <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full">
                 <CardHeader className="pb-2">

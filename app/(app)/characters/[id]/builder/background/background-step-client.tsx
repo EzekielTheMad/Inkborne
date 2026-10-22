@@ -25,6 +25,7 @@ import { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
+import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 
 import { fixedLanguages, resolveChoiceOptions } from "@/lib/builder/choice-validation";
 
@@ -60,6 +61,7 @@ interface BackgroundStepClientProps {
   asiEvidence?: AsiEvidence;
   schema: SystemSchemaDefinition | undefined;
   availableLanguages?: string[];
+  saveAction?: SaveBuilderStep;
 }
 
 function getBackgroundSelectionError(
@@ -84,6 +86,7 @@ export function BackgroundStepClient({
   schema,
   asiEvidence,
   availableLanguages = [],
+  saveAction,
 }: BackgroundStepClientProps) {
   const saveBusy = useRef(false);
   const [customDrafts, setCustomDrafts] = useState<Partial<Record<NarrativeField, string[]>>>({});
@@ -168,12 +171,10 @@ export function BackgroundStepClient({
     const prev = localChoices;
 
     try {
-      const saved = await setCharacterBackground(
-        characterId,
-        content.id,
-        content.version,
-      );
-      setLocalChoices(saved.savedChoices);
+      const savedChoices = saveAction
+        ? (await saveAction("select_background", { content_id: content.id, content_version: content.version })).choices
+        : (await setCharacterBackground(characterId, content.id, content.version)).savedChoices;
+      setLocalChoices(savedChoices);
       setSelectedOverride(content);
       setIsChangingBackground(false);
 
@@ -215,7 +216,11 @@ export function BackgroundStepClient({
     setLocalChoices(newChoices);
 
     try {
-      await updateCharacter(characterId, { choices: newChoices });
+      if (saveAction) {
+        const saved = await saveAction("background_narrative", { key: field, values: newChoices[field] });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+      } else await updateCharacter(characterId, { choices: newChoices });
       setCustomDrafts(drafts => {
         if (drafts[field] !== value) return drafts;
         const next = { ...drafts };
@@ -245,7 +250,11 @@ export function BackgroundStepClient({
     setLocalChoices(newChoices);
 
     try {
-      await updateCharacter(characterId, { choices: newChoices });
+      if (saveAction) {
+        const saved = await saveAction("background_choice", { choice_id: choiceId, selections });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+      } else await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save choice selection:", err);

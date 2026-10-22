@@ -9,6 +9,7 @@ import { BuilderStepNav } from "@/components/builder/builder-step-nav";
 import { characterColorStyle } from "@/lib/character/character-color-style";
 import { getBuilderStepStatus } from "@/lib/builder/step-status";
 import type { CreationStep } from "@/lib/types/system";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -71,6 +72,8 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
           characterId={id}
           steps={steps}
           stepStatus={stepStatus}
+          classStepPath={characterCreationUIEnabled() &&
+            (!character.choices?.classes?.length || character.choices.classes[0]?.occurrence_id) ? "first-class" : "class"}
         />
 
         {children}

@@ -3,6 +3,8 @@ import { getContentByType } from "@/lib/supabase/content-definitions";
 import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { RaceStepClient } from "./race-step-client";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { saveBuilderStep } from "../step-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -30,6 +32,13 @@ export default async function RaceStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
+  const atomicSaving = characterCreationUIEnabled();
+  const savedClasses = character.choices !== null && typeof character.choices === "object" && !Array.isArray(character.choices)
+    ? character.choices.classes : undefined;
+  if (atomicSaving && (!Array.isArray(savedClasses) || savedClasses.length === 0)) {
+    redirect(`/characters/${id}/builder/first-class`);
+  }
+
   const systemId = character.system_id;
 
   const [raceContent, subraceContent, traitContent, contentSnapshot, languages] =
@@ -53,6 +62,7 @@ export default async function RaceStepPage({ params }: PageProps) {
       contentRefs={contentSnapshot.refs}
       asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}
+      saveAction={atomicSaving ? saveBuilderStep.bind(null, user.id, id) : undefined}
     />
   );
 }

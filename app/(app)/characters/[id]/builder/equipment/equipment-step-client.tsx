@@ -30,6 +30,7 @@ import type {
   StartingEquipmentSelections,
 } from "@/lib/types/character";
 import type { Currency } from "@/lib/types/inventory";
+import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 
 interface ContentSummary {
   id: string;
@@ -40,6 +41,7 @@ interface ContentSummary {
 }
 
 interface EquipmentStepClientProps {
+  saveAction?: SaveBuilderStep;
   characterId: string;
   character: {
     id: string;
@@ -60,6 +62,7 @@ export function EquipmentStepClient({
   backgroundContent,
   catalog,
   completion,
+  saveAction,
 }: EquipmentStepClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -114,9 +117,14 @@ export function EquipmentStepClient({
     const prev = equipmentState;
     setEquipmentState(next);
     try {
-      await updateCharacter(characterId, {
-        choices: { ...character.choices, starting_equipment: next },
-      });
+      if (saveAction) {
+        const saved = await saveAction("select_equipment", { selections: next.selections, picks: next.picks });
+        const canonical = saved.choices.starting_equipment;
+        if (!isStructuredSelections(canonical)) throw Error("The saved equipment selection was unavailable.");
+        setEquipmentState(canonical);
+      } else {
+        await updateCharacter(characterId, { choices: { ...character.choices, starting_equipment: next } });
+      }
     } catch (err) {
       setEquipmentState(prev);
       console.error("Failed to save equipment selection:", err);

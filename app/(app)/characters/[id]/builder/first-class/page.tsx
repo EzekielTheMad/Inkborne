@@ -64,6 +64,7 @@ export default async function FirstClassPage({ params }: { params: Promise<{ id:
       <h2 id="saved-first-class" className="font-semibold">Saved class</h2>
       <p>{savedClass.name} · Level {savedClass.level}</p>
       <p>Your class is saved to this notebook.</p>
+      <Link href={`/characters/${id}/builder/race`} className="block text-sm underline">Continue to race</Link>
       <Link href="/characters" className="text-sm underline">Back to your characters</Link>
     </section> : <p className="text-muted-foreground">Save one class to begin this notebook.</p>}
     {savedClassUnavailable && <p role="status">Your saved class could not be read completely. Keep any unfinished request and reload before making changes.</p>}

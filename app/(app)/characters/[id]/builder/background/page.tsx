@@ -3,6 +3,8 @@ import { getContentByType } from "@/lib/supabase/content-definitions";
 import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { BackgroundStepClient } from "./background-step-client";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { saveBuilderStep } from "../step-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -30,6 +32,13 @@ export default async function BackgroundStepPage({ params }: PageProps) {
 
   if (!character || character.user_id !== user.id) notFound();
 
+  const atomicSaving = characterCreationUIEnabled();
+  const savedClasses = character.choices !== null && typeof character.choices === "object" && !Array.isArray(character.choices)
+    ? character.choices.classes : undefined;
+  if (atomicSaving && (!Array.isArray(savedClasses) || savedClasses.length === 0)) {
+    redirect(`/characters/${id}/builder/first-class`);
+  }
+
   const [backgroundContent, contentSnapshot, languages] = await Promise.all([
     getContentByType(character.system_id, "background"),
     getCharacterContentRefSnapshot(id),
@@ -46,6 +55,7 @@ export default async function BackgroundStepPage({ params }: PageProps) {
       asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}
       availableLanguages={languages.map((language) => language.slug)}
+      saveAction={atomicSaving ? saveBuilderStep.bind(null, user.id, id) : undefined}
     />
   );
 }

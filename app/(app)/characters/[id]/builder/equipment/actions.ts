@@ -7,11 +7,14 @@ import { getContentByType } from "@/lib/supabase/content-definitions";
 import { buildInventoryGrants, isSelectionComplete, parseEquipmentGroups } from "@/lib/builder/equipment-choices";
 import { equipmentRequestSchema, equipmentRequestIntent, equipmentSelectionsSchema, equipmentPlanSchema, equalEquipmentIntent, startingEquipmentResultSchema, type StartingEquipmentResult } from "@/lib/builder/starting-equipment-contract";
 import type { Json } from "@/lib/supabase/database.types";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { confirmBuilderEquipment } from "@/lib/supabase/builder-equipment-server";
 
 export async function confirmStartingEquipment(input: unknown): Promise<StartingEquipmentResult> {
   const parsed = equipmentRequestSchema.safeParse(input);
   if (!parsed.success) return { status: "conflict" };
   const request = parsed.data;
+  if (characterCreationUIEnabled()) return confirmBuilderEquipment(request);
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 
 type Account = { email: string; password: string; id: string };
@@ -34,7 +34,15 @@ async function login(page: Page, origin: string, account: Account) {
   }
 }
 
-test("sign in, create, select a class, save and reload the actual app", async ({ page, context, browser }, info) => {
+async function saveThroughApp(page: Page, change: () => Promise<unknown>) {
+  const path = new URL(page.url()).pathname;
+  const [response] = await Promise.all([
+    page.waitForResponse(item => item.request().method() === "POST" && new URL(item.url()).pathname === path), change(),
+  ]);
+  expect(response.status(), "The real application save must succeed before reloading").toBe(200);
+}
+
+test("sign in, build a character, save and reload every step in the actual app", async ({ page, context, browser }, info) => {
   const config = await settings();
   const allowed = new Set([config.appOrigin, config.supabaseOrigin]);
   const blockedOrigins: string[] = [], pageErrors: string[] = [];
@@ -70,6 +78,62 @@ test("sign in, create, select a class, save and reload the actual app", async ({
   expect(await page.evaluate(() => Object.keys(sessionStorage).filter(key =>
     key.startsWith("inkborne:pending-creation:") || key.startsWith("inkborne:pending-first-class:")))).toEqual([]);
   await page.screenshot({ path: info.outputPath("saved-class-after-reload.png"), fullPage: true });
+  const notebook = config.appOrigin + "/characters/" + characterId;
+  await page.getByRole("link", { name: "Continue to race", exact: true }).click();
+  await page.getByRole("button", { name: "Preview Human", exact: true }).click();
+  await saveThroughApp(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
+  await expect(page.getByText("Saving race choices. Keep this page open.", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
+  await expect(page.getByText("Human", { exact: true }).first()).toBeVisible();
+  await page.screenshot({ path: info.outputPath("saved-race-after-reload.png"), fullPage: true });
+  await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
+  await expect(page).toHaveURL(notebook + "/builder/abilities");
+  await page.reload(); // Exercise the first edit on a freshly hydrated abilities page.
+  const abilityValues = { Strength: "15", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "10", Charisma: "8" };
+  for (const [ability, value] of Object.entries(abilityValues)) {
+    await saveThroughApp(page, () => page.getByRole("combobox", { name: ability + " score", exact: true }).selectOption(value));
+    await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
+  }
+  await page.reload();
+  for (const [ability, value] of Object.entries(abilityValues)) {
+    await expect(page.getByRole("combobox", { name: ability + " score", exact: true })).toHaveValue(value);
+  }
+  await page.screenshot({ path: info.outputPath("saved-abilities-after-reload.png"), fullPage: true });
+  await page.getByRole("button", { name: "Next: Background", exact: true }).click();
+  await expect(page).toHaveURL(notebook + "/builder/background");
+  await page.getByRole("button", { name: "Preview Soldier", exact: true }).click();
+  await saveThroughApp(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
+  await expect(page.getByRole("button", { name: "Change Background", exact: true })).toBeVisible();
+  await saveThroughApp(page, () => page.getByRole("button", { name: "I keep my word.", exact: true }).click());
+  await expect(page.getByText("Personality Traits (1/2)", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Change Background", exact: true })).toBeVisible();
+  await expect(page.getByText("Soldier", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Personality Traits (1/2)", { exact: true })).toBeVisible();
+  await page.screenshot({ path: info.outputPath("saved-background-after-reload.png"), fullPage: true });
+  await page.getByRole("button", { name: "Next: Equipment", exact: true }).click();
+  await expect(page).toHaveURL(notebook + "/builder/equipment");
+  await saveThroughApp(page, () => page.getByRole("button", { name: /^\(a\)\s*A backpack$/ }).click());
+  await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled();
+  await page.getByRole("button", { name: "Confirm Equipment", exact: true }).click();
+  await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
+  for (const item of ["Backpack", "Bedroll", "Pouch", "10 gp"]) {
+    await expect(page.getByRole("listitem").filter({ hasText: new RegExp("^" + item + "$") })).toBeVisible();
+  }
+  await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath("saved-equipment-after-reload.png"), fullPage: true });
+  // Return through the builder overview and a fresh class read after all later
+  // choices; no earlier class selection may be lost by a whole-object write.
+  await page.goto(notebook + "/builder");
+  for (const type of ["race", "abilities", "first-class", "background", "equipment"]) {
+    await expect(page.locator('nav[aria-label="Character builder"] a[href="' + notebook.replace(config.appOrigin, "") + "/builder/" + type + '"]')).toBeVisible();
+  }
+  await page.goto(savedUrl);
+  await expect(page.getByText(config.className + " · Level 1", { exact: true })).toBeVisible();
   const other = await browser.newContext();
   try {
     await other.route("**/*", route => allowed.has(new URL(route.request().url()).origin) ? route.continue() : route.abort());
@@ -80,9 +144,12 @@ test("sign in, create, select a class, save and reload the actual app", async ({
     await expect(otherPage.getByText("This page could not be found.", { exact: true })).toBeVisible();
   } finally { await other.close(); }
   expect(blockedOrigins).toEqual([]); expect(pageErrors).toEqual([]);
-  await info.attach("actual-workflow", { contentType: "application/json", body: JSON.stringify({
+  const evidencePath = info.outputPath("actual-workflow.json");
+  await writeFile(evidencePath, JSON.stringify({
     actualNextApp: true, actualAuthCookies: true, actualPostgrest: true, syntheticLocalContent: true,
     characterId, classId: config.classId, name, savedUrl, reloadPassed: true, foreignAccountRefused: true,
+    raceReloadPassed: true, abilitiesReloadPassed: true, backgroundReloadPassed: true, equipmentReloadPassed: true,
     blockedOrigins, pageErrors,
-  }) });
+  }, null, 2));
+  await info.attach("actual-workflow", { contentType: "application/json", path: evidencePath });
 });

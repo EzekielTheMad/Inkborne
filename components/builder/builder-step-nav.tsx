@@ -8,6 +8,7 @@ import type { CreationStep } from "@/lib/types/system";
 import { builderStepStatusLabels, type BuilderStepStatus } from "@/lib/builder/step-status";
 
 interface BuilderStepNavProps {
+  classStepPath?: "class" | "first-class";
   characterId: string;
   steps: CreationStep[];
   stepStatus: Record<string, BuilderStepStatus>;
@@ -17,6 +18,7 @@ export function BuilderStepNav({
   characterId,
   steps,
   stepStatus,
+  classStepPath = "class",
 }: BuilderStepNavProps) {
   const pathname = usePathname();
 
@@ -36,13 +38,14 @@ export function BuilderStepNav({
       </Link>
       {steps.map((step) => {
         const status = stepStatus[step.type] ?? "untouched";
-        const isActive = pathname.endsWith(`/builder/${step.type}`);
+        const path = step.type === "class" ? classStepPath : step.type;
+        const isActive = pathname.endsWith(`/builder/${path}`);
 
         return (
           <Link
             key={step.type}
             aria-current={isActive ? "step" : undefined}
-            href={`/characters/${characterId}/builder/${step.type}`}
+            href={`/characters/${characterId}/builder/${path}`}
             className={cn(
               "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
               isActive

@@ -95,6 +95,7 @@ function createDraftStore(
   characterId: string,
   initialDraft: AbilityScoreDraft,
   persistedSnapshot: AbilityScoreSnapshot,
+  persist = saveCharacterAbilities,
 ) {
   let snapshot: EditorSnapshot = { draft: initialDraft, status: "saved" };
   let saved = persistedSnapshot;
@@ -129,7 +130,7 @@ function createDraftStore(
       try {
         // Raw expectations advance only on a successful canonical response.
         // CAS rejects stale full-page/tab editors; SPA remounts share this queue.
-        const result = await saveCharacterAbilities(characterId, next, saved);
+        const result = await persist(characterId, next, saved);
         if (discarded) return;
         saved = result;
         if (sequence === revision) publish({ draft: snapshot.draft, status: "saved" });
@@ -176,11 +177,12 @@ export function useAbilityScoreDraft(
   characterId: string,
   initialDraft: AbilityScoreDraft,
   persistedSnapshot: AbilityScoreSnapshot,
+  persist = saveCharacterAbilities,
 ) {
   const [serverSnapshot] = useState<EditorSnapshot>(() => ({ draft: initialDraft, status: "saved" }));
   const [store] = useState(() => {
     // Never share draft data between server requests/users during SSR.
-    if (typeof window === "undefined") return createDraftStore(ownerId, characterId, initialDraft, persistedSnapshot);
+    if (typeof window === "undefined") return createDraftStore(ownerId, characterId, initialDraft, persistedSnapshot, persist);
     const key = draftKey(ownerId, characterId);
     const existing = drafts.get(key);
     if (existing) {
@@ -189,7 +191,7 @@ export function useAbilityScoreDraft(
       drafts.set(key, existing);
       return existing;
     }
-    const created = createDraftStore(ownerId, characterId, initialDraft, persistedSnapshot);
+    const created = createDraftStore(ownerId, characterId, initialDraft, persistedSnapshot, persist);
     drafts.set(key, created);
     return created;
   });
