@@ -140,14 +140,14 @@ BEGIN
     OR pg_catalog.has_schema_privilege(gateway,'private','CREATE')
     OR pg_catalog.has_schema_privilege(gateway,'auth','USAGE')
     OR pg_catalog.has_schema_privilege('service_role','private','USAGE') THEN
-    RAISE EXCEPTION 'character_creation_bridge_capability_unavailable' USING ERRCODE='42501';
+    RAISE EXCEPTION 'character_creation_bridge_capability_unavailable:role_or_schema' USING ERRCODE='42501';
   END IF;
   FOR item IN SELECT c.oid FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
     WHERE n.nspname IN ('auth','public','private') AND c.relkind IN ('r','p','v','m','f')
   LOOP
     IF pg_catalog.has_any_column_privilege(gateway,item.oid,'SELECT,INSERT,UPDATE,REFERENCES')
       OR pg_catalog.has_table_privilege(gateway,item.oid,'DELETE,TRUNCATE,TRIGGER') THEN
-      RAISE EXCEPTION 'character_creation_bridge_capability_unavailable' USING ERRCODE='42501';
+      RAISE EXCEPTION 'character_creation_bridge_capability_unavailable:relation:%',item.oid::regclass USING ERRCODE='42501';
     END IF;
   END LOOP;
   FOR item IN SELECT p.oid FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
@@ -157,7 +157,7 @@ BEGIN
       ('private.lock_character_command_actor_rows_gateway_v1(jsonb)'::regprocedure,
        'private.create_empty_class_origin_character_v1(jsonb,jsonb)'::regprocedure,
        'private.resolve_empty_class_origin_creation_v1(jsonb,uuid)'::regprocedure)) THEN
-      RAISE EXCEPTION 'character_creation_bridge_capability_unavailable' USING ERRCODE='42501';
+      RAISE EXCEPTION 'character_creation_bridge_capability_unavailable:function:%',item.oid::regprocedure USING ERRCODE='42501';
     END IF;
   END LOOP;
   IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc p,
@@ -167,7 +167,7 @@ BEGIN
       AND a.privilege_type='EXECUTE' AND a.grantee<>p.proowner
       AND a.grantee<>CASE WHEN p.pronamespace='private'::regnamespace THEN gateway
         ELSE (SELECT oid FROM pg_catalog.pg_roles WHERE rolname='service_role') END) THEN
-    RAISE EXCEPTION 'character_creation_bridge_capability_unavailable' USING ERRCODE='42501';
+    RAISE EXCEPTION 'character_creation_bridge_capability_unavailable:explicit_acl' USING ERRCODE='42501';
   END IF;
 END;
 $closure$;
