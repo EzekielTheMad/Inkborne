@@ -1,18 +1,25 @@
-# First-class materializer slices — dependency and allocation calculations implemented
+# First-class materializer slices — native B1 and staged B2/B3
 
-2026-10-22 continuation: bounded native row/provider profiles now pass; finite
-guarded empty-character creation/recovery is implemented and offline-tested at
-`e055189`. `ad94e2f` adds protected pre-journal B1 storage/binding and33 passing
-offline tests, with a narrow native-owner-compatible history bridge. Full native creation/B1, original B2
-materializers and the real B3 choices writer remain separate open acceptance.
-The corrected original producer and current bootstrap/prerequisite body pins
-include the reviewed CASE/choice-alias fixes. [Current evidence](../handoffs/2026-10-22-character-command-native-and-creation.md).
+2026-10-22 current checkpoint: source `da66dad` includes protected B1, sealed-plan
+B2 consumers (`4bd2a27`) and the genuine staged B3 first-class writer. B2 passes28
+offline cases; B3 passes38 including genuine staged creation COMMIT before class
+selection, full graph/deferred closure, recovery and rollback. Full project
+check passes383 files/5,504 tests/three existing M5 skips, typecheck/lint.
+
+Native run `20261022T195104.853Z-bbb86a2ec4fa` passes83 baseline migrations,
+15 complete stages and15 creation/B1 scenario groups, including real-provider
+draft creation/recovery/rollback and owner-only planning/journal/session checks.
+Native B2/B3 requires the complete17-stage lineage and remains open, as do actual
+Next/PostgREST and complete application acceptance. No global gate/readiness or
+UI flag is enabled. [Current creation/B1 evidence](../handoffs/2026-10-22-creation-ui-and-materializers.md)
+and [B3 source/fixture boundaries](../handoffs/2026-10-22-first-class-save-writer.md).
 
 Continue M1/M3/M4/M6 from source 29b6cc8 and the
 [completed G2 baseline](../handoffs/2026-10-21-g2-baseline-complete.md).
-The dependency calculation described below is now staged source; B1–B3 remain
-ordered implementation work. This implements no issuer, replaces no materializers,
-grants no runtime permissions and authorizes no native profile. Retain the
+The dependency-only calculation described below remains historical scoped
+design. Later B1–B3 implementation status is recorded above; this original
+dependency slice itself implements no issuer, replaces no materializer and
+grants no runtime permission or native authorization. Retain the
 reviewed [prerequisite A contract](2026-10-13-first-class-acquisition-prerequisites.md).
 
 ## Implemented dependency calculation before B1

@@ -4,21 +4,31 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
-Latest executable source `023cd3a` includes default-off account-bound creation
-and recovery (`588e10f`), sealed-plan B2 consumers (`4bd2a27`) and the new endpoint
-ACL fix (`734217d`). Focused130 UI/28 B2 tests and14 actual offline desktop/mobile
-browser checks pass. Full check:382 files/5,466 passes/three existing M5 skips,
-typecheck/lint pass; all556 identities exited. Browser harness type/lint passes;
-all26 browser identities and both ports closed. Original8/extended25 native row
-and nine real provider cases remain accepted within their bounded scope.
-Native creation attempts refused the new bridge's explicit ACL; the narrow fix
-awaits native confirmation. The14-stage B1 candidate was withdrawn before launch
-for a missing full prerequisite; review the corrected15-stage/93-function raw
-closure before freezing. Native creation/B1, B2/B3 full-save, direct-writer fences
-and actual Next/PostgREST browser saving/play remain open. Keep the UI flag off,
-general Auth/global gates/all13 readiness denied. The current human request
-authorizes bounded local continuation, not hosted writes or deployment.
+Latest executable source `da66dad` completes five local checkpoints: endpoint
+ACL closure, default-off account-bound creation/recovery, sealed-plan B2 consumers,
+14 actual local browser checks and the genuine staged first-class writer.
+Focused130 UI/28 B2/38 B3 cases pass. Full check:383 files/5,504 passes/three
+existing M5 skips, typecheck/lint pass; all559 recorded identities exited and
+no recorded task listener remained. Browser26 identities and both ports closed.
+
+Native run `20261022T195104.853Z-bbb86a2ec4fa`, frozen package `03d25dc7...`,
+passes83 baseline migrations,15 complete stages,93-function/17-table metadata
+and15 scenario groups for real-provider draft creation/recovery/rollback,
+protected B1 plans/journals and session revocation. All625 client identities and
+six owned resources are absent. Original8/extended25 native row and nine provider
+cases remain accepted within their bounded scopes. The missing-prerequisite
+candidate and subsequent verifier failures remain historical evidence.
+Native postgres retains its unchanged administrative inheritance; the contract
+forbids added explicit private grants, not effective administrative reads.
+
+Next: the complete17-stage lineage including B2/B3, genuine native first-class
+commit/recovery, remaining writer fences, then actual Next/PostgREST browser
+create–save–reload–play. Keep the UI flag off, general Auth/global gates/all13
+readiness denied. Local/source and native B1 checks do not close application or
+launch acceptance. The current request authorizes bounded local continuation,
+not hosted writes or deployment.
 [Current checkpoint and exact boundaries](handoffs/2026-10-22-creation-ui-and-materializers.md).
+[Writer checkpoint](handoffs/2026-10-22-first-class-save-writer.md).
 Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
 
 Historical source `96e1197` completed three local preparation checkpoints:

@@ -1,7 +1,8 @@
 # Creation recovery interface and first-class materialization
 
-Local executable checkpoints: `734217d` (new endpoint ACL), `588e10f`
-(default-off interface), `4bd2a27` (B2 materialization), `023cd3a` (browser checks).
+Five local executable checkpoints: `734217d` (new endpoint ACL), `588e10f`
+(default-off interface), `4bd2a27` (B2 materialization), `023cd3a` (browser checks),
+`da66dad` ([first-class writer and38 offline cases](2026-10-22-first-class-save-writer.md)).
 The current human five-checkpoint request covers this bounded local work.
 Vercel is unchanged; M1–M6/M5.5 remain active and M7/creature imports paused.
 No push, deployment, hosted write or activation occurred.
@@ -32,8 +33,11 @@ rerun untouched empty-history planning after writes. Five original function
 bodies have finite branches; eight remain byte-identical. Existing legacy API
 ACLs, owners, global Auth denials, both gates and all13 readiness flags remain.
 
-The class-owned journal reader grants only postgres EXECUTE; postgres receives
-no SELECT on the original private history cohort. B2 does not perform the B3
+The class-owned journal reader adds only postgres as a nonowner EXECUTE caller;
+B2 adds no explicit postgres table/column grant on original private history.
+Native postgres already inherits administrative reads; this is not effective
+administrator isolation or the reader's exclusive possible access path.
+B2 does not perform the B3
 choices update, private proof consumption, semantic order write or finalization.
 Its fixture injects prior history/pending proofs and manually prepares choices;
 these are explicitly synthetic, not authenticated class-save acceptance.
@@ -65,6 +69,15 @@ Evidence below is under the sibling `equipment-runtime/evidence` directory:
   bundling before any server/browser because a stub lacked resolveDir; corrected.
 - `local-creation-browser-check-20261022T185257Z`:typecheck and zero-warning lint
   pass including the three new browser harness files; eight identities exited.
+- `local-class-writer-20261022T193037Z`:38 offline cases pass, including genuine
+  staged creation COMMIT before the first-class transaction, complete graph and
+  deferred closure, receipt recovery, eight physical-phase rollbacks and trigger
+  drift/mutation refusals. All six recorded identities exited.
+- `local-check-20261022T193716Z`:full existing `npm.cmd run check` passes at
+  `da66dad`:typecheck, zero-warning lint, **383 files /5,504 passes /three existing
+  M5 skips**. All559 recorded task identities exited with no task listener.
+  Resource snapshots/comparison remain alongside the gate; global aggregate
+  changes include unrelated user processes and are not attributed solely to tests.
 
 The browser fixture uses minimal fixture styling, not the full Next layout. It
 does not establish Next cookies, PostgREST, database commit or actual app saving.
@@ -74,7 +87,7 @@ removed. The new endpoint permission regression reproduces a creator-specific
 default, inspects explicit ACLs and does not mistake SUPER fixture privileges for
 NONSUPER runtime proof.
 
-## Native failures and next admission
+## Native creation/B1 acceptance and preserved failures
 
 Creation attempts `20261022T182224.549Z-f515b844ad87` and
 `20261022T183155.033Z-b61b4f3d0abf` replayed the full83-migration baseline and
@@ -86,25 +99,59 @@ without cleanup errors. Independent final readback found all553 recorded client
 identities absent in each run; one late PID reuse in the second was preserved
 and no unrelated process was killed.
 
-The narrow fix closes the NEW public RPC's ambient postgres EXECUTE grant after
-ownership transfer. Supabase documents the installer-specific public default;
-the offline regression reproduces it without changing installer defaults or old
-objects. The next native profile captures actual default ACL metadata before
-staged installation. Its five named original public D1/D2 entries may retain
-their source-permitted nondelegable postgres grants; the new RPC and unrelated
-private functions receive no such exception. Actual native confirmation is open.
+The narrow fix closes the NEW public RPC's explicit ambient postgres EXECUTE
+entry after ownership transfer. Actual installer default ACL metadata confirms
+the public-function default. Existing defaults/legacy objects remain unchanged;
+five named original public D1/D2 entries retain their source-permitted grants.
+Native postgres also inherits service-role capabilities, so raw ACL closure does
+not imply effective administrator EXECUTE denial.
 
 The first proposed fourteen-stage B1 profile was withdrawn before execution:
 the planner binds the first-acquisition prerequisite acceptance guard, so that
 COMPLETE prerequisite source must precede B1's extra journal trigger. The corrected
-candidate has fifteen full stages,93 exact source-derived functions and17 private
-tables. Source helper checks pass; final source admission/freezing/native run
-remain distinct. No fixture extraction, missing-privilege repair or readiness
-activation may stand in for complete native prerequisite installation.
+candidate has fifteen complete stages,93 functions and17 private tables.
+Successive attempts preserved these distinct outcomes:
 
-Actual creation commit/recovery, native protected B1 and B2/B3 remain open. B3 is
-being prepared as a finite first-command transaction, preserving owner-only B1
-minting and receipt-first recovery. Direct mechanical/lifecycle writer fences,
-real Next/PostgREST create–save–reload–play acceptance and release gates are still
-required before activation or beta. See the earlier
+| Native attempt | Observed result |
+| --- | --- |
+| `185949.933Z-7dd612d41bcb` | All15 stages installed; metadata42501 before accounts. |
+| `191504.354Z-7c50781b7dc4` | All15 installed; identified the false effective-postgres-SELECT assertion. Native postgres inherits pg_read_all_data. No role/ACL repair occurred. |
+| `193334.274Z-d9cc0fcb6782` | SQL metadata passes; unchanged pre/post administrative graph14roles/16edges. JavaScript falsely refused JSON object key order. Direct RLS probes/accounts/B1 not reached. |
+| `194327.941Z-929b86db9938` | Metadata/direct isolated-role RLS and five native creation/snapshot groups pass. B1 digest25006 before planning because the real reader takes row locks in a READ ONLY transaction. Inner agent was forced closed; global resources/readback cleared. |
+| `195104.853Z-bbb86a2ec4fa` | Complete native creation/B1 profile PASS:15 scenario groups, no failure or cleanup error. All625 client identities and six owned resources absent. |
+
+All attempt directory names above have prefix `20261022T` under
+`equipment-runtime/evidence/class-first-plan`. Failed receipts are unchanged.
+The verifier now uses structural strict equality, an ordinary BEGIN/ROLLBACK
+transaction around the unchanged locking graph reader, and one explicit normal
+protocol close on a healthy error path. Source/simulated checks do not substitute
+for the successful final native run.
+
+The accepted final package SHA256 is
+`03d25dc74e7cf44b4f83673d0a6904978e8facae26005e512172309ba55a89f9`, source
+`da66dad452eaa2b46f5a17f5a47a692b24d0abe2`; preparation
+`20261022T195001.082Z-35a56ca0e71c`. It binds the complete83-migration baseline,
+all15 raw stages, installed SDK/resolver closure and23 operations. Independent
+source/freeze review passed. Native same-token provider context leads to actual
+service-role SQL creation COMMIT, full graph/two consumed proofs, receipt retry/
+recovery/conflict/absence, source refusal/history-first recovery and injected
+rollback. Five genuine content-definition INSERTs fire original version triggers.
+B1 then commits a protected plan, checks same-xid reuse, no-mint/immutability,
+unsealed-class calculation refusal, exact pending journal plus tamper rollback,
+stale-xid refusal and actual session deletion. General Auth/gates/all13 readiness
+remain denied. No actual add_class, B2/B3 or PostgREST is executed by this profile.
+
+Pre/post native postgres administrative authority is identical (14 reachable
+roles,16 edges); all eight original/proof relations have no explicit postgres
+table/column ACL entries. Inherited effective SELECT remains true. Both actual
+isolated roles are NONSUPER/NOBYPASS with active RLS. The final agent exits0
+without force; recorded SQL backends and owned containers/network/volumes are
+absent. Root's independent final readback confirms625 identities absent without
+PID reuse or kills. Shared engine/image cache remain as authorized by G1.
+
+B3 source is delivered and passes38 offline cases. Native B2/B3 needs the same
+complete lineage followed by B2 and B3:17 stages. Direct mechanical/lifecycle
+writer fences, actual Next-cookie/PostgREST create–save–reload–play and broader
+session-policy/release acceptance remain required before activation or beta.
+See the earlier
 [native row/provider evidence](2026-10-22-character-command-native-and-creation.md).

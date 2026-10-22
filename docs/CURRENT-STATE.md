@@ -2,22 +2,31 @@
 
 ## Active execution — 2026-10-22 UTC
 
-**Native row/Auth verified; creation/recovery UI and B2 materialization staged.**
-The original8/expanded25 native row and nine real provider cases passed. New
-checkpoints `734217d`, `588e10f`, `4bd2a27`, `023cd3a` close the new endpoint's
-installer default, add an account-bound default-off interface and consume sealed
-first-class materialization plans. Focused130 UI and28 B2 tests pass;14 actual
-offline desktop/mobile browser checks pass, including real reload and account
-changes. Full project check passes **382 files /5,466 tests /three existing M5
-skips**, typecheck and zero-warning lint; all556 identities exited. Additional
-browser harness type/lint passes; all26 browser identities and both ports closed.
-Two complete-stage native attempts stopped safely at the bridge's explicit ACL
-check. The narrow fix is offline-verified; native confirmation remains open.
-The proposed14-stage B1 profile was withdrawn before execution for a missing
-complete prerequisite; its corrected15-stage/93-function profile is under review.
-Native creation/B1, B2/B3 full-save and actual Next/PostgREST/play acceptance remain
-open. No hosted acceptance or feature activation is claimed.
+**Five local checkpoints complete; native draft creation and B1 planning pass.**
+`734217d`, `588e10f`, `4bd2a27`, `023cd3a`, `da66dad` deliver endpoint ACL closure,
+account-bound default-off creation/recovery, sealed-plan materializers,14 actual
+local desktop/mobile browser checks and the first-class transaction writer.
+The latter passes38 offline SQL cases including genuine staged creation COMMIT,
+class selection, full graph/deferred closure, historical recovery and rollback.
+Full project check at `da66dad` passes **383 files /5,504 tests /three existing M5
+skips**, typecheck and zero-warning lint; all559 recorded identities exited and
+no recorded task listener remained. Focused130 UI/28 B2 cases also pass.
+
+Native run `20261022T195104.853Z-bbb86a2ec4fa` passes the complete83-migration
+baseline,15 complete stages,93-function/17-table metadata and15 scenario groups:
+real-provider draft creation/recovery/rollback, protected B1 planning, exact
+journal admission/refusal and actual session revocation. All625 recorded client
+identities and six owned resources are absent. Native postgres's administrative
+inheritance is unchanged (14 roles/16 edges); no explicit private table/column
+grant or role repair was added. This is not administrator read isolation.
+The earlier missing-prerequisite and verifier failures remain preserved.
+
+Native B2/B3/class-save, direct-writer fences and actual Next/PostgREST
+create–save–reload–play acceptance remain open. UI flag, general Auth denials,
+both gates and all13 readiness flags remain disabled. No hosted acceptance or
+feature activation is claimed.
 [Current evidence, failures and next gates](handoffs/2026-10-22-creation-ui-and-materializers.md).
+[First-class writer and exact offline limits](handoffs/2026-10-22-first-class-save-writer.md).
 Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
 
 Earlier preparation checkpoints follow.

@@ -51,8 +51,10 @@ recovery, replacement session, conflicts/ownership, closed caller permissions,
 forged proof/phase refusal, failures at all eight physical write phases, a late
 BEFORE trigger changing NEW, and seven atomic installation-drift cases.
 `local-creation-browser-check-20261022T193116Z` passes the existing typecheck and
-zero-warning lint scripts; all eight recorded task identities exited. The full
-project check will run after the frozen native retry.
+zero-warning lint scripts; all eight recorded task identities exited.
+Full `local-check-20261022T193716Z` at `da66dad` passes typecheck, zero-warning
+lint and383 files/5,504 tests/three existing M5 skips. All559 recorded task
+identities exited and no task listener remained.
 
 Earlier failed attempts remain preserved. The complete fixture exposed revoked
 owner EXECUTE on two new private functions; only the exact owners were restored.
@@ -63,7 +65,12 @@ the finite first-class branch now validates whole sealed OLD/NEW and returns
 NEW unchanged. Its complete ordinary body is preserved. Fixture game-system
 column names and ordered trigger columns were corrected to original migrations.
 
-This is not full83-migration/native B3, provider, concurrency, Next-cookie,
-PostgREST, browser or deployed-save acceptance. The accepted native selected-row
-and provider profiles have separate scopes. Full creation-to-class-to-save UI,
+The separate native creation/B1 run `20261022T195104.853Z-bbb86a2ec4fa` passes
+83 baseline migrations,15 complete stages and15 scenario groups. Its actual
+draft creation, receipt recovery, protected planning/journal refusal and session
+revocation pass; all625 client identities/six owned resources are absent. It
+does not install B2/B3 or execute add_class. [Native evidence and preserved failures](2026-10-22-creation-ui-and-materializers.md).
+
+This is not full83-migration/native B3, concurrency, Next-cookie, PostgREST,
+browser or deployed-class-save acceptance. Full creation-to-class-to-save UI,
 remaining writer fences, play/reload/recovery and launch acceptance remain open.

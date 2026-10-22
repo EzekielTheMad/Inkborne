@@ -2,25 +2,34 @@
 
 ## Active continuation — 2026-10-22 UTC
 
-### Native selected-row/provider profiles pass; full app saving remains open
+### Five local checkpoints and native creation/B1 pass; full app saving remains open
 
-Original8/expanded25 native row cases and nine real provider cases passed.
-These bounded profiles do not establish full session policy, Next cookies or
-hosted acceptance. `734217d` closes the NEW creation RPC's installer-specific
-postgres grant; native confirmation is open after two safely refused attempts.
-`588e10f` stages account-bound creation/recovery behind a default-off flag;
-`4bd2a27` adds sealed-plan B2 materialization. Focused130 UI/28 B2 and14 actual
-offline desktop/mobile browser checks pass. Full project check passes382 files,
-5,466 tests, three existing M5 skips, typecheck and zero-warning lint. All556
-test identities exited; browser26 identities and both local ports closed.
-Browser harness additional type/lint passes at `023cd3a`.
-The proposed14-stage B1 native candidate was withdrawn before launch for a missing
-full prerequisite; corrected15-stage/93-function admission is pending. Native
-creation/B1, actual B2/B3 class-save, direct-writer fences, Next/PostgREST and
-complete create–save–reload–play acceptance remain OPEN. UI flag, general Auth,
-both gates and13 readiness families remain denied. No release gate closes from
-the interface's explicit Auth/action doubles or B2's injected proof fixture.
+Source `da66dad` completes five local checkpoints (`734217d`, `588e10f`, `4bd2a27`,
+`023cd3a`, `da66dad`): creation endpoint permissions, account-bound default-off
+creation/recovery, sealed-plan B2 materialization,14 actual local desktop/mobile
+browser checks and the first-class transaction writer. Focused130 UI/28 B2/38 B3
+tests pass. Full check passes383 files/5,504 tests/three existing M5 skips,
+typecheck and zero-warning lint; all559 test identities exited with no recorded
+task listener. Browser26 identities and both local ports closed.
+
+Native run `20261022T195104.853Z-bbb86a2ec4fa` passes the full83-migration baseline,
+15 complete stages,93-function/17-table metadata and15 scenario groups. Genuine
+real-provider draft creation COMMIT/full graph, receipt recovery/conflict/absence,
+injected rollback, owner-only B1 planning/journal refusal and actual session
+revocation pass. All625 client identities and six owned resources are absent.
+Before/after administrative inheritance is unchanged (14 roles/16 edges);
+effective native postgres reads are not private-role isolation. No new explicit
+postgres private table/column grant or membership was added. Earlier failed
+attempts and the withdrawn14-stage candidate remain preserved.
+
+Original8/expanded25 native row and nine provider cases remain accepted in their
+bounded scopes. Native B2/B3 class-save, broader session policy, direct-writer
+fences, Next cookies/PostgREST and complete create–save–reload–play acceptance
+remain OPEN. UI flag, general Auth, both gates and13 readiness families remain
+denied. The next native class-save profile requires all17 complete stages;
+38 offline B3 cases and explicit browser/Auth/action doubles cannot close it.
 [Evidence, failures and exact remaining gates](handoffs/2026-10-22-creation-ui-and-materializers.md).
+[Writer evidence](handoffs/2026-10-22-first-class-save-writer.md).
 Vercel unchanged; M1–M6/M5.5 precede M8; M7/creature imports paused.
 
 Earlier preparation evidence follows.
