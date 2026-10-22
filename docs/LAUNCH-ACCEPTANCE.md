@@ -2,29 +2,31 @@
 
 ## Active continuation — 2026-10-22 UTC
 
-### Actual application sign-in, creation and first-class save/reload
+### Actual application character builder save/reload
 
-**The actual application core flow passes locally at `49460f0`.** A real browser
-signs in, follows the dashboard creation link, creates a character, selects
-Fighter, saves, and reloads with the same class/name. A second signed-in account
-gets a 404 for that notebook. This exposed and fixed a retained browser-account
-state bug after server-action sign-in; saved-class rendering now uses the pinned
-snapshot and refreshes after confirmation.
+**Race, abilities, background and starting equipment now save and reload in the
+actual local app at `2e2b252`.** One real browser signs in, creates a notebook,
+saves Fighter, then saves Human, all six standard-array scores, Soldier and a
+personality note, and confirms the starting award. Each step survives a full
+reload. Backpack, Bedroll, Pouch and 10 gp are retained; the original class stays
+intact. A second signed-in account receives a 404.
 
-One actual Next/Auth/PostgREST/database browser story, 57 focused page/form/account
-checks, typecheck and zero-warning lint pass. The broader suite was not repeated
-under the user's focused-testing instruction. One database readback confirms
-exactly one class receipt and committed level/revisions. Synthetic local content
-was used; full catalog/builder/play/recovery/concurrency and hosted acceptance
-remain open. [Delivery, preserved failure and exact evidence](handoffs/2026-10-22-real-app-character-saving.md).
+The actual Next/Auth/PostgREST/database story passes. Focused UI and transport
+checks, typecheck and zero-warning lint pass; the full suite was intentionally
+not repeated. Native readback confirms the saved values and exactly one starting
+award. Real execution exposed and fixed a writer-lock privilege mismatch, an
+award-receipt variable error and an ability edit before hydration.
+[Delivery, preserved failures and exact evidence](handoffs/2026-10-22-real-app-builder-saving.md).
 
-The UI was enabled only in the task-owned local Next environment; repository
-activation gates remain closed. No push, deployment or hosted configuration/data
-change occurred. Vercel is unchanged. M1 remains incomplete, M1–M6/M5.5 precede
-M8, and M7/creature imports remain paused. Wider
+This uses parser-valid synthetic local content. Full catalog combinations,
+advanced builder/gameplay, recovery/concurrency and hosted acceptance remain
+open; M1 is incomplete. The temporary local UI flag does not open repository
+activation/readiness gates. No push, deployment or hosted configuration/data
+change occurred. Vercel is unchanged; M1–M6/M5.5 precede M8 and M7/creature
+imports remain paused. Wider
 [writer fences](specs/2026-10-22-enrolled-character-writer-fences.md) remain a
-production activation requirement. Temporary services are stopped after use;
-shared Docker engine/cache remain.
+production activation requirement. Task services are stopped after use; shared
+Docker engine/cache remain.
 
 Earlier preparation evidence follows.
 
