@@ -4,6 +4,18 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Latest source `3d25ac3` adds the closed database row-lock primitive; `95e9c90`
+has62 focused passing tests and independent source/fixture review. It checks
+selected Auth account/session/profile, guard and current-owned parent under locks
+with native deadline checks. No caller, Auth replacement, runtime privilege or
+save activation exists. Native/provider/configuration/concurrency proof remains
+open; a read-only hosted metadata attempt failed connector credentials28P01.
+[Current checkpoint](handoffs/2026-10-22-character-command-row-locks.md),
+[proposed native profile](specs/2026-10-22-character-command-native-row-check-plan.md).
+Full check at `95e9c90` passed typecheck/lint,366 files /5119 tests /three
+UNVERIFIED M5 skips; all425 observed identities exited. Vercel unchanged,
+M1–M6/M5.5 active, M7/creature imports paused.
+
 Latest source `0dc7a4b` implements the no-argument server same-token context
 boundary; `f534bfb` adds 75 passing focused tests, including installed-SDK real
 ES256 verification against ephemeral fixture keys. Independent source review

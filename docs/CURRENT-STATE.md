@@ -2,6 +2,22 @@
 
 ## Active execution — 2026-10-22 UTC
 
+**Database session/current-owner row checks implemented, staged only.**
+Source `3d25ac3` adds a closed invoker primitive that locks selected user/session/
+profile rows, writer guard and exact owned parent, then rechecks native deadlines
+and account/session/ownership conditions. All62 focused tests at `95e9c90` passed;
+independent source/fixture review passed. Success is row correspondence, not JWT
+authentication, configured-session validity or save acceptance. Both original
+Auth seams/gates remain denied. The hosted read-only metadata attempt failed
+with connector credential error28P01; no schema/row data or hosted changes resulted.
+[Checkpoint](handoffs/2026-10-22-character-command-row-locks.md) and
+[proposed native profile](specs/2026-10-22-character-command-native-row-check-plan.md).
+Full check at `95e9c90` passed typecheck, zero-warning lint,
+**366 files /5119 tests /three UNVERIFIED M5 skips**; all425 observed identities
+exited. Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
+
+Earlier checkpoints follow.
+
 **Server token-context verification implemented; authenticated saving still open.**
 Source `0dc7a4b` captures one cookie token and passes it explicitly to the installed
 SDK's claims verification and current-user lookup. Strict same-token identity,

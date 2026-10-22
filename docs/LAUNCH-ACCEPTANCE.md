@@ -2,6 +2,25 @@
 
 ## Active continuation — 2026-10-22 UTC
 
+### Database session/ownership rows — source complete, native admission open
+
+Source `3d25ac3` adds only two closed postgres-owned invoker functions. The exact
+user→session→profile→writer guard→owned character lock sequence checks native
+expiry after waits and selected status/ownership before returning void. No API
+grant, new role/table/policy, original Auth helper, readiness or save path changed.
+`95e9c90`: **62/62 focused tests passed**, independent source/fixture review passed.
+Full check passed typecheck, zero-warning lint, **366 files /5119 tests /three
+UNVERIFIED M5 skips**; all425 observed identities exited. The reduced fixture proves none of the live
+provider/configuration/lock-race or native privilege/RLS requirements.
+
+The hosted connector's read-only metadata call failed28P01, returning no schema
+or user/session data. Pinned Auth2.196.0 source supports the selected columns;
+native target metadata/provider acceptance remains open. Same-token verification
+is a precondition, and row success does not validate configured session lifetime
+or enable saving. [Checkpoint](handoffs/2026-10-22-character-command-row-locks.md),
+[finite proposed native profile](specs/2026-10-22-character-command-native-row-check-plan.md).
+Vercel unchanged; M1–M6/M5.5 precede M8, M7/creature imports paused.
+
 ### Same-token server boundary — source complete, native save admission open
 
 Source `0dc7a4b` implements the accepted no-argument server token-context boundary:

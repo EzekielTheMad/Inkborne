@@ -1,5 +1,19 @@
 # Starting-equipment transaction: local review stage
 
+## Character command database row locks — separate closed subcheck
+
+`character-command-row-locks.sql` adds only two postgres-owned invoker functions
+after the Auth/profile/character tables and existing writer guard are present.
+The strict finite context and current row checks run under user/session/profile
+SHARE and guard/owned-parent UPDATE locks; native expiry is checked after every
+acquisition and final status reread. The void result conveys no account payload,
+JWT verification, configured-session validity or accepted save. No API EXECUTE,
+Auth grant, role, policy, readiness or existing Auth-helper change is included.
+All62 focused reduced-schema PGlite tests passed; native roles/RLS/config/provider
+lock waits remain unverified. [Checkpoint](../../docs/handoffs/2026-10-22-character-command-row-locks.md).
+Use the [proposed native profile](../../docs/specs/2026-10-22-character-command-native-row-check-plan.md)
+before any separate installation request; its descriptor/scenarios remain to prepare.
+
 ## First-class history and immutable calculations — separate evidence stage
 
 `class-first-acquisition-calculations.sql` validates exact original creation
