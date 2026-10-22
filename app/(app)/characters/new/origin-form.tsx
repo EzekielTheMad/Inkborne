@@ -68,7 +68,7 @@ export function OriginCreationForm({ accountId, systems, submitAction, checkActi
         setView({ epoch: lease.epoch, pending, blocked: true, confirmedId: result.character_id,
           notice: "Your character is saved. Opening its notebook…" });
         clearConfirmedCreation(pending, lease, window.sessionStorage);
-        router.push("/characters/" + result.character_id + "/builder");
+        router.push("/characters/" + result.character_id + "/builder/first-class");
       } catch {
         if (mounted.current && getCreationScope().epoch === lease.epoch) {
           setView(current => ({ ...current, pending, notice: current.confirmedId
@@ -104,7 +104,7 @@ export function OriginCreationForm({ accountId, systems, submitAction, checkActi
   return (
     <div className="space-y-4">
       {view.notice && <p role="status" className="text-sm text-muted-foreground">{view.notice}</p>}
-      {view.confirmedId ? <Link href={"/characters/" + view.confirmedId + "/builder"}>Open your saved character</Link> : view.pending ? (
+      {view.confirmedId ? <Link href={"/characters/" + view.confirmedId + "/builder/first-class"}>Open your saved character</Link> : view.pending ? (
         <div className="space-y-3">
           <p className="text-sm">Waiting for confirmation: <strong>{view.pending.intent.fields.name}</strong></p>
           <div className="flex flex-wrap gap-2">

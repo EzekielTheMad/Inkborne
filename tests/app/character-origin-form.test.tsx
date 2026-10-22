@@ -66,7 +66,7 @@ describe("pending first-character creation", () => {
   it("only a matching owned confirmation clears and opens the saved character", async () => {
     const handlers = actions(); handlers.submit.mockImplementation(async intent => confirmed(intent.operation_id));
     await open(handlers); fillAndSubmit();
-    await waitFor(() => expect(mocks.push).toHaveBeenCalledExactlyOnceWith("/characters/" + target + "/builder"));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledExactlyOnceWith("/characters/" + target + "/builder/first-class"));
     expect(readPendingCreation(account, sessionStorage)).toBeNull();
     expect(screen.getByRole("link", { name: "Open your saved character" })).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
