@@ -144,7 +144,8 @@ describe("actual provider subclass source", () => {
     expect(screen.queryByRole("button", { name: /Cast Prism Mark/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByTitle("Prepare"));
     expect(await screen.findByRole("button", { name: "Cast Prism Mark" })).toBeInTheDocument();
-    expect(spells.spells[0].is_prepared).toBe(true);
+    // Probe publishes context through a passive effect after the UI commit.
+    await waitFor(() => expect(spells.spells[0].is_prepared).toBe(true));
   });
   it("uses the explicitly declared half-level preparation rule", () => {
     fixture({ level: 5, prepared: true, preparationRule: "half-class-level-plus-ability" });
