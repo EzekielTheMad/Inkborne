@@ -4,6 +4,8 @@ import NewCharacterPage from "@/app/(app)/characters/new/page";
 import { createClient } from "@/lib/supabase/server";
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/character/creation-ui-server", () => ({ characterCreationUIEnabled: () => false }));
 vi.mock("@/app/(app)/characters/new/actions", () => ({ createCharacter: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 

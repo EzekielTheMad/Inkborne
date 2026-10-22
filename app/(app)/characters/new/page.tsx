@@ -4,12 +4,16 @@ import { CharacterSubmitButton } from "./submit-button";
 import { Input } from "@/components/ui/input";
 import { createCharacter } from "@/app/(app)/characters/new/actions";
 import { InkRule } from "@/components/journey/ornaments";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { OriginCreationForm } from "./origin-form";
+import { checkOriginCreation, submitOriginCreation } from "./origin-actions";
 
 interface PageProps {
   searchParams: Promise<{ error?: string }>;
 }
 
 export default async function NewCharacterPage({ searchParams }: PageProps) {
+  const creationEnabled = characterCreationUIEnabled();
   const { error: pageError } = await searchParams;
   const supabase = await createClient();
   const {
@@ -32,6 +36,7 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
     systemsError = true;
   }
 
+  if (creationEnabled) systems = systems?.filter(system => system.slug === "dnd-5e-2014") ?? null;
   const onlySystem = !systemsError && systems && systems.length === 1 ? systems[0] : null;
   const systemsAvailable = !systemsError && !!systems?.length;
 
@@ -50,7 +55,7 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
 
         <InkRule className="my-5" />
 
-        {pageError && (
+        {!creationEnabled && pageError && (
           <p
             role="alert"
             className="mb-4 rounded-md border border-destructive/35 bg-destructive/[0.06] px-3.5 py-3 text-[12.5px] text-[#f4a3a3]"
@@ -69,7 +74,8 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
           </p>
         )}
 
-        <form action={createCharacter} className="space-y-4">
+        {creationEnabled ? <OriginCreationForm accountId={user.id} systems={systemsError ? [] : systems ?? []}
+          submitAction={submitOriginCreation.bind(null, user.id)} checkAction={checkOriginCreation.bind(null, user.id)} /> : <form action={createCharacter} className="space-y-4">
           <div className="space-y-1.5">
             <label
               htmlFor="name"
@@ -114,7 +120,7 @@ export default async function NewCharacterPage({ searchParams }: PageProps) {
           )}
 
           <CharacterSubmitButton disabled={!systemsAvailable} />
-        </form>
+        </form>}
 
         <p className="mt-5 text-center text-[11.5px] leading-relaxed text-muted-foreground">
           Next you&rsquo;ll pick a race, class, abilities, background and starting equipment —

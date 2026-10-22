@@ -36,7 +36,7 @@ function bounded(value: unknown, maximum: number): boolean {
   return boundedClassRoleJson(value) && new TextEncoder().encode(JSON.stringify(value)).byteLength <= maximum;
 }
 
-async function send(request: Request): Promise<CharacterCreationCommandResult> {
+async function send(request: Request, expectedAccountId?: string): Promise<CharacterCreationCommandResult> {
   try {
     // Caller input never contains context, actor, session, expiry or a JWT.
     // The service credential remains a trusted server boundary: its holders
@@ -44,6 +44,9 @@ async function send(request: Request): Promise<CharacterCreationCommandResult> {
     const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const verified = await resolveCharacterCommandContext();
     if (verified.status !== "token_verified") return unavailable;
+    // The page's bound account is a consistency constraint only. The SAME
+    // verified context still supplies the sole actor/session authority.
+    if (expectedAccountId !== undefined && verified.context.actor_id !== expectedAccountId) return unavailable;
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || url !== configuredUrl || !key || key.trim().length === 0) return unavailable;
     const client = createClient<CreationBridgeDatabase>(url, key, {
@@ -96,4 +99,21 @@ export async function createClassOriginCharacter(input: unknown): Promise<Charac
 export async function resolveClassOriginCreation(operationId: unknown): Promise<CharacterCreationCommandResult> {
   const parsed = uuid.safeParse(operationId);
   return parsed.success ? send({ contract_version: 1, command: "resolve_creation", operation_id: parsed.data }) : { status: "invalid" };
+}
+
+/** Stale-page protection for the staged UI; never caller-selected authority. */
+export async function createClassOriginCharacterForAccount(expectedAccountId: unknown, input: unknown): Promise<CharacterCreationCommandResult> {
+  try {
+    const account = uuid.safeParse(expectedAccountId);
+    if (!account.success || !bounded(input, 32768)) return { status: "invalid" };
+    const parsed = creationIntent.safeParse(input);
+    return parsed.success ? send(parsed.data, account.data) : { status: "invalid" };
+  } catch { return { status: "invalid" }; }
+}
+
+export async function resolveClassOriginCreationForAccount(expectedAccountId: unknown, operationId: unknown): Promise<CharacterCreationCommandResult> {
+  const account = uuid.safeParse(expectedAccountId), operation = uuid.safeParse(operationId);
+  return account.success && operation.success
+    ? send({ contract_version: 1, command: "resolve_creation", operation_id: operation.data }, account.data)
+    : { status: "invalid" };
 }

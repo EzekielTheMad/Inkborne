@@ -180,3 +180,5 @@ it("does not construct a privileged client when getUser returns both an error an
   expect(chain.insert).not.toHaveBeenCalled();
   expect(createStartingEquipmentClient).not.toHaveBeenCalled();
 });
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/character/creation-ui-server", () => ({ characterCreationUIEnabled: () => false }));

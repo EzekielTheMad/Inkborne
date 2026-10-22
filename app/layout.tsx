@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Marcellus, EB_Garamond } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { CreationSessionBoundary } from "@/components/auth/creation-session-boundary";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 /**
@@ -28,11 +31,20 @@ export const metadata: Metadata = {
   description: "Character and campaign management for tabletop RPGs",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const creationEnabled = characterCreationUIEnabled();
+  let creationAccount: string | null | undefined;
+  if (creationEnabled) {
+    try {
+      const client = await createClient();
+      const { data, error } = await client.auth.getUser();
+      if (!error) creationAccount = data.user?.id ?? null;
+    } catch { /* Unknown Auth state preserves the pending record. */ }
+  }
   return (
     <html
       lang="en"
@@ -40,7 +52,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {creationEnabled && <CreationSessionBoundary accountId={creationAccount} />}
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

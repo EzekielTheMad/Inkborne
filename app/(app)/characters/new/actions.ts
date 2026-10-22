@@ -3,8 +3,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { createStartingEquipmentClient, startingEquipmentEnabled } from "@/lib/supabase/starting-equipment-server";
 import { redirect } from "next/navigation";
+import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
 
 export async function createCharacter(formData: FormData) {
+  // Once the staged path is selected, an old tab may not bypass it through
+  // the legacy INSERT or starting-equipment RPC after an uncertain result.
+  if (characterCreationUIEnabled()) redirect("/characters/new?error=creation_failed");
   const supabase = await createClient();
   const {
     data: { user },

@@ -4,7 +4,8 @@ const mocks = vi.hoisted(() => ({ verify: vi.fn(), client: vi.fn(), rpc: vi.fn()
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth/character-command-context", () => ({ resolveCharacterCommandContext: mocks.verify }));
 vi.mock("@supabase/supabase-js", () => ({ createClient: mocks.client }));
-import { createClassOriginCharacter, resolveClassOriginCreation } from "@/lib/supabase/character-command-server";
+import { createClassOriginCharacter, resolveClassOriginCreation,
+  createClassOriginCharacterForAccount, resolveClassOriginCreationForAccount } from "@/lib/supabase/character-command-server";
 
 // Transport/response parsing only. The same-token verifier is tested separately;
 // these mocks do not establish native Auth, installed RPC or a saved character.
@@ -27,6 +28,28 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllEnvs(); });
 describe("server-only staged creation transport", () => {
+  it.each(["create", "recover"])("the account-bound %s path uses the same verified context and one RPC", async kind => {
+    const result = await (kind === "create" ? createClassOriginCharacterForAccount(actor, intent())
+      : resolveClassOriginCreationForAccount(actor, operation));
+    expect(result).toEqual({ status: "recorded", receipt: receipt() });
+    expect(mocks.verify).toHaveBeenCalledExactlyOnceWith();
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("character_creation_command_v1", {
+      p_context: context(), p_request: kind === "create" ? intent()
+        : { contract_version: 1, command: "resolve_creation", operation_id: operation },
+    });
+  });
+  it.each(["create", "recover"])("the account-bound %s path rejects a switched cookie account before client/RPC", async kind => {
+    mocks.verify.mockResolvedValue({ status: "token_verified", context: { ...context(), actor_id: target } });
+    expect(await (kind === "create" ? createClassOriginCharacterForAccount(actor, intent())
+      : resolveClassOriginCreationForAccount(actor, operation))).toEqual(unavailable);
+    expect(mocks.verify).toHaveBeenCalledExactlyOnceWith();
+    expect(mocks.client).not.toHaveBeenCalled(); expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+  it.each([null, {}, "bad", { actor_id: actor }])("account consistency input is a finite ID, never an authority object: %j", async expected => {
+    expect(await createClassOriginCharacterForAccount(expected, intent())).toEqual({ status: "invalid" });
+    expect(await resolveClassOriginCreationForAccount(expected, operation)).toEqual({ status: "invalid" });
+    expect(mocks.verify).not.toHaveBeenCalled(); expect(mocks.rpc).not.toHaveBeenCalled();
+  });
   it("gets context itself and sends one exact RPC using a fresh cookie-free service client", async () => {
     expect(await createClassOriginCharacter(intent())).toEqual({ status: "recorded", receipt: receipt() });
     expect(mocks.verify).toHaveBeenCalledExactlyOnceWith();
