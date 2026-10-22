@@ -196,7 +196,7 @@ DECLARE source jsonb:=lineage->'immediate_source'; anchor jsonb:=lineage->'root_
     OR lineage->>'copy_kind' NOT IN ('draft','recorded','legacy')
     OR NOT COALESCE(private.class_origin_exact_keys_v1(source,ARRAY['source_character_id','source_origin_occurrence_id','creation_operation_id','action_revision','class_revision','origin_status','lifecycle','ended_at','raw_provenance']),false)
     OR NOT private.class_origin_uuid_v1(source->'source_character_id') OR NOT private.class_origin_decimal_v1(source->>'action_revision')
-    OR source->>'origin_status' IS DISTINCT FROM CASE lineage->>'copy_kind' WHEN 'draft' THEN 'draft' WHEN 'recorded' THEN 'recorded' ELSE 'legacy_unavailable' END
+    OR source->>'origin_status' IS DISTINCT FROM (CASE lineage->>'copy_kind' WHEN 'draft' THEN 'draft' WHEN 'recorded' THEN 'recorded' ELSE 'legacy_unavailable' END)
     OR pg_catalog.jsonb_typeof(source->'raw_provenance') IS DISTINCT FROM 'object' THEN RETURN false; END IF;
   IF source->'lifecycle' IS DISTINCT FROM 'null'::jsonb AND source->>'lifecycle' NOT IN ('provisional','accepted','ended') THEN RETURN false; END IF;
   IF source->'ended_at' IS DISTINCT FROM 'null'::jsonb AND NOT private.class_origin_instant_v1(source->'ended_at') THEN RETURN false; END IF;
@@ -568,7 +568,7 @@ DECLARE j private.class_writer_acceptance_v1%ROWTYPE; graph jsonb; occurrence_id
     IS DISTINCT FROM (graph#>>'{parent,level}')::integer OR (graph#>>'{parent,level}')::integer>20 THEN
     RAISE EXCEPTION 'Total class level mismatch' USING ERRCODE='23514'; END IF;
   IF EXISTS(SELECT 1 FROM private.character_class_occurrences_v1 occurrence WHERE occurrence.character_id=j.target_character_id AND occurrence.lifecycle<>'ended'
-    AND NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(COALESCE(graph#>'{parent,choices,classes}','[]'::jsonb)) choice WHERE choice->>'occurrence_id'=occurrence.id::text))
+    AND NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(COALESCE(graph#>'{parent,choices,classes}','[]'::jsonb)) AS selected_choice(value) WHERE selected_choice.value->>'occurrence_id'=occurrence.id::text))
     OR EXISTS(SELECT 1 FROM public.character_content_refs ref JOIN public.content_versions v ON v.content_id=ref.content_id AND v.version=ref.content_version
       WHERE ref.character_id=j.target_character_id AND v.content_type_snapshot='class' AND NOT EXISTS(SELECT 1 FROM private.character_class_occurrences_v1 occurrence
         WHERE occurrence.character_id=ref.character_id AND occurrence.lifecycle<>'ended' AND occurrence.controller_ref_id=ref.id))

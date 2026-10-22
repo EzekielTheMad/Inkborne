@@ -1,9 +1,10 @@
 -- SOURCE ONLY / UNAPPLIED. Reviewed PLAN bc9ec36; fixed root710c3fc.
 -- Dependency Git blobs; STATIC source bindings, NOT native installation receipts:
 -- class-origin-command-schema.ts d935b7c1bb14dedce381499ab3f21abb50efa96a
--- class-origin-producer.sql 3e39a6c96e638aea87e39ee9fbd34f915a20758d
+-- Producer/bootstrap include the reviewed 2026-10-22 SQL corrections and pin update.
+-- class-origin-producer.sql 3ad143c239c404f2393a14fb98eb46fc223c46cd
 -- class-origin-joint-revision.sql d07ce2f53b0af06950ae3eb46006906e804701ed
--- class-origin-fresh-bootstrap.sql e0e86688e7d75a392e40edd94165b0445ca41f1d
+-- class-origin-fresh-bootstrap.sql 8d48cb0c8f3e41a3e186e9bf2046cd114c90ffcc
 -- hit-die-authority-and-writers.sql 7f8650efc96617063cf03e6ea4c5763f684ce72c
 -- 20260720185127_feature_grant_integrity.sql 57aeceb8b06aa0dd13a597e3e24747991ef58a73
 -- 20260720185149_feature_spell_grants.sql 2c1a957971b0b677e48d3303c0ea99c4285b482d
@@ -48,7 +49,7 @@ DO $$ DECLARE class_oid oid; authority_oid oid; item record; actual jsonb; BEGIN
     ('private.class_origin_finalize_bootstrap_v1(uuid)','inkborne_class_origin_owner','33eb67f9610636fbe8d2f21a7a2db81b',false,'plpgsql','void','v'),
     ('private.class_origin_finalize_acceptance_v1(uuid)','inkborne_class_origin_owner','b6a63f555d25eb7b375702310b95126c',true,'plpgsql','void','v'),
     ('private.class_origin_read_final_graph_v1(uuid,uuid[])','inkborne_class_origin_owner','3e860cbfbeacc9594d1dbcb7ec2d28ec',false,'plpgsql','jsonb','v'),
-    ('private.class_origin_assert_common_v1(uuid)','inkborne_class_origin_owner','4dece7fee387eba47f6b77133960350c',false,'plpgsql','jsonb','v'),
+    ('private.class_origin_assert_common_v1(uuid)','inkborne_class_origin_owner','bc903e21c8921db490a1ccc1be64e52c',false,'plpgsql','jsonb','v'),
     ('private.class_origin_deferred_finalizer_v1()','inkborne_class_origin_owner','48058f01ba8e27be3794a627c4655e2f',true,'plpgsql','trigger','v'),
     ('private.class_origin_acceptance_guard_v1()','inkborne_class_origin_owner','74549af21275768d4ac44585fec72e03',true,'plpgsql','trigger','v'),
     ('private.hit_die_context_shape_v1(jsonb)','inkborne_hit_die_authority_owner','f244630700c62b63f5185ba59a2b36d5',false,'plpgsql','boolean','s'),

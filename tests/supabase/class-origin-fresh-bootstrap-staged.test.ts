@@ -27,9 +27,9 @@ function definition(source: string, name: string) {
 const body = (name: string) => definition(stage, name).body;
 
 describe("fresh bootstrap actual staged source STATIC controls; NO SQL/native authority proof", () => {
-  it("binds fixed production dependency Git blobs without spawning Git/runtime", () => {
+  it("binds reviewed dependency Git blobs, including the producer SQL corrections", () => {
     for (const [path, blob] of [
-      ["supabase/staged/class-origin-producer.sql", "3e39a6c96e638aea87e39ee9fbd34f915a20758d"],
+      ["supabase/staged/class-origin-producer.sql", "3ad143c239c404f2393a14fb98eb46fc223c46cd"],
       ["supabase/staged/class-origin-joint-revision.sql", "d07ce2f53b0af06950ae3eb46006906e804701ed"],
       ["supabase/staged/class-origin-confirmation-producer.sql", "7d0d7db1d3988e94de5143b84e7f3c89b8cb3176"],
       ["supabase/staged/hit-die-authority-and-writers.sql", "7f8650efc96617063cf03e6ea4c5763f684ce72c"],

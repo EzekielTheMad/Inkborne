@@ -10,9 +10,9 @@ const authority = read("supabase/staged/hit-die-authority-and-writers.sql");
 const kernel = read("supabase/staged/hit-die-transaction.sql");
 const dependencies = [
   ["lib/character/class-origin-command-schema.ts", "d935b7c1bb14dedce381499ab3f21abb50efa96a"],
-  ["supabase/staged/class-origin-producer.sql", "3e39a6c96e638aea87e39ee9fbd34f915a20758d"],
+  ["supabase/staged/class-origin-producer.sql", "3ad143c239c404f2393a14fb98eb46fc223c46cd"],
   ["supabase/staged/class-origin-joint-revision.sql", "d07ce2f53b0af06950ae3eb46006906e804701ed"],
-  ["supabase/staged/class-origin-fresh-bootstrap.sql", "e0e86688e7d75a392e40edd94165b0445ca41f1d"],
+  ["supabase/staged/class-origin-fresh-bootstrap.sql", "8d48cb0c8f3e41a3e186e9bf2046cd114c90ffcc"],
   ["supabase/staged/hit-die-authority-and-writers.sql", "7f8650efc96617063cf03e6ea4c5763f684ce72c"],
   ["supabase/migrations/20260720185127_feature_grant_integrity.sql", "57aeceb8b06aa0dd13a597e3e24747991ef58a73"],
   ["supabase/migrations/20260720185149_feature_spell_grants.sql", "2c1a957971b0b677e48d3303c0ea99c4285b482d"],
@@ -37,7 +37,7 @@ const owned = [
 ] as const;
 
 describe("first acquisition prerequisite actual SOURCE/STATIC contract only; SQL never executed", () => {
-  it.each(dependencies)("preserves fixed root710 dependency %s", (path, blob) => {
+  it.each(dependencies)("binds reviewed current dependency %s", (path, blob) => {
     const bytes = Buffer.from(read(path));
     expect(createHash("sha1").update(`blob ${bytes.length}\0`).update(bytes).digest("hex")).toBe(blob);
     expect(stage).toContain(blob);
