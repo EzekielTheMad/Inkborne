@@ -1,8 +1,22 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-21 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
+Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
 
 ## Resume and ownership
+
+Latest executable source `0a91a3d`: complete native first-class allocation/receipt
+proposal plus graph-to-class-role-save advisory integration. All 29 focused tests
+and independent source/fixture review passed. The exact allocated raw graph matches
+the unchanged final reader in PostgreSQL-WASM; manifests are not synthesized and
+draft saving throws remain provisional/unavailable. No protected B1 producer,
+actual materializer or authenticated choices save is established. Continue the
+protected preacceptance reader/immutable plan, B2 consumer, and B3 guarded writer;
+keep existing denials, Auth/readiness and ordinary legacy paths unchanged until
+their reviewed closure. [Current checkpoint](handoffs/2026-10-22-class-allocation-save-integration.md).
+Vercel/M1–M6/M5.5/M7 priorities are unchanged. Earlier checkpoints follow.
+Full check passed at `0a91a3d`: typecheck/lint, 363 files / 4949 passes / three
+UNVERIFIED M5 skips; all 380 observed identities exited. Docs-only successor
+records that result; no native/hosted/browser acceptance is added.
 
 Latest source child: reviewed dependency descriptor `cae1499`, with 30 focused
 PostgreSQL-WASM differential tests passing. It computes full dormant grants/raw

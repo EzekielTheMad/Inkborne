@@ -1,6 +1,27 @@
 # Inkborne project-wide acceptance ledger
 
-## Active continuation — 2026-10-21 UTC
+## Active continuation — 2026-10-22 UTC
+
+### Native allocation and saving-throw input integration — source complete, admission open
+
+Source `743a4b3` allocates the full finite first-class native row envelope before
+journal acceptance, deriving the parent/choices/header/order/receipt proposal from
+actual empty structural rows and the exact dependency resolver. `0a91a3d` projects
+complete native graph evidence into the existing advisory class-role save reader.
+Raw effects/data stay unchanged; missing manifests and unconfirmed draft saves
+stay unavailable. No starting-save compiler or authenticated producer is invented.
+
+Independent source/fixture review passed. All 29 focused tests passed: native UUID/
+time/default links, exact unchanged final-reader full graph, original SQL and
+TypeScript receipt/transition shape compatibility, rejection of bad source/order/
+grant evidence and retention of provisional/legacy save behavior. Manual fixture
+insertion/revision/order updates are compatibility evidence only; actual Auth,
+RLS, full triggers/FKs, materializers, protected plan storage and B3 save are open.
+[Exact checkpoint and verification limits](handoffs/2026-10-22-class-allocation-save-integration.md).
+Vercel remains the host; M1–M6/M5.5 precede M8 and M7/creature imports remain paused.
+Full project gate at executable checkpoint `0a91a3d` passed typecheck/lint,
+**363 files / 4949 tests / three UNVERIFIED M5 skips**; all 380 observed process
+identities exited. No actual save, materialization, native stage or rollout follows.
 
 ### First-class dependency calculation — staged implementation, acceptance open
 

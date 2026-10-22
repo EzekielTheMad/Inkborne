@@ -1,5 +1,19 @@
 # Starting-equipment transaction: local review stage
 
+## First-class native allocation — calculated save envelope only
+
+`class-first-acquisition-allocation.sql` adds a closed invoker/volatile calculator
+after the descriptor and private class row types exist. It allocates native UUIDs
+and timestamps for the complete finite first-class graph, proposed saved choices,
+receipt and three private transitions. It reads actual structurally empty rows;
+that does not authenticate an actor or prove bootstrap lineage. It accepts no
+caller graph/allocated IDs/times and writes no journal, proof or character rows.
+The separate advisory native-graph adapter preserves raw save effects and missing/
+provisional evidence. No application caller or execution grant is added.
+All 29 offline tests passed, including the unchanged final-reader full raw graph
+roundtrip; actual protected planning, materializers, Auth/RLS/concurrency and choices
+save remain unverified. [Checkpoint](../../docs/handoffs/2026-10-22-class-allocation-save-integration.md).
+
 ## First-class dependency descriptor — separate calculation stage
 
 `class-first-acquisition-dependencies.sql` is additive review text, outside the

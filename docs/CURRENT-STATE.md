@@ -1,6 +1,22 @@
 # Inkborne current work
 
-## Active execution — 2026-10-21 UTC
+## Active execution — 2026-10-22 UTC
+
+**Native allocation and saving-throw evidence integration implemented, staged only.**
+Executable source `0a91a3d` builds the complete first-class proposed graph with
+native UUIDs/timestamps, ordered dormant/active grants, proposed saved choices,
+receipt and three private transitions. The advisory native-graph adapter feeds the
+existing class-role save classifier without inventing manifests or confirmation.
+All 29 focused PostgreSQL-WASM tests passed, including exact full-row roundtrip
+through the unchanged final graph reader; independent source/fixture review passed.
+This is calculated save compatibility, not protected B1 storage or an actual
+authenticated character save. [Checkpoint and remaining work](handoffs/2026-10-22-class-allocation-save-integration.md).
+Vercel is unchanged; M1–M6/M5.5 remain priority and M7/creature imports stay paused.
+Full check passed at `0a91a3d`: typecheck, zero-warning lint,
+**363 files / 4949 tests / three UNVERIFIED M5 skips**. All 380 observed identities
+exited. No native stage, application deployment or browser workflow ran.
+
+The earlier dependency checkpoint below remains accepted local evidence.
 
 **First-class dependency descriptor implemented, staged only.** Reviewed source
 `cae1499` resolves exact frozen class features/spells, dormant grants and hypothetical

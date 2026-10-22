@@ -1,4 +1,4 @@
-# First-class materializer slices — dependency calculation implemented
+# First-class materializer slices — dependency and allocation calculations implemented
 
 Continue M1/M3/M4/M6 from source 29b6cc8 and the
 [completed G2 baseline](../handoffs/2026-10-21-g2-baseline-complete.md).
@@ -33,6 +33,49 @@ anon, authenticated and service_role. No new runtime-role grant or caller exists
 Native installation must verify actual default ACLs and resulting privileges;
 the offline model is not native privilege acceptance. Source/fixture review passed
 and 30 focused differential tests passed. [Evidence/limits](../handoffs/2026-10-21-class-dependency-descriptor.md).
+
+## Implemented allocation and save-evidence compatibility before protected B1
+
+`supabase/staged/class-first-acquisition-allocation.sql` defines
+`private.allocate_first_class_save_envelope_v1(jsonb)`. This closed invoker calculator
+reads actual parent/header/order rows and admits only the structurally untouched
+new-character/null-campaign/subclass-null/zero-revision profile with empty native
+domains. Structural correspondence is not genuine bootstrap or actor evidence.
+It accepts only the strict original add_class request, using lowercase RFC UUIDs
+(or exact nil/max) compatible with the current schemas. Caller-supplied allocated
+native row IDs, timestamps, actor, graphs and allocation maps are not accepted;
+character/operation/content identifiers remain the strict request's inputs.
+
+Native UUIDs cover acceptance proposal, occurrence, controller, every dormant/active
+grant and active projection. Typed rows preserve all actual parent/header fields;
+the proposed choices contain occurrence_id/slug/level1 and omit a subclass property.
+Projection created_at uses transaction_timestamp; occurrence selected_at and proposed
+receipt accepted_at share a separate clock instant, retaining native/raw versus
+canonical receipt timestamp representations. The full graph's order arrays follow
+source traversal, and exact versions use the original reader's UUID/integer sort.
+
+The proposed graph, full native row envelope and exactly three private transitions
+(origin, occurrence, class_receipt) are distinct. Public refs/grants/spells are never
+inserted into the private transition protocol. Graph/domain/request/combined-envelope
+bounds remain 4MiB/4096/32KiB/8MiB. No journal, protected plan, proof or character row
+is written; no runtime grant, lock certificate or positive acceptance is created.
+
+`lib/character/class-role-effects-native-graph.ts` projects a bounded exact native
+graph into the existing advisory classifier. It checks source/version closure,
+domain order and controller/grant/projection links; subclasses are explicitly
+unsupported. Raw effects/data and source order remain unchanged. Native occurrence
+controller fields are checked before projecting the strict advisory occurrence DTO.
+The caller supplies system/proficiency inputs and any existing advisory manifests;
+the adapter never manufactures a compiler manifest or confirmation. Missing evidence
+and legacy save namespaces remain unavailable. No application consumer is enabled.
+
+Source/fixture review and all 29 focused offline tests passed. Fixture manual DML
+roundtrips the entire allocated graph through the unchanged final reader and checks
+original SQL/TypeScript receipt/transition shapes. This is row/save-evidence
+compatibility, not B2 materialization or the genuine B3 choices update. Protected
+preacceptance inputs/storage must still bind the envelope before acceptance; the
+existing postacceptance inputs callback cannot be used to calculate its own graph.
+[Detailed evidence and limits](../handoffs/2026-10-22-class-allocation-save-integration.md).
 
 ## Resolved prerequisite and its limits
 
