@@ -4,7 +4,19 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
-Latest executable source `96e1197` completes three local preparation checkpoints:
+Latest executable source `ad94e2f` adds sealed B1 storage/binding (33 offline tests)
+after `e055189` implemented finite guarded empty-character creation/recovery and
+server bridge. Native B1 remains open. Original8/extended25 native row cases
+and nine real provider cases passed independently reviewed evidence/cleanup.
+Full check at `e055189`:374 files/5,343 passes/three existing M5 skips, typecheck and lint pass;
+all586 test identities exited. Native full-stage creation is being prepared;
+protected B1/B2/B3 and actual browser saving/play remain open. Keep general Auth,
+global gates and all13 readiness families denied. The latest human five-checkpoint
+request authorizes bounded local continuation; it does not change hosting or
+authorize hosted writes. [Current checkpoint and exact boundaries](handoffs/2026-10-22-character-command-native-and-creation.md).
+Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
+
+Historical source `96e1197` completed three local preparation checkpoints:
 five-file selected-catalog/synthetic-fixture pack, eight-case three-session runner
 and persistent psql transport, and new-scope frozen launch package. All68 focused
 tests and independent source/fixture/controller review passed. Native execution

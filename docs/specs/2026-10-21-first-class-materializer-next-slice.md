@@ -1,5 +1,13 @@
 # First-class materializer slices — dependency and allocation calculations implemented
 
+2026-10-22 continuation: bounded native row/provider profiles now pass; finite
+guarded empty-character creation/recovery is implemented and offline-tested at
+`e055189`. `ad94e2f` adds protected pre-journal B1 storage/binding and33 passing
+offline tests, with a narrow native-owner-compatible history bridge. Full native creation/B1, original B2
+materializers and the real B3 choices writer remain separate open acceptance.
+The corrected original producer and current bootstrap/prerequisite body pins
+include the reviewed CASE/choice-alias fixes. [Current evidence](../handoffs/2026-10-22-character-command-native-and-creation.md).
+
 Continue M1/M3/M4/M6 from source 29b6cc8 and the
 [completed G2 baseline](../handoffs/2026-10-21-g2-baseline-complete.md).
 The dependency calculation described below is now staged source; B1–B3 remain

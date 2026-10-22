@@ -2,6 +2,23 @@
 
 ## Active continuation — 2026-10-22 UTC
 
+### Native selected-row/provider profiles pass; full app saving remains open
+
+Original8 and expanded25 native cases passed; all nine real Auth lifecycle cases
+passed using the production resolver/SDK. Evidence independently reviewed; exact
+owned resources and clients are absent. These finite profiles do not establish
+full configured-session policy, Next cookies or hosted acceptance. Source
+`e055189` implements closed server creation transport and actual guarded empty
+creation/recovery;100 focused tests pass, including23 positive offline SQL cases.
+`ad94e2f` adds sealed pre-journal B1 storage/binding with33 passing offline tests;
+native B1 still requires acceptance. Full check at `e055189` passed:374 files/5,343 passes/three existing M5 skips, typecheck and
+zero-warning lint. Native full-stage creation and B1/B2/B3/app acceptance remain
+open; general Auth/gates/13 readiness families remain denied.
+[Evidence, discovered SQL defects and five work areas](handoffs/2026-10-22-character-command-native-and-creation.md).
+Vercel unchanged; M1–M6/M5.5 precede M8; M7/creature imports paused.
+
+Earlier preparation evidence follows.
+
 ### Three native-verification preparation checkpoints — local only
 
 `96e1197` completes the five-file metadata/fixture pack, eight-case three-session

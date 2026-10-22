@@ -1,5 +1,14 @@
 # Character command database row checks — prepared native verification
 
+2026-10-22 execution update: the original8 profile and expanded25 profile have
+run successfully on real PostgreSQL, followed by nine real Auth lifecycle cases.
+The latest human request authorized these bounded disposable profiles; historical
+baseline-only approval records were preserved. Exact source/package/evidence,
+review and cleanup details are in the [current handoff](../handoffs/2026-10-22-character-command-native-and-creation.md).
+Full provider-policy/Next-cookie/protected-save acceptance remains open.
+
+Historical preparation contract follows.
+
 Prepared source only; no native profile or hosted change is authorized by this
 document. The next three local preparation checkpoints are implemented at
 `96e1197`: five-file SQL pack, persistent three-session runner and new-scope frozen
