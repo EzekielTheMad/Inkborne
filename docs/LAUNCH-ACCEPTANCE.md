@@ -2,6 +2,22 @@
 
 ## Active continuation — 2026-10-22 UTC
 
+### Three native-verification preparation checkpoints — local only
+
+`96e1197` completes the five-file metadata/fixture pack, eight-case three-session
+runner/persistent psql transport, and strict new-scope frozen launch package.
+Independent source/fixture/controller review passed; 68 focused tests passed:
+12 reduced-schema SQL, 40 SIMULATED runner/transport, 16 SIMULATED freeze/admission.
+There is no successful native profile or successful full wrapper orchestration
+test. The eight cases are a finite first subset; wider row-race/provider/config
+requirements remain explicit. Original Auth seams/gates still deny and saving is
+disabled. Previous baseline-only G2 permission is not expanded. [Delivery, failure history and remaining acceptance](handoffs/2026-10-22-character-command-three-checkpoints.md).
+Full check at `96e1197` passed typecheck, zero-warning lint, **370 files / 5,187
+passes / three UNVERIFIED M5 skips**; all 528 observed identities exited. Final
+readback finds all nine attempts' identities absent and no workspace service.
+Documentation-only successor records that evidence before the final external freeze.
+Vercel unchanged; M1–M6/M5.5 precede M8, M7/creature imports paused.
+
 ### Database session/ownership rows — source complete, native admission open
 
 Source `3d25ac3` adds only two closed postgres-owned invoker functions. The exact

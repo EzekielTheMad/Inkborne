@@ -1,8 +1,11 @@
-# Character command database row checks — proposed native verification
+# Character command database row checks — prepared native verification
 
-Source proposal only; no native profile or hosted change is authorized by this
-document. Victor requested database session/ownership progress. Local implementation
-is tested at `95e9c90`; earlier G2 permission covered baseline/catalog only.
+Prepared source only; no native profile or hosted change is authorized by this
+document. The next three local preparation checkpoints are implemented at
+`96e1197`: five-file SQL pack, persistent three-session runner and new-scope frozen
+launcher. [Delivery/evidence handoff](../handoffs/2026-10-22-character-command-three-checkpoints.md).
+The underlying checker is tested at `95e9c90`; earlier G2 permission covered
+baseline/catalog only. No native row-check profile has run.
 Vercel hosting stays unchanged; M1–M6/M5.5 active, M7/creature imports paused.
 
 ## Exact source and scope
@@ -14,14 +17,23 @@ writer readiness or gameplay installation. It must run inside its existing atomi
 BEGIN/COMMIT. The 62-case PGlite file is characterization, not native acceptance.
 The new functions require the guard table; they do not create it.
 
-Before any run, prepare a new bounded descriptor with exact launcher/SQL/bootstrap/
-83-migration hashes and independent review. Do not reuse the old baseline descriptor
-as permission for this profile. Use the existing digest-pinned PostgreSQL17.11,
+The new `scripts/character-command-native.ts freeze` descriptor binds exact
+launcher/SQL/bootstrap/83-migration hashes, fixture IDs and allowed operations,
+and requires a clean committed source. Independent source review passed; the final
+external freeze follows the documentation commit. It supplies no approval record.
+Do not reuse the old baseline descriptor as permission for this profile. A future
+execution requires the exact package's new `character-command-rows-native-v1`
+human record and explicit package confirmation through `node --import tsx` and
+the separately hashed external `character-command-run.mjs`. Use the existing
+digest-pinned PostgreSQL17.11,
 Auth2.196.0 migration job and Storage1.74.0 migration job, five reviewed mounts,
 one internal network and two disposable volumes. Preserve existing engine/cache.
 No new image pull, host-published port, browser server, hosted project, live data
 or running Auth HTTP service is part of the first profile. Resource ceilings and
-the 20GiB free-space floor must be rechecked from the reviewed G2 recipe.
+the 20GiB free-space and 3GiB free-memory floors are rechecked from the reviewed
+G2 recipe. Per-container memory/CPU/PID limits and exact resource cleanup are
+recorded in the delivery handoff. The engine must already be running and match
+the new approval. This profile cannot start it or pull images.
 
 The reviewed source is tied to Auth tag2.196.0 source commit
 `0204331ca41a5b49f076b6fa3dc6c0d20b996590`. That tag does not attest the actual
@@ -55,20 +67,44 @@ proof, including direct non-key UPDATE attempts and role membership isolation.
 
 ## Synthetic row and multi-connection cases
 
-After exact catalog acceptance, the eventual separately reviewed descriptor must
-first include a **scratch-only guard fixture**, because the original83 baseline
-migrations do not create `private.character_writer_guard_v1`. Freeze the exact
+The prepared five-file pack is under `scripts/character-command-verification`:
+catalog, strict preflight, guard fixture, seed and fixture cleanup. Native preflight
+requires the observed postgres NONSUPERUSER/BYPASSRLS profile and deliberately
+refuses the offline engine's SUPERUSER actor. No missing permission is repaired.
+
+After exact catalog acceptance, the reviewed descriptor includes a
+**scratch-only guard fixture**, because the original83 baseline migrations do not
+create `private.character_writer_guard_v1`. `guard-fixture.sql` is exactly the
 original CREATE TABLE statement from `hit-die-authority-and-writers.sql` and its
 single `INSERT ... (singleton) VALUES(true)` statement. Install no other authority
 stage statements, roles, RLS policies, grants or readiness records. Capture actual
 fixture owner/shape/constraints and stop on mismatch. This fixture supplies only
 the lock relation/row; it is not an operational writer fence or readiness proof.
-Until those exact two fixture statements are in the reviewed descriptor, positive
-native cases are blocked by the missing guard prerequisite.
+These exact two statements are now included in the source inventory; actual
+native shape/capability acceptance remains unrun.
 
-Then install the new closed two-function file. Use synthetic
-UUIDs and reduced nonsensitive account/profile/character values in scratch rows;
-no password, access token, refresh token or login. Test the actual installed SQL:
+Then install the new closed two-function file. The fresh baseline has no game
+system row either: the pack explicitly supplies synthetic draft system
+`10000000-0000-4000-8000-000000000005`, slug `inkborne-authrows-fixture`, with
+empty mechanics. Seven reserved UUIDs cover that system and two accounts/sessions/
+characters. Existing signup triggers alone create profiles. No D&D seed, password,
+access token, refresh token or login is involved. Cleanup verifies exact markers,
+roots and incoming references and preserves unrelated data.
+
+The bounded runner implements eight cases: checker-first session deletion,
+delete-first refusal, ban-first refusal, owner-transfer-first refusal, JWT expiry
+on guard wait, not_after expiry on session wait, actual 22012/rollback lock release,
+and all three API roles denied row-check execution. Native edges require three
+identified connections and actual `pg_blocking_pids`/active Lock observations;
+deadline cases prove the edge both before and after native expiry. Scripted-session
+and fake-process unit tests are SIMULATED. Freeze/admission tests do not exercise
+a successful `executeCharacterRows` orchestration path or accept native execution.
+
+The broader required matrix below remains tracked. The eight cases do **not**
+implement all rows: soft-delete-first, checker-first user/owner updates, missing or
+wrong-owner prerequisites, expiry during every row wait, direct clock-helper role
+denial and complete before/after row equality need further bounded native work.
+Offline characterization is not a replacement for those native requirements.
 
 | Competing action | Required observation |
 | --- | --- |
@@ -83,12 +119,12 @@ no password, access token, refresh token or login. Test the actual installed SQL
 | Statement fails or transaction rolls back | Owned locks released; complete before/after rows agree |
 | Caller attempts anon/authenticated/service_role execution | Denied; neither clock helper nor checker granted |
 
-Use at least two actual connections with bounded lock/statement/wall-clock timeouts.
+Use three actual connections with bounded lock/statement/wall-clock timeouts.
 Record backend IDs, blocker chains, each SQL outcome and exact cleanup. Do not use
 SKIP LOCKED in this checker, sleeps as evidence of lock acquisition, or a fixture
-replacement of the clock/production Auth seams. Prepare and review exact scenario
-SQL and launcher processes before release; this document alone is not a runnable
-or approved descriptor. Finish by removing only owned scratch rows/resources and
+replacement of the clock/production Auth seams. Exact source/launcher preparation
+and source review are complete; the frozen descriptor and a new human approval
+remain separate from this document. Finish by removing only owned scratch rows/resources and
 verifying recorded process identities and ports absent.
 
 ## Separate provider/configuration acceptance

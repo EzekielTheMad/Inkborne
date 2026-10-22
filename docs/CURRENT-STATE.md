@@ -2,6 +2,22 @@
 
 ## Active execution — 2026-10-22 UTC
 
+**Three native-verification preparation checkpoints complete locally.**
+`96e1197` includes the reviewed SQL metadata/synthetic-fixture pack, bounded
+three-session concurrency runner/persistent psql transport and strict frozen
+launch package. All 68 focused tests pass (12 offline SQL, 40 simulated runner/
+transport, 16 simulated freeze/admission). The new native profile has not run;
+the original baseline-only G2 approval does not authorize it. The broader native
+matrix/provider/configuration checks remain open, both original Auth seams still
+deny, and authenticated saving stays disabled. [Checkpoint and exact limits](handoffs/2026-10-22-character-command-three-checkpoints.md).
+Full `npm.cmd run check` at `96e1197` passed typecheck, zero-warning lint,
+**370 files / 5,187 passes / three UNVERIFIED M5 skips**; all 528 observed
+identities exited. Final readback confirms all nine attempts' recorded identities
+absent and no workspace service. Only documentation changed afterward.
+Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
+
+Earlier checkpoints follow.
+
 **Database session/current-owner row checks implemented, staged only.**
 Source `3d25ac3` adds a closed invoker primitive that locks selected user/session/
 profile rows, writer guard and exact owned parent, then rechecks native deadlines

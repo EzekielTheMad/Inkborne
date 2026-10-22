@@ -11,8 +11,12 @@ JWT verification, configured-session validity or accepted save. No API EXECUTE,
 Auth grant, role, policy, readiness or existing Auth-helper change is included.
 All62 focused reduced-schema PGlite tests passed; native roles/RLS/config/provider
 lock waits remain unverified. [Checkpoint](../../docs/handoffs/2026-10-22-character-command-row-locks.md).
-Use the [proposed native profile](../../docs/specs/2026-10-22-character-command-native-row-check-plan.md)
-before any separate installation request; its descriptor/scenarios remain to prepare.
+The [prepared native profile](../../docs/specs/2026-10-22-character-command-native-row-check-plan.md)
+now has a reviewed five-file metadata/fixture pack, persistent three-session runner
+and strict new-scope launch package. [Three preparation checkpoints](../../docs/handoffs/2026-10-22-character-command-three-checkpoints.md)
+record the local evidence and wider unimplemented matrix. No native row-check run,
+provider acceptance or save activation follows; previous baseline-only G2 approval
+does not authorize this new profile.
 
 ## First-class history and immutable calculations — separate evidence stage
 

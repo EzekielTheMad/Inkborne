@@ -4,6 +4,22 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Latest executable source `96e1197` completes three local preparation checkpoints:
+five-file selected-catalog/synthetic-fixture pack, eight-case three-session runner
+and persistent psql transport, and new-scope frozen launch package. All68 focused
+tests and independent source/fixture/controller review passed. Native execution
+and successful full-wrapper orchestration remain untested; the first subset does
+not close the wider native/provider/configuration matrix. Keep original Auth
+refusals and save gates closed. [Current checkpoint](handoffs/2026-10-22-character-command-three-checkpoints.md)
+records evidence/failures, the exact external package location and next separately
+authorized boundary. Old baseline G2 scope must not be reused as permission.
+Full check at `96e1197` passed typecheck/lint, 370 files / 5,187 tests / three
+UNVERIFIED M5 skips; all 528 observed identities exited. Final readback confirms
+all nine attempts' identities absent and no workspace service. Commit final docs,
+then freeze the clean HEAD to the named external preparation directory; do not
+change source after that freeze or fabricate an approval record.
+Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
+
 Latest source `3d25ac3` adds the closed database row-lock primitive; `95e9c90`
 has62 focused passing tests and independent source/fixture review. It checks
 selected Auth account/session/profile, guard and current-owned parent under locks
