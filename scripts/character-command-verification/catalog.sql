@@ -52,10 +52,10 @@ WITH requested(schema_name,table_name,column_name,row_lock_read) AS (VALUES
    'target',CASE WHEN confrelid=0 THEN NULL ELSE confrelid::pg_catalog.regclass::text END,
    'on_delete',confdeltype,'on_update',confupdtype,'definition_md5',pg_catalog.md5(pg_catalog.pg_get_constraintdef(oid,true)),
    'column_map',(SELECT pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('position',m.position,
-     'source_attnum',m.source_num,'source_column',a.attname,'target_attnum',m.target_num,'target_column',b.attname) ORDER BY m.position)
-     FROM pg_catalog.unnest(conkey,confkey) WITH ORDINALITY m(source_num,target_num,position)
-     LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=conrelid AND a.attnum=m.source_num
-     LEFT JOIN pg_catalog.pg_attribute b ON b.attrelid=confrelid AND b.attnum=m.target_num)) ORDER BY conrelid,conname),'[]'::jsonb) FROM keys),
+     'source_attnum',conkey[m.position],'source_column',a.attname,'target_attnum',confkey[m.position],'target_column',b.attname) ORDER BY m.position)
+     FROM pg_catalog.generate_subscripts(conkey,1) AS m(position)
+     LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=conrelid AND a.attnum=conkey[m.position]
+     LEFT JOIN pg_catalog.pg_attribute b ON b.attrelid=confrelid AND b.attnum=confkey[m.position])) ORDER BY conrelid,conname),'[]'::jsonb) FROM keys),
  'roles',(SELECT pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('role',rolname,'superuser',rolsuper,
    'inherit',rolinherit,'bypass_rls',rolbypassrls,'can_login',rolcanlogin) ORDER BY rolname) FROM roles),
  'memberships',(SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('role',pg_catalog.pg_get_userbyid(roleid),
