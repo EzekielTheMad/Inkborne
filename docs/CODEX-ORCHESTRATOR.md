@@ -4,34 +4,27 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
-Latest executable source `cebfb24`. **Five further checkpoints complete; native first-class save and recovery pass.**
-Commits `a484e97`, `702e2c8`, `67a9555`, `cebfb24` add account-bound class-command
-transport, immutable account/character-scoped pending originals, a default-off
-first-class selection/recovery route and 30 actual local desktop/mobile browser
-checks. Focused 96 transport/storage and 100 UI cases pass. Full check at
-`cebfb24` passes **388 files /5,633 tests /three existing M5 skips**, typecheck
-and zero-warning lint; all 531 recorded test identities exited. Browser 23
-identities, Chrome and both local ports are closed.
+**The actual application core flow passes locally at `49460f0`.** A real browser
+signs in, follows the dashboard creation link, creates a character, selects
+Fighter, saves, and reloads with the same class/name. A second signed-in account
+gets a 404 for that notebook. This exposed and fixed a retained browser-account
+state bug after server-action sign-in; saved-class rendering now uses the pinned
+snapshot and refreshes after confirmation.
 
-Native run `20261022T205813.848Z-86307c2a3584`, frozen package `83ebf2a3...`,
-passes all 83 baseline migrations, 17 COMPLETE stages, 109-function/17-table metadata
-and 16 scenario groups. Genuine creation precedes actual first-class COMMIT;
-a fresh transaction verifies the complete original raw graph, native rows/order
-and consumed proofs. Replay/recovery/conflict/absence, active-phase full rollback,
-foreign/missing owner, source version/draft changes, actual logout and new-provider
-session historical recovery pass. All650 recorded identities and six owned
-resources are absent. Native postgres administrative inheritance remains unchanged;
-no explicit original-private table/column grant or role repair was added.
+One actual Next/Auth/PostgREST/database browser story, 57 focused page/form/account
+checks, typecheck and zero-warning lint pass. The broader suite was not repeated
+under the user's focused-testing instruction. One database readback confirms
+exactly one class receipt and committed level/revisions. Synthetic local content
+was used; full catalog/builder/play/recovery/concurrency and hosted acceptance
+remain open. [Delivery, preserved failure and exact evidence](handoffs/2026-10-22-real-app-character-saving.md).
 
-Application saving remains disabled. Actual Next cookies/PostgREST and complete
-browser-to-database create–save–reload–play/recovery, native class concurrency,
-broader session policy and remaining writer cohorts remain OPEN. The UI flag,
-general Auth denials, both gates and all 13 readiness flags remain closed.
-[Current delivery, exact native evidence and limitations](handoffs/2026-10-22-authenticated-first-class-saving.md).
-[Next writer-fence checkpoint and inventory](specs/2026-10-22-enrolled-character-writer-fences.md).
-Earlier row/provider/creation/B1 checks retain their own finite scopes and
-preserved failures. M1 remains incomplete; Vercel is unchanged, M1–M6/M5.5
-precede M8, and M7/creature imports remain paused.
+The UI was enabled only in the task-owned local Next environment; repository
+activation gates remain closed. No push, deployment or hosted configuration/data
+change occurred. Vercel is unchanged. M1 remains incomplete, M1–M6/M5.5 precede
+M8, and M7/creature imports remain paused. Wider
+[writer fences](specs/2026-10-22-enrolled-character-writer-fences.md) remain a
+production activation requirement. Temporary services are stopped after use;
+shared Docker engine/cache remain.
 
 Historical source `96e1197` completed three local preparation checkpoints:
 five-file selected-catalog/synthetic-fixture pack, eight-case three-session runner
