@@ -28,7 +28,7 @@ beforeEach(async () => { db = new PGlite({ loadDataDir: dump }); await db.waitRe
 afterEach(async () => { await db.close(); });
 async function seed() { await db.exec(pack("guard-fixture")); await db.exec(pack("seed")); }
 async function counts() {
-  return (await db.query(`SELECT (SELECT count(*)::integer FROM auth.users) AS users,
+  return (await db.query<{ users: number; sessions: number; profiles: number; characters: number; systems: number }>(`SELECT (SELECT count(*)::integer FROM auth.users) AS users,
     (SELECT count(*)::integer FROM auth.sessions) AS sessions,(SELECT count(*)::integer FROM public.profiles) AS profiles,
     (SELECT count(*)::integer FROM public.characters) AS characters,(SELECT count(*)::integer FROM public.game_systems) AS systems`)).rows[0];
 }
