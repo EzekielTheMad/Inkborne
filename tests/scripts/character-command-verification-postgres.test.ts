@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, beforeEach, afterEach, describe, expect, it } from "vitest";
 
@@ -41,6 +42,37 @@ describe("CP1 SQL package in PostgreSQL-WASM; no native/provider acceptance", ()
     expect(result.roles).toContainEqual(expect.objectContaining({ role: "postgres", superuser: true }));
     expect(Array.isArray(result.memberships)).toBe(true);
     expect(JSON.stringify(result)).not.toContain("raw_user_meta_data_snapshot");
+  });
+  it("characterizes actual installed-function catalog metadata offline without admitting the native preflight", async () => {
+    await expect(db.exec(pack("preflight"))).rejects.toMatchObject({ message: "command_fixture_native_postgres_role_drift" });
+    // Explicit reduced-schema fixture installation, not native harness admission.
+    // Neither the actual stage nor the native preflight predicate is rewritten.
+    await db.exec(pack("guard-fixture"));
+    const staged = readFileSync("supabase/staged/character-command-row-locks.sql", "utf8").replaceAll("\r\n", "\n");
+    await db.exec(staged);
+    const result = (await db.query<{ catalog: Record<string, unknown> }>(pack("catalog"))).rows[0].catalog;
+    expect(result).toMatchObject({ catalog_version: 1, status: "complete", current_role: "postgres" });
+    expect(Array.isArray(result.functions)).toBe(true);
+    const functions = result.functions as Record<string, unknown>[];
+    const definitions = [
+      ["private.check_character_command_clock_v1(timestamp with time zone)", "check_character_command_clock_v1", "timestamp with time zone"],
+      ["private.lock_character_command_rows_v1(jsonb,uuid)", "lock_character_command_rows_v1", "void"],
+    ] as const;
+    for (const [signature, name, returnType] of definitions) {
+      const metadata = functions.find(row => row.signature === signature);
+      const start = staged.indexOf(`CREATE FUNCTION private.${name}(`);
+      const open = staged.indexOf("AS $$", start), close = staged.indexOf("$$;", open + 5);
+      expect(start).toBeGreaterThanOrEqual(0); expect(open).toBeGreaterThan(start); expect(close).toBeGreaterThan(open);
+      expect(metadata).toMatchObject({ signature, owner: "postgres", security_definer: false, volatility: "v",
+        return_type: returnType, search_path: ['search_path=""'],
+        body_md5: createHash("md5").update(staged.slice(open + 5, close)).digest("hex") });
+      expect(Array.isArray(metadata!.role_execute)).toBe(true);
+      const execute = metadata!.role_execute as Record<string, unknown>[];
+      const required = execute.filter(row => ["postgres", "anon", "authenticated", "service_role"].includes(String(row.role)));
+      expect(required).toHaveLength(4); expect(new Set(required.map(row => row.role)).size).toBe(4);
+      for (const entry of execute) expect(entry).toEqual({ role: expect.any(String), execute: entry.role === "postgres" });
+    }
+    expect(await counts()).toEqual({ users: 0, sessions: 0, profiles: 0, characters: 0, systems: 0 });
   });
   it("refuses the actual PGlite superuser instead of pretending native postgres acceptance", async () => {
     await expect(db.exec(pack("preflight"))).rejects.toMatchObject({ code: "P0001", message: "command_fixture_native_postgres_role_drift" });

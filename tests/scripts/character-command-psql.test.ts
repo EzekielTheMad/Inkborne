@@ -89,6 +89,11 @@ describe("SIMULATED psql framing; no process, Docker or database execution", () 
     await expect(f.session.query("SELECT 2 AS n")).rejects.toThrow();
     f.stdout.write(f.frame('{"n":1}')); await pending;
   });
+  it("discards idle whitespace instead of retaining an unbounded buffer", async () => {
+    const f = make(); f.stdout.write(" ".repeat(PSQL_LIMITS.outputBytes + 1));
+    const pending = f.session.query("SELECT 1 AS n"); f.stdout.write(f.frame('{"n":1}'));
+    expect(await pending).toEqual([{ n: 1 }]);
+  });
   it("fails closed on stdout/stderr overflow", async () => {
     for (const stream of ["stdout", "stderr"] as const) {
       const f = make(), pending = f.session.query("SELECT 1 AS n");

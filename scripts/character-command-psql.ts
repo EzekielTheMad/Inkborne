@@ -89,7 +89,7 @@ export class CharacterPsqlSession implements NativeSession {
   }
   private receive(value: string) {
     if (this.failed) return;
-    if (!this.pending && value.trim()) { this.fail(); return; }
+    if (!this.pending) { if (value.trim()) this.fail(); return; }
     if (this.pending) {
       this.pending.bytes += Buffer.byteLength(value);
       if (this.pending.bytes > PSQL_LIMITS.outputBytes) { this.fail(); return; }
@@ -108,7 +108,7 @@ export class CharacterPsqlSession implements NativeSession {
       if (line.startsWith(pending.end + " ")) {
         const code = line.slice(pending.end.length + 1);
         if (!/^[0-9A-Z]{5}$/.test(code) || this.buffer.trim()) { this.fail(); return; }
-        clearTimeout(pending.timer); this.pending = undefined;
+        clearTimeout(pending.timer); this.pending = undefined; this.buffer = "";
         if (code === "00000") pending.resolve(pending.rows); else pending.reject(new CharacterPsqlError(code));
         continue;
       }
