@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-22",
+  "status": "Unselected raster concepts; not production assets",
+  "method": "Built-in image_gen",
+  "assets": [
+    {
+      "concept": "A",
+      "file": "a-the-scribe.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1157189,
+      "sha256": "e0559b53ee37b8c4a30ab57505d20cc0db46898e9cf0fd4f527976e978af17c2"
+    },
+    {
+      "concept": "A-refined",
+      "file": "a-the-scribe-refined.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1322405,
+      "sha256": "58d02566b2f713b49206d46dbba36306d88fba46e21648290172504785e56ce6"
+    },
+    {
+      "concept": "B",
+      "file": "b-the-folio.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1136395,
+      "sha256": "87430c931cd69693546efeacbc230d2773692c2267aa321d7ddcfb83932d715a"
+    },
+    {
+      "concept": "C",
+      "file": "c-the-initial.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1139270,
+      "sha256": "7efac74848a2b1f047064d0b013b2afd9fc16352b0defee4816a0690bc8d3600"
+    }
+  ]
+}

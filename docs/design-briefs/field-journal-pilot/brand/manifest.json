@@ -1,0 +1,388 @@
+{
+  "name": "Inkborne \u2014 The Scribe",
+  "status": "Draft vector reconstruction; direction selected, final visual approval pending the site pilot",
+  "source": "source.json",
+  "sourceSha256": "5c9e56f572a49e00e3222dae4b91e308726c027c148206e05337f9b125d51f4c",
+  "generator": "make_assets.py",
+  "generatorSha256": "cb7d782407c909af6c06cc11a1fb4ff95a2d915478fc91806b47fa41ca5166b0",
+  "reference": "../../logo-exploration/a-the-scribe-refined.png",
+  "font": {
+    "path": "../fonts/EBGaramond[wght].ttf",
+    "family": "EB Garamond",
+    "weight": 600,
+    "sha256": "ef9512f92f6d579e5dc75af59a5a4b1b8b47d2eda89e00b954d44520e5369027",
+    "license": "../fonts/OFL.txt"
+  },
+  "geometry": {
+    "nibViewBox": [
+      0,
+      0,
+      320,
+      512
+    ],
+    "nibAxisX": 160,
+    "wordmarkOutlineBounds": [
+      16.800048828125,
+      -14.45001220703125,
+      3786.599609375,
+      705.0
+    ],
+    "wordmarkKerning": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "horizontalAspect": 4.238226955605708,
+    "stackedAspect": 1.3217602523493381
+  },
+  "exports": {
+    "inkborne-horizontal-ink.svg": {
+      "type": "svg",
+      "layout": "horizontal",
+      "color": "ink",
+      "width": 406.86978773814803,
+      "height": 96,
+      "bytes": 27706,
+      "sha256": "263f8126ece0d7376f5e268856b810f106b44313a0cabe36cb8b24fecf1207da"
+    },
+    "inkborne-stacked-ink.svg": {
+      "type": "svg",
+      "layout": "stacked",
+      "color": "ink",
+      "width": 293.4307760215531,
+      "height": 222,
+      "bytes": 27732,
+      "sha256": "4c78e14cbce00751384f24de8e98fc3f13778481f44c62fa536a7e30d2a40c39"
+    },
+    "inkborne-symbol-ink.svg": {
+      "type": "svg",
+      "layout": "symbol",
+      "color": "ink",
+      "opticalSmall": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 1073,
+      "sha256": "f9b74ab3e70e5fced7edd625bbf52d5ae0b13d3d9f4b0b26251a836c216ee519"
+    },
+    "inkborne-symbol-ink-small.svg": {
+      "type": "svg",
+      "layout": "symbol",
+      "color": "ink",
+      "opticalSmall": true,
+      "width": 512,
+      "height": 512,
+      "bytes": 1073,
+      "sha256": "edfb293bd2a46249977cd410e31c70b486b1b5d18f4de3c8e2843f777cea6c12"
+    },
+    "inkborne-horizontal-oxblood.svg": {
+      "type": "svg",
+      "layout": "horizontal",
+      "color": "oxblood",
+      "width": 406.86978773814803,
+      "height": 96,
+      "bytes": 27706,
+      "sha256": "05300bade671aca917dd3a561319d2c6a0455d01a839605e9288a57261e314d5"
+    },
+    "inkborne-stacked-oxblood.svg": {
+      "type": "svg",
+      "layout": "stacked",
+      "color": "oxblood",
+      "width": 293.4307760215531,
+      "height": 222,
+      "bytes": 27732,
+      "sha256": "587f44f7fd336b890444bcd97c35b25b3831ac7e2353fe86124331a6743a0df8"
+    },
+    "inkborne-symbol-oxblood.svg": {
+      "type": "svg",
+      "layout": "symbol",
+      "color": "oxblood",
+      "opticalSmall": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 1073,
+      "sha256": "0d82403179555fe8477ed99f1c1562d1b07b3708c207d0968e00df1577555039"
+    },
+    "inkborne-symbol-oxblood-small.svg": {
+      "type": "svg",
+      "layout": "symbol",
+      "color": "oxblood",
+      "opticalSmall": true,
+      "width": 512,
+      "height": 512,
+      "bytes": 1073,
+      "sha256": "454b3c545a8e2d7b2362157242dd21570308ec9745bf199ca9a07395808be029"
+    },
+    "inkborne-horizontal-reverse.svg": {
+      "type": "svg",
+      "layout": "horizontal",
+      "color": "reverse",
+      "width": 406.86978773814803,
+      "height": 96,
+      "bytes": 27706,
+      "sha256": "a81000d9a3e001f64bc8983407afb366ab9732e947afa57f1e16f23fb1072fd3"
+    },
+    "inkborne-stacked-reverse.svg": {
+      "type": "svg",
+      "layout": "stacked",
+      "color": "reverse",
+      "width": 293.4307760215531,
+      "height": 222,
+      "bytes": 27732,
+      "sha256": "13a80b83206730586ca747dffa6ed3db792fc1dfc04adb8aa656d0e2e6999549"
+    },
+    "inkborne-symbol-reverse.svg": {
+      "type": "svg",
+      "layout": "symbol",
+      "color": "reverse",
+      "opticalSmall": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 1073,
+      "sha256": "fff26a74e54c972e6f25cc85804705fafbfe780166833f45c041d436301cb20b"
+    },
+    "inkborne-symbol-reverse-small.svg": {
+      "type": "svg",
+      "layout": "symbol",
+      "color": "reverse",
+      "opticalSmall": true,
+      "width": 512,
+      "height": 512,
+      "bytes": 1073,
+      "sha256": "dd48aa65e04098f8aa277f39ac1749f6eff0d87d9238dc6a9694eb131ed48590"
+    },
+    "inkborne-master.svg": {
+      "type": "svg",
+      "layout": "master",
+      "width": 320,
+      "height": 512,
+      "bytes": 1023,
+      "sha256": "5a77b53af3cd7bf7a0745d699538d3b99ab48e97503f2a8dbd78aa2d407a9f2c"
+    },
+    "favicon.svg": {
+      "type": "svg",
+      "layout": "favicon",
+      "width": 32,
+      "height": 32,
+      "bytes": 1113,
+      "sha256": "b54173f73a9cf5dd4b9dc0f98472aa303d82b9e959c175db423617bc23763680"
+    },
+    "proof.svg": {
+      "type": "svg",
+      "layout": "proof",
+      "width": 1440,
+      "height": 1220,
+      "bytes": 235345,
+      "sha256": "2b154315dbf51c4bc0ae99c7fa554f772797c41c4deeb6cd8a9da48a232c4905"
+    },
+    "inkborne-horizontal-ink.png": {
+      "type": "png",
+      "width": 1600,
+      "height": 378,
+      "bytes": 38820,
+      "sha256": "91c0443eeea7660e499a3f407b1eefd62d1e9a4d39705e0f58e70649030b2bed"
+    },
+    "inkborne-stacked-ink.png": {
+      "type": "png",
+      "width": 1000,
+      "height": 757,
+      "bytes": 64266,
+      "sha256": "d0da7a11f0620df61335a989537b494a38e99fb5be80f640c0f631e4d2505808"
+    },
+    "inkborne-symbol-ink-16.png": {
+      "type": "png",
+      "width": 16,
+      "height": 16,
+      "bytes": 296,
+      "sha256": "8126933dd85566243c0197b3826358a112fd4e9d7d5d938bc952e1e107e4b77d"
+    },
+    "inkborne-symbol-ink-24.png": {
+      "type": "png",
+      "width": 24,
+      "height": 24,
+      "bytes": 416,
+      "sha256": "005d333b543c1c025495c667d816c9e669293eb9c391b71c02029630dfa58133"
+    },
+    "inkborne-symbol-ink-32.png": {
+      "type": "png",
+      "width": 32,
+      "height": 32,
+      "bytes": 548,
+      "sha256": "40f56a74105b9df19de3062d1d5a7c40271884dd0b35839aa206303e37e152e5"
+    },
+    "inkborne-symbol-ink-48.png": {
+      "type": "png",
+      "width": 48,
+      "height": 48,
+      "bytes": 743,
+      "sha256": "a706195aab20dcef1b1c11d9886f7cafbedba4891e9a59a957f44dd85f5d60a7"
+    },
+    "inkborne-horizontal-oxblood.png": {
+      "type": "png",
+      "width": 1600,
+      "height": 378,
+      "bytes": 40476,
+      "sha256": "f682e46dcf261245e0ca1e6e28c914765a3e83178a0ec859a547ac547b8539f9"
+    },
+    "inkborne-stacked-oxblood.png": {
+      "type": "png",
+      "width": 1000,
+      "height": 757,
+      "bytes": 67114,
+      "sha256": "c38b742435ee5f0b8e83569b3e28d6875d57e6abbb81dc3c137543cdd9612c0f"
+    },
+    "inkborne-symbol-oxblood-16.png": {
+      "type": "png",
+      "width": 16,
+      "height": 16,
+      "bytes": 310,
+      "sha256": "56ad3f92b2f6ff3bea0dd0b252792d30a5d371fa1d3a6907d992da2b5ec2e3ca"
+    },
+    "inkborne-symbol-oxblood-24.png": {
+      "type": "png",
+      "width": 24,
+      "height": 24,
+      "bytes": 445,
+      "sha256": "c2d86027253952b3a2f4238711f8ec1e034d8f2b785de3129830a2f4666667f4"
+    },
+    "inkborne-symbol-oxblood-32.png": {
+      "type": "png",
+      "width": 32,
+      "height": 32,
+      "bytes": 566,
+      "sha256": "2c766d8d76c386f1b0f6a62a1336904ee5ec8a3ab6250d14a8a58ab0320b4d45"
+    },
+    "inkborne-symbol-oxblood-48.png": {
+      "type": "png",
+      "width": 48,
+      "height": 48,
+      "bytes": 766,
+      "sha256": "602f165647850f72190279e8b9110d7d5c90d1b24b21641b305e4324b4a8ae0b"
+    },
+    "inkborne-horizontal-reverse.png": {
+      "type": "png",
+      "width": 1600,
+      "height": 378,
+      "bytes": 39614,
+      "sha256": "cab875be0b596de0e7910f1f21be47d8afb4fd1cb89bd67c1b858148d3669a15"
+    },
+    "inkborne-stacked-reverse.png": {
+      "type": "png",
+      "width": 1000,
+      "height": 757,
+      "bytes": 76031,
+      "sha256": "2a6eed671b44185f3007fce59dc641845589818878fe7d3a588c05ef3da7fd7c"
+    },
+    "inkborne-symbol-reverse-16.png": {
+      "type": "png",
+      "width": 16,
+      "height": 16,
+      "bytes": 311,
+      "sha256": "1b8771562d17f9c8231e912ba205608b233fb901e570e426390d9a4ce74838cd"
+    },
+    "inkborne-symbol-reverse-24.png": {
+      "type": "png",
+      "width": 24,
+      "height": 24,
+      "bytes": 434,
+      "sha256": "b89a84d99ab07b96fb8925069db94f33f79c3b776b98a92029b12326d82ffd4e"
+    },
+    "inkborne-symbol-reverse-32.png": {
+      "type": "png",
+      "width": 32,
+      "height": 32,
+      "bytes": 556,
+      "sha256": "3de7276742184c6d42a5df1e67c2f27d859398fffcf808fd8427959c12848ae0"
+    },
+    "inkborne-symbol-reverse-48.png": {
+      "type": "png",
+      "width": 48,
+      "height": 48,
+      "bytes": 764,
+      "sha256": "449f4fcc783eb6652454687c23521bd5045019d24e6767728eff7c64794c3e0c"
+    },
+    "inkborne-appicon-180.png": {
+      "type": "png",
+      "width": 180,
+      "height": 180,
+      "bytes": 3759,
+      "sha256": "87ad7dd30acd08f30f53fda32db63f9f5ad32532fa6132c7a5a6138c2d2960a4"
+    },
+    "inkborne-appicon-reverse-180.png": {
+      "type": "png",
+      "width": 180,
+      "height": 180,
+      "bytes": 3780,
+      "sha256": "a3c865e062e1e13b1dbd8f5c8230aeede8f081e39ab9d87eb4c581602666cf58"
+    },
+    "inkborne-appicon-192.png": {
+      "type": "png",
+      "width": 192,
+      "height": 192,
+      "bytes": 4081,
+      "sha256": "113ff1aa52731669353f8156f2b344746654666ea903b3148e800ea378b091ef"
+    },
+    "inkborne-appicon-reverse-192.png": {
+      "type": "png",
+      "width": 192,
+      "height": 192,
+      "bytes": 4095,
+      "sha256": "5cded006f1bdf5287525200e85ad0f8c89db1e3c75eb534387256b8d72c31cb0"
+    },
+    "inkborne-appicon-512.png": {
+      "type": "png",
+      "width": 512,
+      "height": 512,
+      "bytes": 15657,
+      "sha256": "cbd075cd9a88b3ab794e49525f11de20e9861133605d1209722d0dc110649468"
+    },
+    "inkborne-appicon-reverse-512.png": {
+      "type": "png",
+      "width": 512,
+      "height": 512,
+      "bytes": 15699,
+      "sha256": "92d561319aa696c550a28b307ab2a0600f3abd474d88609a4986a5705472aa19"
+    },
+    "favicon-16.png": {
+      "type": "png",
+      "width": 16,
+      "height": 16,
+      "bytes": 311,
+      "sha256": "449cb3ddd87ab91720e271b97aeeae8e90656833637e161909572eb5496130a4"
+    },
+    "favicon-32.png": {
+      "type": "png",
+      "width": 32,
+      "height": 32,
+      "bytes": 601,
+      "sha256": "da17559f5dc6800240d8118d46487a67a5837f6d9b67d0fb34f6bcc05a6b5601"
+    },
+    "favicon-48.png": {
+      "type": "png",
+      "width": 48,
+      "height": 48,
+      "bytes": 869,
+      "sha256": "eb8237fbd80e95a2f80e66a341428fccb7228c242e200e65fb04da8a0191ac37"
+    },
+    "proof.png": {
+      "type": "png",
+      "width": 1440,
+      "height": 1220,
+      "bytes": 142802,
+      "sha256": "5264416b8cf236f29ea6991c5cc0a98ff3bbd5dd21a722f683b78cecd655e4f2"
+    },
+    "favicon.ico": {
+      "type": "ico",
+      "sizes": [
+        16,
+        32,
+        48
+      ],
+      "bytes": 2153,
+      "sha256": "2baf82c2df803e03ca6e7fab41578eecffe02a96175a03b034e7e73383ac5ca4"
+    }
+  }
+}

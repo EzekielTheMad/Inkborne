@@ -1,0 +1,156 @@
+@font-face{font-family:"Inkborne notebook serif";src:url("fonts/EBGaramond-latin.ttf") format("truetype");font-style:normal;font-weight:400 800;font-display:swap}
+@font-face{font-family:"Inkborne notebook serif";src:url("fonts/EBGaramond-Italic-latin.ttf") format("truetype");font-style:italic;font-weight:400;font-display:swap}
+@font-face{font-family:"Inkborne notebook display";src:url("fonts/Marcellus-Regular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+
+#inkborne-home-study{--page:#0B0A10;--surface:#1A1626;--raised:#211B30;--ink:#F0EEF5;--muted:#BBB0CA;--rule:#393047;--boundary:#81718E;--action:#C9A44A;--on-action:#0B0A10;--focus:#D0ABEE;--violet:#D0ABEE;--wash-gold:rgba(201,164,74,.04);--wash-violet:rgba(155,107,203,.045);--serif:"Inkborne notebook serif",Georgia,serif;--display:"Inkborne notebook display",Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;position:relative;isolation:isolate;overflow:hidden;background:var(--page);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;color-scheme:dark;-webkit-font-smoothing:antialiased}
+#inkborne-home-study[data-theme="light"]{--page:#F4F0E6;--surface:#FFFCF5;--raised:#F7F0E2;--ink:#282A25;--muted:#655B6D;--rule:#D7CEDD;--boundary:#8A7B92;--action:#785923;--on-action:#FFFCF5;--focus:#70448D;--violet:#70448D;--wash-gold:rgba(120,89,35,.04);--wash-violet:rgba(112,68,141,.04);color-scheme:light}
+#inkborne-home-study::before{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;opacity:.015;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.8' filter='url(%23grain)'/%3E%3C/svg%3E")}
+#inkborne-home-study *,#inkborne-home-study *::before,#inkborne-home-study *::after{box-sizing:border-box}
+#inkborne-home-study a{color:inherit;text-underline-offset:4px}
+#inkborne-home-study a:focus-visible,#inkborne-home-study select:focus-visible{outline:3px solid var(--focus);outline-offset:4px}
+#inkborne-home-study ::selection{background:var(--action);color:var(--on-action)}
+#inkborne-home-study h1,#inkborne-home-study h2,#inkborne-home-study h3,#inkborne-home-study h4,#inkborne-home-study p,#inkborne-home-study figure,#inkborne-home-study dl,#inkborne-home-study dd{margin:0}
+#inkborne-home-study img{display:block;max-width:100%}
+#inkborne-home-study h1,#inkborne-home-study h2,#inkborne-home-study h3{font-family:var(--display);font-weight:400}
+#inkborne-home-study em{font-family:var(--serif);font-weight:400}
+#inkborne-home-study .container{width:min(1104px,calc(100% - 96px));margin-inline:auto}
+#inkborne-home-study .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#inkborne-home-study .skip-link{position:absolute;z-index:20;top:-100px;left:16px;padding:12px 18px;background:var(--surface);color:var(--ink)}
+#inkborne-home-study .skip-link:focus{top:12px}
+#inkborne-home-study .review-bar{padding:8px 24px;border-bottom:1px solid var(--rule);background:var(--surface);color:var(--muted);font-size:12px}
+#inkborne-home-study .review-inner{max-width:1320px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+#inkborne-home-study .review-inner p{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#inkborne-home-study .review-inner strong{font-weight:650;color:var(--ink)}
+#inkborne-home-study .review-inner a{display:inline-flex;align-items:center;min-height:44px;gap:8px;flex-shrink:0}
+#inkborne-home-study .review-divider{color:var(--boundary)}
+#inkborne-home-study .review-note{max-width:1320px;margin:auto;font-size:11px}
+#inkborne-home-study .alpha-banner{text-align:center;font-family:var(--serif);font-size:14px;line-height:1.5;padding:8px 20px;border-bottom:1px solid var(--rule);color:var(--muted)}
+#inkborne-home-study .alpha-banner strong,#inkborne-home-study .alpha-banner>p>span:first-child{color:var(--action);font-weight:600}
+#inkborne-home-study .site-header{border-bottom:1px solid var(--rule)}
+#inkborne-home-study .header-inner{min-height:100px;display:flex;gap:32px;align-items:center}
+#inkborne-home-study .brand-link{min-height:48px;display:inline-flex;align-items:center;flex-shrink:0}
+#inkborne-home-study .brand-logo{width:168px;height:auto}
+#inkborne-home-study .site-nav{margin-left:auto;display:flex;gap:24px;align-items:center;font-size:13px}
+#inkborne-home-study .site-nav a{display:inline-flex;gap:5px;align-items:center;min-height:44px;text-decoration:none;white-space:nowrap}
+#inkborne-home-study .site-nav a:hover{color:var(--action);text-decoration:underline}
+#inkborne-home-study .header-actions{display:flex;gap:16px;align-items:center}
+#inkborne-home-study .appearance-label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px}
+#inkborne-home-study .appearance-label select{font:inherit;font-size:16px;min-height:44px;max-width:108px;padding:9px 28px 9px 10px;border:1px solid var(--boundary);border-radius:5px;background:var(--surface);color:var(--ink);cursor:pointer}
+#inkborne-home-study .button{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:16px;padding:12px 23px;background:var(--action);border:1px solid var(--action);border-radius:5px;color:var(--on-action);text-decoration:none;font-size:14px;line-height:1.5;font-weight:650}
+#inkborne-home-study .button:hover{filter:brightness(1.1)}
+#inkborne-home-study .button-outline{background:var(--surface);border-color:var(--boundary);color:var(--ink);font-weight:500}
+#inkborne-home-study .header-cta{min-height:44px;padding:10px 16px;font-size:12px;white-space:nowrap}
+#inkborne-home-study .folio{font-family:var(--serif);font-size:12px;line-height:1.6;font-weight:600;letter-spacing:.19em;text-transform:uppercase;color:var(--action)}
+#inkborne-home-study .hero{position:relative;text-align:center;padding-top:78px;padding-bottom:66px}
+#inkborne-home-study .hero::before{content:"";position:absolute;inset:0 -8% -20px;z-index:-1;background:radial-gradient(ellipse at 50% 32%,var(--wash-gold) 0,transparent 56%),radial-gradient(ellipse at 65% 70%,var(--wash-violet) 0,transparent 65%);pointer-events:none}
+#inkborne-home-study .hero>.folio{margin-bottom:22px}
+#inkborne-home-study .hero>.folio span{padding-inline:7px}
+#inkborne-home-study h1{font-size:clamp(36px,4.3vw,58px);line-height:1.17;letter-spacing:-.025em;max-width:960px;margin-inline:auto}
+#inkborne-home-study h1 em{font-size:1.1em;line-height:1;color:var(--action)}
+#inkborne-home-study .hero-description{max-width:585px;margin:24px auto 0;color:var(--muted);font-size:15px;line-height:1.8}
+#inkborne-home-study .hero-actions{display:flex;gap:12px;justify-content:center;margin-top:28px}
+#inkborne-home-study .hero-explore{display:inline-flex;gap:12px;align-items:center;min-height:44px;margin-top:16px;text-decoration:none;color:var(--muted);font-family:var(--serif);font-style:italic;font-size:16px}
+#inkborne-home-study .hero-explore:hover{color:var(--action)}
+#inkborne-home-study .feature-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:76px;border-bottom:1px solid var(--rule);padding:62px 0 52px}
+#inkborne-home-study .feature-row:first-child{padding-top:24px}
+#inkborne-home-study .feature-row:last-child{border-bottom:0}
+#inkborne-home-study .feature-reverse .feature-copy{order:2}
+#inkborne-home-study .feature-reverse .example-figure{order:1}
+#inkborne-home-study .feature-copy{min-width:0;padding-bottom:20px}
+#inkborne-home-study .feature-kicker{display:flex;gap:14px;align-items:baseline;margin-bottom:13px}
+#inkborne-home-study .folio-number{font-family:var(--display);font-size:31px;line-height:1;color:var(--action)}
+#inkborne-home-study .feature-copy h2{font-size:31px;line-height:1.3;letter-spacing:-.02em}
+#inkborne-home-study .feature-copy>p:not(.feature-kicker){margin-top:18px;color:var(--muted);font-size:14px;line-height:1.85;max-width:450px}
+#inkborne-home-study .feature-copy>p.marginal-note{font-family:var(--serif);font-style:italic;color:var(--action);font-size:18px;line-height:1.5;margin-top:20px}
+#inkborne-home-study .text-link{display:inline-flex;gap:12px;align-items:center;min-height:44px;margin-top:18px;font-size:12px;color:var(--muted)}
+#inkborne-home-study .text-link:hover{color:var(--action)}
+#inkborne-home-study .example-figure{min-width:0}
+#inkborne-home-study figcaption{font-size:11px;line-height:1.6;color:var(--muted);margin:10px 2px 0}
+#inkborne-home-study .notebook-card{position:relative;border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:25px;box-shadow:0 2px 0 color-mix(in srgb,var(--surface) 90%,var(--ink) 10%)}
+#inkborne-home-study .sheet-heading{display:flex;gap:16px;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--rule)}
+#inkborne-home-study .small-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+#inkborne-home-study .sheet-heading h3{font-size:25px;line-height:1.3;margin-top:6px}
+#inkborne-home-study .character-subtitle{font-size:12px;color:var(--muted);margin-top:4px}
+#inkborne-home-study .character-subtitle span{padding-inline:4px}
+#inkborne-home-study .identity-seal{font-family:var(--display);font-size:28px;line-height:1;display:grid;place-items:center;width:49px;height:57px;border:1px solid var(--boundary);border-radius:30px 30px 4px 4px;color:var(--action)}
+#inkborne-home-study .sheet-section-heading{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:18px;margin-bottom:10px}
+#inkborne-home-study .sheet-section-heading h4{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.09em;color:var(--action)}
+#inkborne-home-study .proficiency-key{font-size:11px;color:var(--muted);white-space:nowrap}
+#inkborne-home-study .proficiency-key span{color:var(--action);font-size:8px;vertical-align:1px;padding-right:3px}
+#inkborne-home-study .save-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#inkborne-home-study .save-grid>div{display:flex;justify-content:space-between;gap:6px;align-items:center;border:1px solid var(--rule);border-radius:4px;padding:9px 10px;background:var(--raised)}
+#inkborne-home-study .save-grid dt{color:var(--muted);font-size:11px;letter-spacing:.04em}
+#inkborne-home-study .save-grid dd{font-size:16px;line-height:1.3;font-variant-numeric:tabular-nums;white-space:nowrap}
+#inkborne-home-study .save-grid .proficient dd{color:var(--action)}
+#inkborne-home-study .save-grid .proficient dd span{font-size:8px;vertical-align:2px}
+#inkborne-home-study .defense-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#inkborne-home-study .defense-grid>div{padding:12px 6px;background:var(--raised);border:1px solid var(--rule);border-radius:4px;text-align:center}
+#inkborne-home-study .defense-grid dt{font-size:11px;color:var(--muted)}
+#inkborne-home-study .defense-grid dd{font-family:var(--display);font-size:27px;line-height:1.3;margin-top:4px}
+#inkborne-home-study .defense-grid dd span{font-family:var(--sans);font-size:11px;color:var(--muted)}
+#inkborne-home-study .sheet-foot{margin-top:18px;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11px}
+#inkborne-home-study .sheet-foot strong{color:var(--ink);margin-left:6px;font-weight:500}
+#inkborne-home-study .spell-pips{display:flex;gap:5px}
+#inkborne-home-study .spell-pips i{display:block;width:9px;height:9px;background:var(--action);border:1px solid var(--action);border-radius:50%}
+#inkborne-home-study .spell-pips i.spent{background:transparent;border-color:var(--boundary)}
+#inkborne-home-study .journal-card{padding:27px 28px 18px;background:linear-gradient(130deg,var(--wash-violet),transparent 65%),var(--surface)}
+#inkborne-home-study .journal-dateline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+#inkborne-home-study .journal-dateline .folio{font-size:11px;letter-spacing:.16em}
+#inkborne-home-study .moon-note{color:var(--muted);font-family:var(--serif);font-size:13px;font-style:italic}
+#inkborne-home-study .journal-card h3{font-size:24px;line-height:1.35;margin-bottom:15px}
+#inkborne-home-study .journal-prose{font-family:var(--serif);font-size:18px;line-height:1.65;color:var(--muted)}
+#inkborne-home-study .drop-cap{float:left;font-size:65px;line-height:.85;color:var(--action);margin:6px 5px 0 0}
+#inkborne-home-study .journal-rule{display:flex;align-items:center;gap:10px;width:112px;margin:22px auto 15px;color:var(--action)}
+#inkborne-home-study .journal-rule span{height:1px;background:var(--rule);flex:1}
+#inkborne-home-study .journal-rule b{font-size:12px;font-weight:400}
+#inkborne-home-study .journal-afterthought{font-family:var(--serif);font-style:italic;font-size:17px;line-height:1.45;color:var(--ink)}
+#inkborne-home-study .story-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:19px}
+#inkborne-home-study .story-tags span{font-size:11px;line-height:1.4;padding:4px 8px;border:1px solid var(--boundary);border-radius:3px;color:var(--action)}
+#inkborne-home-study .story-tags .violet-tag{color:var(--violet)}
+#inkborne-home-study .journal-page-number{text-align:center;color:var(--muted);font-family:var(--serif);font-size:12px;margin-top:17px}
+#inkborne-home-study .homebrew-card{padding:24px 27px;background:linear-gradient(155deg,var(--wash-gold),transparent 65%),var(--surface)}
+#inkborne-home-study .homebrew-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+#inkborne-home-study .homebrew-topline .folio{font-size:11px;letter-spacing:.1em}
+#inkborne-home-study .homebrew-stamp{font-size:11px;border:1px solid var(--boundary);border-radius:3px;padding:3px 9px;color:var(--muted)}
+#inkborne-home-study .coven-name{font-family:var(--serif);font-style:italic;color:var(--violet);font-size:17px}
+#inkborne-home-study .homebrew-card h3{font-size:26px;line-height:1.3;margin-top:4px}
+#inkborne-home-study .spell-school{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted);margin-top:6px}
+#inkborne-home-study .spell-details{display:grid;grid-template-columns:1fr 1fr;gap:13px 16px;padding-block:18px;margin-block:17px;border-block:1px solid var(--rule)}
+#inkborne-home-study .spell-details dt{font-size:11px;line-height:1.4;color:var(--muted)}
+#inkborne-home-study .spell-details dd{font-size:13px;margin-top:2px}
+#inkborne-home-study .spell-description{font-family:var(--serif);font-size:18px;line-height:1.6;color:var(--muted)}
+#inkborne-home-study .homebrew-margin{display:flex;gap:12px;margin-top:20px;padding-left:12px;border-left:2px solid var(--action);color:var(--action)}
+#inkborne-home-study .homebrew-margin>span{font-size:14px}
+#inkborne-home-study .homebrew-margin p{font-family:var(--serif);font-size:15px;line-height:1.5}
+#inkborne-home-study .homebrew-margin em{color:var(--muted)}
+#inkborne-home-study .open-source{position:relative;margin-top:12px;padding-block:64px;border-block:1px solid var(--rule);background:var(--surface)}
+#inkborne-home-study .open-source::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 75% 15%,var(--wash-violet),transparent 65%);pointer-events:none}
+#inkborne-home-study .open-source-inner{position:relative;display:grid;grid-template-columns:120px minmax(0,740px);gap:48px;justify-content:center;align-items:center}
+#inkborne-home-study .source-mark{color:var(--ink);opacity:.45;width:86px;margin:auto}
+#inkborne-home-study .source-mark svg{display:block;width:100%;height:auto}
+#inkborne-home-study .open-source h2{margin-top:14px;font-size:34px;line-height:1.3;letter-spacing:-.02em}
+#inkborne-home-study .open-source h2 em{color:var(--action);font-size:1.12em}
+#inkborne-home-study .open-source h2+p{max-width:610px;margin-top:20px;color:var(--muted);font-size:14px;line-height:1.85}
+#inkborne-home-study .source-values{display:flex;gap:14px 24px;flex-wrap:wrap;margin-top:25px;color:var(--muted);font-size:11px}
+#inkborne-home-study .source-values b{font-size:12px;color:var(--action);margin-right:5px;font-weight:400}
+#inkborne-home-study .closing{padding-block:68px 78px;text-align:center}
+#inkborne-home-study .star-rule{display:flex;gap:12px;align-items:center;width:160px;margin:0 auto 26px;color:var(--action)}
+#inkborne-home-study .star-rule span{flex:1;height:1px;background:var(--rule)}
+#inkborne-home-study .star-rule b{font-size:13px;font-weight:400}
+#inkborne-home-study .closing>.folio{font-size:11px;letter-spacing:.2em;margin-bottom:13px}
+#inkborne-home-study .closing h2{font-size:42px;line-height:1.25;letter-spacing:-.025em}
+#inkborne-home-study .closing h2+p{font-family:var(--serif);font-size:19px;color:var(--muted);margin-top:14px}
+#inkborne-home-study .closing>.button{margin-top:27px;min-width:180px}
+#inkborne-home-study .closing>.closing-alpha{color:var(--muted);font-size:11px;margin-top:14px}
+#inkborne-home-study .site-footer{border-top:1px solid var(--rule)}
+#inkborne-home-study .footer-inner{padding-block:27px;display:flex;gap:24px;align-items:center;justify-content:space-between}
+#inkborne-home-study .footer-logo{width:128px;height:auto}
+#inkborne-home-study .footer-inner p{color:var(--muted);font-family:var(--serif);font-style:italic;font-size:16px}
+#inkborne-home-study .footer-inner>a:last-child{display:flex;gap:8px;align-items:center;min-height:44px;color:var(--muted);font-size:12px;white-space:nowrap}
+
+@media(min-width:1440px){#inkborne-home-study .container{width:min(1160px,calc(100% - 128px))}#inkborne-home-study .hero{padding-top:84px;padding-bottom:78px}#inkborne-home-study .feature-row{gap:86px}}
+@media(max-width:1130px){#inkborne-home-study .header-inner{gap:20px}#inkborne-home-study .site-nav{gap:18px}#inkborne-home-study .appearance-label>span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}#inkborne-home-study .header-actions{gap:12px}#inkborne-home-study .feature-row{gap:46px}}
+@media(max-width:940px){#inkborne-home-study .container{width:calc(100% - 64px)}#inkborne-home-study .header-inner{min-height:88px}#inkborne-home-study .site-nav{display:none}#inkborne-home-study .header-actions{margin-left:auto}#inkborne-home-study .appearance-label>span{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:normal}#inkborne-home-study .feature-row{gap:32px}#inkborne-home-study .feature-copy h2{font-size:27px}#inkborne-home-study .notebook-card{padding:20px}#inkborne-home-study .journal-card,#inkborne-home-study .homebrew-card{padding:23px}#inkborne-home-study .save-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#inkborne-home-study .sheet-heading h3{font-size:23px}#inkborne-home-study .journal-dateline{gap:8px;flex-wrap:wrap}#inkborne-home-study .journal-card h3{font-size:22px}#inkborne-home-study .story-tags{gap:5px}#inkborne-home-study .open-source-inner{gap:30px;grid-template-columns:90px minmax(0,1fr)}#inkborne-home-study .source-mark{width:68px}#inkborne-home-study .footer-inner{flex-wrap:wrap;gap:14px 24px}#inkborne-home-study .footer-inner p{order:3;width:100%;text-align:center}}
+@media(max-width:700px){#inkborne-home-study .container{width:calc(100% - 40px)}#inkborne-home-study .review-bar{padding:7px 16px}#inkborne-home-study .review-inner{align-items:flex-start;gap:12px}#inkborne-home-study .review-inner p{display:block;max-width:230px;font-size:11px;padding-block:8px;line-height:1.6}#inkborne-home-study .review-inner p strong{display:block}#inkborne-home-study .review-divider{display:none}#inkborne-home-study .review-inner a{font-size:11px;white-space:nowrap}#inkborne-home-study .review-note{font-size:11px;line-height:1.5;padding-bottom:5px}#inkborne-home-study .alpha-banner{font-size:13px;padding-block:8px}#inkborne-home-study .header-inner{min-height:84px;gap:14px}#inkborne-home-study .brand-logo{width:146px}#inkborne-home-study .header-cta{display:none}#inkborne-home-study .appearance-label>span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}#inkborne-home-study .appearance-label select{font-size:16px;padding-left:9px;max-width:104px}#inkborne-home-study .hero{padding-top:54px;padding-bottom:44px}#inkborne-home-study .hero>.folio{font-size:11px;letter-spacing:.13em;margin-bottom:21px}#inkborne-home-study .hero>.folio span{padding-inline:4px}#inkborne-home-study h1{font-size:clamp(31px,5.7vw,39px);line-height:1.24;letter-spacing:-.03em}#inkborne-home-study h1 em{font-size:1.08em}#inkborne-home-study .hero-description{font-size:14px;line-height:1.8;margin-top:23px;max-width:430px}#inkborne-home-study .hero-actions{margin-top:24px;gap:10px}#inkborne-home-study .hero-actions .button{min-width:124px;font-size:13px;padding-inline:17px}#inkborne-home-study .hero-explore{margin-top:14px;font-size:16px}#inkborne-home-study .feature-row,#inkborne-home-study .feature-row:first-child{grid-template-columns:minmax(0,1fr);gap:27px;padding-block:39px 35px}#inkborne-home-study .feature-copy{padding-bottom:0}#inkborne-home-study .feature-copy h2{font-size:29px;line-height:1.28}#inkborne-home-study .feature-copy h2 br{display:none}#inkborne-home-study .feature-copy>p:not(.feature-kicker){max-width:none;margin-top:15px;font-size:14px;line-height:1.8}#inkborne-home-study .feature-copy>p.marginal-note{font-size:18px;line-height:1.5;margin-top:15px}#inkborne-home-study .feature-kicker{margin-bottom:12px;gap:12px}#inkborne-home-study .folio-number{font-size:29px}#inkborne-home-study .feature-reverse .feature-copy{order:0}#inkborne-home-study .feature-reverse .example-figure{order:0}#inkborne-home-study .text-link{margin-top:13px}#inkborne-home-study .notebook-card{padding:23px}#inkborne-home-study .save-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#inkborne-home-study .journal-card{padding:25px 23px 18px}#inkborne-home-study .journal-card h3{font-size:24px}#inkborne-home-study .journal-prose{font-size:18px}#inkborne-home-study .homebrew-card{padding:24px 23px}#inkborne-home-study .homebrew-card h3{font-size:26px}#inkborne-home-study .open-source{margin-top:0;padding-block:43px}#inkborne-home-study .open-source-inner{display:block}#inkborne-home-study .source-mark{width:34px;float:right;margin:0 5px 12px 18px}#inkborne-home-study .open-source h2{font-size:30px;line-height:1.3;margin-top:16px}#inkborne-home-study .open-source h2+p{font-size:14px;line-height:1.8;margin-top:19px}#inkborne-home-study .source-values{gap:10px 18px;font-size:11px;margin-top:22px}#inkborne-home-study .closing{padding-block:48px 52px}#inkborne-home-study .closing h2{font-size:36px}#inkborne-home-study .closing h2+p{font-size:18px;line-height:1.5;max-width:260px;margin-inline:auto}#inkborne-home-study .footer-inner{padding-block:20px;gap:12px}#inkborne-home-study .footer-logo{width:120px}#inkborne-home-study .footer-inner p{font-size:15px;max-width:300px;margin:auto}#inkborne-home-study .footer-inner>a:last-child{font-size:11px}}
+@media(max-width:359px){#inkborne-home-study .container{width:calc(100% - 32px)}#inkborne-home-study .brand-logo{width:132px}#inkborne-home-study .appearance-label select{font-size:16px;max-width:100px}#inkborne-home-study h1{font-size:28px;line-height:1.26}#inkborne-home-study .hero>.folio{font-size:11px;letter-spacing:.06em}#inkborne-home-study .hero>.folio span{padding-inline:2px}#inkborne-home-study .notebook-card,#inkborne-home-study .journal-card,#inkborne-home-study .homebrew-card{padding-inline:18px}#inkborne-home-study .save-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#inkborne-home-study .sheet-heading h3{font-size:22px}#inkborne-home-study .sheet-foot{gap:8px;flex-wrap:wrap}#inkborne-home-study .proficiency-key{font-size:11px}#inkborne-home-study .identity-seal{width:39px;height:50px}#inkborne-home-study .sheet-section-heading{align-items:start}#inkborne-home-study .homebrew-topline{gap:8px}#inkborne-home-study .homebrew-topline .folio{font-size:11px;letter-spacing:.04em}#inkborne-home-study .homebrew-card h3{font-size:24px}#inkborne-home-study .open-source h2{font-size:28px}#inkborne-home-study .review-inner a{max-width:91px;line-height:1.4;white-space:normal}#inkborne-home-study .alpha-detail{display:block}}
+@media(prefers-reduced-motion:reduce){#inkborne-home-study *,#inkborne-home-study *::before,#inkborne-home-study *::after{scroll-behavior:auto;transition:none}}

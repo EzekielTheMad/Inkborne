@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Inkborne · Character color study</title>
+  <link rel="icon" href="brand/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="character-study.css" />
+  <script src="character-colors.js" defer></script>
+  <script src="character-study.js" defer></script>
+</head>
+<body style="margin:0">
+  <div id="inkborne-character-study" data-theme="dark">
+    <aside class="cs-review-bar"><span class="cs-review-dot" aria-hidden="true"></span><strong>Design preview</strong><span class="cs-review-separator" aria-hidden="true">·</span><span>Fictional characters</span><span class="cs-review-disclaimer">Changes stay in this preview</span></aside>
+    <a class="cs-skip-link" href="#cs-main">Skip to character</a>
+    <header class="cs-app-header">
+      <div class="cs-app-header-inner">
+        <img class="cs-logo" src="brand/inkborne-horizontal-reverse.svg" width="407" height="96" alt="Inkborne" />
+        <nav class="cs-global-nav" aria-label="App context"><span aria-current="page">Characters</span><span>Campaigns</span><span>Library</span></nav>
+        <label class="cs-theme-control"><span>Appearance</span><select id="cs-theme" aria-label="Appearance"><option value="light">Light</option><option value="dark" selected>Dark</option><option value="system">System</option></select></label>
+        <span class="cs-account" aria-label="Fictional player Alex Vale">AV</span>
+      </div>
+    </header>
+    <main id="cs-main" class="cs-main" tabindex="-1">
+      <div class="cs-context-bar"><span class="cs-breadcrumb">Characters <span aria-hidden="true">/</span> <span id="cs-breadcrumb-name">Mara Vale</span></span><label class="cs-character-switch"><span>Character</span><select id="cs-character" aria-label="Character"><option value="mara">Mara Vale</option><option value="sera">Sera Quill</option></select></label></div>
+      <div class="cs-character-scope" data-character-scope>
+        <div class="cs-folio" aria-hidden="true"><span>Character folio</span><span class="cs-folio-ornament">✦</span><em>Sheet &amp; story, kept together.</em></div>
+        <section class="cs-character-heading" aria-labelledby="cs-character-name">
+          <div class="cs-identity"><span class="cs-initial" id="cs-character-initial" aria-hidden="true">M</span><div><p class="cs-eyebrow" id="cs-campaign">The Greyfen Road</p><h1 id="cs-character-name">Mara Vale</h1><p class="cs-character-meta" id="cs-character-meta">Human ranger · Level 4 · Outlander</p></div></div>
+          <div class="cs-identity-actions"><button type="button" id="cs-open-color" class="cs-color-button" aria-haspopup="dialog"><span class="cs-color-chip" aria-hidden="true"></span><span>Character color</span><span aria-hidden="true">⌄</span></button><span class="cs-color-description" id="cs-color-description">Site accent · Follows appearance</span></div>
+        </section>
+        <div class="cs-character-tabs" role="tablist" aria-label="Character pages"><button type="button" role="tab" id="cs-tab-sheet" aria-controls="cs-panel-sheet" aria-selected="true" tabindex="0" data-tab="sheet">Sheet</button><button type="button" role="tab" id="cs-tab-story" aria-controls="cs-panel-story" aria-selected="false" tabindex="-1" data-tab="story">Story</button><button type="button" role="tab" id="cs-tab-equipment" aria-controls="cs-panel-equipment" aria-selected="false" tabindex="-1" data-tab="equipment">Equipment</button><button type="button" role="tab" id="cs-tab-builder" aria-controls="cs-panel-builder" aria-selected="false" tabindex="-1" data-tab="builder">Builder</button></div>
+        <section id="cs-panel-sheet" class="cs-tab-panel" role="tabpanel" aria-labelledby="cs-tab-sheet"></section>
+        <section id="cs-panel-story" class="cs-tab-panel" role="tabpanel" aria-labelledby="cs-tab-story" hidden></section>
+        <section id="cs-panel-equipment" class="cs-tab-panel" role="tabpanel" aria-labelledby="cs-tab-equipment" hidden></section>
+        <section id="cs-panel-builder" class="cs-tab-panel" role="tabpanel" aria-labelledby="cs-tab-builder" hidden></section>
+      </div>
+      <footer class="cs-preview-footnote"><span>Character screen study · Fantasy notebook / A</span><span id="cs-effective-theme">Dark appearance</span></footer>
+    </main>
+    <dialog class="cs-dialog cs-color-dialog" id="cs-color-dialog" aria-labelledby="cs-color-title" aria-describedby="cs-color-help" data-character-dialog>
+      <form id="cs-color-form" novalidate>
+        <div class="cs-dialog-heading"><p class="cs-eyebrow" data-dialog-character>Mara Vale</p><h2 id="cs-color-title">A color of their own.</h2><p id="cs-color-help">Use the site accent, or choose a color to carry through this character’s pages.</p></div>
+        <button type="button" class="cs-default-color" id="cs-use-default" aria-pressed="true"><span class="cs-default-check" aria-hidden="true">✓</span><span><strong>Use site accent</strong><small>Adapts to Light and Dark</small></span></button>
+        <fieldset class="cs-presets"><legend>Or choose a character color</legend><div class="cs-preset-grid" id="cs-presets"></div></fieldset>
+        <div class="cs-custom-color"><label for="cs-color-native">Custom color</label><div class="cs-custom-fields"><input type="color" id="cs-color-native" value="#c9a44a" aria-label="Choose custom color" /><div class="cs-hex-field"><label class="cs-sr-only" for="cs-color-hex">Color hex code</label><input type="text" id="cs-color-hex" value="#c9a44a" spellcheck="false" autocomplete="off" maxlength="7" inputmode="text" aria-describedby="cs-color-error cs-color-source" /></div></div><p class="cs-field-help" id="cs-color-source">The selected source stays the same in both themes.</p><p class="cs-error" id="cs-color-error" role="alert" hidden>Enter a six-digit hex color, such as #7c3aed.</p></div>
+        <div class="cs-color-sample" id="cs-color-sample"><span class="cs-sample-mark" aria-hidden="true">M</span><div><strong id="cs-sample-name">Mara Vale</strong><span>Readable tones follow appearance</span></div><span class="cs-sample-tag">Selected</span></div>
+        <div class="cs-dialog-actions"><button type="button" class="cs-button cs-button-quiet" data-close-dialog="cs-color-dialog">Cancel</button><button type="button" id="cs-apply-color" class="cs-button cs-button-character">Apply color</button></div>
+      </form>
+    </dialog>
+    <dialog class="cs-dialog cs-note-dialog" id="cs-note-dialog" aria-labelledby="cs-note-title" data-character-dialog>
+      <form id="cs-note-form">
+        <div class="cs-dialog-heading"><p class="cs-eyebrow" data-dialog-character>Mara Vale</p><h2 id="cs-note-title">Add a journal note</h2><p>A small detail worth keeping. Saved only in this design preview.</p></div>
+        <label class="cs-field-label" for="cs-note-heading">Title</label><input type="text" id="cs-note-heading" name="title" maxlength="80" placeholder="A name, a place, a loose thread" required />
+        <label class="cs-field-label" for="cs-note-body">Note</label><textarea id="cs-note-body" name="body" maxlength="1200" rows="5" placeholder="What do you want to remember?" required></textarea>
+        <p class="cs-error" id="cs-note-error" role="alert" hidden>Add a title and note before saving.</p>
+        <div class="cs-dialog-actions"><button type="button" class="cs-button cs-button-quiet" data-close-dialog="cs-note-dialog">Cancel</button><button type="button" id="cs-save-note" class="cs-button cs-button-character">Save note</button></div>
+      </form>
+    </dialog>
+    <p class="cs-sr-only" id="cs-announcement" role="status" aria-live="polite"></p>
+  </div>
+</body>
+</html>

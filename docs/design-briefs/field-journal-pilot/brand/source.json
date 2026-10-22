@@ -1,0 +1,32 @@
+{
+  "name": "Inkborne — The Scribe",
+  "status": "Draft vector reconstruction; direction selected, final visual approval pending the site pilot",
+  "reference": "../../logo-exploration/a-the-scribe-refined.png",
+  "font": "../fonts/EBGaramond[wght].ttf",
+  "fontLicense": "../fonts/OFL.txt",
+  "fontSha256": "ef9512f92f6d579e5dc75af59a5a4b1b8b47d2eda89e00b954d44520e5369027",
+  "fontWeight": 600,
+  "wordmark": "Inkborne",
+  "colors": {
+    "ink": "#282A25",
+    "oxblood": "#713B40",
+    "reverse": "#EEEBDD",
+    "paper": "#F4F0E6",
+    "dark": "#191D1B"
+  },
+  "nib": {
+    "viewBox": [0, 0, 320, 512],
+    "outer": "M160 0 C165 0 167 11 170 21 C192 106 236 180 316 258 Q321 263 316 269 C274 319 225 404 225 449 C225 470 233 483 248 494 Q251 496 251 500 V509 Q251 512 247 512 H73 Q69 512 69 509 V500 Q69 496 72 494 C87 483 95 470 95 449 C95 404 46 319 4 269 Q-1 263 4 258 C84 180 128 106 150 21 C153 11 155 0 160 0 Z",
+    "counter": "M160 36 C162 36 163 39 163 43 L170 161 C171 174 174 182 187 182 H222 Q224 182 224 185 V196 Q224 199 221 199 C194 200 187 206 187 232 V454 C187 478 194 484 222 485 Q224 485 224 488 V498 Q224 500 222 500 H98 Q96 500 96 498 V488 Q96 485 98 485 C126 484 133 478 133 454 V232 C133 206 126 200 99 199 Q96 199 96 196 V185 Q96 182 98 182 H133 C146 182 149 174 150 161 L157 43 C157 39 158 36 160 36 Z",
+    "smallCounter": "M160 34 C164 34 166 38 166 44 L173 158 C174 171 178 178 191 178 H224 Q228 178 228 182 V197 Q228 201 224 201 C198 202 190 209 190 233 V451 C190 475 199 482 224 483 Q228 483 228 487 V500 Q228 503 224 503 H96 Q92 503 92 500 V487 Q92 483 96 483 C121 482 130 475 130 451 V233 C130 209 122 202 96 201 Q92 201 92 197 V182 Q92 178 96 178 H129 C142 178 146 171 147 158 L154 44 C154 38 156 34 160 34 Z"
+  },
+  "layout": {
+    "horizontalSymbolHeight": 96,
+    "horizontalWordmarkHeight": 62,
+    "horizontalGap": 22,
+    "stackedSymbolHeight": 144,
+    "stackedWordmarkHeight": 56,
+    "stackedGap": 22,
+    "squareSafeArea": 0.12
+  }
+}

@@ -1,0 +1,1299 @@
+.root {
+  --page: #F4F0E6;
+  --surface: #FFFCF5;
+  --raised: #F7F0E2;
+  --ink: #282A25;
+  --muted: #655B6D;
+  --rule: #D7CEDD;
+  --boundary: #8A7B92;
+  --action: #785923;
+  --on-action: #FFFCF5;
+  --focus: #70448D;
+  --violet: #70448D;
+  --wash-gold: rgba(120,89,35,.04);
+  --wash-violet: rgba(112,68,141,.04);
+  --serif: var(--font-eb-garamond),Georgia,serif;
+  --display: var(--font-marcellus),Georgia,serif;
+  --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+}
+
+:global(.dark) .root {
+  --page: #0B0A10;
+  --surface: #1A1626;
+  --raised: #211B30;
+  --ink: #F0EEF5;
+  --muted: #BBB0CA;
+  --rule: #393047;
+  --boundary: #81718E;
+  --action: #C9A44A;
+  --on-action: #0B0A10;
+  --focus: #D0ABEE;
+  --violet: #D0ABEE;
+  --wash-gold: rgba(201,164,74,.04);
+  --wash-violet: rgba(155,107,203,.045);
+  color-scheme: dark;
+}
+
+.root::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  opacity: .015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.8' filter='url(%23grain)'/%3E%3C/svg%3E");
+}
+
+.root *,.root *::before,.root *::after {
+  box-sizing: border-box;
+}
+
+.root a {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
+.root a:focus-visible,.root select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.root ::selection {
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.root h1,.root h2,.root h3,.root h4,.root p,.root figure,.root dl,.root dd {
+  margin: 0;
+}
+
+.root img {
+  display: block;
+  max-width: 100%;
+}
+
+.root h1,.root h2,.root h3 {
+  font-family: var(--display);
+  font-weight: 400;
+}
+
+.root em {
+  font-family: var(--serif);
+  font-weight: 400;
+}
+
+.root .container {
+  width: min(1104px,calc(100% - 96px));
+  margin-inline: auto;
+}
+
+.root .skipLink {
+  position: absolute;
+  z-index: 20;
+  top: -100px;
+  left: 16px;
+  padding: 12px 18px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.root .skipLink:focus {
+  top: 12px;
+}
+
+.root .alphaBanner {
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+}
+
+.root .alphaBanner strong,.root .alphaBanner>p>span:first-child {
+  color: var(--action);
+  font-weight: 600;
+}
+
+.root .siteHeader {
+  border-bottom: 1px solid var(--rule);
+}
+
+.root .headerInner {
+  min-height: 100px;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.root .brandLink {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.root .brandLogo {
+  width: 168px;
+  height: auto;
+}
+
+.root .siteNav {
+  margin-left: auto;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.root .siteNav a {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.root .siteNav a:hover {
+  color: var(--action);
+  text-decoration: underline;
+}
+
+.root .headerActions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.root .appearanceControl {
+  flex-shrink: 0;
+}
+
+.root .button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 23px;
+  background: var(--action);
+  border: 1px solid var(--action);
+  border-radius: 5px;
+  color: var(--on-action);
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.root .button:hover {
+  filter: brightness(1.1);
+}
+
+.root .buttonOutline {
+  background: var(--surface);
+  border-color: var(--boundary);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.root .headerSignIn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--boundary);
+  border-radius: 5px;
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.root .headerSignIn:hover { background: var(--surface); }
+
+.root .folio {
+  font-family: var(--serif);
+  font-size: 12px;
+  line-height: 1.6;
+  font-weight: 600;
+  letter-spacing: .19em;
+  text-transform: uppercase;
+  color: var(--action);
+}
+
+.root .hero {
+  position: relative;
+  text-align: center;
+  padding-top: 78px;
+  padding-bottom: 66px;
+}
+
+.root .hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 -8% -20px;
+  z-index: -1;
+  background: radial-gradient(ellipse at 50% 32%,var(--wash-gold) 0,transparent 56%),radial-gradient(ellipse at 65% 70%,var(--wash-violet) 0,transparent 65%);
+  pointer-events: none;
+}
+
+.root .hero>.folio {
+  margin-bottom: 22px;
+}
+
+.root .hero>.folio span {
+  padding-inline: 7px;
+}
+
+.root h1 {
+  font-size: clamp(36px,4.3vw,58px);
+  line-height: 1.17;
+  letter-spacing: -.025em;
+  max-width: 960px;
+  margin-inline: auto;
+}
+
+.root h1 em {
+  font-size: 1.1em;
+  line-height: 1;
+  color: var(--action);
+}
+
+.root .heroDescription {
+  max-width: 585px;
+  margin: 24px auto 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.root .heroActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.root .heroExplore {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 16px;
+  text-decoration: none;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+}
+
+.root .heroExplore:hover {
+  color: var(--action);
+}
+
+.root .features {
+  scroll-margin-top: 24px;
+}
+
+.root .featureRow {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  align-items: center;
+  gap: 76px;
+  border-bottom: 1px solid var(--rule);
+  padding: 62px 0 52px;
+}
+
+.root .featureRow:first-child {
+  padding-top: 24px;
+}
+
+.root .featureRow:last-child {
+  border-bottom: 0;
+}
+
+.root .featureReverse .featureCopy {
+  order: 2;
+}
+
+.root .featureReverse .exampleFigure {
+  order: 1;
+}
+
+.root .featureCopy {
+  min-width: 0;
+  padding-bottom: 20px;
+}
+
+.root .featureKicker {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  margin-bottom: 13px;
+}
+
+.root .folioNumber {
+  font-family: var(--display);
+  font-size: 31px;
+  line-height: 1;
+  color: var(--action);
+}
+
+.root .featureCopy h2 {
+  font-size: 31px;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+
+.root .featureCopy>p:not(.featureKicker) {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.85;
+  max-width: 450px;
+}
+
+.root .featureCopy>p.marginalNote {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--action);
+  font-size: 18px;
+  line-height: 1.5;
+  margin-top: 20px;
+}
+
+.root .exampleFigure {
+  min-width: 0;
+}
+
+.root figcaption {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 10px 2px 0;
+}
+
+.root .notebookCard {
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 25px;
+  box-shadow: 0 2px 0 color-mix(in srgb,var(--surface) 90%,var(--ink) 10%);
+}
+
+.root .sheetHeading {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.root .smallLabel {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.root .sheetHeading h3 {
+  font-size: 25px;
+  line-height: 1.3;
+  margin-top: 6px;
+}
+
+.root .characterSubtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.root .characterSubtitle span {
+  padding-inline: 4px;
+}
+
+.root .identitySeal {
+  font-family: var(--display);
+  font-size: 28px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 49px;
+  height: 57px;
+  border: 1px solid var(--boundary);
+  border-radius: 30px 30px 4px 4px;
+  color: var(--action);
+}
+
+.root .sheetSectionHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.root .sheetSectionHeading h4 {
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--action);
+}
+
+.root .proficiencyKey {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.root .proficiencyKey span {
+  color: var(--action);
+  font-size: 8px;
+  vertical-align: 1px;
+  padding-right: 3px;
+}
+
+.root .saveGrid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 7px;
+}
+
+.root .saveGrid>div {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 9px 10px;
+  background: var(--raised);
+}
+
+.root .saveGrid dt {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+
+.root .saveGrid dd {
+  font-size: 16px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.root .saveGrid .proficient dd {
+  color: var(--action);
+}
+
+.root .saveGrid .proficient dd span {
+  font-size: 8px;
+  vertical-align: 2px;
+}
+
+.root .defenseGrid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 7px;
+}
+
+.root .defenseGrid>div {
+  padding: 12px 6px;
+  background: var(--raised);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.root .defenseGrid dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.root .defenseGrid dd {
+  font-family: var(--display);
+  font-size: 27px;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+.root .defenseGrid dd span {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.root .sheetFoot {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.root .sheetFoot strong {
+  color: var(--ink);
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.root .spellPips {
+  display: flex;
+  gap: 5px;
+}
+
+.root .spellPips i {
+  display: block;
+  width: 9px;
+  height: 9px;
+  background: var(--action);
+  border: 1px solid var(--action);
+  border-radius: 50%;
+}
+
+.root .spellPips i.spent {
+  background: transparent;
+  border-color: var(--boundary);
+}
+
+.root .journalCard {
+  padding: 27px 28px 18px;
+  background: linear-gradient(130deg,var(--wash-violet),transparent 65%),var(--surface);
+}
+
+.root .journalDateline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.root .journalDateline .folio {
+  font-size: 11px;
+  letter-spacing: .16em;
+}
+
+.root .moonNote {
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.root .journalCard h3 {
+  font-size: 24px;
+  line-height: 1.35;
+  margin-bottom: 15px;
+}
+
+.root .journalProse {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.root .dropCap {
+  float: left;
+  font-size: 65px;
+  line-height: .85;
+  color: var(--action);
+  margin: 6px 5px 0 0;
+}
+
+.root .journalRule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 112px;
+  margin: 22px auto 15px;
+  color: var(--action);
+}
+
+.root .journalRule span {
+  height: 1px;
+  background: var(--rule);
+  flex: 1;
+}
+
+.root .journalRule b {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.root .journalAfterthought {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.root .storyTags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 19px;
+}
+
+.root .storyTags span {
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 4px 8px;
+  border: 1px solid var(--boundary);
+  border-radius: 3px;
+  color: var(--action);
+}
+
+.root .storyTags .violetTag {
+  color: var(--violet);
+}
+
+.root .journalPageNumber {
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 12px;
+  margin-top: 17px;
+}
+
+.root .homebrewCard {
+  padding: 24px 27px;
+  background: linear-gradient(155deg,var(--wash-gold),transparent 65%),var(--surface);
+}
+
+.root .homebrewTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.root .homebrewTopline .folio {
+  font-size: 11px;
+  letter-spacing: .1em;
+}
+
+.root .homebrewStamp {
+  font-size: 11px;
+  border: 1px solid var(--boundary);
+  border-radius: 3px;
+  padding: 3px 9px;
+  color: var(--muted);
+}
+
+.root .covenName {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--violet);
+  font-size: 17px;
+}
+
+.root .homebrewCard h3 {
+  font-size: 26px;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+.root .spellSchool {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.root .spellDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px 16px;
+  padding-block: 18px;
+  margin-block: 17px;
+  border-block: 1px solid var(--rule);
+}
+
+.root .spellDetails dt {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.root .spellDetails dd {
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.root .spellDescription {
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.root .homebrewMargin {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-left: 12px;
+  border-left: 2px solid var(--action);
+  color: var(--action);
+}
+
+.root .homebrewMargin>span {
+  font-size: 14px;
+}
+
+.root .homebrewMargin p {
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.root .homebrewMargin em {
+  color: var(--muted);
+}
+
+.root .openSource {
+  position: relative;
+  margin-top: 12px;
+  padding-block: 64px;
+  border-block: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.root .openSource::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 75% 15%,var(--wash-violet),transparent 65%);
+  pointer-events: none;
+}
+
+.root .openSourceInner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 120px minmax(0,740px);
+  gap: 48px;
+  justify-content: center;
+  align-items: center;
+}
+
+.root .sourceMark {
+  color: var(--ink);
+  opacity: .45;
+  width: 86px;
+  margin: auto;
+}
+
+.root .sourceMark svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.root .openSource h2 {
+  margin-top: 14px;
+  font-size: 34px;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+
+.root .openSource h2 em {
+  color: var(--action);
+  font-size: 1.12em;
+}
+
+.root .openSource h2+p {
+  max-width: 610px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.root .sourceValues {
+  display: flex;
+  gap: 14px 24px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.root .sourceValues b {
+  font-size: 12px;
+  color: var(--action);
+  margin-right: 5px;
+  font-weight: 400;
+}
+
+.root .closing {
+  padding-block: 68px 78px;
+  text-align: center;
+}
+
+.root .starRule {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 160px;
+  margin: 0 auto 26px;
+  color: var(--action);
+}
+
+.root .starRule span {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.root .starRule b {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.root .closing>.folio {
+  font-size: 11px;
+  letter-spacing: .2em;
+  margin-bottom: 13px;
+}
+
+.root .closing h2 {
+  font-size: 42px;
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+
+.root .closing h2+p {
+  font-family: var(--serif);
+  font-size: 19px;
+  color: var(--muted);
+  margin-top: 14px;
+}
+
+.root .closing>.button {
+  margin-top: 27px;
+  min-width: 180px;
+}
+
+.root .closing>.closingAlpha {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 14px;
+}
+
+.root .siteFooter {
+  border-top: 1px solid var(--rule);
+}
+
+.root .footerInner {
+  padding-block: 27px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.root .footerLogo {
+  width: 128px;
+  height: auto;
+}
+
+.root .footerInner p {
+  color: var(--muted);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+}
+
+.root .footerInner>a:last-child {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media(min-width:1440px) {
+  .root .container {
+    width: min(1160px,calc(100% - 128px));
+  }
+  .root .hero {
+    padding-top: 84px;
+    padding-bottom: 78px;
+  }
+  .root .featureRow {
+    gap: 86px;
+  }
+}
+
+@media(max-width:1130px) {
+  .root .headerInner {
+    gap: 20px;
+  }
+  .root .siteNav {
+    gap: 18px;
+  }
+  .root .headerActions {
+    gap: 12px;
+  }
+  .root .featureRow {
+    gap: 46px;
+  }
+}
+
+@media(max-width:940px) {
+  .root .container {
+    width: calc(100% - 64px);
+  }
+  .root .headerInner {
+    min-height: 88px;
+  }
+  .root .siteNav {
+    display: none;
+  }
+  .root .headerActions {
+    margin-left: auto;
+  }
+  .root .featureRow {
+    gap: 32px;
+  }
+  .root .featureCopy h2 {
+    font-size: 27px;
+  }
+  .root .notebookCard {
+    padding: 20px;
+  }
+  .root .journalCard,.root .homebrewCard {
+    padding: 23px;
+  }
+  .root .saveGrid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .root .sheetHeading h3 {
+    font-size: 23px;
+  }
+  .root .journalDateline {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .root .journalCard h3 {
+    font-size: 22px;
+  }
+  .root .storyTags {
+    gap: 5px;
+  }
+  .root .openSourceInner {
+    gap: 30px;
+    grid-template-columns: 90px minmax(0,1fr);
+  }
+  .root .sourceMark {
+    width: 68px;
+  }
+  .root .footerInner {
+    flex-wrap: wrap;
+    gap: 14px 24px;
+  }
+  .root .footerInner p {
+    order: 3;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media(max-width:700px) {
+  .root .container {
+    width: calc(100% - 40px);
+  }
+  .root .alphaBanner {
+    font-size: 13px;
+    padding-block: 8px;
+  }
+  .root .headerInner {
+    min-height: 84px;
+    gap: 14px;
+  }
+  .root .brandLogo {
+    width: 146px;
+  }
+  .root .hero {
+    padding-top: 54px;
+    padding-bottom: 44px;
+  }
+  .root .hero>.folio {
+    font-size: 11px;
+    letter-spacing: .13em;
+    margin-bottom: 21px;
+  }
+  .root .hero>.folio span {
+    padding-inline: 4px;
+  }
+  .root h1 {
+    font-size: clamp(31px,5.7vw,39px);
+    line-height: 1.24;
+    letter-spacing: -.03em;
+  }
+  .root h1 em {
+    font-size: 1.08em;
+  }
+  .root .heroDescription {
+    font-size: 14px;
+    line-height: 1.8;
+    margin-top: 23px;
+    max-width: 430px;
+  }
+  .root .heroActions {
+    margin-top: 24px;
+    gap: 10px;
+  }
+  .root .heroActions .button {
+    min-width: 124px;
+    font-size: 13px;
+    padding-inline: 17px;
+  }
+  .root .heroExplore {
+    margin-top: 14px;
+    font-size: 16px;
+  }
+  .root .featureRow,.root .featureRow:first-child {
+    grid-template-columns: minmax(0,1fr);
+    gap: 27px;
+    padding-block: 39px 35px;
+  }
+  .root .featureCopy {
+    padding-bottom: 0;
+  }
+  .root .featureCopy h2 {
+    font-size: 29px;
+    line-height: 1.28;
+  }
+  .root .featureCopy h2 br {
+    display: none;
+  }
+  .root .featureCopy>p:not(.featureKicker) {
+    max-width: none;
+    margin-top: 15px;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .root .featureCopy>p.marginalNote {
+    font-size: 18px;
+    line-height: 1.5;
+    margin-top: 15px;
+  }
+  .root .featureKicker {
+    margin-bottom: 12px;
+    gap: 12px;
+  }
+  .root .folioNumber {
+    font-size: 29px;
+  }
+  .root .featureReverse .featureCopy {
+    order: 0;
+  }
+  .root .featureReverse .exampleFigure {
+    order: 0;
+  }
+  .root .notebookCard {
+    padding: 23px;
+  }
+  .root .saveGrid {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+  }
+  .root .journalCard {
+    padding: 25px 23px 18px;
+  }
+  .root .journalCard h3 {
+    font-size: 24px;
+  }
+  .root .journalProse {
+    font-size: 18px;
+  }
+  .root .homebrewCard {
+    padding: 24px 23px;
+  }
+  .root .homebrewCard h3 {
+    font-size: 26px;
+  }
+  .root .openSource {
+    margin-top: 0;
+    padding-block: 43px;
+  }
+  .root .openSourceInner {
+    display: block;
+  }
+  .root .sourceMark {
+    width: 34px;
+    float: right;
+    margin: 0 5px 12px 18px;
+  }
+  .root .openSource h2 {
+    font-size: 30px;
+    line-height: 1.3;
+    margin-top: 16px;
+  }
+  .root .openSource h2+p {
+    font-size: 14px;
+    line-height: 1.8;
+    margin-top: 19px;
+  }
+  .root .sourceValues {
+    gap: 10px 18px;
+    font-size: 11px;
+    margin-top: 22px;
+  }
+  .root .closing {
+    padding-block: 48px 52px;
+  }
+  .root .closing h2 {
+    font-size: 36px;
+  }
+  .root .closing h2+p {
+    font-size: 18px;
+    line-height: 1.5;
+    max-width: 260px;
+    margin-inline: auto;
+  }
+  .root .footerInner {
+    padding-block: 20px;
+    gap: 12px;
+  }
+  .root .footerLogo {
+    width: 120px;
+  }
+  .root .footerInner p {
+    font-size: 15px;
+    max-width: 300px;
+    margin: auto;
+  }
+  .root .footerInner>a:last-child {
+    font-size: 11px;
+  }
+}
+
+@media(max-width:359px) {
+  .root .container {
+    width: calc(100% - 32px);
+  }
+  .root .brandLogo {
+    width: 132px;
+  }
+  .root .headerActions { gap: 6px; }
+  .root .headerSignIn { padding-inline: 12px; }
+  .root h1 {
+    font-size: 28px;
+    line-height: 1.26;
+  }
+  .root .hero>.folio {
+    font-size: 11px;
+    letter-spacing: .06em;
+  }
+  .root .hero>.folio span {
+    padding-inline: 2px;
+  }
+  .root .notebookCard,.root .journalCard,.root .homebrewCard {
+    padding-inline: 18px;
+  }
+  .root .saveGrid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .root .sheetHeading h3 {
+    font-size: 22px;
+  }
+  .root .sheetFoot {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .root .proficiencyKey {
+    font-size: 11px;
+  }
+  .root .identitySeal {
+    width: 39px;
+    height: 50px;
+  }
+  .root .sheetSectionHeading {
+    align-items: start;
+  }
+  .root .homebrewTopline {
+    gap: 8px;
+  }
+  .root .homebrewTopline .folio {
+    font-size: 11px;
+    letter-spacing: .04em;
+  }
+  .root .homebrewCard h3 {
+    font-size: 24px;
+  }
+  .root .openSource h2 {
+    font-size: 28px;
+  }
+  .root .alphaDetail {
+    display: block;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .root *,.root *::before,.root *::after {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}
+
+.root .logoLight {
+  display: block;
+}
+
+.root .logoDark {
+  display: none;
+}
+
+:global(.dark) .root .logoLight {
+  display: none;
+}
+
+:global(.dark) .root .logoDark {
+  display: block;
+}
+
+.root .footerLinks {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.root .footerLinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.root .footerLinks a:hover {
+  color: var(--action);
+  text-decoration: underline;
+}
