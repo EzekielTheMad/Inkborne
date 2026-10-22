@@ -1,5 +1,27 @@
 # Starting-equipment transaction: local review stage
 
+## Current first-class save stages — disabled
+
+`class-first-acquisition-protected-plan.sql` seals native B1 allocation;
+`class-first-acquisition-materializers.sql` consumes that plan in the original
+public-row triggers. `class-first-acquisition-writer.sql` adds one finite first
+`add_class` transaction and historical receipt recovery. Install the COMPLETE
+`class-origin-first-acquisition-prerequisites.sql` before B1, then B2 and B3.
+The complete original stage files and dependency bodies remain required.
+
+B3 retains exact native OLD/NEW revision assignment, proof consumption, full
+graph comparison and deferred commit checks. Original ordinary trigger bodies
+remain below finite checked branches. Its selected-baseline offline fixture
+uses genuine staged creation before acquisition, with synthetic Auth rows;
+this does not establish native/provider/HTTP/browser save acceptance.
+
+Native Supabase postgres inherits administrative read access. These stages add
+no explicit postgres private table/column grant or membership; API and isolated
+owner permissions are checked separately. Do not interpret plain offline
+postgres denial as native administrator isolation. All gates/readiness and the
+creation UI flag remain disabled. [Current evidence](../../docs/handoffs/2026-10-22-creation-ui-and-materializers.md)
+supersedes older preparation snapshots below. Vercel is unchanged; M7 is paused.
+
 ## Character command database row locks — separate closed subcheck
 
 `character-command-row-locks.sql` adds only two postgres-owned invoker functions
