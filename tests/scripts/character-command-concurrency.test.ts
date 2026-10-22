@@ -1,19 +1,24 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { CONCURRENCY_SCENARIOS, RESET_SQL, runCharacterCommandConcurrency, type CommandSessions,
+import { CONCURRENCY_SCENARIOS, EXTENDED_CONCURRENCY_SCENARIOS, RESET_SQL, runCharacterCommandConcurrency, type CommandSessions,
   type NativeSession } from "../../scripts/character-command-concurrency";
 
 // SIMULATED protocol tests only. Scripted SQLSTATEs, pg_stat_activity rows and
 // clocks below are not native PostgreSQL/Auth/concurrency acceptance evidence.
 type Role = keyof CommandSessions;
 type Fault = "wrong-backend" | "wrong-observer-edge" | "wrong-name" | "no-block" | "early-settle"
-  | "wrong-refusal" | "clock-never-expires" | "close-failure" | "private-error" | "role-switch-failure";
-function simulated(fault?: Fault) {
+  | "wrong-refusal" | "clock-never-expires" | "close-failure" | "private-error" | "role-switch-failure"
+  | "extended-row-drift" | "absence-rollback-drift" | "clock-helper-allowed";
+function simulated(fault?: Fault, profile: "baseline" | "extended" = "baseline") {
   const commands: Array<{ role: Role; sql: string }> = [];
   const closed: Role[] = [];
   const pids = { blocker: 101, checker: 102, observer: 103 };
   const names = { blocker: "inkborne-authrows-blocker", checker: "inkborne-authrows-checker", observer: "inkborne-authrows-observer" };
-  let scenario = -1, observations = 0, currentRole = "postgres";
+  let scenario = -1, observations = 0, currentRole = "postgres", digestReads = 0, absenceMutated = false, rollbackCorrupt = false;
+  const inventory = profile === "extended" ? EXTENDED_CONCURRENCY_SCENARIOS : CONCURRENCY_SCENARIOS;
+  const scenarioName = () => inventory[scenario];
+  const checkerFirst = () => scenarioName()?.startsWith("checker-first-") || scenarioName() === "failure-rollback-releases-locks";
+  const absenceCase = () => scenarioName()?.endsWith("-transaction-refuses");
   const pending = new Map<Role, { resolve(rows: Record<string, unknown>[]): void; reject(error: unknown): void }>();
   const stateError = (code: string) => Object.assign(new Error("SIMULATED private message must never enter evidence"), { code });
   const wait = (role: Role) => new Promise<Record<string, unknown>[]>((resolve, reject) => pending.set(role, { resolve, reject }));
@@ -24,15 +29,21 @@ function simulated(fault?: Fault) {
   const query = async (role: Role, sql: string): Promise<Record<string, unknown>[]> => {
     commands.push({ role, sql });
     if (fault === "private-error" && sql.startsWith("SET application_name")) throw stateError("XX001");
-    if (sql === RESET_SQL) { scenario++; observations = 0; return []; }
+    if (sql === RESET_SQL) { scenario++; observations = 0; digestReads = 0; absenceMutated = false; rollbackCorrupt = false; return []; }
     if (sql.startsWith("SET application_name")) return [];
     if (sql.startsWith("SELECT pg_backend_pid()")) return [{ pid: fault === "wrong-backend" ? 999 : pids[role], database: "SIMULATED", role: "postgres" }];
     if (sql.startsWith("SELECT to_char((date_trunc")) return [{ deadline: "2099-01-01T00:00:03.000000Z" }];
+    if (sql.includes("AS fixture_digest")) {
+      digestReads++;
+      const changed = (role === "checker" && absenceMutated) || rollbackCorrupt
+        || (fault === "extended-row-drift" && scenarioName() === "read-only-complete-row-correspondence" && digestReads > 1);
+      return [{ fixture_digest: (changed ? "b" : "a").repeat(32) }];
+    }
     if (sql.includes("FROM pg_stat_activity")) {
       observations++;
-      const waiter: Role = scenario === 0 || scenario === 6 ? "blocker" : "checker";
+      const waiter: Role = checkerFirst() ? "blocker" : "checker";
       const holder: Role = waiter === "blocker" ? "checker" : "blocker";
-      const expired = (scenario === 4 || scenario === 5) && observations > 1 && fault !== "clock-never-expires";
+      const expired = scenarioName()?.endsWith("-expiry") && observations > 1 && fault !== "clock-never-expires";
       return [{ waiter_pid: fault === "wrong-observer-edge" ? 999 : pids[waiter], blocker_pid: pids[holder],
         waiter_name: fault === "wrong-name" ? "unrelated" : names[waiter], blocker_name: names[holder],
         state: "active", wait_event_type: "Lock", blocked: fault !== "no-block",
@@ -43,18 +54,29 @@ function simulated(fault?: Fault) {
       currentRole = sql.match(/ROLE (\w+)/)![1]; return [];
     }
     if (sql.startsWith("SELECT private.lock_character_command_rows_v1")) {
-      if (scenario === 7 && currentRole !== "postgres") throw stateError("42501");
-      if (scenario === 0 || scenario === 6 || fault === "early-settle") return [];
+      if (scenarioName() === "api-execute-denials" && currentRole !== "postgres") throw stateError("42501");
+      if (absenceCase()) throw stateError("P0001");
+      if (checkerFirst() || scenarioName() === "read-only-complete-row-correspondence" || fault === "early-settle") return [];
       return wait(role);
     }
+    if (sql.startsWith("SELECT private.check_character_command_clock_v1")) {
+      if (currentRole !== "postgres" && fault !== "clock-helper-allowed") throw stateError("42501");
+      return [];
+    }
     if (sql.startsWith("SELECT 1/0")) throw stateError("22012");
-    if (sql.startsWith("DELETE FROM auth.sessions") && (scenario === 0 || scenario === 6)) return wait(role);
+    if (role === "blocker" && checkerFirst() && (sql.startsWith("DELETE FROM auth.sessions")
+      || sql.startsWith("UPDATE auth.users") || sql.startsWith("UPDATE public.characters"))) return wait(role);
+    if (role === "checker" && absenceCase() && (sql.startsWith("DELETE ") || sql.startsWith("UPDATE "))) {
+      absenceMutated = true; return [];
+    }
     if (sql === "COMMIT;" || sql === "ROLLBACK;") {
       if (role === "checker") {
         currentRole = "postgres";
-        if (scenario === 0 || scenario === 6) release("blocker");
+        if (checkerFirst()) release("blocker");
+        if (absenceMutated && fault === "absence-rollback-drift") rollbackCorrupt = true;
+        absenceMutated = false;
       }
-      if (role === "blocker" && scenario >= 1 && scenario <= 5) release("checker", fault === "wrong-refusal" ? "42501" : "P0001");
+      if (role === "blocker" && pending.has("checker")) release("checker", fault === "wrong-refusal" ? "42501" : "P0001");
       return [];
     }
     if (sql === "BEGIN;" || sql.startsWith("SET LOCAL lock_timeout=") || sql.startsWith("SET LOCAL statement_timeout=")
@@ -141,6 +163,71 @@ describe("SIMULATED character command multi-session orchestration; no native acc
   it("rejects duplicate backend identities before issuing SQL", async () => {
     const fixture = simulated(); fixture.sessions.checker.backendPid = fixture.sessions.blocker.backendPid;
     const result = await runCharacterCommandConcurrency(fixture.sessions);
+    expect(result.passed).toBe(false); expect(fixture.commands).toEqual([]); expect(fixture.closed).toHaveLength(3);
+  });
+
+  it("selects the extended 25-case matrix only explicitly, covering both deadlines at every wait site", async () => {
+    expect(EXTENDED_CONCURRENCY_SCENARIOS.slice(0, 8)).toEqual([...CONCURRENCY_SCENARIOS]);
+    expect(new Set(EXTENDED_CONCURRENCY_SCENARIOS).size).toBe(25);
+    const fixture = simulated(undefined, "extended");
+    const result = await runCharacterCommandConcurrency(fixture.sessions, { scenarioProfile: "extended", maxScenarioMs: 1000, pollMs: 1 });
+    expect(result).toMatchObject({ authenticationAccepted: false, sessionsClosed: true, passed: true });
+    expect(result.scenarios.map(item => item.scenario)).toEqual([...EXTENDED_CONCURRENCY_SCENARIOS]);
+    for (const site of ["user", "session", "profile", "guard", "parent"]) {
+      for (const expiry of ["jwt", "not-after"]) {
+        const scenario = result.scenarios.find(item => item.scenario === `${site}-wait-${expiry}-expiry`);
+        expect(scenario).toMatchObject({ status: "passed", expectedSqlstate: "P0001", observedSqlstate: "P0001" });
+        expect(scenario!.edges.map(edge => edge.deadlineExpired)).toEqual([false, true]);
+      }
+    }
+    for (const name of ["checker-first-user-ban", "checker-first-owner-transfer"]) {
+      expect(result.scenarios.find(item => item.scenario === name)?.edges).toMatchObject([{ waiterPid: 101, blockerPid: 102 }]);
+    }
+    expect(result.scenarios.find(item => item.scenario === "clock-helper-api-execute-denials")?.deniedRoles)
+      .toEqual(["anon", "authenticated", "service_role"]);
+    expect(fixture.commands.filter(command => command.sql === RESET_SQL)).toHaveLength(26);
+    for (const table of ["auth.users", "auth.sessions", "public.profiles", "public.characters"]) {
+      expect(fixture.commands.filter(command => command.role === "blocker"
+        && command.sql.startsWith(`SELECT id FROM ${table} WHERE`) && command.sql.endsWith("FOR UPDATE;"))).toHaveLength(2);
+    }
+    expect(fixture.commands.filter(command => command.sql === "SELECT singleton FROM private.character_writer_guard_v1 WHERE singleton=true FOR UPDATE;")).toHaveLength(2);
+  });
+
+  it("keeps only complete-row digests and proves unchanged read-only rows plus rollback recovery for absence cases", async () => {
+    const fixture = simulated(undefined, "extended");
+    const result = await runCharacterCommandConcurrency(fixture.sessions, { scenarioProfile: "extended", maxScenarioMs: 1000, pollMs: 1 });
+    expect(result.passed).toBe(true);
+    const checks = result.scenarios.filter(item => item.rowChecks);
+    expect(checks).toHaveLength(5);
+    for (const scenario of checks) {
+      const rows = scenario.rowChecks!;
+      expect(rows.scope).toBe("complete-owned-fixture-rows-digest-only");
+      expect(rows.beforeDigest).toMatch(/^[0-9a-f]{32}$/);
+      expect(rows.restoredDigest).toBe(rows.beforeDigest);
+      if (rows.phase === "read-only-check") expect(rows.afterDigest).toBe(rows.beforeDigest);
+      else {
+        expect(rows.afterDigest).not.toBe(rows.beforeDigest);
+        expect(scenario).toMatchObject({ expectedSqlstate: "P0001", observedSqlstate: "P0001" });
+      }
+    }
+    expect(fixture.commands.filter(command => command.sql.includes("AS fixture_digest"))).toHaveLength(15);
+    expect(JSON.stringify(result)).not.toMatch(/raw_user_meta_data|encrypted_password|user_id|SELECT|auth\.users|context_version/);
+  });
+
+  it.each(["extended-row-drift", "absence-rollback-drift", "clock-helper-allowed"] as const)(
+    "refuses extended-profile %s rather than claiming new acceptance", async fault => {
+      const fixture = simulated(fault, "extended");
+      const result = await runCharacterCommandConcurrency(fixture.sessions, { scenarioProfile: "extended", maxScenarioMs: 1000, pollMs: 1 });
+      expect(result.passed).toBe(false); expect(result.scenarios.at(-1)?.status).toBe("failed");
+      expect(fixture.closed).toHaveLength(3);
+      if (fault === "extended-row-drift") expect(result.scenarios.at(-1)?.reason).toMatch(/changed during read-only/);
+      else if (fault === "absence-rollback-drift") expect(result.scenarios.at(-1)?.reason).toMatch(/recover after rollback/);
+      else expect(result.scenarios.at(-1)).toMatchObject({ scenario: "clock-helper-api-execute-denials", deniedRoles: [] });
+    });
+
+  it("refuses an unknown profile before issuing fixture SQL", async () => {
+    const fixture = simulated();
+    const result = await runCharacterCommandConcurrency(fixture.sessions, { scenarioProfile: "unapproved" as "extended" });
     expect(result.passed).toBe(false); expect(fixture.commands).toEqual([]); expect(fixture.closed).toHaveLength(3);
   });
 });

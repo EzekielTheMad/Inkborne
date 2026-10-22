@@ -22,12 +22,23 @@ END; $$;`;
 export const CONCURRENCY_SCENARIOS = ["checker-first-session-delete", "delete-first-checker-refuses", "ban-first-checker-refuses",
   "owner-transfer-first-checker-refuses", "guard-wait-jwt-expiry", "session-wait-not-after-expiry",
   "failure-rollback-releases-locks", "api-execute-denials"] as const;
-type Scenario = typeof CONCURRENCY_SCENARIOS[number] | "setup";
+/** Opt-in only: a separate source freeze and approved native package must select
+ * this matrix. Existing callers continue to run the original eight cases. */
+export const EXTENDED_CONCURRENCY_SCENARIOS = [...CONCURRENCY_SCENARIOS,
+  "soft-delete-first-checker-refuses", "checker-first-user-ban", "checker-first-owner-transfer",
+  "missing-profile-transaction-refuses", "missing-guard-transaction-refuses", "missing-session-transaction-refuses",
+  "wrong-session-owner-transaction-refuses", "user-wait-jwt-expiry", "session-wait-jwt-expiry",
+  "profile-wait-jwt-expiry", "parent-wait-jwt-expiry", "user-wait-not-after-expiry",
+  "profile-wait-not-after-expiry", "guard-wait-not-after-expiry", "parent-wait-not-after-expiry",
+  "clock-helper-api-execute-denials", "read-only-complete-row-correspondence"] as const;
+type Scenario = typeof EXTENDED_CONCURRENCY_SCENARIOS[number] | "setup";
 export interface LockEdge { waiterPid: number; blockerPid: number; observedAtUTC: string; deadlineExpired: boolean }
 export interface ScenarioEvidence {
   scenario: Scenario; status: "passed" | "failed"; startedUTC: string; finishedUTC?: string;
   edges: LockEdge[]; deadlineUTC?: string; expectedSqlstate?: string; observedSqlstate?: string;
   deniedRoles?: string[]; reason?: string;
+  rowChecks?: { scope: "complete-owned-fixture-rows-digest-only"; phase: "read-only-check" | "absence-mutation-before-refusal";
+    beforeDigest: string; afterDigest: string; restoredDigest: string };
 }
 export interface ConcurrencyReport {
   kind: "character-command-concurrency-observations-v1";
@@ -59,21 +70,33 @@ function callSql(deadline: string): string {
   return `SELECT private.lock_character_command_rows_v1(jsonb_build_object('context_version',1,'actor_id','${actor}',
 'session_id','${session}','jwt_expires_at',to_char(${quotedDeadline(deadline)} AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')),'${target}'::uuid);`;
 }
+// Complete owned rows are hashed inside PostgreSQL. No Auth row payload leaves
+// the server or enters evidence. This is fixture correspondence, not Auth proof.
+const fixtureDigestSql = `SELECT md5(jsonb_build_object(
+'users',(SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM auth.users r WHERE r.id IN ('${actor}','${foreignActor}')),
+'sessions',(SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM auth.sessions r WHERE r.id IN ('${session}','10000000-0000-4000-8000-000000000006')),
+'profiles',(SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM public.profiles r WHERE r.id IN ('${actor}','${foreignActor}')),
+'characters',(SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM public.characters r WHERE r.id IN ('${target}','10000000-0000-4000-8000-000000000007')),
+'systems',(SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM public.game_systems r WHERE r.id='10000000-0000-4000-8000-000000000005'),
+'guard',(SELECT jsonb_agg(to_jsonb(r) ORDER BY r.singleton) FROM private.character_writer_guard_v1 r WHERE r.singleton)
+)::text) AS fixture_digest;`;
 
 /** Evidence records SQLSTATEs and backend lock edges only. No Auth row values,
  * token/user payloads, raw errors, query text or secrets enter the report.
  * Tests using scripted sessions must label their results SIMULATED; this
  * injected interface cannot attest whether a transport is actual PostgreSQL. */
 export async function runCharacterCommandConcurrency(sessions: CommandSessions,
-  options: { maxScenarioMs?: number; pollMs?: number } = {}): Promise<ConcurrencyReport> {
+  options: { maxScenarioMs?: number; pollMs?: number; scenarioProfile?: "baseline" | "extended" } = {}): Promise<ConcurrencyReport> {
   const maxMs = options.maxScenarioMs ?? 15_000, pollMs = options.pollMs ?? 25;
+  const profile = options.scenarioProfile ?? "baseline";
+  const scenarios = profile === "extended" ? EXTENDED_CONCURRENCY_SCENARIOS : CONCURRENCY_SCENARIOS;
   const report: ConcurrencyReport = { kind: "character-command-concurrency-observations-v1",
     authenticationAccepted: false, scenarios: [], sessionsClosed: false, passed: false };
   let end = Date.now() + maxMs, commands = 0;
   let evidence: ScenarioEvidence = { scenario: "setup", status: "failed", startedUTC: new Date().toISOString(), edges: [] };
   const list = [sessions.blocker, sessions.checker, sessions.observer];
   const run = async (connection: NativeSession, sql: string) => {
-    if (++commands > 1024) throw new SafeFailure("Finite query budget exceeded");
+    if (++commands > (profile === "extended" ? 4096 : 1024)) throw new SafeFailure("Finite query budget exceeded");
     const remaining = end - Date.now();
     if (remaining <= 0) throw new SafeFailure("Scenario wall-time bound exceeded");
     try { return await bounded(connection.query(sql), remaining); }
@@ -157,8 +180,26 @@ WHERE waiter.pid=${sessions[waiter].backendPid} AND holder.pid=${sessions[holder
     await blocked("checker", "blocker", pending);
     await run(sessions.blocker, "COMMIT;"); await expectCode(pending, "P0001");
   };
+  const fixtureDigest = async (connection = sessions.observer) => {
+    const rows = await run(connection, fixtureDigestSql);
+    if (rows.length !== 1 || Object.keys(rows[0]).length !== 1 || typeof rows[0].fixture_digest !== "string"
+      || !/^[0-9a-f]{32}$/.test(rows[0].fixture_digest)) throw new SafeFailure("Owned fixture digest is unavailable");
+    return rows[0].fixture_digest;
+  };
+  const absence = async (mutation: string) => {
+    const beforeDigest = await fixtureDigest();
+    await begin(sessions.checker); await run(sessions.checker, mutation);
+    const afterDigest = await fixtureDigest(sessions.checker);
+    if (afterDigest === beforeDigest) throw new SafeFailure("Absence mutation did not change the owned fixture rows");
+    await expectCode(start(sessions.checker, callSql(await deadline(3600))), "P0001");
+    await run(sessions.checker, "ROLLBACK;");
+    const restoredDigest = await fixtureDigest();
+    evidence.rowChecks = { scope: "complete-owned-fixture-rows-digest-only", phase: "absence-mutation-before-refusal",
+      beforeDigest, afterDigest, restoredDigest };
+    if (restoredDigest !== beforeDigest) throw new SafeFailure("Owned fixture rows did not recover after rollback");
+  };
   try {
-    if (!Number.isInteger(maxMs) || maxMs < 100 || maxMs > 30_000 || !Number.isInteger(pollMs) || pollMs < 1 || pollMs > 250
+    if ((profile !== "baseline" && profile !== "extended") || !Number.isInteger(maxMs) || maxMs < 100 || maxMs > 30_000 || !Number.isInteger(pollMs) || pollMs < 1 || pollMs > 250
       || list.some(connection => !Number.isSafeInteger(connection.backendPid) || connection.backendPid <= 0)
       || new Set(list.map(connection => connection.backendPid)).size !== 3) throw new SafeFailure("Invalid bounded session configuration");
     const identities: Record<string, unknown>[] = [];
@@ -169,15 +210,21 @@ WHERE waiter.pid=${sessions[waiter].backendPid} AND holder.pid=${sessions[holder
       identities.push(rows[0]);
     }
     if (identities.some(row => row.database !== identities[0].database || row.role !== identities[0].role)) throw new SafeFailure("Sessions do not share the same target and role");
-    for (const scenario of CONCURRENCY_SCENARIOS) {
+    for (const scenario of scenarios) {
       end = Date.now() + maxMs;
       evidence = { scenario, status: "failed", startedUTC: new Date().toISOString(), edges: [] };
       report.scenarios.push(evidence);
       await run(sessions.observer, RESET_SQL);
-      if (scenario === "checker-first-session-delete" || scenario === "failure-rollback-releases-locks") {
+      if (scenario === "checker-first-session-delete" || scenario === "failure-rollback-releases-locks"
+        || scenario === "checker-first-user-ban" || scenario === "checker-first-owner-transfer") {
         await begin(sessions.checker); await run(sessions.checker, callSql(await deadline(3600)));
         await begin(sessions.blocker);
-        const pending = start(sessions.blocker, `DELETE FROM auth.sessions WHERE id='${session}';`);
+        const mutation = scenario === "checker-first-user-ban"
+          ? `UPDATE auth.users SET banned_until=clock_timestamp()+interval '1 hour' WHERE id='${actor}';`
+          : scenario === "checker-first-owner-transfer"
+            ? `UPDATE public.characters SET user_id='${foreignActor}' WHERE id='${target}';`
+            : `DELETE FROM auth.sessions WHERE id='${session}';`;
+        const pending = start(sessions.blocker, mutation);
         await blocked("blocker", "checker", pending);
         if (scenario === "failure-rollback-releases-locks") {
           await expectCode(start(sessions.checker, "SELECT 1/0 AS intentional_failure;"), "22012");
@@ -190,29 +237,57 @@ WHERE waiter.pid=${sessions[waiter].backendPid} AND holder.pid=${sessions[holder
         await refusalAfterMutation(`UPDATE auth.users SET banned_until=clock_timestamp()+interval '1 hour' WHERE id='${actor}';`);
       } else if (scenario === "owner-transfer-first-checker-refuses") {
         await refusalAfterMutation(`UPDATE public.characters SET user_id='${foreignActor}' WHERE id='${target}';`);
-      } else if (scenario === "guard-wait-jwt-expiry" || scenario === "session-wait-not-after-expiry") {
+      } else if (scenario === "soft-delete-first-checker-refuses") {
+        await refusalAfterMutation(`UPDATE auth.users SET deleted_at=clock_timestamp() WHERE id='${actor}';`);
+      } else if (scenario === "missing-profile-transaction-refuses") {
+        // Original profile cascades may also remove the owned target inside this
+        // transaction. This is an absence-refusal case, not isolated path proof.
+        await absence(`DELETE FROM public.profiles WHERE id='${actor}';`);
+      } else if (scenario === "missing-guard-transaction-refuses") {
+        await absence("DELETE FROM private.character_writer_guard_v1 WHERE singleton=true;");
+      } else if (scenario === "missing-session-transaction-refuses") {
+        await absence(`DELETE FROM auth.sessions WHERE id='${session}';`);
+      } else if (scenario === "wrong-session-owner-transaction-refuses") {
+        await absence(`UPDATE auth.sessions SET user_id='${foreignActor}' WHERE id='${session}';`);
+      } else if (scenario.endsWith("-expiry")) {
         const expiry = await deadline(3, sessions.observer); evidence.deadlineUTC = expiry;
-        if (scenario === "session-wait-not-after-expiry") {
+        const sessionDeadline = scenario.endsWith("-not-after-expiry");
+        if (sessionDeadline) {
           await run(sessions.observer, `UPDATE auth.sessions SET not_after=${quotedDeadline(expiry)} WHERE id='${session}';`);
         }
         await begin(sessions.blocker);
-        await run(sessions.blocker, scenario === "guard-wait-jwt-expiry"
-          ? "SELECT singleton FROM private.character_writer_guard_v1 WHERE singleton=true FOR UPDATE;"
-          : `SELECT id FROM auth.sessions WHERE id='${session}' FOR UPDATE;`);
+        const waitSite = scenario.split("-wait-")[0];
+        const lockSql = waitSite === "user" ? `SELECT id FROM auth.users WHERE id='${actor}' FOR UPDATE;`
+          : waitSite === "session" ? `SELECT id FROM auth.sessions WHERE id='${session}' FOR UPDATE;`
+            : waitSite === "profile" ? `SELECT id FROM public.profiles WHERE id='${actor}' FOR UPDATE;`
+              : waitSite === "guard" ? "SELECT singleton FROM private.character_writer_guard_v1 WHERE singleton=true FOR UPDATE;"
+                : waitSite === "parent" ? `SELECT id FROM public.characters WHERE id='${target}' FOR UPDATE;` : undefined;
+        if (!lockSql) throw new SafeFailure("Unsupported finite wait site");
+        await run(sessions.blocker, lockSql);
         await begin(sessions.checker);
-        const pending = start(sessions.checker, callSql(scenario === "guard-wait-jwt-expiry" ? expiry : await deadline(3600)));
+        const pending = start(sessions.checker, callSql(sessionDeadline ? await deadline(3600) : expiry));
         await blocked("checker", "blocker", pending, expiry);
         await expireWhileBlocked(pending, expiry);
         await run(sessions.blocker, "ROLLBACK;"); await expectCode(pending, "P0001");
-      } else {
+      } else if (scenario === "read-only-complete-row-correspondence") {
+        const beforeDigest = await fixtureDigest();
+        await begin(sessions.checker); await run(sessions.checker, callSql(await deadline(3600)));
+        const afterDigest = await fixtureDigest();
+        await run(sessions.checker, "ROLLBACK;");
+        const restoredDigest = await fixtureDigest();
+        evidence.rowChecks = { scope: "complete-owned-fixture-rows-digest-only", phase: "read-only-check",
+          beforeDigest, afterDigest, restoredDigest };
+        if (beforeDigest !== afterDigest || beforeDigest !== restoredDigest) throw new SafeFailure("Owned fixture rows changed during read-only check");
+      } else if (scenario === "api-execute-denials" || scenario === "clock-helper-api-execute-denials") {
         evidence.deniedRoles = [];
         for (const role of ["anon", "authenticated", "service_role"]) {
           const expires = await deadline(3600);
           await begin(sessions.checker); await run(sessions.checker, `SET LOCAL ROLE ${role};`);
-          await expectCode(start(sessions.checker, callSql(expires)), "42501");
+          await expectCode(start(sessions.checker, scenario === "clock-helper-api-execute-denials"
+            ? `SELECT private.check_character_command_clock_v1(${quotedDeadline(expires)});` : callSql(expires)), "42501");
           evidence.deniedRoles.push(role); await run(sessions.checker, "ROLLBACK;");
         }
-      }
+      } else throw new SafeFailure("Unsupported finite scenario");
       // Own idle/aborted transactions are explicitly ended between cases.
       await run(sessions.blocker, "ROLLBACK;"); await run(sessions.checker, "ROLLBACK;");
       evidence.status = "passed"; evidence.finishedUTC = new Date().toISOString();
@@ -229,7 +304,7 @@ WHERE waiter.pid=${sessions[waiter].backendPid} AND holder.pid=${sessions[holder
     const closed = await Promise.allSettled(list.map(connection => bounded(Promise.resolve().then(() => connection.close()), 5000)));
     report.sessionsClosed = closed.every(result => result.status === "fulfilled");
   }
-  report.passed = report.sessionsClosed && report.scenarios.length === CONCURRENCY_SCENARIOS.length
+  report.passed = report.sessionsClosed && report.scenarios.length === scenarios.length
     && report.scenarios.every(item => item.status === "passed");
   return report;
 }
