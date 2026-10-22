@@ -2,6 +2,21 @@
 
 ## Active execution — 2026-10-22 UTC
 
+**Server token-context verification implemented; authenticated saving still open.**
+Source `0dc7a4b` captures one cookie token and passes it explicitly to the installed
+SDK's claims verification and current-user lookup. Strict same-token identity,
+issuer/profile and post-lookup expiry checks return only a frozen four-field
+context or generic failure. All 75 focused tests at `f534bfb` passed, including
+real SDK ES256 verification with in-process Auth transport. Independent source
+review passed. The helper has no application caller; native session/config/owner
+locks, genuine bootstrap and verified B1/B2/B3 remain open. Original SQL denials
+and gates are unchanged. [Checkpoint](handoffs/2026-10-22-character-command-token-context.md).
+Full project check at `f534bfb` passed typecheck, zero-warning lint,
+**365 files / 5057 tests / three UNVERIFIED M5 skips**; all432 observed identities
+exited. Vercel is unchanged; M1–M6/M5.5 remain active and M7/creature imports paused.
+
+Earlier checkpoints follow.
+
 **Original creation-history checks and immutable calculation storage implemented.**
 Executable source `5b0da64` verifies the creation receipt, unique finalized bootstrap
 journal and exactly two consumed proofs before deriving and retaining a complete

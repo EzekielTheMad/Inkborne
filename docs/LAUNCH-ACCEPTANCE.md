@@ -2,6 +2,26 @@
 
 ## Active continuation — 2026-10-22 UTC
 
+### Same-token server boundary — source complete, native save admission open
+
+Source `0dc7a4b` implements the accepted no-argument server token-context boundary:
+one untrusted cookie token, explicit SDK claims/user verification of those same
+bytes, strict selected identity/config/profile checks and expiry after waits.
+Only the frozen four-field context or generic unavailable result escapes.
+Test checkpoint `f534bfb`: **75/75 passed**, including seven installed-SDK cases
+with ephemeral keys and strict in-process Auth transport. Independent source
+review passed. Full project check at `f534bfb` passed typecheck, zero-warning lint,
+**365 files / 5057 tests / three UNVERIFIED M5 skips**; all432 observed identities
+exited. The skips remain open requirements.
+
+This is an unused internal helper, with no route/service client/RPC or SQL changes.
+Native Auth/session/configuration/current-owner and acceptance locks remain open;
+both original Auth seams still refuse. G2 baseline history did not close those
+requirements. The finite nonanonymous/issuer/audience/time restrictions and
+modeled-provider limits are explicit in the [checkpoint](handoffs/2026-10-22-character-command-token-context.md).
+Continue genuine bootstrap and verified B1/B2/B3 only after their required native
+closure. Vercel unchanged; M1–M6/M5.5 precede M8; M7/creature imports paused.
+
 ### Creation-history correspondence and immutable calculation evidence — staged only
 
 Source `8e113c5` adds a closed native history reader and calculation table. The

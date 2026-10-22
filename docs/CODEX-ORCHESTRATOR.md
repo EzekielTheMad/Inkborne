@@ -4,6 +4,17 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+Latest source `0dc7a4b` implements the no-argument server same-token context
+boundary; `f534bfb` adds 75 passing focused tests, including installed-SDK real
+ES256 verification against ephemeral fixture keys. Independent source review
+passed. No application caller, service client, RPC, SQL Auth replacement or native
+session/config/owner acceptance exists. Keep both SQL Auth seams denied; next
+prepare/review finite native Auth/locks/revocation before genuine bootstrap and
+verified B1/B2/B3. [Current checkpoint](handoffs/2026-10-22-character-command-token-context.md).
+Full check at `f534bfb` passed typecheck/lint,365 files /5057 tests /three
+UNVERIFIED M5 skips; all432 observed identities exited. Vercel unchanged,
+M1–M6/M5.5 active, M7/creature imports paused.
+
 Latest executable checkpoint `5b0da64`: original bootstrap correspondence reader
 and immutable calculation-only storage (`8e113c5`). All 62 focused tests and
 independent source/fixture reviews passed. Records derive entirely from native
