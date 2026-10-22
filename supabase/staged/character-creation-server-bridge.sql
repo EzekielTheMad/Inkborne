@@ -126,7 +126,10 @@ BEGIN
   RETURN result;
 END $$;
 ALTER FUNCTION public.character_creation_command_v1(jsonb,jsonb) OWNER TO inkborne_character_command_gateway_owner;
-REVOKE ALL ON FUNCTION public.character_creation_command_v1(jsonb,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+-- Native supabase_admin has a public-schema default EXECUTE grant to postgres.
+-- Close this NEW function's ACL after ownership transfer; never alter the
+-- installer's defaults or unrelated legacy objects to make installation pass.
+REVOKE ALL ON FUNCTION public.character_creation_command_v1(jsonb,jsonb) FROM PUBLIC,anon,authenticated,service_role,postgres;
 GRANT EXECUTE ON FUNCTION public.character_creation_command_v1(jsonb,jsonb) TO service_role;
 
 -- Refuse permissive inherited defaults rather than silently reconciling them.
@@ -160,15 +163,18 @@ BEGIN
       RAISE EXCEPTION 'character_creation_bridge_capability_unavailable:function:%',item.oid::regprocedure USING ERRCODE='42501';
     END IF;
   END LOOP;
-  IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc p,
+  FOR item IN SELECT p.oid,pg_catalog.pg_get_userbyid(a.grantee) AS grantee,a.is_grantable
+    FROM pg_catalog.pg_proc p,
       LATERAL pg_catalog.aclexplode(COALESCE(p.proacl,pg_catalog.acldefault('f',p.proowner))) a
     WHERE p.oid IN ('private.lock_character_command_actor_rows_gateway_v1(jsonb)'::regprocedure,
       'public.character_creation_command_v1(jsonb,jsonb)'::regprocedure)
       AND a.privilege_type='EXECUTE' AND a.grantee<>p.proowner
       AND a.grantee<>CASE WHEN p.pronamespace='private'::regnamespace THEN gateway
-        ELSE (SELECT oid FROM pg_catalog.pg_roles WHERE rolname='service_role') END) THEN
-    RAISE EXCEPTION 'character_creation_bridge_capability_unavailable:explicit_acl' USING ERRCODE='42501';
-  END IF;
+        ELSE (SELECT oid FROM pg_catalog.pg_roles WHERE rolname='service_role') END
+  LOOP
+    RAISE EXCEPTION 'character_creation_bridge_capability_unavailable:explicit_acl:%:%:%',
+      item.oid::regprocedure,item.grantee,item.is_grantable USING ERRCODE='42501';
+  END LOOP;
 END;
 $closure$;
 COMMIT;

@@ -193,6 +193,30 @@ describe("installation rejects changed authority/default privileges", () => {
     await removeBridge(); await db.exec("GRANT USAGE ON SCHEMA private TO service_role");
     await installationRefuses();
   });
+  it("installs under a distinct directly authenticated SUPER installer without changing runtime ownership", async () => {
+    await removeBridge();
+    await db.exec("CREATE ROLE supabase_admin LOGIN SUPERUSER; SET SESSION AUTHORIZATION supabase_admin");
+    await db.exec(stage);
+    expect((await db.query(`SELECT current_user,session_user,pg_get_userbyid(proowner) AS owner
+      FROM pg_proc WHERE oid='private.lock_character_command_actor_rows_gateway_v1(jsonb)'::regprocedure`)).rows)
+      .toEqual([{ current_user: "supabase_admin", session_user: "supabase_admin", owner: "postgres" }]);
+  });
+  it("closes only the new RPC when the SUPER installer has Supabase's public postgres EXECUTE default", async () => {
+    await removeBridge();
+    // Reproduce the documented creator-specific default. This fixture's OID10
+    // postgres remains SUPER, so inspect explicit ACLs, not runtime authority.
+    await db.exec(`CREATE ROLE supabase_admin LOGIN SUPERUSER;
+      ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO postgres;
+      SET SESSION AUTHORIZATION supabase_admin`);
+    const defaults = (await db.query("SELECT defaclrole,defaclnamespace,defaclobjtype,defaclacl::text FROM pg_default_acl ORDER BY oid")).rows;
+    await db.exec(stage);
+    expect((await db.query("SELECT defaclrole,defaclnamespace,defaclobjtype,defaclacl::text FROM pg_default_acl ORDER BY oid")).rows).toEqual(defaults);
+    expect((await db.query(`SELECT pg_get_userbyid(a.grantee) AS grantee,a.privilege_type,a.is_grantable
+      FROM pg_proc p,LATERAL aclexplode(p.proacl) a
+      WHERE p.oid='public.character_creation_command_v1(jsonb,jsonb)'::regprocedure ORDER BY grantee`)).rows)
+      .toEqual([{ grantee: gateway, privilege_type: "EXECUTE", is_grantable: false },
+        { grantee: "service_role", privilege_type: "EXECUTE", is_grantable: false }]);
+  });
   it("atomically rejects an unexpected inherited default EXECUTE grant", async () => {
     await removeBridge(); await db.exec("CREATE ROLE fixture_extra; ALTER DEFAULT PRIVILEGES IN SCHEMA private GRANT EXECUTE ON FUNCTIONS TO fixture_extra");
     await installationRefuses();
