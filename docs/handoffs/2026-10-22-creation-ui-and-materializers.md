@@ -1,5 +1,11 @@
 # Creation recovery interface and first-class materialization
 
+Current successor: [native first-class save and staged application recovery](2026-10-22-authenticated-first-class-saving.md)
+records the later 17-stage native COMMIT/recovery pass, new application transport,
+default-off selection/recovery flow,30 local browser checks and full 388/5,633
+check. Earlier evidence below retains its original scope. Application/Next/
+PostgREST acceptance and writer-fence activation remain open.
+
 Five local executable checkpoints: `734217d` (new endpoint ACL), `588e10f`
 (default-off interface), `4bd2a27` (B2 materialization), `023cd3a` (browser checks),
 `da66dad` ([first-class writer and38 offline cases](2026-10-22-first-class-save-writer.md)).

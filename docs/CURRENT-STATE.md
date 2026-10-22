@@ -2,32 +2,34 @@
 
 ## Active execution — 2026-10-22 UTC
 
-**Five local checkpoints complete; native draft creation and B1 planning pass.**
-`734217d`, `588e10f`, `4bd2a27`, `023cd3a`, `da66dad` deliver endpoint ACL closure,
-account-bound default-off creation/recovery, sealed-plan materializers,14 actual
-local desktop/mobile browser checks and the first-class transaction writer.
-The latter passes38 offline SQL cases including genuine staged creation COMMIT,
-class selection, full graph/deferred closure, historical recovery and rollback.
-Full project check at `da66dad` passes **383 files /5,504 tests /three existing M5
-skips**, typecheck and zero-warning lint; all559 recorded identities exited and
-no recorded task listener remained. Focused130 UI/28 B2 cases also pass.
+**Five further checkpoints complete; native first-class save and recovery pass.**
+Commits `a484e97`, `702e2c8`, `67a9555`, `cebfb24` add account-bound class-command
+transport, immutable account/character-scoped pending originals, a default-off
+first-class selection/recovery route and 30 actual local desktop/mobile browser
+checks. Focused 96 transport/storage and 100 UI cases pass. Full check at
+`cebfb24` passes **388 files /5,633 tests /three existing M5 skips**, typecheck
+and zero-warning lint; all 531 recorded test identities exited. Browser 23
+identities, Chrome and both local ports are closed.
 
-Native run `20261022T195104.853Z-bbb86a2ec4fa` passes the complete83-migration
-baseline,15 complete stages,93-function/17-table metadata and15 scenario groups:
-real-provider draft creation/recovery/rollback, protected B1 planning, exact
-journal admission/refusal and actual session revocation. All625 recorded client
-identities and six owned resources are absent. Native postgres's administrative
-inheritance is unchanged (14 roles/16 edges); no explicit private table/column
-grant or role repair was added. This is not administrator read isolation.
-The earlier missing-prerequisite and verifier failures remain preserved.
+Native run `20261022T205813.848Z-86307c2a3584`, frozen package `83ebf2a3...`,
+passes all 83 baseline migrations, 17 COMPLETE stages, 109-function/17-table metadata
+and 16 scenario groups. Genuine creation precedes actual first-class COMMIT;
+a fresh transaction verifies the complete original raw graph, native rows/order
+and consumed proofs. Replay/recovery/conflict/absence, active-phase full rollback,
+foreign/missing owner, source version/draft changes, actual logout and new-provider
+session historical recovery pass. All650 recorded identities and six owned
+resources are absent. Native postgres administrative inheritance remains unchanged;
+no explicit original-private table/column grant or role repair was added.
 
-Native B2/B3/class-save, direct-writer fences and actual Next/PostgREST
-create–save–reload–play acceptance remain open. UI flag, general Auth denials,
-both gates and all13 readiness flags remain disabled. No hosted acceptance or
-feature activation is claimed.
-[Current evidence, failures and next gates](handoffs/2026-10-22-creation-ui-and-materializers.md).
-[First-class writer and exact offline limits](handoffs/2026-10-22-first-class-save-writer.md).
-Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
+Application saving remains disabled. Actual Next cookies/PostgREST and complete
+browser-to-database create–save–reload–play/recovery, native class concurrency,
+broader session policy and remaining writer cohorts remain OPEN. The UI flag,
+general Auth denials, both gates and all 13 readiness flags remain closed.
+[Current delivery, exact native evidence and limitations](handoffs/2026-10-22-authenticated-first-class-saving.md).
+[Next writer-fence checkpoint and inventory](specs/2026-10-22-enrolled-character-writer-fences.md).
+Earlier row/provider/creation/B1 checks retain their own finite scopes and
+preserved failures. M1 remains incomplete; Vercel is unchanged, M1–M6/M5.5
+precede M8, and M7/creature imports remain paused.
 
 Earlier preparation checkpoints follow.
 

@@ -1,6 +1,16 @@
-# First-class materializer slices — native B1 and staged B2/B3
+# First-class materializer slices — native save accepted in its finite scope
 
-2026-10-22 current checkpoint: source `da66dad` includes protected B1, sealed-plan
+Current successor: [native first-class save and staged application recovery](../handoffs/2026-10-22-authenticated-first-class-saving.md).
+Native run `20261022T205813.848Z-86307c2a3584` now passes all 17 COMPLETE stages,
+genuine first-class COMMIT/full graph, rollback and historical/current-session
+recovery. Source `cebfb24` adds default-off application transport/recovery and 30
+local browser checks; full 388 files/5,633 passes/three existing M5 skips pass.
+Keep writer fences, real Next/PostgREST/app acceptance and activation open.
+The earlier native 15/B3-source snapshot below remains historical evidence.
+
+## Historical checkpoint at da66dad
+
+2026-10-22 historical checkpoint: source `da66dad` includes protected B1, sealed-plan
 B2 consumers (`4bd2a27`) and the genuine staged B3 first-class writer. B2 passes28
 offline cases; B3 passes38 including genuine staged creation COMMIT before class
 selection, full graph/deferred closure, recovery and rollback. Full project

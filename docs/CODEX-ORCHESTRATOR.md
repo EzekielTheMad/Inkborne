@@ -4,32 +4,34 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
-Latest executable source `da66dad` completes five local checkpoints: endpoint
-ACL closure, default-off account-bound creation/recovery, sealed-plan B2 consumers,
-14 actual local browser checks and the genuine staged first-class writer.
-Focused130 UI/28 B2/38 B3 cases pass. Full check:383 files/5,504 passes/three
-existing M5 skips, typecheck/lint pass; all559 recorded identities exited and
-no recorded task listener remained. Browser26 identities and both ports closed.
+Latest executable source `cebfb24`. **Five further checkpoints complete; native first-class save and recovery pass.**
+Commits `a484e97`, `702e2c8`, `67a9555`, `cebfb24` add account-bound class-command
+transport, immutable account/character-scoped pending originals, a default-off
+first-class selection/recovery route and 30 actual local desktop/mobile browser
+checks. Focused 96 transport/storage and 100 UI cases pass. Full check at
+`cebfb24` passes **388 files /5,633 tests /three existing M5 skips**, typecheck
+and zero-warning lint; all 531 recorded test identities exited. Browser 23
+identities, Chrome and both local ports are closed.
 
-Native run `20261022T195104.853Z-bbb86a2ec4fa`, frozen package `03d25dc7...`,
-passes83 baseline migrations,15 complete stages,93-function/17-table metadata
-and15 scenario groups for real-provider draft creation/recovery/rollback,
-protected B1 plans/journals and session revocation. All625 client identities and
-six owned resources are absent. Original8/extended25 native row and nine provider
-cases remain accepted within their bounded scopes. The missing-prerequisite
-candidate and subsequent verifier failures remain historical evidence.
-Native postgres retains its unchanged administrative inheritance; the contract
-forbids added explicit private grants, not effective administrative reads.
+Native run `20261022T205813.848Z-86307c2a3584`, frozen package `83ebf2a3...`,
+passes all 83 baseline migrations, 17 COMPLETE stages, 109-function/17-table metadata
+and 16 scenario groups. Genuine creation precedes actual first-class COMMIT;
+a fresh transaction verifies the complete original raw graph, native rows/order
+and consumed proofs. Replay/recovery/conflict/absence, active-phase full rollback,
+foreign/missing owner, source version/draft changes, actual logout and new-provider
+session historical recovery pass. All650 recorded identities and six owned
+resources are absent. Native postgres administrative inheritance remains unchanged;
+no explicit original-private table/column grant or role repair was added.
 
-Next: the complete17-stage lineage including B2/B3, genuine native first-class
-commit/recovery, remaining writer fences, then actual Next/PostgREST browser
-create–save–reload–play. Keep the UI flag off, general Auth/global gates/all13
-readiness denied. Local/source and native B1 checks do not close application or
-launch acceptance. The current request authorizes bounded local continuation,
-not hosted writes or deployment.
-[Current checkpoint and exact boundaries](handoffs/2026-10-22-creation-ui-and-materializers.md).
-[Writer checkpoint](handoffs/2026-10-22-first-class-save-writer.md).
-Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
+Application saving remains disabled. Actual Next cookies/PostgREST and complete
+browser-to-database create–save–reload–play/recovery, native class concurrency,
+broader session policy and remaining writer cohorts remain OPEN. The UI flag,
+general Auth denials, both gates and all 13 readiness flags remain closed.
+[Current delivery, exact native evidence and limitations](handoffs/2026-10-22-authenticated-first-class-saving.md).
+[Next writer-fence checkpoint and inventory](specs/2026-10-22-enrolled-character-writer-fences.md).
+Earlier row/provider/creation/B1 checks retain their own finite scopes and
+preserved failures. M1 remains incomplete; Vercel is unchanged, M1–M6/M5.5
+precede M8, and M7/creature imports remain paused.
 
 Historical source `96e1197` completed three local preparation checkpoints:
 five-file selected-catalog/synthetic-fixture pack, eight-case three-session runner

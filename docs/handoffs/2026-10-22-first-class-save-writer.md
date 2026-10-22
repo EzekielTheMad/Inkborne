@@ -1,5 +1,11 @@
 # First-class transaction writer — staged local checkpoint
 
+Current successor: [native first-class save and staged application recovery](2026-10-22-authenticated-first-class-saving.md)
+records the later 17-stage native COMMIT/recovery pass, new application transport,
+default-off selection/recovery flow,30 local browser checks and full 388/5,633
+check. Earlier evidence below retains its original scope. Application/Next/
+PostgREST acceptance and writer-fence activation remain open.
+
 The current five-checkpoint request authorizes this local continuation. Vercel
 is unchanged; M1–M6/M5.5 remain active and M7/creature imports remain paused.
 The new SQL is outside migrations. No hosted installation, feature activation,

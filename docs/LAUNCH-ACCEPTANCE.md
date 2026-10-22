@@ -2,35 +2,36 @@
 
 ## Active continuation — 2026-10-22 UTC
 
-### Five local checkpoints and native creation/B1 pass; full app saving remains open
+### Native first-class saving and staged application recovery; full app acceptance open
 
-Source `da66dad` completes five local checkpoints (`734217d`, `588e10f`, `4bd2a27`,
-`023cd3a`, `da66dad`): creation endpoint permissions, account-bound default-off
-creation/recovery, sealed-plan B2 materialization,14 actual local desktop/mobile
-browser checks and the first-class transaction writer. Focused130 UI/28 B2/38 B3
-tests pass. Full check passes383 files/5,504 tests/three existing M5 skips,
-typecheck and zero-warning lint; all559 test identities exited with no recorded
-task listener. Browser26 identities and both local ports closed.
+**Five further checkpoints complete; native first-class save and recovery pass.**
+Commits `a484e97`, `702e2c8`, `67a9555`, `cebfb24` add account-bound class-command
+transport, immutable account/character-scoped pending originals, a default-off
+first-class selection/recovery route and 30 actual local desktop/mobile browser
+checks. Focused 96 transport/storage and 100 UI cases pass. Full check at
+`cebfb24` passes **388 files /5,633 tests /three existing M5 skips**, typecheck
+and zero-warning lint; all 531 recorded test identities exited. Browser 23
+identities, Chrome and both local ports are closed.
 
-Native run `20261022T195104.853Z-bbb86a2ec4fa` passes the full83-migration baseline,
-15 complete stages,93-function/17-table metadata and15 scenario groups. Genuine
-real-provider draft creation COMMIT/full graph, receipt recovery/conflict/absence,
-injected rollback, owner-only B1 planning/journal refusal and actual session
-revocation pass. All625 client identities and six owned resources are absent.
-Before/after administrative inheritance is unchanged (14 roles/16 edges);
-effective native postgres reads are not private-role isolation. No new explicit
-postgres private table/column grant or membership was added. Earlier failed
-attempts and the withdrawn14-stage candidate remain preserved.
+Native run `20261022T205813.848Z-86307c2a3584`, frozen package `83ebf2a3...`,
+passes all 83 baseline migrations, 17 COMPLETE stages, 109-function/17-table metadata
+and 16 scenario groups. Genuine creation precedes actual first-class COMMIT;
+a fresh transaction verifies the complete original raw graph, native rows/order
+and consumed proofs. Replay/recovery/conflict/absence, active-phase full rollback,
+foreign/missing owner, source version/draft changes, actual logout and new-provider
+session historical recovery pass. All650 recorded identities and six owned
+resources are absent. Native postgres administrative inheritance remains unchanged;
+no explicit original-private table/column grant or role repair was added.
 
-Original8/expanded25 native row and nine provider cases remain accepted in their
-bounded scopes. Native B2/B3 class-save, broader session policy, direct-writer
-fences, Next cookies/PostgREST and complete create–save–reload–play acceptance
-remain OPEN. UI flag, general Auth, both gates and13 readiness families remain
-denied. The next native class-save profile requires all17 complete stages;
-38 offline B3 cases and explicit browser/Auth/action doubles cannot close it.
-[Evidence, failures and exact remaining gates](handoffs/2026-10-22-creation-ui-and-materializers.md).
-[Writer evidence](handoffs/2026-10-22-first-class-save-writer.md).
-Vercel unchanged; M1–M6/M5.5 precede M8; M7/creature imports paused.
+Application saving remains disabled. Actual Next cookies/PostgREST and complete
+browser-to-database create–save–reload–play/recovery, native class concurrency,
+broader session policy and remaining writer cohorts remain OPEN. The UI flag,
+general Auth denials, both gates and all 13 readiness flags remain closed.
+[Current delivery, exact native evidence and limitations](handoffs/2026-10-22-authenticated-first-class-saving.md).
+[Next writer-fence checkpoint and inventory](specs/2026-10-22-enrolled-character-writer-fences.md).
+Earlier row/provider/creation/B1 checks retain their own finite scopes and
+preserved failures. M1 remains incomplete; Vercel is unchanged, M1–M6/M5.5
+precede M8, and M7/creature imports remain paused.
 
 Earlier preparation evidence follows.
 
