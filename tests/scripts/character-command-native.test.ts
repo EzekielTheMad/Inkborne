@@ -48,6 +48,7 @@ describe("CP3 SIMULATED freeze/admission; no native runtime, provider or approva
   it("binds baseline, every added source and all executable external input", () => {
     expect(pkg.files.map(file => file.path)).toEqual(CHARACTER_FILES);
     expect(pkg.external).toHaveLength(3); expect(pkg.fixtureIds).toHaveLength(7);
+    expect(pkg.scenarioProfile).toBe("extended"); expect(pkg.scenarios).toHaveLength(25);
     expect(loadCharacterPackage(root, pkg).has("scripts/character-command-concurrency.ts")).toBe(true);
   });
   it.each([{ scope: "R07.1-baseline-and-stage" }, { gate: "G1" }, { approvedBy: "Agent" }, { approvedAtUTC: "bad" },
@@ -71,6 +72,8 @@ describe("CP3 SIMULATED freeze/admission; no native runtime, provider or approva
   it("refuses any changed finite inventory/operation list", () => {
     expect(() => loadCharacterPackage(root, { ...pkg, files: pkg.files.slice(1) })).toThrow();
     expect(() => loadCharacterPackage(root, { ...pkg, fixtureIds: [...pkg.fixtureIds, "extra"] })).toThrow();
+    expect(() => loadCharacterPackage(root, { ...pkg, scenarioProfile: "baseline" } as unknown as CharacterPackage)).toThrow();
+    expect(() => loadCharacterPackage(root, { ...pkg, scenarios: pkg.scenarios.slice(1) } as unknown as CharacterPackage)).toThrow();
   });
   it("rejects approval before source/transport/process/evidence access", async () => {
     const transport = vi.fn(), save = vi.fn(), saveProcess = vi.fn();

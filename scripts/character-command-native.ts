@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import { TARGET, freezeSource, validateFrozen, manifestHash, psql, verifyRuntime,
   type FrozenManifest, type Journal, type RuntimeApproval, type Transport } from "./equipment-runtime";
 import { openCharacterPsqlSession, type SessionProcess } from "./character-command-psql";
-import { runCharacterCommandConcurrency, type NativeSession, type ConcurrencyReport } from "./character-command-concurrency";
+import { EXTENDED_CONCURRENCY_SCENARIOS, runCharacterCommandConcurrency, type NativeSession, type ConcurrencyReport } from "./character-command-concurrency";
 
 export const CHARACTER_PROFILE = "character-command-rows-native-v1";
 export const CHARACTER_FILES = ["scripts/character-command-native.ts", "scripts/character-command-psql.ts",
@@ -21,6 +21,7 @@ type Fingerprint = { path: string; sha256: string };
 export interface CharacterPackage {
   version: 1; scope: typeof CHARACTER_PROFILE; baseline: FrozenManifest; files: Fingerprint[];
   external: Fingerprint[]; operations: typeof CHARACTER_OPERATIONS; fixtureIds: string[];
+  scenarioProfile: "extended"; scenarios: typeof EXTENDED_CONCURRENCY_SCENARIOS;
 }
 export interface CharacterApproval {
   gate: "G2"; scope: typeof CHARACTER_PROFILE; approvedBy: "Victor"; approvedAtUTC: string;
@@ -28,6 +29,7 @@ export interface CharacterApproval {
 }
 export interface CharacterNativeJournal {
   scope: typeof CHARACTER_PROFILE; execution: "native"; packageSha256: string; sourceSha: string;
+  scenarioProfile: "extended";
   authenticationAccepted: false; complete: boolean; steps: string[]; catalogs: unknown[];
   scenarioReport?: ConcurrencyReport; backendPids: number[]; backendsAbsent: boolean;
   failurePhase?: string; cleanupErrors: string[];
@@ -53,7 +55,8 @@ export function freezeCharacterPackage(root: string): CharacterPackage {
     return { path: file, sha256: hash(readFileSync(file)) };
   });
   return { version: 1, scope: CHARACTER_PROFILE, baseline, files, external,
-    operations: CHARACTER_OPERATIONS, fixtureIds: CHARACTER_FIXTURE_IDS };
+    operations: CHARACTER_OPERATIONS, fixtureIds: CHARACTER_FIXTURE_IDS,
+    scenarioProfile: "extended", scenarios: EXTENDED_CONCURRENCY_SCENARIOS };
 }
 export function validateCharacterApproval(pkg: CharacterPackage, approval: CharacterApproval, confirmation: string) {
   const keys = ["gate", "scope", "approvedBy", "approvedAtUTC", "sourceSha", "packageSha256", "engineId", "operations"].sort();
@@ -96,6 +99,7 @@ export async function executeCharacterRows(options: {
   baselineMatches(options.pkg, options.baselineReceipt, options.resourceIds);
   if (options.resourceIds.engineId !== options.approval.engineId) return fail();
   const journal: CharacterNativeJournal = { scope: CHARACTER_PROFILE, execution: "native", authenticationAccepted: false,
+    scenarioProfile: "extended",
     packageSha256: characterPackageHash(options.pkg), sourceSha: options.pkg.baseline.sourceSha,
     complete: false, steps: [], catalogs: [], backendPids: [], backendsAbsent: false, cleanupErrors: [] };
   const sessions: NativeSession[] = [];
@@ -146,7 +150,8 @@ export async function executeCharacterRows(options: {
       sessions.push(session); journal.backendPids.push(session.backendPid); save();
     }
     phase = "three-session-contention"; save();
-    journal.scenarioReport = await runCharacterCommandConcurrency({ blocker: sessions[0], checker: sessions[1], observer: sessions[2] });
+    journal.scenarioReport = await runCharacterCommandConcurrency({ blocker: sessions[0], checker: sessions[1], observer: sessions[2] },
+      { scenarioProfile: options.pkg.scenarioProfile });
     save(); if (!journal.scenarioReport.passed) return fail();
     journal.steps.push(phase);
   } catch { journal.failurePhase = phase; }
