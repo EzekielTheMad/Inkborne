@@ -2,19 +2,22 @@
 
 ## Active execution — 2026-10-22 UTC
 
-**Native row/Auth profiles pass; guarded creation implemented locally.**
-The original8 and expanded25 real PostgreSQL cases passed, followed by nine real
-Auth lifecycle cases using the production resolver and installed SDK. Independent
-evidence review and exact owned-resource/client cleanup passed. Source `e055189`
-adds the reviewed server-only creation bridge and finite guarded creation/recovery;
-77 bridge/transport and23 actual offline bootstrap tests pass. `ad94e2f` adds sealed
-pre-journal B1 storage/binding with33 passing offline tests; native B1 remains open.
-Full check at `e055189` passed:
-**374 files /5,343 passes /three existing M5 skips**, typecheck and zero-warning
-lint; all586 recorded identities exited. Native full-stage creation, protected
-class planning/materialization/choices writing and the actual app workflow remain
-open. No hosted acceptance or save activation is claimed.
-[Current evidence and five work areas](handoffs/2026-10-22-character-command-native-and-creation.md).
+**Native row/Auth verified; creation/recovery UI and B2 materialization staged.**
+The original8/expanded25 native row and nine real provider cases passed. New
+checkpoints `734217d`, `588e10f`, `4bd2a27`, `023cd3a` close the new endpoint's
+installer default, add an account-bound default-off interface and consume sealed
+first-class materialization plans. Focused130 UI and28 B2 tests pass;14 actual
+offline desktop/mobile browser checks pass, including real reload and account
+changes. Full project check passes **382 files /5,466 tests /three existing M5
+skips**, typecheck and zero-warning lint; all556 identities exited. Additional
+browser harness type/lint passes; all26 browser identities and both ports closed.
+Two complete-stage native attempts stopped safely at the bridge's explicit ACL
+check. The narrow fix is offline-verified; native confirmation remains open.
+The proposed14-stage B1 profile was withdrawn before execution for a missing
+complete prerequisite; its corrected15-stage/93-function profile is under review.
+Native creation/B1, B2/B3 full-save and actual Next/PostgREST/play acceptance remain
+open. No hosted acceptance or feature activation is claimed.
+[Current evidence, failures and next gates](handoffs/2026-10-22-creation-ui-and-materializers.md).
 Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
 
 Earlier preparation checkpoints follow.

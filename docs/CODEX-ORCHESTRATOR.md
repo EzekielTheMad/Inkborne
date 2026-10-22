@@ -4,16 +4,21 @@ Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
-Latest executable source `ad94e2f` adds sealed B1 storage/binding (33 offline tests)
-after `e055189` implemented finite guarded empty-character creation/recovery and
-server bridge. Native B1 remains open. Original8/extended25 native row cases
-and nine real provider cases passed independently reviewed evidence/cleanup.
-Full check at `e055189`:374 files/5,343 passes/three existing M5 skips, typecheck and lint pass;
-all586 test identities exited. Native full-stage creation is being prepared;
-protected B1/B2/B3 and actual browser saving/play remain open. Keep general Auth,
-global gates and all13 readiness families denied. The latest human five-checkpoint
-request authorizes bounded local continuation; it does not change hosting or
-authorize hosted writes. [Current checkpoint and exact boundaries](handoffs/2026-10-22-character-command-native-and-creation.md).
+Latest executable source `023cd3a` includes default-off account-bound creation
+and recovery (`588e10f`), sealed-plan B2 consumers (`4bd2a27`) and the new endpoint
+ACL fix (`734217d`). Focused130 UI/28 B2 tests and14 actual offline desktop/mobile
+browser checks pass. Full check:382 files/5,466 passes/three existing M5 skips,
+typecheck/lint pass; all556 identities exited. Browser harness type/lint passes;
+all26 browser identities and both ports closed. Original8/extended25 native row
+and nine real provider cases remain accepted within their bounded scope.
+Native creation attempts refused the new bridge's explicit ACL; the narrow fix
+awaits native confirmation. The14-stage B1 candidate was withdrawn before launch
+for a missing full prerequisite; review the corrected15-stage/93-function raw
+closure before freezing. Native creation/B1, B2/B3 full-save, direct-writer fences
+and actual Next/PostgREST browser saving/play remain open. Keep the UI flag off,
+general Auth/global gates/all13 readiness denied. The current human request
+authorizes bounded local continuation, not hosted writes or deployment.
+[Current checkpoint and exact boundaries](handoffs/2026-10-22-creation-ui-and-materializers.md).
 Vercel unchanged; M1–M6/M5.5 active, M7/creature imports paused.
 
 Historical source `96e1197` completed three local preparation checkpoints:
