@@ -1,5 +1,25 @@
 # Inkborne current work
 
+## Active execution — 2026-10-23 UTC
+
+**Native multiclass acquisition and five class-choice families save/reload in
+the actual local app through `f5d7439`.** Six browser stories and matching native
+readbacks pass, plus 102 focused tests, typecheck and zero-warning lint. The
+Fighter → Cleric workflow retains original grants/equipment while saving each
+class's levels, subclass, spells, HP and ASIs. Bard Expertise, Ranger terrain/
+Favored Enemy/Hunter, Sorcerer ancestry/Metamagic, Druid Land and Warlock pacts/
+invocations save, reload and prune invalidated choices.
+[Delivery, exact evidence and remaining acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md).
+
+M1/R06 remains in progress; special bonus-spell choices/budgets, Lore bonus skills,
+class removal, broader recovery/concurrency and hosted acceptance remain. Vercel
+is unchanged, M7/creature imports paused and M1–M6/M5.5 precede M8. Global gates
+stay closed. Task services/credentials are removed and ports closed; shared
+Docker engine/cache and inherited worktrees remain. One task-created dependency
+junction remains after automatic approval review blocked its removal.
+
+### Earlier checkpoint
+
 ## Active execution — 2026-10-22 UTC
 
 **Race, abilities, background and starting equipment now save and reload in the

@@ -4,6 +4,28 @@ Updated 2026-10-23 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+**Native multiclass acquisition and five class-choice families save/reload in
+the actual local app through `f5d7439`.** The final six-story run passes Fighter
+→ Cleric acquisition, independent class/subclass/spell/HP/ASI changes, stale-tab
+refusal and foreign-account 404; Bard Expertise; Ranger terrain/Favored Enemy/
+Hunter choices and pruning; Sorcerer ancestry/Metamagic; Druid Land; and Warlock
+pacts/invocations. Native readbacks agree on immutable provenance, original and
+secondary roles, receipts, retained server HP draw, revisions and ordering.
+102 focused tests, typecheck and zero-warning lint pass. Task services and
+credentials are removed and ports closed; shared Docker engine/cache remain.
+[Delivery, exact evidence and remaining work](handoffs/2026-10-23-multiclass-and-class-choices.md).
+
+M1/R06 remains **in progress**. Next are special bonus-spell choices/budgets,
+Lore bonus skills and the remaining activation/recovery/concurrency/hosted
+acceptance. Class removal is not enabled. The current catalog has 1,535
+definitions and 1,536 historical snapshots after the isolated Land correction;
+all old snapshots and existing characters were preserved. Global gates stay
+closed. Vercel unchanged; M1–M6/M5.5 precede M8 and M7/creature imports stay paused.
+One task-created worker dependency junction remains after automatic approval
+review blocked its removal; no worker Node process remains.
+
+### Prior single-class checkpoint
+
 **Real SRD Fighter and Cleric workflows save and reload in the actual local app
 at `4279067`.** Both stories cover sign-in, creation, class/race/ability/background
 choices, actual gear, one 15 gp award, details, sheet reload and a second account's

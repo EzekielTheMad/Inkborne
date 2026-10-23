@@ -18,7 +18,14 @@ The private helper requires the current same-transaction builder capability and 
 | Progression | `d0f8cb403bc4e03dfa0c7d80b61bd4c3` | `97e29472187cb63fef0da670b6f4eea6` |
 | Acquisition, including empty-array repair | `ed2c8225db562571db783f688b59ba3b` | `f08844d4d198b17b4f83353cfe9c2bab` |
 
-The final class-choice helper body MD5 is `15ab056ef2de2f4857b578af584ec1b7`. Its final return is the exact composition point for the later Favored Enemy normalizer. No recursive normalizer call is required.
+The corrected class-choice helper body MD5 is `9d96150045a09c91a39eec343549964a`.
+Its final return is the exact composition point for the later Favored Enemy
+normalizer, producing `518793720d6c4abe638edec0c36e9fe1`. No recursive normalizer
+call is required. The earlier `15ab056ef2de2f4857b578af584ec1b7` helper (or
+`8d3dfe19ebd128cb7e1b96ab7bcb6d7b` with the original Favored tail) is only an
+exact old-profile input to the sibling provenance repair. Each new child gets
+its content/version in its unique tag; an exact existing legacy child retains
+its original pin and tag.
 
 Focused source verification passed four transformer/helper files with 32 tests, five isolated in-memory PostgreSQL helper vectors and TypeScript. The helper vectors exercise real SQL, immutable pin retention, cross-tier conflicts, level/spell/pact loss and subclass styles; their stubbed actor/locking environment does not establish native command or app acceptance. The root continuation supplies native installation, ownership/receipt readbacks and real browser save/reload evidence.
 
