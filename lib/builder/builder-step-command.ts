@@ -24,6 +24,8 @@ export const builderStepInputSchema = z.discriminatedUnion("command", [
     ]), language: z.string().regex(/^[a-z][a-z-]*$/).max(100).nullable() }) }),
   z.strictObject({ command: z.literal("add_class"), fields: z.strictObject({ class_id: z.uuid(),
     class_version: z.number().int().positive(), expected_action_revision: classRoleRevisionSchema }) }),
+  z.strictObject({ command: z.literal("remove_class"), fields: z.strictObject({ occurrence_id: z.uuid(),
+    expected_action_revision: classRoleRevisionSchema }) }),
   z.strictObject({ command: z.enum(["select_race", "select_subrace", "select_background"]), fields: content }),
   z.strictObject({ command: z.enum(["clear_race", "clear_subrace"]), fields: z.strictObject({}) }),
   z.strictObject({ command: z.enum(["race_choice", "background_choice", "class_choice"]), fields: choice }),
