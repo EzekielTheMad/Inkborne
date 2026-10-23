@@ -60,6 +60,42 @@ interface ApiSubclass {
   spells?: Array<{ spell: { index: string; name: string }; prerequisites?: Array<{ type: string; index: string }> }>;
 }
 
+interface ApiSubclassChoiceController {
+  index: string;
+  class: { index: string };
+  subclass?: { index: string };
+  level: number;
+  feature_specific?: { subfeature_options?: ApiChoice };
+}
+
+/** The API's Land level listing omits its terrain controller even though the
+ * genuine feature resource owns the seven options and explicitly earns them
+ * at Druid/Land level two. Restore that source relationship before publishing
+ * the immutable subclass manifest; never infer it from a saved user choice.
+ */
+export function subclassFeatureManifest(subclass: Pick<ApiSubclass, "index" | "class">,
+  sourceLevels: readonly { level: number; features: readonly { index: string }[] }[], controller?: ApiSubclassChoiceController) {
+  const levels = sourceLevels.map(row => ({ level: row.level, features: row.features.map(feature => feature.index) }));
+  if (subclass.index !== "land") return levels;
+  const options = controller?.feature_specific?.subfeature_options;
+  const terrains = ["arctic", "coast", "desert", "forest", "grassland", "mountain", "swamp"]
+    .map(terrain => `circle-of-the-land-${terrain}`);
+  if (subclass.class.index !== "druid" || controller?.index !== "circle-of-the-land" || controller.class.index !== "druid"
+    || controller.subclass?.index !== "land" || controller.level !== 2 || options?.choose !== 1
+    || options.from.options?.length !== terrains.length
+    || !options.from.options.every(option => option.option_type === "reference" && option.item && terrains.includes(option.item.index))
+    || new Set(options.from.options.map(option => option.item!.index)).size !== terrains.length
+    || levels.filter(row => row.level === 2).length !== 1) {
+    throw Error("The genuine SRD Circle of the Land controller is unavailable or changed");
+  }
+  const existing = levels.flatMap(row => row.features.filter(slug => slug === controller.index).map(() => row.level));
+  if (existing.length > 1 || existing.some(level => level !== controller.level)) {
+    throw Error("The SRD Circle of the Land controller has conflicting level ownership");
+  }
+  if (!existing.length) levels.find(row => row.level === controller.level)!.features.push(controller.index);
+  return levels;
+}
+
 function mapSpellcastingType(className: string): "full" | "half" | "third" | "pact" | null {
   const fullCasters = ["wizard", "sorcerer", "cleric", "druid", "bard"];
   const halfCasters = ["paladin", "ranger"];
@@ -207,10 +243,9 @@ export async function transformClasses(): Promise<TransformedContent[]> {
   const subclasses = await fetchAllFromApi<ApiSubclass>("/subclasses");
   for (const sub of subclasses) {
     const subLevels = await fetchFromApi<ApiClassLevel[]>(`/subclasses/${sub.index}/levels`);
-    const levels = subLevels.map((lvl) => ({
-      level: lvl.level,
-      features: lvl.features.map((f) => f.index),
-    }));
+    const landController = sub.index === "land"
+      ? await fetchFromApi<ApiSubclassChoiceController>("/features/circle-of-the-land") : undefined;
+    const levels = subclassFeatureManifest(sub, subLevels, landController);
 
     const spellTiers = new Map<number, string[]>();
     for (const grant of sub.spells ?? []) {
