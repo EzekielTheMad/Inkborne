@@ -34,6 +34,7 @@ export async function saveBuilderStep(expectedAccountId: string, characterId: st
     const message = sent?.error?.message;
     console.warn("Builder step was not confirmed", { code: sent?.error?.code ?? "transport",
       reason: typeof message === "string" && (/^(builder|first_class|character_command|protected_character)_[a-z_]+$/.test(message)
+        || /^duplicate key value violates unique constraint "[a-z_0-9]{1,63}"$/.test(message)
         || /^permission denied for (schema|table|function|sequence) [a-z0-9_.]+$/.test(message))
         ? message : "withheld" });
     // Resolve the same operation after an uncertain response; never resend a

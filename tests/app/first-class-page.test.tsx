@@ -103,9 +103,9 @@ describe("first-class route (query/action doubles only)", () => {
     expect(mocks.form.mock.calls[0][0]).toMatchObject({ canStart: false, classes: [] });
   });
   it("reads the original class in a saved multiclass build using its native occurrence rather than array position", async () => {
-    const original = classPin(), secondary = { ...classPin(), id: id(10), content_id: id(11),
+    const original = classPin(), secondary = { ...classPin(), id: id(10), content_id: id(11), choice_source: `builder:class-acquisition:${id(15)}`,
       content_definitions: { ...classPin().content_definitions, id: id(11), slug: "cleric", name: "Pinned Cleric" } };
-    const role = (pin: typeof original, occurrence: string, kind: "original" | "secondary") => ({ ...pin,
+    const role = (pin: Omit<typeof original, "choice_source"> & { choice_source: string | null }, occurrence: string, kind: "original" | "secondary") => ({ ...pin,
       class_role: { occurrence_id: occurrence, controller_ref_id: pin.id, content_id: pin.content_id, content_version: 1,
         role: kind, action_revision: "9", raw_effects: [], evaluation_effects: [], raw_data: {}, evaluation_data: {} } });
     setup({ ...savedCharacter(), action_revision: "9", level: 5, choices: { classes: [

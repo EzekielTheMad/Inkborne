@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { FirstClassForm } from "./first-class-form";
 import { checkFirstClass, submitFirstClass } from "./actions";
-import { originalClassOccurrence } from "@/lib/character/builder-class-roles";
+import { classRoleForRef, originalClassOccurrence } from "@/lib/character/builder-class-roles";
 
 const savedChoices = z.object({ classes: z.array(z.strictObject({
   occurrence_id: z.uuid(), slug: z.string().min(1).max(200), level: z.number().int().min(1).max(20),
@@ -63,8 +63,12 @@ export default async function FirstClassPage({ params }: { params: Promise<{ id:
         if (pins.length !== 1 || (cls.subclass && (subclasses.length !== 1
           || subclasses[0].content_definitions.data.parent_class !== cls.slug))) throw Error("Saved class unavailable");
         const pin = pins[0], snapshot = pin.content_definitions;
+        const role = classRoleForRef(pin, selected.data);
+        const validSource = role?.role === "secondary"
+          ? typeof pin.choice_source === "string" && /^builder:class-acquisition:[0-9a-f-]{36}$/.test(pin.choice_source)
+          : pin.choice_source === null;
         if (snapshot.system_id !== character.system_id || pin.content_id !== snapshot.id || pin.content_version !== snapshot.version
-          || pin.feature_grant_id !== null || pin.choice_source !== null || !controllerContext.safeParse(pin.context).success)
+          || pin.feature_grant_id !== null || !validSource || !controllerContext.safeParse(pin.context).success)
           throw Error("Saved class unavailable");
       }
       const originalId = originalClassOccurrence(refs, selected.data);

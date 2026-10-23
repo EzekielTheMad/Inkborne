@@ -3,7 +3,7 @@ import type { AsiEvidence } from "@/lib/character/asi-contributions";
 import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateCharacter,
@@ -115,6 +115,8 @@ function pinnedEntries(
   return { entries, conflicts };
 }
 
+const subscribeToHydration = () => () => {};
+
 export function ClassStepClient({
   characterId,
   character,
@@ -140,6 +142,7 @@ export function ClassStepClient({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
+  const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const [refreshing, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
@@ -708,7 +711,7 @@ export function ClassStepClient({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <fieldset disabled={saving || refreshing} aria-busy={saving || refreshing} className="space-y-6 min-w-0 border-0 p-0">
+      <fieldset disabled={!hydrated || saving || refreshing} aria-busy={!hydrated || saving || refreshing} className="space-y-6 min-w-0 border-0 p-0">
         <RaceAbilityNotice contentRefs={contentRefs} />
         <h2 className="text-xl font-semibold">Class</h2>
         {saving && <p role="status" className="text-sm text-muted-foreground">Saving this class change. Please wait.</p>}

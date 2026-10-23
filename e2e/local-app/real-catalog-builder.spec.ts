@@ -311,6 +311,7 @@ async function runStory(page: Page, context: BrowserContext, browser: Browser, i
       preparedSpells: clericPrepared, racialCantrip: "Light", alwaysPrepared: ["Bless", "Cure Wounds"] } : {}),
     foreignAccountRefused: true, equipment, gp: 15, blockedOrigins, pageErrors }, null, 2));
   await info.attach("real-catalog-workflow", { contentType: "application/json", path: evidence });
+  return { characterId, name, sheetUrl, config };
 }
 
 test("real SRD Fighter, Half-Elf, and Acolyte finish and reload in the actual app", async ({ page, context, browser }, info) => {
@@ -333,6 +334,98 @@ test("real SRD Life Cleric, High Elf, and Acolyte finish and reload in the actua
     features: ["Disciple of Life", "Fey Ancestry", "High Elf Cantrip", "Elf Weapon Training"],
     inventory: ["Mace", "Scale Mail", "Shield", "Priest's Pack", "Pouch"],
   });
+});
+
+test("real SRD multiclass Fighter and Cleric acquire, advance independently and reload", async ({ page, context, browser }, info) => {
+  const { characterId, name, sheetUrl, config } = await runStory(page, context, browser, info, {
+    className: "Fighter", race: "Half-Elf",
+    baseScores: { Strength: "15", Dexterity: "14", Constitution: "12", Intelligence: "10", Wisdom: "13", Charisma: "8" },
+    finalScores: { Strength: "16", Dexterity: "14", Constitution: "13", Intelligence: "10", Wisdom: "13", Charisma: "10" },
+    classSkills: ["Athletics", "Perception"], proficientSkills: ["Athletics", "Perception", "Arcana", "Stealth", "Insight", "Religion"],
+    features: ["Second Wind", "Fey Ancestry", "Skill Versatility"],
+    inventory: ["Longsword", "Chain Mail", "Shield", "Dungeoneer's Pack", "Pouch"],
+  });
+  const builderUrl = `${config.appOrigin}/characters/${characterId}/builder/class`;
+  await page.goto(builderUrl);
+  const stale = await context.newPage();
+  await stale.goto(builderUrl);
+  await stale.getByRole("button", { name: /^Add a class/ }).click();
+  await stale.getByRole("button", { name: /^Rogue\s/ }).click();
+  await expect(stale.getByRole("dialog", { name: "Rogue class details", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /^Add a class/ }).click();
+  await expect(page.getByRole("button", { name: /^Bard\s/ })).toHaveAttribute("aria-disabled", "true");
+  await page.getByRole("button", { name: /^Cleric\s/ }).click();
+  await saveThroughApp(page, () => page.getByRole("button", { name: "Pick this class", exact: true }).click());
+  await expect(page.getByRole("combobox", { name: "Set level for Cleric", exact: true })).toHaveValue("1");
+  await Promise.all([stale.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === new URL(builderUrl).pathname),
+    stale.getByRole("button", { name: "Pick this class", exact: true }).click()]);
+  await expect(stale.getByText("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.", { exact: true })).toBeVisible();
+  await stale.reload();
+  await expect(stale.getByRole("combobox", { name: "Set level for Cleric", exact: true })).toHaveValue("1");
+  await expect(stale.getByRole("combobox", { name: "Set level for Rogue", exact: true })).toHaveCount(0);
+  await stale.close();
+  const clericRail = page.getByRole("combobox", { name: "Set level for Cleric", exact: true }).locator("..").locator("..").locator("..");
+  await clericRail.getByRole("button", { name: /^Level 1:/ }).click();
+  const secondaryRoll = page.getByRole("radio", { name: /^Roll d8/ });
+  await saveThroughApp(page, () => secondaryRoll.click());
+  await expect(secondaryRoll).toHaveAttribute("aria-checked", "true");
+  const retainedSecondaryRoll = await secondaryRoll.innerText();
+  await page.reload();
+  await clericRail.getByRole("button", { name: /^Level 1:/ }).click();
+  await expect(secondaryRoll).toHaveText(retainedSecondaryRoll);
+  await saveThroughApp(page, () => secondaryRoll.click());
+  await expect(secondaryRoll).toHaveText(retainedSecondaryRoll);
+  await saveThroughApp(page, () => page.getByRole("radio", { name: "Average (+6)", exact: true }).click());
+  await expect(page.getByText("Choose 2 proficiency", { exact: true })).toHaveCount(0);
+  await choose(page, page.getByRole("button", { name: /^Life(?:\s|$)/ }));
+  const panel = page.getByRole("form", { name: "Cleric spell choices", exact: true });
+  for (const spell of [...clericCantrips, "Bane", "Command"]) await panel.getByRole("checkbox", { name: "Select " + spell, exact: true }).check();
+  await saveThroughApp(page, () => panel.getByRole("button", { name: "Save spells", exact: true }).click());
+  await page.reload();
+  for (const spell of [...clericCantrips, "Bane", "Command"]) await expect(panel.getByRole("checkbox", { name: "Select " + spell, exact: true })).toBeChecked();
+  await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).selectOption("4"));
+  const fighterRail = page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).locator("..").locator("..").locator("..");
+  await fighterRail.getByRole("button", { name: /^Level 3:/ }).click();
+  await choose(page, page.getByRole("button", { name: /^Champion(?:\s|$)/ }));
+  await fighterRail.getByRole("button", { name: /^Level 4:/ }).click();
+  await choose(page, page.getByRole("button", { name: "STR +2", exact: true }));
+  await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Cleric", exact: true }).selectOption("2"));
+  await panel.getByRole("checkbox", { name: "Select Guiding Bolt", exact: true }).check();
+  await saveThroughApp(page, () => panel.getByRole("button", { name: "Save spells", exact: true }).click());
+  await page.reload();
+  for (const [className, level] of [["Fighter", "4"], ["Cleric", "2"]]) {
+    await expect(page.getByRole("combobox", { name: `Set level for ${className}`, exact: true })).toHaveValue(level);
+  }
+  await page.goto(sheetUrl);
+  await expect(page.getByRole("button", { name: "Roll Strength check", exact: true }).locator("p").last()).toHaveText("18");
+  await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toContainText("/44");
+  await page.getByRole("button", { name: "Features", exact: true }).click();
+  await expect(page.getByText("Extra Attack", { exact: true }).filter({ visible: true })).toHaveCount(0);
+  await page.goto(builderUrl);
+  await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).selectOption("3"));
+  await page.reload();
+  await expect(page.getByRole("combobox", { name: "Set level for Cleric", exact: true })).toHaveValue("2");
+  for (const spell of [...clericCantrips, ...clericPrepared]) await expect(panel.getByRole("checkbox", { name: "Select " + spell, exact: true })).toBeChecked();
+  await page.goto(sheetUrl);
+  await page.reload();
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Roll Strength check", exact: true }).locator("p").last()).toHaveText("16");
+  await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toContainText("/37");
+  for (const ability of ["Strength", "Constitution"]) await expect(page.getByRole("button", { name: `Roll ${ability} saving throw`, exact: true }).getByLabel("Proficient", { exact: true })).toBeVisible();
+  for (const ability of ["Wisdom", "Charisma"]) await expect(page.getByRole("button", { name: `Roll ${ability} saving throw`, exact: true }).getByLabel("Proficient", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Inventory", exact: true }).click();
+  await expect(page.getByRole("spinbutton", { name: "GP amount", exact: true })).toHaveValue("15");
+  await page.getByRole("button", { name: "Features", exact: true }).click();
+  for (const feature of ["Second Wind", "Improved Critical", "Disciple of Life", "Channel Divinity: Preserve Life"]) await expect(page.getByText(feature, { exact: true }).filter({ visible: true }).first()).toBeVisible();
+  await page.screenshot({ path: info.outputPath("multiclass-after-reload.png"), fullPage: true });
+  const blocked: string[] = [], errors: string[] = [];
+  await rejectOtherAccount(browser, config, sheetUrl, new Set([config.appOrigin, config.supabaseOrigin]), blocked, errors);
+  expect(blocked).toEqual([]); expect(errors).toEqual([]);
+  await writeFile(info.outputPath("multiclass-workflow.json"), JSON.stringify({ characterId, name, actualApp: true,
+    originalClass: "fighter", secondaryClass: "cleric", levels: { fighter: 3, cleric: 2 }, subclasses: { fighter: "champion", cleric: "life" },
+    maxHp: 37, staleAddRefused: true, unmetPrerequisiteOptionUnavailable: true, secondaryLevelOneRollRetained: true,
+    independentProgressionReloadPassed: true, originalSavingThrowsOnly: true,
+    otherClassSpellsPreserved: true, retiredAsiPruned: true, noEarlyExtraAttack: true, equipmentGp: 15, foreignAccountRefused: true }, null, 2));
 });
 
 test("saved Fighter advances to Champion level four with HP and an ability improvement", async ({ page, context }, info) => {
