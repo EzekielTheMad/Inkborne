@@ -385,7 +385,7 @@ BEGIN
     'occurrences',(expected->'occurrences')||pg_catalog.jsonb_build_array(pg_catalog.to_jsonb(occurrence)));
   FOREACH domain IN ARRAY ARRAY['refs','feature_grants','spell_grants','spells','occurrences'] LOOP
     IF pg_catalog.jsonb_array_length(expected->domain)>4096 THEN RAISE EXCEPTION 'builder_acquisition_graph_bound' USING ERRCODE='54000'; END IF;
-    SELECT pg_catalog.jsonb_agg(value ORDER BY (value->>'id')::uuid) INTO entry FROM pg_catalog.jsonb_array_elements(expected->domain);
+    SELECT COALESCE(pg_catalog.jsonb_agg(value ORDER BY (value->>'id')::uuid),'[]') INTO entry FROM pg_catalog.jsonb_array_elements(expected->domain);
     expected:=pg_catalog.jsonb_set(expected,ARRAY[domain],entry);
   END LOOP;
   IF pg_catalog.octet_length(expected::text)>8388608 THEN RAISE EXCEPTION 'builder_acquisition_graph_bound' USING ERRCODE='54000'; END IF;
