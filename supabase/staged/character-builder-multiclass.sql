@@ -1501,7 +1501,7 @@ BEGIN
     OR NEW.receipt->>'action_revision' IS DISTINCT FROM current_parent->>'action_revision'
     OR NEW.after_graph->'origin' IS DISTINCT FROM NEW.before_graph->'origin'
     OR NEW.after_graph->'commands' IS DISTINCT FROM NEW.before_graph->'commands'
-    OR pg_catalog.jsonb_array_length(NEW.after_graph->'occurrences')<>pg_catalog.jsonb_array_length(NEW.before_graph->'occurrences')+CASE WHEN NEW.command='add_class' THEN 1 ELSE 0 END
+    OR pg_catalog.jsonb_array_length(NEW.after_graph->'occurrences')<>pg_catalog.jsonb_array_length(NEW.before_graph->'occurrences')+(CASE WHEN NEW.command='add_class' THEN 1 ELSE 0 END)
     OR EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(NEW.before_graph->'occurrences') b(value) WHERE NOT EXISTS(
       SELECT 1 FROM pg_catalog.jsonb_array_elements(NEW.after_graph->'occurrences') a(value) WHERE (a.value-'subclass_ref_id')=(b.value-'subclass_ref_id')))
     OR current_order->>'producer_revision' IS DISTINCT FROM current_parent->>'action_revision' THEN
