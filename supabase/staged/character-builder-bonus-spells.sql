@@ -171,6 +171,17 @@ BEGIN
   IF strict_choice_id IS NOT NULL AND (SELECT count(*) FROM pg_catalog.jsonb_array_elements(definitions) d(value)
     WHERE d.value#>>'{choice,choice_id}'=strict_choice_id AND d.value#>>'{source,slug_snapshot}'=strict_feature_slug AND NOT d.value ? 'fixed')<>1 THEN
     RAISE EXCEPTION 'builder_bonus_source_unavailable' USING ERRCODE='22023'; END IF;
+  IF strict_choice_id IS NOT NULL AND EXISTS(
+    SELECT 1 FROM pg_catalog.jsonb_array_elements(definitions) mine(value)
+    CROSS JOIN LATERAL pg_catalog.jsonb_array_elements(selections->strict_choice_id) requested(value)
+    JOIN pg_catalog.jsonb_array_elements(definitions) other(value)
+      ON other.value#>>'{source,data_snapshot,class}'=mine.value#>>'{source,data_snapshot,class}'
+        AND other.value#>>'{choice,choice_id}'<>strict_choice_id
+    CROSS JOIN LATERAL pg_catalog.jsonb_array_elements(CASE WHEN pg_catalog.jsonb_typeof(COALESCE(other.value->'fixed',
+      selections->(other.value#>>'{choice,choice_id}'),'[]'))='array' THEN COALESCE(other.value->'fixed',
+      selections->(other.value#>>'{choice,choice_id}'),'[]') ELSE '[]' END) occupied(value)
+    WHERE mine.value#>>'{choice,choice_id}'=strict_choice_id AND requested.value->'content_id'=occupied.value->'content_id') THEN
+    RAISE EXCEPTION 'builder_bonus_spell_already_selected' USING ERRCODE='22023'; END IF;
   FOR request IN SELECT value FROM pg_catalog.jsonb_array_elements(definitions) ORDER BY value#>>'{choice,choice_id}' LOOP
     bonus_source:=request->'source'; source_ref:=bonus_source->'_source_ref'; choice:=request->'choice'; key:=choice->>'choice_id'; mode:=choice->>'mode';
     is_strict:=key=strict_choice_id; class_slug:=bonus_source#>>'{data_snapshot,class}';

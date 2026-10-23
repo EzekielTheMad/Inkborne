@@ -121,6 +121,8 @@ describe("finite source-owned bonus spell helper", () => {
     await expect(apply(choices({ "mystic-arcanum-6th-level": [tuple(26)] }), "mystic-arcanum-6th-level")).rejects.toThrow("builder_bonus_spell_unavailable");
     await expect(apply(choices({ "eldritch-invocation-book-of-ancient-secrets": [tuple(25)] }), "eldritch-invocation-book-of-ancient-secrets")).rejects.toThrow("builder_bonus_spell_unavailable");
     await expect(apply(choices({ "magical-secrets-1": [tuple(24), tuple(25), tuple(26)] }), "magical-secrets-1")).rejects.toThrow("builder_bonus_spell_unavailable");
+    await expect(apply(choices({ "additional-magical-secrets": [tuple(24)], "magical-secrets-1": [tuple(24)] }), "additional-magical-secrets"))
+      .rejects.toThrow("builder_bonus_spell_already_selected");
   });
   it("validates book membership and annotates Signature without duplicating book rows", async () => {
     await expect(apply(choices({ "spell-mastery-1": [tuple(24)] }), "spell-mastery-1")).rejects.toThrow("builder_bonus_spell_unavailable");
