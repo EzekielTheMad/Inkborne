@@ -185,8 +185,8 @@ BEGIN
     SELECT * INTO original FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(item.signature);
     IF NOT FOUND OR original.proowner<>'postgres'::pg_catalog.regrole OR NOT original.prosecdef OR original.provolatile<>'v'
       OR original.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
-      OR original.proacl::text IS DISTINCT FROM CASE WHEN item.kind='transition'
-        THEN '{postgres=X/postgres,inkborne_class_origin_owner=X/postgres}' ELSE '{postgres=X/postgres}' END
+      OR original.proacl::text IS DISTINCT FROM (CASE WHEN item.kind='transition'
+        THEN '{postgres=X/postgres,inkborne_class_origin_owner=X/postgres}' ELSE '{postgres=X/postgres}' END)
       OR pg_catalog.md5(pg_catalog.replace(original.prosrc,E'\r\n',E'\n'))<>item.before_md5 THEN
       RAISE EXCEPTION 'builder_class_removal_preimage_changed: %',item.kind USING ERRCODE='42501'; END IF;
     source:=pg_catalog.replace(original.prosrc,E'\r\n',E'\n');
