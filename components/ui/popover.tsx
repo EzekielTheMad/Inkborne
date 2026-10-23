@@ -4,6 +4,7 @@ import * as React from "react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
 import { cn } from "@/lib/utils"
+import { CharacterPortalScope } from "@/components/character/character-notebook-scope"
 
 function Popover({ ...props }: PopoverPrimitive.Root.Props) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
@@ -27,6 +28,7 @@ function PopoverContent({
   >) {
   return (
     <PopoverPrimitive.Portal>
+      <CharacterPortalScope>
       <PopoverPrimitive.Positioner
         align={align}
         alignOffset={alignOffset}
@@ -43,6 +45,7 @@ function PopoverContent({
           {...props}
         />
       </PopoverPrimitive.Positioner>
+      </CharacterPortalScope>
     </PopoverPrimitive.Portal>
   )
 }

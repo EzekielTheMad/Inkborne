@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { CharacterWithSystem, CharacterState } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult, StructuredSources } from "@/lib/engine/evaluator";
@@ -12,7 +12,9 @@ import type { RollLogEntry } from "@/lib/types/rolls";
 import type { ClassContentData } from "@/lib/character/character-context";
 import { CharacterProvider } from "@/lib/character/character-context";
 import { CharacterShell } from "@/components/character/character-shell";
-import { characterColorStyle } from "@/lib/character/character-color-style";
+import { characterNotebookStyle } from "@/lib/character/notebook-colors";
+import { CharacterVisualProvider } from "./character-notebook-scope";
+import styles from "./character-notebook.module.css";
 import type { CampaignPageBacklink } from "@/lib/campaigns/backlinks";
 import type {
   CharacterRelationship,
@@ -42,6 +44,10 @@ interface CharacterPageClientProps {
 }
 
 export function CharacterPageClient(props: CharacterPageClientProps) {
+  return <CharacterNotebook key={props.character.id} {...props} />;
+}
+
+function CharacterNotebook(props: CharacterPageClientProps) {
   const {
     character,
     schema,
@@ -66,9 +72,11 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
   const [primaryColor, setPrimaryColor] = useState<string | null>(
     character.primary_color ?? null,
   );
+  const colorStyle = useMemo(() => characterNotebookStyle(primaryColor), [primaryColor]);
 
   return (
-    <div style={characterColorStyle(primaryColor)}>
+    <CharacterVisualProvider style={colorStyle} portalClassName={styles.portal}>
+    <div className={styles.notebook} style={colorStyle} data-character-notebook>
       <CharacterProvider
         character={character}
         schema={schema}
@@ -95,5 +103,6 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
         />
       </CharacterProvider>
     </div>
+    </CharacterVisualProvider>
   );
 }

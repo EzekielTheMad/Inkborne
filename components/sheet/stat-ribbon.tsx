@@ -8,6 +8,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { CharacterState } from "@/lib/types/character";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
+import styles from "@/components/character/character-notebook.module.css";
 
 interface StatRibbonProps {
   schema: SystemSchemaDefinition;
@@ -38,9 +39,9 @@ export function StatRibbon({
   const speed = computed.speed ?? computed.movement_speed ?? 30;
 
   return (
-    <div className="flex items-center gap-3 overflow-x-auto pb-1">
+    <div className={styles.statRibbon}>
       {/* Ability score cards: 3x2 grid on mobile, horizontal row on desktop */}
-      <div className="grid grid-cols-3 gap-2 md:flex md:gap-2 shrink-0">
+      <div className={styles.abilities}>
         {schema.ability_scores.map((ability) => {
           const score = stats[ability.slug] ?? 10;
           const modifier = Math.floor((score - 10) / 2);
@@ -59,7 +60,7 @@ export function StatRibbon({
       <Separator orientation="vertical" className="hidden md:block h-16" />
 
       {/* Combat stats */}
-      <div className="shrink-0">
+      <div>
         <CombatStats
           proficiencyBonus={proficiencyBonus}
           armorClass={armorClass}
@@ -73,7 +74,7 @@ export function StatRibbon({
       <Separator orientation="vertical" className="hidden md:block h-16" />
 
       {/* HP Tracker */}
-      <div className="shrink-0">
+      <div className={styles.vital}>
         <HPTracker
           currentHp={state.current_hp ?? maxHp}
           maxHp={maxHp}

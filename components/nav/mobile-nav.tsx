@@ -10,6 +10,7 @@ import { NavLink } from "@/components/nav/nav-link";
 import { Menu, MessageSquare, Shield } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
 import { useFeedbackTrigger } from "@/components/feedback/feedback-provider";
+import { CharacterAppearance } from "@/components/nav/character-appearance";
 
 interface MobileNavProps {
   displayName: string;
@@ -46,7 +47,8 @@ export function MobileNav({ displayName, avatarUrl, email, isAdmin }: MobileNavP
   }
 
   return (
-    <div className="flex items-center gap-1 md:hidden">
+    <div data-mobile-navigation className="flex items-center gap-1 md:hidden">
+      <CharacterAppearance />
       <FeedbackButton iconOnly />
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger

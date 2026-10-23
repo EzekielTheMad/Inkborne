@@ -14,3 +14,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Treat the guide as the target style; inspect the current implementation before describing anything as shipped. Current CSS tokens live in `app/globals.css`.
 - Evolve the existing fantasy notebook personality. Preserve the selected Scribe identity, coordinated light/dark themes, and theme-aware character personalization described in the guide.
 - Preserve existing functionality and accessibility. Apply the guide within the requested scope, with gradual rollout to stable screens; it does not authorize an unrelated site-wide restyle.
+- Before changing an existing screen, render representative current views and capture its visual baseline. Compare at matching viewport, theme, character and accent; preserve useful density, identity and interaction patterns.
+- The approved second character-sheet composition evolves the [original sheet baseline](docs/design-briefs/character-sheet-baseline/README.md). The first neutral notebook draft was not accepted and must not become a template for later screens.
+- Keep simulated local review evidence separate from hosted persistence and acceptance. A visual migration must preserve the release baseline's gameplay contracts and must not import unrelated development ancestry.

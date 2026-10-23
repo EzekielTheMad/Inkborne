@@ -5,6 +5,7 @@ import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { CharacterPortalScope } from "@/components/character/character-notebook-scope";
 import type { CharacterState } from "@/lib/types/character";
 import type { HitDicePool } from "@/lib/hit-dice/helpers";
 
@@ -168,6 +169,7 @@ export function HPTracker({
       </PopoverPrimitive.Trigger>
 
       <PopoverPrimitive.Portal>
+        <CharacterPortalScope>
         <PopoverPrimitive.Positioner side="bottom" align="center" sideOffset={8}>
           <PopoverPrimitive.Popup
             className={cn(
@@ -228,6 +230,7 @@ export function HPTracker({
             </div>
           </PopoverPrimitive.Popup>
         </PopoverPrimitive.Positioner>
+        </CharacterPortalScope>
       </PopoverPrimitive.Portal>
     </PopoverPrimitive.Root>
   );

@@ -4,6 +4,7 @@ import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
+import { CharacterPortalScope } from "@/components/character/character-notebook-scope"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
@@ -19,8 +20,8 @@ function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
-function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
-  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
+function SheetPortal({ children, ...props }: SheetPrimitive.Portal.Props) {
+  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props}><CharacterPortalScope>{children}</CharacterPortalScope></SheetPrimitive.Portal>
 }
 
 function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {

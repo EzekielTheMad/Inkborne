@@ -20,7 +20,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
+vi.mock("next/navigation", () => ({ redirect: vi.fn(), usePathname: () => "/dashboard" }));
 vi.mock("@/lib/auth/is-admin", () => ({ isAdminUserId: () => false }));
 vi.mock("@/components/error/error-listeners", () => ({ ErrorListeners: () => null }));
 vi.mock("@/components/nav/app-nav", () => ({ AppNav: () => <div>Desktop navigation</div> }));
