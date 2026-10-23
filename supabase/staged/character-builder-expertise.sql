@@ -206,6 +206,9 @@ $background$||needle;
     END IF;
     IF (length(source)-length(pg_catalog.replace(source,needle,'')))/length(needle)<>1 THEN
       RAISE EXCEPTION 'builder_expertise_source_mismatch' USING ERRCODE='42501'; END IF;
+    -- Dollar-quoted insertions retain checkout line endings. Match the existing
+    -- normalized body profile on both Windows CRLF and LF installations.
+    insertion:=pg_catalog.replace(insertion,E'\r\n',E'\n');
     replacement:=pg_catalog.replace(source,needle,insertion);
     IF pg_catalog.md5(replacement)<>item.next_md5 THEN
       RAISE EXCEPTION 'builder_expertise_postimage_changed' USING ERRCODE='42501'; END IF;
