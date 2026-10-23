@@ -251,7 +251,7 @@ describe("ClassStepClient feat regressions", () => {
         data: { parent_class: "warlock", spellcastingExtra: [{ level: 1, spells: ["burning-hands"] }] } } };
     const save = vi.fn();
     renderClient(choices, save, { action_revision: "8", contentRefs: [fiendRef] });
-    expect(screen.getByRole("status")).toHaveTextContent("Your saved Fiend content uses an earlier spell-list version. Your choices are preserved.");
+    expect(screen.getByText("Your saved Fiend content uses an earlier spell-list version. Your choices are preserved. Correct expanded spell choices require a reviewed content-version update.")).toBeInTheDocument();
     expect(currentRail.localChoices).toEqual(choices);
     expect(save).not.toHaveBeenCalled();
   });
