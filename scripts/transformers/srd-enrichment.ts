@@ -29,5 +29,12 @@ export function enrichSrdEntry(entry: TransformedContent): TransformedContent {
     extra.push({ type: "grant", stat: "spell", value: "thaumaturgy" },
       { type: "grant", stat: "spellcasting_ability", value: "charisma" });
   }
+  if (entry.content_type === "feature" && entry.slug === "eldritch-invocation-beguiling-influence") {
+    extra.push({ type: "grant", stat: "skill-deception", value: "proficient" },
+      { type: "grant", stat: "skill-persuasion", value: "proficient" });
+  }
+  if (entry.content_type === "feature" && entry.slug === "dragon-ancestor") {
+    extra.push({ type: "grant", stat: "language", value: "draconic" });
+  }
   return { ...entry, data, effects: [...effects, ...extra] };
 }

@@ -1,6 +1,6 @@
 import { fetchAllFromApi, buildContentEntry, buildNarrativeEffect, buildChoiceEffect } from "./common";
 import type { TransformedContent } from "./common";
-import { referenceOptions, type ApiChoice } from "./api-options";
+import { referenceOptions, type ApiChoice, type ApiReference } from "./api-options";
 import type { Effect } from "@/lib/types/effects";
 
 interface ApiFeature {
@@ -12,7 +12,9 @@ interface ApiFeature {
   desc: string[];
   prerequisites: Array<unknown>;
   feature_specific?: { subfeature_options?: ApiChoice; expertise_options?: ApiChoice;
-    terrain_type_options?: { choose: number; type: string; from: { option_set_type: string; options: string[] } } };
+    terrain_type_options?: { choose: number; type: string; from: { option_set_type: string; options: string[] } };
+    enemy_type_options?: { choose: number; type: string; from: { option_set_type: string; options: string[] } };
+    invocations?: ApiReference[] };
 }
 
 const SUBCLASS_FEATURES = new Set(["primal-path", "bard-college", "divine-domain", "druid-circle", "martial-archetype",
@@ -82,6 +84,44 @@ function rangerTerrain(feature: ApiFeature): string[] | undefined {
   return [...choice.from.options];
 }
 
+function rangerEnemies(feature: ApiFeature): Record<string, string[]> | undefined {
+  const level = ({ "favored-enemy-1-type": 1, "favored-enemy-2-types": 6, "favored-enemy-3-enemies": 14 } as Record<string, number>)[feature.index];
+  if (!level) return;
+  const choice = feature.feature_specific?.enemy_type_options;
+  const enemy_types = ["aberrations", "beasts", "celestials", "constructs", "dragons", "elementals", "fey", "fiends", "giants",
+    "monstrosities", "oozes", "plants", "undead"];
+  const expected = [...enemy_types, "humanoids"];
+  if (feature.class.index !== "ranger" || feature.subclass || feature.level !== level || choice?.choose !== 1 || choice.type !== "string"
+    || choice.from.option_set_type !== "options_array" || choice.from.options.length !== expected.length
+    || new Set(choice.from.options).size !== expected.length || !expected.every(option => choice.from.options.includes(option))) {
+    throw Error(`Unsupported SRD Favored Enemy: ${feature.index}`);
+  }
+  // This finite humanoid subset is explicit in the product UI. The source's
+  // example gnolls/orcs and the nine SRD player races are not an exhaustive
+  // taxonomy of every humanoid in every campaign.
+  return { enemy_types, humanoid_races: ["dragonborn", "dwarf", "elf", "gnoll", "gnome", "half-elf", "half-orc", "halfling", "human", "orc", "tiefling"] };
+}
+
+function invocationPrerequisites(feature: ApiFeature): Record<string, unknown>[] | undefined {
+  if (!feature.index.startsWith("eldritch-invocation-")) return;
+  if (feature.class.index !== "warlock" || feature.subclass || !Number.isInteger(feature.level)
+    || feature.level < 2 || feature.level > 20) throw Error(`Unsupported SRD invocation: ${feature.index}`);
+  const requirements: Record<string, unknown>[] = [{ kind: "class_level", minimum: feature.level }];
+  for (const entry of feature.prerequisites) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw Error(`Unsupported SRD invocation prerequisite: ${feature.index}`);
+    const prerequisite = entry as Record<string, unknown>;
+    if (prerequisite.type === "level" && prerequisite.level === feature.level) continue;
+    if (["spell", "feature"].includes(String(prerequisite.type))) {
+      const kind = prerequisite.type as "spell" | "feature";
+      const value = prerequisite[kind];
+      const match = typeof value === "string" && value.match(new RegExp(`^/api/2014/${kind}s/([a-z0-9-]+)$`));
+      if (match) { requirements.push({ kind, slug: match[1] }); continue; }
+    }
+    throw Error(`Unsupported SRD invocation prerequisite: ${feature.index}`);
+  }
+  return requirements;
+}
+
 // Reviewed resource/mechanical constants are merged by buildContentEntry.
 export function transformFeatureEntry(feature: ApiFeature): TransformedContent {
     const effects: Effect[] = [];
@@ -93,6 +133,8 @@ export function transformFeatureEntry(feature: ApiFeature): TransformedContent {
     // such as "Domain Spells" or "Circle of the Land: Arctic" are not gates.
     const expertise = rogueExpertise(feature) ?? bardExpertise(feature);
     const terrain = rangerTerrain(feature);
+    const favored_enemy = rangerEnemies(feature);
+    const selection_prerequisites = invocationPrerequisites(feature);
     let feature_type = "passive";
     if (expertise) {
       feature_type = "choice";
@@ -100,6 +142,8 @@ export function transformFeatureEntry(feature: ApiFeature): TransformedContent {
     } else if (terrain) {
       feature_type = "choice";
       effects.push(buildChoiceEffect(1, terrain, "favored_terrain", feature.index));
+    } else if (favored_enemy) {
+      feature_type = "favored_enemy";
     } else if (feature.name === "Ability Score Improvement") {
       feature_type = "asi";
     } else if (SUBCLASS_FEATURES.has(feature.index)) {
@@ -111,14 +155,41 @@ export function transformFeatureEntry(feature: ApiFeature): TransformedContent {
     }
 
     const choices = feature.feature_specific?.subfeature_options;
+    if (choices && feature_type === "choice") {
+      // A referenced option is a real immutable child feature, not a label
+      // whose mechanics can be reconstructed from a saved string.
+      if (!choices.from.options?.every(option => option.option_type === "reference" && option.item)) {
+        throw Error(`Unsupported SRD feature choice: ${feature.index}`);
+      }
+      const options = referenceOptions(choices).map(option => option.index);
+      if (/^metamagic-[123]$/.test(feature.index)
+        && (feature.class.index !== "sorcerer" || choices.choose !== (feature.index === "metamagic-1" ? 2 : 1)
+          || feature.level !== ({ "metamagic-1": 3, "metamagic-2": 10, "metamagic-3": 17 } as Record<string, number>)[feature.index]
+          || options.length !== 8 || options.some(option => !option.startsWith("metamagic-")))) {
+        throw Error(`Unsupported SRD Metamagic: ${feature.index}`);
+      }
+      effects.push(buildChoiceEffect(choices.choose, options, "feature", feature.index));
+    }
+    const invocations = feature.index === "eldritch-invocations" ? feature.feature_specific?.invocations : undefined;
+    if (feature.index === "eldritch-invocations" && !invocations) throw Error("Unsupported SRD Eldritch Invocations");
+    if (invocations) {
+      if (feature.class.index !== "warlock" || feature.level !== 2 || invocations.length !== 32
+        || new Set(invocations.map(option => option.index)).size !== 32
+        || invocations.some(option => !option.index.startsWith("eldritch-invocation-"))) throw Error("Unsupported SRD Eldritch Invocations");
+      feature_type = "choice";
+      effects.push(buildChoiceEffect(2, invocations.map(option => option.index), "invocation", feature.index));
+    }
     return buildContentEntry("feature", feature.index, feature.name, {
       class: feature.class.index,
       subclass: feature.subclass?.index ?? null,
       level: feature.level,
       description: feature.desc.join("\n"),
       feature_type,
+      ...(selection_prerequisites ? { selection_prerequisites } : {}),
+      ...(favored_enemy ? { favored_enemy } : {}),
       ...(choices ? { choices: [{ name: feature.name, count: choices.choose,
-        options: referenceOptions(choices).map(option => option.index) }] } : {}),
+        options: referenceOptions(choices).map(option => option.index) }] } : invocations
+        ? { choices: [{ name: feature.name, count: 2, options: invocations.map(option => option.index) }] } : {}),
     }, effects);
 }
 

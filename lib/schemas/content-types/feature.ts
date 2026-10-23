@@ -53,6 +53,7 @@ export const FEATURE_TYPES = [
   "subclass",        // Subclass selection point — show subclass dropdown
   "fighting_style",  // Choose a fighting style
   "choice",          // Generic choice — has choice effects to resolve
+  "favored_enemy",   // One type OR two humanoid races, plus conditional language
 ] as const;
 
 export type FeatureType = (typeof FEATURE_TYPES)[number];
@@ -95,6 +96,15 @@ export const featureDataSchema = z.object({
   languageProfs: languageProfsSchema,
   carryingCapacity: z.number().optional(),
   prereqeval: z.string().optional(),
+  // Finite selection prerequisites from immutable sources. No executable rule
+  // expressions are accepted by native class-feature choice commands.
+  selection_prerequisites: z.array(z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("class_level"), minimum: z.number().int().min(1).max(20) }),
+    z.object({ kind: z.literal("spell"), slug: z.string().min(1).max(300) }),
+    z.object({ kind: z.literal("feature"), slug: z.string().min(1).max(300) }),
+  ])).optional(),
+  favored_enemy: z.object({ enemy_types: z.array(z.string().min(1)).min(1),
+    humanoid_races: z.array(z.string().min(1)).min(2) }).optional(),
   choices: z.array(featureChoiceSchema).default([]),
   extrachoices: z.array(featureChoiceSchema).default([]),
   weaponOptions: z.array(weaponOptionSchema).default([]),

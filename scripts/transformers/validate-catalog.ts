@@ -45,6 +45,9 @@ export function validateSrdCatalog(entries: readonly TransformedContent[]): Tran
       check(entry, "class", data.class);
       if (data.subclass) check(entry, "subclass", data.subclass);
       for (const choice of (data.choices as Array<{ options: string[] }> | undefined) ?? []) for (const slug of choice.options) check(entry, "feature", slug);
+      for (const prerequisite of (data.selection_prerequisites as Array<{ kind: string; slug?: string }> | undefined) ?? []) {
+        if (["feature", "spell"].includes(prerequisite.kind)) check(entry, prerequisite.kind, prerequisite.slug);
+      }
     }
     if (entry.content_type === "trait") {
       for (const slug of list(data.races)) check(entry, "race", slug);
@@ -53,7 +56,8 @@ export function validateSrdCatalog(entries: readonly TransformedContent[]): Tran
     for (const effect of entry.effects) {
       if (effect.type === "grant" && effect.stat === "spell") check(entry, "spell", effect.value);
       if (effect.type !== "choice" || !Array.isArray(effect.from)) continue;
-      const type = ({ proficiency: "proficiency", expertise: "proficiency", language: "language", spell: "spell", trait: "trait" } as Record<string, string>)[effect.grant_type];
+      const type = ({ proficiency: "proficiency", expertise: "proficiency", language: "language", spell: "spell", trait: "trait",
+        feature: "feature", invocation: "feature" } as Record<string, string>)[effect.grant_type];
       if (type) for (const slug of effect.from) check(entry, type, slug);
     }
   }
