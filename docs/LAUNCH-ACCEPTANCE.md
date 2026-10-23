@@ -4,6 +4,26 @@
 
 ### Actual application character builder save/reload
 
+**Latest bounded checkpoint: `7c16608`.** Fiend's ten expanded spells use
+ordinary Warlock selection budgets and earned tiers, save/reload and prune on
+level/patron loss. Added-class removal/re-addition preserves the fixed starting
+Fighter, its ASI/HP/pin identities, rejects a stale tab and creates a fresh Cleric
+occurrence. Two actual local Next/Auth/PostgREST/PostgreSQL stories and eight
+native readbacks pass. The starting class stays fixed by the user's decision.
+The 68 focused Fiend and 34 removal/UI checks, typecheck and zero-warning lint
+pass; no broad suite/build repetition was run.
+[Evidence and remaining gates](handoffs/2026-10-23-fiend-and-class-removal.md).
+
+R06/M1 remains **IN PROGRESS**: ordinary save-response/reload recovery, reviewed
+historical correction/repin, complete caster drafts, broader combinations/
+concurrency, enrolled writer/lifecycle fences and hosted/provider acceptance.
+Global gates stay closed. Owned services/containers/networks/volumes/credentials
+are removed and task ports closed; shared engine/cache and worktrees remain.
+No hosted change, push or deployment. Vercel unchanged; M1–M6/M5.5 precede M8;
+M7/creature imports paused.
+
+### Prior bonus-acquisition checkpoint
+
 **Latest accepted bonus-acquisition checkpoint: `1323c18`.** All 14 source-owned
 bonus-spell groups and Lore's three new skills save/reload in the actual local
 Next/Auth/PostgREST/PostgreSQL app. Four focused stories cover Bard/Lore,
@@ -1824,7 +1844,7 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R03 M1/P0 safety | Reviewed dependencies, error/privacy boundaries, release/recovery compatibility. [Dependency evidence](handoffs/2026-10-12-r03-devtools-remediation-plan.md), [release checklist](RELEASE-READINESS.md). I=P/T=local/G=yes patches/D=- candidate/A=open. | Production audit zero; eight unpatched development-chain highs remain unaccepted. Final combined source/renderer gates, restore/migration replay and old-client compatibility remain required; audit counts do not prove exploit absence. |
 | R04 M1/M8 | Feedback capture/admin triage and alpha checkpoint A-D evidence. [Contract](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [alpha records](alpha). I=yes/T=local+H/G=yes/D=H/A=admin/current open. | Exact originating context/mobile feedback and permitted admin triage; record feedback rounds, disposition/blockers and Victor acceptance, not invented users or elapsed-time substitutes. |
 | R05 M2/PRD §11 | Established visual identity, responsive web, mobile/tablet workflows. [Journey](design-briefs/design_handoff_journey_alpha/README.md), [UI](../components), [offline configs](../e2e). I=yes/T=offline+H/G=yes/D=H/A=current open. | Real current routes at desktop/mobile/tablet; reachable controls, no clipping, keyboard/focus/labels/errors/contrast/zoom and screen-reader checks. Preserve shipped #67; no redesign. |
-| R06 PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. R06 remains in progress: Fiend expanded-list eligibility correction, class removal, historical correction/repin, broader combinations/recovery/concurrency and hosted/provider acceptance. Legacy race dual arithmetic stays visibly preserved. |
+| R06 PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md), [Fiend/removal actual app acceptance](handoffs/2026-10-23-fiend-and-class-removal.md). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. Fiend expanded candidates and secondary removal/re-addition also pass actual save/reload; the original class stays fixed. R06 remains in progress: ordinary save-response/reload recovery, historical correction/repin, complete caster drafts, broader combinations/concurrency, enrolled writer fences and hosted/provider acceptance. Legacy race dual arithmetic stays visibly preserved. |
 | R07 PRD §5; M3 | Equipment/custom inventory/equip/currency, atomic starting awards/copy. [Inventory](../lib/supabase/inventory.ts), [staged SQL/readme](../supabase/staged/README.md), [45-case executable test](../tests/supabase/starting-equipment-postgres.test.ts). I=staged/P/T=model+offline/G=yes, gate off/D=-/A=open. | Full migration/grants/triggers, per-write rollback, concurrent same/different intent, ownership/pin/copy races, replay after consumption and lost responses. No fabricated legacy eligibility/receipts. E1 runtime + approved legacy policy; rollout after actual acceptance. |
 | R08 PRD §3/§4/§9; M3 | HP/temp HP, death saves, conditions, dice/logs, cast/slots/resources, effects/concentration, rests/hit dice. [Provider](../lib/character/character-context.tsx), [sheet](../components/sheet), [core checks](handoffs/2026-10-11-orchestrator-local-queue.md). I=yes/P/T=offline+H/G=yes/D=H/A=current open. | Real multi-class play/rest/roll/calculation scenarios, pending/failure/conflict/reload/offline/expiration paths, no silent duplicate or lost spend. Do not confuse a simulated router/provider with hosted success. |
 | R09 M3 safety/D1 | Durable rolled action + revision/dependency/old-writer participation. [Contract and executable gaps](specs/2026-10-11-durable-roll-state-contract.md), [current gap tests](../tests/supabase/durable-action-current-gaps.test.ts). I=proposal/T=characterization/G=proposal/D=-/A=open. | Implement one hit-die command locally with operation identity/receipt and revision/dependency checks; prove rollback/lost-response replay/ABA/legacy-writer behavior, then reviewed death-save/concentration adapters. Local SQL-file edits/tests are ordinary work; actual DB/security execution uses G2/G3. |

@@ -1,5 +1,21 @@
 # Starting-equipment transaction: local review stage
 
+## Current Fiend/removal builder companions — disabled
+
+After the current builder progression, multiclass, class-feature-choice and
+bonus-spell companions, install `character-builder-expanded-spells.sql`, then
+`character-builder-class-removal.sql`, only in the authorized disposable native
+profile. The first extends ordinary eligibility from the exact earned Fiend pin;
+the second retires added class occurrences while keeping the original fixed.
+Both require exact function profiles, preserve ownership/ACLs and leave all
+global gates disabled. They are staged source, outside the migration chain.
+
+The actual local app save/reload and native readbacks pass for the bounded
+Fiend/removal flows. This does not authorize hosted installation or establish
+general route, recovery/concurrency or historical-repin acceptance. See the
+[contract](../../docs/specs/2026-10-23-fiend-expanded-list-and-class-removal.md)
+and [evidence](../../docs/handoffs/2026-10-23-fiend-and-class-removal.md).
+
 ## Current first-class save stages — disabled
 
 `class-first-acquisition-protected-plan.sql` seals native B1 allocation;

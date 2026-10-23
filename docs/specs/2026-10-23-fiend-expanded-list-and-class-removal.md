@@ -31,9 +31,10 @@ with a matching slug cannot impersonate a published off-list candidate. Class
 level and spell level remain bounded by the selected Warlock's own progression.
 Ordinary Warlock-list eligibility retains its independent path.
 
-Losing a tier or clearing the subclass prunes only expanded-only choices that
-have become ineligible. Other ordinary Warlock selections and retained row IDs
-survive. The subclass card provides an explicit **Clear subclass** action; a
+Loss of expanded eligibility removes expanded-only choices that become
+ineligible. Normal level and budget pruning also applies when reducing a class
+level. Clearing the patron preserves independently eligible base-list selections
+and their row IDs. The subclass card provides an explicit **Clear subclass** action; a
 click on the selected card remains idempotent. Historical immutable Fiend
 snapshots are preserved and show a warning. Updating those snapshots requires
 a separate reviewed content-version/repin policy.

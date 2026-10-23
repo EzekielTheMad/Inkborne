@@ -4,22 +4,33 @@ Updated 2026-10-23 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
-**All 14 remaining bonus-spell groups and Lore's three bonus skills save/reload
-in the actual local app through `1323c18`.** Four browser stories and eight
-native snapshots verify budgets, exact earned owners, physical projections,
-pruning, receipts/revisions and row ordering. 85 relevant tests pass; a final
-three-file rerun passes 21 overlapping tests. Final typecheck and zero-warning
-lint pass. [Evidence and next work](handoffs/2026-10-23-bonus-spells-and-lore.md).
+**Fiend's expanded list and added-class removal save/reload in the actual local
+app through `7c16608`.** Fiend's ten spells extend ordinary eligibility at five
+earned tiers and consume the normal allowance. Lost patron eligibility prunes
+expanded-only choices; normal level/budget pruning also applies.
+Removing/re-adding Cleric preserves the original Fighter,
+ASI, HP and pin identities, rejects a stale tab and creates a fresh secondary
+occurrence. The starting class stays fixed, per the user's decision. Two actual
+browser stories and eight native snapshots pass. The 68 focused Fiend checks
+and 34 removal/UI/action checks pass, along with typecheck and zero-warning lint.
+[Evidence, focused checks and limitations](handoffs/2026-10-23-fiend-and-class-removal.md).
 
-M1/R06 remains **in progress**. Next is correcting Fiend expanded-list spells
-currently treated as free prepared grants. Class removal, historical correction/
-repin, broader combinations/recovery/concurrency and hosted/provider acceptance
-remain open. Advanced free-cast spending/recovery remains separate gameplay
-work. The fresh disposable catalog had 1,535 exact definitions/snapshots. Task
-services, five containers, two networks, two volumes and private credentials
-are removed; ports 3001/9997/9998/9999 are closed. Shared Docker engine/cache,
-all worktrees and retained dependency junctions remain. Global gates are closed.
-Vercel unchanged; M1–M6/M5.5 precede M8 and M7/creature imports stay paused.
+M1/R06 remains **in progress**. Next is recovery after a lost ordinary builder
+save response and reload, followed by reviewed historical correction/repin,
+complete caster-draft acceptance and broader combinations/concurrency. Enrolled
+writer/lifecycle fences and hosted/provider acceptance remain open. Advanced
+free-cast spending/recovery remains separate gameplay work. The fresh disposable
+catalog had 1,535 exact definitions/snapshots. Task services, five containers,
+two networks, two volumes and private credentials are removed; ports
+3001/9997/9998/9999 are closed. Shared Docker engine/cache, all worktrees and
+retained dependency junctions remain. Global gates are closed. Vercel unchanged;
+M1–M6/M5.5 precede M8 and M7/creature imports stay paused.
+
+### Prior bonus-acquisition checkpoint
+
+All 14 source-owned bonus-spell groups and Lore's three new skills save/reload
+through `1323c18`, with four actual browser stories and eight native snapshots.
+[Prior evidence](handoffs/2026-10-23-bonus-spells-and-lore.md).
 
 ### Prior multiclass and class-family checkpoint
 
