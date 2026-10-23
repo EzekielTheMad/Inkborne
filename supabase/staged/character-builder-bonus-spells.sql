@@ -317,7 +317,7 @@ DECLARE item record; original pg_catalog.pg_proc%ROWTYPE; repaired pg_catalog.pg
 BEGIN
   FOR item IN SELECT * FROM (VALUES
     ('private.prepare_builder_class_feature_choices_v1(uuid,jsonb,jsonb,text,jsonb)','518793720d6c4abe638edec0c36e9fe1','ac38f1a56f22097481aa51ea3472d592','normalizer'),
-    ('private.builder_progression_class_spells_v1(uuid,jsonb,integer,jsonb,jsonb,text)','931cb3381da5db27c377bc9cafe1ecce','1d3d154da775f4aa972f46e1729f0893','budget'),
+    ('private.builder_progression_class_spells_v1(uuid,jsonb,integer,jsonb,jsonb,text)','931cb3381da5db27c377bc9cafe1ecce','b2535515321b201f5288845e8b0956e8','budget'),
     ('private.apply_builder_progression_graph_v1(uuid,jsonb,jsonb,integer)','d1bae62e2076a1b1202a9a0c5bb7657d','adbc4f82a2454cc5bd63a8f4a9cd0db7','apply')
   ) expected(signature,body_md5,next_md5,kind) LOOP
     SELECT * INTO original FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(item.signature);
