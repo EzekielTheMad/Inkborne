@@ -3,13 +3,13 @@ import { SPELLCASTING_TYPES } from "@/lib/types/taxonomies";
 import { spellcastingListSchema } from "./mechanical";
 
 const nonblankSlug = z.string().refine(value => value.trim().length > 0, "Expected a nonblank slug");
-const expandedSpellSlug = z.string().min(1).refine(value => value.trim() === value && value.length > 0, "Expected a trimmed nonblank slug");
+const expandedSpellSlug = z.string().min(1).max(200).refine(value => value.trim() === value && value.length > 0, "Expected a trimmed nonblank slug");
 /** Expanded lists add eligible ordinary choices, never known/prepared grants.
  * Levels are the selected parent class's earned levels. */
 export const subclassSpellcastingExpandedSchema = z.array(z.object({
   level: z.number().int().min(1).max(20),
-  spells: z.array(expandedSpellSlug).min(1),
-})).min(1).superRefine((tiers, context) => {
+  spells: z.array(expandedSpellSlug).min(1).max(100),
+}).strict()).min(1).max(20).superRefine((tiers, context) => {
   const levels = new Set<number>(), spells = new Set<string>();
   for (const [index, tier] of tiers.entries()) {
     if (levels.has(tier.level)) context.addIssue({ code: "custom", message: "Duplicate expanded-list class level", path: [index, "level"] });

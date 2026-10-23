@@ -65,10 +65,12 @@ describe("physical builder spell completion", () => {
   it("counts earned expanded spells as ordinary known selections with exact saved slug evidence", () => {
     const source: EffectiveCastingSource = { ...cleric, classSlug: "warlock", config: { type: "pact", ability: "charisma" },
       cantripsKnown: 0, spellsKnown: 2, prepared: false, spellList: { class: "warlock", level: [0, 9] },
-      expandedSpellSlugs: ["burning-hands", "command"] };
+      expandedSpellSlugs: ["burning-hands", "command"],
+      expandedSpellSource: { system_id: "original-system", source: "srd", scope: "platform", owner_id: null } };
     const known = (slug: string, classes = ["wizard"]) => spell(slug, 1, {
       class_slug: "warlock", is_prepared: false, content_definitions: {
-        id: slug, slug, version: 1, content_type: "spell", data: { level: 1, classes },
+        id: slug, slug, version: 1, content_type: "spell", system_id: "original-system", source: "srd", scope: "platform", owner_id: null,
+        data: { level: 1, classes },
       },
     });
     const saved = [known("burning-hands"), known("hex", ["warlock"])];

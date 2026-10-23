@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveEffectiveCastingSources } from "@/lib/spells/effective-sources";
 import { isOrdinaryClassSpellEligible } from "@/lib/spells/spell-eligibility";
 import { isBonusSpellEligible } from "@/lib/builder/bonus-spells";
-import { originalParent, originalRef, originalSnapshot, originalSubclassFixture } from "../fixtures/subclass-casting";
+import { originalParent, originalRef, originalSnapshot, originalSubclassFixture, subclassSystemId, subclassOwnerId } from "../fixtures/subclass-casting";
 
 function fixture(level = 3) {
   const input = originalSubclassFixture(level);
@@ -16,7 +16,8 @@ function fixture(level = 3) {
   }, 20, 2));
   return input;
 }
-const spell = (slug: string, level: number, classes = ["original-scholar"]) => ({ slug, data: { level, classes } });
+const origin = { system_id: subclassSystemId, source: "homebrew", scope: "personal", owner_id: subclassOwnerId };
+const spell = (slug: string, level: number, classes = ["original-scholar"]) => ({ slug, ...origin, data: { level, classes } });
 
 describe("immutable expanded ordinary spell lists", () => {
   it.each([1, 3])("inherits one Pact source and earns only its own class-level tiers at %s", level => {
@@ -37,6 +38,12 @@ describe("immutable expanded ordinary spell lists", () => {
     expect(isOrdinaryClassSpellEligible(source, spell("ordinary", 1, ["warden"]))).toBe(true);
     expect(isOrdinaryClassSpellEligible(source, spell("off-list", 1))).toBe(false);
     expect(isOrdinaryClassSpellEligible(source, spell("prism-mark", 3))).toBe(false);
+    for (const provenance of [{ system_id: "other-system" }, { source: "srd" }, { scope: "shared" }, { owner_id: null }]) {
+      expect(isOrdinaryClassSpellEligible(source, { ...spell("prism-mark", 1), ...provenance })).toBe(false);
+      // Legitimate ordinary class-list candidates retain their existing eligibility.
+      expect(isOrdinaryClassSpellEligible(source, { ...spell("ordinary", 1, ["warden"]), ...provenance })).toBe(true);
+    }
+    expect(isOrdinaryClassSpellEligible({ ...source, expandedSpellSource: undefined }, spell("prism-mark", 1))).toBe(false);
     expect(isOrdinaryClassSpellEligible(result.sources[1], spell("prism-mark", 1))).toBe(false);
   });
   it("keeps absent metadata absent and refuses malformed saved metadata without repinning", () => {

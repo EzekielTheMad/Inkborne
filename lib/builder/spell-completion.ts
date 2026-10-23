@@ -7,7 +7,7 @@ import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions
 
 export type BuilderSpellCompletionRow = Pick<CharacterSpell,
   "content_id" | "content_version" | "class_slug" | "source" | "is_prepared" | "is_known" | "in_spellbook" | "always_prepared"
-> & { custom_data?: Record<string, unknown> | null; content_definitions?: Pick<ParsedContentDefinition, "id" | "version" | "content_type" | "data"> & Partial<Pick<ParsedContentDefinition, "slug">> | null };
+> & { custom_data?: Record<string, unknown> | null; content_definitions?: Pick<ParsedContentDefinition, "id" | "version" | "content_type" | "data"> & Partial<Pick<ParsedContentDefinition, "slug" | "system_id" | "source" | "scope" | "owner_id">> | null };
 
 export interface BonusSpellCompletionEvidence {
   features: ReadonlyArray<Pick<ParsedContentDefinition, "id" | "version" | "slug" | "data"> & { ref_id: string }>;

@@ -20,6 +20,7 @@ export interface EffectiveCastingSource {
   spellList: { class: string; level: [number, number] };
   /** Earned from the selected immutable subclass; ordinary known budget. */
   expandedSpellSlugs?: string[];
+  expandedSpellSource?: { system_id: string; source: string; scope: string; owner_id: string | null };
   directSlots: number[];
   maxLearnableLevel: number;
 }
@@ -59,6 +60,7 @@ export function resolveEffectiveCastingSources(classes: unknown, refs: ContentRe
     let kind: EffectiveCastingSource["kind"] = "class";
     let subclass: ContentRefWithContent | null = null;
     let expandedSpellSlugs: string[] | undefined;
+    let expandedSpellSource: EffectiveCastingSource["expandedSpellSource"];
     let preparationRule: PreparationRule = "parent";
     if (choice.subclass !== undefined) {
       subclass = exactRef("subclass", choice.subclass, refs, character);
@@ -66,8 +68,12 @@ export function resolveEffectiveCastingSources(classes: unknown, refs: ContentRe
       const parsed = subclassDataSchema.safeParse(subclass.content_definitions.data);
       if (!parsed.success || parsed.data.parent_class !== choice.slug) return unavailable("invalid selected subclass or parent pairing");
       const sub = parsed.data;
-      if (sub.spellcastingExpanded) expandedSpellSlugs = sub.spellcastingExpanded
-        .filter(tier => tier.level <= choice.level).flatMap(tier => tier.spells);
+      if (sub.spellcastingExpanded) {
+        const pinned = subclass.content_definitions;
+        if (!pinned.system_id || !pinned.scope || pinned.owner_id === undefined) return unavailable("missing expanded spell-list source ownership");
+        expandedSpellSlugs = sub.spellcastingExpanded.filter(tier => tier.level <= choice.level).flatMap(tier => tier.spells);
+        expandedSpellSource = { system_id: pinned.system_id, source: pinned.source, scope: pinned.scope, owner_id: pinned.owner_id };
+      }
       // Grants/legacy spells are intentionally excluded from source markers.
       const metadataMarker = Object.hasOwn(sub, "spellcastingKnown") || Object.hasOwn(sub, "spellcastingList") || Object.hasOwn(sub, "preparation_rule");
       const rowMarker = sub.levels.some(row => Object.hasOwn(row, "spellcasting"));
@@ -100,7 +106,7 @@ export function resolveEffectiveCastingSources(classes: unknown, refs: ContentRe
       parentPin: { contentId: parent.content_id, version: parent.content_version },
       ...(subclass ? { subclassPin: { contentId: subclass.content_id, version: subclass.content_version } } : {}),
       active, config, prepared: known?.prepared ?? false, preparationRule, spellList, directSlots,
-      ...(expandedSpellSlugs ? { expandedSpellSlugs } : {}),
+      ...(expandedSpellSlugs ? { expandedSpellSlugs, expandedSpellSource } : {}),
       cantripsKnown: known?.cantrips?.[choice.level - 1] ?? 0,
       spellsKnown: known?.spells === "all" || known?.spells === undefined ? "all" : known.spells[choice.level - 1] ?? 0,
       maxLearnableLevel: directSlots.reduce((max, count, index) => count > 0 ? index + 1 : max, 0) });
