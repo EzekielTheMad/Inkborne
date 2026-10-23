@@ -16,7 +16,7 @@ The private helper requires the current same-transaction builder capability and 
 | --- | --- | --- |
 | Catalog | `a42a35c4646b26a33ec91a3402dcfae4` | `8175fff619fa2ba56962e30fcb04a843` |
 | Progression | `d0f8cb403bc4e03dfa0c7d80b61bd4c3` | `97e29472187cb63fef0da670b6f4eea6` |
-| Acquisition | `4dba9fc24df5d0dae2bb553d7b364915` | `e39dd2ce600e32c1bd6d4447aa1d4fa1` |
+| Acquisition, including empty-array repair | `ed2c8225db562571db783f688b59ba3b` | `f08844d4d198b17b4f83353cfe9c2bab` |
 
 The final class-choice helper body MD5 is `15ab056ef2de2f4857b578af584ec1b7`. Its final return is the exact composition point for the later Favored Enemy normalizer. No recursive normalizer call is required.
 

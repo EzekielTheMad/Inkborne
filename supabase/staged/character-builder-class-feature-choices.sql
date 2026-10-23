@@ -241,7 +241,7 @@ BEGIN
   FOR item IN SELECT * FROM (VALUES
     ('private.apply_builder_catalog_command_v1(uuid,text,jsonb)','a42a35c4646b26a33ec91a3402dcfae4','8175fff619fa2ba56962e30fcb04a843','catalog'),
     ('private.prepare_builder_progression_v1(uuid,uuid,text,jsonb)','d0f8cb403bc4e03dfa0c7d80b61bd4c3','97e29472187cb63fef0da670b6f4eea6','progression'),
-    ('private.prepare_builder_acquisition_v1(uuid,uuid,jsonb)','4dba9fc24df5d0dae2bb553d7b364915','e39dd2ce600e32c1bd6d4447aa1d4fa1','acquisition')
+    ('private.prepare_builder_acquisition_v1(uuid,uuid,jsonb)','ed2c8225db562571db783f688b59ba3b','f08844d4d198b17b4f83353cfe9c2bab','acquisition')
   ) wanted(signature,body_md5,next_md5,kind) LOOP
     SELECT * INTO original FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(item.signature);
     IF NOT FOUND OR original.proowner<>'postgres'::pg_catalog.regrole::oid
