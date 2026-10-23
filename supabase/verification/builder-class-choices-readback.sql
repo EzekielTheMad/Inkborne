@@ -104,7 +104,7 @@ WITH target AS (
 ), sibling_checks AS (
   SELECT source_ref_id,choice_id,count(*) AS child_count,count(DISTINCT choice_source)=count(*) AS unique_tags,
     count(*) FILTER(WHERE retained_legacy_tag)<=1 AS at_most_one_legacy_tag,
-    bool_and(finite_parent_authority AND (retained_legacy_tag OR exact_child_version_tag)) AS all_children_authorized
+    bool_and(COALESCE(finite_parent_authority,false) AND COALESCE(retained_legacy_tag OR exact_child_version_tag,false)) AS all_children_authorized
   FROM children GROUP BY source_ref_id,choice_id
 ), favored_rows AS (
   SELECT saved.key AS source_slug,saved.value AS candidate,s.id AS source_ref_id,s.data AS source_data,s.source AS source_origin,
@@ -181,7 +181,7 @@ SELECT pg_catalog.jsonb_pretty(pg_catalog.jsonb_build_object(
     ELSE '{"scope":"No family browser expectation encoded"}'::jsonb END FROM summary),
   'exact_frozen_pins',(SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('id',id,'kind',kind,'slug',slug,
     'content_id',content_id,'content_version',content_version,'feature_grant_id',feature_grant_id,'choice_source',choice_source) ORDER BY kind,slug,id),'[]') FROM refs),
-  'all_pinned_versions_exact',(SELECT COALESCE(bool_and(r.exact_version_found AND r.system_id=t.system_id),false) FROM refs r CROSS JOIN target t),
+  'all_pinned_versions_exact',(SELECT COALESCE(bool_and(COALESCE(r.exact_version_found AND r.system_id=t.system_id,false)),false) FROM refs r CROSS JOIN target t),
   'feature_grants_exact',(SELECT COALESCE(bool_and(g.exact_feature_version AND g.controller_kind=g.controller_type
     AND g.pinned_controller_slug=g.controller_slug AND g.class_level IS NOT NULL),false) FROM feature_grants g),
   'physical_feature_grant_links_exact',NOT EXISTS(SELECT 1 FROM refs r WHERE r.feature_grant_id IS NOT NULL AND NOT EXISTS(
@@ -198,15 +198,15 @@ SELECT pg_catalog.jsonb_pretty(pg_catalog.jsonb_build_object(
   'finite_feature_choices',(SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('source_ref_id',source_ref_id,
     'source_slug',source_slug,'choice_id',choice_id,'grant_type',grant_type,'selected',selected,'capacity',capacity,
     'finite_unique_choice',finite_unique_choice,'selected_children_present',selected_children_present) ORDER BY choice_id),'[]') FROM choice_checks),
-  'all_choice_checks',(SELECT COALESCE(bool_and(finite_unique_choice AND selected_children_present),true) FROM choice_checks),
+  'all_choice_checks',(SELECT COALESCE(bool_and(COALESCE(finite_unique_choice AND selected_children_present,false)),true) FROM choice_checks),
   'materialized_children',(SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.to_jsonb(c) ORDER BY slug,id),'[]') FROM children c),
   'sibling_tag_checks',(SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.to_jsonb(s) ORDER BY source_ref_id,choice_id),'[]') FROM sibling_checks s),
   'all_child_checks',(SELECT COALESCE(bool_and(unique_tags AND at_most_one_legacy_tag AND all_children_authorized),true) FROM sibling_checks),
   'favored_selections',(SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object('source_slug',source_slug,'candidate',candidate,
     'source_ref_id',source_ref_id,'finite_earned_selection',finite_earned_selection,'language_projection_exact',language_projection_exact) ORDER BY source_slug),'[]') FROM favored_rows),
   'favored_language_pins',(SELECT COALESCE(pg_catalog.jsonb_agg(pg_catalog.to_jsonb(f) ORDER BY slug,id),'[]') FROM favored_languages f),
-  'all_favored_checks',(SELECT COALESCE(bool_and(finite_earned_selection AND language_projection_exact),true) FROM favored_rows)
-    AND (SELECT COALESCE(bool_and(exact_owned_language),true) FROM favored_languages)
+  'all_favored_checks',(SELECT COALESCE(bool_and(COALESCE(finite_earned_selection AND language_projection_exact,false)),true) FROM favored_rows)
+    AND (SELECT COALESCE(bool_and(COALESCE(exact_owned_language,false)),true) FROM favored_languages)
     AND (SELECT count(*)=count(DISTINCT candidate#>>'{selection,enemy_type}') FROM favored_rows WHERE candidate#>>'{selection,mode}'='type')
     AND (SELECT count(*)=count(DISTINCT race.value) FROM favored_rows f CROSS JOIN LATERAL pg_catalog.jsonb_array_elements(
       CASE WHEN f.candidate#>>'{selection,mode}'='humanoids' THEN f.candidate#>'{selection,races}' ELSE '[]' END) race(value)),
