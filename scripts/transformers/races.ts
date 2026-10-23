@@ -1,4 +1,4 @@
-import { fetchAllFromApi, buildContentEntry, buildMechanicalEffect, buildAbilityBonusEffects, buildGrantEffect, buildChoiceEffect, normalizeSlug } from "./common";
+import { fetchAllFromApi, buildContentEntry, buildMechanicalEffect, buildAbilityBonusEffects, buildGrantEffect, buildChoiceEffect, normalizeSlug, expandAbilityAbbreviation } from "./common";
 import type { TransformedContent } from "./common";
 import type { Effect } from "@/lib/types/effects";
 
@@ -7,6 +7,7 @@ interface ApiRace {
   name: string;
   speed: number;
   ability_bonuses: Array<{ ability_score: { index: string; name: string }; bonus: number }>;
+  ability_bonus_options?: { choose: number; from: { options: Array<{ ability_score: { index: string }; bonus: number }> } };
   size: string;
   size_description: string;
   age: string;
@@ -44,6 +45,12 @@ export function transformRaceEntry(apiRace: ApiRace): TransformedContent {
 
   // Ability bonuses
   effects.push(...buildAbilityBonusEffects(apiRace.ability_bonuses));
+  if (apiRace.ability_bonus_options) {
+    const choice = apiRace.ability_bonus_options;
+    if (choice.from.options.some(option => option.bonus !== 1)) throw new Error("Unsupported nonuniform SRD ability bonus choice.");
+    effects.push(buildChoiceEffect(choice.choose, choice.from.options.map(option => expandAbilityAbbreviation(option.ability_score.index)),
+      "ability_bonus", `${apiRace.index}-ability-bonus-choice`));
+  }
 
   // Speed
   effects.push(buildMechanicalEffect("movement_speed", "set", apiRace.speed));

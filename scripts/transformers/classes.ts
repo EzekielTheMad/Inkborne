@@ -1,19 +1,22 @@
 import { fetchFromApi, fetchAllFromApi, buildContentEntry, buildChoiceEffect, buildGrantEffect, expandAbilityAbbreviation, normalizeSlug } from "./common";
 import type { TransformedContent } from "./common";
 import type { Effect, StatCondition } from "@/lib/types/effects";
+import { referenceOptions, startingEquipmentText, type ApiChoice, type ApiReference } from "./api-options";
+
+export const SUBCLASS_LEVELS: Readonly<Record<string, number>> = {
+  barbarian: 3, bard: 3, cleric: 1, druid: 2, fighter: 3, monk: 3,
+  paladin: 3, ranger: 3, rogue: 3, sorcerer: 1, warlock: 1, wizard: 2,
+};
 
 interface ApiClass {
   index: string;
   name: string;
   hit_die: number;
-  proficiency_choices: Array<{
-    choose: number;
-    from: { options: Array<{ item: { index: string; name: string } }> };
-  }>;
+  proficiency_choices: ApiChoice[];
   proficiencies: Array<{ index: string; name: string }>;
   saving_throws: Array<{ index: string; name: string }>;
-  starting_equipment: Array<unknown>;
-  starting_equipment_options: Array<unknown>;
+  starting_equipment: Array<{ equipment: ApiReference; quantity: number }>;
+  starting_equipment_options: ApiChoice[];
   subclasses: Array<{ index: string; name: string }>;
   spellcasting?: {
     level: number;
@@ -54,7 +57,7 @@ interface ApiSubclass {
   subclass_flavor: string;
   desc: string[];
   subclass_levels: string;
-  spells?: Array<{ spell: { index: string; name: string } }>;
+  spells?: Array<{ spell: { index: string; name: string }; prerequisites?: Array<{ type: string; index: string }> }>;
 }
 
 function mapSpellcastingType(className: string): "full" | "half" | "third" | "pact" | null {
@@ -73,12 +76,12 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
 
   // Phase 3: derive skillstxt from proficiency choices
   const skillChoices = apiClass.proficiency_choices
-    .filter((c) => c.from.options.some((o) => o.item?.index?.startsWith("skill-")));
+    .filter((c) => referenceOptions(c).some((o) => o.index.startsWith("skill-")));
   const skillstxt = skillChoices.length > 0
     ? `Choose ${skillChoices[0].choose} from ${
-        skillChoices[0].from.options
-          .filter((o) => o.item?.index?.startsWith("skill-"))
-          .map((o) => o.item.name.replace("Skill: ", ""))
+        referenceOptions(skillChoices[0])
+          .filter((o) => o.index.startsWith("skill-"))
+          .map((o) => o.name.replace("Skill: ", ""))
           .join(", ")
       }`
     : undefined;
@@ -86,7 +89,7 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
   // Proficiency choices (e.g., choose 2 skills)
   for (let i = 0; i < apiClass.proficiency_choices.length; i++) {
     const choice = apiClass.proficiency_choices[i];
-    const options = choice.from.options.filter((o) => o.item != null).map((o) => normalizeSlug(o.item.index));
+    const options = referenceOptions(choice).map((o) => normalizeSlug(o.index));
     effects.push(buildChoiceEffect(
       choice.choose,
       options,
@@ -112,8 +115,8 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     ? {
         ability: expandAbilityAbbreviation(apiClass.spellcasting.spellcasting_ability.index),
         type: mapSpellcastingType(apiClass.index) ?? "full",
-        focus: "",
-        ritual_casting: false,
+        focus: ({ bard: "musical instrument", cleric: "holy symbol", druid: "druidic focus", sorcerer: "arcane focus", warlock: "arcane focus", wizard: "arcane focus" } as Record<string, string>)[apiClass.index] ?? "",
+        ritual_casting: ["wizard", "cleric", "druid", "bard"].includes(apiClass.index),
       }
     : null;
 
@@ -140,7 +143,7 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
       spellcasting: spellSlots
         ? { cantrips_known: lvl.spellcasting?.cantrips_known, spell_slots: spellSlots }
         : null,
-      ...(lvl.subclass ? { subclass_level: true } : {}),
+      ...(lvl.subclass || SUBCLASS_LEVELS[apiClass.index] === lvl.level ? { subclass_level: true } : {}),
       ...(Object.keys(lvl.class_specific).length > 0 ? { class_specific: lvl.class_specific } : {}),
     };
   });
@@ -158,9 +161,8 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     .map((lvl) => lvl.spellcasting?.cantrips_known ?? 0);
   const hasCantrips = cantripsKnown.some((c) => c > 0);
 
-  // Phase 3: primaryAbility, subclassLabel, equipment, armorProfs, weaponProfs, and
-  // toolProfs are MPMB-seeded via SQL migration 00018_class_detail_enrichment.sql.
-  // Only skillstxt and source_refs are derived from the API here.
+  // Data-only reviewed SRD constants add display/proficiency/progression detail
+  // in buildContentEntry, before the complete import is validated and promoted.
   return buildContentEntry("class", apiClass.index, apiClass.name, {
     hit_die: apiClass.hit_die,
     spellcasting,
@@ -172,7 +174,7 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     starting_proficiencies: apiClass.proficiencies.map((p) => p.index),
     levels,
     ...(improvements.some(Boolean) ? { improvements } : {}),
-    // Partial spellcastingKnown from API — cantrips only; spells/prepared via SQL migration
+    // API cantrips plus reviewed spells-known/prepared progression enrichment.
     ...(hasCantrips ? {
       spellcastingKnown: {
         cantrips: cantripsKnown,
@@ -187,6 +189,7 @@ export function transformClassEntry(apiClass: ApiClass, apiLevels: ApiClassLevel
     } : {}),
     // Phase 3 fields from API
     ...(skillstxt ? { skillstxt } : {}),
+    equipment: startingEquipmentText(apiClass.starting_equipment, apiClass.starting_equipment_options),
     source_refs: [{ book: "SRD", page: 0 }],
   }, effects);
 }
@@ -209,12 +212,24 @@ export async function transformClasses(): Promise<TransformedContent[]> {
       features: lvl.features.map((f) => f.index),
     }));
 
+    const spellTiers = new Map<number, string[]>();
+    for (const grant of sub.spells ?? []) {
+      // Terrain/feature-gated spells cannot become unconditional subclass
+      // grants. Their feature descriptions remain authoritative until that
+      // richer conditional spell contract is explicitly represented.
+      if (grant.prerequisites?.some(prerequisite => prerequisite.type !== "level")) continue;
+      const level = grant.prerequisites?.find(prerequisite => prerequisite.type === "level")?.index.match(/-(\d+)$/)?.[1];
+      if (!level) throw new Error(`Missing SRD subclass spell level: ${sub.index}/${grant.spell.index}`);
+      const tier = spellTiers.get(Number(level)) ?? [];
+      tier.push(grant.spell.index); spellTiers.set(Number(level), tier);
+    }
     results.push(buildContentEntry("subclass", sub.index, sub.name, {
       parent_class: sub.class.index,
       flavor_label: sub.subclass_flavor,
       description: sub.desc.join("\n"),
       levels,
-      spells: (sub.spells ?? []).map((s) => s.spell.index),
+      spells: [],
+      ...(spellTiers.size ? { spellcastingExtra: [...spellTiers].sort(([a], [b]) => a - b).map(([level, spells]) => ({ level, spells })) } : {}),
     }));
   }
 

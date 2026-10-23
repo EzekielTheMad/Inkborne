@@ -1,14 +1,16 @@
 import { fetchAllFromApi, buildContentEntry, buildGrantEffect, buildChoiceEffect, normalizeSlug } from "./common";
 import type { TransformedContent } from "./common";
 import type { Effect } from "@/lib/types/effects";
+import { referenceOptions, startingEquipmentText, type ApiChoice } from "./api-options";
 
 interface ApiBackground {
   index: string;
   name: string;
   starting_proficiencies: Array<{ index: string; name: string }>;
-  language_options?: { choose: number; from: { options: Array<{ item: { index: string } }> } };
+  language_options?: ApiChoice;
   starting_equipment: Array<{ equipment: { index: string; name: string }; quantity: number }>;
-  starting_equipment_options: Array<unknown>;
+  starting_equipment_options: ApiChoice[];
+  starting_gold?: { quantity: number; unit: string };
   feature: { name: string; desc: string[] };
   personality_traits: { choose: number; from: { options: Array<{ string: string }> } };
   ideals: { choose: number; from: { options: Array<{ desc: string; alignments: Array<{ index: string }> }> } };
@@ -27,7 +29,7 @@ export async function transformBackgrounds(): Promise<TransformedContent[]> {
 
     if (bg.language_options) {
       const opts = bg.language_options;
-      const options = (opts.from?.options ?? []).map((o) => normalizeSlug(o.item.index));
+      const options = (opts.from.options?.length ? referenceOptions(opts) : []).map((o) => normalizeSlug(o.index));
       effects.push(buildChoiceEffect(opts.choose, options.length > 0 ? options : "all_languages", "language", `${bg.index}-language-choice`));
     }
 
@@ -68,7 +70,11 @@ export async function transformBackgrounds(): Promise<TransformedContent[]> {
       toolProfs,
       languageProfs,
       source_refs: [{ book: "SRD", page: 0 }],
-      // gold and equipment are MPMB-seeded via SQL migration 00017
+      gold: bg.starting_gold?.unit === "gp" ? bg.starting_gold.quantity : undefined,
+      // Currency is in the trusted equipment plan exactly once. `gold` is
+      // descriptive metadata; the award compiler consumes only this text.
+      equipment: [startingEquipmentText(bg.starting_equipment, bg.starting_equipment_options, ", "),
+        ...(bg.starting_gold ? [`${bg.starting_gold.quantity} ${bg.starting_gold.unit}`] : [])].filter(Boolean).join(", "),
     }, effects);
   });
 }

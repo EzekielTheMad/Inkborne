@@ -1,4 +1,7 @@
 import type { MechanicalEffect, GrantEffect, NarrativeEffect, ChoiceEffect, Effect } from "@/lib/types/effects";
+import { readFile, mkdir, writeFile } from "node:fs/promises";
+import { resolve, dirname } from "node:path";
+import { enrichSrdEntry } from "./srd-enrichment";
 
 const API_HOST = "https://www.dnd5eapi.co";
 const API_BASE = `${API_HOST}/api/2014`;
@@ -15,15 +18,40 @@ export async function fetchFromApi<T>(path: string): Promise<T> {
   } else {
     url = `${API_BASE}${path}`;
   }
-  const response = await fetch(url);
+  const source = new URL(url);
+  if (source.origin !== API_HOST || !/^\/api\/2014\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/.test(source.pathname) || source.search || source.hash) {
+    throw new Error("SRD source must be an explicit 2014 D&D API resource.");
+  }
+  const cacheRoot = process.env.INKBORNE_SRD_CACHE_DIR;
+  const cacheFile = cacheRoot ? resolve(cacheRoot, "responses", `${source.pathname.slice("/api/2014/".length)}.json`) : null;
+  if (cacheFile) {
+    try {
+      const cached = await readFile(cacheFile, "utf8");
+      if (Buffer.byteLength(cached) > 4_194_304) throw new Error("SRD source response exceeds cache budget.");
+      return JSON.parse(cached) as T;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+  }
+  const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
   if (!response.ok) {
     throw new Error(`API fetch failed: ${response.status} ${url}`);
   }
-  return response.json() as Promise<T>;
+  const data = await response.json() as T;
+  if (cacheFile) {
+    const serialized = `${JSON.stringify(data, null, 2)}\n`;
+    if (Buffer.byteLength(serialized) > 4_194_304) throw new Error("SRD source response exceeds cache budget.");
+    await mkdir(dirname(cacheFile), { recursive: true });
+    await writeFile(cacheFile, serialized);
+  }
+  return data;
 }
 
 export async function fetchAllFromApi<T>(path: string): Promise<T[]> {
-  const listResponse = await fetchFromApi<{ results: Array<{ index: string; url: string }> }>(path);
+  const listResponse = await fetchFromApi<{ count?: number; results: Array<{ index: string; url: string }> }>(path);
+  if (!Array.isArray(listResponse.results) || listResponse.results.length > 5_000 || (listResponse.count !== undefined && listResponse.count !== listResponse.results.length)) {
+    throw new Error(`Incomplete or oversized SRD source listing: ${path}`);
+  }
   const items: T[] = [];
   for (const result of listResponse.results) {
     const item = await fetchFromApi<T>(result.url);
@@ -109,5 +137,5 @@ export function buildContentEntry(
   data: Record<string, unknown>,
   effects: Effect[] = []
 ): TransformedContent {
-  return { content_type: contentType, slug, name, data, effects };
+  return enrichSrdEntry({ content_type: contentType, slug, name, data, effects });
 }

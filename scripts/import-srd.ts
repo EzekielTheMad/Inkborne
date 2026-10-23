@@ -15,6 +15,7 @@ import { transformSpells } from "./transformers/spells";
 import { transformEquipment } from "./transformers/equipment";
 import { transformMagicItems } from "./transformers/magic-items";
 import type { TransformedContent } from "./transformers/common";
+import { validateSrdCatalog } from "./transformers/validate-catalog";
 
 const UPSERT_BATCH_SIZE = 50;
 const DESTRUCTIVE_RETIREMENT_FLAG = "--allow-destructive-retirement";
@@ -191,7 +192,9 @@ export async function upsertContent(
 }
 
 export async function saveRawData(name: string, data: unknown): Promise<void> {
-  const dir = path.join(process.cwd(), "data", "srd-2014", "raw");
+  const dir = process.env.INKBORNE_SRD_CACHE_DIR
+    ? path.resolve(process.env.INKBORNE_SRD_CACHE_DIR, "prepared")
+    : path.join(process.cwd(), "data", "srd-2014", "raw");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, `${name}.json`), JSON.stringify(data, null, 2));
 }
@@ -251,6 +254,12 @@ export async function importSrd(
   console.log(`Found game system: ${systemId}\n`);
 
   const prepared = await prepareImportSteps(steps);
+  const validated = validateSrdCatalog(prepared.flatMap(step => step.content));
+  let offset = 0;
+  for (const step of prepared) {
+    step.content = validated.slice(offset, offset + step.content.length);
+    offset += step.content.length;
+  }
   for (const step of prepared) {
     console.log(`Transformed ${step.name}: ${step.content.length} entries`);
   }
