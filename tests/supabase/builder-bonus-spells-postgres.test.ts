@@ -58,6 +58,7 @@ source(28, "eyebite", "spell", { level: 6, classes: ["warlock", "wizard"], ritua
 source(29, "barkskin", "spell", { level: 2, classes: ["druid"], ritual: false });
 source(30, "call-lightning", "spell", { level: 3, classes: ["druid"], ritual: false });
 source(31, "unlisted-spell", "spell", { level: 1, classes: [], ritual: true });
+for (let n = 32; n <= 54; n++) source(n, `book-spell-${n}`, "spell", { level: 1, classes: ["wizard"], ritual: false });
 const tuple = (n: number) => ({ content_id: id(n), content_version: 1 });
 const choices = (bonus_spells: Row = {}, level = 20) => ({ classes: ["bard", "warlock", "wizard", "druid"].map(slug => ({ slug, level })), bonus_spells });
 const book = (n: number): Row => ({ id: id(n + 400), character_id: target, ...tuple(n), name: definitions.find(d => d.content_id === id(n))?.name_snapshot,
@@ -152,6 +153,20 @@ describe("finite source-owned bonus spell helper", () => {
       expect(saved.graph.spells.find(s => s.content_id === id(29))?.content_version).toBe(1);
       await expect(apply(choices({ "magical-secrets-1": [tuple(24)] }), "magical-secrets-1")).rejects.toThrow("builder_bonus_spell_unavailable");
     } finally { await db.query("UPDATE public.content_definitions SET version=1 WHERE id IN($1,$2)", [id(24), id(29)]); }
+  });
+  it("keeps Signature preparation free and refuses a replacement that would exceed the ordinary budget", async () => {
+    const ids = [...Array.from({ length: 23 }, (_, n) => n + 32), 26, 27];
+    const pending = { ...choices({ "signature-spell": [tuple(26), tuple(27)] }), class_spell_selections: {
+      wizard: ids.map(n => ({ ...tuple(n), prepared: true })),
+    } };
+    const saved = await apply(pending, "signature-spell", graph(ids.map(n => ({ ...book(n), is_prepared: true }))));
+    expect(saved.graph.spells.filter(s => s.class_slug === "wizard" && s.always_prepared)).toHaveLength(2);
+    await expect(apply({ ...pending, bonus_spells: { "signature-spell": [] } }, "signature-spell", saved.graph))
+      .rejects.toThrow("builder_spell_selection_budget_exceeded");
+    const downlevel = await apply({ ...pending, classes: pending.classes.map(c => c.slug === "wizard" ? { ...c, level: 19 } : c) }, null, saved.graph);
+    expect(downlevel.graph.spells.filter(s => s.class_slug === "wizard")).toHaveLength(25);
+    expect(downlevel.graph.spells.filter(s => s.class_slug === "wizard" && s.is_prepared)).toHaveLength(22);
+    expect(downlevel.graph.spells.filter(s => s.class_slug === "wizard" && s.always_prepared)).toHaveLength(0);
   });
   it("reserves the source's full Secrets count while excluding Lore's extra choices", async () => {
     const bard = definitions.find(d => d.slug_snapshot === "bard");
