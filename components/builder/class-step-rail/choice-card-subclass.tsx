@@ -7,7 +7,7 @@ interface ChoiceCardSubclassProps {
   classSlug: string;
   subclasses: ContentEntry[];
   currentSelection: string | undefined;
-  onSelect: (slug: string) => void;
+  onSelect: (slug: string | undefined) => void;
   /** Optional override label (defaults to "Subclass"). */
   label?: string;
 }
@@ -69,6 +69,13 @@ export function ChoiceCardSubclass({
           })}
         </div>
       )}
+      {isMade && <div className="mt-3 space-y-1">
+        <button type="button" onClick={() => onSelect(undefined)}
+          className="rounded-md px-2 py-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          Clear subclass
+        </button>
+        <p className="text-xs text-muted-foreground">Clearing this choice also removes its subclass features and spell choices.</p>
+      </div>}
     </article>
   );
 }
