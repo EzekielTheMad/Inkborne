@@ -117,13 +117,30 @@ BEGIN
     normalized:='[]'; new_spells:='[]';
     FOR item IN SELECT s.value FROM pg_catalog.jsonb_array_elements(spells) s(value)
       WHERE s.value->>'source'='selection' AND s.value->>'class_slug'=current_class->>'slug' ORDER BY s.value->>'id' LOOP
-      candidate:=pg_catalog.jsonb_build_object('content_id',item->'content_id','content_version',item->'content_version','prepared',item->'is_prepared');
+      -- Physical Signature rows are always prepared; preserve the owner's
+      -- independent ordinary preparation intent when retaining their book row.
+      SELECT p.value INTO entry FROM pg_catalog.jsonb_array_elements(COALESCE(next_choices#>ARRAY['class_spell_selections',current_class->>'slug'],'[]')) p(value)
+        WHERE p.value->'content_id'=item->'content_id' AND p.value->'content_version'=item->'content_version';
+      candidate:=pg_catalog.jsonb_build_object('content_id',item->'content_id','content_version',item->'content_version',
+        'prepared',COALESCE(entry->'prepared',item->'is_prepared'));
       BEGIN
         entry:=private.builder_progression_class_spells_v1(target,next_choices,(current_class->>'level')::integer,
           normalized||pg_catalog.jsonb_build_array(candidate),spells,current_class->>'slug');
         normalized:=normalized||pg_catalog.jsonb_build_array(candidate); new_spells:=entry;
       EXCEPTION WHEN SQLSTATE '22023' THEN
         IF SQLERRM NOT IN ('builder_class_cannot_cast','builder_spell_not_on_current_list','builder_spell_selection_budget_exceeded') THEN RAISE; END IF;
+        IF SQLERRM='builder_spell_selection_budget_exceeded' AND candidate->'prepared'='true'::jsonb THEN
+          -- Losing an ASI may lower a retained preparation allowance. Keep
+          -- learned/spellbook membership if simply unpreparing restores it.
+          candidate:=candidate||'{"prepared":false}'::jsonb;
+          BEGIN
+            entry:=private.builder_progression_class_spells_v1(target,next_choices,(current_class->>'level')::integer,
+              normalized||pg_catalog.jsonb_build_array(candidate),spells,current_class->>'slug');
+            normalized:=normalized||pg_catalog.jsonb_build_array(candidate); new_spells:=entry;
+          EXCEPTION WHEN SQLSTATE '22023' THEN
+            IF SQLERRM NOT IN ('builder_class_cannot_cast','builder_spell_not_on_current_list','builder_spell_selection_budget_exceeded') THEN RAISE; END IF;
+          END;
+        END IF;
       END;
     END LOOP;
     SELECT COALESCE(pg_catalog.jsonb_agg(s.value),'[]') INTO spells FROM pg_catalog.jsonb_array_elements(spells) s(value)

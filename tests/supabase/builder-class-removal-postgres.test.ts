@@ -52,7 +52,14 @@ beforeAll(async () => {
     CREATE FUNCTION private.builder_exact_keys_v1(value jsonb,keys text[]) RETURNS boolean LANGUAGE sql AS
       'SELECT jsonb_typeof(value)=''object'' AND (SELECT count(*) FROM jsonb_object_keys(value))=cardinality(keys) AND value ?& keys';
     CREATE FUNCTION private.builder_controller_level_v1(jsonb,jsonb,text) RETURNS integer LANGUAGE sql AS 'SELECT 4';
-    CREATE FUNCTION private.builder_progression_class_spells_v1(uuid,jsonb,integer,jsonb,jsonb,text) RETURNS jsonb LANGUAGE sql AS 'SELECT ''[]''::jsonb';
+    CREATE FUNCTION private.builder_progression_class_spells_v1(uuid,jsonb,integer,jsonb,jsonb,text) RETURNS jsonb LANGUAGE plpgsql AS $$
+      BEGIN
+        IF (SELECT count(*) FROM jsonb_array_elements($4) p(value) WHERE p.value->'prepared'='true'::jsonb)>1 THEN
+          RAISE EXCEPTION 'builder_spell_selection_budget_exceeded' USING ERRCODE='22023'; END IF;
+        RETURN (SELECT COALESCE(jsonb_agg(s.value||jsonb_build_object('is_prepared',p.value->'prepared')),'[]')
+          FROM jsonb_array_elements($4) p(value) JOIN jsonb_array_elements($5) s(value)
+            ON s.value->'content_id'=p.value->'content_id' AND s.value->'content_version'=p.value->'content_version' AND s.value->>'class_slug'=$6);
+      END $$;
     CREATE FUNCTION private.prepare_builder_class_feature_choices_v1(uuid,jsonb,jsonb,text,jsonb) RETURNS jsonb LANGUAGE sql AS 'SELECT jsonb_build_object(''choices'',$2,''graph'',$3)';
     CREATE FUNCTION private.builder_multiclass_max_hp_v1(uuid,jsonb,jsonb) RETURNS integer LANGUAGE sql AS 'SELECT 32';
     CREATE FUNCTION private.apply_builder_progression_graph_v1(uuid,jsonb,jsonb,integer) RETURNS void LANGUAGE sql AS 'SELECT';`);
@@ -111,6 +118,20 @@ describe("finite added-class removal compiler", () => {
     const noSubclass = { ...protectedGraph, occurrences: occurrences.map(o => o.id === id(2) ? { ...o, subclass_ref_id: null } : o) };
     const saved = await compile(undefined, noSubclass);
     expect(saved.expected_graph.spells).toEqual([protectedGraph.spells[2]]);
+  });
+  it("unprepares excess retained book rows when an owned ASI disappears, preserving saved preparation intent", async () => {
+    const book = [61, 62, 63].map(n => ({ id: id(n), content_id: id(n + 100), content_version: 1, class_slug: "wizard", source: "selection",
+      is_prepared: true, in_spellbook: true, custom_data: { builder_class_controller_ref_id: id(11) }, spell_grant_id: null }));
+    const wizardChoices = { ...beforeChoices, classes: beforeChoices.classes.map(c => c.slug === "fighter" ? { ...c, slug: "wizard" } : c),
+      class_spell_selections: { ...beforeChoices.class_spell_selections, wizard: book.map((s, index) => ({ content_id: s.content_id,
+        content_version: s.content_version, prepared: index !== 0 })) } };
+    await db.query("UPDATE public.characters SET choices=$1 WHERE id=$2", [wizardChoices, target]);
+    try {
+      const saved = await compile(undefined, { ...protectedGraph, spells: [...protectedGraph.spells, ...book] });
+      expect(saved.expected_choices.class_spell_selections).toEqual({ wizard: book.map((s, index) => ({ content_id: s.content_id,
+        content_version: s.content_version, prepared: index === 1 })) });
+      expect(saved.expected_graph.spells.filter(s => s.class_slug === "wizard")).toEqual(book.map((s, index) => ({ ...s, is_prepared: index === 1 })));
+    } finally { await db.query("UPDATE public.characters SET choices=$1 WHERE id=$2", [beforeChoices, target]); }
   });
 });
 
