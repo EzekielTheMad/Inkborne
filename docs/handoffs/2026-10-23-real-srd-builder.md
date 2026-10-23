@@ -134,3 +134,16 @@ metamagic. `native-multiclass-worker`/`codex/native-multiclass-20261023` starts 
 `9158162`; no work from that branch is yet activated. Wider recovery/concurrency,
 provider/hosted acceptance and release gates remain open. M1/R06 is incomplete.
 No push, deployment, hosted change or public beta happened. M7 remains paused.
+
+## Continuing builder work
+
+The class picker now checks the existing classes' ability prerequisites as well
+as the candidate's, following [SRD 5.1 page 56](https://media.wizards.com/2023/downloads/dnd/SRD_CC_v5.1.pdf).
+For example, WIS15 alone cannot qualify a STR10/DEX10 Fighter to add Cleric.
+This remains an advisory numeric check; native class acquisition still requires
+its own locked source/provenance validation and Add Class stays unavailable for
+enrolled characters. Independent narrow source review passes.
+`local-catalog-builder-20261023T183009Z` passes two files / 28 tests. The first
+run preserved a stale reproduction expectation that subrace structured data was
+excluded; the assertion now follows the shipped real-catalog subrace consumer.
+No further runtime was started for this pure helper change.

@@ -122,7 +122,7 @@ describe("R06.1 source-proven synthetic race-pin reproduction", () => {
     expect(v1.pin.version).toBe(1);
   });
 
-  it("collector takes the first race only; no policy is inferred for competing or subrace sources", () => {
+  it("collector retains the first race and collects the pinned subrace separately", () => {
     const dual = syntheticRacePin().pin;
     const scores = syntheticRacePin("scores-only").pin;
     const child = transformSubraceEntry({ index: "r06-synthetic-ember-child", name: "Synthetic Ember Child",
@@ -139,6 +139,6 @@ describe("R06.1 source-proven synthetic race-pin reproduction", () => {
       pinnedRaceRef(dual), pinnedRaceRef(scores), { content_definitions: subrace },
     ], 3);
     expect(sources.raceData).toBe(dual.data);
-    expect(sources.featureData).toEqual([]);
+    expect(sources.featureData).toEqual([subrace!.data]);
   });
 });

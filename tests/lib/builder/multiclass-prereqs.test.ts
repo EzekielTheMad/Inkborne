@@ -81,6 +81,26 @@ describe("evaluateMulticlassPrereq", () => {
     expect(result.line).toBe("Already in this build");
   });
 
+  it("rejects a qualified Cleric candidate when the current Fighter cannot multiclass", () => {
+    const result = evaluateMulticlassPrereq("cleric", { ...stats10, wisdom: 15 }, [{ slug: "fighter" }], true);
+    expect(result).toMatchObject({ classSlug: "cleric", state: "not-met", line: "Fighter: STR 13 or DEX 13 · not met" });
+  });
+
+  it("accepts Fighter to Cleric only when both classes qualify", () => {
+    const result = evaluateMulticlassPrereq("cleric", { ...stats10, dexterity: 14, wisdom: 13 }, [{ slug: "fighter" }], true);
+    expect(result.state).toBe("met");
+  });
+
+  it("checks every current class before a third acquisition", () => {
+    const result = evaluateMulticlassPrereq("wizard", { ...stats13, charisma: 12 }, [{ slug: "fighter" }, { slug: "bard" }], true);
+    expect(result).toMatchObject({ classSlug: "wizard", state: "not-met", line: "Bard: CHA 13 · not met" });
+  });
+
+  it("keeps the candidate unavailable when a current class's required score is missing", () => {
+    const result = evaluateMulticlassPrereq("cleric", { wisdom: 15 }, [{ slug: "fighter" }], true);
+    expect(result).toMatchObject({ classSlug: "cleric", state: "unavailable" });
+  });
+
   it("uses STR/DEX/CON/INT/WIS/CHA abbreviations in the line", () => {
     expect(evaluateMulticlassPrereq("rogue", stats13, [], true).line).toBe("DEX 13 · met");
     expect(evaluateMulticlassPrereq("wizard", stats13, [], true).line).toBe("INT 13 · met");

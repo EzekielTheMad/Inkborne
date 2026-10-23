@@ -68,6 +68,16 @@ export function evaluateMulticlassPrereq(
     };
   }
 
+  // SRD 5.1 p56: the existing class must qualify as well as the new one.
+  // Evaluate each current class without the duplicate-selection shortcut.
+  for (const current of selectedClasses) {
+    const result = evaluateMulticlassPrereq(current.slug, resolvedStats, [], mechanicsAvailable);
+    if (result.state !== "met") {
+      const label = current.slug.charAt(0).toUpperCase() + current.slug.slice(1);
+      return { ...result, classSlug, line: `${label}: ${result.line}` };
+    }
+  }
+
   const prereq = MULTICLASS_PREREQ_TABLE[classSlug];
   const required = [...(prereq?.all ?? []), ...(prereq?.any ?? [])];
   if (!mechanicsAvailable || required.some(entry => !Object.hasOwn(resolvedStats, entry.ability) || !Number.isFinite(resolvedStats[entry.ability]))) {
