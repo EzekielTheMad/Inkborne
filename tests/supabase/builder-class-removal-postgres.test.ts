@@ -171,6 +171,7 @@ describe("native removal command and exact profile amendments", () => {
     // functions are never invoked here; the minimal row types let PostgreSQL
     // validate the real guarded DDL, function attributes and ACL preservation.
     await db.exec(`CREATE ROLE inkborne_class_origin_owner NOLOGIN;
+      CREATE TABLE private.character_builder_receipts_v1(actor_id uuid,operation_id uuid,character_id uuid,request jsonb,receipt jsonb,created_at timestamptz);
       CREATE TABLE public.character_feature_grants(id uuid,character_id uuid,controller_ref_id uuid,controller_type text,controller_slug text,
         feature_slug text,feature_content_id uuid,feature_version integer,unlock_level integer,created_at timestamptz);
       CREATE TABLE public.character_spell_grants(id uuid,character_id uuid,controller_ref_id uuid,controller_type text,controller_slug text,class_slug text,
