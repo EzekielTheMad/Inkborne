@@ -2,7 +2,13 @@ import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices } from "@/lib/types/character";
 
 import type { ChoiceEffect } from "@/lib/types/effects";
-import { isAsiChoiceComplete, isChoiceComplete } from "./choice-validation";
+import { fightingStyleSlugs, isAsiChoiceComplete, isChoiceComplete } from "./choice-validation";
+
+export function availableFightingStyles(features: ContentEntry[], classSlug: string): ContentEntry[] {
+  const allowed = new Set(features.filter(feature => feature.data.class === classSlug).flatMap(fightingStyleSlugs));
+  return features.filter(feature => feature.data.class === classSlug && (allowed.size > 0
+    ? allowed.has(feature.slug) : feature.data.feature_type === "fighting_style" && feature.name !== "Fighting Style"));
+}
 
 export type ChoiceType = "asi" | "subclass" | "fighting-style" | "generic";
 
@@ -121,9 +127,10 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
       }
       if (featureType === "fighting_style" && f.name === "Fighting Style") {
         const selectedStyles = resolvedChoices[f.slug] ?? [];
+        const allowed = fightingStyleSlugs(f);
         const isMade = selectedStyles.length === 1 && features.some(style =>
           style.slug === selectedStyles[0] && style.name !== "Fighting Style" &&
-          style.data.class === classSlug && style.data.feature_type === "fighting_style");
+          style.data.class === classSlug && (allowed.length > 0 ? allowed.includes(style.slug) : style.data.feature_type === "fighting_style"));
         choices.push({
           type: "fighting-style",
           featureSlug: f.slug,

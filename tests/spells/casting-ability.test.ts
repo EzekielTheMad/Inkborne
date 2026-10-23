@@ -1,8 +1,32 @@
 import { describe, expect, it } from "vitest";
 import { resolveCastingAbility } from "@/lib/spells/casting-ability";
 import { castingAbilityFixture } from "../fixtures/casting-acquisitions";
+import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 
 describe("exact acquisition casting ability", () => {
+  it("uses the exact racial cantrip source without inventing a casting class", () => {
+    const input = castingAbilityFixture();
+    const rootId = "10000000-0000-4000-8000-000000000001", traitId = "10000000-0000-4000-8000-000000000002";
+    const base = input.contentRefs[0];
+    const root = { ...base, id: rootId, content_id: "tiefling-content", content_definitions: {
+      ...base.content_definitions, id: "tiefling-content", content_type: "race", slug: "tiefling", data: { traits: ["infernal-legacy"] }, effects: [],
+    } } as unknown as ContentRefWithContent;
+    const trait = { ...base, id: traitId, content_id: "infernal-legacy-content", context: { source: "racial_trait", root_controller_ref_id: rootId },
+      content_definitions: { ...base.content_definitions, id: "infernal-legacy-content", content_type: "trait", slug: "infernal-legacy", data: {},
+        effects: [{ type: "grant", stat: "spell", value: "prism-signal" }, { type: "grant", stat: "spellcasting_ability", value: "charisma" }] },
+    } as unknown as ContentRefWithContent;
+    input.character.choices = { classes: [{ slug: "fighter", level: 1 }], race: "tiefling" };
+    input.contentRefs = [root, trait]; input.spells = [{ ...input.spells[0], source: "racial_trait", class_slug: "race:tiefling",
+      custom_data: { builder_source_pin_id: traitId, builder_root_ref_id: rootId, builder_choice_id: null, spellcasting_ability: "charisma" },
+      content_definitions: { ...input.spells[0].content_definitions!, data: { ...input.spells[0].content_definitions!.data, level: 0 } },
+    }];
+    expect(resolveCastingAbility(input.spells[0], input)).toMatchObject({ status: "available", racialPin: { contentId: "tiefling-content", version: 1 },
+      profile: { ability: "charisma", spellAttackBonus: 3, spellDc: 11 } });
+    input.character.choices.race = "human";
+    expect(resolveCastingAbility(input.spells[0], input).status).toBe("unavailable");
+    input.character.choices.race = "tiefling"; input.spells[0].custom_data!.spellcasting_ability = "intelligence";
+    expect(resolveCastingAbility(input.spells[0], input).status).toBe("unavailable");
+  });
   it.each([[18, 10, 7, 3], [10, 18, 3, 7]])("binds the same spell/version under each class with opposite ability strengths (%s/%s)", (intelligence, charisma, wizardBonus, warlockBonus) => {
     const input = castingAbilityFixture(intelligence, charisma);
     for (const [index, ability, bonus] of [[0, "intelligence", wizardBonus], [1, "charisma", warlockBonus]] as const) {

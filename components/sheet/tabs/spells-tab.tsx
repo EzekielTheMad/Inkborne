@@ -68,7 +68,7 @@ export function SpellsTab() {
 
   const hasAnySpells = spells.length > 0;
 
-  if (!casterInfo.isCaster && slotResolution?.status === "available") {
+  if (!casterInfo.isCaster && !hasAnySpells && slotResolution?.status === "available") {
     return (
       <div className="p-3 space-y-3">
         <p className="text-sm font-medium">Spells</p>

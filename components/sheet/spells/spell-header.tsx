@@ -7,15 +7,22 @@ export function SpellHeader() {
   if (!casterInfo.isCaster) return null;
   if (casterInfo.castingMathStatus === "unavailable" || casterInfo.spellDc === null || casterInfo.spellAttackBonus === null) return <p role="status" className="text-sm text-muted-foreground">Casting values and preparation are unavailable. Reload or restore the saved ability/class content.</p>;
 
-  const cantripsKnown = spells.filter(
+  const classSelections = spells.filter(spell => spell.source === "selection" && !spell.always_prepared
+    && casterInfo.classes.some(caster => caster.slug === spell.class_slug));
+  const cantripsKnown = classSelections.filter(
     (s) => (s.content_definitions?.data?.level ?? 1) === 0,
   ).length;
-  const leveledSpellsKnown = spells.filter((s) => {
-    if (s.always_prepared) return false;
+  const leveledSpellsKnown = classSelections.filter((s) => {
+    const caster = casterInfo.classes.find(caster => caster.slug === s.class_slug);
+    if (!caster || caster.prepared || caster.slug === "wizard") return false;
     const level = (s.content_definitions?.data?.level as number | undefined) ?? 0;
     return level > 0;
   }).length;
-  const preparedCount = spells.filter((s) => s.is_prepared).length;
+  const preparedCount = classSelections.filter(spell => {
+    const level = spell.content_definitions?.data.level;
+    return spell.is_prepared && typeof level === "number" && level > 0
+      && casterInfo.classes.some(caster => caster.slug === spell.class_slug && caster.prepared);
+  }).length;
   const totalCantripsAllowed = casterInfo.classes.reduce(
     (sum, c) => sum + c.cantripsKnown,
     0,
@@ -36,7 +43,7 @@ export function SpellHeader() {
 
   return (
     <div className="rounded-lg border border-border bg-card/50 p-3 space-y-1">
-      <p className="text-xs text-muted-foreground">Spellcasting Ability</p>
+      <p className="text-xs text-muted-foreground">Class Spellcasting Ability</p>
       <p className="text-sm font-medium">{abilityLabel}</p>
       <div className="flex items-center gap-4 text-sm pt-1">
         <span>
@@ -50,6 +57,7 @@ export function SpellHeader() {
           </span>
         </span>
       </div>
+      <p className="text-xs text-muted-foreground">Granted spells and racial cantrips do not use these class allowances.</p>
       {casterInfo.classes.length > 1 && <p className="text-xs text-muted-foreground">Highest class save DC and attack shown above. Each cast uses its spell&apos;s class.</p>}
       <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1 flex-wrap">
         <span>

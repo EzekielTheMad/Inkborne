@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { StatPreview } from "@/components/builder/stat-preview";
 import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
+import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 import { evaluate } from "@/lib/engine/evaluator";
 import { abilityScoreArraySchema } from "@/lib/schemas/content-types/mechanical";
 import { RACE_ABILITY_SLUGS } from "@/lib/engine/race-ability-scores";
@@ -119,9 +120,7 @@ function AbilitiesEditor({
     setBlocked(cannotNavigate && status !== "session_changed");
   }, [cannotNavigate, status, setBlocked]);
 
-  const allEffects: Effect[] = contentRefs.flatMap(
-    (ref) => ref.content_definitions?.effects ?? [],
-  );
+  const allEffects: Effect[] = resolveCharacterChoiceEffects(contentRefs, character.choices ?? {});
 
   const structuredSources = buildCharacterStructuredSources(contentRefs, character.level, { character: { ...character, system_id: character.system_id ?? "" }, evidence: asiEvidence });
   const evaluated = schema ? evaluate({ ...scores, level: character.level }, allEffects, schema, structuredSources, character.state) : null;

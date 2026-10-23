@@ -38,6 +38,8 @@ export function buildCharacterStructuredSources(
   const featuresAndFeats = contentRefs.filter((ref) =>
     ref.content_definitions?.content_type === "feature"
     || ref.content_definitions?.content_type === "feat"
+    || ref.content_definitions?.content_type === "trait"
+    || ref.content_definitions?.content_type === "subrace"
   );
 
   return {

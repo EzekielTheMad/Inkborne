@@ -1,6 +1,7 @@
 "use client";
 import type { AsiEvidence } from "@/lib/character/asi-contributions";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
+import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 
 
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -134,12 +135,10 @@ export function BackgroundStepClient({
     router.push(`/characters/${characterId}/builder/${step}`);
   }
 
-  const allEffects: Effect[] = [
-    ...contentRefs
-      .filter((ref) => ref.content_definitions?.content_type !== "background")
-      .flatMap((ref) => ref.content_definitions?.effects ?? []),
-    ...(selectedBgContent?.effects ?? []),
-  ];
+  const allEffects: Effect[] = resolveCharacterChoiceEffects([
+    ...contentRefs.filter(ref => ref.content_definitions?.content_type !== "background"),
+    { content_definitions: selectedBgContent ?? null },
+  ], localChoices);
 
   const bgChoices: ChoiceEffect[] = (selectedBgContent?.effects ?? []).filter(
     (e): e is ChoiceEffect => e.type === "choice",

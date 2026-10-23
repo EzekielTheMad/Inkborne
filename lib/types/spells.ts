@@ -16,7 +16,7 @@ export interface CharacterSpell {
   is_prepared: boolean;
   always_prepared: boolean;
   in_spellbook: boolean;
-  source: "selection" | "feature" | "feat" | "item";
+  source: "selection" | "feature" | "feat" | "item" | "racial_trait";
   custom_data: Record<string, unknown> | null;
   created_at: string;
   content_definitions?: ParsedContentDefinition | null;

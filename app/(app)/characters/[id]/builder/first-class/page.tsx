@@ -9,7 +9,8 @@ import { FirstClassForm } from "./first-class-form";
 import { checkFirstClass, submitFirstClass } from "./actions";
 
 const savedChoices = z.object({ classes: z.tuple([z.strictObject({
-  occurrence_id: z.uuid(), slug: z.string().min(1).max(200), level: z.literal(1),
+  occurrence_id: z.uuid(), slug: z.string().min(1).max(200), level: z.number().int().min(1).max(20),
+  subclass: z.string().min(1).max(200).optional(),
 })]) });
 const controllerContext = z.strictObject({ source: z.literal("class"), level: z.literal(1) });
 
@@ -33,7 +34,7 @@ export default async function FirstClassPage({ params }: { params: Promise<{ id:
     .select("id,name,version").eq("system_id", character.system_id).eq("content_type", "class").order("name")
     : { data: [], error: null };
   const classes = contentError ? [] : (rows ?? []);
-  let savedClass: { name: string; level: 1 } | null = null;
+  let savedClass: { name: string; level: number } | null = null;
   let savedClassUnavailable = false;
   if (character.choices !== null && typeof character.choices === "object" && !Array.isArray(character.choices)
     && "classes" in character.choices) {
@@ -42,15 +43,20 @@ export default async function FirstClassPage({ params }: { params: Promise<{ id:
       const rawRevision = typeof character.action_revision === "string" ? character.action_revision
         : Number.isSafeInteger(character.action_revision) ? String(character.action_revision) : null;
       const revision = classRoleRevisionSchema.safeParse(rawRevision);
-      if (!selected.success || !revision.success || revision.data === "0" || character.level !== 1
+      if (!selected.success || !revision.success || revision.data === "0" || character.level !== selected.data.classes[0].level
         || !system.success || system.data.slug !== "dnd-5e-2014") throw Error("Saved class unavailable");
       // Reuse the complete public-row/pinned-version reader. Never substitute
       // today's catalog, infer an absent pin or display a partially read graph.
       const refs = await getContentRefsByCharacter(id, { requireCompleteSnapshots: true, fresh: true });
       const controllers = refs.filter(ref => ["class", "subclass"].includes(ref.content_definitions.content_type));
       const selectedClass = selected.data.classes[0];
-      if (controllers.length !== 1 || refs.some(ref => ref.character_id !== id)) throw Error("Saved class unavailable");
-      const pin = controllers[0], snapshot = pin.content_definitions;
+      const classPins = controllers.filter(ref => ref.content_definitions.content_type === "class");
+      const subclassPins = controllers.filter(ref => ref.content_definitions.content_type === "subclass");
+      if (classPins.length !== 1 || subclassPins.length !== (selectedClass.subclass ? 1 : 0)
+        || refs.some(ref => ref.character_id !== id)) throw Error("Saved class unavailable");
+      if (selectedClass.subclass && (subclassPins[0].content_definitions.slug !== selectedClass.subclass
+        || subclassPins[0].content_definitions.data.parent_class !== selectedClass.slug)) throw Error("Saved class unavailable");
+      const pin = classPins[0], snapshot = pin.content_definitions;
       if (snapshot.content_type !== "class" || snapshot.system_id !== character.system_id || snapshot.slug !== selectedClass.slug
         || pin.content_id !== snapshot.id || pin.content_version !== snapshot.version
         || pin.feature_grant_id !== null || pin.choice_source !== null || !controllerContext.safeParse(pin.context).success)
@@ -64,6 +70,7 @@ export default async function FirstClassPage({ params }: { params: Promise<{ id:
       <h2 id="saved-first-class" className="font-semibold">Saved class</h2>
       <p>{savedClass.name} · Level {savedClass.level}</p>
       <p>Your class is saved to this notebook.</p>
+      <Link href={`/characters/${id}/builder/class`} className="block text-sm underline">Complete class choices</Link>
       <Link href={`/characters/${id}/builder/race`} className="block text-sm underline">Continue to race</Link>
       <Link href="/characters" className="text-sm underline">Back to your characters</Link>
     </section> : <p className="text-muted-foreground">Save one class to begin this notebook.</p>}

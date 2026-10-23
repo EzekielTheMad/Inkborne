@@ -23,6 +23,7 @@ import { ChoiceSelector } from "@/components/builder/choice-selector";
 import { StatPreview } from "@/components/builder/stat-preview";
 import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
+import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
@@ -133,9 +134,7 @@ export function RaceStepClient({
   const mismatchedSubrace = !!selectedSubrace && !!subraceCandidate && !selectedSubraceContent;
 
   // Collect all effects for stat preview
-  const allEffects: Effect[] = contentRefs.flatMap(
-    (ref) => ref.content_definitions?.effects ?? [],
-  );
+  const allEffects: Effect[] = resolveCharacterChoiceEffects(contentRefs, localChoices);
 
   const grantedLanguages = fixedLanguages(contentRefs.map(ref => ref.content_definitions));
   const resolveChoices = (entry: ContentEntry | undefined) => entry ? resolveDefinitionChoices(entry, availableLanguages, grantedLanguages).effects ?? [] : [];

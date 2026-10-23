@@ -1,6 +1,6 @@
 import { isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
 import { getContentByType } from "@/lib/supabase/content-definitions";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -18,6 +18,7 @@ import { getBuilderStepStatus, builderStepStatusLabels } from "@/lib/builder/ste
 import type { CreationStep } from "@/lib/types/system";
 import type { CharacterChoices } from "@/lib/types/character";
 import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { savedBuilderClassSpellsComplete } from "@/lib/builder/class-spells-status-server";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -44,6 +45,8 @@ function getStepSummary(
       return choices.ability_method ?? "Not selected";
     case "equipment":
       return describeStartingEquipment(choices.starting_equipment);
+    case "details":
+      return choices.details_confirmed ? choices.alignment || "Name confirmed" : "Not started";
     default:
       return "Not started";
   }
@@ -66,7 +69,9 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
 
   if (!character) notFound();
 
-  const contentRefs = await getContentRefsByCharacter(id, { requireCompleteSnapshots: true });
+  const snapshot = await getCharacterContentRefSnapshot(id);
+  if (!snapshot.complete) throw Error("The saved build could not be read. Reload before editing.");
+  const contentRefs = snapshot.refs;
   const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && isLanguageChoiceCategory(effect)));
   // A failed catalog read leaves category choices incomplete; it never upgrades a pin.
   const languages = hasLanguageCategory
@@ -76,26 +81,25 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
   const steps: CreationStep[] = schema?.creation_steps ?? [];
   const choices: CharacterChoices = character.choices ?? {};
   const baseStats: Record<string, number> = character.base_stats ?? {};
+  const classSpellsComplete = !characterCreationUIEnabled() || await savedBuilderClassSpellsComplete(character, snapshot, schema).catch(() => false);
 
   return (
     <div className="space-y-4">
       <p className="text-muted-foreground">
-        Complete each step to build your character. Steps can be done in any
-        order. Saved selections can still have class-level choices to finish.
-        Review those choices and equipment before playing. Saved status validates
-        recorded snapshots; unpinned race trait choices still need review.
+        Complete each step, then review your character before playing. You can
+        return to saved steps to make changes.
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((step, index) => {
-          const status = getBuilderStepStatus(step.type, choices, baseStats, schema, contentRefs, languages);
+          const status = getBuilderStepStatus(step.type, choices, baseStats, schema, contentRefs, languages, classSpellsComplete);
           const summary = getStepSummary(step, choices);
 
           return (
             <Link
               key={step.type}
               href={`/characters/${id}/builder/${step.type === "class" && characterCreationUIEnabled()
-                && (!character.choices?.classes?.length || character.choices.classes[0]?.occurrence_id) ? "first-class" : step.type}`}
+                && !character.choices?.classes?.length ? "first-class" : step.type}`}
             >
               <Card className="hover:bg-accent/50 transition-colors cursor-pointer h-full">
                 <CardHeader className="pb-2">

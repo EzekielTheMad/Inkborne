@@ -1,6 +1,6 @@
 import type { Effect } from "@/lib/types/effects";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
-import { activeFeatureSlugs, fixedLanguages, isAsiChoiceComplete, isChoiceComplete } from "./choice-validation";
+import { activeFeatureSlugs, fightingStyleSlugs, fixedLanguages, isAsiChoiceComplete, isChoiceComplete } from "./choice-validation";
 import { hasCompleteAbilityScores } from "./ability-score-validation";
 import type { CharacterChoices } from "@/lib/types/character";
 import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choices";
@@ -63,7 +63,9 @@ function hasSavedLevelChoices(definition: BuilderStatusRef["content_definitions"
     if (feature.data.feature_type === "fighting_style" && feature.name === "Fighting Style") {
       const selected = choices.resolved_choices?.[slug] ?? [];
       const style = selected.length === 1 ? exactSavedPin("feature", selected[0], refs) : undefined;
-      return !!style && style.name !== "Fighting Style" && style.data.class === classSlug && style.data.feature_type === "fighting_style";
+      const allowed = fightingStyleSlugs(feature);
+      return !!style && style.name !== "Fighting Style" && style.data.class === classSlug && (allowed.length > 0
+        ? allowed.includes(style.slug) : style.data.feature_type === "fighting_style");
     }
     return true;
   });
@@ -73,10 +75,10 @@ function hasSavedTraits(definition: BuilderStatusRef["content_definitions"], cho
   const traits = definition.data.traits;
   return !Array.isArray(traits) || traits.every(slug => {
     if (typeof slug !== "string") return false;
-    // Race/subrace selection currently persists only its own pin. Unlike class
-    // features, trait slugs have no immutable grant manifest. Validate recorded
-    // trait pins, but never infer that an absent child pin was lost.
-    if (!refs.some(ref => ref.content_definitions.content_type === "trait" && ref.content_definitions.slug === slug)) return true;
+    // Enrolled builders pin the complete source-derived trait closure. Preserve
+    // the older saved-evidence contract for existing un-enrolled characters.
+    const enrolled = choices.classes?.some(cls => typeof cls.occurrence_id === "string");
+    if (!enrolled && !refs.some(ref => ref.content_definitions.content_type === "trait" && ref.content_definitions.slug === slug)) return true;
     const trait = exactSavedPin("trait", slug, refs);
     return !!trait && hasSavedChoices(trait, choices, languages, granted);
   });
@@ -84,7 +86,7 @@ function hasSavedTraits(definition: BuilderStatusRef["content_definitions"], cho
 
 /** Saved core identity/reference consistency and schema-aware abilities.
  * Validates supported core/per-level/category choices from exact saved pins.
- * Unpinned trait choices are outside this saved-evidence verdict.
+ * Enrolled builders require their source-derived trait pins.
  * Still not a whole-character playability or backend authorization verdict. */
 export function getBuilderStepStatus(
   stepType: string,
@@ -93,6 +95,7 @@ export function getBuilderStepStatus(
   schema?: SystemSchemaDefinition,
   refs: BuilderStatusRef[] = [],
   languages?: readonly string[],
+  classSpellsComplete = true,
 ): BuilderStepStatus {
   const granted = fixedLanguages(refs.map(ref => ref.content_definitions));
   const countPins = (type: string) => refs.filter(ref => ref.content_definitions.content_type === type).length;
@@ -100,6 +103,7 @@ export function getBuilderStepStatus(
     case "class": {
       const classes = choices.classes;
       if (!classes?.length) return countPins("class") || countPins("subclass") ? "in_progress" : "untouched";
+      if (!classSpellsComplete) return "in_progress";
       if (!Array.isArray(classes) || new Set(classes.map(cls => cls?.slug)).size !== classes.length ||
         countPins("class") !== classes.length || countPins("subclass") !== classes.filter(cls => cls?.subclass).length) return "in_progress";
       return classes.every(cls => {
@@ -131,6 +135,8 @@ export function getBuilderStepStatus(
     case "equipment":
       if (isEquipmentConfirmed(choices.starting_equipment)) return "complete";
       return isStructuredSelections(choices.starting_equipment) ? "in_progress" : "untouched";
+    case "details":
+      return choices.details_confirmed === true ? "complete" : "untouched";
     default:
       return "untouched";
   }

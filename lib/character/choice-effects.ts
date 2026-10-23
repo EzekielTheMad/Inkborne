@@ -1,0 +1,50 @@
+import type { Effect } from "@/lib/types/effects";
+import type { CharacterChoices } from "@/lib/types/character";
+import { fixedLanguages, isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
+
+type Ref = { content_definitions?: { slug?: string; content_type?: string; effects?: Effect[]; data?: Record<string, unknown> } | null };
+const abilities = new Set(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]);
+
+/** Project finite saved choices from their loaded immutable source effects.
+ * Choice values never supply formulas, amounts, arbitrary stats or effect JSON.
+ * Spell acquisitions and selected feature pins are projected by the database.
+ */
+export function resolveCharacterChoiceEffects(refs: readonly Ref[], choices: CharacterChoices): Effect[] {
+  const effects = refs.flatMap(ref => (ref.content_definitions?.effects ?? []).map(effect =>
+    effect.type === "grant" && ["proficient", "expertise"].includes(effect.value) && effect.stat.startsWith("skill-")
+      ? { ...effect, stat: effect.stat.slice(6) } : effect.type === "grant" && effect.value === "proficient"
+        && choices.classes?.length === 1 && ref.content_definitions?.content_type === "class" && ref.content_definitions.slug === choices.classes[0].slug
+        && effect.stat.startsWith("save_") && abilities.has(effect.stat.slice(5))
+        ? { ...effect, stat: `saving_throw_${effect.stat.slice(5)}` }
+        : effect.type === "grant" && ["language", "languages"].includes(effect.stat)
+          ? { ...effect, stat: effect.value, value: "proficient" } : effect));
+  const definitions = effects.filter(effect => effect.type === "choice");
+  const derived: Effect[] = fixedLanguages(refs.map(ref => ({ data: ref.content_definitions?.data ?? {},
+    effects: ref.content_definitions?.effects }))).map(language => ({ type: "grant", stat: language, value: "proficient" }));
+  for (const choice of definitions) {
+    if (definitions.filter(other => other.choice_id === choice.choice_id).length !== 1) continue;
+    const selections = choices.resolved_choices?.[choice.choice_id];
+    if (!Array.isArray(selections) || !Number.isInteger(choice.choose) || choice.choose < 1
+      || selections.length > choice.choose || new Set(selections).size !== selections.length) continue;
+    if (!selections.every(value => typeof value === "string" && value.length > 0 && value.length <= 300
+      && (Array.isArray(choice.from) ? choice.from.includes(value) : isLanguageChoiceCategory(choice) && /^[a-z][a-z0-9-]*$/.test(value)))) continue;
+    for (const value of selections) {
+      if (choice.grant_type === "ability_bonus" && abilities.has(value)) {
+        derived.push({ type: "mechanical", stat: value, op: "add", value: 1 });
+      } else if (["proficiency", "skill", "tool", "weapon", "armor"].includes(choice.grant_type)) {
+        derived.push({ type: "grant", stat: value.replace(/^skill-/, ""), value: "proficient" });
+      } else if (choice.grant_type === "expertise") {
+        derived.push({ type: "grant", stat: value.replace(/^skill-/, ""), value: "expertise" });
+      } else if (choice.grant_type === "language") {
+        derived.push({ type: "grant", stat: value, value: "proficient" });
+      }
+    }
+  }
+  const grants = new Set<string>();
+  return [...effects, ...derived].filter(effect => {
+    if (effect.type !== "grant") return true;
+    const key = `${effect.stat}\u0000${effect.value}`;
+    if (grants.has(key)) return false;
+    grants.add(key); return true;
+  });
+}

@@ -354,6 +354,20 @@ describe("atomic equipment recovery", () => {
   });
 });
 
+it("points to incomplete builder choices and prevents finishing before they are saved", () => {
+  render(<EquipmentStepClient characterId="char-1" character={{ id: "char-1", level: 1, choices: {}, state: null }}
+    classContent={null} backgroundContent={null} catalog={[]} completion={{ status: "inherited_completion" }}
+    incompleteSteps={[{ type: "class", label: "Class" }]} />);
+  expect(screen.getByRole("button", { name: "Finish & View Character" })).toBeDisabled();
+  expect(screen.getByRole("link", { name: "Class" })).toHaveAttribute("href", "/characters/char-1/builder/class");
+});
+
+it("requires a confirmed equipment award even after all other builder steps are complete", () => {
+  render(<EquipmentStepClient characterId="char-1" character={{ id: "char-1", level: 1, choices: {}, state: null }}
+    classContent={null} backgroundContent={null} catalog={[]} incompleteSteps={[]} />);
+  expect(screen.getByRole("button", { name: "Finish & View Character" })).toBeDisabled();
+});
+
 it.each(["awarded", "inherited_completion"] as const)("shows terminal %s with no catalog and no confirmation path", status => {
   const receipt = { grant_id: "11111111-1111-4111-8111-111111111111", inventory_ids: [], awarded_at: "2026-10-04", plan: { items: [{ content_id: null, content_version: null, name: "Consumed original item", content_type: "item" as const, quantity: 2 }], currency: { gp: 15 } } };
   render(<EquipmentStepClient characterId="char-1" character={{ id: "char-1", level: 1, choices: {}, state: null }} classContent={null} backgroundContent={null} catalog={[]} completion={status === "awarded" ? { status, receipt } : { status }} />);

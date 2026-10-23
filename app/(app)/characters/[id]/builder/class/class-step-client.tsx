@@ -20,6 +20,7 @@ import { ClassStepRail } from "@/components/builder/class-step-rail";
 import { StatPreview } from "@/components/builder/stat-preview";
 import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
+import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 import type {
   CharacterChoices,
   AsiChoice,
@@ -37,8 +38,15 @@ import {
 } from "./actions";
 
 import { activeFeatureSlugs, fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
+import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { ClassSpellsPanel, type BuilderSpellSelection } from "@/components/builder/class-spells-panel";
+import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
 
 interface ClassStepClientProps {
+  saveAction?: SaveBuilderStep;
+  castingSources?: EffectiveCastingSource[];
+  selectedSpells?: Array<BuilderSpellSelection & { class_slug: string }>;
+  grantedSpells?: Array<{ content_id: string; class_slug: string }>;
   characterId: string;
   character: {
     id: string;
@@ -110,6 +118,10 @@ export function ClassStepClient({
   schema,
   asiEvidence: serverAsiEvidence,
   availableLanguages,
+  saveAction,
+  castingSources = [],
+  selectedSpells = [],
+  grantedSpells = [],
 }: ClassStepClientProps) {
   const [recovered, setRecovered] = useState<{ source: ClassStepClientProps["contentRefs"]; refs: ClassStepClientProps["contentRefs"]; asiEvidence: AsiEvidence } | null>(null);
   const contentRefs = recovered?.source === serverContentRefs ? recovered.refs : serverContentRefs;
@@ -118,12 +130,17 @@ export function ClassStepClient({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [refreshing, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
   const [localChoices, setLocalChoices] = useState<CharacterChoices>(
     character.choices ?? {},
   );
   const [localLevel, setLocalLevel] = useState(character.level);
+  const [spellDrafts, setSpellDrafts] = useState<Record<string, boolean>>({});
+  const handleSpellDraftChange = useCallback((classSlug: string, dirty: boolean) => {
+    setSpellDrafts(previous => previous[classSlug] === dirty ? previous : { ...previous, [classSlug]: dirty });
+  }, []);
+  const unsavedSpells = Object.values(spellDrafts).some(Boolean);
 
   const selectedClasses = localChoices.classes ?? [];
   const hasClass = selectedClasses.length > 0;
@@ -182,18 +199,16 @@ export function ClassStepClient({
 
   const hpRolls = localChoices.hp_rolls ?? {};
 
-  const allEffects: Effect[] = contentRefs.flatMap(
-    (ref) => ref.content_definitions?.effects ?? [],
-  );
+  const allEffects: Effect[] = resolveCharacterChoiceEffects(contentRefs, localChoices);
 
   const confirmedSources = buildCharacterStructuredSources(contentRefs, character.level, { character: { ...character, system_id: character.system_id ?? "" }, evidence: asiEvidence });
   const confirmedResult = schema ? evaluate({ ...character.base_stats, level: character.level }, allEffects, schema, confirmedSources, character.state) : null;
   const confirmedMechanics = schema && confirmedResult ? resolveAbilityMechanics(character.base_stats, confirmedResult, schema) : { status: "unavailable" as const, reason: "Saved mechanics are unavailable." };
-  const mechanicsAvailable = confirmedMechanics.status === "available" && localLevel === character.level && JSON.stringify(localChoices) === JSON.stringify(character.choices) && !saving;
+  const mechanicsAvailable = confirmedMechanics.status === "available" && localLevel === character.level && JSON.stringify(localChoices) === JSON.stringify(character.choices) && !saving && !refreshing;
   const resolvedStats = confirmedResult?.stats ?? {};
 
   function beginSave() {
-    if (saveBusy.current) {
+    if (saveBusy.current || refreshing) {
       setSaveError("The class build is still saving. Wait for it to finish, then retry this change.");
       return false;
     }
@@ -275,6 +290,13 @@ export function ClassStepClient({
 
     setSaveError(null);
     try {
+      if (saveAction) {
+        const saved = await saveAction("set_class_level", { class_slug: selectedClasses[classIndex].slug, level: newLevel });
+        setLocalChoices(saved.choices);
+        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
+        startTransition(() => router.refresh());
+        return;
+      }
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: totalLevel,
@@ -313,6 +335,13 @@ export function ClassStepClient({
 
     setSaveError(null);
     try {
+      if (saveAction) {
+        const saved = await saveAction("set_class_level", { class_slug: selectedClasses[classIndex].slug, level: draftLevel });
+        setLocalChoices(saved.choices);
+        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
+        startTransition(() => router.refresh());
+        return;
+      }
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: totalLevel,
@@ -342,11 +371,17 @@ export function ClassStepClient({
     const newChoices = { ...localChoices, hp_rolls: newHpRolls };
 
     const prev = localChoices;
-    setLocalChoices(newChoices);
+    if (!saveAction || record.method !== "rolled") setLocalChoices(newChoices);
 
     setSaveError(null);
     try {
-      await updateCharacter(characterId, { choices: newChoices });
+      if (saveAction) {
+        const split = key.lastIndexOf("-");
+        const saved = await saveAction("save_hp_roll", { class_slug: key.slice(0, split), level: Number(key.slice(split + 1)),
+          method: record.method, value: record.method === "rolled" ? null : record.value });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+      } else await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save HP roll:", err);
@@ -410,7 +445,11 @@ export function ClassStepClient({
 
     setSaveError(null);
     try {
-      await updateCharacter(characterId, { choices: newChoices });
+      if (saveAction) {
+        const saved = await saveAction("class_choice", { choice_id: choiceId, selections });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+      } else await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
       setLocalChoices(prev);
       console.error("Failed to save choice selection:", err);
@@ -438,6 +477,12 @@ export function ClassStepClient({
 
     setSaveError(null);
     try {
+      if (saveAction) {
+        const saved = await saveAction("fighting_style", { feature_slug: featureSlug, style_slug: styleSlug ?? null });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       await updateCharacter(characterId, { choices: newChoices });
 
       const previousStyles = prev.resolved_choices?.[featureSlug] ?? [];
@@ -496,6 +541,15 @@ export function ClassStepClient({
 
     setSaveError(null);
     try {
+      if (saveAction) {
+        const selected = subclassSlug ? subclasses.find(entry => entry.slug === subclassSlug) : undefined;
+        if (subclassSlug && !selected) throw Error("The selected subclass is unavailable. Reload before trying again.");
+        const saved = await saveAction("select_subclass", { class_slug: classSlug,
+          content_id: selected?.id ?? null, content_version: selected?.version ?? null });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       await updateCharacter(characterId, { choices: newChoices });
 
       const existingRef = contentRefs.find(
@@ -546,6 +600,13 @@ export function ClassStepClient({
 
     setSaveError(null);
     try {
+      if (saveAction) {
+        const saved = await saveAction("select_asi", { feature_slug: featureSlug, choice: choice.mode === "feat"
+          ? { mode: "feat", feat_id: choice.featId, feat_version: choice.featVersion } : choice });
+        setLocalChoices(saved.choices);
+        startTransition(() => router.refresh());
+        return;
+      }
       const result = await setCharacterAsiChoiceAction({
         characterId,
         featureSlug,
@@ -587,7 +648,7 @@ export function ClassStepClient({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <fieldset disabled={saving} aria-busy={saving} className="space-y-6 min-w-0 border-0 p-0">
+      <fieldset disabled={saving || refreshing} aria-busy={saving || refreshing} className="space-y-6 min-w-0 border-0 p-0">
         <RaceAbilityNotice contentRefs={contentRefs} />
         <h2 className="text-xl font-semibold">Class</h2>
         {saving && <p role="status" className="text-sm text-muted-foreground">Saving this class change. Please wait.</p>}
@@ -601,6 +662,8 @@ export function ClassStepClient({
         </div>}
         {snapshotConflict || missingFeatures.length > 0 ? null : hasClass ? (
           <ClassStepRail
+            saveLevelImmediately={!!saveAction}
+            classChangesAvailable={!saveAction}
             characterName={character.name}
             savePending={saving}
             saveError={saveError}
@@ -649,23 +712,32 @@ export function ClassStepClient({
           }}
         />
 
+        {saveAction && castingSources.filter(source => source.active && source.config).map(source => <ClassSpellsPanel
+          key={source.classSlug}
+          source={source} catalog={spells.filter(spell => !grantedSpells.some(grant => grant.class_slug === source.classSlug && grant.content_id === spell.id))}
+          selected={selectedSpells.filter(spell => spell.class_slug === source.classSlug)} abilityScores={resolvedStats}
+          disabled={saving || refreshing || !mechanicsAvailable} saveAction={saveAction} onDirtyChange={handleSpellDraftChange} />)}
+
         {/* Bottom navigation */}
+        {unsavedSpells && <p role="status" className="text-sm text-muted-foreground">Save your spell choices before continuing.</p>}
         <div className="flex justify-between pt-4">
           <Button
             variant="outline"
+            disabled={unsavedSpells}
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/race`)
+              router.push(`/characters/${characterId}/builder/${saveAction ? "first-class" : "race"}`)
             }
           >
-            Previous: Race
+            {saveAction ? "Previous: Class selection" : "Previous: Race"}
           </Button>
           <Button
             className="bg-character-fg text-background hover:opacity-90"
+            disabled={unsavedSpells}
             onClick={() =>
-              router.push(`/characters/${characterId}/builder/abilities`)
+              router.push(`/characters/${characterId}/builder/${saveAction ? "race" : "abilities"}`)
             }
           >
-            Next: Abilities
+            {saveAction ? "Next: Race" : "Next: Abilities"}
           </Button>
         </div>
       </fieldset>

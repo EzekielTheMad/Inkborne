@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   classFeaturesPerLevel,
+  availableFightingStyles,
   buildRenderedPerLevel,
   pendingChoicesUpTo,
   type PerLevel,
@@ -306,6 +307,17 @@ describe("classFeaturesPerLevel", () => {
 });
 
 describe("feature-owned choices", () => {
+  it("offers a passive real-catalog style only through its owning controller", () => {
+    const controller = feature("fighter-fighting-style", "Fighting Style", 1, "fighter", { feature_type: "fighting_style",
+      choices: [{ type: "fighting_style", options: ["fighter-defense"] }] });
+    const defense = feature("fighter-defense", "Defense", 1, "fighter", { feature_type: "passive" });
+    const unlisted = feature("unlisted", "Unlisted", 1, "fighter", { feature_type: "passive" });
+    const features = [controller, defense, unlisted];
+    expect(availableFightingStyles(features, "fighter").map(entry => entry.slug)).toEqual(["fighter-defense"]);
+    const rows = classFeaturesPerLevel({ classContent: { ...makeClass(), slug: "fighter", data: { levels: [{ level: 1, features: [controller.slug] }] } },
+      features, subclassContent: null, characterChoices: { resolved_choices: { [controller.slug]: [defense.slug] } }, classIndex: 0 });
+    expect(rows[0].choices[0].isMade).toBe(true);
+  });
   it("emits required generic choices from pinned features for actual level panes", () => {
     const cls=makeClass();
     const entry={...feature("divine-sense", "Divine Sense", 1, "paladin"), effects:[{type:"choice" as const,choose:1,from:["old-option"],grant_type:"proficiency" as const,choice_id:"training"}]};

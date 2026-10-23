@@ -26,7 +26,7 @@ interface LevelRailMobileProps {
   activeLevel: number;
   onSelectLevel: (level: number) => void;
   onLevelChange: (newLevel: number) => Promise<void> | void;
-  onRemoveClass: () => Promise<void> | void;
+  onRemoveClass?: () => Promise<void> | void;
   onLevelUpClick: () => void;
   levelUpButtonState: "idle" | "disabled" | "active-flow";
   levelUpButtonReason?: string;
@@ -48,7 +48,7 @@ export function LevelRailMobile(props: LevelRailMobileProps) {
 
   const handleRemove = () => {
     if (!window.confirm(`Remove ${className_} from this character? This will also remove any subclass and choices made for it.`)) return;
-    void onRemoveClass();
+    void onRemoveClass?.();
   };
 
   return (
@@ -71,7 +71,7 @@ export function LevelRailMobile(props: LevelRailMobileProps) {
         >
           Set level
         </Button>
-        <DropdownMenu>
+        {onRemoveClass && <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`More options for ${className_}`}
             disabled={disabled}
@@ -84,7 +84,7 @@ export function LevelRailMobile(props: LevelRailMobileProps) {
               Remove {className_}
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu>}
       </div>
 
       <div

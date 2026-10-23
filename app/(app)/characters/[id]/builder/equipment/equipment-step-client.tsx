@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { updateCharacter } from "@/lib/supabase/character-client";
 import { confirmStartingEquipment } from "./actions";
 import type { EquipmentRequest, StartingEquipmentCompletion } from "@/lib/builder/starting-equipment-contract";
@@ -41,6 +42,7 @@ interface ContentSummary {
 }
 
 interface EquipmentStepClientProps {
+  incompleteSteps?: Array<{ type: string; label: string }>;
   saveAction?: SaveBuilderStep;
   characterId: string;
   character: {
@@ -63,6 +65,7 @@ export function EquipmentStepClient({
   catalog,
   completion,
   saveAction,
+  incompleteSteps,
 }: EquipmentStepClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -99,6 +102,8 @@ export function EquipmentStepClient({
   );
 
   const confirmed = !!completion || !!equipmentState.confirmed;
+  const needsDetails = incompleteSteps?.some(step => step.type === "details") ?? false;
+  const incompleteBeforeDetails = incompleteSteps?.filter(step => step.type !== "details") ?? [];
   const complete = isSelectionComplete(groups, equipmentState, catalog);
   const hasUnavailablePicks = !complete && isSelectionComplete(groups, equipmentState);
 
@@ -312,6 +317,13 @@ export function EquipmentStepClient({
 
       <Separator />
 
+      {!!incompleteSteps?.length && <div className="space-y-2 text-sm" role="status">
+        <p>Complete these choices before finishing your character:</p>
+        <ul className="list-disc pl-5">{incompleteSteps.map(step => <li key={step.type}>
+          <Link className="underline" href={`/characters/${characterId}/builder/${step.type}`}>{step.label}</Link>
+        </li>)}</ul>
+      </div>}
+
       <div className="flex justify-between pt-4">
         <Button
           variant="outline"
@@ -324,14 +336,15 @@ export function EquipmentStepClient({
         </Button>
         <Button
           className="bg-character-fg text-background hover:opacity-90"
-          disabled={isSavingSelection || isConfirming}
+          disabled={isSavingSelection || isConfirming || (incompleteSteps !== undefined && (!!incompleteBeforeDetails.length || !confirmed))}
           onClick={() => {
+            if (needsDetails) { router.push(`/characters/${characterId}/builder/details`); return; }
             // Let the sheet play its one-time arrival moment (M2 B4).
             markFirstArrival(characterId);
             router.push(`/characters/${characterId}`);
           }}
         >
-          Finish &amp; View Character
+          {needsDetails ? "Next: Character Details" : "Finish & View Character"}
         </Button>
       </div>
     </div>

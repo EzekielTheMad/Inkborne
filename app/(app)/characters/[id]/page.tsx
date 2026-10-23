@@ -8,6 +8,7 @@ import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
+import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 import { CharacterPageClient } from "@/components/character/character-page-client";
 import {
   applyActiveSpellGrantOverlays,
@@ -109,10 +110,11 @@ export default async function CharacterPage({ params }: PageProps) {
   const classChoices =
     ((character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string }> })
       ?.classes) ?? [];
+  const enrolledBuilder = classChoices.some(choice => "occurrence_id" in choice);
   // Automatic class/subclass features are materialized as exact-version refs
   // the first time they are earned. Only the character owner may reconcile
   // them; DMs retain a strictly read-only view of the player's pinned sheet.
-  if (isOwner) {
+  if (isOwner && !enrolledBuilder) {
     try {
       const syncResult = await syncClassFeatureRefs(supabase, {
         characterId: id,
@@ -152,7 +154,7 @@ export default async function CharacterPage({ params }: PageProps) {
 
   // Viewing a character is read-only for DMs. Only the character owner may
   // reconcile derived, feature-granted spell rows.
-  if (isOwner) {
+  if (isOwner && !enrolledBuilder) {
     try {
       const syncResult = await syncAlwaysPreparedSpells(supabase, {
         characterId: id,
@@ -259,9 +261,7 @@ export default async function CharacterPage({ params }: PageProps) {
   }));
 
   // Collect all effects
-  const allEffects: Effect[] = contentRefs.flatMap(
-    (ref) => ref.content_definitions?.effects ?? [],
-  );
+  const allEffects: Effect[] = resolveCharacterChoiceEffects(contentRefs, character.choices ?? {});
 
   // Build structured sources
   const structuredSources: StructuredSources = buildCharacterStructuredSources(

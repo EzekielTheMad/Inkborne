@@ -12,7 +12,7 @@ import { ClassPickerPanel } from "@/components/builder/class-step-rail/class-pic
 import { ClassPickerSheet } from "@/components/builder/class-step-rail/class-picker-sheet";
 import { LevelUpSheet } from "@/components/builder/class-step-rail/level-up-sheet";
 import { Separator } from "@/components/ui/separator";
-import { classFeaturesPerLevel, buildRenderedPerLevel, pendingChoicesUpTo } from "@/lib/builder/class-features-per-level";
+import { availableFightingStyles, classFeaturesPerLevel, buildRenderedPerLevel, pendingChoicesUpTo } from "@/lib/builder/class-features-per-level";
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import { useIsMobile } from "@/lib/builder/use-is-mobile";
 import type { ContentEntry } from "@/components/builder/content-browser";
@@ -21,6 +21,8 @@ import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
 
 export interface ClassStepRailProps {
+  saveLevelImmediately?: boolean;
+  classChangesAvailable?: boolean;
   characterName?: string;
   savePending?: boolean;
   saveError?: string | null;
@@ -80,6 +82,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
   const {
     characterName = "Character",
     savePending = false,
+    classChangesAvailable = true,
     saveError,
     classes,
     subclasses,
@@ -244,6 +247,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
 
     const handleLevelUpClick = () => {
       if (buttonState !== "idle") return;
+      if (props.saveLevelImmediately) { handleLevelChange(cls.level + 1); return; }
       setShowPicker(false);
       setMobileDetail(null);
       setLevelUpDraft({ classIndex: idx, draftLevel: cls.level + 1 });
@@ -267,7 +271,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
   // ---------------------------------------------------------------------------
   // AddClassRow: same logic for both layout branches.
   // ---------------------------------------------------------------------------
-  const addClassRowJsx = isMidFlow ? (
+  const addClassRowJsx = !classChangesAvailable ? <AddClassRow reasons={[]} disabledReason="This builder currently supports one class." /> : isMidFlow ? (
     <AddClassRow
       reasons={MULTICLASS_PREREQS_LOCKED_REASONS}
       disabledReason="Finish active level-up first"
@@ -307,10 +311,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
           features: [],
           choices: [],
         };
-        const styleOptions = features.filter((f) => {
-          const data = f.data as Record<string, unknown>;
-          return data.class === cls.slug && data.feature_type === "fighting_style" && f.name !== "Fighting Style";
-        });
+        const styleOptions = availableFightingStyles(features, cls.slug);
         const classChoices = (classContent.effects ?? []).filter(
           (e): e is ChoiceEffect => e.type === "choice",
         );
@@ -379,10 +380,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
           classIndex: mobileDetail.classIndex,
         });
         const row = perLevel.find((r) => r.level === mobileDetail.level);
-        const styleOptions = features.filter((f) => {
-          const data = f.data as Record<string, unknown>;
-          return data.class === cls.slug && data.feature_type === "fighting_style" && f.name !== "Fighting Style";
-        });
+        const styleOptions = availableFightingStyles(features, cls.slug);
         const classChoices = (classContent.effects ?? []).filter(
           (e): e is ChoiceEffect => e.type === "choice",
         );
@@ -475,7 +473,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
                     setMobileDetail({ classIndex: idx, level: pendingLevel });
                   }
                 }}
-                onRemoveClass={() => onRemoveClass(idx)}
+                onRemoveClass={classChangesAvailable ? () => onRemoveClass(idx) : undefined}
                 disabled={railDisabled}
                 onLevelUpClick={handleLevelUpClick}
                 levelUpButtonState={buttonState}
@@ -534,10 +532,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         features: [],
         choices: [],
       };
-      const styleOptions = features.filter((f) => {
-        const data = f.data as Record<string, unknown>;
-        return data.class === cls.slug && data.feature_type === "fighting_style" && f.name !== "Fighting Style";
-      });
+      const styleOptions = availableFightingStyles(features, cls.slug);
       const classChoices = (classContent.effects ?? []).filter(
         (e): e is ChoiceEffect => e.type === "choice",
       );
@@ -604,14 +599,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         classIndex: selected.classIndex,
       });
       const activeRow = activePerLevel.find((r) => r.level === selected.level);
-      const styleOptionsForActive = features.filter((f) => {
-        const data = f.data as Record<string, unknown>;
-        return (
-          data.class === activeClass.slug &&
-          data.feature_type === "fighting_style" &&
-          f.name !== "Fighting Style"
-        );
-      });
+      const styleOptionsForActive = availableFightingStyles(features, activeClass.slug);
       const activeClassChoices = (activeClassContent.effects ?? []).filter(
         (e): e is ChoiceEffect => e.type === "choice",
       );
@@ -677,7 +665,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
               activeLevel={activeLevel}
               onSelectLevel={handleSelectLevel}
               onLevelChange={handleLevelChange}
-              onRemoveClass={() => onRemoveClass(idx)}
+              onRemoveClass={classChangesAvailable ? () => onRemoveClass(idx) : undefined}
               disabled={railDisabled}
               onLevelUpClick={handleLevelUpClick}
               levelUpButtonState={buttonState}

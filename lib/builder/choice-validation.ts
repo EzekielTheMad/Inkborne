@@ -55,3 +55,9 @@ export function activeFeatureSlugs(definition: { data: Record<string, unknown> }
   return [...new Set(rows.flatMap(row => row && Number.isInteger(row.level) && row.level > 0 && row.level <= level && Array.isArray(row.features)
     ? row.features.filter((slug: unknown): slug is string => typeof slug === "string") : []))] as string[];
 }
+
+export function fightingStyleSlugs(definition: { data: Record<string, unknown> }): string[] {
+  if (definition.data.feature_type !== "fighting_style" || !Array.isArray(definition.data.choices)) return [];
+  return [...new Set(definition.data.choices.flatMap(choice => choice && Array.isArray(choice.options)
+    ? choice.options.filter((slug: unknown): slug is string => typeof slug === "string") : []))] as string[];
+}

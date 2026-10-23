@@ -107,9 +107,10 @@ const emberSentinel: UsableFeatOption = {
   prerequisiteReason: null,
 };
 
-function renderClient(choices: CharacterChoices) {
+function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typeof ClassStepClient>["saveAction"]) {
   return render(
     <ClassStepClient
+      saveAction={saveAction}
       characterId="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
       character={{
         id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -140,6 +141,29 @@ function deferred<T>() {
 describe("ClassStepClient feat regressions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("uses the accepted domain saver for class choices and style pins without a legacy write", async () => {
+    const choices = { classes: [{ slug: "fighter", level: 1, occurrence_id: "native-occurrence" }] };
+    const saved = { ...choices, race: "half-elf", resolved_choices: { skills: ["skill-athletics"] } };
+    const save = vi.fn().mockResolvedValue({ choices: saved, scores: {} });
+    renderClient(choices, save);
+    await act(async () => { await currentRail.onChoiceSelect("skills", ["skill-athletics"]); });
+    expect(save).toHaveBeenLastCalledWith("class_choice", { choice_id: "skills", selections: ["skill-athletics"] });
+    expect(currentRail.localChoices).toEqual(saved);
+    await act(async () => { await currentRail.onFightingStyleSelect("fighter-fighting-style", "fighter", "fighter-defense"); });
+    expect(save).toHaveBeenLastCalledWith("fighting_style", { feature_slug: "fighter-fighting-style", style_slug: "fighter-defense" });
+    expect(mocks.updateCharacter).not.toHaveBeenCalled();
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("never falls back to a whole choices write after a refused native class choice", async () => {
+    const choices = { classes: [{ slug: "fighter", level: 1 }] };
+    renderClient(choices, vi.fn().mockRejectedValue(Error("refused")));
+    await act(async () => { await currentRail.onChoiceSelect("skills", ["skill-athletics"]); });
+    expect(currentRail.localChoices).toEqual(choices);
+    expect(mocks.updateCharacter).not.toHaveBeenCalled();
+    expect(screen.getAllByRole("alert")[0]).toHaveTextContent("could not be confirmed");
   });
 
   it("uses canonical level-down choices so leveling back up cannot resurrect a pruned ASI feat", async () => {

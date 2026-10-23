@@ -78,7 +78,7 @@ export interface StartingEquipmentSelections {
 }
 
 export interface CharacterChoices {
-  classes?: Array<{ slug: string; level: number; subclass?: string }>;
+  classes?: Array<{ slug: string; level: number; subclass?: string; occurrence_id?: string }>;
   race?: string;
   subrace?: string;
   background?: string;
@@ -88,6 +88,7 @@ export interface CharacterChoices {
    *  the equipment chooser writes a StartingEquipmentSelections object. */
   starting_equipment?: string | StartingEquipmentSelections;
   alignment?: string;
+  details_confirmed?: boolean;
   personality_traits?: string[];
   ideals?: string[];
   bonds?: string[];

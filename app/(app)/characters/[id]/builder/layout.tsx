@@ -1,6 +1,6 @@
 import { isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
 import { getContentByType } from "@/lib/supabase/content-definitions";
-import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
+import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { characterColorStyle } from "@/lib/character/character-color-style";
 import { getBuilderStepStatus } from "@/lib/builder/step-status";
 import type { CreationStep } from "@/lib/types/system";
 import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
+import { savedBuilderClassSpellsComplete } from "@/lib/builder/class-spells-status-server";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,7 +40,9 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
   if (!character) notFound();
   if (character.user_id !== user.id) notFound();
 
-  const contentRefs = await getContentRefsByCharacter(id, { requireCompleteSnapshots: true });
+  const snapshot = await getCharacterContentRefSnapshot(id);
+  if (!snapshot.complete) throw Error("The saved build could not be read. Reload before editing.");
+  const contentRefs = snapshot.refs;
   const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && isLanguageChoiceCategory(effect)));
   // A failed catalog read leaves category choices incomplete; it never upgrades a pin.
   const languages = hasLanguageCategory
@@ -47,9 +50,10 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
     : undefined;
   const schema = character.game_systems?.schema_definition;
   const steps: CreationStep[] = schema?.creation_steps ?? [];
+  const classSpellsComplete = !characterCreationUIEnabled() || await savedBuilderClassSpellsComplete(character, snapshot, schema).catch(() => false);
   const stepStatus = Object.fromEntries(
     steps.map((step) => [step.type, getBuilderStepStatus(
-      step.type, character.choices ?? {}, character.base_stats ?? {}, schema, contentRefs, languages,
+      step.type, character.choices ?? {}, character.base_stats ?? {}, schema, contentRefs, languages, classSpellsComplete,
     )]),
   );
 
@@ -72,8 +76,7 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
           characterId={id}
           steps={steps}
           stepStatus={stepStatus}
-          classStepPath={characterCreationUIEnabled() &&
-            (!character.choices?.classes?.length || character.choices.classes[0]?.occurrence_id) ? "first-class" : "class"}
+          classStepPath={characterCreationUIEnabled() && !character.choices?.classes?.length ? "first-class" : "class"}
         />
 
         {children}
