@@ -98,7 +98,7 @@ SELECT jsonb_build_object('characterId',t.id,'level',t.level,'classes',t.choices
  'bonusRows',COALESCE((SELECT jsonb_agg(to_jsonb(r) ORDER BY class_slug,choice_id,slug) FROM bonus_rows r),'[]'),
  'spells',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',id,'slug',slug,'source',source,'known',is_known,
    'prepared',is_prepared,'alwaysPrepared',always_prepared,'book',in_spellbook,'custom',custom_data) ORDER BY slug) FROM spell_rows),'[]'),
- 'allChoicesValid',NOT EXISTS(SELECT 1 FROM choice_checks WHERE NOT earned_unique_within_budget OR NOT exact_pins OR NOT exact_rows),
+ 'allChoicesValid',NOT EXISTS(SELECT 1 FROM choice_checks WHERE NOT COALESCE(earned_unique_within_budget,false) OR NOT exact_pins OR NOT exact_rows),
  'allBonusRowsOwned',NOT EXISTS(SELECT 1 FROM bonus_rows WHERE NOT owned_exact_projection),
  'orderBijections',(SELECT jsonb_object_agg(domain,bijection) FROM order_checks),
  'parentOrderRevisionEqual',(SELECT producer_revision=t.action_revision FROM private.character_projection_order_v1 WHERE character_id=t.id),
