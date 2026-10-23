@@ -18,9 +18,7 @@ interface ApiBackground {
   flaws: { choose: number; from: { options: Array<{ string: string }> } };
 }
 
-export async function transformBackgrounds(): Promise<TransformedContent[]> {
-  const backgrounds = await fetchAllFromApi<ApiBackground>("/backgrounds");
-  return backgrounds.map((bg) => {
+export function transformBackgroundEntry(bg: ApiBackground): TransformedContent {
     const effects: Effect[] = [];
 
     for (const prof of bg.starting_proficiencies) {
@@ -56,6 +54,16 @@ export async function transformBackgrounds(): Promise<TransformedContent[]> {
       ? [{ choose: bg.language_options.choose, from: "any" as const }]
       : [];
 
+    let equipment = bg.starting_equipment;
+    if (bg.starting_gold) {
+      if (!Number.isSafeInteger(bg.starting_gold.quantity) || bg.starting_gold.quantity < 0 || !["cp", "sp", "ep", "gp", "pp"].includes(bg.starting_gold.unit)
+        || bg.starting_equipment.filter(item => item.equipment.index === "pouch" && item.quantity === 1).length !== 1) {
+        throw new Error(`Unsupported SRD background starting-currency source: ${bg.index}`);
+      }
+      equipment = bg.starting_equipment.map(item => item.equipment.index === "pouch"
+        ? { ...item, equipment: { ...item.equipment, name: `Pouch containing ${bg.starting_gold!.quantity} ${bg.starting_gold!.unit}` } }
+        : item);
+    }
     return buildContentEntry("background", bg.index, bg.name, {
       feature: {
         name: bg.feature.name,
@@ -73,8 +81,11 @@ export async function transformBackgrounds(): Promise<TransformedContent[]> {
       gold: bg.starting_gold?.unit === "gp" ? bg.starting_gold.quantity : undefined,
       // Currency is in the trusted equipment plan exactly once. `gold` is
       // descriptive metadata; the award compiler consumes only this text.
-      equipment: [startingEquipmentText(bg.starting_equipment, bg.starting_equipment_options, ", "),
-        ...(bg.starting_gold ? [`${bg.starting_gold.quantity} ${bg.starting_gold.unit}`] : [])].filter(Boolean).join(", "),
+      equipment: startingEquipmentText(equipment, bg.starting_equipment_options, ", "),
     }, effects);
-  });
+}
+
+export async function transformBackgrounds(): Promise<TransformedContent[]> {
+  const backgrounds = await fetchAllFromApi<ApiBackground>("/backgrounds");
+  return backgrounds.map(transformBackgroundEntry);
 }

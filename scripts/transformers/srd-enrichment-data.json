@@ -1,4 +1,25 @@
 {
+  "background/acolyte": {
+    "gold": 15,
+    "skills": [
+      "insight",
+      "religion"
+    ],
+    "equipment": "A holy symbol, a prayer book or prayer wheel, 5 sticks of incense, vestments, a set of common clothes, and a pouch containing 15 gp",
+    "toolProfs": [],
+    "source_refs": [
+      {
+        "book": "SRD",
+        "page": 0
+      }
+    ],
+    "languageProfs": [
+      {
+        "from": "any",
+        "choose": 2
+      }
+    ]
+  },
   "class/barbarian": {
     "attacks": [
       1,

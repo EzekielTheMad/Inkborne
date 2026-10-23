@@ -4,6 +4,7 @@ import { buildContentEntry } from "@/scripts/transformers/common";
 import { transformTraitEntry } from "@/scripts/transformers/traits";
 import { transformRaceEntry } from "@/scripts/transformers/races";
 import { transformFeatureEntry } from "@/scripts/transformers/features";
+import { transformBackgroundEntry } from "@/scripts/transformers/backgrounds";
 import { SUBCLASS_LEVELS, transformClassEntry } from "@/scripts/transformers/classes";
 import { validateSrdCatalog } from "@/scripts/transformers/validate-catalog";
 import { buildInventoryGrants, parseEquipmentGroups } from "@/lib/builder/equipment-choices";
@@ -37,7 +38,12 @@ describe("real SRD catalog import metadata", () => {
   });
 
   it("restores complete Acolyte SRD equipment and awards its gold once", () => {
-    const background = buildContentEntry("background", "acolyte", "Acolyte", { feature: { name: "Shelter", description: "Shelter" } });
+    const background = transformBackgroundEntry({ index: "acolyte", name: "Acolyte", starting_proficiencies: [],
+      starting_equipment: [{ equipment: { index: "clothes-common", name: "Clothes, common" }, quantity: 1 }, { equipment: { index: "pouch", name: "Pouch" }, quantity: 1 }],
+      starting_equipment_options: [{ choose: 1, from: { equipment_category: { index: "holy-symbols", name: "Holy Symbols" } } }],
+      starting_gold: { quantity: 15, unit: "gp" }, feature: { name: "Shelter", desc: ["Shelter"] },
+      personality_traits: { choose: 2, from: { options: [] } }, ideals: { choose: 1, from: { options: [] } },
+      bonds: { choose: 1, from: { options: [] } }, flaws: { choose: 1, from: { options: [] } } });
     expect(background.data.equipment).toContain("5 sticks of incense");
     expect(background.data.equipment).toContain("pouch containing 15 gp");
     const groups = parseEquipmentGroups({ backgroundText: background.data.equipment as string });
@@ -46,6 +52,10 @@ describe("real SRD catalog import metadata", () => {
     const award = buildInventoryGrants(groups, { selections, picks, confirmed: false }, []);
     expect(award.currency).toEqual({ gp: 15 });
     expect(award.items.some(item => /15 gp/.test(item.name))).toBe(false);
+    const custom = transformBackgroundEntry({ index: "custom-test", name: "Custom Test", starting_proficiencies: [], starting_equipment: [{ equipment: { index: "pouch", name: "Pouch" }, quantity: 1 }], starting_equipment_options: [],
+      starting_gold: { quantity: 15, unit: "gp" }, feature: { name: "Shelter", desc: ["Shelter"] },
+      personality_traits: { choose: 2, from: { options: [] } }, ideals: { choose: 1, from: { options: [] } }, bonds: { choose: 1, from: { options: [] } }, flaws: { choose: 1, from: { options: [] } } });
+    expect(custom.data.equipment).toBe("1 Pouch containing 15 gp");
   });
 
   it("retains the High Elf cantrip choice and actual casting ability", () => {
