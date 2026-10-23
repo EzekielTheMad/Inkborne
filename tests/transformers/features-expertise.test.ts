@@ -51,3 +51,24 @@ describe("real SRD Rogue Expertise source mapping", () => {
     expect(validateSrdCatalog([cls, feature, ...proficiencies]).find(entry => entry.slug === feature.slug)?.effects).toEqual(feature.effects);
   });
 });
+
+describe("real SRD Bard Expertise source mapping", () => {
+  const bard = (level: 3 | 10) => ({ index: `bard-expertise-${level === 3 ? 1 : 2}`, name: "Expertise",
+    class: { index: "bard", name: "Bard" }, level, desc: ["Choose two of your skill proficiencies."], prerequisites: [],
+    feature_specific: { expertise_options: chooseSkills(2) } });
+  it.each([3, 10] as const)("uses the level %s skill-only vocabulary and source identity", level => {
+    const input = bard(level);
+    input.feature_specific.expertise_options.from.options!.forEach(option => { option.option_type = "reference"; });
+    const feature = transformFeatureEntry(input);
+    expect(feature.data.feature_type).toBe("choice");
+    expect(feature.effects).toContainEqual({ type: "choice", choice_id: input.index, choose: 2, from: skills, grant_type: "expertise" });
+    expect(feature.effects.some(effect => effect.type === "choice" && effect.from.includes("thieves-tools"))).toBe(false);
+  });
+  it("rejects changed levels, cardinality and a tool substituted for a skill", () => {
+    expect(() => transformFeatureEntry({ ...bard(3), level: 1 })).toThrow("Unsupported SRD Bard Expertise");
+    const count = bard(3); count.feature_specific.expertise_options.choose = 1;
+    expect(() => transformFeatureEntry(count)).toThrow("Unsupported SRD Bard Expertise");
+    const tool = bard(10); tool.feature_specific.expertise_options.from.options!.at(-1)!.item = { index: "thieves-tools", name: "Thieves' tools" };
+    expect(() => transformFeatureEntry(tool)).toThrow("Unsupported SRD Bard Expertise");
+  });
+});

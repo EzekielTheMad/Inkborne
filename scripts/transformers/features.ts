@@ -11,7 +11,8 @@ interface ApiFeature {
   level: number;
   desc: string[];
   prerequisites: Array<unknown>;
-  feature_specific?: { subfeature_options?: ApiChoice; expertise_options?: ApiChoice };
+  feature_specific?: { subfeature_options?: ApiChoice; expertise_options?: ApiChoice;
+    terrain_type_options?: { choose: number; type: string; from: { option_set_type: string; options: string[] } } };
 }
 
 const SUBCLASS_FEATURES = new Set(["primal-path", "bard-college", "divine-domain", "druid-circle", "martial-archetype",
@@ -50,6 +51,37 @@ function rogueExpertise(feature: ApiFeature): string[] | undefined {
   return options;
 }
 
+/** Bard grants only existing skill proficiencies, never the Rogue's tool
+ * alternative. Keep each earned tier's own source ID for persistence. */
+function bardExpertise(feature: ApiFeature): string[] | undefined {
+  const level = ({ "bard-expertise-1": 3, "bard-expertise-2": 10 } as Record<string, number>)[feature.index];
+  if (!level) return;
+  const choice = feature.feature_specific?.expertise_options;
+  const fail = () => { throw Error(`Unsupported SRD Bard Expertise: ${feature.index}`); };
+  if (feature.class.index !== "bard" || feature.subclass || feature.level !== level || !choice || choice.choose !== 2
+    || !choice.from.options?.every(option => option.option_type === "reference" && option.item)) return fail();
+  const options = referenceOptions(choice).map(option => option.index);
+  const skills = ["acrobatics", "animal-handling", "arcana", "athletics", "deception", "history", "insight", "intimidation",
+    "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight-of-hand", "stealth", "survival"];
+  if (options.length !== skills.length || !skills.every(skill => options.includes(`skill-${skill}`))) return fail();
+  return options;
+}
+
+/** Each later Natural Explorer tier earns one additional terrain. The API
+ * title's cumulative count is not the number gained by this occurrence. */
+function rangerTerrain(feature: ApiFeature): string[] | undefined {
+  const level = ({ "natural-explorer-1-terrain-type": 1, "natural-explorer-2-terrain-types": 6,
+    "natural-explorer-3-terrain-types": 10 } as Record<string, number>)[feature.index];
+  if (!level) return;
+  const choice = feature.feature_specific?.terrain_type_options;
+  const options = ["arctic", "coast", "desert", "forest", "grassland", "mountain", "swamp"];
+  if (feature.class.index !== "ranger" || feature.subclass || feature.level !== level || choice?.choose !== 1
+    || choice.type !== "string" || choice.from.option_set_type !== "options_array"
+    || choice.from.options.length !== options.length || new Set(choice.from.options).size !== options.length
+    || !options.every(option => choice.from.options.includes(option))) throw Error(`Unsupported SRD Natural Explorer: ${feature.index}`);
+  return [...choice.from.options];
+}
+
 // Reviewed resource/mechanical constants are merged by buildContentEntry.
 export function transformFeatureEntry(feature: ApiFeature): TransformedContent {
     const effects: Effect[] = [];
@@ -59,11 +91,15 @@ export function transformFeatureEntry(feature: ApiFeature): TransformedContent {
 
     // Only the actual twelve subclass gates are subclass selectors. Names
     // such as "Domain Spells" or "Circle of the Land: Arctic" are not gates.
-    const expertise = rogueExpertise(feature);
+    const expertise = rogueExpertise(feature) ?? bardExpertise(feature);
+    const terrain = rangerTerrain(feature);
     let feature_type = "passive";
     if (expertise) {
       feature_type = "choice";
       effects.push(buildChoiceEffect(2, expertise, "expertise", feature.index));
+    } else if (terrain) {
+      feature_type = "choice";
+      effects.push(buildChoiceEffect(1, terrain, "favored_terrain", feature.index));
     } else if (feature.name === "Ability Score Improvement") {
       feature_type = "asi";
     } else if (SUBCLASS_FEATURES.has(feature.index)) {
