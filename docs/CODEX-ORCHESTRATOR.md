@@ -1,32 +1,30 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-22 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
+Updated 2026-10-23 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
 
 ## Resume and ownership
 
-**Race, abilities, background and starting equipment now save and reload in the
-actual local app at `2e2b252`.** One real browser signs in, creates a notebook,
-saves Fighter, then saves Human, all six standard-array scores, Soldier and a
-personality note, and confirms the starting award. Each step survives a full
-reload. Backpack, Bedroll, Pouch and 10 gp are retained; the original class stays
-intact. A second signed-in account receives a 404.
+**Real SRD Fighter and Cleric workflows save and reload in the actual local app
+at `9158162`.** Both stories cover sign-in, creation, class/race/ability/background
+choices, actual gear, one 15 gp award, details, sheet reload and a second account's
+404. Fighter additionally reaches Champion 4 with saved HP, ASI/feat replacement
+and a retained server HP roll. Cleric retains class/racial/domain spells with
+correct casting ability, completion guards, allowance counters and saving throws.
 
-The actual Next/Auth/PostgREST/database story passes. Focused UI and transport
-checks, typecheck and zero-warning lint pass; the full suite was intentionally
-not repeated. Native readback confirms the saved values and exactly one starting
-award. Real execution exposed and fixed a writer-lock privilege mismatch, an
-award-receipt variable error and an ability edit before hydration.
-[Delivery, preserved failures and exact evidence](handoffs/2026-10-22-real-app-builder-saving.md).
+The runtime contains 1,535 real catalog definitions and matching immutable
+snapshots. Native database readback agrees with the browser. Focused tests,
+typecheck and zero-warning lint pass; the full suite was intentionally not
+repeated. [Delivery, repairs, exact evidence and remaining work](handoffs/2026-10-23-real-srd-builder.md).
 
-This uses parser-valid synthetic local content. Full catalog combinations,
-advanced builder/gameplay, recovery/concurrency and hosted acceptance remain
-open; M1 is incomplete. The temporary local UI flag does not open repository
-activation/readiness gates. No push, deployment or hosted configuration/data
-change occurred. Vercel is unchanged; M1–M6/M5.5 precede M8 and M7/creature
-imports remain paused. Wider
-[writer fences](specs/2026-10-22-enrolled-character-writer-fences.md) remain a
-production activation requirement. Task services are stopped after use; shared
-Docker engine/cache remain.
+Next is genuine multiclass acquisition and remaining catalog choice families.
+M1/R06, wider recovery/concurrency and hosted acceptance remain open. Global
+activation/readiness gates remain closed. No push, deployment or hosted change
+occurred. Vercel is unchanged; M1–M6/M5.5 precede M8 and M7/creature imports remain
+paused. Task Next/Auth/REST/database services and credentials are removed after
+verification; shared Docker engine/cache and inherited worktrees remain.
+
+Historical preparation and delivery evidence follows; its old pending items
+must be read against the current checkpoint above.
 
 Historical source `96e1197` completed three local preparation checkpoints:
 five-file selected-catalog/synthetic-fixture pack, eight-case three-session runner

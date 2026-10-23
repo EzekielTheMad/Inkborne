@@ -1,32 +1,29 @@
 # Inkborne project-wide acceptance ledger
 
-## Active continuation — 2026-10-22 UTC
+## Active continuation — 2026-10-23 UTC
 
 ### Actual application character builder save/reload
 
-**Race, abilities, background and starting equipment now save and reload in the
-actual local app at `2e2b252`.** One real browser signs in, creates a notebook,
-saves Fighter, then saves Human, all six standard-array scores, Soldier and a
-personality note, and confirms the starting award. Each step survives a full
-reload. Backpack, Bedroll, Pouch and 10 gp are retained; the original class stays
-intact. A second signed-in account receives a 404.
+**Real SRD Fighter and Cleric workflows save and reload in the actual local app
+at `9158162`.** Both stories cover sign-in, creation, class/race/ability/background
+choices, actual gear, one 15 gp award, details, sheet reload and a second account's
+404. Fighter reaches Champion 4 with HP, ASI/feat replacement and a retained server
+HP roll. Cleric retains class/racial/domain spells with correct casting ability,
+completion guards, allowance counters and saving-throw proficiency.
 
-The actual Next/Auth/PostgREST/database story passes. Focused UI and transport
-checks, typecheck and zero-warning lint pass; the full suite was intentionally
-not repeated. Native readback confirms the saved values and exactly one starting
-award. Real execution exposed and fixed a writer-lock privilege mismatch, an
-award-receipt variable error and an ability edit before hydration.
-[Delivery, preserved failures and exact evidence](handoffs/2026-10-22-real-app-builder-saving.md).
+The local runtime contains 1,535 real definitions and matching immutable snapshots;
+native database readback agrees with the browser. Focused tests, typecheck and
+zero-warning lint pass. No repeated full suite/build was added.
+[Delivery, preserved failures, staging order and exact evidence](handoffs/2026-10-23-real-srd-builder.md).
 
-This uses parser-valid synthetic local content. Full catalog combinations,
-advanced builder/gameplay, recovery/concurrency and hosted acceptance remain
-open; M1 is incomplete. The temporary local UI flag does not open repository
-activation/readiness gates. No push, deployment or hosted configuration/data
-change occurred. Vercel is unchanged; M1–M6/M5.5 precede M8 and M7/creature
-imports remain paused. Wider
-[writer fences](specs/2026-10-22-enrolled-character-writer-fences.md) remain a
-production activation requirement. Task services are stopped after use; shared
-Docker engine/cache remain.
+R06/M1 remains **IN PROGRESS**: genuine multiclass acquisition, remaining catalog
+choice families, wider recovery/concurrency/provider matrices and hosted acceptance
+remain open. Global readiness/class/hit-die gates remain closed. Wider
+[writer fences](specs/2026-10-22-enrolled-character-writer-fences.md) remain required
+before production activation. Task services/credentials were removed and ports
+closed; shared Docker engine/cache and inherited worktrees remain. No push,
+deployment or hosted change occurred. Vercel unchanged; M1–M6/M5.5 precede M8;
+M7/creature imports paused.
 
 Earlier preparation evidence follows.
 
