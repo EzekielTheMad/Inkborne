@@ -1,6 +1,6 @@
 # Inkborne brand guide
 
-Version 2.4 · 22 October 2026
+Version 2.5 · 23 October 2026
 
 Inkborne brings playable character sheets and character stories together. Its visual identity is a player's fantasy notebook: useful at the table, personal between sessions, and full of the atmosphere of a living campaign. Evolve the current site's ink-purple, warm-gold manuscript character rather than replacing it with a neutral productivity app.
 
@@ -46,7 +46,7 @@ The [first-round logo exploration](design-briefs/logo-exploration/README.md) rec
 
 The [interactive character study](design-briefs/field-journal-pilot/character-preview.html) extends the notebook direction through light and dark character screens, related page views, custom accents, and dialogs. Its fictional data and preview-local color resolver support design review; they do not establish a completed application migration. The earlier [version 1 vector reference](design-briefs/field-journal-reference.svg) is retained as historical exploration and does not define the current palette or typography.
 
-The [local auth notebook review](design-briefs/auth-notebook-local/README.md) continues the homepage's identity through sign in, signup, verification, and password recovery. It uses a restrained notebook spread on desktop, a form-focused mobile layout, and scoped Light/Dark feedback colors. This remains a local implementation for review; it does not change authentication behavior or establish hosted provider/mail acceptance.
+The [auth notebook refresh](handoffs/2026-10-23-auth-dev-deployment-receipt.md) continues the homepage's identity through sign in, signup, verification, and password recovery. It uses a restrained notebook spread on desktop, a form-focused mobile layout, and scoped Light/Dark feedback colors. It is deployed to dev as `99acb2c`, preserving the existing authentication implementation. The [local review](design-briefs/auth-notebook-local/README.md) records the earlier design evidence. Hosted UI checks do not establish provider or mail acceptance.
 
 Prove the direction on the homepage and a representative character screen before extending their layouts through the app. Keep the resulting desktop and mobile references beside this guide and identify which design revision they represent.
 
@@ -160,7 +160,7 @@ Avoid generic promises about epic adventures, stacks of promotional badges, deco
 
 ### Relationship to the current implementation
 
-The public homepage has been deployed to dev as the isolated `bc85889` release, with distinct Light and Dark palettes and the shared appearance preference. Auth pages now have a separate local review implementation with scoped palettes. The wider authenticated app and character screens have not been visually migrated by these changes. The purple-and-gold manuscript styling supplies their personality baseline. The app's global light and dark CSS palettes remain identical; homepage and auth palettes are deliberately scoped to their own modules.
+The public homepage first deployed to dev as the isolated `bc85889` release, with distinct Light and Dark palettes and the shared appearance preference. The auth notebook refresh deployed to dev as `99acb2c`, with its own scoped palettes and unchanged authentication implementation. The wider authenticated app and character screens have not been visually migrated by these changes. The purple-and-gold manuscript styling supplies their personality baseline. The app's global light and dark CSS palettes remain identical; homepage and auth palettes are deliberately scoped to their own modules.
 
 The current global token values live in [app/globals.css](../app/globals.css), homepage values in [landing-content.module.css](../components/landing/landing-content.module.css), auth values in [auth-shell.module.css](../components/auth/auth-shell.module.css), and typography in [app/layout.tsx](../app/layout.tsx). These files describe the current source implementation, while this guide describes the site-wide direction. Verify deployment state separately and preserve this distinction until each migration is verified.
 
@@ -170,6 +170,7 @@ Older HTML/JSX bundles and screenshots under `docs/design-briefs/` preserve earl
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-23 | Version 2.5: release the approved auth notebook refresh to dev, preserving authentication and existing hosted configuration. Record hosted UI evidence separately from real account, provider, and mail testing. |
 | 2026-10-22 | Version 2.3: simplify the homepage header to an icon-only appearance menu and Sign in. Keep character creation in the hero and closing section. |
 | 2026-10-22 | Version 2.2: evolve the homepage from three alternating blocks into an illustrated hero and one explorable character notebook. Preserve the Scribe identity, coordinated themes, and scoped character accents. Keep this implementation local for review. |
 | 2026-10-22 | Adopt a player's field-journal direction and a staged site-wide refresh. |

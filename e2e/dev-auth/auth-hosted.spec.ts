@@ -1,16 +1,40 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
 
 const appOrigin = "https://dev.inkborne.app";
 const fictionalEmail = "reviewer@example.test";
+const omittedScript = "/* Platform script omitted for read-only review. */";
+const omittedScriptDigest = createHash("sha512").update(omittedScript).digest("base64");
 type ReadOnlyEvidence = { mutations: string[]; external: string[] };
 
 const test = base.extend<{ readOnlyEvidence: ReadOnlyEvidence }>({
   readOnlyEvidence: [async ({ context, page }, use) => {
+    // Deployment Protection is separate from Inkborne authentication. Reuse
+    // private, temporary Vercel access without persisting or tracing its URL.
+    const accessUrl = process.env.AUTH_SMOKE_ACCESS_URL;
+    if (accessUrl) {
+      let accepted = false;
+      try {
+        const target = new URL(accessUrl);
+        if (target.origin !== appOrigin || target.pathname !== "/login"
+          || !target.searchParams.has("_vercel_share")) throw new Error("Invalid access scope");
+        const response = await context.request.get(accessUrl, { maxRedirects: 0 });
+        accepted = [200, 302, 303, 307, 308].includes(response.status());
+        await response.dispose();
+      } catch { /* Do not include private access URLs in diagnostic output. */ }
+      if (!accepted) throw new Error("Vercel protection access could not be initialized.");
+    }
     const errors: string[] = [];
     const mutations: string[] = [];
     const external: string[] = [];
+    const omittedPlatformScripts = new Set<string>();
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
+      // Cloudflare's injected SRI correctly rejects our placeholder. Exempt only
+      // the exact resource/digest we substituted, preserving all app errors.
+      const expectedIntegrityError = message.text().match(/^Failed to find a valid digest in the 'integrity' attribute for resource '([^']+)' with computed SHA-512 integrity '([^']+)'\. The resource has been blocked\.$/);
+      if (expectedIntegrityError && omittedPlatformScripts.has(expectedIntegrityError[1])
+        && expectedIntegrityError[2] === omittedScriptDigest) return;
       if (message.type() === "error" || /hydrat|did not match|server rendered HTML/i.test(message.text())) {
         errors.push(message.text());
       }
@@ -20,6 +44,17 @@ const test = base.extend<{ readOnlyEvidence: ReadOnlyEvidence }>({
       const url = new URL(request.url());
       const safeMethod = ["GET", "HEAD"].includes(request.method());
       const sameOrigin = url.origin === appOrigin;
+      // Hosting/CDN inject these scripts. Serve empty local responses so the
+      // review neither contacts telemetry/toolbar services nor reports their
+      // deliberate omission as an application failure. Other origins still fail.
+      const platformScript = request.method() === "GET" && request.resourceType() === "script"
+        && ((url.origin === "https://static.cloudflareinsights.com" && url.pathname.startsWith("/beacon.min.js/"))
+          || (url.origin === "https://vercel.live" && url.pathname === "/_next-live/feedback/feedback.js"));
+      if (platformScript) {
+        omittedPlatformScripts.add(url.href);
+        await route.fulfill({ status: 200, contentType: "application/javascript", body: omittedScript });
+        return;
+      }
       if (!safeMethod) mutations.push(`${request.method()} ${url.origin}${url.pathname}`);
       if (!sameOrigin) external.push(`${request.method()} ${url.origin}${url.pathname}`);
       if (safeMethod && sameOrigin) await route.continue();

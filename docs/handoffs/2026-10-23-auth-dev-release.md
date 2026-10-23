@@ -104,4 +104,6 @@ review server on 3192 is preserved.
 The new `e2e/dev-auth` suite performs only anonymous GET/HEAD requests against the
 fixed dev origin, including empty native validation with zero POSTs. It is run
 after the new deployment is READY; no hosted test outcome is claimed yet.
-The final deployment receipt is recorded after hosted verification.
+The final [deployment receipt](2026-10-23-auth-dev-deployment-receipt.md) records
+the READY release and hosted verification, including Vercel access and the
+test-only platform-script handling.

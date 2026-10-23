@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Anonymous, read-only browser smoke against the dev alias. No credentials,
-// storage state, setup projects, dotenv, mocks, or server process are used.
+// Anonymous, read-only browser smoke against the dev alias. No Inkborne
+// credentials/storage state, setup projects, dotenv, auth-response mocks, or server.
+// Optional private Vercel access is kept in process memory; never trace its URL.
 export default defineConfig({
   testDir: ".",
   testMatch: "auth-hosted.spec.ts",
@@ -15,7 +16,7 @@ export default defineConfig({
   expect: { timeout: 20_000 },
   use: {
     baseURL: "https://dev.inkborne.app",
-    trace: "retain-on-failure",
+    trace: process.env.AUTH_SMOKE_ACCESS_URL ? "off" : "retain-on-failure",
     screenshot: "only-on-failure",
     serviceWorkers: "block",
   },
