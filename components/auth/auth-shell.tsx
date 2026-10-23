@@ -1,35 +1,44 @@
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/landing/logo";
-import { Inkstain } from "@/components/journey/ornaments";
+import Image from "next/image";
+import Link from "next/link";
+import { HomepageAppearance as AppearanceControl } from "@/components/landing/homepage-appearance";
+import styles from "./auth-shell.module.css";
 
 /**
- * Shared chrome for the auth surfaces (login / signup / verify /
- * forgot / reset). Journey handoff: AuthShell in journey-auth.jsx —
- * paper-warm centered card, ambient inkstains, quiet alpha footer.
+ * Notebook presentation shared by the existing authentication pages.
+ * Tokens stay inside this shell; session handling belongs to the existing routes.
  */
 export function AuthShell({
   marginalia,
   children,
 }: {
-  /** Small italic flourish shown top-right ("Open the notebook."). */
+  /** Small italic flourish in the desktop notebook margin. */
   marginalia?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="j-grain relative flex min-h-screen flex-col overflow-hidden bg-background">
-      <Inkstain className="-left-28 -top-14 h-[360px] w-[520px] opacity-5" />
-      <Inkstain tone="purple" className="-right-24 bottom-10 h-[300px] w-[420px] opacity-[0.04]" />
-      <header className="relative flex items-center justify-between px-6 py-5 sm:px-7">
-        <Logo />
-        {marginalia && (
-          <span className="j-marginalia hidden text-xs sm:inline">{marginalia}</span>
-        )}
+    <div className={styles.root} data-testid="auth-notebook">
+      <a className={styles.skipLink} href="#auth-main">Skip to form</a>
+      <header className={styles.header}>
+        <Link className={styles.brand} href="/" aria-label="Inkborne home">
+          <Image className={styles.logoLight} data-logo-theme="light" src="/brand/inkborne-horizontal-ink.svg" width={407} height={96} alt="Inkborne" unoptimized />
+          <Image className={styles.logoDark} data-logo-theme="dark" src="/brand/inkborne-horizontal-reverse.svg" width={407} height={96} alt="Inkborne" unoptimized />
+        </Link>
+        <AppearanceControl />
       </header>
-      <main className="relative flex flex-1 items-center justify-center p-4 sm:p-8">
-        {children}
+      <main className={styles.main} id="auth-main" tabIndex={-1}>
+        <div className={styles.spread}>
+          <aside className={styles.margin} aria-label="Inkborne notebook">
+            <p className={styles.eyebrow}>The sheet · The story</p>
+            <p className={styles.marginTitle}>The sheet.<br /><em>The story.</em><br />One place.</p>
+            <p className={styles.marginDescription}>Character sheets and character stories, kept together.</p>
+            {marginalia && <p className={styles.marginalia}><span aria-hidden="true">✦</span>{marginalia}</p>}
+          </aside>
+          <div className={styles.formPage}>{children}</div>
+        </div>
       </main>
-      <footer className="relative flex justify-center px-6 py-5 text-[11px] tracking-[0.05em] text-muted-foreground">
-        ✦ &nbsp; Inkborne is in private alpha &nbsp; ✦
+      <footer className={styles.footer}>
+        <span aria-hidden="true">✦</span> Inkborne is in private alpha
       </footer>
     </div>
   );
@@ -44,7 +53,7 @@ export function AuthCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("j-card-paper w-full max-w-md p-6 sm:p-9", className)}>{children}</div>
+    <div className={cn(styles.card, className)}>{children}</div>
   );
 }
 
@@ -59,10 +68,10 @@ export function AuthHeading({
   sub?: string;
 }) {
   return (
-    <div className="mb-6 text-center">
-      <p className="j-folio mb-2.5">{kicker}</p>
-      <h1 className="j-display text-[28px] leading-tight text-foreground">{title}</h1>
-      {sub && <p className="mt-1.5 text-[13px] text-muted-foreground">{sub}</p>}
+    <div className={styles.heading}>
+      <p className={styles.eyebrow}>{kicker}</p>
+      <h1>{title}</h1>
+      {sub && <p className={styles.subtitle}>{sub}</p>}
     </div>
   );
 }
@@ -70,8 +79,8 @@ export function AuthHeading({
 /** Hairline "or" divider between OAuth and the email form. */
 export function AuthDivider() {
   return (
-    <div className="j-rule my-4" role="presentation">
-      <span className="j-rule-glyph text-[11px]">or</span>
+    <div className={styles.divider} role="presentation">
+      <span>or</span>
     </div>
   );
 }
@@ -87,15 +96,15 @@ export function AuthErrorBanner({
   return (
     <div
       role="alert"
-      className="mb-4 rounded-md border border-destructive/35 bg-destructive/[0.06] px-3.5 py-3 text-[12.5px] leading-relaxed text-[#f4a3a3]"
+      className={styles.error}
     >
-      <p className="mb-1 font-semibold text-[#fbb]">{title}</p>
+      <p className={styles.errorTitle}>{title}</p>
       {children}
     </div>
   );
 }
 
-/** Eyebrow-styled field label used across the auth forms. */
+/** Readable field label used across the auth forms. */
 export function AuthLabel({
   htmlFor,
   children,
@@ -109,11 +118,15 @@ export function AuthLabel({
     <label
       htmlFor={htmlFor}
       className={cn(
-        "block text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
+        styles.label,
         className,
       )}
     >
       {children}
     </label>
   );
+}
+
+export function AuthNotice({ children }: { children: React.ReactNode }) {
+  return <p className={styles.notice} role="status">{children}</p>;
 }

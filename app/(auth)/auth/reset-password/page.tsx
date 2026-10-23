@@ -81,6 +81,7 @@ export default function ResetPasswordPage() {
           <Button type="submit" variant="gold" className="w-full" disabled={loading}>
             {loading ? "Updating..." : "Update password"}
           </Button>
+          <span className="sr-only" role="status" aria-live="polite">{loading ? "Updating password" : ""}</span>
         </form>
       </AuthCard>
     </AuthShell>

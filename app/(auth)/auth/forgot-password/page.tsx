@@ -10,6 +10,7 @@ import {
   AuthHeading,
   AuthErrorBanner,
   AuthLabel,
+  AuthNotice,
 } from "@/components/auth/auth-shell";
 import Link from "next/link";
 
@@ -49,9 +50,9 @@ export default function ForgotPasswordPage() {
 
         {success ? (
           <div className="space-y-4 text-center">
-            <p className="text-sm text-foreground">
+            <AuthNotice>
               Check your email for a password reset link. ✦
-            </p>
+            </AuthNotice>
             <p className="text-[12.5px] text-muted-foreground">
               <Link
                 href="/login"
@@ -78,6 +79,7 @@ export default function ForgotPasswordPage() {
               <Button type="submit" variant="gold" className="w-full" disabled={loading}>
                 {loading ? "Sending..." : "Send reset link"}
               </Button>
+              <span className="sr-only" role="status" aria-live="polite">{loading ? "Sending reset link" : ""}</span>
             </form>
             <p className="mt-5 text-center text-[12.5px] text-muted-foreground">
               <Link

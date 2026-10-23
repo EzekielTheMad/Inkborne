@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { AuthShell, AuthCard, AuthHeading } from "@/components/auth/auth-shell";
+import { AuthShell, AuthCard, AuthHeading, AuthErrorBanner, AuthNotice } from "@/components/auth/auth-shell";
 import { Quill } from "@/components/journey/ornaments";
 import Link from "next/link";
 
@@ -85,7 +85,7 @@ function VerifyContent() {
         </div>
 
         {resendStatus === "success" ? (
-          <p className="mb-4 text-sm text-foreground">Verification email resent. ✦</p>
+          <AuthNotice>Verification email resent. ✦</AuthNotice>
         ) : (
           <div className="mb-4 space-y-2">
             <Button
@@ -97,8 +97,9 @@ function VerifyContent() {
               {resendStatus === "loading" ? "Resending..." : "Resend email"}
             </Button>
             {resendStatus === "error" && resendError && (
-              <p className="text-sm text-destructive">{resendError}</p>
+              <AuthErrorBanner title="That didn’t send.">{resendError}</AuthErrorBanner>
             )}
+            <span className="sr-only" role="status" aria-live="polite">{resendStatus === "loading" ? "Resending verification email" : ""}</span>
           </div>
         )}
 

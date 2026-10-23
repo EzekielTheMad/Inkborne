@@ -1,5 +1,7 @@
 "use client";
 
+import styles from "./auth-shell.module.css";
+
 export type OAuthProvider = "discord" | "google";
 
 const DiscordIcon = () => (
@@ -35,8 +37,7 @@ const GoogleIcon = () => (
  * own colors.
  */
 export function OAuthButtons({ onSelect }: { onSelect: (provider: OAuthProvider) => void }) {
-  const base =
-    "inline-flex h-10 w-full items-center justify-center gap-2.5 rounded-md border border-border-strong bg-white/[0.03] text-[13px] font-medium text-foreground transition-colors hover:border-accent hover:bg-accent/[0.04]";
+  const base = styles.oauth;
   return (
     <div className="flex flex-col gap-2">
       {process.env.NEXT_PUBLIC_DISCORD_AUTH_ENABLED === "true" && (

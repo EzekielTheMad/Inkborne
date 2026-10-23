@@ -1,6 +1,6 @@
 # Inkborne brand guide
 
-Version 2.3 · 22 October 2026
+Version 2.4 · 22 October 2026
 
 Inkborne brings playable character sheets and character stories together. Its visual identity is a player's fantasy notebook: useful at the table, personal between sessions, and full of the atmosphere of a living campaign. Evolve the current site's ink-purple, warm-gold manuscript character rather than replacing it with a neutral productivity app.
 
@@ -45,6 +45,8 @@ The [local homepage implementation](design-briefs/homepage-notebook-local/README
 The [first-round logo exploration](design-briefs/logo-exploration/README.md) records the original directions. Direction A, The Scribe, remains selected. Use ink on light surfaces and the reverse treatment on dark surfaces. The asset pack retains an oxblood alternate as an exploration, not the default product accent. The [local homepage implementation](design-briefs/homepage-notebook-local/README.md) now uses production copies of the selected lockups and browser icons. Deployment remains subject to a separate review.
 
 The [interactive character study](design-briefs/field-journal-pilot/character-preview.html) extends the notebook direction through light and dark character screens, related page views, custom accents, and dialogs. Its fictional data and preview-local color resolver support design review; they do not establish a completed application migration. The earlier [version 1 vector reference](design-briefs/field-journal-reference.svg) is retained as historical exploration and does not define the current palette or typography.
+
+The [local auth notebook review](design-briefs/auth-notebook-local/README.md) continues the homepage's identity through sign in, signup, verification, and password recovery. It uses a restrained notebook spread on desktop, a form-focused mobile layout, and scoped Light/Dark feedback colors. This remains a local implementation for review; it does not change authentication behavior or establish hosted provider/mail acceptance.
 
 Prove the direction on the homepage and a representative character screen before extending their layouts through the app. Keep the resulting desktop and mobile references beside this guide and identify which design revision they represent.
 
@@ -158,9 +160,9 @@ Avoid generic promises about epic adventures, stacks of promotional badges, deco
 
 ### Relationship to the current implementation
 
-The public homepage has a local implementation of this direction, including distinct Light and Dark palettes and the shared appearance preference. The wider authenticated app and character screens have not been visually migrated by that change. The purple-and-gold manuscript styling supplies their personality baseline. The app's global light and dark CSS palettes remain identical; the homepage's distinct palettes are deliberately scoped to its own module.
+The public homepage has been deployed to dev as the isolated `bc85889` release, with distinct Light and Dark palettes and the shared appearance preference. Auth pages now have a separate local review implementation with scoped palettes. The wider authenticated app and character screens have not been visually migrated by these changes. The purple-and-gold manuscript styling supplies their personality baseline. The app's global light and dark CSS palettes remain identical; homepage and auth palettes are deliberately scoped to their own modules.
 
-The current global token values live in [app/globals.css](../app/globals.css), homepage values in [landing-content.module.css](../components/landing/landing-content.module.css), and typography in [app/layout.tsx](../app/layout.tsx). These files describe the current source implementation, while this guide describes the site-wide direction. Verify deployment state separately and preserve this distinction until each migration is verified.
+The current global token values live in [app/globals.css](../app/globals.css), homepage values in [landing-content.module.css](../components/landing/landing-content.module.css), auth values in [auth-shell.module.css](../components/auth/auth-shell.module.css), and typography in [app/layout.tsx](../app/layout.tsx). These files describe the current source implementation, while this guide describes the site-wide direction. Verify deployment state separately and preserve this distinction until each migration is verified.
 
 Older HTML/JSX bundles and screenshots under `docs/design-briefs/` preserve earlier work. They remain useful for workflow context, but their color, ornament, typography, and competitor-copy instructions do not override this guide. They are not proof that a feature is implemented or released.
 
@@ -178,3 +180,4 @@ Older HTML/JSX bundles and screenshots under `docs/design-briefs/` preserve earl
 | 2026-10-22 | Default character accents follow the site's primary-action accent in the active theme. Preserve custom colors as source values and derive readable light/dark treatments consistently across related character pages and dialogs. |
 | 2026-10-22 | Evolve the current fantasy notebook instead of adopting the sanitized first pilot. Restore ink-purple/gold, Marcellus/Garamond contrast, purposeful texture and folios, substantial alternating vignettes, and the open-source band. Keep the selected Scribe logo, distinct themes, and character personalization. This supersedes version 1's neutral palette, Garamond-only display direction, and blanket ornament restrictions. |
 | 2026-10-22 | Implement the approved homepage and Scribe identity locally for review. Reuse the shared theme preference, keep new palettes scoped to the homepage, and preserve authenticated navigation, character colors, and data. Deployment and wider app migration remain separate work. |
+| 2026-10-22 | Extend the selected identity into a local auth notebook review. Scope palettes and feedback styles to auth pages, retain the shared appearance preference and existing authentication behavior, and review desktop/mobile before release. |
