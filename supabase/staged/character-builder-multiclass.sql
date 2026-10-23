@@ -1434,18 +1434,20 @@ ALTER TABLE private.character_builder_progression_history_v1 ADD CONSTRAINT char
 ALTER TABLE private.character_builder_hp_draws_v1 DROP CONSTRAINT character_builder_hp_draws_v1_level_check;
 ALTER TABLE private.character_builder_hp_draws_v1 ADD CONSTRAINT character_builder_hp_draws_v1_level_check CHECK(level BETWEEN 1 AND 20);
 DO $occurrence_insert_profile$
-DECLARE original pg_catalog.pg_proc%ROWTYPE; replacement text; needle text;
+DECLARE original pg_catalog.pg_proc%ROWTYPE; replacement text; needle text; source text;
 BEGIN
   SELECT * INTO original FROM pg_catalog.pg_proc WHERE oid='private.class_origin_protected_row_guard_v1()'::pg_catalog.regprocedure;
   needle:='IF TG_TABLE_SCHEMA=''private'' AND TG_TABLE_NAME=''character_class_occurrences_v1'' AND TG_OP=''UPDATE''
     AND private.builder_catalog_occurrence_transition_v1(pg_catalog.to_jsonb(OLD),pg_catalog.to_jsonb(NEW)) THEN RETURN NEW; END IF;';
+  source:=pg_catalog.replace(original.prosrc,E'\r\n',E'\n');
+  needle:=pg_catalog.replace(needle,E'\r\n',E'\n');
   IF original.proowner<>'inkborne_class_origin_owner'::pg_catalog.regrole OR NOT original.prosecdef
     OR original.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
-    OR (length(original.prosrc)-length(pg_catalog.replace(original.prosrc,needle,'')))/length(needle)<>1 THEN
+    OR (length(source)-length(pg_catalog.replace(source,needle,'')))/length(needle)<>1 THEN
     RAISE EXCEPTION 'builder_occurrence_insert_profile_changed' USING ERRCODE='42501'; END IF;
-  replacement:=pg_catalog.replace(original.prosrc,needle,
+  replacement:=pg_catalog.replace(source,needle,pg_catalog.replace(
     'IF TG_TABLE_SCHEMA=''private'' AND TG_TABLE_NAME=''character_class_occurrences_v1'' AND TG_OP IN (''INSERT'',''UPDATE'')
-    AND private.builder_catalog_occurrence_transition_v1(CASE WHEN TG_OP=''UPDATE'' THEN pg_catalog.to_jsonb(OLD) END,pg_catalog.to_jsonb(NEW)) THEN RETURN NEW; END IF;');
+    AND private.builder_catalog_occurrence_transition_v1(CASE WHEN TG_OP=''UPDATE'' THEN pg_catalog.to_jsonb(OLD) END,pg_catalog.to_jsonb(NEW)) THEN RETURN NEW; END IF;',E'\r\n',E'\n'));
   EXECUTE pg_catalog.replace(pg_catalog.pg_get_functiondef(original.oid),original.prosrc,replacement);
 END $occurrence_insert_profile$;
 
