@@ -47,6 +47,11 @@ export const builderStepInputSchema = z.discriminatedUnion("command", [
     class_slug: z.string().min(1).max(200), spells: z.array(z.strictObject({ content_id: z.uuid(),
       content_version: z.number().int().positive(), prepared: z.boolean() })).max(200),
   }) }),
+  z.strictObject({ command: z.literal("select_bonus_spells"), fields: z.strictObject({
+    feature_slug: z.string().regex(/^[a-z][a-z0-9-]*$/).max(200),
+    choice_id: z.string().regex(/^[a-z][a-z0-9-]*$/).max(200),
+    spells: z.array(content).max(3).refine(values => new Set(values.map(value => value.content_id)).size === values.length),
+  }) }),
   z.strictObject({ command: z.literal("background_narrative"), fields: z.strictObject({
     key: z.enum(["personality_traits", "ideals", "bonds", "flaws"]),
     values: z.array(z.string().min(1).max(2000).refine(value => value.trim().length > 0)).max(20),
