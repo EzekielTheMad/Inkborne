@@ -148,9 +148,16 @@ describe("finite source-owned bonus spell helper", () => {
   it("retains historical book and fixed terrain versions after a catalog head advances", async () => {
     await db.query("UPDATE public.content_definitions SET version=2 WHERE id IN($1,$2)", [id(24), id(29)]);
     try {
-      const saved = await apply(choices({ "spell-mastery-1": [tuple(24)] }), "spell-mastery-1", graph([book(24)]));
+      const pending = { ...choices({ "spell-mastery-1": [tuple(24)] }), class_spell_selections: {
+        druid: [{ ...tuple(29), content_version: 2, prepared: true }],
+      } };
+      const saved = await apply(pending, "spell-mastery-1", graph([book(24), {
+        ...book(29), class_slug: "druid", content_version: 2, in_spellbook: false,
+      }]));
       expect(saved.choices.bonus_spells["spell-mastery-1"]).toEqual([tuple(24)]);
       expect(saved.graph.spells.find(s => s.content_id === id(29))?.content_version).toBe(1);
+      expect(saved.graph.spells.filter(s => s.content_id === id(29))).toHaveLength(1);
+      expect(saved.graph.spells.find(s => s.content_id === id(29))?.source).toBe("bonus");
       await expect(apply(choices({ "magical-secrets-1": [tuple(24)] }), "magical-secrets-1")).rejects.toThrow("builder_bonus_spell_unavailable");
     } finally { await db.query("UPDATE public.content_definitions SET version=1 WHERE id IN($1,$2)", [id(24), id(29)]); }
   });

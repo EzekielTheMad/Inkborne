@@ -229,7 +229,8 @@ BEGIN
           AND (choice->'list_class'='null'::jsonb OR COALESCE(selected.data_snapshot->'classes','[]') @> pg_catalog.jsonb_build_array(choice->>'list_class'))
           AND (choice->'ritual_only'='false'::jsonb OR selected.data_snapshot->'ritual'='true'::jsonb);
         SELECT s.value INTO existing FROM pg_catalog.jsonb_array_elements(spells) s(value)
-          WHERE s.value->'content_id'=entry->'content_id' AND s.value->'content_version'=entry->'content_version' AND s.value->>'class_slug'=class_slug;
+          WHERE s.value->'content_id'=entry->'content_id' AND (mode='fixed' OR s.value->'content_version'=entry->'content_version')
+            AND s.value->>'class_slug'=class_slug;
         IF choice->'spellbook_only'='true'::jsonb THEN
           valid:=valid AND existing->>'source'='selection' AND existing->'in_spellbook'='true'::jsonb;
         ELSIF mode<>'fixed' AND existing IS NOT NULL THEN valid:=false;
