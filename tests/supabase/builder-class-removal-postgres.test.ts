@@ -142,7 +142,7 @@ describe("native removal command and exact profile amendments", () => {
     expect(builderStepInputSchema.safeParse({ command: "remove_class", fields: { ...fields, expected_action_revision: 10 } }).success).toBe(false);
     expect(builderStepInputSchema.safeParse({ command: "remove_class", fields: { ...fields, classes: [] } }).success).toBe(false);
   });
-  it("pins all five before/after function bodies, including occurrence-scoped HP recovery", () => {
+  it("installs the exact five profile amendments, including occurrence-scoped HP recovery", async () => {
     const multi = read("supabase/staged/character-builder-multiclass.sql"), progression = read("supabase/staged/character-builder-progression.sql");
     const body = (sql: string, name: string) => sql.slice(sql.indexOf("AS $$", sql.indexOf(name)) + 5, sql.indexOf("END $$;", sql.indexOf(name)) + 4);
     const bodies: Record<string, string> = {
@@ -166,6 +166,35 @@ describe("native removal command and exact profile amendments", () => {
       expect(hash(bodies[kind]), kind).toBe(wanted[1]);
       expect(bodies[kind].split(needle)).toHaveLength(2);
       expect(hash(bodies[kind].replace(needle, insertion)), kind).toBe(wanted[2]);
+    }
+    // Execute the actual installer block as well as checking body hashes. These
+    // functions are never invoked here; the minimal row types let PostgreSQL
+    // validate the real guarded DDL, function attributes and ACL preservation.
+    await db.exec(`CREATE ROLE inkborne_class_origin_owner NOLOGIN;
+      CREATE TABLE public.character_feature_grants(id uuid,character_id uuid,controller_ref_id uuid,controller_type text,controller_slug text,
+        feature_slug text,feature_content_id uuid,feature_version integer,unlock_level integer,created_at timestamptz);
+      CREATE TABLE public.character_spell_grants(id uuid,character_id uuid,controller_ref_id uuid,controller_type text,controller_slug text,class_slug text,
+        spell_slug text,spell_content_id uuid,spell_version integer,spell_name text,unlock_level integer,created_at timestamptz);
+      CREATE TABLE public.character_spells(id uuid,character_id uuid,content_id uuid,content_version integer,name text,class_slug text,is_known boolean,
+        is_prepared boolean,always_prepared boolean,in_spellbook boolean,source text,custom_data jsonb,created_at timestamptz,spell_grant_id uuid);`);
+    const signatures: Record<string, { declaration: string; result: string; signature: string }> = {
+      transition: { declaration: "private.builder_catalog_occurrence_transition_v1(before_row jsonb,after_row jsonb)", result: "boolean", signature: "private.builder_catalog_occurrence_transition_v1(jsonb,jsonb)" },
+      apply: { declaration: "private.apply_builder_progression_graph_v1(target uuid,choices jsonb,state jsonb,level integer)", result: "void", signature: "private.apply_builder_progression_graph_v1(uuid,jsonb,jsonb,integer)" },
+      asi: { declaration: "private.builder_progression_asi_write_v1(before_row jsonb,after_row jsonb,domain text)", result: "boolean", signature: "private.builder_progression_asi_write_v1(jsonb,jsonb,text)" },
+      history: { declaration: "private.check_builder_progression_history_v1()", result: "trigger", signature: "private.check_builder_progression_history_v1()" },
+      hp: { declaration: "private.prepare_builder_progression_v1(target uuid,operation uuid,command text,fields jsonb)", result: "void", signature: "private.prepare_builder_progression_v1(uuid,uuid,text,jsonb)" },
+    };
+    for (const [kind, signature] of Object.entries(signatures)) {
+      await db.exec(`CREATE OR REPLACE FUNCTION ${signature.declaration} RETURNS ${signature.result}
+        LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS $$${bodies[kind]}$$;
+        ALTER FUNCTION ${signature.signature} OWNER TO postgres;
+        REVOKE ALL ON FUNCTION ${signature.signature} FROM PUBLIC,inkborne_class_origin_owner;`);
+    }
+    await db.exec("GRANT EXECUTE ON FUNCTION private.builder_catalog_occurrence_transition_v1(jsonb,jsonb) TO inkborne_class_origin_owner");
+    await db.exec(stage.slice(stage.indexOf("DO $profiles$"), stage.indexOf("ALTER TABLE private.character_builder_progression_history_v1")));
+    for (const wanted of expected) {
+      const { rows } = await db.query<{ body: string }>("SELECT md5(prosrc) AS body FROM pg_proc WHERE oid=to_regprocedure($1)", [signatures[wanted[3]].signature]);
+      expect(rows[0].body).toBe(wanted[2]);
     }
   });
 });
