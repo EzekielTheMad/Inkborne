@@ -171,12 +171,17 @@ export function ClassStepClient({
 
   const selectedClasses = localChoices.classes ?? [];
   const hasClass = selectedClasses.length > 0;
+  const originalOccurrenceId = saveAction ? originalClassOccurrence(contentRefs, localChoices) ?? null : undefined;
 
   const savedClasses = pinnedEntries(classes, contentRefs, "class", selectedClasses.map(cls => cls.slug));
   const savedSubclasses = pinnedEntries(subclasses, contentRefs, "subclass",
     selectedClasses.flatMap(cls => cls.subclass ? [cls.subclass] : []));
   const mismatchedSubclass = selectedClasses.some(cls => cls.subclass &&
     savedSubclasses.entries.find(entry => entry.slug === cls.subclass)?.data.parent_class !== cls.slug);
+  const legacyFiendList = selectedClasses.some(cls => cls.slug === "warlock" && cls.subclass === "fiend"
+    && contentRefs.some(ref => ref.content_id === ref.content_definitions.id && ref.content_version === ref.content_definitions.version
+      && ref.content_definitions.content_type === "subclass" && ref.content_definitions.slug === "fiend"
+      && Object.hasOwn(ref.content_definitions.data, "spellcastingExtra") && !Object.hasOwn(ref.content_definitions.data, "spellcastingExpanded")));
   const referencedFeatures = [...savedClasses.entries.filter(entry => selectedClasses.some(cls => cls.slug === entry.slug)),
     ...savedSubclasses.entries.filter(entry => selectedClasses.some(cls => cls.subclass === entry.slug))]
     .flatMap(entry => (entry.data.levels as Array<{ features?: string[] }> | undefined) ?? [])
@@ -461,23 +466,36 @@ export function ClassStepClient({
   }
 
   async function handleRemoveClass(classIndex: number) {
-    if (saveAction) {
-      setSaveError("Removing a saved class is not available yet.");
+    const removedClass = selectedClasses[classIndex];
+    if (!removedClass) return;
+    if (saveAction && (!classRolesAvailable || !originalOccurrenceId || !removedClass.occurrence_id
+      || !classRoleRevisionSchema.safeParse(currentRevision).success)) {
+      setSaveError("Reload the saved class build before removing an added class.");
+      return;
+    }
+    if (saveAction && (removedClass.occurrence_id === originalOccurrenceId || selectedClasses.length <= 1)) {
+      setSaveError("Your starting class is fixed. Only added classes can be removed.");
       return;
     }
     if (!beginSave()) return;
-    const removedClass = selectedClasses[classIndex];
     const updatedClasses = selectedClasses.filter((_, i) => i !== classIndex);
     const totalLevel = updatedClasses.reduce((sum, c) => sum + c.level, 0);
     const newChoices = { ...localChoices, classes: updatedClasses };
     const newLevel = Math.max(totalLevel, 1);
 
     const prev = { choices: localChoices, level: localLevel };
-    setLocalChoices(newChoices);
-    setLocalLevel(newLevel);
+    if (!saveAction) { setLocalChoices(newChoices); setLocalLevel(newLevel); }
 
     setSaveError(null);
     try {
+      if (saveAction) {
+        const saved = await saveAction("remove_class", { occurrence_id: removedClass.occurrence_id,
+          expected_action_revision: currentRevision });
+        setLocalChoices(saved.choices);
+        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
+        startTransition(() => router.refresh());
+        return;
+      }
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: newLevel,
@@ -750,8 +768,8 @@ export function ClassStepClient({
           <ClassStepRail
             saveLevelImmediately={!!saveAction}
             classChangesAvailable={!saveAction || classRolesAvailable}
-            classRemovalAvailable={!saveAction}
-            originalOccurrenceId={saveAction ? originalClassOccurrence(contentRefs, localChoices) ?? null : undefined}
+            classRemovalAvailable={!saveAction || classRolesAvailable && !!originalOccurrenceId && classRoleRevisionSchema.safeParse(currentRevision).success}
+            originalOccurrenceId={originalOccurrenceId}
             characterName={character.name}
             savePending={saving}
             saveError={saveError}
@@ -803,6 +821,9 @@ export function ClassStepClient({
           }}
         />
 
+        {legacyFiendList && <p role="status" className="rounded-md border border-border p-3 text-sm text-muted-foreground">
+          Your saved Fiend content uses an earlier spell-list version. Your choices are preserved. Correct expanded spell choices require a reviewed content-version update.
+        </p>}
         {saveAction && adjustedCastingSources.filter(source => source.active && source.config).map(source => <ClassSpellsPanel
           key={source.classSlug}
           source={source} catalog={spells.filter(spell => !grantedSpells.some(grant => grant.class_slug === source.classSlug && grant.content_id === spell.id))}

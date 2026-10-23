@@ -68,6 +68,8 @@ export interface ClassStepRailProps {
 interface SelectedKey {
   classIndex: number;
   level: number;
+  occurrenceId?: string;
+  classSlug?: string;
 }
 
 interface LevelUpDraft {
@@ -123,10 +125,14 @@ export function ClassStepRail(props: ClassStepRailProps) {
 
   const initialClassIndex = 0;
   const initialLevel = selectedClasses[0]?.level ?? 1;
-  const [selectedState, setSelected] = useState<SelectedKey>({
+  const [selectedState, setSelectedState] = useState<SelectedKey>({
     classIndex: initialClassIndex,
     level: initialLevel,
+    occurrenceId: selectedClasses[initialClassIndex]?.occurrence_id,
+    classSlug: selectedClasses[initialClassIndex]?.slug,
   });
+  const setSelected = (value: SelectedKey) => setSelectedState({ ...value,
+    occurrenceId: selectedClasses[value.classIndex]?.occurrence_id, classSlug: selectedClasses[value.classIndex]?.slug });
   const [pickerOpenedAtClassCount, setPickerOpenedAtClassCount] = useState<number | null>(null);
   const [pendingLevelUpDraft, setLevelUpDraft] = useState<LevelUpDraft | null>(null);
   // Mobile-only: which class/level the level-detail bottom sheet shows (null = closed).
@@ -146,6 +152,11 @@ export function ClassStepRail(props: ClassStepRailProps) {
     (selectedClasses[pendingLevelUpDraft.classIndex]?.level ?? 0) >= pendingLevelUpDraft.draftLevel;
   const showPicker = pickerOpenedAtClassCount !== null && !pickerClosedByAddition;
   const levelUpDraft = completedLevelUp ? null : pendingLevelUpDraft;
+  const retainedIndex = selectedState.occurrenceId ? selectedClasses.findIndex(cls => cls.occurrence_id === selectedState.occurrenceId)
+    : selectedState.classSlug ? selectedClasses.findIndex(cls => cls.slug === selectedState.classSlug) : selectedState.classIndex;
+  const retainedSelectedState = selectedClasses[retainedIndex]
+    ? { classIndex: retainedIndex, level: selectedState.level }
+    : { classIndex: 0, level: selectedClasses[0]?.level ?? 1 };
   const selected: SelectedKey = pickerClosedByAddition
     ? { classIndex: selectedClasses.length - 1, level: 1 }
     : completedLevelUp && pendingLevelUpDraft
@@ -153,13 +164,15 @@ export function ClassStepRail(props: ClassStepRailProps) {
           classIndex: pendingLevelUpDraft.classIndex,
           level: selectedClasses[pendingLevelUpDraft.classIndex]?.level ?? pendingLevelUpDraft.draftLevel,
         }
-      : selectedState;
+      : retainedSelectedState;
   const setShowPicker = (open: boolean) => {
     setPickerOpenedAtClassCount(open ? selectedClasses.length : null);
   };
   const totalLevel = selectedClasses.reduce((sum, c) => sum + c.level, 0);
   const isOriginalClass = (index: number) => props.originalOccurrenceId === undefined ? index === 0
     : selectedClasses[index]?.occurrence_id === props.originalOccurrenceId;
+  const canRemoveClass = (index: number) => classRemovalAvailable && (props.originalOccurrenceId === undefined
+    || props.originalOccurrenceId !== null && !isOriginalClass(index) && !!selectedClasses[index]?.occurrence_id);
   const levelsRemaining = MAX_TOTAL_LEVEL - totalLevel;
 
   const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes, mechanicsAvailable);
@@ -492,7 +505,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
                     setMobileDetail({ classIndex: idx, level: pendingLevel });
                   }
                 }}
-                  onRemoveClass={classRemovalAvailable ? () => onRemoveClass(idx) : undefined}
+                onRemoveClass={canRemoveClass(idx) ? () => onRemoveClass(idx) : undefined}
+                startingClassFixed={props.originalOccurrenceId !== undefined && isOriginalClass(idx)}
                 disabled={railDisabled}
                 onLevelUpClick={handleLevelUpClick}
                 levelUpButtonState={buttonState}
@@ -690,7 +704,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
               activeLevel={activeLevel}
               onSelectLevel={handleSelectLevel}
               onLevelChange={handleLevelChange}
-              onRemoveClass={classRemovalAvailable ? () => onRemoveClass(idx) : undefined}
+              onRemoveClass={canRemoveClass(idx) ? () => onRemoveClass(idx) : undefined}
+              startingClassFixed={props.originalOccurrenceId !== undefined && isOriginalClass(idx)}
               disabled={railDisabled}
               onLevelUpClick={handleLevelUpClick}
               levelUpButtonState={buttonState}

@@ -27,6 +27,7 @@ interface LevelRailMobileProps {
   onSelectLevel: (level: number) => void;
   onLevelChange: (newLevel: number) => Promise<void> | void;
   onRemoveClass?: () => Promise<void> | void;
+  startingClassFixed?: boolean;
   onLevelUpClick: () => void;
   levelUpButtonState: "idle" | "disabled" | "active-flow";
   levelUpButtonReason?: string;
@@ -39,7 +40,7 @@ const MAX_LEVEL = 20;
 export function LevelRailMobile(props: LevelRailMobileProps) {
   const {
     classSlug, className_, subclassName, currentLevel, perLevel,
-    activeLevel, onSelectLevel, onLevelChange, onRemoveClass,
+    activeLevel, onSelectLevel, onLevelChange, onRemoveClass, startingClassFixed = false,
     onLevelUpClick, levelUpButtonState, levelUpButtonReason,
     disabled = false, className,
   } = props;
@@ -57,6 +58,7 @@ export function LevelRailMobile(props: LevelRailMobileProps) {
         <ClassEmblem slug={classSlug} name={className_} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">{className_}</p>
+          {startingClassFixed && <p className="text-[10.5px] text-muted-foreground">Starting class · fixed</p>}
           {subclassName && (
             <p className="truncate text-[10.5px] text-muted-foreground">{subclassName}</p>
           )}
@@ -71,7 +73,7 @@ export function LevelRailMobile(props: LevelRailMobileProps) {
         >
           Set level
         </Button>
-        {onRemoveClass && <DropdownMenu>
+        {onRemoveClass && !startingClassFixed && <DropdownMenu>
           <DropdownMenuTrigger
             aria-label={`More options for ${className_}`}
             disabled={disabled}

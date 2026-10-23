@@ -11,11 +11,12 @@ const source: EffectiveCastingSource = { classSlug: "warlock", classLevel: 1, ki
   parentPin: { contentId: "warlock", version: 1 }, subclassPin: { contentId: "fiend", version: 1 },
   active: true, config: { type: "pact", ability: "charisma" }, cantripsKnown: 0, spellsKnown: 2,
   prepared: false, preparationRule: "parent", spellList: { class: "warlock", level: [0, 5] },
-  directSlots: [1], maxLearnableLevel: 1, expandedSpellSlugs: ["burning-hands", "scorching-ray"] };
+  directSlots: [1], maxLearnableLevel: 1, expandedSpellSlugs: ["burning-hands", "scorching-ray"],
+  expandedSpellSource: { system_id: "system", source: "srd", scope: "srd", owner_id: null } };
 
 function spell(index: number, slug: string, name: string, level: number, classes: string[]): ContentEntry {
   return { id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`, version: 1, slug, name,
-    content_type: "spell", source: "srd", effects: [], data: { level, classes } };
+    content_type: "spell", source: "srd", system_id: "system", scope: "srd", owner_id: null, effects: [], data: { level, classes } };
 }
 const burningHands = spell(1, "burning-hands", "Burning Hands", 1, ["sorcerer", "wizard"]);
 const hellishRebuke = spell(2, "hellish-rebuke", "Hellish Rebuke", 1, ["warlock"]);

@@ -110,7 +110,8 @@ const emberSentinel: UsableFeatOption = {
 };
 
 function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typeof ClassStepClient>["saveAction"],
-  native?: { classRolesAvailable?: boolean; action_revision?: string }) {
+  native?: { classRolesAvailable?: boolean; action_revision?: string;
+    contentRefs?: ComponentProps<typeof ClassStepClient>["contentRefs"] }) {
   return render(
     <ClassStepClient
       saveAction={saveAction}
@@ -129,10 +130,22 @@ function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typ
       features={[]}
       feats={[emberSentinel]}
       spells={[]}
-      contentRefs={[]}
+      contentRefs={native?.contentRefs ?? []}
       schema={undefined}
     />,
   );
+}
+
+function nativeClassRefs(classes: NonNullable<CharacterChoices["classes"]>): ComponentProps<typeof ClassStepClient>["contentRefs"] {
+  return classes.map((cls, index) => {
+    const contentId = `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+    const controllerId = `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+    return { id: controllerId, content_id: contentId, content_version: 1, context: {}, choice_source: null,
+      content_definitions: { ...fighter, id: contentId, slug: cls.slug, name: cls.slug },
+      class_role: { occurrence_id: cls.occurrence_id!, controller_ref_id: controllerId, content_id: contentId,
+        content_version: 1, role: index === 0 ? "original" : "secondary", raw_effects: [], evaluation_effects: [],
+        raw_data: {}, evaluation_data: {}, action_revision: "8" } };
+  });
 }
 
 function deferred<T>() {
@@ -175,6 +188,72 @@ describe("ClassStepClient feat regressions", () => {
     expect(currentRail.localChoices).toEqual(choices);
     expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
     expect(screen.getAllByRole("alert")[0]).toHaveTextContent("could not be confirmed");
+  });
+
+  it("keeps the starting class fixed and waits for confirmed secondary removal before adopting the pruned build", async () => {
+    const classes = [{ slug: "fighter", level: 4, occurrence_id: "30000000-0000-4000-8000-000000000001" },
+      { slug: "cleric", level: 2, occurrence_id: "30000000-0000-4000-8000-000000000002" }];
+    const choices = { classes, race: "half-elf", hp_rolls: { "fighter-2": { method: "average" as const, value: 6 } } };
+    const retained = { ...choices, classes: [classes[0]] };
+    const pending = deferred<{ choices: CharacterChoices; scores: Record<string, number>; action_revision: string }>();
+    const save = vi.fn().mockReturnValue(pending.promise);
+    renderClient(choices, save, { classRolesAvailable: true, action_revision: "8", contentRefs: nativeClassRefs(classes) });
+    expect(currentRail.classRemovalAvailable).toBe(true);
+    expect(currentRail.originalOccurrenceId).toBe(classes[0].occurrence_id);
+    await act(async () => { await currentRail.onRemoveClass(0); });
+    expect(save).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Your starting class is fixed");
+    let removal: Promise<void> | void = undefined;
+    await act(async () => { removal = currentRail.onRemoveClass(1); });
+    expect(save).toHaveBeenCalledExactlyOnceWith("remove_class", { occurrence_id: classes[1].occurrence_id, expected_action_revision: "8" });
+    expect(currentRail.localChoices).toEqual(choices);
+    await act(async () => { pending.resolve({ choices: retained, scores: {}, action_revision: "9" }); await removal; });
+    expect(currentRail.localChoices).toEqual(retained);
+    expect(mocks.refresh).toHaveBeenCalled();
+    expect(mocks.updateCharacter).not.toHaveBeenCalled();
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("retains the saved classes after a refused removal without falling back to legacy writes", async () => {
+    const classes = [{ slug: "fighter", level: 4, occurrence_id: "30000000-0000-4000-8000-000000000001" },
+      { slug: "cleric", level: 2, occurrence_id: "30000000-0000-4000-8000-000000000002" }];
+    const choices = { classes };
+    const save = vi.fn().mockRejectedValue(Error("stale"));
+    renderClient(choices, save, { classRolesAvailable: true, action_revision: "8", contentRefs: nativeClassRefs(classes) });
+    await act(async () => { await currentRail.onRemoveClass(1); });
+    expect(currentRail.localChoices).toEqual(choices);
+    expect(screen.getByRole("alert")).toHaveTextContent("could not be confirmed");
+    expect(mocks.updateCharacter).not.toHaveBeenCalled();
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("re-adds through the accepted removal revision and adopts the new server occurrence", async () => {
+    const classes = [{ slug: "fighter", level: 4, occurrence_id: "30000000-0000-4000-8000-000000000001" },
+      { slug: "cleric", level: 2, occurrence_id: "30000000-0000-4000-8000-000000000002" }];
+    const retained = { classes: [classes[0]] };
+    const readded = { classes: [classes[0], { ...classes[1], level: 1, occurrence_id: "30000000-0000-4000-8000-000000000003" }] };
+    const save = vi.fn().mockResolvedValueOnce({ choices: retained, scores: {}, action_revision: "9" })
+      .mockResolvedValueOnce({ choices: readded, scores: {}, action_revision: "10" });
+    renderClient({ classes }, save, { classRolesAvailable: true, action_revision: "8", contentRefs: nativeClassRefs(classes) });
+    await act(async () => { await currentRail.onRemoveClass(1); });
+    const cleric = { ...fighter, id: "10000000-0000-4000-8000-000000000005", slug: "cleric", name: "Cleric" };
+    await act(async () => { currentRail.onAddClass(cleric); });
+    await act(async () => { currentPreview.onPick({ classSlug: "cleric", subclassSlug: null }); });
+    expect(save).toHaveBeenLastCalledWith("add_class", { class_id: cleric.id, class_version: 1, expected_action_revision: "9" });
+    expect(currentRail.localChoices).toEqual(readded);
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("explains preserved legacy Fiend content without changing its pin or choices", () => {
+    const choices = { classes: [{ slug: "warlock", level: 1, subclass: "fiend", occurrence_id: "30000000-0000-4000-8000-000000000001" }] };
+    const fiendRef = { id: "fiend-ref", content_id: "fiend", content_version: 1, context: {}, choice_source: null,
+      content_definitions: { ...fighter, id: "fiend", slug: "fiend", name: "Fiend", content_type: "subclass",
+        data: { parent_class: "warlock", spellcastingExtra: [{ level: 1, spells: ["burning-hands"] }] } } };
+    const save = vi.fn();
+    renderClient(choices, save, { action_revision: "8", contentRefs: [fiendRef] });
+    expect(screen.getByRole("status")).toHaveTextContent("Your saved Fiend content uses an earlier spell-list version. Your choices are preserved.");
+    expect(currentRail.localChoices).toEqual(choices);
+    expect(save).not.toHaveBeenCalled();
   });
 
   it("keeps Add unavailable without native role proof instead of inferring the original array entry", async () => {

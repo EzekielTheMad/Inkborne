@@ -17,6 +17,7 @@ interface LevelRailProps {
   onSelectLevel: (level: number) => void;
   onLevelChange: (newLevel: number) => void;
   onRemoveClass?: () => void;
+  startingClassFixed?: boolean;
   /** Disables level dropdown + Remove button (used during a level-up flow on another class). */
   disabled?: boolean;
   onLevelUpClick: () => void;
@@ -47,6 +48,7 @@ export function LevelRail({
   onSelectLevel,
   onLevelChange,
   onRemoveClass,
+  startingClassFixed = false,
   disabled = false,
   onLevelUpClick,
   levelUpButtonState,
@@ -58,6 +60,7 @@ export function LevelRail({
         <ClassEmblem slug={classSlug} name={className_} size="sm" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{className_}</p>
+          {startingClassFixed && <p className="text-[11px] text-muted-foreground">Starting class · fixed</p>}
           {subclassName && (
             <p className="text-[11px] text-muted-foreground truncate">{subclassName}</p>
           )}
@@ -76,7 +79,7 @@ export function LevelRail({
             ))}
           </select>
         </label>
-        {onRemoveClass && (
+        {onRemoveClass && !startingClassFixed && (
           <button
             type="button"
             onClick={() => {

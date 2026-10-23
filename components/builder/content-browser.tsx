@@ -22,6 +22,9 @@ export interface ContentEntry {
   effects: Effect[];
   version: number;
   source: string;
+  system_id?: string;
+  scope?: string;
+  owner_id?: string | null;
 }
 
 interface ContentBrowserProps {
