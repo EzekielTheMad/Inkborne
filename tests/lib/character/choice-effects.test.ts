@@ -32,6 +32,21 @@ describe("saved source-owned choice mechanics", () => {
       .toEqual([{ ...fixed, stat: "religion" }]);
     expect(fixed.stat).toBe("skill-religion");
   });
+
+  it.each([["skill-animal-handling", "animal_handling"], ["skill-sleight-of-hand", "sleight_of_hand"]])(
+    "uses the sheet key for fixed, selected and Expertise grants in %s", (sourceStat, sheetStat) => {
+      const sources = [{ content_definitions: { effects: [
+        { type: "grant", stat: sourceStat, value: "proficient" },
+        { type: "choice", choice_id: "skills", choose: 1, from: [sourceStat], grant_type: "proficiency" },
+        { type: "choice", choice_id: "expertise", choose: 1, from: [sourceStat], grant_type: "expertise" },
+      ] as Effect[] } }];
+      const original = JSON.stringify(sources);
+      const effects = resolveCharacterChoiceEffects(sources, { resolved_choices: { skills: [sourceStat], expertise: [sourceStat] } });
+      expect(effects.filter(effect => effect.type === "grant")).toEqual([
+        { type: "grant", stat: sheetStat, value: "proficient" }, { type: "grant", stat: sheetStat, value: "expertise" },
+      ]);
+      expect(JSON.stringify(sources)).toBe(original);
+    });
   it("uses a single saved class's API saving-throw proficiency without inferring multiclass roles", () => {
     const fighter: Effect = { type: "grant", stat: "save_strength", value: "proficient" };
     const cleric: Effect = { type: "grant", stat: "save_wisdom", value: "proficient" };

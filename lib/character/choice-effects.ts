@@ -6,6 +6,13 @@ import { resolveExpertiseChoice } from "@/lib/builder/expertise";
 type Ref = { content_definitions?: { slug?: string; content_type?: string; effects?: Effect[]; data?: Record<string, unknown> } | null };
 const abilities = new Set(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]);
 
+function skillGrantStat(value: string): string {
+  if (!value.startsWith("skill-")) return value;
+  const skill = value.slice(6);
+  // The 2014 catalog uses hyphens; these two published sheet keys use underscores.
+  return skill === "animal-handling" ? "animal_handling" : skill === "sleight-of-hand" ? "sleight_of_hand" : skill;
+}
+
 /** Project finite saved choices from their loaded immutable source effects.
  * Choice values never supply formulas, amounts, arbitrary stats or effect JSON.
  * Spell acquisitions and selected feature pins are projected by the database.
@@ -13,7 +20,7 @@ const abilities = new Set(["strength", "dexterity", "constitution", "intelligenc
 export function resolveCharacterChoiceEffects(refs: readonly Ref[], choices: CharacterChoices): Effect[] {
   const effects = refs.flatMap(ref => (ref.content_definitions?.effects ?? []).map(effect =>
     effect.type === "grant" && ["proficient", "expertise"].includes(effect.value) && effect.stat.startsWith("skill-")
-      ? { ...effect, stat: effect.stat.slice(6) } : effect.type === "grant" && effect.value === "proficient"
+      ? { ...effect, stat: skillGrantStat(effect.stat) } : effect.type === "grant" && effect.value === "proficient"
         && choices.classes?.length === 1 && ref.content_definitions?.content_type === "class" && ref.content_definitions.slug === choices.classes[0].slug
         && effect.stat.startsWith("save_") && abilities.has(effect.stat.slice(5))
         ? { ...effect, stat: `saving_throw_${effect.stat.slice(5)}` }
@@ -33,10 +40,10 @@ export function resolveCharacterChoiceEffects(refs: readonly Ref[], choices: Cha
       if (choice.grant_type === "ability_bonus" && abilities.has(value)) {
         derived.push({ type: "mechanical", stat: value, op: "add", value: 1 });
       } else if (["proficiency", "skill", "tool", "weapon", "armor"].includes(choice.grant_type)) {
-        derived.push({ type: "grant", stat: value.replace(/^skill-/, ""), value: "proficient" });
+        derived.push({ type: "grant", stat: skillGrantStat(value), value: "proficient" });
       } else if (choice.grant_type === "expertise") {
         if (resolveExpertiseChoice(choice, refs, choices).from.includes(value)) {
-          derived.push({ type: "grant", stat: value.replace(/^skill-/, ""), value: "expertise" });
+          derived.push({ type: "grant", stat: skillGrantStat(value), value: "expertise" });
         }
       } else if (choice.grant_type === "language") {
         derived.push({ type: "grant", stat: value, value: "proficient" });
