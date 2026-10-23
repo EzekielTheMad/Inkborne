@@ -5,16 +5,21 @@
 ### Actual application character builder save/reload
 
 **Real SRD Fighter and Cleric workflows save and reload in the actual local app
-at `9158162`.** Both stories cover sign-in, creation, class/race/ability/background
+at `4279067`.** Both stories cover sign-in, creation, class/race/ability/background
 choices, actual gear, one 15 gp award, details, sheet reload and a second account's
-404. Fighter reaches Champion 4 with HP, ASI/feat replacement and a retained server
+404. Earlier Fighter verification reaches Champion 4 with HP, ASI/feat replacement and a retained server
 HP roll. Cleric retains class/racial/domain spells with correct casting ability,
 completion guards, allowance counters and saving-throw proficiency.
 
 The local runtime contains 1,535 real definitions and matching immutable snapshots;
 native database readback agrees with the browser. Focused tests, typecheck and
 zero-warning lint pass. No repeated full suite/build was added.
-[Delivery, preserved failures, staging order and exact evidence](handoffs/2026-10-23-real-srd-builder.md).
+Rogue Expertise also saves/reloads at levels 1/6, excludes untrained/duplicate
+picks and prunes a pick when its underlying proficiency is lost. Shared fixed,
+selected and Expertise grants now use the correct compound skill keys. Final
+Fighter/Cleric reruns pass after those changes; native readbacks agree for all
+three workflows. [Latest evidence, preserved failures and remaining acceptance](handoffs/2026-10-23-rogue-expertise.md),
+[earlier catalog/progression evidence](handoffs/2026-10-23-real-srd-builder.md).
 
 R06/M1 remains **IN PROGRESS**: genuine multiclass acquisition, remaining catalog
 choice families, wider recovery/concurrency/provider matrices and hosted acceptance

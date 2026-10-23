@@ -5,16 +5,20 @@ Updated 2026-10-23 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 ## Resume and ownership
 
 **Real SRD Fighter and Cleric workflows save and reload in the actual local app
-at `9158162`.** Both stories cover sign-in, creation, class/race/ability/background
+at `4279067`.** Both stories cover sign-in, creation, class/race/ability/background
 choices, actual gear, one 15 gp award, details, sheet reload and a second account's
-404. Fighter additionally reaches Champion 4 with saved HP, ASI/feat replacement
+404. Earlier Fighter verification also reaches Champion 4 with saved HP, ASI/feat replacement
 and a retained server HP roll. Cleric retains class/racial/domain spells with
 correct casting ability, completion guards, allowance counters and saving throws.
 
 The runtime contains 1,535 real catalog definitions and matching immutable
 snapshots. Native database readback agrees with the browser. Focused tests,
 typecheck and zero-warning lint pass; the full suite was intentionally not
-repeated. [Delivery, repairs, exact evidence and remaining work](handoffs/2026-10-23-real-srd-builder.md).
+repeated. Rogue Expertise now also saves/reloads at levels 1 and 6, prunes a pick
+when its proficiency is lost, and displays skill/tool Expertise correctly. The
+final Fighter/Cleric reruns and native readbacks agree after those shared changes.
+[Latest delivery and evidence](handoffs/2026-10-23-rogue-expertise.md),
+[earlier catalog/progression checkpoint](handoffs/2026-10-23-real-srd-builder.md).
 
 Next is genuine multiclass acquisition and remaining catalog choice families.
 M1/R06, wider recovery/concurrency and hosted acceptance remain open. Global

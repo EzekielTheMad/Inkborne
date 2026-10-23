@@ -147,3 +147,9 @@ enrolled characters. Independent narrow source review passes.
 run preserved a stale reproduction expectation that subrace structured data was
 excluded; the assertion now follows the shipped real-catalog subrace consumer.
 No further runtime was started for this pure helper change.
+
+Subsequent delivery at `4279067` adds working Rogue Expertise and correct
+compound skill grants, with final Fighter/Cleric walkthroughs passing again.
+Use the [Rogue application checkpoint](2026-10-23-rogue-expertise.md) for current
+catalog hash, accepted source, evidence, cleanup and remaining boundaries. The
+earlier level-four Fighter evidence and control/readbacks above remain preserved.
