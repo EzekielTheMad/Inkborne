@@ -10,10 +10,10 @@ describe("Subclass clearing", () => {
   it("uses an explicit clear action while clicking the selected card remains idempotent", () => {
     const onSelect = vi.fn();
     render(<ChoiceCardSubclass classSlug="warlock" subclasses={[fiend]} currentSelection="fiend" onSelect={onSelect} />);
-    fireEvent.click(screen.getByRole("button", { name: "Fiend", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Fiend" }));
     expect(onSelect).not.toHaveBeenCalled();
     expect(screen.getByText("Clearing this choice also removes its subclass features and spell choices.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Clear subclass", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear subclass" }));
     expect(onSelect).toHaveBeenCalledExactlyOnceWith(undefined);
   });
 
@@ -21,7 +21,7 @@ describe("Subclass clearing", () => {
     const onSelect = vi.fn();
     render(<ChoiceCardSubclass classSlug="warlock" subclasses={[fiend]} currentSelection={undefined} onSelect={onSelect} />);
     expect(screen.queryByRole("button", { name: "Clear subclass" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Fiend", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Fiend" }));
     expect(onSelect).toHaveBeenCalledExactlyOnceWith("fiend");
   });
 });

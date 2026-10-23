@@ -36,11 +36,6 @@ async function choose(page: Page, option: Locator) {
   await expect(option).toBeEnabled();
 }
 
-function group(page: Page, label: string, option?: string): Locator {
-  const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: label, exact: true, level: 4 }) });
-  return option ? article.filter({ has: page.getByRole("button", { name: option, exact: true }) }) : article;
-}
-
 async function setLevel(page: Page, className: string, level: number) {
   const input = page.getByRole("combobox", { name: `Set level for ${className}`, exact: true });
   await saveThroughApp(page, () => input.selectOption(String(level)));
