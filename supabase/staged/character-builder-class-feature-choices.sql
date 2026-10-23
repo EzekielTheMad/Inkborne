@@ -93,6 +93,7 @@ DECLARE cap private.character_builder_capabilities_v1%ROWTYPE; refs jsonb; sourc
   source jsonb; entry jsonb; effect jsonb; choice jsonb; values_list jsonb; chosen jsonb; choices_map jsonb;
   claims jsonb:='[]'; accepted jsonb; style_keys jsonb; definition jsonb; dependency jsonb; pin jsonb; projected jsonb; prior_ids text[]:='{}'; active_ids text[]:='{}';
   count_sources integer; mode text; class_slug text; item record; is_strict boolean;
+  child_context jsonb; legacy_source text; child_source text;
 BEGIN
   SELECT * INTO cap FROM private.character_builder_capabilities_v1
     WHERE transaction_id=pg_catalog.pg_current_xact_id() AND character_id=target;
@@ -209,10 +210,20 @@ BEGIN
           pin:=private.builder_catalog_pin_v1(target,dependency,pg_catalog.jsonb_build_object('source','fighting_style',
             'class',class_slug,'feature',source->>'slug_snapshot'),'builder:fighting-style:'||(source->>'slug_snapshot'),NULL,cap.protected_graph->'refs');
         ELSE
-          pin:=private.builder_catalog_pin_v1(target,dependency,pg_catalog.jsonb_build_object('source','class_feature_choice',
+          child_context:=pg_catalog.jsonb_build_object('source','class_feature_choice',
             'class',class_slug,'feature',source->>'slug_snapshot','choice_id',choice->>'choice_id',
-            'source_ref_id',source#>>'{_source_ref,id}'),
-            'builder:feature-choice:'||(source#>>'{_source_ref,id}')||':'||(choice->>'choice_id'),NULL,cap.protected_graph->'refs');
+            'source_ref_id',source#>>'{_source_ref,id}');
+          legacy_source:='builder:feature-choice:'||(source#>>'{_source_ref,id}')||':'||(choice->>'choice_id');
+          child_source:=legacy_source||':'||(dependency->>'content_id')||':'||(dependency->>'version');
+          -- One old child may already own the historical unsuffixed tag.
+          -- Retain that exact pin; each new sibling receives its own tag.
+          IF EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(cap.protected_graph->'refs') prior(value)
+            WHERE prior.value->>'character_id'=target::text AND prior.value->>'choice_source'=legacy_source
+              AND prior.value->'content_id'=dependency->'content_id' AND prior.value->'content_version'=dependency->'version'
+              AND prior.value->'context'=child_context AND prior.value->'feature_grant_id'='null'::jsonb) THEN
+            child_source:=legacy_source;
+          END IF;
+          pin:=private.builder_catalog_pin_v1(target,dependency,child_context,child_source,NULL,cap.protected_graph->'refs');
         END IF;
         refs:=refs||pg_catalog.jsonb_build_array(pin); accepted:=accepted||pg_catalog.jsonb_build_array(chosen);
       END LOOP;
