@@ -3171,45 +3171,6 @@
       "prepared": false
     }
   },
-  "subclass/fiend": {
-    "spellcastingExtra": [
-      {
-        "level": 1,
-        "spells": [
-          "burning-hands",
-          "command"
-        ]
-      },
-      {
-        "level": 3,
-        "spells": [
-          "blindness-deafness",
-          "scorching-ray"
-        ]
-      },
-      {
-        "level": 5,
-        "spells": [
-          "fireball",
-          "stinking-cloud"
-        ]
-      },
-      {
-        "level": 7,
-        "spells": [
-          "fire-shield",
-          "wall-of-fire"
-        ]
-      },
-      {
-        "level": 9,
-        "spells": [
-          "flame-strike",
-          "hallow"
-        ]
-      }
-    ]
-  },
   "subclass/life": {
     "spellcastingExtra": [
       {

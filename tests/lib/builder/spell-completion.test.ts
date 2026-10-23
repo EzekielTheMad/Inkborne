@@ -62,6 +62,24 @@ describe("physical builder spell completion", () => {
     expect(classSpellSelectionsComplete([source], [known("one"), { ...known("two"), is_known: false }], scores)).toBe(false);
   });
 
+  it("counts earned expanded spells as ordinary known selections with exact saved slug evidence", () => {
+    const source: EffectiveCastingSource = { ...cleric, classSlug: "warlock", config: { type: "pact", ability: "charisma" },
+      cantripsKnown: 0, spellsKnown: 2, prepared: false, spellList: { class: "warlock", level: [0, 9] },
+      expandedSpellSlugs: ["burning-hands", "command"] };
+    const known = (slug: string, classes = ["wizard"]) => spell(slug, 1, {
+      class_slug: "warlock", is_prepared: false, content_definitions: {
+        id: slug, slug, version: 1, content_type: "spell", data: { level: 1, classes },
+      },
+    });
+    const saved = [known("burning-hands"), known("hex", ["warlock"])];
+    expect(classSpellSelectionsComplete([source], saved, scores)).toBe(true);
+    expect(classSpellSelectionsComplete([source], [...saved, known("command", ["cleric"])], scores)).toBe(false);
+    expect(classSpellSelectionsComplete([{ ...source, expandedSpellSlugs: [] }], saved, scores)).toBe(false);
+    expect(classSpellSelectionsComplete([source], [saved[1], known("wrong-slug")], scores)).toBe(false);
+    expect(classSpellSelectionsComplete([source], saved.map(row => ({ ...row, always_prepared: true })), scores)).toBe(false);
+    expect(classSpellSelectionsComplete([source], saved.map(row => ({ ...row, source: "feature" })), scores)).toBe(false);
+  });
+
   it("requires a real Wizard spellbook of the expected size and a prepared subset", () => {
     const source: EffectiveCastingSource = { ...cleric, classSlug: "wizard", config: { type: "full", ability: "intelligence" },
       cantripsKnown: 0, spellList: { class: "wizard", level: [0, 9] } };

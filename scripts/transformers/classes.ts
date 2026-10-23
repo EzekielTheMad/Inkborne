@@ -96,6 +96,45 @@ export function subclassFeatureManifest(subclass: Pick<ApiSubclass, "index" | "c
   return levels;
 }
 
+/** The SRD Fiend expands the Warlock list for ordinary learned choices. Life
+ * domain spells remain always-prepared grants; Land's conditional terrain
+ * spells remain owned by their selected terrain features. */
+export function subclassSpellMetadata(subclass: Pick<ApiSubclass, "index" | "class" | "spells">) {
+  const spellTiers = new Map<number, string[]>();
+  for (const grant of subclass.spells ?? []) {
+    // Conditional source edges must not become unconditional subclass grants.
+    if (grant.prerequisites?.some(prerequisite => prerequisite.type !== "level")) {
+      if (subclass.index === "fiend") throw new Error("The genuine SRD Fiend expanded spell list is unavailable or changed");
+      continue;
+    }
+    const level = grant.prerequisites?.find(prerequisite => prerequisite.type === "level")?.index.match(/-(\d+)$/)?.[1];
+    if (!level) throw new Error(`Missing SRD subclass spell level: ${subclass.index}/${grant.spell.index}`);
+    if (subclass.index === "fiend" && (grant.prerequisites?.length !== 1
+      || grant.prerequisites[0].index !== `warlock-${level}`)) {
+      throw new Error("The genuine SRD Fiend expanded spell list is unavailable or changed");
+    }
+    const tier = spellTiers.get(Number(level)) ?? [];
+    tier.push(grant.spell.index); spellTiers.set(Number(level), tier);
+  }
+  const tiers = [...spellTiers].sort(([a], [b]) => a - b).map(([level, spells]) => ({ level, spells }));
+  if (subclass.index === "fiend") {
+    // Reviewed against the genuine 2014 API edges and SRD 5.1 Fiend table.
+    const expected = [
+      { level: 1, spells: ["burning-hands", "command"] },
+      { level: 3, spells: ["blindness-deafness", "scorching-ray"] },
+      { level: 5, spells: ["fireball", "stinking-cloud"] },
+      { level: 7, spells: ["fire-shield", "wall-of-fire"] },
+      { level: 9, spells: ["flame-strike", "hallow"] },
+    ];
+    const canonical = (entries: typeof tiers) => entries.map(tier => ({ ...tier, spells: [...tier.spells].sort() }));
+    if (subclass.class.index !== "warlock" || JSON.stringify(canonical(tiers)) !== JSON.stringify(canonical(expected))) {
+      throw new Error("The genuine SRD Fiend expanded spell list is unavailable or changed");
+    }
+    return { spellcastingExpanded: tiers };
+  }
+  return tiers.length ? { spellcastingExtra: tiers } : {};
+}
+
 function mapSpellcastingType(className: string): "full" | "half" | "third" | "pact" | null {
   const fullCasters = ["wizard", "sorcerer", "cleric", "druid", "bard"];
   const halfCasters = ["paladin", "ranger"];
@@ -247,24 +286,13 @@ export async function transformClasses(): Promise<TransformedContent[]> {
       ? await fetchFromApi<ApiSubclassChoiceController>("/features/circle-of-the-land") : undefined;
     const levels = subclassFeatureManifest(sub, subLevels, landController);
 
-    const spellTiers = new Map<number, string[]>();
-    for (const grant of sub.spells ?? []) {
-      // Terrain/feature-gated spells cannot become unconditional subclass
-      // grants. Their feature descriptions remain authoritative until that
-      // richer conditional spell contract is explicitly represented.
-      if (grant.prerequisites?.some(prerequisite => prerequisite.type !== "level")) continue;
-      const level = grant.prerequisites?.find(prerequisite => prerequisite.type === "level")?.index.match(/-(\d+)$/)?.[1];
-      if (!level) throw new Error(`Missing SRD subclass spell level: ${sub.index}/${grant.spell.index}`);
-      const tier = spellTiers.get(Number(level)) ?? [];
-      tier.push(grant.spell.index); spellTiers.set(Number(level), tier);
-    }
     results.push(buildContentEntry("subclass", sub.index, sub.name, {
       parent_class: sub.class.index,
       flavor_label: sub.subclass_flavor,
       description: sub.desc.join("\n"),
       levels,
       spells: [],
-      ...(spellTiers.size ? { spellcastingExtra: [...spellTiers].sort(([a], [b]) => a - b).map(([level, spells]) => ({ level, spells })) } : {}),
+      ...subclassSpellMetadata(sub),
     }));
   }
 

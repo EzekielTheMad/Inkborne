@@ -40,6 +40,9 @@ export function validateSrdCatalog(entries: readonly TransformedContent[]): Tran
       for (const tier of (data.spellcastingExtra as Array<string | string[] | { spells: string[] }> | undefined) ?? []) {
         for (const slug of typeof tier === "string" ? [tier] : Array.isArray(tier) ? tier : tier.spells) check(entry, "spell", slug);
       }
+      for (const tier of (data.spellcastingExpanded as Array<{ spells: string[] }> | undefined) ?? []) {
+        for (const slug of tier.spells) check(entry, "spell", slug);
+      }
     }
     if (entry.content_type === "feature") {
       check(entry, "class", data.class);

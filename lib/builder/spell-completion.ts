@@ -1,12 +1,13 @@
 import type { CharacterSpell } from "@/lib/types/spells";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
+import { isOrdinaryClassSpellEligible } from "@/lib/spells/spell-eligibility";
 import { computeMaxPrepared } from "@/lib/spells/helpers";
 import { readBonusSpellChoices, isBonusSpellEligible, ordinaryKnownSpellBudget, type BonusSpellPin } from "./bonus-spells";
 import type { ParsedContentDefinition } from "@/lib/supabase/content-definitions-parser";
 
 export type BuilderSpellCompletionRow = Pick<CharacterSpell,
   "content_id" | "content_version" | "class_slug" | "source" | "is_prepared" | "is_known" | "in_spellbook" | "always_prepared"
-> & { custom_data?: Record<string, unknown> | null; content_definitions?: Pick<ParsedContentDefinition, "id" | "version" | "content_type" | "data"> | null };
+> & { custom_data?: Record<string, unknown> | null; content_definitions?: Pick<ParsedContentDefinition, "id" | "version" | "content_type" | "data"> & Partial<Pick<ParsedContentDefinition, "slug">> | null };
 
 export interface BonusSpellCompletionEvidence {
   features: ReadonlyArray<Pick<ParsedContentDefinition, "id" | "version" | "slug" | "data"> & { ref_id: string }>;
@@ -49,8 +50,7 @@ export function classSpellSelectionsComplete(
       if (!row.content_id || !Number.isInteger(row.content_version) || row.content_version! < 1 || row.always_prepared && !(source.classSlug === "wizard" && signatureIds.has(`${row.content_id}:${row.content_version}`)) || !row.is_known
         || !definition || definition.id !== row.content_id || definition.version !== row.content_version
         || definition.content_type !== "spell" || typeof level !== "number" || !Number.isInteger(level)
-        || level < source.spellList.level[0] || level > maxLevel || !Array.isArray(definition.data.classes)
-        || !definition.data.classes.includes(source.spellList.class)) return false;
+        || !isOrdinaryClassSpellEligible(source, definition)) return false;
       (level === 0 ? cantrips : levelled).push(row);
     }
     if (cantrips.length !== source.cantripsKnown || cantrips.some(row => row.in_spellbook)) return false;
