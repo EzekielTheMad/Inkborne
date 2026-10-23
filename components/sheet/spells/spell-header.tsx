@@ -88,7 +88,7 @@ export function SpellHeader() {
       </div>
       {bonusGroups.length > 0 && <div className="space-y-1 pt-1 text-xs text-muted-foreground" aria-label="Bonus spell allowances">
         {bonusGroups.map(({ choice }) => <p key={choice.choice_id}>{choice.choice_id.replace(/-/g, " ")}: {character.choices.bonus_spells?.[choice.choice_id]?.length ?? 0}/{choice.choose}</p>)}
-      </div>
+      </div>}
     </div>
   );
 }
