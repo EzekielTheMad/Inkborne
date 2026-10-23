@@ -4,6 +4,7 @@ import { activeFeatureSlugs, fightingStyleSlugs, fixedLanguages, isAsiChoiceComp
 import { hasCompleteAbilityScores } from "./ability-score-validation";
 import type { CharacterChoices } from "@/lib/types/character";
 import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choices";
+import { resolveLoreSkillChoice } from "./bonus-spells";
 import { resolveDefinitionExpertise } from "./expertise";
 import { classRoleEvaluationRef, classRoleForRef, type BuilderClassRole } from "@/lib/character/builder-class-roles";
 import { resolveDefinitionClassFeatureChoices } from "./class-feature-choices";
@@ -114,7 +115,9 @@ export function getBuilderStepStatus(
   const sourceRefs = refs;
   refs = refs.map(ref => { const projected = classRoleEvaluationRef(ref, choices);
     return { ...projected, content_definitions: resolveDefinitionClassFeatureChoices(
-      resolveDefinitionExpertise(projected.content_definitions, sourceRefs, choices), sourceRefs, choices) }; });
+      resolveDefinitionExpertise({ ...projected.content_definitions,
+        effects: projected.content_definitions.effects?.map(effect => effect.type === "choice"
+          ? resolveLoreSkillChoice(effect, sourceRefs, choices) : effect) }, sourceRefs, choices), sourceRefs, choices) }; });
   const granted = fixedLanguages(refs.map(ref => ref.content_definitions));
   const countPins = (type: string) => refs.filter(ref => ref.content_definitions.content_type === type).length;
   switch (stepType) {

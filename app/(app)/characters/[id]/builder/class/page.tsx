@@ -5,6 +5,7 @@ import { redirect, notFound } from "next/navigation";
 import { ClassStepClient } from "./class-step-client";
 import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
 import { saveBuilderStep } from "../step-actions";
+import { parseNestedContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
 import { resolveEffectiveCastingSources } from "@/lib/spells/effective-sources";
 
 interface PageProps {
@@ -44,9 +45,19 @@ export default async function ClassStepPage({ params }: PageProps) {
       getContentByType(systemId, "spell"),
       getCharacterContentRefSnapshot(id),
       getContentByType(systemId, "language"),
-      supabase.from("character_spells").select("content_id,content_version,is_prepared,source,class_slug").eq("character_id", id),
+      supabase.from("character_spells").select(`content_id,content_version,is_prepared,always_prepared,in_spellbook,source,class_slug,
+        content_versions!character_spells_content_version_fkey(content_id,version,system_id_snapshot,content_type_snapshot,slug_snapshot,name_snapshot,data_snapshot,effects_snapshot,source_snapshot,scope_snapshot,owner_id_snapshot)`)
+        .eq("character_id", id),
     ]);
   if (savedSpells.error) throw Error("The saved spell selections could not be read. Reload before editing.");
+  const savedSpellEntries = (savedSpells.data ?? []).flatMap(row => {
+    const definition = parseNestedContentVersionSnapshot(row.content_versions);
+    return definition && definition.id === row.content_id && definition.version === row.content_version ? [definition] : [];
+  });
+  const pinnedSpellEntries = [...savedSpellEntries, ...contentSnapshot.refs.flatMap(ref => ref.content_definitions.content_type === "spell"
+    && ref.content_id === ref.content_definitions.id && ref.content_version === ref.content_definitions.version ? [ref.content_definitions] : [])];
+  const spellCatalog = [...spells, ...pinnedSpellEntries].filter((spell, index, all) =>
+    all.findIndex(other => other.id === spell.id && other.version === spell.version) === index);
   const casting = resolveEffectiveCastingSources(character.choices?.classes ?? [], contentSnapshot.refs, character);
 
   return (
@@ -55,7 +66,13 @@ export default async function ClassStepPage({ params }: PageProps) {
       classRolesAvailable={contentSnapshot.classRoles.status === "available" && contentSnapshot.classRoles.action_revision === String(character.action_revision)}
       castingSources={casting.status === "available" ? casting.sources : []}
       selectedSpells={(savedSpells.data ?? []).filter(row => row.source === "selection" && row.content_id && row.content_version)
-        .map(row => ({ content_id: row.content_id!, content_version: row.content_version!, is_prepared: row.is_prepared, class_slug: row.class_slug }))}
+        .map(row => {
+          const choices: unknown = character.choices?.class_spell_selections?.[row.class_slug];
+          const intent = Array.isArray(choices) ? choices.find(item => item?.content_id === row.content_id
+            && item?.content_version === row.content_version && typeof item?.prepared === "boolean")?.prepared : undefined;
+          return { content_id: row.content_id!, content_version: row.content_version!, is_prepared: row.is_prepared,
+            always_prepared: row.always_prepared, prepared_intent: intent, class_slug: row.class_slug };
+        })}
       grantedSpells={(savedSpells.data ?? []).filter(row => row.source !== "selection" && row.content_id)
         .map(row => ({ content_id: row.content_id!, class_slug: row.class_slug }))}
       characterId={id}
@@ -65,7 +82,7 @@ export default async function ClassStepPage({ params }: PageProps) {
       features={featureContent}
       availableLanguages={languages.map(language => language.slug)}
       feats={[]}
-      spells={spells}
+      spells={spellCatalog}
       contentRefs={contentSnapshot.refs}
       asiEvidence={contentSnapshot.asiEvidence}
       schema={character.game_systems?.schema_definition}

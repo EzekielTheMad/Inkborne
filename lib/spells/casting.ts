@@ -208,6 +208,11 @@ export function getSpellCastability(
 ): SpellCastability {
   const data = spell.content_definitions?.data as CastSpellData | undefined;
   if (!data || typeof data.level !== "number") return "none";
+  // Arcanum has a separate once-per-long-rest payment. The ordinary slot
+  // dialog must not spend an unrelated multiclass slot for this acquisition.
+  if (spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum") return "none";
+  if (spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "ritual")
+    return data.ritual === true ? "ritual-only" : "none";
   if (data.level === 0) return "full";
   if (spell.always_prepared) return "full";
 
@@ -229,6 +234,8 @@ export function isRitualEligible(
 ): boolean {
   const data = spell.content_definitions?.data as CastSpellData | undefined;
   if (data?.ritual !== true) return false;
+  if (spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum") return false;
+  if (spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "ritual") return true;
   const casterClass = casterInfo.classes.find((c) => c.slug === spell.class_slug);
   return casterClass?.ritualCasting ?? false;
 }

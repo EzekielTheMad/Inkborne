@@ -36,5 +36,10 @@ export async function savedBuilderClassSpellsComplete(
   const rows = await readSavedSpells(character.id);
   const scores = evaluate({ ...character.base_stats, level: character.level }, resolveCharacterChoiceEffects(snapshot.refs, character.choices), schema,
     buildCharacterStructuredSources(snapshot.refs, character.level, { character, evidence: snapshot.asiEvidence }), character.state).stats;
-  return classSpellSelectionsComplete(casting.sources, rows, scores);
+  return classSpellSelectionsComplete(casting.sources, rows, scores, {
+    features: snapshot.refs.filter(ref => ref.content_definitions.content_type === "feature"
+      && ref.content_id === ref.content_definitions.id && ref.content_version === ref.content_definitions.version)
+      .map(ref => ({ ...ref.content_definitions, ref_id: ref.id })),
+    selections: character.choices.bonus_spells ?? {},
+  });
 }

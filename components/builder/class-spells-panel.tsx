@@ -14,6 +14,9 @@ export interface BuilderSpellSelection {
   content_id: string;
   content_version: number;
   is_prepared: boolean;
+  always_prepared?: boolean;
+  /** Saved ordinary preparation intent before Signature Spells projection. */
+  prepared_intent?: boolean;
 }
 
 export interface ClassSpellsPanelProps {
@@ -69,7 +72,8 @@ function SpellSection({ label, entries, selections, showPrepared, disabled, onTo
             <span className="font-medium">{entry.name}</span>
             <span className="ml-auto text-xs text-muted-foreground">{spellLevel(entry) === 0 ? "Cantrip" : `Level ${spellLevel(entry)}`}</span>
           </label>
-          {selected && showPrepared && <label className="mt-2 flex items-center gap-2 pl-6 text-sm text-muted-foreground">
+          {selected?.always_prepared && <p className="mt-2 pl-6 text-sm text-muted-foreground">Always prepared by Signature Spells.</p>}
+          {selected && !selected.always_prepared && showPrepared && <label className="mt-2 flex items-center gap-2 pl-6 text-sm text-muted-foreground">
             <input type="checkbox" aria-label={`Prepare ${entry.name}`} checked={selected.is_prepared} disabled={disabled}
               onChange={event => onPrepare(entry, event.target.checked)} />Prepared
           </label>}
@@ -112,11 +116,13 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
     && source.classLevel <= 20 && Number.isInteger(source.cantripsKnown) && source.cantripsKnown >= 0
     && Number.isInteger(source.spellList.level[0]) && source.spellList.level[0] >= 0
     && Number.isInteger(maxLevel) && maxLevel >= source.spellList.level[0] && maxLevel <= 9;
-  const entries = useMemo(() => catalog.filter(entry => {
+  const entries = useMemo(() => catalog.filter((entry, index) => {
     const level = spellLevel(entry);
+    const pin = selected.find(item => item.content_id === entry.id);
+    if (pin ? entry.version !== pin.content_version : catalog.findIndex(item => item.id === entry.id) !== index) return false;
     return entry.content_type === "spell" && level !== null && level >= source.spellList.level[0] && level <= maxLevel
       && Array.isArray(entry.data.classes) && entry.data.classes.includes(source.spellList.class);
-  }).sort((a, b) => (spellLevel(a)! - spellLevel(b)!) || a.name.localeCompare(b.name)), [catalog, maxLevel, source.spellList]);
+  }).sort((a, b) => (spellLevel(a)! - spellLevel(b)!) || a.name.localeCompare(b.name)), [catalog, maxLevel, source.spellList, selected]);
   const byId = useMemo(() => {
     const result = new Map<string, ContentEntry[]>();
     for (const entry of entries) result.set(entry.id, [...(result.get(entry.id) ?? []), entry]);
@@ -129,7 +135,7 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
   const duplicateSelections = new Set(draft.value.map(item => item.content_id)).size !== draft.value.length;
   const cantripCount = draft.value.filter(item => spellLevel(byId.get(item.content_id)?.[0]) === 0).length;
   const leveledCount = draft.value.length - cantripCount;
-  const preparedCount = draft.value.filter(item => item.is_prepared && spellLevel(byId.get(item.content_id)?.[0]) !== 0).length;
+  const preparedCount = draft.value.filter(item => item.is_prepared && !item.always_prepared && spellLevel(byId.get(item.content_id)?.[0]) !== 0).length;
   const wizardBook = source.kind === "class" && source.classSlug === "wizard";
   const bookSize = 6 + 2 * (source.classLevel - 1);
   const ability = source.config ? abilityScores[source.config.ability] : undefined;
@@ -161,7 +167,8 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
     if (!valid || locked || inFlight.current) return;
     inFlight.current = true;
     const submitted = draft.value.map(item => ({ content_id: item.content_id, content_version: item.content_version,
-      prepared: spellLevel(byId.get(item.content_id)?.[0]) === 0 ? false : item.is_prepared }));
+      prepared: spellLevel(byId.get(item.content_id)?.[0]) === 0 ? false
+        : item.always_prepared ? item.prepared_intent ?? false : item.is_prepared }));
     setError(null); setSaved(false);
     startTransition(async () => {
       try {

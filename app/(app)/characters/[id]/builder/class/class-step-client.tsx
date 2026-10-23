@@ -40,6 +40,8 @@ import {
 
 import { activeFeatureSlugs, fightingStyleSlugs, fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { BonusSpellsPanel } from "@/components/builder/bonus-spells-panel";
+import { readBonusSpellChoices, ordinaryKnownSpellBudget, resolveLoreSkillChoice } from "@/lib/builder/bonus-spells";
 import { ClassSpellsPanel, type BuilderSpellSelection } from "@/components/builder/class-spells-panel";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
 import { classRoleEvaluationRef, originalClassOccurrence, type BuilderClassRole } from "@/lib/character/builder-class-roles";
@@ -201,10 +203,24 @@ export function ClassStepClient({
   const resolveEntries = (entries: ContentEntry[]) => entries.map(entry => {
     const pin = entry.content_type === "class" ? contentRefs.find(ref => ref.content_id === entry.id && ref.content_version === entry.version) : undefined;
     const projected = pin ? classRoleEvaluationRef(pin, localChoices).content_definitions : entry;
+    const loreResolved = { ...projected, effects: projected.effects?.map(effect => effect.type === "choice"
+      ? resolveLoreSkillChoice(effect, contentRefs, localChoices) : effect) };
     return resolveDefinitionClassFeatureChoices(resolveDefinitionExpertise(
-      resolveDefinitionChoices(projected ?? entry, availableLanguages, grantedLanguages), contentRefs, localChoices), contentRefs, localChoices,
+      resolveDefinitionChoices(loreResolved, availableLanguages, grantedLanguages), contentRefs, localChoices), contentRefs, localChoices,
       { features, knownSpellSlugs });
   });
+
+  const bonusGroups = contentRefs.flatMap(ref => {
+    const feature = ref.content_definitions;
+    if (ref.content_id !== feature.id || ref.content_version !== feature.version || feature.content_type !== "feature") return [];
+    const source = castingSources.find(candidate => candidate.classSlug === feature.data.class && candidate.active && candidate.config);
+    if (!source || typeof feature.data.level !== "number" || feature.data.level > source.classLevel
+      || typeof feature.data.subclass === "string" && feature.data.subclass !== source.subclassSlug) return [];
+    return readBonusSpellChoices(feature.data).map(choice => ({ feature, choice, source }));
+  });
+  const adjustedCastingSources = castingSources.map(source => ({ ...source, spellsKnown: source.spellsKnown === "all" ? "all" as const : ordinaryKnownSpellBudget(source.spellsKnown,
+    bonusGroups.filter(group => group.source.classSlug === source.classSlug).map(group => group.choice)) }));
+  const handleBonusSaved = (saved: Awaited<ReturnType<SaveBuilderStep>>) => setLocalChoices(saved.choices);
 
   async function recoverFeatureRefs() {
     if (saveBusy.current || snapshotConflict) return;
@@ -780,11 +796,27 @@ export function ClassStepClient({
           }}
         />
 
-        {saveAction && castingSources.filter(source => source.active && source.config).map(source => <ClassSpellsPanel
+        {saveAction && adjustedCastingSources.filter(source => source.active && source.config).map(source => <ClassSpellsPanel
           key={source.classSlug}
           source={source} catalog={spells.filter(spell => !grantedSpells.some(grant => grant.class_slug === source.classSlug && grant.content_id === spell.id))}
           selected={selectedSpells.filter(spell => spell.class_slug === source.classSlug)} abilityScores={resolvedStats}
           disabled={saving || refreshing || !mechanicsAvailable} saveAction={saveAction} onDirtyChange={handleSpellDraftChange} />)}
+
+        {saveAction && bonusGroups.map(({ feature, choice, source }) => <BonusSpellsPanel
+          key={`${feature.id}:${feature.version}:${choice.choice_id}`}
+          feature={feature} choice={choice} catalog={spells}
+          selected={localChoices.bonus_spells?.[choice.choice_id] ?? []}
+          spellbook={selectedSpells.filter(spell => spell.class_slug === source.classSlug)
+            .map(spell => ({ content_id: spell.content_id, content_version: spell.content_version }))}
+          classMaxSpellLevel={source.maxLearnableLevel}
+          occupied={new Set(choice.spellbook_only ? [] : [
+            ...selectedSpells.filter(spell => spell.class_slug === source.classSlug).map(spell => spell.content_id),
+            ...grantedSpells.filter(spell => spell.class_slug === source.classSlug).map(spell => spell.content_id),
+            ...bonusGroups.filter(other => other.source.classSlug === source.classSlug && other.choice.choice_id !== choice.choice_id)
+              .flatMap(other => localChoices.bonus_spells?.[other.choice.choice_id] ?? []).map(spell => spell.content_id),
+          ])}
+          saveAction={saveAction} disabled={saving || refreshing || !mechanicsAvailable}
+          onSaved={handleBonusSaved} onDirtyChange={handleSpellDraftChange} />)}
 
         {/* Bottom navigation */}
         {unsavedSpells && <p role="status" className="text-sm text-muted-foreground">Save your spell choices before continuing.</p>}

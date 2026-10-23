@@ -98,6 +98,8 @@ export function SpellRow({
               Always
             </Badge>
           )}
+          {spell.source === "bonus" && <Badge variant="outline" className="text-[9px] shrink-0">Bonus</Badge>}
+          {spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum" && <Badge variant="outline" className="text-[9px] shrink-0">Arcanum · 1/long rest</Badge>}
           {data.ritual && (
             <Badge variant="outline" className="text-[9px] shrink-0">
               R
@@ -126,7 +128,7 @@ export function SpellRow({
           </Button>
         )}
 
-        {!spell.always_prepared && (
+        {!spell.always_prepared && spell.source !== "bonus" && (
           <button
             type="button"
             onClick={onRemove}
@@ -140,6 +142,7 @@ export function SpellRow({
 
       {expanded && (
         <div className="border-t border-border/50 bg-card/30 px-3 py-2 space-y-1.5 text-xs">
+          {spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum" && <p>Mystic Arcanum uses its own once-per-long-rest feature. Casting and use tracking are not available in this spell dialog.</p>}
           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
             {data.casting_time && (
               <div>

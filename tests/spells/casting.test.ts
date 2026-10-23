@@ -211,6 +211,16 @@ describe("castSourceFromCharacterSpell", () => {
 describe("getSpellCastability", () => {
   const casterInfo = mkCasterInfo();
 
+  it("keeps Book of Ancient Secrets ritual-only and Arcanum outside ordinary slots", () => {
+    const ritual = mkCharacterSpell({ source: "bonus", is_known: true, is_prepared: false,
+      custom_data: { builder_bonus_mode: "ritual" } }, { ritual: true });
+    const noRitualInfo = mkCasterInfo({ classes: [{ ...mkCasterInfo().classes[0], ritualCasting: false }] });
+    expect(getSpellCastability(ritual, noRitualInfo)).toBe("ritual-only");
+    expect(isRitualEligible(ritual, noRitualInfo)).toBe(true);
+    expect(getSpellCastability({ ...ritual, custom_data: { builder_bonus_mode: "arcanum" } }, casterInfo)).toBe("none");
+    expect(isRitualEligible({ ...ritual, custom_data: { builder_bonus_mode: "arcanum" } }, casterInfo)).toBe(false);
+  });
+
   it("cantrips are always fully castable", () => {
     const spell = mkCharacterSpell({ is_prepared: false }, { level: 0 });
     expect(getSpellCastability(spell, casterInfo)).toBe("full");
