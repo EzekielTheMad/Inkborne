@@ -541,7 +541,7 @@ BEGIN
         WHERE c.value->'options' @> pg_catalog.jsonb_build_array(chosen)) THEN
         RAISE EXCEPTION 'builder_fighting_style_unavailable' USING ERRCODE='22023'; END IF;
       dependency:=private.builder_catalog_dependency_v1(target,source,'feature',chosen#>>'{}');
-      IF dependency#>>'{data_snapshot,feature_type}'<>'fighting_style'
+      IF COALESCE(dependency#>>'{data_snapshot,feature_type}','') NOT IN ('fighting_style','passive')
         OR dependency#>>'{data_snapshot,class}' IS DISTINCT FROM selected_class_slug THEN
         RAISE EXCEPTION 'builder_fighting_style_unavailable' USING ERRCODE='22023'; END IF;
       pin:=private.builder_catalog_pin_v1(target,dependency,

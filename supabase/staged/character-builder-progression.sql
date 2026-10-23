@@ -6,6 +6,10 @@ DO $preflight$
 BEGIN
   IF CURRENT_USER<>'supabase_admin' OR NOT (SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname=CURRENT_USER)
     OR pg_catalog.to_regprocedure('private.apply_builder_catalog_command_v1(uuid,text,jsonb)') IS NULL
+    OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
+      WHERE p.oid=pg_catalog.to_regprocedure('private.apply_builder_catalog_command_v1(uuid,text,jsonb)')
+        AND pg_catalog.md5(pg_catalog.replace(p.prosrc,E'\r\n',E'\n'))='9b5b1df5a5c79769677119d418c3c51b'
+        AND p.proconfig=ARRAY['search_path=""']::text[] AND p.proowner='postgres'::pg_catalog.regrole::oid)
     OR pg_catalog.has_schema_privilege('service_role','private','USAGE')
     OR EXISTS(SELECT 1 FROM private.character_builder_capabilities_v1)
     OR (SELECT count(*) FROM private.character_writer_readiness_v1)<>13
