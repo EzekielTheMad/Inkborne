@@ -7,6 +7,8 @@ import { ChoiceCardSubclass } from "@/components/builder/class-step-rail/choice-
 import { ChoiceCardASI } from "@/components/builder/class-step-rail/choice-card-asi";
 import { ChoiceCardFightingStyle } from "@/components/builder/class-step-rail/choice-card-fighting-style";
 import { ChoiceCardGeneric } from "@/components/builder/class-step-rail/choice-card-generic";
+import { ChoiceCardFavoredEnemy } from "@/components/builder/class-step-rail/choice-card-favored-enemy";
+import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 import { HpPicker } from "@/components/builder/class-step-rail/hp-picker";
 import { LevelUpActionBar } from "@/components/builder/class-step-rail/level-up-action-bar";
 import type { ContentEntry } from "@/components/builder/content-browser";
@@ -37,6 +39,8 @@ interface LevelUpPaneProps {
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => Promise<void> | void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => Promise<void> | void;
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
+  availableLanguages?: readonly string[];
+  onFavoredEnemySelect?: (featureSlug: string, value: FavoredEnemyChoice) => Promise<void> | void;
   onHpRollChange: (key: string, record: HpRollRecord) => void;
   onCancel: () => void;
   onConfirm: () => void;
@@ -58,6 +62,7 @@ export function LevelUpPane(props: LevelUpPaneProps) {
     perLevelRow, subclasses, styleOptions, localChoices, feats = [], onFeatSearch, currentSubclass, classChoices,
     hpRule, conMod, hpRolls,
     onAsiSelect, onSubclassSelect, onFightingStyleSelect, onChoiceSelect, onHpRollChange,
+    availableLanguages = [], onFavoredEnemySelect,
     onCancel, onConfirm,
     chrome = "default",
     renderFooter,
@@ -130,6 +135,13 @@ export function LevelUpPane(props: LevelUpPaneProps) {
           </p>
           <div className="mt-2 space-y-2">
             {perLevelRow.choices.map((choice) => {
+              if (choice.type === "favored-enemy" && choice.featureSlug) {
+                return choice.favoredEnemyOptions && onFavoredEnemySelect ? <ChoiceCardFavoredEnemy
+                  key={choice.featureSlug} featureSlug={choice.featureSlug} label={choice.label} options={choice.favoredEnemyOptions}
+                  value={localChoices.favored_enemies?.[choice.featureSlug]} availableLanguages={availableLanguages}
+                  onSelect={value => onFavoredEnemySelect(choice.featureSlug!, value)} />
+                  : <p key={choice.featureSlug} role="status">This favored enemy choice could not be loaded. Reload before editing.</p>;
+              }
               if (choice.type === "subclass") {
                 return (
                   <ChoiceCardSubclass
@@ -161,7 +173,7 @@ export function LevelUpPane(props: LevelUpPaneProps) {
                     key={choice.featureSlug}
                     featureSlug={choice.featureSlug}
                     classSlug={choice.classSlug}
-                    styleOptions={styleOptions}
+                    styleOptions={choice.fightingStyleOptions ? styleOptions.filter(style => choice.fightingStyleOptions!.includes(style.slug)) : styleOptions}
                     currentStyleSlug={selectedStyles.length === 1 ? selectedStyles[0] : undefined}
                     onSelect={(featureSlug, classSlug, styleSlug) =>
                       onFightingStyleSelect(featureSlug, classSlug, styleSlug)

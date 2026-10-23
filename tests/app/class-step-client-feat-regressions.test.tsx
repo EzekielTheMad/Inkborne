@@ -213,6 +213,22 @@ describe("ClassStepClient feat regressions", () => {
     expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
   });
 
+  it("sends Favored Enemy through the finite native saver and preserves choices when refused", async () => {
+    const choices = { classes: [{ slug: "ranger", level: 1, occurrence_id: "native-occurrence" }] };
+    const value = { selection: { mode: "humanoids" as const, races: ["elf", "goblin"] }, language: "goblin" };
+    const saved = { ...choices, favored_enemies: { "favored-enemy": value } };
+    const save = vi.fn().mockResolvedValueOnce({ choices: saved, scores: {}, action_revision: "9" })
+      .mockRejectedValueOnce(Error("refused"));
+    renderClient(choices, save);
+    await act(async () => { await currentRail.onFavoredEnemySelect?.("favored-enemy", value); });
+    expect(save).toHaveBeenCalledWith("favored_enemy", { feature_slug: "favored-enemy", ...value });
+    expect(currentRail.localChoices).toEqual(saved);
+    await act(async () => { await expect(currentRail.onFavoredEnemySelect?.("favored-enemy", { selection: { mode: "type", enemy_type: "undead" }, language: null })).rejects.toThrow(); });
+    expect(currentRail.localChoices).toEqual(saved);
+    expect(mocks.updateCharacter).not.toHaveBeenCalled();
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+  });
+
   it("never falls back to a whole choices write after a refused native class choice", async () => {
     const choices = { classes: [{ slug: "fighter", level: 1 }] };
     renderClient(choices, vi.fn().mockRejectedValue(Error("refused")));

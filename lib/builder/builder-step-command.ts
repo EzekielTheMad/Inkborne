@@ -16,6 +16,12 @@ const asi = z.discriminatedUnion("mode", [
   z.strictObject({ mode: z.literal("feat"), feat_id: z.uuid(), feat_version: z.number().int().positive() }),
 ]);
 export const builderStepInputSchema = z.discriminatedUnion("command", [
+  z.strictObject({ command: z.literal("favored_enemy"), fields: z.strictObject({ feature_slug: z.string().min(1).max(200),
+    selection: z.discriminatedUnion("mode", [
+      z.strictObject({ mode: z.literal("type"), enemy_type: z.string().regex(/^[a-z][a-z-]*$/).max(100) }),
+      z.strictObject({ mode: z.literal("humanoids"), races: z.array(z.string().regex(/^[a-z][a-z-]*$/).max(100)).length(2)
+        .refine(values => new Set(values).size === 2) }),
+    ]), language: z.string().regex(/^[a-z][a-z-]*$/).max(100).nullable() }) }),
   z.strictObject({ command: z.literal("add_class"), fields: z.strictObject({ class_id: z.uuid(),
     class_version: z.number().int().positive(), expected_action_revision: classRoleRevisionSchema }) }),
   z.strictObject({ command: z.enum(["select_race", "select_subrace", "select_background"]), fields: content }),

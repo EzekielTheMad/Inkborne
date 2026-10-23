@@ -14,6 +14,7 @@ import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, Usabl
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
+import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 
 interface LevelUpSheetProps {
   open: boolean;
@@ -40,6 +41,8 @@ interface LevelUpSheetProps {
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => Promise<void> | void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => Promise<void> | void;
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
+  availableLanguages?: readonly string[];
+  onFavoredEnemySelect?: (featureSlug: string, value: FavoredEnemyChoice) => Promise<void> | void;
   onHpRollChange: (key: string, record: HpRollRecord) => void;
   onCancel: () => void;
   onConfirm: () => void;
@@ -52,6 +55,7 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
     perLevelRow, subclasses, styleOptions, localChoices, feats = [], onFeatSearch, currentSubclass, classChoices,
     hpRule, conMod, hpRolls,
     onAsiSelect, onSubclassSelect, onFightingStyleSelect, onChoiceSelect, onHpRollChange,
+    availableLanguages, onFavoredEnemySelect,
     onCancel, onConfirm,
   } = props;
 
@@ -92,6 +96,8 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
               onSubclassSelect={onSubclassSelect}
               onFightingStyleSelect={onFightingStyleSelect}
               onChoiceSelect={onChoiceSelect}
+              availableLanguages={availableLanguages}
+              onFavoredEnemySelect={onFavoredEnemySelect}
               onHpRollChange={onHpRollChange}
               onCancel={onCancel}
               onConfirm={onConfirm}

@@ -3,6 +3,7 @@ import type { CharacterChoices } from "@/lib/types/character";
 import { fixedLanguages, isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
 import { resolveExpertiseChoice } from "@/lib/builder/expertise";
 import { classRoleEvaluationRef, classRoleForRef, type BuilderClassRoleRef } from "./builder-class-roles";
+import { favoredEnemyLanguages } from "@/lib/builder/favored-enemy";
 
 type Ref = BuilderClassRoleRef;
 const abilities = new Set(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]);
@@ -32,6 +33,7 @@ export function resolveCharacterChoiceEffects(refs: readonly Ref[], choices: Cha
   const definitions = effects.filter(effect => effect.type === "choice");
   const derived: Effect[] = fixedLanguages(projected.map(({ ref }) => ({ data: ref.content_definitions?.data ?? {},
     effects: ref.content_definitions?.effects }))).map(language => ({ type: "grant", stat: language, value: "proficient" }));
+  for (const language of favoredEnemyLanguages(refs, choices)) derived.push({ type: "grant", stat: language, value: "proficient" });
   for (const choice of definitions) {
     if (definitions.filter(other => other.choice_id === choice.choice_id).length !== 1) continue;
     const selections = choices.resolved_choices?.[choice.choice_id];

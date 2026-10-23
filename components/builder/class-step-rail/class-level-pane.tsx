@@ -7,6 +7,8 @@ import { ChoiceCardASI } from "@/components/builder/class-step-rail/choice-card-
 import { ChoiceCardSubclass } from "@/components/builder/class-step-rail/choice-card-subclass";
 import { ChoiceCardFightingStyle } from "@/components/builder/class-step-rail/choice-card-fighting-style";
 import { ChoiceCardGeneric } from "@/components/builder/class-step-rail/choice-card-generic";
+import { ChoiceCardFavoredEnemy } from "@/components/builder/class-step-rail/choice-card-favored-enemy";
+import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { PerLevel } from "@/lib/builder/class-features-per-level";
 import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, UsableFeatSearch } from "@/lib/types/character";
@@ -34,6 +36,8 @@ interface ClassLevelPaneProps {
   onSubclassSelect: (classSlug: string, classIndex: number, subclassSlug: string | undefined) => void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => void;
   onChoiceSelect: (choiceId: string, selections: string[]) => void;
+  availableLanguages?: readonly string[];
+  onFavoredEnemySelect?: (featureSlug: string, value: FavoredEnemyChoice) => Promise<void> | void;
   onHpRollChange: (key: string, record: HpRollRecord) => void;
 }
 
@@ -64,6 +68,8 @@ export function ClassLevelPane({
   onSubclassSelect,
   onFightingStyleSelect,
   onChoiceSelect,
+  availableLanguages = [],
+  onFavoredEnemySelect,
   onHpRollChange,
 }: ClassLevelPaneProps) {
   if (!row) {
@@ -117,6 +123,13 @@ export function ClassLevelPane({
               <FeatureCard key={feature.id} feature={feature} />
             ))}
             {row.choices.map((choice, idx) => {
+              if (choice.type === "favored-enemy" && choice.featureSlug) {
+                return choice.favoredEnemyOptions && onFavoredEnemySelect ? <ChoiceCardFavoredEnemy
+                  key={choice.featureSlug} featureSlug={choice.featureSlug} label={choice.label} options={choice.favoredEnemyOptions}
+                  value={localChoices.favored_enemies?.[choice.featureSlug]} availableLanguages={availableLanguages}
+                  onSelect={value => onFavoredEnemySelect(choice.featureSlug!, value)} />
+                  : <p key={choice.featureSlug} role="status">This favored enemy choice could not be loaded. Reload before editing.</p>;
+              }
               if (choice.type === "asi") {
                 return (
                   <ChoiceCardASI
@@ -149,7 +162,7 @@ export function ClassLevelPane({
                     key={`${choice.type}-${idx}`}
                     featureSlug={choice.featureSlug!}
                     classSlug={classSlug}
-                    styleOptions={styleOptions}
+                    styleOptions={choice.fightingStyleOptions ? styleOptions.filter(style => choice.fightingStyleOptions!.includes(style.slug)) : styleOptions}
                     currentStyleSlug={currentStyle}
                     onSelect={onFightingStyleSelect}
                   />

@@ -38,13 +38,14 @@ import {
   setCharacterAsiChoiceAction,
 } from "./actions";
 
-import { activeFeatureSlugs, fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
+import { activeFeatureSlugs, fightingStyleSlugs, fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 import { ClassSpellsPanel, type BuilderSpellSelection } from "@/components/builder/class-spells-panel";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
 import { classRoleEvaluationRef, originalClassOccurrence, type BuilderClassRole } from "@/lib/character/builder-class-roles";
 import { classRoleRevisionSchema } from "@/lib/character/class-role-effects-schema";
 import { resolveDefinitionClassFeatureChoices } from "@/lib/builder/class-feature-choices";
+import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 
 interface ClassStepClientProps {
   saveAction?: SaveBuilderStep;
@@ -175,7 +176,7 @@ export function ClassStepClient({
   const savedLevelFeatures = pinnedEntries(features, contentRefs, "feature", referencedFeatures);
   const selectedStyleSlugs = savedLevelFeatures.entries
     .filter(feature => referencedFeatures.includes(feature.slug) &&
-      feature.data.feature_type === "fighting_style" && feature.name === "Fighting Style")
+      feature.data.feature_type === "fighting_style" && (fightingStyleSlugs(feature).length > 0 || feature.name === "Fighting Style"))
     .flatMap(feature => localChoices.resolved_choices?.[feature.slug] ?? []);
   const savedFeatures = pinnedEntries(savedLevelFeatures.entries, contentRefs, "feature", selectedStyleSlugs);
   const conflictingPins = [...savedClasses.conflicts, ...savedSubclasses.conflicts,
@@ -190,11 +191,16 @@ export function ClassStepClient({
   });
   const missingFeatures = [...new Set(activeSlugs)].filter(slug => !contentRefs.some(ref => ref.content_id === ref.content_definitions.id && ref.content_definitions.content_type === "feature" && ref.content_definitions.slug === slug));
   const grantedLanguages = fixedLanguages(contentRefs.map(ref => ref.content_definitions));
+  const knownSpellSlugs = new Set(selectedSpells.flatMap(selected => {
+    const matches = spells.filter(spell => spell.id === selected.content_id && spell.version === selected.content_version);
+    return matches.length === 1 ? [matches[0].slug] : [];
+  }));
   const resolveEntries = (entries: ContentEntry[]) => entries.map(entry => {
     const pin = entry.content_type === "class" ? contentRefs.find(ref => ref.content_id === entry.id && ref.content_version === entry.version) : undefined;
     const projected = pin ? classRoleEvaluationRef(pin, localChoices).content_definitions : entry;
     return resolveDefinitionClassFeatureChoices(resolveDefinitionExpertise(
-      resolveDefinitionChoices(projected ?? entry, availableLanguages, grantedLanguages), contentRefs, localChoices), contentRefs, localChoices);
+      resolveDefinitionChoices(projected ?? entry, availableLanguages, grantedLanguages), contentRefs, localChoices), contentRefs, localChoices,
+      { features, knownSpellSlugs });
   });
 
   async function recoverFeatureRefs() {
@@ -500,6 +506,20 @@ export function ClassStepClient({
     }
   }
 
+  async function handleFavoredEnemySelect(featureSlug: string, value: FavoredEnemyChoice) {
+    if (!saveAction) throw Error("This favored enemy save is unavailable.");
+    if (!beginSave()) throw Error("The current class build is still saving.");
+    setSaveError(null);
+    try {
+      const saved = await saveAction("favored_enemy", { feature_slug: featureSlug, ...value });
+      setLocalChoices(saved.choices);
+      startTransition(() => router.refresh());
+    } catch (error) {
+      setSaveError("This class choice could not be confirmed. Reload its saved values before trying again.");
+      throw error;
+    } finally { saveBusy.current = false; setSaving(false); }
+  }
+
   async function handleFightingStyleSelect(
     featureSlug: string,
     classSlug: string,
@@ -726,6 +746,8 @@ export function ClassStepClient({
             onAsiSelect={handleAsiSelect}
             onFightingStyleSelect={handleFightingStyleSelect}
             onChoiceSelect={handleChoiceSelect}
+            availableLanguages={availableLanguages}
+            onFavoredEnemySelect={handleFavoredEnemySelect}
             onAddClass={(content) => setPreviewContent(content)}
             onConfirmLevelUp={handleConfirmLevelUp}
             onCancelLevelUp={handleCancelLevelUp}

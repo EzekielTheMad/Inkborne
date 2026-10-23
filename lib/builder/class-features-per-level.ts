@@ -3,6 +3,7 @@ import type { CharacterChoices } from "@/lib/types/character";
 
 import type { ChoiceEffect } from "@/lib/types/effects";
 import { fightingStyleSlugs, isAsiChoiceComplete, isChoiceComplete } from "./choice-validation";
+import { favoredEnemyOptions, isFavoredEnemyComplete, type FavoredEnemyOptions } from "./favored-enemy";
 
 export function availableFightingStyles(features: ContentEntry[], classSlug: string): ContentEntry[] {
   const allowed = new Set(features.filter(feature => feature.data.class === classSlug).flatMap(fightingStyleSlugs));
@@ -10,7 +11,15 @@ export function availableFightingStyles(features: ContentEntry[], classSlug: str
     ? allowed.has(feature.slug) : feature.data.feature_type === "fighting_style" && feature.name !== "Fighting Style"));
 }
 
-export type ChoiceType = "asi" | "subclass" | "fighting-style" | "generic";
+export function unoccupiedFightingStyleSlugs(parent: { slug: string; data: Record<string, unknown> },
+  features: readonly { slug: string; data: Record<string, unknown> }[], choices: CharacterChoices): string[] {
+  const occupied = new Set(features.filter(feature => feature.slug !== parent.slug && feature.data.class === parent.data.class)
+    .flatMap(feature => { const selected = choices.resolved_choices?.[feature.slug] ?? [], allowed = fightingStyleSlugs(feature);
+      return selected.length === 1 && allowed.includes(selected[0]) ? selected : []; }));
+  return fightingStyleSlugs(parent).filter(slug => !occupied.has(slug));
+}
+
+export type ChoiceType = "asi" | "subclass" | "fighting-style" | "generic" | "favored-enemy";
 
 export interface PerLevelChoice {
   type: ChoiceType;
@@ -18,6 +27,8 @@ export interface PerLevelChoice {
   featureSlug?: string;
   classSlug: string;
   choiceEffect?: ChoiceEffect;
+  favoredEnemyOptions?: FavoredEnemyOptions;
+  fightingStyleOptions?: string[];
   /** Display label for level pill summary + breadcrumb title. */
   label: string;
   /** True if the user has already made this choice. */
@@ -41,6 +52,7 @@ export interface ClassFeaturesPerLevelArgs {
   subclassContent: ContentEntry | null;
   characterChoices: CharacterChoices;
   classIndex: number;
+  availableLanguages?: readonly string[];
 }
 
 export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel[] {
@@ -98,6 +110,16 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
       if (!f) continue;
       const fdata = f.data as Record<string, unknown>;
       const featureType = fdata.feature_type as string | undefined;
+      if (featureType === "favored_enemy") {
+        const options = favoredEnemyOptions(f);
+        const other = features.filter(feature => feature.slug !== f.slug && favoredEnemyOptions(feature))
+          .flatMap(feature => { const saved = characterChoices.favored_enemies?.[feature.slug];
+            return isFavoredEnemyComplete(feature, saved, args.availableLanguages) ? [saved] : []; });
+        choices.push({ type: "favored-enemy", featureSlug: f.slug, classSlug, label: f.name,
+          ...(options ? { favoredEnemyOptions: options } : {}),
+          isMade: isFavoredEnemyComplete(f, characterChoices.favored_enemies?.[f.slug], args.availableLanguages, other) });
+        continue;
+      }
 
       for (const effect of f.effects ?? []) {
         if (effect.type !== "choice") continue;
@@ -125,18 +147,20 @@ export function classFeaturesPerLevel(args: ClassFeaturesPerLevelArgs): PerLevel
         });
         continue;
       }
-      if (featureType === "fighting_style" && f.name === "Fighting Style") {
+      if (featureType === "fighting_style" && (fightingStyleSlugs(f).length > 0 || f.name === "Fighting Style")) {
         const selectedStyles = resolvedChoices[f.slug] ?? [];
         const allowed = fightingStyleSlugs(f);
+        const unoccupied = unoccupiedFightingStyleSlugs(f, features, characterChoices);
         const isMade = selectedStyles.length === 1 && features.some(style =>
           style.slug === selectedStyles[0] && style.name !== "Fighting Style" &&
-          style.data.class === classSlug && (allowed.length > 0 ? allowed.includes(style.slug) : style.data.feature_type === "fighting_style"));
+          style.data.class === classSlug && (allowed.length > 0 ? unoccupied.includes(style.slug) : style.data.feature_type === "fighting_style"));
         choices.push({
           type: "fighting-style",
           featureSlug: f.slug,
           classSlug,
           label: f.name,
           isMade,
+          ...(allowed.length > 0 ? { fightingStyleOptions: unoccupied } : {}),
         });
         continue;
       }

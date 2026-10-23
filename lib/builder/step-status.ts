@@ -7,6 +7,8 @@ import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choice
 import { resolveDefinitionExpertise } from "./expertise";
 import { classRoleEvaluationRef, classRoleForRef, type BuilderClassRole } from "@/lib/character/builder-class-roles";
 import { resolveDefinitionClassFeatureChoices } from "./class-feature-choices";
+import { favoredEnemyOptions, isFavoredEnemyComplete } from "./favored-enemy";
+import { unoccupiedFightingStyleSlugs } from "./class-features-per-level";
 
 export type BuilderStepStatus = "complete" | "in_progress" | "untouched";
 
@@ -54,6 +56,12 @@ function hasSavedLevelChoices(definition: BuilderStatusRef["content_definitions"
   return activeFeatureSlugs(definition, level).every(slug => {
     const feature = exactSavedPin("feature", slug, refs);
     if (!feature || !hasSavedChoices(feature, choices, languages, granted)) return false;
+    if (feature.data.feature_type === "favored_enemy") {
+      const other = refs.filter(ref => ref.content_definitions.slug !== slug && favoredEnemyOptions(ref.content_definitions))
+        .flatMap(ref => { const saved = choices.favored_enemies?.[ref.content_definitions.slug];
+          return isFavoredEnemyComplete(ref.content_definitions, saved, languages) ? [saved] : []; });
+      return isFavoredEnemyComplete(feature, choices.favored_enemies?.[slug], languages, other);
+    }
     if (feature.data.feature_type === "subclass") return !!choices.classes?.find(cls => cls.slug === classSlug)?.subclass;
     if (feature.data.feature_type === "asi") {
       const choice = choices.asi_choices?.[slug];
@@ -65,12 +73,13 @@ function hasSavedLevelChoices(definition: BuilderStatusRef["content_definitions"
         ref.context?.source === "asi_feat" && ref.context?.feature_slug === slug && ref.choice_source?.startsWith("choice:asi:"));
       return matching.length === 1;
     }
-    if (feature.data.feature_type === "fighting_style" && feature.name === "Fighting Style") {
+    if (feature.data.feature_type === "fighting_style" && (fightingStyleSlugs(feature).length > 0 || feature.name === "Fighting Style")) {
       const selected = choices.resolved_choices?.[slug] ?? [];
       const style = selected.length === 1 ? exactSavedPin("feature", selected[0], refs) : undefined;
       const allowed = fightingStyleSlugs(feature);
+      const unoccupied = unoccupiedFightingStyleSlugs(feature, refs.map(ref => ref.content_definitions), choices);
       return !!style && style.name !== "Fighting Style" && style.data.class === classSlug && (allowed.length > 0
-        ? allowed.includes(style.slug) : style.data.feature_type === "fighting_style");
+        ? unoccupied.includes(style.slug) : style.data.feature_type === "fighting_style");
     }
     return true;
   });

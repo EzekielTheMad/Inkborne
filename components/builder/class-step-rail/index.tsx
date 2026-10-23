@@ -19,6 +19,7 @@ import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, UsableFeatSearch } from "@/lib/types/character";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
+import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 
 export interface ClassStepRailProps {
   saveLevelImmediately?: boolean;
@@ -54,6 +55,8 @@ export interface ClassStepRailProps {
   onAsiSelect: (featureSlug: string, choice: AsiChoice) => Promise<void> | void;
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => Promise<void> | void;
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
+  availableLanguages?: readonly string[];
+  onFavoredEnemySelect?: (featureSlug: string, value: FavoredEnemyChoice) => Promise<void> | void;
   /** Called when a met card in the picker is clicked. Parent opens the existing ClassPreviewModal. */
   onAddClass: (content: ContentEntry) => void;
   onConfirmLevelUp: (payload: { classIndex: number; draftLevel: number }) => void;
@@ -106,6 +109,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
     onAsiSelect,
     onFightingStyleSelect,
     onChoiceSelect,
+    availableLanguages,
+    onFavoredEnemySelect,
     onAddClass,
     onConfirmLevelUp,
     onCancelLevelUp,
@@ -181,6 +186,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       subclassContent,
       characterChoices: localChoices,
       classIndex: idx,
+      availableLanguages,
     });
 
     const draftClassIndex = levelUpDraft?.classIndex ?? -1;
@@ -312,6 +318,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
           subclassContent,
           characterChoices: localChoices,
           classIndex: draft.classIndex,
+          availableLanguages,
         });
         const draftRow = perLevel.find((r) => r.level === draft.draftLevel) ?? {
           level: draft.draftLevel,
@@ -355,6 +362,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
             onSubclassSelect={onSubclassSelect}
             onFightingStyleSelect={onFightingStyleSelect}
             onChoiceSelect={onChoiceSelect}
+            availableLanguages={availableLanguages}
+            onFavoredEnemySelect={onFavoredEnemySelect}
             onHpRollChange={onHpRollChange}
             onCancel={() => {
               setLevelUpDraft(null);
@@ -385,6 +394,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
           subclassContent,
           characterChoices: localChoices,
           classIndex: mobileDetail.classIndex,
+          availableLanguages,
         });
         const row = perLevel.find((r) => r.level === mobileDetail.level);
         const styleOptions = availableFightingStyles(features, cls.slug);
@@ -423,6 +433,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
             onSubclassSelect={onSubclassSelect}
             onFightingStyleSelect={onFightingStyleSelect}
             onChoiceSelect={onChoiceSelect}
+            availableLanguages={availableLanguages}
+            onFavoredEnemySelect={onFavoredEnemySelect}
             onHpRollChange={onHpRollChange}
           />
         );
@@ -533,6 +545,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         subclassContent,
         characterChoices: localChoices,
         classIndex: draft.classIndex,
+        availableLanguages,
       });
       const draftRow = perLevel.find((r) => r.level === draft.draftLevel) ?? {
         level: draft.draftLevel,
@@ -567,6 +580,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
           onSubclassSelect={onSubclassSelect}
           onFightingStyleSelect={onFightingStyleSelect}
           onChoiceSelect={onChoiceSelect}
+          availableLanguages={availableLanguages}
+          onFavoredEnemySelect={onFavoredEnemySelect}
           onHpRollChange={onHpRollChange}
           onCancel={() => {
             setLevelUpDraft(null);
@@ -604,6 +619,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         subclassContent: activeSubclassContent,
         characterChoices: localChoices,
         classIndex: selected.classIndex,
+        availableLanguages,
       });
       const activeRow = activePerLevel.find((r) => r.level === selected.level);
       const styleOptionsForActive = availableFightingStyles(features, activeClass.slug);
@@ -635,6 +651,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
           onSubclassSelect={onSubclassSelect}
           onFightingStyleSelect={onFightingStyleSelect}
           onChoiceSelect={onChoiceSelect}
+          availableLanguages={availableLanguages}
+          onFavoredEnemySelect={onFavoredEnemySelect}
           onHpRollChange={onHpRollChange}
         />
       );

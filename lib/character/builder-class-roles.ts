@@ -42,7 +42,9 @@ export function attachBuilderClassRoles<T extends BuilderClassRoleRef>(refs: T[]
     || value.source_order.length !== refs.length || new Set(value.source_order).size !== refs.length
     || refs.some(ref => !ref.id || !value.source_order.includes(ref.id) || ref.character_id !== parent.id)
     || classes.length !== pins.length || classes.length !== value.class_sources.length
+    || new Set(classes.map(cls => cls.slug)).size !== classes.length
     || new Set(classes.map(cls => cls.occurrence_id)).size !== classes.length
+    || new Set(value.class_sources.map(row => row.occurrence_id)).size !== classes.length
     || new Set(value.class_sources.map(row => row.controller_ref_id)).size !== pins.length
     || value.class_sources.filter(row => row.role === "original" && row.occurrence_id === value.original_occurrence_id).length !== 1
     || value.class_sources.some(row => row.role === "original" && row.occurrence_id !== value.original_occurrence_id)) return unavailable;

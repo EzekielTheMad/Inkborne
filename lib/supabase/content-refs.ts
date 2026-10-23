@@ -136,6 +136,7 @@ async function readCharacterContentRefSnapshot(
   }
   let asiEvidence: AsiEvidence = { status: "unavailable", reason: "incomplete_evidence" };
   let classRoles: BuilderClassRoles = { status: "unavailable" };
+  let requiresClassRoles = false;
   let evaluatedRefs = refs;
   try {
     const supabase = await createClient();
@@ -156,6 +157,7 @@ async function readCharacterContentRefSnapshot(
     if (complete && !identity.error && parsedIdentity.success && identity.data?.choices
       && typeof identity.data.choices === "object" && !Array.isArray(identity.data.choices)) {
       const choices = identity.data.choices as CharacterChoices;
+      requiresClassRoles = Array.isArray(choices.classes) && choices.classes.length > 1 && choices.classes.some(cls => cls.occurrence_id);
       const revision = typeof identity.data.action_revision === "string" ? identity.data.action_revision
         : Number.isSafeInteger(identity.data.action_revision) ? String(identity.data.action_revision) : null;
       if (revision !== null && choices.classes?.some(cls => cls.occurrence_id)) {
@@ -174,6 +176,7 @@ async function readCharacterContentRefSnapshot(
       }
     }
   } catch { /* Failure stays explicitly unavailable, never confirmed empty grants. */ }
+  if (requiresClassRoles && classRoles.status !== "available") complete = false;
   if (asiEvidence.status === "complete") asiEvidence = { ...asiEvidence, refs: evaluatedRefs };
   return { refs: evaluatedRefs, complete, asiEvidence, classRoles };
 }
