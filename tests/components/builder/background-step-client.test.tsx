@@ -130,7 +130,7 @@ describe("BackgroundStepClient", () => {
   });
 
   it("uses the injected atomic selection with an exact tuple and canonical returned choices", async () => {
-    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: {
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, action_revision: "2", choices: {
       background: "lantern-courier", ideals: ["A note retained by the server"],
     } });
     renderStep({ choices: {}, contentRefs: [], saveAction });
@@ -157,7 +157,7 @@ describe("BackgroundStepClient", () => {
   });
 
   it("sends only the narrative domain patch and uses canonical choices without a direct parent write", async () => {
-    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: {
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, action_revision: "2", choices: {
       background: "lantern-courier", ideals: ["A server-normalized note"],
     } });
     renderStep({ saveAction });

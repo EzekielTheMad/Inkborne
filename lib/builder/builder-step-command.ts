@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CharacterChoices } from "@/lib/types/character";
 import { equipmentSelectionsSchema } from "./starting-equipment-contract";
+import { classRoleRevisionSchema } from "@/lib/character/class-role-effects-schema";
 
 const content = z.strictObject({ content_id: z.uuid(), content_version: z.number().int().positive() });
 const choice = z.strictObject({ choice_id: z.string().min(1).max(200),
@@ -15,6 +16,8 @@ const asi = z.discriminatedUnion("mode", [
   z.strictObject({ mode: z.literal("feat"), feat_id: z.uuid(), feat_version: z.number().int().positive() }),
 ]);
 export const builderStepInputSchema = z.discriminatedUnion("command", [
+  z.strictObject({ command: z.literal("add_class"), fields: z.strictObject({ class_id: z.uuid(),
+    class_version: z.number().int().positive(), expected_action_revision: classRoleRevisionSchema }) }),
   z.strictObject({ command: z.enum(["select_race", "select_subrace", "select_background"]), fields: content }),
   z.strictObject({ command: z.enum(["clear_race", "clear_subrace"]), fields: z.strictObject({}) }),
   z.strictObject({ command: z.enum(["race_choice", "background_choice", "class_choice"]), fields: choice }),
@@ -31,7 +34,7 @@ export const builderStepInputSchema = z.discriminatedUnion("command", [
     class_slug: z.string().min(1).max(200), level: z.number().int().min(1).max(20), hp_roll: hpRoll.nullable().optional(),
   }) }),
   z.strictObject({ command: z.literal("save_hp_roll"), fields: z.strictObject({
-    class_slug: z.string().min(1).max(200), level: z.number().int().min(2).max(20), ...hpRoll.shape,
+    class_slug: z.string().min(1).max(200), level: z.number().int().min(1).max(20), ...hpRoll.shape,
   }) }),
   z.strictObject({ command: z.literal("select_asi"), fields: z.strictObject({ feature_slug: z.string().min(1).max(200), choice: asi }) }),
   z.strictObject({ command: z.literal("select_class_spells"), fields: z.strictObject({
@@ -48,7 +51,7 @@ export const builderStepInputSchema = z.discriminatedUnion("command", [
   z.strictObject({ command: z.literal("select_equipment"), fields: equipmentSelectionsSchema.omit({ confirmed: true }) }),
 ]);
 export type BuilderStepCommand = z.infer<typeof builderStepInputSchema>["command"];
-export type BuilderStepSaved = { choices: CharacterChoices; scores: Record<string, number> };
+export type BuilderStepSaved = { choices: CharacterChoices; scores: Record<string, number>; action_revision: string };
 export type SaveBuilderStep = (command: BuilderStepCommand, fields: Record<string, unknown>) => Promise<BuilderStepSaved>;
 
 export const builderStepReceiptSchema = z.strictObject({

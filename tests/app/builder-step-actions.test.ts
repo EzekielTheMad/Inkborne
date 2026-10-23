@@ -31,7 +31,7 @@ describe("builder domain action (Auth/RPC doubles; actual app acceptance is sepa
     expect(mocks.client).not.toHaveBeenCalled();
   });
   it("returns only the exact accepted domain patch's canonical saved values", async () => {
-    expect(await saveBuilderStep(actor, target, "select_race", fields)).toEqual({ choices: { race: "human" }, scores: {} });
+    expect(await saveBuilderStep(actor, target, "select_race", fields)).toEqual({ choices: { race: "human" }, scores: {}, action_revision: "2" });
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("character_builder_command_v1", expect.objectContaining({
       p_request: expect.objectContaining({ command: "select_race", character_id: target, fields }),
     }));
@@ -43,7 +43,7 @@ describe("builder domain action (Auth/RPC doubles; actual app acceptance is sepa
         expect(args.p_request).toEqual({ contract_version: 1, command: "resolve_builder", operation_id: original.operation_id, character_id: target });
         return { error: null, data: { ...applied(original), status: "recorded" } };
       });
-    expect(await saveBuilderStep(actor, target, "select_race", fields)).toEqual({ choices: { race: "human" }, scores: {} });
+    expect(await saveBuilderStep(actor, target, "select_race", fields)).toEqual({ choices: { race: "human" }, scores: {}, action_revision: "2" });
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
   });
   it.each(["actor_id", "character_id", "operation_id"])("refuses a structurally valid receipt for another %s", async key => {

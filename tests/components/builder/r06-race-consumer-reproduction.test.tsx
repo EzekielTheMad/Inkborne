@@ -68,7 +68,7 @@ function classEntry(slug: string, id: string) {
 describe("R06.1 actual builder consumers of synthetic immutable race pins", () => {
   it("saves a selected race through the injected exact-tuple action without split legacy writes", async () => {
     vi.clearAllMocks(); const { pin } = syntheticRacePin("imported");
-    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: { race: pin.slug } });
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, action_revision: "2", choices: { race: pin.slug } });
     render(<RaceStepClient characterId="r06-synthetic-character" character={{ ...character(pin), choices: {} }}
       races={[pin]} subraces={[]} traits={[]} contentRefs={[]} schema={raceParitySchema} saveAction={saveAction} />);
     fireEvent.click(screen.getByRole("button", { name: `Preview ${pin.name}` }));
@@ -78,7 +78,7 @@ describe("R06.1 actual builder consumers of synthetic immutable race pins", () =
   });
   it("uses returned canonical choices after an injected clear instead of keeping the optimistic local state", async () => {
     vi.clearAllMocks(); const { pin } = syntheticRacePin("imported");
-    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, choices: { race: pin.slug } });
+    const saveAction = vi.fn<SaveBuilderStep>().mockResolvedValue({ scores: {}, action_revision: "2", choices: { race: pin.slug } });
     render(<RaceStepClient characterId="r06-synthetic-character" character={character(pin)} races={[pin]} subraces={[]} traits={[]}
       contentRefs={[pinnedRaceRef(pin)]} schema={raceParitySchema} saveAction={saveAction} />);
     fireEvent.click(screen.getByRole("button", { name: `Change ${raceLabel}` }));

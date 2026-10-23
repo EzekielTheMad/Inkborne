@@ -7,6 +7,7 @@ import { evaluate } from "@/lib/engine/evaluator";
 import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
 import { computeMaxHp } from "@/lib/character/max-hp";
+import { originalClassOccurrence } from "@/lib/character/builder-class-roles";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 import { CharacterPageClient } from "@/components/character/character-page-client";
@@ -108,7 +109,7 @@ export default async function CharacterPage({ params }: PageProps) {
 
   // Fetch class content for caster classes to derive spellcasting metadata.
   const classChoices =
-    ((character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string }> })
+    ((character.choices as { classes?: Array<{ slug: string; level: number; subclass?: string; occurrence_id?: string }> })
       ?.classes) ?? [];
   const enrolledBuilder = classChoices.some(choice => "occurrence_id" in choice);
   // Automatic class/subclass features are materialized as exact-version refs
@@ -281,7 +282,8 @@ export default async function CharacterPage({ params }: PageProps) {
   const constitutionScore = (evalResult.stats.constitution as number | undefined) ?? 10;
   const hpRolls = (character.choices?.hp_rolls ?? {}) as Record<string, import("@/lib/types/character").HpRollRecord>;
   const hpRule = (character.game_systems?.schema_definition as { hp_rule?: import("@/lib/builder/level-up-rules").HpRule } | undefined)?.hp_rule ?? "free_choice";
-  const maxHp = computeMaxHp(classChoices, classData, constitutionScore, hpRolls, hpRule);
+  const maxHp = computeMaxHp(classChoices, classData, constitutionScore, hpRolls, hpRule,
+    enrolledBuilder ? originalClassOccurrence(contentRefs, character.choices) ?? null : undefined);
   const initialState = initializeState(character.state, maxHp);
 
   const hasSheet = character.choices?.classes && character.choices.classes.length > 0;

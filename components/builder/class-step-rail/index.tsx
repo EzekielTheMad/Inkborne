@@ -23,6 +23,9 @@ import type { HpRule } from "@/lib/builder/level-up-rules";
 export interface ClassStepRailProps {
   saveLevelImmediately?: boolean;
   classChangesAvailable?: boolean;
+  classRemovalAvailable?: boolean;
+  /** undefined retains the legacy reader; native callers supply exact proof. */
+  originalOccurrenceId?: string | null;
   characterName?: string;
   savePending?: boolean;
   saveError?: string | null;
@@ -35,6 +38,7 @@ export interface ClassStepRailProps {
     slug: string;
     level: number;
     subclass?: string;
+    occurrence_id?: string;
   }>;
   localChoices: CharacterChoices;
   /** Engine-resolved ability scores for the current build. */
@@ -83,6 +87,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     characterName = "Character",
     savePending = false,
     classChangesAvailable = true,
+    classRemovalAvailable = classChangesAvailable,
     saveError,
     classes,
     subclasses,
@@ -148,6 +153,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
     setPickerOpenedAtClassCount(open ? selectedClasses.length : null);
   };
   const totalLevel = selectedClasses.reduce((sum, c) => sum + c.level, 0);
+  const isOriginalClass = (index: number) => props.originalOccurrenceId === undefined ? index === 0
+    : selectedClasses[index]?.occurrence_id === props.originalOccurrenceId;
   const levelsRemaining = MAX_TOTAL_LEVEL - totalLevel;
 
   const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes, mechanicsAvailable);
@@ -271,7 +278,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
   // ---------------------------------------------------------------------------
   // AddClassRow: same logic for both layout branches.
   // ---------------------------------------------------------------------------
-  const addClassRowJsx = !classChangesAvailable ? <AddClassRow reasons={[]} disabledReason="This builder currently supports one class." /> : isMidFlow ? (
+  const addClassRowJsx = !classChangesAvailable ? <AddClassRow reasons={[]} disabledReason="Saved class roles are unavailable. Reload before adding a class." /> : isMidFlow ? (
     <AddClassRow
       reasons={MULTICLASS_PREREQS_LOCKED_REASONS}
       disabledReason="Finish active level-up first"
@@ -330,7 +337,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
             }}
             classContent={classContent}
             classIndex={draft.classIndex}
-            isPrimaryClass={draft.classIndex === 0}
+            isPrimaryClass={isOriginalClass(draft.classIndex)}
             draftLevel={draft.draftLevel}
             totalLevelAfterConfirm={totalAfter}
             perLevelRow={draftRow}
@@ -399,7 +406,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
             classSlug={cls.slug}
             className_={classContent.name}
             classIndex={mobileDetail.classIndex}
-            isPrimaryClass={mobileDetail.classIndex === 0}
+            isPrimaryClass={isOriginalClass(mobileDetail.classIndex)}
             row={row}
             subclasses={subclasses}
             styleOptions={styleOptions}
@@ -473,7 +480,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
                     setMobileDetail({ classIndex: idx, level: pendingLevel });
                   }
                 }}
-                onRemoveClass={classChangesAvailable ? () => onRemoveClass(idx) : undefined}
+                  onRemoveClass={classRemovalAvailable ? () => onRemoveClass(idx) : undefined}
                 disabled={railDisabled}
                 onLevelUpClick={handleLevelUpClick}
                 levelUpButtonState={buttonState}
@@ -542,7 +549,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         <LevelUpPane
           classContent={classContent}
           classIndex={draft.classIndex}
-          isPrimaryClass={draft.classIndex === 0}
+          isPrimaryClass={isOriginalClass(draft.classIndex)}
           draftLevel={draft.draftLevel}
           totalLevelAfterConfirm={totalAfter}
           perLevelRow={draftRow}
@@ -611,7 +618,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
           classSlug={activeClass.slug}
           className_={activeClassContent.name}
           classIndex={selected.classIndex}
-          isPrimaryClass={selected.classIndex === 0}
+          isPrimaryClass={isOriginalClass(selected.classIndex)}
           row={activeRow}
           subclasses={subclasses}
           styleOptions={styleOptionsForActive}
@@ -665,7 +672,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
               activeLevel={activeLevel}
               onSelectLevel={handleSelectLevel}
               onLevelChange={handleLevelChange}
-              onRemoveClass={classChangesAvailable ? () => onRemoveClass(idx) : undefined}
+              onRemoveClass={classRemovalAvailable ? () => onRemoveClass(idx) : undefined}
               disabled={railDisabled}
               onLevelUpClick={handleLevelUpClick}
               levelUpButtonState={buttonState}

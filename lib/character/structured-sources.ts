@@ -11,6 +11,9 @@ interface StructuredContentRef {
   choice_source?: string | null;
   created_at?: string;
   content_definitions?: {
+    id?: string;
+    slug?: string;
+    version?: number;
     content_type?: string;
     data?: unknown;
   } | null;
@@ -41,6 +44,15 @@ export function buildCharacterStructuredSources(
     || ref.content_definitions?.content_type === "trait"
     || ref.content_definitions?.content_type === "subrace"
   );
+  const classes = asiInputs?.character.choices.classes;
+  const classProgression = classes?.map(cls => {
+    const pins = contentRefs.filter(ref => ref.content_definitions?.content_type === "class"
+      && ref.content_definitions.slug === cls.slug && ref.content_id === ref.content_definitions.id
+      && ref.content_version === ref.content_definitions.version);
+    const data = pins.length === 1 ? pins[0].content_definitions?.data as StructuredSources["classData"] : undefined;
+    return data && Number.isInteger(cls.level) && cls.level >= 1 && cls.level <= 20 ? { level: cls.level,
+      attacks: data.attacks, improvements: data.improvements } : null;
+  });
 
   return {
     asi: asiInputs ? asiInputs.evidence?.status === "complete" && JSON.stringify(contentRefs.map(asiRefEnvelope)) !== JSON.stringify(asiInputs.evidence.refs.map(asiRefEnvelope))
@@ -48,6 +60,8 @@ export function buildCharacterStructuredSources(
       : resolveCharacterAsiContributions(asiInputs.character, asiInputs.evidence) : undefined,
     raceData: race?.content_definitions?.data as StructuredSources["raceData"],
     classData: characterClass?.content_definitions?.data as StructuredSources["classData"],
+    ...(classProgression ? { classProgression: classProgression.some(source => source === null)
+      ? [] : classProgression as NonNullable<StructuredSources["classProgression"]> } : {}),
     featureData: featuresAndFeats
       .map(
         (ref) => ref.content_definitions?.data as

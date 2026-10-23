@@ -102,6 +102,21 @@ describe("first-class route (query/action doubles only)", () => {
     expect(query.contentQuery.order).not.toHaveBeenCalled();
     expect(mocks.form.mock.calls[0][0]).toMatchObject({ canStart: false, classes: [] });
   });
+  it("reads the original class in a saved multiclass build using its native occurrence rather than array position", async () => {
+    const original = classPin(), secondary = { ...classPin(), id: id(10), content_id: id(11),
+      content_definitions: { ...classPin().content_definitions, id: id(11), slug: "cleric", name: "Pinned Cleric" } };
+    const role = (pin: typeof original, occurrence: string, kind: "original" | "secondary") => ({ ...pin,
+      class_role: { occurrence_id: occurrence, controller_ref_id: pin.id, content_id: pin.content_id, content_version: 1,
+        role: kind, action_revision: "9", raw_effects: [], evaluation_effects: [], raw_data: {}, evaluation_data: {} } });
+    setup({ ...savedCharacter(), action_revision: "9", level: 5, choices: { classes: [
+      { occurrence_id: id(12), slug: "cleric", level: 1 }, { occurrence_id: id(6), slug: "fixture-class", level: 4 },
+    ] } });
+    mocks.refs.mockResolvedValue([role(secondary, id(12), "secondary"), role(original, id(6), "original")]);
+    render(await FirstClassPage({ params: Promise.resolve({ id: target }) }));
+    expect(screen.getByText("Pinned fixture class · Level 4")).toBeInTheDocument();
+    expect(screen.queryByText("Pinned Cleric · Level 1")).not.toBeInTheDocument();
+    expect(mocks.form.mock.calls[0][0]).toMatchObject({ canStart: false, hasSavedClass: true });
+  });
   it("retains recovery and refuses a success display when complete pinned snapshots are unreadable", async () => {
     setup(savedCharacter()); mocks.refs.mockRejectedValue(Error("fixture-private-snapshot-error"));
     render(await FirstClassPage({ params: Promise.resolve({ id: target }) }));

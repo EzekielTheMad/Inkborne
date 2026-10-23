@@ -1,11 +1,10 @@
 import type { CharacterChoices } from "@/lib/types/character";
 import type { ChoiceEffect, Effect } from "@/lib/types/effects";
+import { classRoleEvaluationRef, type BuilderClassRoleRef } from "@/lib/character/builder-class-roles";
 
 /** These readers receive the same active, immutable source snapshots as the
  * builder and sheet. A saved string alone never establishes proficiency. */
-export type ExpertiseSource = { content_definitions?: {
-  slug?: string; content_type?: string; data?: Record<string, unknown>; effects?: Effect[];
-} | null };
+export type ExpertiseSource = BuilderClassRoleRef;
 
 const skills = new Set(["acrobatics", "animal-handling", "arcana", "athletics", "deception", "history", "insight",
   "intimidation", "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion",
@@ -27,21 +26,18 @@ function finiteSelections(choice: ChoiceEffect, choices: CharacterChoices): stri
 }
 
 function eligibleSources(refs: readonly ExpertiseSource[], choices: CharacterChoices): readonly ExpertiseSource[] {
-  return refs.filter(ref => ref.content_definitions?.content_type !== "class"
-    || (choices.classes?.length === 1 && choices.classes[0].slug === ref.content_definitions.slug));
+  return refs.map(ref => classRoleEvaluationRef(ref, choices));
 }
 
 export function expertiseProficiencies(refs: readonly ExpertiseSource[], choices: CharacterChoices): ReadonlySet<string> {
   const eligible = new Set<string>();
-  const definitions = refs.flatMap(ref => ref.content_definitions?.effects ?? []).filter(effect => effect.type === "choice");
   const activeSources = eligibleSources(refs, choices);
+  const definitions = activeSources.flatMap(ref => ref.content_definitions?.effects ?? []).filter(effect => effect.type === "choice");
   const add = (value: unknown) => { const slug = proficiency(value); if (slug) eligible.add(slug); };
   for (const ref of activeSources) {
     const definition = ref.content_definitions;
     if (!definition) continue;
     for (const effect of definition.effects ?? []) if (effect.type === "grant" && effect.value === "proficient") add(effect.stat);
-    // First/secondary class roles must be proved separately before multiclass
-    // proficiency data can be consumed. The current builder has one class.
     for (const field of ["skills", "toolProfs", ...(definition.content_type === "class" ? ["starting_proficiencies"] : [])]) {
       const values = definition.data?.[field];
       if (Array.isArray(values)) values.forEach(add);
@@ -60,7 +56,7 @@ export function expertiseProficiencies(refs: readonly ExpertiseSource[], choices
 export function resolveExpertiseChoice(choice: ChoiceEffect, refs: readonly ExpertiseSource[], choices: CharacterChoices): ChoiceEffect {
   if (choice.grant_type !== "expertise") return choice;
   const effects = eligibleSources(refs, choices).flatMap(ref => ref.content_definitions?.effects ?? []);
-  const definitions = refs.flatMap(ref => ref.content_definitions?.effects ?? []).filter(effect => effect.type === "choice");
+  const definitions = effects.filter(effect => effect.type === "choice");
   const eligible = expertiseProficiencies(refs, choices);
   const occupied = new Set<string>();
   for (const effect of effects) {

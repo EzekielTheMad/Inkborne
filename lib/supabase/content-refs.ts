@@ -10,9 +10,13 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import type { CharacterContentRef } from "@/lib/types/character";
 import { frozenFeatureGrantSchema, type AsiEvidence } from "@/lib/character/asi-contributions";
+import { resolveCharacterCommandContext } from "@/lib/auth/character-command-context";
+import { attachBuilderClassRoles, type BuilderClassRole, type BuilderClassRoles } from "@/lib/character/builder-class-roles";
+import type { CharacterChoices } from "@/lib/types/character";
 
 export interface ContentRefWithContent extends CharacterContentRef {
   content_definitions: ParsedContentDefinition;
+  class_role?: BuilderClassRole;
 }
 
 const contentRefEnvelopeSchema = z.object({
@@ -99,7 +103,7 @@ export async function getContentRefsByCharacter(
 export async function getCharacterContentRefSnapshot(
   characterId: string,
   options: { fresh?: boolean } = {},
-): Promise<{ refs: ContentRefWithContent[]; complete: boolean; asiEvidence: AsiEvidence }> {
+): Promise<{ refs: ContentRefWithContent[]; complete: boolean; asiEvidence: AsiEvidence; classRoles: BuilderClassRoles }> {
   return readCharacterContentRefSnapshot(characterId, options);
 }
 
@@ -107,7 +111,7 @@ async function readCharacterContentRefSnapshot(
   characterId: string,
   options: { fresh?: boolean } = {},
   rejectReadErrors = false,
-): Promise<{ refs: ContentRefWithContent[]; complete: boolean; asiEvidence: AsiEvidence }> {
+): Promise<{ refs: ContentRefWithContent[]; complete: boolean; asiEvidence: AsiEvidence; classRoles: BuilderClassRoles }> {
   // Reads after a write in the same render must bypass its earlier snapshot.
   let data: unknown[] = [];
   let complete = true;
@@ -131,12 +135,14 @@ async function readCharacterContentRefSnapshot(
     if (ref !== null) refs.push(ref);
   }
   let asiEvidence: AsiEvidence = { status: "unavailable", reason: "incomplete_evidence" };
+  let classRoles: BuilderClassRoles = { status: "unavailable" };
+  let evaluatedRefs = refs;
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (!user || authError) return { refs, complete, asiEvidence };
+    if (!user || authError) return { refs, complete, asiEvidence, classRoles };
     const [identity, grants] = await Promise.all([
-      supabase.from("characters").select("id, system_id, game_systems (slug)").eq("id", characterId).single(),
+      supabase.from("characters").select("id, system_id, action_revision, choices, game_systems (slug)").eq("id", characterId).single(),
       supabase.from("character_feature_grants").select("id, character_id, controller_ref_id, controller_type, controller_slug, feature_content_id, feature_version, feature_slug, unlock_level, created_at", { count: "exact" }).eq("character_id", characterId),
     ]);
     const parsed = z.array(frozenFeatureGrantSchema).safeParse(grants.data);
@@ -147,8 +153,29 @@ async function readCharacterContentRefSnapshot(
     if (complete && !identity.error && parsedIdentity.success && !grants.error && parsed.success && grants.count === parsed.data.length) {
       asiEvidence = { status: "complete", character_id: characterId, system_id: parsedIdentity.data.system_id, refs, grants: parsed.data };
     }
+    if (complete && !identity.error && parsedIdentity.success && identity.data?.choices
+      && typeof identity.data.choices === "object" && !Array.isArray(identity.data.choices)) {
+      const choices = identity.data.choices as CharacterChoices;
+      const revision = typeof identity.data.action_revision === "string" ? identity.data.action_revision
+        : Number.isSafeInteger(identity.data.action_revision) ? String(identity.data.action_revision) : null;
+      if (revision !== null && choices.classes?.some(cls => cls.occurrence_id)) {
+        const verified = await resolveCharacterCommandContext();
+        if (verified.status === "token_verified" && verified.context.actor_id === user.id) {
+          const result = await supabase.rpc("character_builder_class_role_projection_v1", {
+            p_context: { ...verified.context }, p_character_id: characterId,
+          });
+          if (!result.error) {
+            const attached = attachBuilderClassRoles(refs, result.data, { id: characterId,
+              system_id: parsedIdentity.data.system_id, action_revision: revision, choices });
+            evaluatedRefs = attached.refs;
+            classRoles = attached.classRoles;
+          }
+        }
+      }
+    }
   } catch { /* Failure stays explicitly unavailable, never confirmed empty grants. */ }
-  return { refs, complete, asiEvidence };
+  if (asiEvidence.status === "complete") asiEvidence = { ...asiEvidence, refs: evaluatedRefs };
+  return { refs: evaluatedRefs, complete, asiEvidence, classRoles };
 }
 
 export async function addContentRef(params: {

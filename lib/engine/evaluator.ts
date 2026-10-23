@@ -36,6 +36,8 @@ export interface StructuredSources {
     attacks?: number[];
     improvements?: boolean[];
   };
+  /** Exact selected classes use their own levels; Extra Attack does not stack. */
+  classProgression?: Array<{ level: number; attacks?: number[]; improvements?: boolean[] }>;
   level?: number;
 }
 
@@ -136,10 +138,14 @@ function collectStructuredData(sources?: StructuredSources): {
   };
 
   // --- Attacks: lookup from class data ---
-  const attacks = sources.classData?.attacks?.[level - 1] ?? 1;
+  const attacks = sources.classProgression
+    ? Math.max(1, ...sources.classProgression.map(source => source.attacks?.[source.level - 1] ?? 1))
+    : sources.classData?.attacks?.[level - 1] ?? 1;
 
   // --- Improvements: lookup from class data ---
-  const improvements = sources.classData?.improvements?.[level - 1] ?? false;
+  const improvements = sources.classProgression
+    ? sources.classProgression.some(source => source.improvements?.[source.level - 1] === true)
+    : sources.classData?.improvements?.[level - 1] ?? false;
 
   return { speed, vision, dmgres, savetxt, attacks, improvements };
 }

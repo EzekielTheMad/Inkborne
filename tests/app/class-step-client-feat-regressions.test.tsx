@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ClassStepRail } from "@/components/builder/class-step-rail";
 import type { ContentEntry } from "@/components/builder/content-browser";
+import type { ClassPreviewModalProps } from "@/components/builder/class-preview-modal";
 import type { CharacterChoices, UsableFeatOption } from "@/lib/types/character";
 
 const mocks = vi.hoisted(() => ({
@@ -38,8 +39,9 @@ vi.mock("@/components/builder/content-browser", () => ({
   ContentBrowser: () => null,
 }));
 
+let currentPreview!: ClassPreviewModalProps;
 vi.mock("@/components/builder/class-preview-modal", () => ({
-  ClassPreviewModal: () => null,
+  ClassPreviewModal: (props: ClassPreviewModalProps) => { currentPreview = props; return null; },
 }));
 
 vi.mock("@/components/builder/stat-preview", () => ({
@@ -107,15 +109,18 @@ const emberSentinel: UsableFeatOption = {
   prerequisiteReason: null,
 };
 
-function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typeof ClassStepClient>["saveAction"]) {
+function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typeof ClassStepClient>["saveAction"],
+  native?: { classRolesAvailable?: boolean; action_revision?: string }) {
   return render(
     <ClassStepClient
       saveAction={saveAction}
+      classRolesAvailable={native?.classRolesAvailable}
       characterId="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
       character={{
         id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
         name: "Tamsin",
         level: 4,
+        action_revision: native?.action_revision,
         base_stats: {},
         choices,
       }}
@@ -141,6 +146,57 @@ function deferred<T>() {
 describe("ClassStepClient feat regressions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("adds a native class with the displayed revision and never uses legacy writes or native removal", async () => {
+    const choices = { classes: [{ slug: "fighter", level: 4, occurrence_id: "fighter-occurrence" }] };
+    const added = { classes: [...choices.classes, { slug: "cleric", level: 1, occurrence_id: "cleric-occurrence" }] };
+    const save = vi.fn().mockResolvedValue({ choices: added, scores: {}, action_revision: "9" });
+    renderClient(choices, save, { classRolesAvailable: true, action_revision: "8" });
+    expect(currentRail.classChangesAvailable).toBe(true);
+    expect(currentRail.classRemovalAvailable).toBe(false);
+    const cleric = { ...fighter, id: "10000000-0000-4000-8000-000000000005", slug: "cleric", name: "Cleric" };
+    await act(async () => { currentRail.onAddClass(cleric); });
+    expect(currentPreview.acquisitionOnly).toBe(true);
+    await act(async () => { currentPreview.onPick({ classSlug: "cleric", subclassSlug: "life" }); });
+    expect(save).toHaveBeenCalledExactlyOnceWith("add_class", { class_id: cleric.id, class_version: 1, expected_action_revision: "8" });
+    expect(currentRail.localChoices).toEqual(added);
+    await act(async () => { await currentRail.onRemoveClass(0); });
+    expect(mocks.updateCharacter).not.toHaveBeenCalled();
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("keeps the saved build after a refused native Add without a legacy fallback", async () => {
+    const choices = { classes: [{ slug: "fighter", level: 4, occurrence_id: "fighter-occurrence" }] };
+    const save = vi.fn().mockRejectedValue(Error("refused"));
+    renderClient(choices, save, { classRolesAvailable: true, action_revision: "8" });
+    await act(async () => { currentRail.onAddClass({ ...fighter, slug: "cleric" }); });
+    await act(async () => { currentPreview.onPick({ classSlug: "cleric", subclassSlug: null }); });
+    expect(currentRail.localChoices).toEqual(choices);
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+    expect(screen.getAllByRole("alert")[0]).toHaveTextContent("could not be confirmed");
+  });
+
+  it("keeps Add unavailable without native role proof instead of inferring the original array entry", async () => {
+    const save = vi.fn();
+    renderClient({ classes: [{ slug: "fighter", level: 4, occurrence_id: "fighter-occurrence" }] }, save, { action_revision: "8" });
+    expect(currentRail.classChangesAvailable).toBe(false);
+    await act(async () => { currentRail.onAddClass({ ...fighter, slug: "cleric" }); });
+    await act(async () => { currentPreview.onPick({ classSlug: "cleric", subclassSlug: null }); });
+    expect(save).not.toHaveBeenCalled();
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("uses the last accepted revision after another native save without fetching a newer revision for stale intent", async () => {
+    const choices = { classes: [{ slug: "fighter", level: 4, occurrence_id: "fighter-occurrence" }] };
+    const save = vi.fn().mockResolvedValueOnce({ choices, scores: {}, action_revision: "9" })
+      .mockResolvedValueOnce({ choices, scores: {}, action_revision: "10" });
+    renderClient(choices, save, { classRolesAvailable: true, action_revision: "8" });
+    await act(async () => { await currentRail.onChoiceSelect("fighter-skills", ["skill-athletics"]); });
+    await act(async () => { currentRail.onAddClass({ ...fighter, slug: "cleric" }); });
+    await act(async () => { currentPreview.onPick({ classSlug: "cleric", subclassSlug: null }); });
+    expect(save).toHaveBeenLastCalledWith("add_class", { class_id: fighter.id, class_version: 1, expected_action_revision: "9" });
+    expect(mocks.updateCharacterAndReturn).not.toHaveBeenCalled();
   });
 
   it("uses the accepted domain saver for class choices and style pins without a legacy write", async () => {

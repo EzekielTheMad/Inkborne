@@ -23,6 +23,7 @@ import type { HpRollRecord } from "@/lib/types/character";
 interface ClassChoice {
   slug: string;
   level: number;
+  occurrence_id?: string;
 }
 
 interface ClassContentEntry {
@@ -55,6 +56,7 @@ export function computeMaxHp(
   constitutionScore: number,
   hpRolls: Record<string, HpRollRecord> = {},
   hpRule: HpRule = "free_choice",
+  originalOccurrenceId?: string | null,
 ): number {
   if (classes.length === 0) return 0;
   const conMod = abilityMod(constitutionScore);
@@ -62,7 +64,9 @@ export function computeMaxHp(
   let total = 0;
   classes.forEach((cls, classIndex) => {
     const die = hitDieFor(cls.slug, classContent);
-    const isPrimary = classIndex === 0;
+    // Native callers pass the proved original occurrence. Never promote the
+    // first array entry when that evidence is unavailable or order changes.
+    const isPrimary = originalOccurrenceId === undefined ? classIndex === 0 : cls.occurrence_id === originalOccurrenceId;
 
     for (let level = 1; level <= cls.level; level++) {
       const contribution = hpContributionForLevel({

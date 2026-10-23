@@ -5,6 +5,8 @@ import { hasCompleteAbilityScores } from "./ability-score-validation";
 import type { CharacterChoices } from "@/lib/types/character";
 import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choices";
 import { resolveDefinitionExpertise } from "./expertise";
+import { classRoleEvaluationRef, classRoleForRef, type BuilderClassRole } from "@/lib/character/builder-class-roles";
+import { resolveDefinitionClassFeatureChoices } from "./class-feature-choices";
 
 export type BuilderStepStatus = "complete" | "in_progress" | "untouched";
 
@@ -16,6 +18,8 @@ export const builderStepStatusLabels: Record<BuilderStepStatus, string> = {
 
 /** Minimal parsed snapshot shape; runtime fetchers validate the full envelope. */
 export interface BuilderStatusRef {
+  id?: string;
+  class_role?: BuilderClassRole;
   content_id: string;
   content_version: number;
   context?: Record<string, unknown>;
@@ -99,7 +103,9 @@ export function getBuilderStepStatus(
   classSpellsComplete = true,
 ): BuilderStepStatus {
   const sourceRefs = refs;
-  refs = refs.map(ref => ({ ...ref, content_definitions: resolveDefinitionExpertise(ref.content_definitions, sourceRefs, choices) }));
+  refs = refs.map(ref => { const projected = classRoleEvaluationRef(ref, choices);
+    return { ...projected, content_definitions: resolveDefinitionClassFeatureChoices(
+      resolveDefinitionExpertise(projected.content_definitions, sourceRefs, choices), sourceRefs, choices) }; });
   const granted = fixedLanguages(refs.map(ref => ref.content_definitions));
   const countPins = (type: string) => refs.filter(ref => ref.content_definitions.content_type === type).length;
   switch (stepType) {
@@ -109,6 +115,8 @@ export function getBuilderStepStatus(
       if (!classSpellsComplete) return "in_progress";
       if (!Array.isArray(classes) || new Set(classes.map(cls => cls?.slug)).size !== classes.length ||
         countPins("class") !== classes.length || countPins("subclass") !== classes.filter(cls => cls?.subclass).length) return "in_progress";
+      if (classes.length > 1 && sourceRefs.filter(ref => ref.content_definitions.content_type === "class")
+        .some(ref => !classRoleForRef(ref, choices))) return "in_progress";
       return classes.every(cls => {
         if (!cls || typeof cls.slug !== "string" || !cls.slug.trim() ||
           !Number.isInteger(cls.level) || cls.level <= 0) return false;

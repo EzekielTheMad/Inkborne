@@ -52,6 +52,7 @@ export default async function ClassStepPage({ params }: PageProps) {
   return (
     <ClassStepClient
       saveAction={characterCreationUIEnabled() ? saveBuilderStep.bind(null, user.id, id) : undefined}
+      classRolesAvailable={contentSnapshot.classRoles.status === "available" && contentSnapshot.classRoles.action_revision === String(character.action_revision)}
       castingSources={casting.status === "available" ? casting.sources : []}
       selectedSpells={(savedSpells.data ?? []).filter(row => row.source === "selection" && row.content_id && row.content_version)
         .map(row => ({ content_id: row.content_id!, content_version: row.content_version!, is_prepared: row.is_prepared, class_slug: row.class_slug }))}

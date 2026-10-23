@@ -2,8 +2,9 @@ import type { Effect } from "@/lib/types/effects";
 import type { CharacterChoices } from "@/lib/types/character";
 import { fixedLanguages, isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
 import { resolveExpertiseChoice } from "@/lib/builder/expertise";
+import { classRoleEvaluationRef, classRoleForRef, type BuilderClassRoleRef } from "./builder-class-roles";
 
-type Ref = { content_definitions?: { slug?: string; content_type?: string; effects?: Effect[]; data?: Record<string, unknown> } | null };
+type Ref = BuilderClassRoleRef;
 const abilities = new Set(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]);
 
 function skillGrantStat(value: string): string {
@@ -18,16 +19,18 @@ function skillGrantStat(value: string): string {
  * Spell acquisitions and selected feature pins are projected by the database.
  */
 export function resolveCharacterChoiceEffects(refs: readonly Ref[], choices: CharacterChoices): Effect[] {
-  const effects = refs.flatMap(ref => (ref.content_definitions?.effects ?? []).map(effect =>
+  const projected = refs.map(ref => ({ ref: classRoleEvaluationRef(ref, choices), role: classRoleForRef(ref, choices) }));
+  const effects = projected.flatMap(({ ref, role }) => (ref.content_definitions?.effects ?? []).map(effect =>
     effect.type === "grant" && ["proficient", "expertise"].includes(effect.value) && effect.stat.startsWith("skill-")
       ? { ...effect, stat: skillGrantStat(effect.stat) } : effect.type === "grant" && effect.value === "proficient"
-        && choices.classes?.length === 1 && ref.content_definitions?.content_type === "class" && ref.content_definitions.slug === choices.classes[0].slug
+        && (role?.role === "original" || choices.classes?.length === 1) && ref.content_definitions?.content_type === "class"
+        && choices.classes?.some(cls => cls.slug === ref.content_definitions?.slug)
         && effect.stat.startsWith("save_") && abilities.has(effect.stat.slice(5))
         ? { ...effect, stat: `saving_throw_${effect.stat.slice(5)}` }
         : effect.type === "grant" && ["language", "languages"].includes(effect.stat)
           ? { ...effect, stat: effect.value, value: "proficient" } : effect));
   const definitions = effects.filter(effect => effect.type === "choice");
-  const derived: Effect[] = fixedLanguages(refs.map(ref => ({ data: ref.content_definitions?.data ?? {},
+  const derived: Effect[] = fixedLanguages(projected.map(({ ref }) => ({ data: ref.content_definitions?.data ?? {},
     effects: ref.content_definitions?.effects }))).map(language => ({ type: "grant", stat: language, value: "proficient" }));
   for (const choice of definitions) {
     if (definitions.filter(other => other.choice_id === choice.choice_id).length !== 1) continue;

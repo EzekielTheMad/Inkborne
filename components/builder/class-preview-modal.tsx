@@ -14,6 +14,7 @@ import { useIsMobile } from "@/lib/builder/use-is-mobile";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
 export interface ClassPreviewModalProps {
+  acquisitionOnly?: boolean;
   open: boolean;
   classContent: ContentEntry | null;
   features: ContentEntry[];
@@ -33,6 +34,7 @@ export function ClassPreviewModal({
   spells,
   onCancel,
   onPick,
+  acquisitionOnly = false,
 }: ClassPreviewModalProps) {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -158,6 +160,7 @@ export function ClassPreviewModal({
           </Button>
         </div>
       </footer>
+      {acquisitionOnly && <p className="px-6 py-2 text-sm text-muted-foreground">Adds level 1 of this class. Choose its subclass and spells after saving.</p>}
     </>
   );
 

@@ -52,5 +52,5 @@ export async function saveBuilderStep(expectedAccountId: string, characterId: st
     || receipt.actor_id !== expectedAccountId || receipt.command !== command || !equalEquipmentIntent(receipt.fields, input.data.fields)) {
     throw Error("This selection could not be confirmed. Reload its saved values before trying again.");
   }
-  return { choices: receipt.saved_choices as CharacterChoices, scores: receipt.saved_scores };
+  return { choices: receipt.saved_choices as CharacterChoices, scores: receipt.saved_scores, action_revision: receipt.action_revision };
 }

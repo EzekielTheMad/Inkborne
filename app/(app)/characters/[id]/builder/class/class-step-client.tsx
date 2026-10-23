@@ -42,9 +42,13 @@ import { activeFeatureSlugs, fixedLanguages, resolveDefinitionChoices } from "@/
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 import { ClassSpellsPanel, type BuilderSpellSelection } from "@/components/builder/class-spells-panel";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
+import { classRoleEvaluationRef, originalClassOccurrence, type BuilderClassRole } from "@/lib/character/builder-class-roles";
+import { classRoleRevisionSchema } from "@/lib/character/class-role-effects-schema";
+import { resolveDefinitionClassFeatureChoices } from "@/lib/builder/class-feature-choices";
 
 interface ClassStepClientProps {
   saveAction?: SaveBuilderStep;
+  classRolesAvailable?: boolean;
   castingSources?: EffectiveCastingSource[];
   selectedSpells?: Array<BuilderSpellSelection & { class_slug: string }>;
   grantedSpells?: Array<{ content_id: string; class_slug: string }>;
@@ -54,6 +58,7 @@ interface ClassStepClientProps {
     name: string;
     system_id?: string;
     level: number;
+    action_revision?: number | string;
     base_stats: Record<string, number>;
     choices: CharacterChoices;
     state?: Record<string, unknown>;
@@ -68,6 +73,8 @@ interface ClassStepClientProps {
     content_id: string;
     context: Record<string, unknown>;
     choice_source: string | null;
+    content_version?: number;
+    class_role?: BuilderClassRole;
     content_definitions: {
       id: string;
       name: string;
@@ -119,7 +126,8 @@ export function ClassStepClient({
   schema,
   asiEvidence: serverAsiEvidence,
   availableLanguages,
-  saveAction,
+  saveAction: serverSaveAction,
+  classRolesAvailable = false,
   castingSources = [],
   selectedSpells = [],
   grantedSpells = [],
@@ -137,6 +145,15 @@ export function ClassStepClient({
     character.choices ?? {},
   );
   const [localLevel, setLocalLevel] = useState(character.level);
+  const [acceptedRevision, setAcceptedRevision] = useState<{ source: typeof character.action_revision; value: string } | null>(null);
+  const currentRevision = acceptedRevision && acceptedRevision.source === character.action_revision ? acceptedRevision.value : String(character.action_revision);
+  const saveNative = useCallback<SaveBuilderStep>(async (command, fields) => {
+    if (!serverSaveAction) throw Error("This class save is unavailable.");
+    const saved = await serverSaveAction(command, fields);
+    setAcceptedRevision({ source: character.action_revision, value: saved.action_revision });
+    return saved;
+  }, [serverSaveAction, character.action_revision]);
+  const saveAction = serverSaveAction ? saveNative : undefined;
   const [spellDrafts, setSpellDrafts] = useState<Record<string, boolean>>({});
   const handleSpellDraftChange = useCallback((classSlug: string, dirty: boolean) => {
     setSpellDrafts(previous => previous[classSlug] === dirty ? previous : { ...previous, [classSlug]: dirty });
@@ -173,8 +190,12 @@ export function ClassStepClient({
   });
   const missingFeatures = [...new Set(activeSlugs)].filter(slug => !contentRefs.some(ref => ref.content_id === ref.content_definitions.id && ref.content_definitions.content_type === "feature" && ref.content_definitions.slug === slug));
   const grantedLanguages = fixedLanguages(contentRefs.map(ref => ref.content_definitions));
-  const resolveEntries = (entries: ContentEntry[]) => entries.map(entry => resolveDefinitionExpertise(
-    resolveDefinitionChoices(entry, availableLanguages, grantedLanguages), contentRefs, localChoices));
+  const resolveEntries = (entries: ContentEntry[]) => entries.map(entry => {
+    const pin = entry.content_type === "class" ? contentRefs.find(ref => ref.content_id === entry.id && ref.content_version === entry.version) : undefined;
+    const projected = pin ? classRoleEvaluationRef(pin, localChoices).content_definitions : entry;
+    return resolveDefinitionClassFeatureChoices(resolveDefinitionExpertise(
+      resolveDefinitionChoices(projected ?? entry, availableLanguages, grantedLanguages), contentRefs, localChoices), contentRefs, localChoices);
+  });
 
   async function recoverFeatureRefs() {
     if (saveBusy.current || snapshotConflict) return;
@@ -224,6 +245,10 @@ export function ClassStepClient({
     content: ContentEntry,
     opts?: { subclassSlug?: string | null },
   ) {
+    if (saveAction && (!classRolesAvailable || !classRoleRevisionSchema.safeParse(currentRevision).success || unsavedSpells)) {
+      setSaveError("Save your spell choices and reload the current class build before adding a class.");
+      return;
+    }
     if (!beginSave()) return;
     setPreviewContent(null);
 
@@ -236,11 +261,20 @@ export function ClassStepClient({
     const newChoices = { ...localChoices, classes: newClasses };
 
     const prev = { choices: localChoices, level: localLevel };
-    setLocalChoices(newChoices);
-    setLocalLevel(totalLevel);
+    if (!saveAction) { setLocalChoices(newChoices); setLocalLevel(totalLevel); }
 
     setSaveError(null);
     try {
+      if (saveAction) {
+        const saved = await saveAction("add_class", { class_id: content.id, class_version: content.version,
+          expected_action_revision: currentRevision });
+        setLocalChoices(saved.choices);
+        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
+        // Subclass acquisition has its own finite transition after the new
+        // controller reloads. Never combine a legacy pin write with Add.
+        startTransition(() => router.refresh());
+        return;
+      }
       const persisted = await updateCharacterAndReturn(characterId, {
         choices: newChoices,
         level: totalLevel,
@@ -395,6 +429,10 @@ export function ClassStepClient({
   }
 
   async function handleRemoveClass(classIndex: number) {
+    if (saveAction) {
+      setSaveError("Removing a saved class is not available yet.");
+      return;
+    }
     if (!beginSave()) return;
     const removedClass = selectedClasses[classIndex];
     const updatedClasses = selectedClasses.filter((_, i) => i !== classIndex);
@@ -665,7 +703,9 @@ export function ClassStepClient({
         {snapshotConflict || missingFeatures.length > 0 ? null : hasClass ? (
           <ClassStepRail
             saveLevelImmediately={!!saveAction}
-            classChangesAvailable={!saveAction}
+            classChangesAvailable={!saveAction || classRolesAvailable}
+            classRemovalAvailable={!saveAction}
+            originalOccurrenceId={saveAction ? originalClassOccurrence(contentRefs, localChoices) ?? null : undefined}
             characterName={character.name}
             savePending={saving}
             saveError={saveError}
@@ -700,6 +740,7 @@ export function ClassStepClient({
         )}
 
         <ClassPreviewModal
+          acquisitionOnly={!!saveAction}
           open={previewContent !== null && !snapshotConflict}
           classContent={previewContent}
           features={features}

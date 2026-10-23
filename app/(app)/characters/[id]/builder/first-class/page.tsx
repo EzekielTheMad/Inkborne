@@ -7,11 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getContentRefsByCharacter } from "@/lib/supabase/content-refs";
 import { FirstClassForm } from "./first-class-form";
 import { checkFirstClass, submitFirstClass } from "./actions";
+import { originalClassOccurrence } from "@/lib/character/builder-class-roles";
 
-const savedChoices = z.object({ classes: z.tuple([z.strictObject({
+const savedChoices = z.object({ classes: z.array(z.strictObject({
   occurrence_id: z.uuid(), slug: z.string().min(1).max(200), level: z.number().int().min(1).max(20),
   subclass: z.string().min(1).max(200).optional(),
-})]) });
+})).min(1).max(20) });
 const controllerContext = z.strictObject({ source: z.literal("class"), level: z.literal(1) });
 
 export default async function FirstClassPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,25 +44,35 @@ export default async function FirstClassPage({ params }: { params: Promise<{ id:
       const rawRevision = typeof character.action_revision === "string" ? character.action_revision
         : Number.isSafeInteger(character.action_revision) ? String(character.action_revision) : null;
       const revision = classRoleRevisionSchema.safeParse(rawRevision);
-      if (!selected.success || !revision.success || revision.data === "0" || character.level !== selected.data.classes[0].level
+      if (!selected.success || !revision.success || revision.data === "0"
+        || character.level !== selected.data.classes.reduce((sum, cls) => sum + cls.level, 0)
+        || new Set(selected.data.classes.map(cls => cls.slug)).size !== selected.data.classes.length
+        || new Set(selected.data.classes.map(cls => cls.occurrence_id)).size !== selected.data.classes.length
         || !system.success || system.data.slug !== "dnd-5e-2014") throw Error("Saved class unavailable");
       // Reuse the complete public-row/pinned-version reader. Never substitute
       // today's catalog, infer an absent pin or display a partially read graph.
       const refs = await getContentRefsByCharacter(id, { requireCompleteSnapshots: true, fresh: true });
       const controllers = refs.filter(ref => ["class", "subclass"].includes(ref.content_definitions.content_type));
-      const selectedClass = selected.data.classes[0];
       const classPins = controllers.filter(ref => ref.content_definitions.content_type === "class");
       const subclassPins = controllers.filter(ref => ref.content_definitions.content_type === "subclass");
-      if (classPins.length !== 1 || subclassPins.length !== (selectedClass.subclass ? 1 : 0)
+      if (classPins.length !== selected.data.classes.length || subclassPins.length !== selected.data.classes.filter(cls => cls.subclass).length
         || refs.some(ref => ref.character_id !== id)) throw Error("Saved class unavailable");
-      if (selectedClass.subclass && (subclassPins[0].content_definitions.slug !== selectedClass.subclass
-        || subclassPins[0].content_definitions.data.parent_class !== selectedClass.slug)) throw Error("Saved class unavailable");
-      const pin = classPins[0], snapshot = pin.content_definitions;
-      if (snapshot.content_type !== "class" || snapshot.system_id !== character.system_id || snapshot.slug !== selectedClass.slug
-        || pin.content_id !== snapshot.id || pin.content_version !== snapshot.version
-        || pin.feature_grant_id !== null || pin.choice_source !== null || !controllerContext.safeParse(pin.context).success)
-        throw Error("Saved class unavailable");
-      savedClass = { name: snapshot.name, level: selectedClass.level };
+      for (const cls of selected.data.classes) {
+        const pins = classPins.filter(ref => ref.content_definitions.slug === cls.slug);
+        const subclasses = subclassPins.filter(ref => ref.content_definitions.slug === cls.subclass);
+        if (pins.length !== 1 || (cls.subclass && (subclasses.length !== 1
+          || subclasses[0].content_definitions.data.parent_class !== cls.slug))) throw Error("Saved class unavailable");
+        const pin = pins[0], snapshot = pin.content_definitions;
+        if (snapshot.system_id !== character.system_id || pin.content_id !== snapshot.id || pin.content_version !== snapshot.version
+          || pin.feature_grant_id !== null || pin.choice_source !== null || !controllerContext.safeParse(pin.context).success)
+          throw Error("Saved class unavailable");
+      }
+      const originalId = originalClassOccurrence(refs, selected.data);
+      const selectedClass = selected.data.classes.length === 1 ? selected.data.classes[0]
+        : selected.data.classes.find(cls => cls.occurrence_id === originalId);
+      if (!selectedClass) throw Error("Saved class unavailable");
+      savedClass = { name: classPins.find(ref => ref.content_definitions.slug === selectedClass.slug)!.content_definitions.name,
+        level: selectedClass.level };
     } catch { savedClassUnavailable = true; }
   }
   return <div className="mx-auto max-w-lg space-y-4">
