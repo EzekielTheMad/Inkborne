@@ -252,6 +252,10 @@ test("Warlock pact and invocation choices respect saved spell prerequisites capa
   await choose(page, page.getByRole("button", { name: /^Fiend(?:\s|$)/ }));
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "10", Charisma: "15" });
   await setLevel(page, "Warlock", 2); await openLevel(page, 2);
+  await expect(page.getByText("Hit Point Maximum", { exact: true }).locator("..").locator("span").last()).toHaveText("15");
+  const casting = page.getByRole("group", { name: "Warlock spellcasting", exact: true });
+  await expect(casting.getByText("Spell Save DC", { exact: true }).locator("..").locator("span").last()).toHaveText("12");
+  await expect(casting.getByText("Spell Attack Bonus", { exact: true }).locator("..").locator("span").last()).toHaveText("+4");
   let invocations = group(page, "Choose 2 invocation");
   await expect(invocations.getByRole("button", { name: "Eldritch Invocation Agonizing Blast", exact: true })).toHaveCount(0);
   for (const name of ["Eldritch Invocation Armor Of Shadows", "Eldritch Invocation Beguiling Influence"]) await choose(page, invocations.getByRole("button", { name, exact: true }));
