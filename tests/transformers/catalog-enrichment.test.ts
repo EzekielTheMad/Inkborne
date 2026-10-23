@@ -68,6 +68,14 @@ describe("real SRD catalog import metadata", () => {
     expect(tiefling.effects).toContainEqual({ type: "grant", stat: "spellcasting_ability", value: "charisma" });
   });
 
+  it("retains the High Elf extra-language choice without inventing fixed languages", () => {
+    const languages = ["dwarvish", "giant", "gnomish", "goblin", "halfling", "orc", "abyssal", "celestial", "draconic", "deep-speech", "infernal", "primordial", "sylvan", "undercommon"];
+    const trait = transformTraitEntry({ index: "extra-language", name: "Extra Language", desc: ["You can speak, read, and write one extra language of your choice."], races: [], subraces: [{ index: "high-elf", name: "High Elf" }], proficiencies: [],
+      language_options: { choose: 1, from: { options: languages.map(index => ({ item: { index, name: index } })) } } });
+    expect(trait.effects).toContainEqual({ type: "choice", choose: 1, from: languages, grant_type: "language", choice_id: "extra-language-language-choice" });
+    expect(trait.effects.some(effect => effect.type === "grant" && effect.stat === "language")).toBe(false);
+  });
+
   it("keeps Half-Elf chosen +1 bonuses separate from its fixed +2 CHA", () => {
     const input = { index: "half-elf", name: "Half-Elf", speed: 30, size: "Medium", size_description: "Medium", age: "", alignment: "", language_desc: "", traits: [], subraces: [], languages: [], starting_proficiencies: [],
       ability_bonuses: [{ ability_score: { index: "cha", name: "CHA" }, bonus: 2 }],

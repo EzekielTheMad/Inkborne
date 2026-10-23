@@ -13,6 +13,7 @@ interface ApiTrait {
     choose: number;
     from: { options: Array<{ item: { index: string; name: string } }> };
   };
+  language_options?: ApiChoice;
   trait_specific?: {
     spell_options?: ApiChoice;
     subtrait_options?: ApiChoice;
@@ -39,6 +40,10 @@ export function transformTraitEntry(trait: ApiTrait): TransformedContent {
         `${trait.index}-proficiency-choice`
       ));
     }
+
+    const languages = trait.language_options;
+    if (languages) effects.push(buildChoiceEffect(languages.choose, referenceOptions(languages).map(option => option.index),
+      "language", `${trait.index}-language-choice`));
 
     const spells = trait.trait_specific?.spell_options;
     if (spells) effects.push(buildChoiceEffect(spells.choose, referenceOptions(spells).map(option => option.index),
