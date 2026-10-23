@@ -407,7 +407,7 @@ BEGIN
       normalized:=normalized||pg_catalog.jsonb_build_object(key,hp);
     END LOOP;
     IF fields ? 'hp_roll' AND fields->'hp_roll'<>'null'::jsonb THEN
-      IF chosen_level<=1 OR NOT private.builder_exact_keys_v1(fields->'hp_roll',ARRAY['method','value']) THEN
+      IF chosen_level<=parent.level OR NOT private.builder_exact_keys_v1(fields->'hp_roll',ARRAY['method','value']) THEN
         RAISE EXCEPTION 'builder_invalid_hp_selection' USING ERRCODE='22023'; END IF;
       hp:=private.builder_progression_hp_v1(target,(occurrence->>'id')::uuid,chosen_level,die,
         fields#>>'{hp_roll,method}',fields#>'{hp_roll,value}',cap.actor_id,operation);
