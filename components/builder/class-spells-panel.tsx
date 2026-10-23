@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
+import { isOrdinaryClassSpellEligible } from "@/lib/spells/spell-eligibility";
 import { computeMaxPrepared } from "@/lib/spells/helpers";
 import { useSaveNavigationGuard } from "@/lib/builder/use-save-navigation-guard";
 
@@ -46,12 +47,13 @@ interface SpellSectionProps {
   entries: ContentEntry[];
   selections: BuilderSpellSelection[];
   showPrepared: boolean;
+  expandedSpellSlugs: readonly string[];
   disabled: boolean;
   onToggle: (entry: ContentEntry) => void;
   onPrepare: (entry: ContentEntry, prepared: boolean) => void;
 }
 
-function SpellSection({ label, entries, selections, showPrepared, disabled, onToggle, onPrepare }: SpellSectionProps) {
+function SpellSection({ label, entries, selections, showPrepared, expandedSpellSlugs, disabled, onToggle, onPrepare }: SpellSectionProps) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
   const filtered = useMemo(() => entries.filter(entry => entry.name.toLowerCase().includes(query.trim().toLowerCase())), [entries, query]);
@@ -70,6 +72,7 @@ function SpellSection({ label, entries, selections, showPrepared, disabled, onTo
             <input type="checkbox" aria-label={`Select ${entry.name}`} checked={!!selected} disabled={disabled}
               onChange={() => onToggle(entry)} />
             <span className="font-medium">{entry.name}</span>
+            {expandedSpellSlugs.includes(entry.slug) && <span className="rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground">Expanded list</span>}
             <span className="ml-auto text-xs text-muted-foreground">{spellLevel(entry) === 0 ? "Cantrip" : `Level ${spellLevel(entry)}`}</span>
           </label>
           {selected?.always_prepared && <p className="mt-2 pl-6 text-sm text-muted-foreground">Always prepared by Signature Spells.</p>}
@@ -120,9 +123,8 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
     const level = spellLevel(entry);
     const pin = selected.find(item => item.content_id === entry.id);
     if (pin ? entry.version !== pin.content_version : catalog.findIndex(item => item.id === entry.id) !== index) return false;
-    return entry.content_type === "spell" && level !== null && level >= source.spellList.level[0] && level <= maxLevel
-      && Array.isArray(entry.data.classes) && entry.data.classes.includes(source.spellList.class);
-  }).sort((a, b) => (spellLevel(a)! - spellLevel(b)!) || a.name.localeCompare(b.name)), [catalog, maxLevel, source.spellList, selected]);
+    return entry.content_type === "spell" && level !== null && isOrdinaryClassSpellEligible(source, entry);
+  }).sort((a, b) => (spellLevel(a)! - spellLevel(b)!) || a.name.localeCompare(b.name)), [catalog, source, selected]);
   const byId = useMemo(() => {
     const result = new Map<string, ContentEntry[]>();
     for (const entry of entries) result.set(entry.id, [...(result.get(entry.id) ?? []), entry]);
@@ -183,6 +185,7 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
     <div className="space-y-2">
       <h3 className="text-base font-semibold">{className} Spells</h3>
       <p className="text-sm text-muted-foreground">Choose {source.cantripsKnown} cantrips from your class list. Spell choices save together when you select Save spells.</p>
+      {!!source.expandedSpellSlugs?.length && <p className="text-sm text-muted-foreground">Your patron&apos;s expanded spells are available below. They count toward your spells-known allowance.</p>}
       <p className="text-sm">Cantrips: {cantripCount} / {source.cantripsKnown}</p>
       {wizardBook ? <p className="text-sm">Spellbook: {leveledCount} / {bookSize} spells</p>
         : !source.prepared && source.spellsKnown !== "all" ? <p className="text-sm">Spells known: {leveledCount} / {source.spellsKnown}</p> : null}
@@ -199,9 +202,9 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
     {duplicateSelections && <p role="alert" className="text-sm text-destructive">The saved spell selections contain duplicates. Reload the character before editing.</p>}
     <fieldset disabled={locked} className="space-y-5 border-0 p-0">
       <SpellSection label={`${className} cantrips`} entries={entries.filter(entry => spellLevel(entry) === 0)} selections={draft.value}
-        showPrepared={false} disabled={locked} onToggle={toggle} onPrepare={prepare} />
+        showPrepared={false} expandedSpellSlugs={source.expandedSpellSlugs ?? []} disabled={locked} onToggle={toggle} onPrepare={prepare} />
       {maxLevel > 0 && <SpellSection label={`${className} levelled spells`} entries={entries.filter(entry => spellLevel(entry)! > 0)} selections={draft.value}
-        showPrepared={source.prepared} disabled={locked} onToggle={toggle} onPrepare={prepare} />}
+        showPrepared={source.prepared} expandedSpellSlugs={source.expandedSpellSlugs ?? []} disabled={locked} onToggle={toggle} onPrepare={prepare} />}
     </fieldset>
     <Button type="submit" disabled={locked || !valid}>{pending ? "Saving spells…" : "Save spells"}</Button>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
