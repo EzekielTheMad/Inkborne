@@ -34,7 +34,7 @@ export function BonusSpellsPanel({ feature, choice, catalog, selected, spellbook
   const [pending, startTransition] = useTransition();
   const inFlight = useRef(false);
   const incomingKey = keyOf(selected);
-  const sourceKey = JSON.stringify([feature.id, feature.version, choice, spellbook, classMaxSpellLevel]);
+  const sourceKey = JSON.stringify([feature.id, feature.version, choice, spellbook, classMaxSpellLevel, [...occupied].sort()]);
   const [draft, setDraft] = useState(() => ({ baselineKey: incomingKey, sourceKey, value: selected, dirty: false }));
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
