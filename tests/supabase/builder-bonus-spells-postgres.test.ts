@@ -57,6 +57,7 @@ source(27, "fly", "spell", { level: 3, classes: ["wizard", "warlock"], ritual: f
 source(28, "eyebite", "spell", { level: 6, classes: ["warlock", "wizard"], ritual: false });
 source(29, "barkskin", "spell", { level: 2, classes: ["druid"], ritual: false });
 source(30, "call-lightning", "spell", { level: 3, classes: ["druid"], ritual: false });
+source(31, "unlisted-spell", "spell", { level: 1, classes: [], ritual: true });
 const tuple = (n: number) => ({ content_id: id(n), content_version: 1 });
 const choices = (bonus_spells: Row = {}, level = 20) => ({ classes: ["bard", "warlock", "wizard", "druid"].map(slug => ({ slug, level })), bonus_spells });
 const book = (n: number): Row => ({ id: id(n + 400), character_id: target, ...tuple(n), name: definitions.find(d => d.content_id === id(n))?.name_snapshot,
@@ -121,6 +122,7 @@ describe("finite source-owned bonus spell helper", () => {
     await expect(apply(choices({ "mystic-arcanum-6th-level": [tuple(26)] }), "mystic-arcanum-6th-level")).rejects.toThrow("builder_bonus_spell_unavailable");
     await expect(apply(choices({ "eldritch-invocation-book-of-ancient-secrets": [tuple(25)] }), "eldritch-invocation-book-of-ancient-secrets")).rejects.toThrow("builder_bonus_spell_unavailable");
     await expect(apply(choices({ "magical-secrets-1": [tuple(24), tuple(25), tuple(26)] }), "magical-secrets-1")).rejects.toThrow("builder_bonus_spell_unavailable");
+    await expect(apply(choices({ "magical-secrets-1": [tuple(31)] }), "magical-secrets-1")).rejects.toThrow("builder_bonus_spell_unavailable");
     await expect(apply(choices({ "additional-magical-secrets": [tuple(24)], "magical-secrets-1": [tuple(24)] }), "additional-magical-secrets"))
       .rejects.toThrow("builder_bonus_spell_already_selected");
   });
@@ -141,6 +143,15 @@ describe("finite source-owned bonus spell helper", () => {
     expect(saved.graph.spells[0]).toMatchObject({ class_slug: "druid", source: "bonus", always_prepared: true, is_prepared: true });
     const removed = await apply(choices(), null, graph([], refs.filter(r => r.content_id !== id(12))));
     expect(removed.graph.spells).toEqual([]);
+  });
+  it("retains historical book and fixed terrain versions after a catalog head advances", async () => {
+    await db.query("UPDATE public.content_definitions SET version=2 WHERE id IN($1,$2)", [id(24), id(29)]);
+    try {
+      const saved = await apply(choices({ "spell-mastery-1": [tuple(24)] }), "spell-mastery-1", graph([book(24)]));
+      expect(saved.choices.bonus_spells["spell-mastery-1"]).toEqual([tuple(24)]);
+      expect(saved.graph.spells.find(s => s.content_id === id(29))?.content_version).toBe(1);
+      await expect(apply(choices({ "magical-secrets-1": [tuple(24)] }), "magical-secrets-1")).rejects.toThrow("builder_bonus_spell_unavailable");
+    } finally { await db.query("UPDATE public.content_definitions SET version=1 WHERE id IN($1,$2)", [id(24), id(29)]); }
   });
   it("reserves the source's full Secrets count while excluding Lore's extra choices", async () => {
     const bard = definitions.find(d => d.slug_snapshot === "bard");
