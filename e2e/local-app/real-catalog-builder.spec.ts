@@ -113,7 +113,7 @@ async function chooseRace(page: Page, story: Story) {
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
 }
 
-async function chooseAbilities(page: Page, story: Story) {
+async function chooseAbilities(page: Page, story: Pick<Story, "baseScores">) {
   await expect(page).toHaveURL(/\/builder\/abilities$/);
   await page.reload(); // The first interaction must also work after a fresh document load.
   for (const [ability, score] of Object.entries(story.baseScores)) {
@@ -448,4 +448,79 @@ test("saved Fighter primary saving throws remain proficient after reload", async
     await page.reload();
   }
   expect(blocked).toEqual([]); expect(errors).toEqual([]);
+});
+
+test("real SRD Rogue Expertise saves, reloads and follows its source proficiencies", async ({ page, context }, info) => {
+  const config = await settings(), blocked: string[] = [], errors: string[] = [];
+  await restrictOrigins(context, new Set([config.appOrigin, config.supabaseOrigin]), blocked);
+  page.on("pageerror", () => errors.push("browser error"));
+  await login(page, config.appOrigin, config.owner);
+  await page.locator('a[href="/characters/new"]').first().click();
+  const name = "SRD Rogue " + randomUUID().slice(0, 8);
+  await page.getByRole("textbox", { name: "What will they be called?" }).fill(name);
+  await page.getByRole("button", { name: "Open the notebook", exact: true }).click();
+  await page.waitForURL(/\/characters\/[0-9a-f-]+\/builder\/first-class$/);
+  const characterId = new URL(page.url()).pathname.split("/")[2];
+  const builderUrl = `${config.appOrigin}/characters/${characterId}/builder/class`;
+  const sheetUrl = `${config.appOrigin}/characters/${characterId}`;
+  await page.getByRole("combobox", { name: "First class", exact: true }).selectOption({ label: "Rogue" });
+  await page.getByRole("button", { name: "Save first class", exact: true }).click();
+  await expect(page.getByText("Rogue · Level 1", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Complete class choices", exact: true }).click();
+  await page.getByRole("button", { name: /^Level 1:/ }).click();
+  const skills = choiceGroup(page, "Choose 4 proficiency");
+  for (const skill of ["Acrobatics", "Perception", "Sleight Of Hand", "Stealth"]) {
+    await choose(page, skills.getByRole("button", { name: skill, exact: true }));
+  }
+  const expertise = choiceGroup(page, "Choose 2 expertise");
+  await expect(expertise.getByRole("button", { name: "Arcana", exact: true })).toHaveCount(0);
+  for (const skill of ["Stealth", "Thieves Tools"]) await choose(page, expertise.getByRole("button", { name: skill, exact: true }));
+  await page.reload();
+  for (const skill of ["Stealth", "Thieves Tools"]) await expect(expertise.getByRole("button", { name: skill, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.goto(`${config.appOrigin}/characters/${characterId}/builder/abilities`);
+  await chooseAbilities(page, { baseScores: { Strength: "10", Dexterity: "15", Constitution: "14", Intelligence: "13", Wisdom: "12", Charisma: "8" } });
+  await page.goto(sheetUrl);
+  const stealth = page.getByRole("button", { name: "Roll Stealth check", exact: true });
+  await expect(stealth.getByLabel("Expertise", { exact: true })).toBeVisible();
+  await expect(stealth).toContainText("+6");
+  await page.reload();
+  await expect(stealth).toContainText("+6");
+  await page.screenshot({ path: info.outputPath("rogue-expertise-after-reload.png"), fullPage: true, caret: "initial" });
+
+  await page.goto(builderUrl);
+  await page.getByRole("button", { name: /^Level 1:/ }).click();
+  await saveThroughApp(page, () => skills.getByRole("button", { name: "Stealth", exact: true }).click());
+  await expect(skills.getByRole("button", { name: "Stealth", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await choose(page, skills.getByRole("button", { name: "Deception", exact: true }));
+  await page.reload();
+  await expect(expertise.getByRole("button", { name: "Stealth", exact: true })).toHaveCount(0);
+  await expect(expertise.getByText("1 / 2 selected", { exact: true })).toBeVisible();
+  await page.goto(sheetUrl);
+  await expect(stealth.getByLabel("Expertise", { exact: true })).toHaveCount(0);
+  await expect(stealth).toContainText("+2");
+  await page.goto(builderUrl);
+  await page.getByRole("button", { name: /^Level 1:/ }).click();
+  await choose(page, expertise.getByRole("button", { name: "Acrobatics", exact: true }));
+  await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Rogue", exact: true }).selectOption("6"));
+  await expect(page.getByRole("combobox", { name: "Set level for Rogue", exact: true })).toHaveValue("6");
+  await page.getByRole("button", { name: /^Level 6:/ }).click();
+  await expect(expertise.getByRole("button", { name: "Acrobatics", exact: true })).toHaveCount(0);
+  await expect(expertise.getByRole("button", { name: "Thieves Tools", exact: true })).toHaveCount(0);
+  for (const skill of ["Perception", "Sleight Of Hand"]) await choose(page, expertise.getByRole("button", { name: skill, exact: true }));
+  await page.reload();
+  for (const skill of ["Perception", "Sleight Of Hand"]) await expect(expertise.getByRole("button", { name: skill, exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.goto(sheetUrl);
+  await page.reload();
+  for (const skill of ["Acrobatics", "Perception", "Sleight of Hand"]) {
+    const check = page.getByRole("button", { name: `Roll ${skill} check`, exact: true });
+    await expect(check.getByLabel("Expertise", { exact: true })).toBeVisible();
+    await expect(check).toContainText(skill === "Perception" ? "+7" : "+8");
+  }
+  await expect(stealth.getByLabel("Expertise", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/Thieves.*Tools.*expertise/i).filter({ visible: true })).toBeVisible();
+  expect(blocked).toEqual([]); expect(errors).toEqual([]);
+  await writeFile(info.outputPath("rogue-expertise-workflow.json"), JSON.stringify({ characterId, name,
+    actualApp: true, level: 6, firstExpertiseReloadPassed: true, lostProficiencyPruned: true,
+    additionalExpertiseReloadPassed: true, duplicatePicksUnavailable: true, toolExpertiseVisible: true,
+    blockedOrigins: blocked, pageErrors: errors }, null, 2));
 });
