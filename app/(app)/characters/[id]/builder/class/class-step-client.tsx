@@ -157,6 +157,9 @@ export function ClassStepClient({
     if (!serverSaveAction) throw Error("This class save is unavailable.");
     const saved = await serverSaveAction(command, fields);
     setAcceptedRevision({ source: character.action_revision, value: saved.action_revision });
+    // Ordinary spellbook edits can prune Mastery/Signature picks too. Adopt
+    // every confirmed choices document before the refreshed snapshot arrives.
+    setLocalChoices(saved.choices);
     return saved;
   }, [serverSaveAction, character.action_revision]);
   const saveAction = serverSaveAction ? saveNative : undefined;
@@ -256,6 +259,10 @@ export function ClassStepClient({
   const resolvedStats = confirmedResult?.stats ?? {};
 
   function beginSave() {
+    if (unsavedSpells) {
+      setSaveError("Save your spell choices before changing this class build.");
+      return false;
+    }
     if (saveBusy.current || refreshing) {
       setSaveError("The class build is still saving. Wait for it to finish, then retry this change.");
       return false;
