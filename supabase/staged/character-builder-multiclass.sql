@@ -1322,7 +1322,7 @@ BEGIN
       WHERE r.value->>'character_id' IS DISTINCT FROM target::text)
     OR (SELECT count(DISTINCT value->>'id') FROM pg_catalog.jsonb_array_elements(active_refs))<>pg_catalog.jsonb_array_length(active_refs) THEN
     RAISE EXCEPTION 'builder_expertise_sources_unavailable' USING ERRCODE='23514'; END IF;
-  SELECT COALESCE(pg_catalog.jsonb_agg(private.builder_role_definition_v1(target,pg_catalog.to_jsonb(r),pg_catalog.to_jsonb(v))),'[]') INTO sources
+  SELECT COALESCE(pg_catalog.jsonb_agg(private.builder_role_definition_v1(target,r.value,pg_catalog.to_jsonb(v))),'[]') INTO sources
     FROM pg_catalog.jsonb_array_elements(active_refs) r(value) JOIN public.content_versions v
       ON v.content_id=(r.value->>'content_id')::uuid AND v.version=(r.value->>'content_version')::integer;
   IF pg_catalog.jsonb_array_length(sources)<>pg_catalog.jsonb_array_length(active_refs) THEN
