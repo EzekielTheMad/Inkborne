@@ -43,6 +43,21 @@ WITH RECURSIVE target AS (
  SELECT s.*,v.slug_snapshot AS slug,v.data_snapshot AS data,v.system_id_snapshot=t.system_id AS same_system
  FROM public.character_spells s JOIN target t ON t.id=s.character_id
  JOIN public.content_versions v ON v.content_id=s.content_id AND v.version=s.content_version
+), ordinary_checks AS (
+ SELECT s.id,EXISTS(SELECT 1 FROM target t
+   CROSS JOIN LATERAL jsonb_array_elements(t.choices->'classes') c(value)
+   JOIN refs parent ON parent.kind='class' AND parent.slug=c.value->>'slug'
+   LEFT JOIN refs sub ON sub.kind='subclass' AND sub.slug=c.value->>'subclass' AND sub.data->>'parent_class'=parent.slug
+   WHERE c.value->>'slug'=s.class_slug AND s.same_system
+     AND s.custom_data->>'builder_class_controller_ref_id'=parent.id::text
+     AND ((s.data->'classes') @> jsonb_build_array(COALESCE(sub.data#>>'{spellcastingList,class}',parent.data#>>'{spellcastingList,class}',parent.slug))
+       OR sub.slug='fiend' AND parent.slug='warlock'
+         AND EXISTS(SELECT 1 FROM jsonb_array_elements(COALESCE(sub.data->'spellcastingExpanded','[]')) tier(value)
+           WHERE (tier.value->>'level')::integer<=(c.value->>'level')::integer AND tier.value->'spells' @> jsonb_build_array(s.slug))
+         AND EXISTS(SELECT 1 FROM public.content_versions sv JOIN public.content_versions pv ON pv.content_id=sub.content_id AND pv.version=sub.content_version
+           WHERE sv.content_id=s.content_id AND sv.version=s.content_version AND sv.source_snapshot=pv.source_snapshot
+             AND sv.scope_snapshot=pv.scope_snapshot AND sv.owner_id_snapshot IS NOT DISTINCT FROM pv.owner_id_snapshot))) AS eligible
+ FROM spell_rows s WHERE s.source='selection'
 ), choice_checks AS (
  SELECT s.choice_id,s.feature_slug,jsonb_array_length(s.selected) AS selected_count,
    s.source_ref_id IS NOT NULL AND jsonb_array_length(s.selected)<=(s.descriptor->>'choose')::integer
@@ -93,6 +108,14 @@ WITH RECURSIVE target AS (
  FROM domains d CROSS JOIN target t JOIN private.character_projection_order_v1 o ON o.character_id=t.id
 )
 SELECT jsonb_build_object('characterId',t.id,'level',t.level,'classes',t.choices->'classes',
+ 'originalOccurrenceId',private.builder_original_occurrence_v1(t.id)->>'id',
+ 'occurrences',(SELECT jsonb_agg(jsonb_build_object('id',id,'classSlug',class_slug,'lifecycle',lifecycle,
+   'controllerRefId',controller_ref_id,'subclassRefId',subclass_ref_id,'acquisitionOperationId',acquisition_operation_id) ORDER BY selected_at,id)
+   FROM private.character_class_occurrences_v1 WHERE character_id=t.id),
+ 'pins',(SELECT jsonb_agg(jsonb_build_object('id',id,'slug',slug,'kind',kind,'context',context) ORDER BY id) FROM refs),
+ 'ordinaryClassListsValid',NOT EXISTS(SELECT 1 FROM ordinary_checks WHERE NOT COALESCE(eligible,false)),
+ 'fiendFreeSpellRows',(SELECT count(*) FROM spell_rows s WHERE s.class_slug='warlock' AND s.source='feature'
+   AND EXISTS(SELECT 1 FROM refs sub WHERE sub.kind='subclass' AND sub.slug='fiend' AND sub.data ? 'spellcastingExpanded')),
  'bonusChoices',COALESCE(t.choices->'bonus_spells','{}'),'resolvedChoices',COALESCE(t.choices->'resolved_choices','{}'),
  'choiceChecks',COALESCE((SELECT jsonb_agg(to_jsonb(c)) FROM choice_checks c),'[]'),
  'bonusRows',COALESCE((SELECT jsonb_agg(to_jsonb(r) ORDER BY class_slug,choice_id,slug) FROM bonus_rows r),'[]'),
