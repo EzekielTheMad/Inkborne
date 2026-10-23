@@ -5,7 +5,20 @@ import { evaluate, type StructuredSources } from "@/lib/engine/evaluator";
 import { Separator } from "@/components/ui/separator";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
-import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
+import { getConfirmedAbilityModifier, resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
+import { computeMaxHp } from "@/lib/character/max-hp";
+import { resolveCastingMath } from "@/lib/spells/casting-math";
+import type { CharacterChoices, HpRule } from "@/lib/types/character";
+import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
+
+export interface StatPreviewClassContext {
+  available: boolean;
+  choices: CharacterChoices;
+  classContent: Record<string, { id: string; version: number; slug: string; name?: string; data: Record<string, unknown> }>;
+  hpRule: HpRule;
+  originalOccurrenceId?: string | null;
+  castingSources: EffectiveCastingSource[];
+}
 
 interface StatPreviewProps {
   draft?: boolean;
@@ -15,6 +28,7 @@ interface StatPreviewProps {
   level: number;
   sources?: StructuredSources;
   state?: Record<string, unknown>;
+  classContext?: StatPreviewClassContext;
 }
 
 export function StatPreview({
@@ -25,6 +39,7 @@ export function StatPreview({
   level,
   sources,
   state,
+  classContext,
 }: StatPreviewProps) {
   const result = useMemo(() => {
     const statsWithLevel = { ...baseStats, level };
@@ -33,6 +48,29 @@ export function StatPreview({
 
   const hasStats = Object.keys(baseStats).length > 0;
   const mechanics = resolveAbilityMechanics(baseStats, result, schema);
+  const classes = classContext?.choices.classes ?? [];
+  const classContextReady = !!classContext?.available && mechanics.status === "available"
+    && classes.length > 0 && new Set(classes.map(cls => cls.slug)).size === classes.length
+    && classes.every(cls => Number.isInteger(cls.level) && cls.level >= 1 && cls.level <= 20
+      && classContext.classContent[cls.slug]?.slug === cls.slug
+      && [4, 6, 8, 10, 12].includes(Number(classContext.classContent[cls.slug].data.hit_die)))
+    && classes.reduce((sum, cls) => sum + cls.level, 0) === level;
+  const originalReady = classContext?.originalOccurrenceId === undefined
+    ? !classes.some(cls => cls.occurrence_id)
+    : classes.filter(cls => cls.occurrence_id === classContext.originalOccurrenceId).length === 1;
+  const maxHp = classContextReady && originalReady && Number.isFinite(result.stats.constitution)
+    ? computeMaxHp(classes, classContext!.classContent, result.stats.constitution, classContext!.choices.hp_rolls,
+      classContext!.hpRule, classContext!.originalOccurrenceId) : null;
+  const casting = (classContext?.castingSources ?? []).filter(source => source.active && source.config).map(source => {
+    const definition = classContext?.classContent[source.classSlug];
+    const exact = classContextReady && definition?.id === source.parentPin.contentId && definition.version === source.parentPin.version
+      && classes.some(cls => cls.slug === source.classSlug && cls.level === source.classLevel);
+    const normal = source.config && exact ? resolveCastingMath(source.config.ability, schema.ability_scores, result.stats,
+      result.computed.proficiency_bonus) : null;
+    const modifier = source.config ? getConfirmedAbilityModifier(result, schema, source.config.ability) : null;
+    const attack = normal?.status === "available" && modifier !== null ? result.computed.proficiency_bonus + modifier : null;
+    return { source, name: definition?.name ?? source.classSlug, attack: attack !== null && Number.isFinite(attack) ? attack : null };
+  });
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3">
@@ -71,7 +109,10 @@ export function StatPreview({
           {/* Derived Stats */}
           <div className="space-y-1">
             {schema.derived_stats.map((stat) => {
-              const value = result.computed[stat.slug];
+              // The generic schema has no class die total or casting ability.
+              // Class-dependent values require the pinned build context below.
+              if (["spell_save_dc", "spell_attack_bonus"].includes(stat.slug)) return null;
+              const value = stat.slug === "hit_points_max" ? maxHp ?? "Unavailable" : result.computed[stat.slug];
               if (value === undefined) return null;
 
               return (
@@ -84,6 +125,14 @@ export function StatPreview({
                 </div>
               );
             })}
+            {casting.map(({ source, name, attack }) => <div key={source.classSlug} role="group" aria-label={`${name} spellcasting`}
+              className="space-y-1 border-t pt-2 mt-2">
+              <p className="text-xs font-medium">{name}</p>
+              <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Spell Save DC</span>
+                <span className="font-medium">{attack === null ? "Unavailable" : 8 + attack}</span></div>
+              <div className="flex items-center justify-between text-sm"><span className="text-muted-foreground">Spell Attack Bonus</span>
+                <span className="font-medium">{attack === null ? "Unavailable" : `${attack >= 0 ? "+" : ""}${attack}`}</span></div>
+            </div>)}
           </div>
 
           {/* Grants */}

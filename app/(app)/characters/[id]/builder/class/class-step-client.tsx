@@ -821,6 +821,11 @@ export function ClassStepClient({
             sources={confirmedSources}
             draft={!mechanicsAvailable}
             state={character.state}
+            classContext={{ available: mechanicsAvailable, choices: localChoices, hpRule,
+              originalOccurrenceId: saveAction ? originalClassOccurrence(contentRefs, localChoices) ?? null : undefined,
+              classContent: Object.fromEntries(contentRefs.filter(ref => ref.content_definitions.content_type === "class"
+                && ref.content_id === ref.content_definitions.id && ref.content_version === ref.content_definitions.version)
+                .map(ref => [ref.content_definitions.slug, ref.content_definitions])), castingSources }}
           />
         </div>
       )}
