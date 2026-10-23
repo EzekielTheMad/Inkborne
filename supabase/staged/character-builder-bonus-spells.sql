@@ -103,6 +103,7 @@ DECLARE cap private.character_builder_capabilities_v1%ROWTYPE; refs jsonb; spell
   current_spells jsonb; key text; active_count integer; is_strict boolean; valid boolean; spell_level integer; mode text;
   selected public.content_versions%ROWTYPE; physical public.character_spells%ROWTYPE; existing jsonb; pin jsonb; request jsonb;
   used text[]:='{}'; use_key text; fixed_tier jsonb; fixed_slug jsonb; prior_requested jsonb; controller_id text;
+  wizard_level integer; prepared_limit integer; prepared_count integer; scores jsonb;
 BEGIN
   SELECT * INTO cap FROM private.character_builder_capabilities_v1
     WHERE transaction_id=pg_catalog.pg_current_xact_id() AND character_id=target;
@@ -197,7 +198,11 @@ BEGIN
         SELECT v.* INTO selected FROM public.content_versions v JOIN public.content_definitions d ON d.id=v.content_id
           WHERE v.content_id=(entry->>'content_id')::uuid AND v.version=(entry->>'content_version')::integer AND NOT d.is_retired
             AND v.content_type_snapshot='spell' AND v.system_id_snapshot=(bonus_source->>'system_id_snapshot')::uuid
-            AND (d.version=v.version OR EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(cap.protected_graph->'refs') p(value)
+            AND (request ? 'fixed' OR d.version=v.version OR (choice->'spellbook_only'='true'::jsonb AND EXISTS(
+              SELECT 1 FROM pg_catalog.jsonb_array_elements(spells) b(value) WHERE b.value->'content_id'=entry->'content_id'
+                AND b.value->'content_version'=entry->'content_version' AND b.value->>'class_slug'=class_slug
+                AND b.value->>'source'='selection' AND b.value->'in_spellbook'='true'::jsonb))
+              OR EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(cap.protected_graph->'refs') p(value)
               WHERE p.value->'content_id'=entry->'content_id' AND p.value->'content_version'=entry->'content_version'
                 AND p.value#>>'{context,source_ref_id}'=source_ref->>'id' AND p.value#>>'{context,choice_id}'=key))
             AND private.character_can_access_content_version(target,v.content_id,v.version) FOR SHARE OF v,d;
@@ -206,6 +211,10 @@ BEGIN
       IF valid THEN
         spell_level:=(selected.data_snapshot->>'level')::integer; use_key:=class_slug||':'||selected.content_id::text;
         valid:=spell_level BETWEEN (choice->>'min_spell_level')::integer AND max_level AND NOT use_key=ANY(used)
+          AND pg_catalog.jsonb_typeof(selected.data_snapshot->'classes')='array'
+          AND pg_catalog.jsonb_array_length(selected.data_snapshot->'classes')>0
+          AND NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(selected.data_snapshot->'classes') listed(value)
+            WHERE pg_catalog.jsonb_typeof(listed.value)<>'string' OR length(listed.value#>>'{}')=0)
           AND (choice->'list_class'='null'::jsonb OR COALESCE(selected.data_snapshot->'classes','[]') @> pg_catalog.jsonb_build_array(choice->>'list_class'))
           AND (choice->'ritual_only'='false'::jsonb OR selected.data_snapshot->'ritual'='true'::jsonb);
         SELECT s.value INTO existing FROM pg_catalog.jsonb_array_elements(spells) s(value)
@@ -251,6 +260,29 @@ BEGIN
     END LOOP;
     IF mode<>'fixed' AND (selections ? key OR accepted<>'[]'::jsonb) THEN normalized:=normalized||pg_catalog.jsonb_build_object(key,accepted); END IF;
   END LOOP;
+  -- A free Signature preparation cannot become an over-budget ordinary
+  -- preparation when the feature is cleared or replaced. The UI preserves
+  -- owner intent; this server check also closes forged ordinary submissions.
+  SELECT (value->>'level')::integer INTO wizard_level FROM pg_catalog.jsonb_array_elements(pending_choices->'classes') WHERE value->>'slug'='wizard';
+  IF wizard_level IS NOT NULL THEN
+    scores:=private.builder_progression_scores_v1(target,pending_choices);
+    prepared_limit:=GREATEST(1,wizard_level+floor(((scores->>'intelligence')::numeric-10)/2)::integer); prepared_count:=0;
+    FOR entry IN SELECT s.value FROM pg_catalog.jsonb_array_elements(spells) s(value) JOIN public.content_versions v
+      ON v.content_id=(s.value->>'content_id')::uuid AND v.version=(s.value->>'content_version')::integer
+      WHERE s.value->>'class_slug'='wizard' AND s.value->>'source'='selection' AND s.value->'is_prepared'='true'::jsonb
+        AND s.value->'always_prepared'='false'::jsonb AND (v.data_snapshot->>'level')::integer>0 ORDER BY s.value->>'id' LOOP
+      prepared_count:=prepared_count+1;
+      IF prepared_count<=prepared_limit THEN CONTINUE; END IF;
+      IF strict_choice_id IS NOT NULL THEN RAISE EXCEPTION 'builder_spell_selection_budget_exceeded' USING ERRCODE='22023'; END IF;
+      SELECT COALESCE(pg_catalog.jsonb_agg(CASE WHEN value->'id'=entry->'id' THEN value||'{"is_prepared":false}'::jsonb ELSE value END),'[]') INTO spells
+        FROM pg_catalog.jsonb_array_elements(spells);
+      SELECT COALESCE(pg_catalog.jsonb_agg(CASE WHEN value->'content_id'=entry->'content_id' AND value->'content_version'=entry->'content_version'
+        THEN value||'{"prepared":false}'::jsonb ELSE value END),'[]') INTO current_spells FROM pg_catalog.jsonb_array_elements(
+          COALESCE(pending_choices#>'{class_spell_selections,wizard}','[]'));
+      pending_choices:=pg_catalog.jsonb_set(pending_choices,'{class_spell_selections}',COALESCE(pending_choices->'class_spell_selections','{}')||
+        pg_catalog.jsonb_build_object('wizard',current_spells),true);
+    END LOOP;
+  END IF;
   IF normalized<>'{}'::jsonb OR pending_choices ? 'bonus_spells' THEN pending_choices:=pg_catalog.jsonb_set(pending_choices,'{bonus_spells}',normalized,true); END IF;
   SELECT COALESCE(pg_catalog.jsonb_agg(value ORDER BY (value->>'id')::uuid),'[]') INTO refs FROM pg_catalog.jsonb_array_elements(refs);
   SELECT COALESCE(pg_catalog.jsonb_agg(value ORDER BY (value->>'id')::uuid),'[]') INTO spells FROM pg_catalog.jsonb_array_elements(spells);
