@@ -78,6 +78,7 @@ export interface StartingEquipmentSelections {
 }
 
 export interface CharacterChoices {
+  favored_enemies?: Record<string, import("@/lib/builder/favored-enemy").FavoredEnemyChoice>;
   classes?: Array<{ slug: string; level: number; subclass?: string; occurrence_id?: string }>;
   race?: string;
   subrace?: string;
