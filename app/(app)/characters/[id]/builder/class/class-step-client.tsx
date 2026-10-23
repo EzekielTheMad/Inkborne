@@ -21,6 +21,7 @@ import { StatPreview } from "@/components/builder/stat-preview";
 import { RaceAbilityNotice } from "@/components/builder/race-ability-notice";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
+import { resolveDefinitionExpertise } from "@/lib/builder/expertise";
 import type {
   CharacterChoices,
   AsiChoice,
@@ -172,7 +173,8 @@ export function ClassStepClient({
   });
   const missingFeatures = [...new Set(activeSlugs)].filter(slug => !contentRefs.some(ref => ref.content_id === ref.content_definitions.id && ref.content_definitions.content_type === "feature" && ref.content_definitions.slug === slug));
   const grantedLanguages = fixedLanguages(contentRefs.map(ref => ref.content_definitions));
-  const resolveEntries = (entries: ContentEntry[]) => entries.map(entry => resolveDefinitionChoices(entry, availableLanguages, grantedLanguages));
+  const resolveEntries = (entries: ContentEntry[]) => entries.map(entry => resolveDefinitionExpertise(
+    resolveDefinitionChoices(entry, availableLanguages, grantedLanguages), contentRefs, localChoices));
 
   async function recoverFeatureRefs() {
     if (saveBusy.current || snapshotConflict) return;

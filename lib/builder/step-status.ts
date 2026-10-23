@@ -4,6 +4,7 @@ import { activeFeatureSlugs, fightingStyleSlugs, fixedLanguages, isAsiChoiceComp
 import { hasCompleteAbilityScores } from "./ability-score-validation";
 import type { CharacterChoices } from "@/lib/types/character";
 import { isEquipmentConfirmed, isStructuredSelections } from "./equipment-choices";
+import { resolveDefinitionExpertise } from "./expertise";
 
 export type BuilderStepStatus = "complete" | "in_progress" | "untouched";
 
@@ -97,6 +98,8 @@ export function getBuilderStepStatus(
   languages?: readonly string[],
   classSpellsComplete = true,
 ): BuilderStepStatus {
+  const sourceRefs = refs;
+  refs = refs.map(ref => ({ ...ref, content_definitions: resolveDefinitionExpertise(ref.content_definitions, sourceRefs, choices) }));
   const granted = fixedLanguages(refs.map(ref => ref.content_definitions));
   const countPins = (type: string) => refs.filter(ref => ref.content_definitions.content_type === type).length;
   switch (stepType) {

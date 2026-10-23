@@ -37,6 +37,9 @@ export function ChoiceCardGeneric({
           {isMade ? "Chosen" : "Choose"}
         </span>
       </header>
+      {choiceEffect.grant_type === "expertise" && <p className="mb-3 text-sm text-muted-foreground">
+        Choose proficiencies you already have. If a proficiency changes, choose a replacement here.
+      </p>}
       <ChoiceSelector
         choiceEffect={choiceEffect}
         currentSelections={currentSelections}

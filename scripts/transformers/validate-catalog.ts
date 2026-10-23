@@ -53,7 +53,7 @@ export function validateSrdCatalog(entries: readonly TransformedContent[]): Tran
     for (const effect of entry.effects) {
       if (effect.type === "grant" && effect.stat === "spell") check(entry, "spell", effect.value);
       if (effect.type !== "choice" || !Array.isArray(effect.from)) continue;
-      const type = ({ proficiency: "proficiency", language: "language", spell: "spell", trait: "trait" } as Record<string, string>)[effect.grant_type];
+      const type = ({ proficiency: "proficiency", expertise: "proficiency", language: "language", spell: "spell", trait: "trait" } as Record<string, string>)[effect.grant_type];
       if (type) for (const slug of effect.from) check(entry, type, slug);
     }
   }

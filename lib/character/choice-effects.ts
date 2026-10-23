@@ -1,6 +1,7 @@
 import type { Effect } from "@/lib/types/effects";
 import type { CharacterChoices } from "@/lib/types/character";
 import { fixedLanguages, isLanguageChoiceCategory } from "@/lib/builder/choice-validation";
+import { resolveExpertiseChoice } from "@/lib/builder/expertise";
 
 type Ref = { content_definitions?: { slug?: string; content_type?: string; effects?: Effect[]; data?: Record<string, unknown> } | null };
 const abilities = new Set(["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]);
@@ -34,7 +35,9 @@ export function resolveCharacterChoiceEffects(refs: readonly Ref[], choices: Cha
       } else if (["proficiency", "skill", "tool", "weapon", "armor"].includes(choice.grant_type)) {
         derived.push({ type: "grant", stat: value.replace(/^skill-/, ""), value: "proficient" });
       } else if (choice.grant_type === "expertise") {
-        derived.push({ type: "grant", stat: value.replace(/^skill-/, ""), value: "expertise" });
+        if (resolveExpertiseChoice(choice, refs, choices).from.includes(value)) {
+          derived.push({ type: "grant", stat: value.replace(/^skill-/, ""), value: "expertise" });
+        }
       } else if (choice.grant_type === "language") {
         derived.push({ type: "grant", stat: value, value: "proficient" });
       }

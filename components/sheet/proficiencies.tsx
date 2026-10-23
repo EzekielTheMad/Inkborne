@@ -11,6 +11,7 @@ interface ProficienciesProps {
 /** Convert a slug like "light_armor" or "simple_weapons" to a display name */
 function slugToLabel(slug: string): string {
   return slug
+    .replace(/-/g, " ")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -83,8 +84,7 @@ interface ProficiencyCategory {
 }
 
 export function Proficiencies({ grants }: ProficienciesProps) {
-  // Only consider proficiency grants (value === "proficient")
-  const profGrants = grants.filter((g) => g.value === "proficient");
+  const profGrants = grants.filter(g => g.value === "proficient" || (g.value === "expertise" && isToolGrant(g.stat)));
 
   const armor: string[] = [];
   const weapons: string[] = [];
@@ -103,7 +103,10 @@ export function Proficiencies({ grants }: ProficienciesProps) {
         : slugToLabel(stat);
       languages.push(label);
     } else if (isToolGrant(stat)) {
-      tools.push(slugToLabel(stat));
+      const label = slugToLabel(stat);
+      const expertise = grants.some(other => other.stat === stat && other.value === "expertise");
+      const display = expertise ? `${label} (Expertise)` : label;
+      if (!tools.includes(display)) tools.push(display);
     }
     // Skills and saves are excluded — handled by SkillsList and SavingThrows
   }
