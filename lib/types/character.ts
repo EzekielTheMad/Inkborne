@@ -78,6 +78,8 @@ export interface StartingEquipmentSelections {
 }
 
 export interface CharacterChoices {
+  /** Exact immutable selections keyed by their source-owned bonus choice ID. */
+  bonus_spells?: Record<string, import("@/lib/builder/bonus-spells").BonusSpellPin[]>;
   favored_enemies?: Record<string, import("@/lib/builder/favored-enemy").FavoredEnemyChoice>;
   classes?: Array<{ slug: string; level: number; subclass?: string; occurrence_id?: string }>;
   race?: string;

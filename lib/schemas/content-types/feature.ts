@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { bonusSpellChoiceSchema, bonusSpellGrantSchema } from "@/lib/builder/bonus-spells";
 import {
   ACTION_TYPES,
   RECOVERY_TYPES,
@@ -105,6 +106,10 @@ export const featureDataSchema = z.object({
   ])).optional(),
   favored_enemy: z.object({ enemy_types: z.array(z.string().min(1)).min(1),
     humanoid_races: z.array(z.string().min(1)).min(2) }).optional(),
+  bonus_spells: z.array(bonusSpellChoiceSchema).max(8)
+    .refine(choices => new Set(choices.map(choice => choice.choice_id)).size === choices.length).optional(),
+  bonus_spell_grants: z.array(bonusSpellGrantSchema).max(10)
+    .refine(grants => new Set(grants.map(grant => grant.class_level)).size === grants.length).optional(),
   choices: z.array(featureChoiceSchema).default([]),
   extrachoices: z.array(featureChoiceSchema).default([]),
   weaponOptions: z.array(weaponOptionSchema).default([]),

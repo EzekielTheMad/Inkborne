@@ -48,6 +48,9 @@ export function validateSrdCatalog(entries: readonly TransformedContent[]): Tran
       for (const prerequisite of (data.selection_prerequisites as Array<{ kind: string; slug?: string }> | undefined) ?? []) {
         if (["feature", "spell"].includes(prerequisite.kind)) check(entry, prerequisite.kind, prerequisite.slug);
       }
+      for (const grant of (data.bonus_spell_grants as Array<{ spells: string[] }> | undefined) ?? []) {
+        for (const slug of grant.spells) check(entry, "spell", slug);
+      }
     }
     if (entry.content_type === "trait") {
       for (const slug of list(data.races)) check(entry, "race", slug);
