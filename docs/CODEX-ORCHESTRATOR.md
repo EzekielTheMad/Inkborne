@@ -1,8 +1,30 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-23 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
+Updated 2026-10-24 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
 
 ## Resume and ownership
+
+**Ordinary builder saves recover after lost responses and reload through
+`0f1a4e6`.** All six steps retain the complete account/character-scoped operation
+before sending, resolve or retry only the original intent, and clear it only
+after an exact owned receipt. Confirmed recovery reloads current server values;
+unknown results show recovery controls and close portalled editors. Account
+changes invalidate old callbacks. Retained ability queues use current adapters.
+Three actual local app stories and 14 native snapshots pass: committed ability
+response loss, absent request/original retry, and one retained server HP draw.
+The integrated 142-test sweep and worker 190-test sweep pass, along with typecheck
+and zero-warning lint. [Evidence and limitations](handoffs/2026-10-23-builder-save-recovery.md).
+
+M1/R06 remains **in progress**. Next is reviewed historical correction/repin,
+complete playable caster drafts and broader combinations/concurrency. Enrolled
+writer/lifecycle fences and hosted/provider/backup-restore acceptance remain
+open. Global gates stay closed. Vercel unchanged; M1–M6/M5.5 precede M8 and
+M7/creature imports stay paused. Preserve the backup and every inherited worktree.
+Owned app/backend services, five containers, two networks, two volumes and three
+private credential files are removed; task ports are closed. Shared engine/cache
+and dependency junctions remain.
+
+### Prior Fiend and class-removal checkpoint
 
 **Fiend's expanded list and added-class removal save/reload in the actual local
 app through `7c16608`.** Fiend's ten spells extend ordinary eligibility at five
