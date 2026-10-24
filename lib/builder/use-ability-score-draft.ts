@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   AbilityScoreConflictError,
@@ -148,6 +148,7 @@ function createDraftStore(
 
   const store = {
     ownerId,
+    setPersist(next: typeof persist) { persist = next; },
     isActive: () => listeners.size > 0,
     discard() {
       discarded = true;
@@ -196,6 +197,10 @@ export function useAbilityScoreDraft(
     return created;
   });
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, () => serverSnapshot);
+
+  // A retained SPA draft can outlive the page/provider that supplied its first
+  // save callback. Future ordered writes use the current committed adapter.
+  useLayoutEffect(() => { store.setPersist(persist); }, [store, persist]);
 
   useEffect(() => { watchRecoverySession(ownerId); }, [ownerId]);
 

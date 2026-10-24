@@ -11,6 +11,8 @@ import { getBuilderStepStatus } from "@/lib/builder/step-status";
 import type { CreationStep } from "@/lib/types/system";
 import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
 import { savedBuilderClassSpellsComplete } from "@/lib/builder/class-spells-status-server";
+import { BuilderSaveBoundary } from "@/components/builder/builder-save-boundary";
+import { submitBuilderStep, checkBuilderStep } from "./step-actions";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -79,7 +81,10 @@ export default async function BuilderLayout({ children, params }: LayoutProps) {
           classStepPath={characterCreationUIEnabled() && !character.choices?.classes?.length ? "first-class" : "class"}
         />
 
-        {children}
+        {characterCreationUIEnabled() ? <BuilderSaveBoundary key={`${user.id}:${id}`} accountId={user.id} characterId={id}
+          submitAction={submitBuilderStep.bind(null, user.id)} checkAction={checkBuilderStep.bind(null, user.id)}>
+          {children}
+        </BuilderSaveBoundary> : children}
       </div>
     </div>
   );

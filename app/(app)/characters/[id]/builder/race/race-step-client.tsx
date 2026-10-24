@@ -28,6 +28,7 @@ import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 
 import { fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 
@@ -93,8 +94,9 @@ export function RaceStepClient({
   schema,
   asiEvidence,
   availableLanguages,
-  saveAction,
+  saveAction: providedSaveAction,
 }: RaceStepClientProps) {
+  const saveAction = useBuilderStepSave(providedSaveAction);
   const saveBusy = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);

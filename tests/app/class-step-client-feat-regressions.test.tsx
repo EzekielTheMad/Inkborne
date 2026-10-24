@@ -347,6 +347,7 @@ describe("ClassStepClient feat regressions", () => {
       expect(screen.getByLabelText("class level")).toHaveTextContent("3");
       expect(screen.getByLabelText("selected ASI feat")).toHaveTextContent("none");
     });
+    await waitFor(() => expect(screen.getByRole("button", { name: "Level up" })).toBeEnabled());
 
     fireEvent.click(screen.getByRole("button", { name: "Level up" }));
     await waitFor(() => expect(mocks.updateCharacterAndReturn).toHaveBeenCalledTimes(2));

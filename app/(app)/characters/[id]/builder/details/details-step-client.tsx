@@ -4,13 +4,15 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 import { useSaveNavigationGuard } from "@/lib/builder/use-save-navigation-guard";
 
 const alignments = ["Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral",
   "Lawful Evil", "Neutral Evil", "Chaotic Evil", "Unaligned"];
 
 export function DetailsStepClient({ characterId, name: initialName, alignment: initialAlignment, confirmed,
-  saveAction }: { characterId: string; name: string; alignment: string; confirmed: boolean; saveAction: SaveBuilderStep }) {
+  saveAction: providedSaveAction }: { characterId: string; name: string; alignment: string; confirmed: boolean; saveAction: SaveBuilderStep }) {
+  const saveAction = useBuilderStepSave(providedSaveAction)!;
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
   const inFlight = useRef(false);

@@ -63,6 +63,20 @@ beforeEach(() => {
 });
 
 describe("AbilitiesStepClient saves", () => {
+  it("uses the new native save adapter when a retained SPA draft remounts", async () => {
+    const initial = vi.fn<import("@/lib/builder/builder-step-command").SaveBuilderStep>().mockRejectedValue(Error("offline"));
+    const replacement = vi.fn<import("@/lib/builder/builder-step-command").SaveBuilderStep>().mockImplementation(async (_command, fields) => ({
+      choices: {}, scores: fields.scores as Record<string, number>, action_revision: "2",
+    }));
+    const first = render(<AbilitiesStepClient {...props()} saveAction={initial} />);
+    editManual(0, "16"); await screen.findByRole("alert"); first.unmount();
+    render(<AbilitiesStepClient {...props()} saveAction={replacement} />);
+    fireEvent.click(screen.getByRole("button", { name: /retry save/i }));
+    await waitFor(() => expect(replacement).toHaveBeenCalledOnce());
+    expect(initial).toHaveBeenCalledOnce();
+    expect(replacement.mock.calls[0]).toEqual(initial.mock.calls[0]);
+    await waitFor(() => expect(next()).toBeEnabled());
+  });
   it.each(["error", "conflict"])("preserves same-window link guards for a retained %s draft", async (status) => {
     update.mockRejectedValueOnce(status === "conflict" ? new AbilityScoreConflictError() : new Error("offline"));
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);

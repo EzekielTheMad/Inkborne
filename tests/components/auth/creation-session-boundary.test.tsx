@@ -6,11 +6,15 @@ vi.mock("@/lib/supabase/client", () => ({ createClient: mocks.client }));
 import { CreationSessionBoundary } from "@/components/auth/creation-session-boundary";
 import { parseCreationIntent } from "@/lib/character/pending-creation-schema";
 import { creationStorageKey, getCreationScope, persistPendingCreation, readPendingCreation, setCreationAccount } from "@/lib/character/pending-creation-storage";
+import { parseBuilderStepIntent } from "@/lib/builder/builder-step-command";
+import { builderStepStorageKey, persistPendingBuilderStep, readPendingBuilderStep } from "@/lib/builder/pending-builder-step-storage";
 
 const account = "10000000-0000-4000-8000-000000000001", other = "10000000-0000-4000-8000-000000000004";
 const operation = "10000000-0000-4000-8000-000000000002", system = "10000000-0000-4000-8000-000000000005";
 const intent = () => parseCreationIntent({ contract_version: 1, operation_id: operation, command: "create_character",
   fields: { name: "Elara", system_id: system, campaign_id: null } })!;
+const builderIntent = () => parseBuilderStepIntent({ contract_version: 1, operation_id: operation, character_id: system,
+  command: "save_details", fields: { name: "Elara", alignment: null } })!;
 let event: (kind: AuthChangeEvent, session: Session | null) => void;
 const sessionFor = (id: string) => ({ user: { id } }) as Session;
 beforeEach(() => {
@@ -24,17 +28,21 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe("local creation account boundary (Auth events mocked)", () => {
   it("preserves pending during same-account refresh and a failed sign-out attempt with no confirmed transition", () => {
     const lease = getCreationScope(), pending = persistPendingCreation(intent(), lease, sessionStorage);
+    const builder = persistPendingBuilderStep(builderIntent(), lease, sessionStorage);
     render(<CreationSessionBoundary accountId={account} />);
     act(() => event("TOKEN_REFRESHED", sessionFor(account)));
     // A failed POST/SDK attempt does not emit SIGNED_OUT. No eager nav clear.
     expect(readPendingCreation(account, sessionStorage)).toEqual(pending);
+    expect(readPendingBuilderStep(account, system, sessionStorage)).toEqual(builder);
     expect(getCreationScope().epoch).toBe(lease.epoch);
   });
   it("confirmed sign-out clears and rejects old writes, including after stale boundary remount/refresh", () => {
     const lease = getCreationScope(); persistPendingCreation(intent(), lease, sessionStorage);
+    persistPendingBuilderStep(builderIntent(), lease, sessionStorage);
     const first = render(<CreationSessionBoundary accountId={account} />);
     act(() => event("SIGNED_OUT", null));
     expect(sessionStorage.getItem(creationStorageKey(account))).toBeNull();
+    expect(sessionStorage.getItem(builderStepStorageKey(account, system))).toBeNull();
     expect(() => persistPendingCreation(intent(), lease, sessionStorage)).toThrow();
     first.unmount(); render(<CreationSessionBoundary accountId={account} />);
     act(() => event("TOKEN_REFRESHED", sessionFor(account)));
@@ -51,11 +59,13 @@ describe("local creation account boundary (Auth events mocked)", () => {
   });
   it("switching account invalidates the old lease before the next account can create", () => {
     const old = getCreationScope(); persistPendingCreation(intent(), old, sessionStorage);
+    persistPendingBuilderStep(builderIntent(), old, sessionStorage);
     sessionStorage.setItem("unrelated", "preserve");
     render(<CreationSessionBoundary accountId={account} />);
     act(() => event("SIGNED_IN", sessionFor(other)));
     expect(getCreationScope().accountId).toBe(other);
     expect(sessionStorage.getItem(creationStorageKey(account))).toBeNull();
+    expect(sessionStorage.getItem(builderStepStorageKey(account, system))).toBeNull();
     expect(() => persistPendingCreation(intent(), old, sessionStorage)).toThrow();
     expect(sessionStorage.getItem("unrelated")).toBe("preserve");
   });

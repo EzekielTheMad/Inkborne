@@ -40,6 +40,7 @@ import {
 
 import { activeFeatureSlugs, fightingStyleSlugs, fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 import { BonusSpellsPanel } from "@/components/builder/bonus-spells-panel";
 import { readBonusSpellChoices, ordinaryKnownSpellBudget, resolveLoreSkillChoice } from "@/lib/builder/bonus-spells";
 import { ClassSpellsPanel, type BuilderSpellSelection } from "@/components/builder/class-spells-panel";
@@ -131,12 +132,13 @@ export function ClassStepClient({
   schema,
   asiEvidence: serverAsiEvidence,
   availableLanguages,
-  saveAction: serverSaveAction,
+  saveAction: providedSaveAction,
   classRolesAvailable = false,
   castingSources = [],
   selectedSpells = [],
   grantedSpells = [],
 }: ClassStepClientProps) {
+  const serverSaveAction = useBuilderStepSave(providedSaveAction);
   const [recovered, setRecovered] = useState<{ source: ClassStepClientProps["contentRefs"]; refs: ClassStepClientProps["contentRefs"]; asiEvidence: AsiEvidence } | null>(null);
   const contentRefs = recovered?.source === serverContentRefs ? recovered.refs : serverContentRefs;
   const asiEvidence = recovered?.source === serverContentRefs ? recovered.asiEvidence : serverAsiEvidence;

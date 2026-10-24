@@ -9,6 +9,7 @@ import { discardAbilityScoreDraft, useAbilityScoreDraft } from "@/lib/builder/us
 import type { AbilityMethod } from "@/lib/supabase/ability-scores-client";
 import { saveCharacterAbilities } from "@/lib/supabase/ability-scores-client";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -75,8 +76,9 @@ function AbilitiesEditor({
   contentRefs,
   schema,
   asiEvidence,
-  saveAction,
+  saveAction: providedSaveAction,
 }: AbilitiesStepClientProps) {
+  const saveAction = useBuilderStepSave(providedSaveAction);
   const router = useRouter();
   // SSR controls must not accept an edit before React and the draft queue are
   // attached; hydration can otherwise replay a select event with its old value.

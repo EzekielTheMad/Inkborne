@@ -32,6 +32,7 @@ import type {
 } from "@/lib/types/character";
 import type { Currency } from "@/lib/types/inventory";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 
 interface ContentSummary {
   id: string;
@@ -64,9 +65,10 @@ export function EquipmentStepClient({
   backgroundContent,
   catalog,
   completion,
-  saveAction,
+  saveAction: providedSaveAction,
   incompleteSteps,
 }: EquipmentStepClientProps) {
+  const saveAction = useBuilderStepSave(providedSaveAction);
   const router = useRouter();
   const [, startTransition] = useTransition();
 

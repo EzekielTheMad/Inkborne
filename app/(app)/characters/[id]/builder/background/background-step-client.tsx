@@ -27,6 +27,7 @@ import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect, ChoiceEffect } from "@/lib/types/effects";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
+import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 
 import { fixedLanguages, resolveChoiceOptions } from "@/lib/builder/choice-validation";
 
@@ -87,8 +88,9 @@ export function BackgroundStepClient({
   schema,
   asiEvidence,
   availableLanguages = [],
-  saveAction,
+  saveAction: providedSaveAction,
 }: BackgroundStepClientProps) {
+  const saveAction = useBuilderStepSave(providedSaveAction);
   const saveBusy = useRef(false);
   const [customDrafts, setCustomDrafts] = useState<Partial<Record<NarrativeField, string[]>>>({});
   const { notice: navigationNotice, setBlocked } = useSaveNavigationGuard("background notes and choices");
