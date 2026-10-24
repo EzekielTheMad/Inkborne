@@ -205,7 +205,10 @@ test("rolled HP recovers one server draw after its save response is lost and the
   expect(committed.progressionHistoryCount).toBe(before.progressionHistoryCount + 1);
   await page.reload(); expect(await pending(page, story)).toEqual(original);
   await page.getByRole("region", { name: "Builder save recovery", exact: true }).getByRole("button", { name: "Check save", exact: true }).click();
-  await expect.poll(() => pending(page, story)).toBeNull();
+  // Confirmation intentionally replaces the document. Wait for its fresh editor
+  // before evaluating storage in that new execution context.
+  await expect(page.getByRole("combobox", { name: "Set level for Fighter", exact: true })).toBeEnabled();
+  expect(await pending(page, story)).toBeNull();
   await page.getByRole("button", { name: /^Level 2:/ }).click();
   const rolled = page.getByRole("radio", { name: /^Roll d10/ });
   await expect(rolled).toHaveAttribute("aria-checked", "true");
