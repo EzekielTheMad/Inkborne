@@ -134,7 +134,7 @@ async function loseResponse(page: Page, story: Story, change: () => Promise<unkn
 
 function sameCommit(before: Native, after: Native, original: Pending, expectedCommand: string) {
   expect(after.receiptCount).toBe(before.receiptCount + 1);
-  expect(BigInt(after.actionRevision)).toBe(BigInt(before.actionRevision) + 1n);
+  expect(BigInt(after.actionRevision)).toBe(BigInt(before.actionRevision) + BigInt(1));
   expect(after.pins).toEqual(before.pins);
   const receipts = after.receipts.filter(receipt => receipt.operationId === original.intent.operation_id);
   expect(receipts).toHaveLength(1);
