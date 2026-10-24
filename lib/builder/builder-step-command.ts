@@ -84,7 +84,15 @@ export type BuilderStepIntent = z.infer<typeof builderStepIntentSchema>;
 export function parseBuilderStepIntent(value: unknown): BuilderStepIntent | null {
   if (!boundedClassRoleJson(value)) return null;
   const parsed = builderStepIntentSchema.safeParse(value);
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) return null;
+  function freezeJson<T>(item: T): T {
+    if (item !== null && typeof item === "object") {
+      for (const child of Object.values(item)) freezeJson(child);
+      Object.freeze(item);
+    }
+    return item;
+  }
+  return freezeJson(parsed.data);
 }
 export function sameBuilderStepIntent(left: BuilderStepIntent, right: BuilderStepIntent): boolean {
   return equalEquipmentIntent(left, right);

@@ -97,4 +97,12 @@ describe("builder domain action (Auth/RPC doubles; actual app acceptance is sepa
     expect(parseBuilderStepIntent(cyclic)).toBeNull();
     expect(parseBuilderStepIntent({ ...intent, fields: new Date() })).toBeNull();
   });
+  it("freezes a separate parsed request through nested fields", () => {
+    const raw = { ...intent, command: "background_narrative", fields: { key: "bonds", values: ["Keep the oath"] } };
+    const parsed = parseBuilderStepIntent(raw)!;
+    expect(Object.isFrozen(parsed)).toBe(true); expect(Object.isFrozen(parsed.fields)).toBe(true);
+    expect(Object.isFrozen((parsed.fields as { values: string[] }).values)).toBe(true);
+    raw.fields.values[0] = "Changed later";
+    expect(parsed.fields).toEqual({ key: "bonds", values: ["Keep the oath"] });
+  });
 });
