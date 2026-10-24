@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -50,7 +51,7 @@ function Editor({ supplied = fallback }: { supplied?: SaveBuilderStep }) {
   const [draft, setDraft] = useState("current server name");
   return <div><input aria-label="Name" value={draft} onChange={event => setDraft(event.target.value)} />
     <button type="button" onClick={() => { void save?.("save_details", { name: "Original name", alignment: null }).then(accepted).catch(() => {}); }}>Save change</button>
-    <a href="/characters">Leave builder</a>
+    <Link href="/characters">Leave builder</Link>
   </div>;
 }
 async function open(handlers = actions()) {
