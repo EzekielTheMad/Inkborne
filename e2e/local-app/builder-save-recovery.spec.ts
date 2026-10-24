@@ -167,7 +167,7 @@ test("ordinary ability save recovers its committed receipt after response loss a
   const committed = await readback(info, story, "committed-response-lost");
   sameCommit(before, committed, original, "save_abilities"); expect(committed.scores.strength).toBe(14);
   await page.reload(); expect(await pending(page, story)).toEqual(original);
-  await expect(page.getByRole("combobox", { name: "Strength score", exact: true })).toBeDisabled();
+  await expect(page.getByRole("combobox", { name: "Strength score", exact: true })).toHaveCount(0);
   await page.getByRole("region", { name: "Builder save recovery", exact: true }).getByRole("button", { name: "Check save", exact: true }).click();
   await expect(page.getByRole("combobox", { name: "Strength score", exact: true })).toBeEnabled();
   await expect(page.getByRole("combobox", { name: "Strength score", exact: true })).toHaveValue("14");
