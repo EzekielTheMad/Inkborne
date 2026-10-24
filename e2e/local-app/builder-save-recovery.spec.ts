@@ -139,6 +139,7 @@ function sameCommit(before: Native, after: Native, original: Pending, expectedCo
   const receipts = after.receipts.filter(receipt => receipt.operationId === original.intent.operation_id);
   expect(receipts).toHaveLength(1);
   expect(receipts[0].actorId).toBe(original.account_id);
+  expect(receipts[0].request).toEqual(original.intent);
   expect(receipts[0].receipt).toMatchObject({ operation_id: original.intent.operation_id, character_id: original.intent.character_id,
     actor_id: original.account_id, command: expectedCommand, fields: original.intent.fields, action_revision: after.actionRevision });
 }
