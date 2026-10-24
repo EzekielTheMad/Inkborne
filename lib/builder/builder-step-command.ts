@@ -1,7 +1,8 @@
 import { z } from "zod";
 import type { CharacterChoices } from "@/lib/types/character";
 import { equipmentSelectionsSchema } from "./starting-equipment-contract";
-import { classRoleRevisionSchema } from "@/lib/character/class-role-effects-schema";
+import { boundedClassRoleJson, classRoleRevisionSchema } from "@/lib/character/class-role-effects-schema";
+import { equalEquipmentIntent } from "./starting-equipment-contract";
 
 const content = z.strictObject({ content_id: z.uuid(), content_version: z.number().int().positive() });
 const choice = z.strictObject({ choice_id: z.string().min(1).max(200),
@@ -67,6 +68,28 @@ export type BuilderStepCommand = z.infer<typeof builderStepInputSchema>["command
 export type BuilderStepSaved = { choices: CharacterChoices; scores: Record<string, number>; action_revision: string };
 export type SaveBuilderStep = (command: BuilderStepCommand, fields: Record<string, unknown>) => Promise<BuilderStepSaved>;
 
+/** The complete original browser request, retained before any mutation is sent. */
+export const builderStepIntentSchema = z.strictObject({
+  contract_version: z.literal(1), operation_id: z.uuid(), character_id: z.uuid(),
+  command: z.unknown(), fields: z.unknown(),
+}).transform((value, context) => {
+  const patch = builderStepInputSchema.safeParse({ command: value.command, fields: value.fields });
+  if (!patch.success) {
+    context.addIssue({ code: "custom", message: "Invalid builder selection" });
+    return z.NEVER;
+  }
+  return { ...value, ...patch.data };
+});
+export type BuilderStepIntent = z.infer<typeof builderStepIntentSchema>;
+export function parseBuilderStepIntent(value: unknown): BuilderStepIntent | null {
+  if (!boundedClassRoleJson(value)) return null;
+  const parsed = builderStepIntentSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+export function sameBuilderStepIntent(left: BuilderStepIntent, right: BuilderStepIntent): boolean {
+  return equalEquipmentIntent(left, right);
+}
+
 export const builderStepReceiptSchema = z.strictObject({
   operation_id: z.uuid(), character_id: z.uuid(), actor_id: z.uuid(), command: z.string(), fields: z.unknown(),
   saved_choices: z.record(z.string(), z.unknown()), saved_scores: z.record(z.string(), z.number()),
@@ -76,3 +99,4 @@ export const builderStepResponseSchema = z.discriminatedUnion("status", [
   z.strictObject({ status: z.enum(["applied", "replayed", "recorded"]), receipt: builderStepReceiptSchema }),
   z.strictObject({ status: z.literal("absent") }),
 ]);
+export type BuilderStepResponse = z.infer<typeof builderStepResponseSchema>;
