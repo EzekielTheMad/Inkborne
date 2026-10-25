@@ -6,5 +6,8 @@ export default defineConfig({
   timeout: 240000, expect: { timeout: 30000 }, reporter: [["list"]],
   outputDir: "../../test-results/local-app/builder-" + new Date().toISOString().replace(/[:.]/g, "-"),
   use: { channel: "chrome", headless: true, actionTimeout: 30000, navigationTimeout: 60000,
+    // Per-renderer V8 old-generation bound for this disposable local profile.
+    // Native/DOM/young-generation memory remains subject to the outer OS guard.
+    launchOptions: { args: ["--js-flags=--max-old-space-size=512"] },
     trace: "off", screenshot: "off", video: "off" },
 });
