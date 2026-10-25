@@ -49,7 +49,7 @@ export function resolveEarnedRacialSpell(spell: CharacterSpell, character: Earne
   const root = roots[0];
   if (roots.length !== 1 || !root || !exact(root) || root.id !== source.builder_root_ref_id
     || root.content_definitions.content_type !== "race" || root.content_definitions.slug !== "tiefling"
-    || character.choices?.race !== "tiefling" || character.choices.subrace
+    || character.choices?.race !== "tiefling" || Object.hasOwn(character.choices, "subrace")
     || root.feature_grant_id !== null || root.choice_source !== null
     || root.context?.source !== "race" || Object.keys(root.context).length !== 1) return unavailable;
   const policy = earnedRacialSpellsSchema.safeParse(root.content_definitions.data.earned_racial_spells);

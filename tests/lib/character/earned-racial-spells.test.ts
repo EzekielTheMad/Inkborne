@@ -78,7 +78,7 @@ describe("exact earned Infernal Legacy source", () => {
     pin.class_role!.raw_data = structuredClone(pin.content_definitions.data);
     expect(resolveCastingAbility(f.spells[0], f.input).status).toBe("unavailable");
   });
-  it.each(["incomplete", "root-absent", "historical-root", "root-version", "root-owner", "root-character", "root-context", "wrong-selection", "subrace-choice", "duplicate-root",
+  it.each(["incomplete", "root-absent", "historical-root", "root-version", "root-owner", "root-character", "root-context", "wrong-selection", "subrace-choice", "empty-subrace-choice", "duplicate-root",
     "trait-absent", "duplicate-trait", "trait-controller", "trait-choice", "trait-owner", "trait-membership", "trait-ability", "trait-spell", "extra-trait-spell",
     "missing-role", "role-revision", "parent-revision", "class-occurrence", "class-raw", "two-originals", "level-sum", "source-pin", "source-root", "source-key", "source-extra",
     "spell-grant", "class-group", "spell-source", "spell-version", "spell-system", "spell-owner", "spell-name", "spell-level", "spellbook", "prepared", "root-time", "trait-time", "spell-time"])(
@@ -93,6 +93,7 @@ describe("exact earned Infernal Legacy source", () => {
       if (fault === "root-context") f.root.context.extra = true;
       if (fault === "wrong-selection") f.character.choices.race = "human";
       if (fault === "subrace-choice") f.input.character.choices.subrace = "other";
+      if (fault === "empty-subrace-choice") f.input.character.choices.subrace = "";
       if (fault === "duplicate-root") f.input.contentRefs.push({ ...f.root, id: racialId(99) });
       if (fault === "trait-absent") f.input.contentRefs = f.refs.filter(ref => ref !== f.trait);
       if (fault === "duplicate-trait") f.input.contentRefs.push({ ...f.trait, id: racialId(99) });
