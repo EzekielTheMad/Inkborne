@@ -271,7 +271,17 @@ beforeAll(async () => {
   beforeHp = await profile();
   beforeWires = (await db.query<{ row: Json }>("SELECT to_jsonb(t) AS row FROM pg_trigger t WHERE tgrelid IN ('public.characters'::regclass,'private.character_parent_admissions_v1'::regclass,'private.character_builder_capabilities_v1'::regclass) ORDER BY oid")).rows;
   beforeFunctions = (await db.query<{ oid: number; row: Json }>("SELECT p.oid::integer AS oid,to_jsonb(p) AS row FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN ('public','private') ORDER BY p.oid")).rows;
-  await db.exec("SET ROLE supabase_admin"); await db.exec(ancestryStage); await db.exec("SET ROLE postgres");
+  await db.exec("SET ROLE supabase_admin");
+  try { await db.exec(ancestryStage); }
+  catch (error) {
+    await db.exec("ROLLBACK");
+    const wires = (await db.query(`SELECT tgname,tgtype,tgfoid::regprocedure::text AS callback,tgrelid::regclass::text AS relation,
+      tgdeferrable,tginitdeferred,tgenabled,tgnargs,octet_length(tgargs) AS args_bytes,tgattr::text AS columns,
+      tgqual::text AS condition FROM pg_trigger WHERE NOT tgisinternal AND (tgrelid='public.characters'::regclass
+        OR tgname IN ('parent_admission_finished','builder_parent_admission_finished')) ORDER BY tgname`)).rows;
+    throw new Error(`Ancestry installer fixture failed: ${error instanceof Error ? error.message : "unknown"}; wires=${JSON.stringify(wires)}`);
+  }
+  await db.exec("SET ROLE postgres");
   await install(baseline, true, true, false);
 });
 afterAll(async () => { await db.close(); await baseline.close(); });

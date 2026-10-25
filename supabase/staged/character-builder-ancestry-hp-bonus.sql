@@ -108,7 +108,7 @@ BEGIN
     "prune_inactive_asi_choices_before_choices":[19,"private.prune_inactive_asi_choices_before_choices()",["choices"]],
     "prune_inactive_feature_refs_after_choices":[17,"private.prune_inactive_feature_refs_after_choices()",["choices"]],
     "validate_character_content_boundaries":[17,"private.validate_character_content_boundaries()",["campaign_id","system_id"]],
-    "zzz_enrolled_parent_native_tuple":[19,"private.enrolled_parent_after_revision_v1()",[]],
+    "zzz_enrolled_parent_after_revision":[19,"private.enrolled_parent_after_revision_v1()",[]],
     "zzz_enrolled_parent_observed":[17,"private.enrolled_parent_observed_v1()",[]]
   }'::jsonb OR EXISTS(SELECT 1 FROM pg_catalog.pg_trigger WHERE tgrelid='public.characters'::pg_catalog.regclass AND NOT tgisinternal
     AND (tgenabled<>'O' OR tgdeferrable OR tginitdeferred OR tgnargs<>0 OR pg_catalog.octet_length(tgargs)<>0 OR tgqual IS NOT NULL
