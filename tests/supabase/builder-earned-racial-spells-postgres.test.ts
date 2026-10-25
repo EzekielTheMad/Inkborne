@@ -265,22 +265,29 @@ const spell = (n: number, source = "racial_trait", group = "race:tiefling", cont
 const graph = (spells: Json[] = [spell(70)], racial = true): Json => ({ refs: [classPin(), ...(racial ? [traitPin()] : [])],
   spells, occurrences: [occurrence()], feature_grants: [], spell_grants: [], origin: { original: true }, commands: [], unrelated: { preserved: [1, 2] } });
 const earned = (value: Json) => (value.spells as Json[]).filter(row => (row.custom_data as Json | null)?.builder_earned_racial_spell);
+async function during<T>(phase: string, run: () => Promise<T>): Promise<T> {
+  try { return await run(); }
+  catch (error) {
+    const issue = error as { code?: string; message?: string; where?: string; position?: string; internalPosition?: string; internalQuery?: string };
+    throw new Error(`Racial fixture ${phase}: ${issue.code ?? "unknown"} ${issue.message ?? "failed"}; ${issue.where ?? "no context"}; position ${issue.position ?? issue.internalPosition ?? "none"}; ${issue.internalQuery?.slice(-400) ?? ""}`);
+  }
+}
 
 async function installBaseline(connection: PGlite, ancestry = true) {
-  await install(connection, true, true, ancestry);
-  await connection.exec("ALTER TABLE public.content_versions ADD COLUMN created_at timestamptz DEFAULT '2026-10-25T00:00:00Z'");
-  await connection.exec(definition("supabase/staged/character-builder-catalog.sql", "private.builder_catalog_dependency_v1").sql);
-  await connection.exec(definition("supabase/staged/character-builder-bonus-spells.sql", "private.prepare_builder_bonus_spells_v1").sql);
+  await during("accepted parent/F1 baseline", () => install(connection, true, true, ancestry));
+  await during("dependency snapshot timestamp column", () => connection.exec("ALTER TABLE public.content_versions ADD COLUMN created_at timestamptz DEFAULT '2026-10-25T00:00:00Z'"));
+  await during("actual dependency resolver", () => connection.exec(definition("supabase/staged/character-builder-catalog.sql", "private.builder_catalog_dependency_v1").sql));
+  await during("actual bonus normalizer", () => connection.exec(definition("supabase/staged/character-builder-bonus-spells.sql", "private.prepare_builder_bonus_spells_v1").sql));
   let body = functionBody("character-builder-class-feature-choices.sql", "private.prepare_builder_class_feature_choices_v1");
   body = replaceOnce(body, "RETURN pg_catalog.jsonb_build_object('choices',pending_choices,'graph',graph||pg_catalog.jsonb_build_object('refs',refs));",
     "pending_choices:=private.normalize_builder_lore_skills_v1(target,pending_choices,refs||supplemental_refs,strict_choice_id); pending_choices:=private.normalize_builder_expertise_v1(target,pending_choices,refs||supplemental_refs,NULL); projected:=private.prepare_builder_favored_enemies_v1(target,pending_choices,graph||pg_catalog.jsonb_build_object('refs',refs),NULL); RETURN private.prepare_builder_bonus_spells_v1(target,projected->'choices',projected->'graph',NULL,NULL);");
   expect(md5(body)).toBe(normalizerPreimage);
-  await connection.exec(`CREATE FUNCTION private.prepare_builder_class_feature_choices_v1(target uuid,pending_choices jsonb,graph jsonb,strict_choice_id text,supplemental_refs jsonb DEFAULT '[]')
+  await during("actual admitted class normalizer and explicit collaborator doubles", () => connection.exec(`CREATE FUNCTION private.prepare_builder_class_feature_choices_v1(target uuid,pending_choices jsonb,graph jsonb,strict_choice_id text,supplemental_refs jsonb DEFAULT '[]')
     RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path='' AS $normalizer$${body}$normalizer$;
     CREATE FUNCTION private.normalize_builder_lore_skills_v1(uuid,jsonb,jsonb,text) RETURNS jsonb LANGUAGE sql AS 'SELECT $2';
     CREATE FUNCTION private.prepare_builder_favored_enemies_v1(uuid,jsonb,jsonb,text) RETURNS jsonb LANGUAGE sql AS $$ SELECT jsonb_build_object('choices',$2,'graph',$3) $$;
     REVOKE ALL ON FUNCTION private.prepare_builder_class_feature_choices_v1(uuid,jsonb,jsonb,text,jsonb),private.builder_catalog_dependency_v1(uuid,jsonb,text,text),
-      private.prepare_builder_bonus_spells_v1(uuid,jsonb,jsonb,text,text) FROM PUBLIC,anon,authenticated,service_role;`);
+      private.prepare_builder_bonus_spells_v1(uuid,jsonb,jsonb,text,text) FROM PUBLIC,anon,authenticated,service_role;`));
 }
 async function profile(connection = db) {
   return (await connection.query<{ oid: number; row: Json }>("SELECT p.oid::integer AS oid,to_jsonb(p) AS row FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN ('public','private') ORDER BY p.oid")).rows;
@@ -329,7 +336,7 @@ beforeAll(async () => {
   await installBaseline(db);
   beforeFunctions = await profile();
   beforeWires = (await db.query<{ oid: number; row: Json }>("SELECT oid::integer AS oid,to_jsonb(t) AS row FROM pg_trigger t ORDER BY oid")).rows;
-  await db.exec("SET ROLE supabase_admin"); await db.exec(racialStage); await db.exec("SET ROLE postgres");
+  await db.exec("SET ROLE supabase_admin"); await during("complete real F3 installer", () => db.exec(racialStage)); await db.exec("SET ROLE postgres");
   await installBaseline(baseline);
 });
 afterAll(async () => { await db.close(); await baseline.close(); });

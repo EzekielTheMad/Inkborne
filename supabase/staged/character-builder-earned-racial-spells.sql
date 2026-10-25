@@ -328,7 +328,7 @@ BEGIN
     source:=CASE WHEN side=0 THEN prior_source ELSE pending_source END;
     IF source IS NULL THEN CONTINUE; END IF;
     FOR tier IN SELECT value FROM pg_catalog.jsonb_array_elements(source#>'{definition,data_snapshot,earned_racial_spells,grants}') LOOP
-      IF (tier->>'character_level')::integer>CASE WHEN side=0 THEN prior_level ELSE pending_level END THEN CONTINUE; END IF;
+      IF (tier->>'character_level')::integer>(CASE WHEN side=0 THEN prior_level ELSE pending_level END) THEN CONTINUE; END IF;
       dependency:=private.builder_catalog_dependency_v1(target,source->'definition','spell',tier->>'spell');
       IF dependency#>'{data_snapshot,level}' IS DISTINCT FROM tier->'spell_level' OR dependency->>'system_id_snapshot' IS DISTINCT FROM parent.system_id::text
         OR dependency->>'source_snapshot' IS DISTINCT FROM 'srd' OR dependency->>'scope_snapshot' IS DISTINCT FROM 'platform'
@@ -417,7 +417,7 @@ BEGIN
       OR proc.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
       OR pg_catalog.md5(pg_catalog.replace(proc.prosrc,E'\r\n',E'\n'))<>(CASE signature
         WHEN 'private.builder_earned_racial_source_v1(uuid,jsonb,jsonb,uuid)' THEN '13b480ff386a5c565e205370ce08fbe0'
-        ELSE '6294da6ba541f4f6cf8b8b0831ff315a' END)
+        ELSE '05989bdb6d1683d31d781e67b302a04d' END)
       OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(proc.proacl,pg_catalog.acldefault('f',proc.proowner))) a
         WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable OR a.grantee<>proc.proowner) THEN
       RAISE EXCEPTION 'builder_earned_racial_helper_profile_changed' USING ERRCODE='42501'; END IF;
