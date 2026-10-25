@@ -1,8 +1,10 @@
 import { test, expect, type Browser, type Locator, type Page, type TestInfo } from "@playwright/test";
-import { readFile, writeFile } from "node:fs/promises";
-import { randomUUID } from "node:crypto";
+import { readFile, realpath, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve, sep } from "node:path";
+import { z } from "zod";
 
 const pendingPrefix = "inkborne:pending-builder-step:v1:";
 const reviewName = "Fiend content update review";
@@ -29,6 +31,131 @@ type Story = { config: Settings; targetId: string; controlId: string; blockedOri
   actionsPath: string; snapshots: Array<{ label: string; path: string; data: Native }>; actions: Array<{ label: string; result: Record<string, unknown> }> };
 const originalScores = { Strength: "8", Dexterity: "14", Constitution: "12", Intelligence: "10", Wisdom: "13", Charisma: "15" };
 const ordinarySpells = ["Comprehend Languages", "Charm Person", "Expeditious Retreat", "Hellish Rebuke"];
+
+const fixtureHash = z.string().regex(/^[0-9a-f]{64}$/);
+const fixtureUuid = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+const fixtureReference = z.object({ path: z.string().min(1), sha256: fixtureHash }).strict();
+const continuationManifest = z.object({
+  contract_version: z.literal(1), kind: z.literal("prepared_fiend_v1_continuation"),
+  project: z.literal("inkborne-app-flow-20261022"), engine_id: fixtureUuid, database_id: fixtureHash,
+  owner_id: fixtureUuid, target_id: fixtureUuid, control_id: fixtureUuid,
+  target_action_revision: z.literal("30"), preparation_commit: z.literal("d614952ce752fcdad32600b676d4b7a442522610"),
+  failed_summary: fixtureReference, old_native: fixtureReference, legacy_publication: fixtureReference, fresh_guard: fixtureReference,
+  subclass_stage_sha256: z.literal("10a6c178f4c7d46c0a7b76a51a7e4b2f9c5a5f253223fd0583944c2e43a6ccb9"),
+  native_reader_sha256: z.literal("674a0e47ba603ef9e5ac390c4b0fcc5c42bdb558fc8caaccc516c5c75217727b"),
+}).strict();
+const continuationGuardSqlSha256 = "52ef75ea6777424a2d1989806fd8f3501b933f5fae858657bd5939cdac142455";
+const continuationGuard = z.object({
+  contract_version: z.literal(1), kind: z.literal("read_only_fixture_guard_captured_now"), captured_utc: z.string().datetime(),
+  engine_id: fixtureUuid, database_id: fixtureHash, read_only: z.literal(true), not_reconstructed_prior_evidence: z.literal(true),
+  sql_sha256: z.literal(continuationGuardSqlSha256), sql: z.string().min(1), data: z.record(z.string(), z.unknown()),
+  processes: z.array(z.record(z.string(), z.unknown())),
+}).strict();
+const continuationTables = ["public.characters", "public.character_content_refs", "public.character_feature_grants", "public.character_spell_grants",
+  "public.character_spells", "public.character_inventory", "public.character_starting_grants", "private.character_class_origin_v1",
+  "private.character_class_commands_v1", "private.character_builder_receipts_v1", "private.character_projection_order_v1",
+  "private.character_builder_hp_draws_v1", "private.character_builder_class_acquisitions_v1", "private.character_class_occurrences_v1",
+  "private.character_builder_progression_history_v1"];
+type FixtureGuardData = {
+  characters: number; parents: Array<{ id: string; actorId: string; actionRevision: string; completeParentRowDigest: string }>;
+  rows: Record<string, { count: number; fingerprint: string }>;
+  catalog: { definitions: number; versions: number; fiendVersion: number; batches: number; staging: number;
+    fiendSnapshots: Array<{ version: number; digest: string }>; otherSnapshotFingerprint: string; otherDefinitionFingerprint: string };
+  caps: number; readinessCount: number; ready: number; classGate: boolean; hitDieGate: boolean; servicePrivateUsage: boolean;
+  updateReceipts: number; updateHistory: number; revisionBodyMd5: string;
+};
+const bytesHash = (bytes: Uint8Array | string) => createHash("sha256").update(bytes).digest("hex");
+async function boundedPublicFile(file: string, allowedDirectory: string, expectedBasename: RegExp, directChild = false) {
+  const requested = resolve(file), directory = resolve(allowedDirectory);
+  expect(basename(requested)).toMatch(expectedBasename);
+  expect(requested.toLowerCase().split(sep).includes("private")).toBe(false);
+  if (directChild) expect(dirname(requested).toLowerCase()).toBe(directory.toLowerCase());
+  const actual = await realpath(requested), allowed = await realpath(directory);
+  expect(actual.toLowerCase().startsWith((allowed + sep).toLowerCase()), "fixture artifact stays in its public evidence directory").toBe(true);
+  expect(basename(actual)).toMatch(expectedBasename);
+  expect(actual.toLowerCase().split(sep).includes("private")).toBe(false);
+  if (directChild) expect(dirname(actual).toLowerCase()).toBe(allowed.toLowerCase());
+  const bytes = await readFile(actual); expect(bytes.byteLength).toBeLessThan(2 * 1024 * 1024);
+  return { path: actual, bytes };
+}
+async function preparedContinuation(info: TestInfo, story: Story) {
+  const file = process.env.INKBORNE_LOCAL_FIEND_CONTINUATION;
+  if (file === undefined) return null;
+  if (!file.trim()) throw Error("Provide a public continuation manifest path, or omit the optional variable");
+  const root = process.cwd(), runtime = resolve(dirname(process.env.INKBORNE_LOCAL_FLOW_CONFIG!), "..");
+  const manifestFile = await boundedPublicFile(file, runtime, /^fiend-continuation-fixture-[0-9TZ]+\.json$/, true);
+  const manifest = continuationManifest.parse(JSON.parse(manifestFile.bytes.toString("utf8")));
+  expect(manifest.owner_id).toBe(story.config.owner.id); expect(manifest.target_id).not.toBe(manifest.control_id);
+  const reference = async (ref: z.infer<typeof fixtureReference>, allowed: string, name: RegExp, directChild = false) => {
+    const value = await boundedPublicFile(resolve(root, ref.path), allowed, name, directChild);
+    expect(bytesHash(value.bytes)).toBe(ref.sha256); return value;
+  };
+  const failedFile = await reference(manifest.failed_summary, resolve(runtime, "../evidence"), /^summary\.json$/);
+  const failed = JSON.parse(failedFile.bytes.toString("utf8"));
+  expect(failed.gate).toBe("subclass-update-app"); expect(failed.exitCode).toBe(1); expect(failed.remainingIdentities).toEqual([]);
+  const priorFile = await reference(manifest.old_native, resolve(root, "test-results/local-app"), /^native-subclass-1-old-v1-before-publication\.json$/);
+  const archived = z.record(z.string(), z.unknown()).parse(JSON.parse(priorFile.bytes.toString("utf8")));
+  expect(archived.label).toBe("old-v1-before-publication");
+  // This is the complete archived reader output, not a historical full parent digest.
+  delete archived.observedUtc; delete archived.label; delete archived.processes;
+  expect(archived.characterId).toBe(manifest.target_id); expect(archived.controlCharacterId).toBe(manifest.control_id);
+  expect(archived.actorId).toBe(manifest.owner_id); expect(archived.controlActorId).toBe(manifest.owner_id);
+  expect(archived.actionRevision).toBe(manifest.target_action_revision); expect(archived.profileCharacterCount).toBe(2);
+  expect(archived.updateReceipts).toEqual([]); expect(archived.updateHistoryCount).toBe(0);
+  const legacyFile = await reference(manifest.legacy_publication, runtime, /^publish-legacy-fiend-readback\.json$/, true);
+  expect(legacyFile.path).toBe(await realpath(resolve(runtime, "publish-legacy-fiend-readback.json")));
+  const legacy = JSON.parse(legacyFile.bytes.toString("utf8"));
+  expect(legacy.sourceSha).toBe(manifest.preparation_commit); expect(legacy.engineId).toBe(manifest.engine_id);
+  expect(legacy.oldCatalogSha256).toBe("1a0d379f8f0a79c3331b43b79d16873e9c890777ae20fc6d4fe413d4a4fa0820");
+  const guardFile = await reference(manifest.fresh_guard, runtime, /^fiend-continuation-guard-[0-9TZ]+\.json$/, true);
+  const guard = continuationGuard.parse(JSON.parse(guardFile.bytes.toString("utf8")));
+  expect(guard.engine_id).toBe(manifest.engine_id); expect(guard.database_id).toBe(manifest.database_id);
+  expect(bytesHash(guard.sql)).toBe(continuationGuardSqlSha256);
+  const state = JSON.parse(await readFile(resolve(runtime, "state.json"), "utf8"));
+  expect(state.project).toBe(manifest.project); expect(state.catalogMode).toBe("real-srd"); expect(state.ready).toBe(true);
+  expect(state.stoppedUtc ?? null).toBeNull(); expect(state.engineId).toBe(manifest.engine_id);
+  expect(state.subclassCorrectedPublication ?? null).toBeNull(); expect(state.subclassUpdateStage.sourceSha256).toBe(manifest.subclass_stage_sha256);
+  expect(existsSync(resolve(runtime, "publish-corrected-fiend-readback.json"))).toBe(false);
+  expect(bytesHash(await readFile(resolve(root, "supabase/staged/character-builder-subclass-update.sql")))).toBe(manifest.subclass_stage_sha256);
+  expect(bytesHash(await readFile(resolve(root, "supabase/verification/subclass-content-update-readback.sql")))).toBe(manifest.native_reader_sha256);
+  const db = state.containers.find((item: { name: string }) => item.name === `/${state.project}-db`);
+  expect(db?.id).toBe(manifest.database_id);
+  const processes: unknown[] = [];
+  const run = (args: string[], input?: string) => {
+    const startedUtc = new Date().toISOString();
+    const result = spawnSync("C:/Users/kaios/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe", ["--context", "desktop-linux", ...args],
+      { cwd: root, input, encoding: "utf8", windowsHide: true, timeout: 30000, maxBuffer: 2 * 1024 * 1024 });
+    processes.push({ pid: result.pid, parentPid: process.pid, cwd: root, args, startedUtc, finishedUtc: new Date().toISOString(), exitCode: result.status });
+    if (result.status !== 0) throw Error("Owned read-only continuation guard failed; raw output withheld");
+    return result.stdout.trim();
+  };
+  expect(run(["info", "--format", "{{.ID}}"])).toBe(manifest.engine_id);
+  const identity = JSON.parse(run(["inspect", "--format", '{"id":{{json .Id}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}}}', db.id]));
+  expect(identity.id).toBe(manifest.database_id); expect(identity.labels["com.docker.compose.project"]).toBe(manifest.project); expect(identity.status).toBe("running");
+  // The only admitted query has a reviewed fixed SHA and a READ ONLY transaction.
+  const current = JSON.parse(run(["exec", "-i", db.id, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "supabase_admin",
+    "--dbname", "postgres", "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", "VERBOSITY=sqlstate", "--file", "-"], guard.sql)) as FixtureGuardData;
+  expect(current).toEqual(guard.data);
+  expect(current.characters).toBe(2); expect(current.parents).toHaveLength(2);
+  expect(current.parents.map(parent => parent.id).sort()).toEqual([manifest.target_id, manifest.control_id].sort());
+  expect(current.parents.every(parent => parent.actorId === manifest.owner_id && /^[0-9a-f]{32}$/.test(parent.completeParentRowDigest))).toBe(true);
+  expect(current.parents.find(parent => parent.id === manifest.target_id)?.actionRevision).toBe(manifest.target_action_revision);
+  expect(Object.keys(current.rows).sort()).toEqual([...continuationTables].sort());
+  expect(current.catalog).toEqual({ definitions: 1535, versions: 1535, fiendVersion: 1, batches: 0, staging: 0,
+    fiendSnapshots: legacy.after.fiendSnapshots, otherSnapshotFingerprint: legacy.after.otherSnapshotFingerprint, otherDefinitionFingerprint: legacy.after.otherDefinitionFingerprint });
+  expect(current.caps).toBe(0); expect(current.readinessCount).toBe(13); expect(current.ready).toBe(0);
+  expect(current.classGate).toBe(false); expect(current.hitDieGate).toBe(false); expect(current.servicePrivateUsage).toBe(false);
+  expect(current.updateReceipts).toBe(0); expect(current.updateHistory).toBe(0); expect(current.revisionBodyMd5).toBe("857950f1a88305838220494f068e5cf5");
+  const proofPath = info.outputPath("continuation-current-guard.json");
+  await writeFile(proofPath, JSON.stringify({ observedUtc: new Date().toISOString(), capturedNowGuardUtc: guard.captured_utc,
+    manifestPath: manifestFile.path, manifestSha256: bytesHash(manifestFile.bytes), querySha256: continuationGuardSqlSha256,
+    readOnly: true, fullParentAnd15TableGuardMatches: true, data: current, processes }, null, 2));
+  story.targetId = manifest.target_id; story.controlId = manifest.control_id;
+  return { archived: archived as unknown as Native, provenance: { mode: "prepared_continuation", creationPerformedInThisRun: false,
+    preparationCommit: manifest.preparation_commit, failedPreparation: manifest.failed_summary, archivedNative: manifest.old_native,
+    manifestPath: manifestFile.path, manifestSha256: bytesHash(manifestFile.bytes), capturedNowGuard: manifest.fresh_guard,
+    capturedNowGuardUtc: guard.captured_utc, freshGuardProofPath: proofPath, historicalRunRemainsFailed: true } };
+}
 
 async function settings(): Promise<Settings> {
   const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
@@ -363,10 +490,17 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
     await page.waitForURL(config.appOrigin + "/dashboard", { timeout: 60000 });
   } catch { await page.close(); throw Error("Actual local sign-in failed; credentials withheld"); }
   expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
-  await prepareTarget(page, story);
-  story.controlId = await createFiend(page, story, `Old Fiend control ${randomUUID().slice(0, 8)}`);
+  const continuation = await preparedContinuation(info, story);
+  if (!continuation) {
+    await prepareTarget(page, story);
+    story.controlId = await createFiend(page, story, `Old Fiend control ${randomUUID().slice(0, 8)}`);
+  } else {
+    expect(await page.evaluate(({ prefix, owner, ids }) => ids.map(id => sessionStorage.getItem(prefix + owner + ":" + id)),
+      { prefix: pendingPrefix, owner: config.owner.id, ids: [story.targetId, story.controlId] })).toEqual([null, null]);
+  }
   await page.goto(classUrl(story));
   const historical = await readback(info, story, "old-v1-before-publication");
+  if (continuation) expect(historical).toEqual(continuation.archived);
   expect(historical.profileCharacterCount).toBe(2);
   expect(historical.fiendDefinitionVersion).toBe(1); expect(historical.fiendSnapshots).toHaveLength(1); expect(historical.fiendSnapshots[0].extra).toBe(true);
   expect(historical.fiendFreeRows).toBe(4); expect(historical.inventory.length).toBeGreaterThan(0); expect(historical.startingAwards).toHaveLength(1);
@@ -446,6 +580,7 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
     cancelNoWrite: true, staleOriginalTerminalProofReadOnly: true, sameCharacterFreshReview: true, lostAppliedResponseRecovered: true,
     appliedReceiptBeforeLaterStaleCheck: true, exactlyOneUpdateReceipt: true, ordinarySpellAllowancePreserved: true,
     targetId: story.targetId, controlId: story.controlId, staleOperationId: staleIntent.intent.operation_id, operationId: original.intent.operation_id,
+    preparation: continuation?.provenance ?? { mode: "fresh_app_creation", creationPerformedInThisRun: true },
     snapshots: story.snapshots, actions: story.actions, authorization, blockedOrigins: story.blockedOrigins, pageErrors: story.pageErrors }, null, 2));
   await info.attach("subclass-content-update", { path: output, contentType: "application/json" });
 });
