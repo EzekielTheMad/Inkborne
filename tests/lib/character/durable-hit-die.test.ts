@@ -149,7 +149,7 @@ describe("durable hit-die service-internal request and snapshot", () => {
     const s = resilienceSnapshot(), f = ancestryHpFixture();
     for (const source of [f.raceRef, f.subraceRef, f.traitRef]) s.pins.push(hitDieSnapshotSchema.shape.pins.element.parse({
       id: source.id, character_id: s.character.id, content_id: source.content_id, content_version: source.content_version,
-      feature_grant_id: null, context: source.context, choice_source: null,
+      feature_grant_id: null, context: source.context, choice_source: source.choice_source,
       resolved: { ...source.content_definitions, system_id: s.system.id },
     }));
     s.character.choices.race = "dwarf"; s.character.choices.subrace = "hill-dwarf";
