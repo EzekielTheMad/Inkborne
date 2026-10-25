@@ -1,8 +1,9 @@
 # Finite native ancestry HP companion
 
 This source checkpoint implements the native calculation portion of
-[F1 ancestry HP parity](2026-10-25-ancestry-hit-point-parity.md). Tests and actual
-acceptance remain pending. It changes no character, frozen snapshot, public
+[F1 ancestry HP parity](2026-10-25-ancestry-hit-point-parity.md). The 41 focused
+PGlite checks pass; actual installation and acceptance remain pending.
+It changes no character, frozen snapshot, public
 writer, graph shape, receipt, native revision, gate or execution grant.
 
 Install in this exact order: Draconic HP companion, parent admission companion,
@@ -58,7 +59,7 @@ complete graph/materializer, original choice callbacks and B3 plan/journal
 collaborators are explicit doubles. It is not native JWT, a full builder
 compiler or actual progression/removal clamp acceptance.
 
-Prepared cases include HP38/old35, pending up/down/removal without changing saved
+Passing cases include HP38/old35, pending up/down/removal without changing saved
 level, raw rolls and CON, negative-CON minima, additive Draconic own-class HP,
 reordered classes, frozen shared-root continuity, malformed/absent/orphan/wrong
 root evidence, graph-supplied ancestry refusal, exact parent +1/order/seal
@@ -68,15 +69,22 @@ body/owner/config/ACL/trigger/deferred/readiness drift. The sealed rollback uses
 an explicit test compiler/capability collaborator and does not fabricate an
 actual app/B3 receipt.
 
-After root releases a serialized check slot, run exactly:
+The serialized receipt is `local-ancestry-hp-native-20261025T065512Z`: 41/41 pass,
+12.16 seconds including wrapper overhead, all six observed identities gone.
+The installer SHA256 is
+`edadfd7b882358dfaf96a3910795cca5eff8bea26118157b92119c30e225118c`.
+Root corrected the exact parent trigger name in the preflight, completed the
+low-CON class manifest, and preserved literal SQL dollars in fixture replacement.
+These corrections do not relax native admission. Subsequent fixture typing
+errors use explicit graph and SQL result types. The focused command is:
 
 ```powershell
 npm.cmd test -- tests/supabase/builder-ancestry-hp-bonus-postgres.test.ts --maxWorkers=1
 ```
 
 Use the agreed 768 MiB Node heap and recorded wrapper after fresh physical/commit
-headroom checks. Do not infer a test pass or native install from this source
-checkpoint. Later actual acceptance must preserve a real old Hill control,
+headroom checks. This test pass does not establish native installation.
+Later actual acceptance must preserve a real old Hill control,
 perform an atomic one-root publication, finish the new Barbarian3/CON16 at HP38,
 reload its sheet, verify native source/order/HP ownership and foreign refusal,
 and exercise any current-HP clamp claim only through an admitted existing writer.

@@ -239,7 +239,11 @@ let beforeHp: Json, beforeWires: Array<{ row: Json }>, beforeFunctions: Array<{ 
 function choices(level = 3): Json {
   return { race: "dwarf", subrace: "hill-dwarf", classes: [{ slug: "barbarian", level, occurrence_id: barbarian }], hp_rolls: {} };
 }
-function graph() {
+type PendingRef = { id: string; character_id: string; content_id: string; content_version: number;
+  context: Record<string, string | number>; feature_grant_id: null; choice_source?: string };
+type PendingOccurrence = { id: string; character_id: string; system_id: string; content_id: string;
+  content_version: number; class_slug: string; controller_ref_id: string; subclass_ref_id: string | null; lifecycle: string };
+function graph(): { refs: PendingRef[]; occurrences: PendingOccurrence[] } {
   return { refs: [{ id: barbarianRoot, character_id: target, content_id: barbarianContent, content_version: 1,
     context: { source: "class", level: 1 }, feature_grant_id: null }],
   occurrences: [{ id: barbarian, character_id: target, system_id: system, content_id: barbarianContent, content_version: 1,
@@ -251,9 +255,9 @@ function mixedGraph() {
     context: { source: "class", level: 1 }, feature_grant_id: null });
   value.refs.push({ id: subclassRoot, character_id: target, content_id: subclassContent, content_version: 2,
     context: { source: "subclass", class: "sorcerer" }, feature_grant_id: null,
-    choice_source: `builder:subclass:${sorcerer}` } as typeof value.refs[number]);
+    choice_source: `builder:subclass:${sorcerer}` });
   value.occurrences.push({ id: sorcerer, character_id: target, system_id: system, content_id: sorcererContent, content_version: 1,
-    class_slug: "sorcerer", controller_ref_id: sorcererRoot, subclass_ref_id: subclassRoot as unknown as null, lifecycle: "accepted" });
+    class_slug: "sorcerer", controller_ref_id: sorcererRoot, subclass_ref_id: subclassRoot, lifecycle: "accepted" });
   return value;
 }
 async function maximum(next: Json = choices(), pendingGraph: Json = graph()) {
@@ -378,14 +382,14 @@ describe("real ordered ancestry HP companion with explicit compiler/Auth doubles
   });
   it("preserves the actual parent seal/revision/order path and rolls back a later failure", async () => {
     await db.query("INSERT INTO private.character_class_origin_v1 VALUES($1)", [target]);
-    const before = (await db.query("SELECT to_jsonb(c) AS row FROM public.characters c WHERE id=$1", [target])).rows;
+    const before = (await db.query<{ row: Json }>("SELECT to_jsonb(c) AS row FROM public.characters c WHERE id=$1", [target])).rows;
     const beforeOrder = (await db.query("SELECT to_jsonb(o) AS row FROM private.character_projection_order_v1 o WHERE character_id=$1", [target])).rows;
     await expect(rollback(async () => {
       const next = choices(1), max = await maximum(next);
       expect(max).toBe(16);
       await db.query("SELECT private.mint_builder_step_v1($1,c,'set_class_level') FROM public.characters c WHERE id=$2", [context, target]);
       await db.query("UPDATE private.character_builder_capabilities_v1 SET expected_state=$1 WHERE character_id=$2", [{ current_hp: max }, target]);
-      const expected = { ...before[0].row as Json, choices: next, state: { current_hp: max }, level: 1 };
+      const expected = { ...before[0].row, choices: next, state: { current_hp: max }, level: 1 };
       await db.query("SELECT private.seal_builder_parent_admission_v1($1,$2)", [target, expected]);
       await db.query("UPDATE public.characters SET choices=$1,state=$2,level=1 WHERE id=$3", [next, { current_hp: max }, target]);
       expect((await db.query<{ action_revision: string }>("SELECT action_revision::text AS action_revision FROM public.characters WHERE id=$1", [target])).rows[0].action_revision).toBe("11");

@@ -18,17 +18,24 @@ The parent safeguard is staged through `d614952` with 32 focused checks; its
 contention verifier has seven simulated checks. Neither is native acceptance.
 The [remaining six-story matrix](specs/2026-10-24-builder-remaining-matrix.md)
 records three ready martial cases and three ancestry repairs. F1 HP source
-is integrated as `dbafbc4` with 157 focused passes; native/actual acceptance
-is pending. Martial
+is integrated as `dbafbc4` with 157 focused passes. Its native companion through
+`a8c40ec` passes 41 PGlite checks; actual installation/publication and the A4
+browser source (`79843fc`) remain pending. F2 selected ancestry defenses is
+integrated in `3524785`: 115 core checks and the final 70 ASI/HP checks pass
+after strict fixture ownership repairs. F3 earned Tiefling spells and A5
+mixed-caster source remain in isolated workers. Martial
 browser/readback source is integrated through `c8de884`; typecheck and lint pass.
 The 2 GiB dev restart and later 3 GiB stale-review fixture failure remain
 preserved. The latter made no correction update. `961b50b` warms the actual
 ability editor before review; a clean full run remains pending. The obsolete
-continuation guard is inadmissible. Next is stopped and the exact owned backend
-is being reset after public evidence archival. A later fresh attempt also
-stopped at the OS commit guard after four native checkpoints; it made no
-correction. Local Chrome's V8 old generation is now bounded in `7de8248` and
-an actual probe passes; the clean complete run remains pending. Consult the latest handoff and external runtime/process receipts
+continuation guard is inadmissible. The final capped-Chrome attempt
+`local-subclass-update-app-20261025T063955Z` stopped at 93.781% system commit
+after five native checkpoints and one strict stale-rejection wire; no correction
+was applied. All owned runtime resources and credentials were removed at
+06:45:34 UTC, with ports 3001/9997/9998/9999 closed and shared Docker/cache retained.
+A fresh actual run needs at least 14 GiB commit-free and 8 GiB physical-free;
+the user has been asked to free memory. The complete run remains pending.
+Consult the latest handoff and external runtime/process receipts
 before operations; serialize heavy checks and retain the OS resource guard.
 Vercel stays unchanged, global gates closed and M7 paused.
 
@@ -48,9 +55,8 @@ complete playable caster drafts and broader combinations/concurrency. Enrolled
 writer/lifecycle fences and hosted/provider/backup-restore acceptance remain
 open. Global gates stay closed. Vercel unchanged; M1–M6/M5.5 precede M8 and
 M7/creature imports stay paused. Preserve the backup and every inherited worktree.
-That accepted ordinary-save checkpoint removed its owned runtime. The latest
-correction backend is instead retained as described above. Shared
-engine/cache and dependency junctions remain.
+Both the accepted ordinary-save runtime and the latest failed correction
+runtime have been removed. Shared engine/cache and dependency junctions remain.
 
 ### Prior Fiend and class-removal checkpoint
 

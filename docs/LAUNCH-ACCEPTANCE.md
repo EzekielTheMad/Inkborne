@@ -18,8 +18,8 @@ actual-flow acceptance yet. The prior paused profile was archived and removed;
 a later 3 GiB continuation also remains failed after four native checkpoints:
 the stale review disappeared during first dev compilation of the other-tab
 editor, before any correction. `961b50b` warms that editor before review. The
-old continuation guard is inadmissible; Next is stopped and the exact owned
-backend is being reset for a clean full run after public failure archival.
+old continuation guard is inadmissible; the exact owned runtime was removed
+after public failure archival.
 The earlier 2 GiB dev restart failure stays failed.
 The next fresh attempt `local-subclass-update-app-20261025T062148Z` stopped at
 the OS commit guard after four native checkpoints, with zero correction
@@ -28,7 +28,19 @@ generation is bounded by `7de8248` and an actual heap/cleanup probe passes;
 the unchanged full acceptance story remains pending. F1 ancestry HP source is
 integrated as `dbafbc4` with 157 focused passes plus the affected 62-test durable
 rerun; typecheck/zero-warning lint pass. Native companion and actual acceptance
-remain open, alongside F2/F3.
+remain open. The later capped-Chrome attempt
+`local-subclass-update-app-20261025T063955Z` stopped at 93.781% system commit
+after five fresh native checkpoints and one exact stale-rejection wire.
+It remains failed, with zero correction receipts/history. All five containers,
+two networks, two volumes, three private credential files and the proxy are
+absent; task ports closed at 06:45:34 UTC. Shared engine/cache remain. A fresh
+actual run waits for at least 14 GiB commit-free and 8 GiB physical-free.
+F1's native companion through `a8c40ec` passes 41 PGlite checks; its A4
+browser/readback source is registered in `79843fc`, without actual execution.
+F2 owned ancestry defense projection (`3524785`) passes 115 core checks and
+70 final ASI/HP checks after source-complete fixture repairs. The remaining
+ten affected consumer files passed in the earlier 194-test sweep. F3 earned
+Tiefling spells and A5 mixed-caster source remain in isolated workers.
 Eight complete caster walkthroughs are prepared.
 The reviewed Draconic HP/AC repair is integrated through `72ce5cf`, with fixture
 fixes in `a4700ce`; 266 focused checks, typecheck and zero-warning lint pass.
@@ -57,9 +69,9 @@ caster drafts, broader combinations/concurrency, enrolled writer/lifecycle fence
 and hosted/provider/backup-restore acceptance. Global gates stay closed. No hosted
 change, push or deployment. Vercel unchanged; M1–M6/M5.5 precede M8;
 M7/creature imports paused.
-That ordinary-save checkpoint removed its task resources. The current correction
-backend is retained as described above; Next is stopped. Use external identity
-receipts for its live loopback resources. Shared engine/cache and worktrees remain.
+That ordinary-save checkpoint and the latest failed correction attempt removed
+their task resources. Use the external cleanup identity receipts; shared
+engine/cache and worktrees remain.
 
 ### Prior Fiend and class-removal checkpoint
 

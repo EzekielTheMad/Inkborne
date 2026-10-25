@@ -50,7 +50,67 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
-### Latest continuation — 2026-10-25 06:33 UTC
+### Latest continuation — 2026-10-25 07:10 UTC
+
+The capped-Chrome fresh attempt `local-subclass-update-app-20261025T063955Z`
+remains failed: the unchanged resource guard observed 93.781% system commit.
+Five fresh native checkpoints through `stale-refusal-no-write` and the original
+strict rejected wire `stale-rejection-response-lost` passed. The complete eleven
+native/four-wire story did not finish; no partial prefix is acceptance. Target
+`7ab396a8-6ffb-487c-80bf-9adb013da740` and control
+`f691da6d-0a04-4ac5-b629-a1c109c45fdc` retained saved Fiend v1/global v2,
+target revision 33, zero correction receipts/history and empty capabilities.
+Final native equality with the last partial checkpoint passed.
+
+The wrapper exited resource-aborted -1 after 124.96 seconds; all 32 recorded
+Next/Playwright/Chrome identities are gone. Peak private memory was about
+4.30 GiB for Next and 1.56 GiB for the test tree. The 512 MiB Chrome flag was
+present; it is not a total renderer/native memory cap. Do not retry this same
+headroom condition. A fresh actual run requires at least 14 GiB commit-free and
+8 GiB physical-free, and the user has been asked to free memory. No reply has
+arrived. Unrelated applications were not closed.
+
+Public failure evidence is preserved in the 75-file hash archive
+`app-flow-runtime/history/repin-capped-resource-failure-20261025T064406Z`.
+The fully reviewed fresh-reset dry run was applied only to its exact owned
+resources. At 06:45:34 UTC, all five containers, two networks, two volumes,
+three private credential files and the proxy identity were absent; ports
+3001/9997/9998/9999 were closed. Receipt:
+`app-flow-runtime/repin-capped-final-cleanup-20261025T0645Z.json`.
+Shared Docker engine/cache, all worktrees and dependency junctions remain.
+The older retained-backend statements below are historical.
+
+F1's staged native companion is integrated in `6a14d3d`, with exact preflight
+and fixture repairs `1f0d73b`/`a8c40ec`. Its full ordered installer fixture passes
+**41/41** in `local-ancestry-hp-native-20261025T065512Z`, 12.16 seconds, all six
+identities gone. This uses explicit Auth/compiler collaborators; no native
+installation or actual HP-clamp acceptance is claimed. A4 actual story/readback
+source is integrated in `da026ad`/`79843fc`, still unexecuted. It preserves absent
+stored current HP, rather than calling an unadmitted Heal writer. The external
+one-root ancestry publisher is still required.
+
+F2's owned ancestry defense projection is integrated in `3524785`. It projects
+only explicit frozen owned damage-resistance grants; no Gold/fire mapping or
+catalog publication. Raw strict effects are checked before parser normalization,
+unavailable ancestry blocks mechanics/printing, and independent source review
+found no remaining blocker. Core eight-file sweep **115/115** passes in
+`local-ancestry-defenses-focused-20261025T070303Z`, all twelve identities gone.
+The wider twelve-file sweep initially had eight fixture failures in two files;
+the other ten files passed. Final ASI/durable fixtures retain exact race context,
+matching character/system, the mandatory owned trait and its choice source.
+The final two-file sweep **70/70** passes in
+`local-ancestry-defenses-asi-20261025T070618Z`, all seven identities gone.
+Earlier failed receipts remain preserved. Final typecheck and zero-warning lint
+pass in `local-creation-browser-check-20261025T070750Z`, 50.11 seconds; all eight
+observed identities are gone. The initial typecheck's two native-test errors
+were corrected with explicit graph/SQL result types, without runtime changes.
+
+F3 earned Tiefling spell acquisition and A5 mixed-caster source remain in
+isolated workers. Neither source preparation nor PGlite checks accepts an
+actual browser/native flow. All global gates remain closed and M1/R06 remains
+in progress.
+
+### Previous continuation — 2026-10-25 06:33 UTC
 
 The next fresh full attempt, `local-subclass-update-app-20261025T062148Z`,
 was stopped by the unchanged OS guard at 92.0686% system commit. Its four
