@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { MobileNav } from "@/components/nav/mobile-nav";
+import { ThemeProvider } from "@/components/theme-provider";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
@@ -15,12 +16,12 @@ vi.mock("@/components/feedback/feedback-dialog", () => ({
 describe("MobileNav", () => {
   it("keeps Library and Homebrew as separate destinations", () => {
     render(
-      <MobileNav
+      <ThemeProvider><MobileNav
         displayName="Alpha Tester"
         avatarUrl={null}
         email="tester@example.com"
         isAdmin={false}
-      />,
+      /></ThemeProvider>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
@@ -31,12 +32,12 @@ describe("MobileNav", () => {
 
   it("offers feedback directly from the mobile header", () => {
     render(
-      <MobileNav
+      <ThemeProvider><MobileNav
         displayName="Alpha Tester"
         avatarUrl={null}
         email="tester@example.com"
         isAdmin={false}
-      />,
+      /></ThemeProvider>,
     );
 
     const feedbackButton = screen.getByRole("button", { name: "Send feedback" });

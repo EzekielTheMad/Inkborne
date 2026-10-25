@@ -7,11 +7,14 @@ import { CharacterRow, formatClassLine } from "@/components/characters/character
 import { Inkstain, InkRule } from "@/components/journey/ornaments";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { CropArea } from "@/components/narrative/portrait-avatar";
+import { characterNotebookStyle } from "@/lib/character/notebook-colors";
+import styles from "@/components/characters/notebook-overview.module.css";
 
 interface DashboardCharacter {
   id: string;
   name: string;
   level: number;
+  primary_color: string | null;
   choices: CharacterChoices | null;
   narrative: Record<string, unknown> | null;
   system_id: string;
@@ -57,9 +60,9 @@ export default async function DashboardPage() {
   const alphaBannerDismissed = typeof prefs.alpha_banner_dismissed_at === "string";
   const displayName = profile?.display_name || null;
 
-  const { data } = await supabase
+  const { data, error: charactersError } = await supabase
     .from("characters")
-    .select("id, name, level, choices, narrative, system_id, game_systems(name)")
+    .select("id, name, level, primary_color, choices, narrative, system_id, game_systems(name)")
     .eq("user_id", user!.id)
     .eq("archived", false)
     .order("created_at", { ascending: false })
@@ -68,12 +71,28 @@ export default async function DashboardPage() {
   const characters = (data ?? []) as unknown as DashboardCharacter[];
   const [latest, ...rest] = characters;
 
+  if (charactersError) {
+    return (
+      <div className={`${styles.page} ${styles.error}`}>
+        {!alphaBannerDismissed && <AlphaBanner />}
+        <div>
+          <p className="j-folio">Home</p>
+          <h1 className="j-display mt-1.5">Your notebook</h1>
+        </div>
+        <section role="alert">
+          <h2>Your characters couldn&rsquo;t be loaded.</h2>
+          <p>Refresh this page to try again.</p>
+        </section>
+      </div>
+    );
+  }
+
   /* ── Empty state: a blank notebook ─────────────────────────── */
   if (characters.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className={styles.page}>
         {!alphaBannerDismissed && <AlphaBanner />}
-        <section className="relative mx-auto max-w-2xl px-2 py-10 text-center sm:py-14">
+        <section className={`${styles.empty} relative mx-auto max-w-2xl px-2 py-10 text-center sm:py-14`}>
           <Inkstain className="left-1/2 top-10 h-[340px] w-[500px] -translate-x-1/2 opacity-5" />
           <div className="relative">
             <p className="j-folio mb-3">Folio I · A blank notebook</p>
@@ -114,13 +133,13 @@ export default async function DashboardPage() {
                 )}
               </div>
               <p className="mb-0 mt-3.5 text-[11.5px] italic text-muted-foreground">
-                Most players finish in 8–12 minutes. You can save and come back.
+                Start with the essentials. There&rsquo;s room for the story as you go.
               </p>
             </div>
 
             <Link
               href="/characters/new"
-              className={buttonVariants({ variant: "gold", size: "lg" }) + " mt-6 px-7"}
+              className={buttonVariants({ variant: "gold", size: "lg" }) + " " + styles.action}
             >
               Begin a character →
             </Link>
@@ -134,10 +153,10 @@ export default async function DashboardPage() {
   const latestPortrait = portraitOf(latest);
 
   return (
-    <div className="space-y-6">
+    <div className={styles.page}>
       {!alphaBannerDismissed && <AlphaBanner />}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className={styles.heading}>
         <div>
           <p className="j-folio">Home</p>
           <h1 className="j-display mt-1.5 text-3xl text-foreground sm:text-[32px]">
@@ -152,7 +171,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/characters/new"
-          className={buttonVariants({ variant: "gold" }) + " w-full sm:w-auto"}
+          className={buttonVariants({ variant: "gold" }) + " " + styles.action}
         >
           + Begin a new character
         </Link>
@@ -160,28 +179,30 @@ export default async function DashboardPage() {
 
       <InkRule />
 
-      {/* Pick up where you left */}
+      {/* The query orders by creation date, not recent activity. */}
       <section
-        aria-label="Pick up where you left"
-        className="j-card-paper relative overflow-hidden p-5 sm:p-6"
+        aria-label="Your latest character"
+        className={`${styles.entry} ${styles.featured} j-card-paper relative overflow-hidden`}
+        style={characterNotebookStyle(latest.primary_color)}
       >
         <Inkstain className="-right-10 -top-5 h-[200px] w-[300px] opacity-5" />
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="relative">
           <PortraitAvatar
             portraitUrl={latestPortrait.url}
             cropArea={latestPortrait.crop}
             characterName={latest.name}
             size="lg"
+            className={styles.portrait}
           />
           <div className="min-w-0 flex-1">
-            <p className="j-folio">Pick up where you left</p>
-            <h2 className="j-display mt-1 truncate text-[22px] text-foreground">{latest.name}</h2>
+            <p className="j-folio">Your latest character</p>
+            <h2 className="j-display text-foreground">{latest.name}</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">{subtitleOf(latest)}</p>
           </div>
           <Link
             href={`/characters/${latest.id}`}
             className={
-              buttonVariants({ variant: "gold", size: "sm" }) + " shrink-0 self-start sm:self-center"
+              buttonVariants({ variant: "gold", size: "sm" }) + " " + styles.action
             }
           >
             Open →
@@ -191,18 +212,18 @@ export default async function DashboardPage() {
 
       {/* Characters list */}
       <section aria-label="Your characters">
-        <div className="mb-3 flex items-baseline justify-between">
+        <div className={styles.sectionHeading}>
           <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
             ★ Your characters
           </h2>
           <Link
             href="/characters"
-            className="text-xs text-muted-foreground transition-colors hover:text-accent"
+            className={styles.textLink}
           >
             View all →
           </Link>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className={styles.rows}>
           {rest.map((character) => {
             const portrait = portraitOf(character);
             const built = (character.choices?.classes?.length ?? 0) > 0;
@@ -215,11 +236,12 @@ export default async function DashboardPage() {
                 subtitle={subtitleOf(character)}
                 portraitUrl={portrait.url}
                 cropArea={portrait.crop}
+                primaryColor={character.primary_color}
               />
             );
           })}
           {rest.length === 0 && (
-            <p className="rounded-lg border border-dashed border-border px-4 py-5 text-center text-xs italic text-muted-foreground">
+            <p className={`${styles.single} border border-dashed border-border px-4 py-5 text-center text-muted-foreground`}>
               One notebook so far — the shelf has room for more.
             </p>
           )}
@@ -229,7 +251,7 @@ export default async function DashboardPage() {
       {/* Campaigns strip */}
       <section
         aria-label="Campaigns"
-        className="flex flex-col gap-2 rounded-lg border border-border bg-paper-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+        className={`${styles.campaigns} flex flex-col gap-2 border border-border sm:flex-row sm:items-center sm:justify-between`}
       >
         <div>
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -241,7 +263,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/campaigns"
-          className="text-xs text-accent transition-colors hover:text-accent/80"
+          className={styles.textLink}
         >
           Open campaigns →
         </Link>
