@@ -517,17 +517,17 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
   const published = await readback(info, story, "v2-published-no-character-write"); sameCharacter(historical, published);
   expect(published.fiendDefinitionVersion).toBe(2); expect(published.fiendSnapshots).toHaveLength(2);
   expect(published.fiendSnapshots[0]).toEqual(historical.fiendSnapshots[0]); expect(published.fiendSnapshots[1]).toMatchObject({ version: 2, extra: false, expanded: true });
+  const concurrent = await context.newPage(); watch(concurrent);
+  // Compile the other editor before opening a review: a first Webpack dev
+  // compilation can refresh existing pages and discard their client state.
+  await concurrent.goto(`${config.appOrigin}/characters/${story.targetId}/builder/abilities`);
+  const concurrentScore = concurrent.getByRole("combobox", { name: "Strength score", exact: true });
+  await expect(concurrentScore).toBeVisible(); await expect(concurrentScore).toBeEnabled();
   await page.goto(classUrl(story));
   const panel = await review(page); await panel.getByRole("button", { name: "Keep saved version", exact: true }).click();
   await expect(panel.getByRole("button", { name: "Confirm update for this character", exact: true })).toHaveCount(0);
   expect(await readback(info, story, "cancel-no-write")).toEqual(published);
 
-  const concurrent = await context.newPage(); watch(concurrent);
-  // Compile the other editor before opening a review: a first Webpack dev
-  // compilation can refresh existing pages and discard their client state.
-  await concurrent.goto(`${config.appOrigin}/characters/${story.targetId}/builder/abilities`);
-  await expect(concurrent.getByRole("combobox", { name: "Strength score", exact: true })).toBeVisible();
-  await page.goto(classUrl(story));
   await review(page);
   await abilities(concurrent, story, story.targetId, { Strength: "10", Intelligence: "8" });
   const changed = await readback(info, story, "concurrent-ordinary-edit"); expect(BigInt(changed.actionRevision)).toBeGreaterThan(BigInt(published.actionRevision));
