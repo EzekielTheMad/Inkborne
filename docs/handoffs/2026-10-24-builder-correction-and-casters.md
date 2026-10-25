@@ -74,11 +74,50 @@ Old failed-profile evidence is archived under
 Its five containers, two networks, two volumes and three private credential files
 were removed; task ports closed and shared Docker engine/cache preserved.
 
-A fresh disposable profile is now being built for one complete clean story.
+A fresh disposable profile was built for one complete clean story; the latest
+resource hold below supersedes that running state.
 Use external runtime state/process receipts before starting or stopping anything;
 do not copy private config into the repository or dump state/credentials.
 After acceptance, retain the backend for the caster stories and finally remove
 all owned runtime resources. Never reuse a failed receipt as a fresh allowance.
+
+### Latest resource hold — 2026-10-25 05:16 UTC
+
+The later run passed ten native checkpoints and the actual stale-rejection,
+same-character fresh review, applied-response loss and receipt-first recovery
+assertions. Its final HP assertion compared rendered inner text with raw text
+content and failed on whitespace. `e6f9399` fixes that fixture and persists wire
+outcomes incrementally. The run remains a preserved partial result, rather than
+a retrospectively green complete run.
+
+`939df5f` adds a positive owner/control preview and exact recorded receipt, six
+real other-account PostgREST refusals, and a separate authenticated other-account
+sheet 404. Typecheck and zero-warning lint pass in
+`local-creation-browser-check-20261025T050616Z` (57.6 seconds, eight identities
+exited). The final fresh story was interrupted by the resource guard before
+these new checks finished. The PC crossed both the 1 GiB physical-free and 92%
+commit limits. No unrelated process was stopped.
+
+The interrupted receipt is
+`local-subclass-update-app-20261025T051053Z`; its six native checkpoints and two
+strict stale wire outcomes are retained. A native correction committed before
+shutdown: target `5d166f36-20d6-4c7a-b303-898654757b6f` has revision 34, Fiend v2,
+one correction receipt/history and no residual capability. The control whose
+UUID starts `e42357d1` remains v1; its full ID is in the external native receipt. The
+positive browser recovery and full foreign checks are unconfirmed in this run.
+Do not reconstruct missing wire artifacts from native receipts.
+
+All recorded Next/Playwright/Chrome identities are absent, the proxy is stopped,
+all five task containers are exited and ports 3001/9997/9998/9999 are closed.
+Two networks, two volumes and three protected config files are deliberately
+preserved while work continues. Shared engine/cache remains untouched.
+`../equipment-runtime/app-flow-runtime/resource-pause-preserved-runtime-readback.json`
+records exact identities, final native state and table fingerprints. Runtime
+state has `ready=false`, `preservedForExplicitResume=true` and
+`resourcePausedUtc`; ordinary reset/start refuses the retained profile.
+Resume requires fresh headroom and explicit orchestration release, followed by
+honest complete actual acceptance and final cleanup. The user was asked to free
+roughly 8 GiB; code/review work continues meanwhile.
 
 ## Isolated Draconic repair and next work
 
@@ -96,6 +135,22 @@ Native progression/removal clamps and sheet/preview/durable calculations must
 agree. This does not add a historical Draconic update command or enable a durable
 hit-die producer/gate. Native candidate `3ca8743` passes 32 focused tests; TS/source
 candidate `222b4dd`/`78a2f69` remains isolated pending its focused checks/review.
+
+TS follow-ups `c0cd5cb`/`11cb7f4` retain one proved original class after array
+reordering and align rolled-only history with that proof. The original six-file
+sweep is 134 distinct green tests after one fixture-only repair; the affected
+two-file rerun passes 97. Gear-preview candidate `4e72090` reads exact equipped
+inventory snapshots for the class sidebar; its four-file tests are pending under
+the resource hold. The source shows an existing sheet shield-bonus omission;
+that remains an R07/R09 source finding without an actual-app reproduction and is
+not repaired or accepted by this bounded subclass change.
+
+An isolated `builder-parent-fence-worker` is preparing only the documented
+finite enrolled-parent companion/tests/plan. Independent design review caught
+background's two-write normalization and valid zero-write return; exact bounded
+proof sequences must preserve both existing behaviors and native revisions.
+Legacy prelocked RPCs need guard-before-parent adapters, while new seals must
+close at transaction end. No fence tests, installation or acceptance have run.
 
 Next: finish the Fiend actual recovery story; integrate/review/verify the
 Draconic repair; publish only its reviewed new root through the existing atomic

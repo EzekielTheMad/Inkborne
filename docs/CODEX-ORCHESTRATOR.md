@@ -11,8 +11,12 @@ corrections are through `08d1352`. Source checks pass; actual acceptance remains
 pending. Eight complete caster stories are prepared, with a discovered Draconic
 HP/AC repair isolated in workers. Continue this queue through its remaining
 local acceptance work. [Current evidence and next actions](handoffs/2026-10-24-builder-correction-and-casters.md).
-The disposable backend is being rebuilt after preserved fixture failures;
-consult the external runtime state and process receipts before starting anything.
+Actual verification is on a host-memory hold. Next, Chrome, the proxy and all
+five owned containers are stopped; protected config, volumes and networks are
+preserved for explicit resume. All four task ports are closed. Consult the
+external runtime state/process receipts; ordinary reset/start refuses this
+preserved profile. Continue source/review work; no new heavy checks or app starts
+until fresh headroom and an explicit orchestration release.
 Vercel stays unchanged, global gates closed and M7 paused.
 
 **Ordinary builder saves recover after lost responses and reload through
