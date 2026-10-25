@@ -21,7 +21,7 @@
 .featured { padding: 28px; border-color: var(--border-strong); border-inline-start: 3px solid var(--entry-border); box-shadow: 0 3px 12px var(--notebook-shadow); }
 .featured > div { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 20px; }
 .featured h2 { margin-top: 6px; font-size: 28px; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
-.featured p:last-child { margin-top: 8px; font-size: 13px; overflow-wrap: anywhere; }
+.featured .subtitle { margin-top: 8px; font-size: 13px; overflow-wrap: anywhere; }
 .portrait { border: 1px solid var(--entry-border); background: var(--entry-bg); color: var(--entry-fg); box-shadow: 0 0 0 3px var(--card), 0 0 0 4px var(--entry-border); }
 .portrait span { color: var(--entry-fg); font-family: var(--font-marcellus), Georgia, serif; font-weight: 400; }
 .sectionHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }

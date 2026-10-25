@@ -35,7 +35,7 @@ describe("CharacterCard", () => {
     expect(link).toHaveTextContent("High Elf · Wizard 3 / Fighter 2");
     expect(link).toHaveTextContent("LVL 5");
     expect(link).toHaveTextContent("D&D 5e 2014");
-    expect(link).toHaveTextContent("The Bellmere Road");
+    expect(link).toHaveTextContent("Campaign · The Bellmere Road");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
@@ -52,6 +52,7 @@ describe("CharacterCard", () => {
     render(<CharacterCard character={character({ game_systems: null, campaigns: null })} />);
     expect(screen.getByRole("link")).toHaveTextContent("Unknown system");
     expect(screen.queryByText("The Bellmere Road")).not.toBeInTheDocument();
+    expect(screen.getByRole("link")).not.toHaveTextContent(/Campaign/i);
   });
 
   it("carries a stored portrait through to the card", () => {

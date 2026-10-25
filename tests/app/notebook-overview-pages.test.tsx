@@ -91,6 +91,8 @@ describe("dashboard notebook contracts", () => {
       expect(projection(owned).split(",")).toContain(field);
     }
     expect(projection(owned)).toContain("game_systems(name)");
+    expect(projection(owned)).toContain("campaigns(name)");
+    expect(projection(owned)).not.toContain("!inner");
     expect(owned.eq.mock.calls).toEqual([["user_id", "owner-1"], ["archived", false]]);
     expect(owned.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(owned.limit).toHaveBeenCalledWith(8);
@@ -120,6 +122,21 @@ describe("dashboard notebook contracts", () => {
     mockReads({ characters: [character("first", { game_systems: [{ name: "Mythic Roads" }] })] });
     render(await DashboardPage());
     expect(screen.getByRole("region", { name: "Your latest character" })).toHaveTextContent("Mythic Roads");
+  });
+
+  it.each([true, false])("shows assigned campaigns and omits absent ones (featured assigned: %s)", async (featuredAssigned) => {
+    mockReads({ characters: [
+      character("first", { campaigns: featuredAssigned ? { name: "Lanterns of Bellmere" } : null }),
+      character("second", { name: "Rook", campaigns: { name: "The Greyfen Road" } }),
+      character("third", { name: "Iven", campaign_id: null, campaigns: null }),
+    ] });
+    render(await DashboardPage());
+    const featured = screen.getByRole("region", { name: "Your latest character" });
+    if (featuredAssigned) expect(featured).toHaveTextContent("Campaign · Lanterns of Bellmere");
+    else expect(featured).not.toHaveTextContent(/Campaign/);
+    expect(screen.getByRole("link", { name: /Rook/ })).toHaveTextContent("Campaign · The Greyfen Road");
+    expect(screen.getByRole("link", { name: /Iven/ })).not.toHaveTextContent(/Campaign/);
+    expect(screen.queryByText(/No campaign|Unassigned campaign/i)).not.toBeInTheDocument();
   });
 
   it.each([undefined, null, false, 0])("shows the alpha notice when the dismissal value is %s", async (value) => {

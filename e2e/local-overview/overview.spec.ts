@@ -57,6 +57,27 @@ test('blank and single-character states retain real creation and character desti
   }
 });
 
+test('campaign names appear only on assigned character entries in both themes', async ({ page }) => {
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: width === 320 ? 844 : 1000 });
+    for (const theme of ['dark', 'light']) {
+      for (const route of ['/dashboard', '/characters']) {
+        await page.goto(route);
+        await page.getByLabel('Review theme').selectOption(theme);
+        const main = page.locator('main');
+        const first = route === '/dashboard' ? page.getByRole('region', { name: 'Your latest character' }) : main.locator('a[href="/characters/11111111-1111-4111-8111-000000000001"]');
+        await expect(first).toContainText('Campaign · Lanterns of Bellmere');
+        await expect(main.locator('a[href="/characters/11111111-1111-4111-8111-000000000003"]')).toContainText('Campaign · Lanterns of Bellmere');
+        await expect(main.locator('a[href="/characters/11111111-1111-4111-8111-000000000002"]')).not.toContainText('Campaign');
+        await expect(main.getByText(/No campaign|Unassigned campaign/i)).toHaveCount(0);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+        await page.evaluate(() => document.fonts.ready);
+        await page.screenshot({ path: test.info().outputPath(`campaign-${route.slice(1)}-${width}-${theme}.png`), fullPage: true, animations: 'disabled' });
+      }
+    }
+  }
+});
+
 test('actual appearance menu persists across pages and System follows the device', async ({ page }) => {
   await page.goto('/dashboard');
   const choose = async (mode: string) => {

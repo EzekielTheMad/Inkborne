@@ -46,3 +46,11 @@ Character source maps are unchanged by theme switching. Ordinary measured text m
 Open [Dashboard](http://127.0.0.1:3198/dashboard) or [Characters](http://127.0.0.1:3198/characters). The actual application appearance button works; the extra review toolbar exposes example states. [Harness details](../../../e2e/local-overview/README.md) document the explicit data boundaries. Reads are fictional, banner dismissal is simulated, feedback is not sent, and character/builder/account destinations outside these two pages are blocked locally. Live authentication, RLS, server queries, persisted preferences and feedback delivery were not exercised.
 
 Further pages should start with their own real baseline. This local candidate is not user acceptance or authorization to deploy.
+
+## Campaign metadata follow-up — 25 October 2026
+
+Assigned characters now show `Campaign · [name]` on shelf cards, the dashboard's featured character and compact rows. Unassigned characters emit no campaign label, placeholder or metadata element. The dashboard adds the existing `campaigns(name)` left embedding, retaining unassigned characters and all prior ownership/archive filters, ordering and limits. No campaign assignment, navigation, authentication or persistence handlers change.
+
+The [desktop shelf](after/campaign-characters-1440-dark.png) shows assigned and unassigned characters together. The [320 px Light dashboard](after/campaign-dashboard-320-light.png) verifies long campaign names wrapping beside the existing character identity. The original before/after sets above remain the 24 October composition references.
+
+`npm.cmd run check` passed with 207 test files / 1,943 tests. The dedicated local overview suite now has 12 passing browser stories, including conditional campaign metadata in both themes at 320 and 1440 px. Source review found no blockers. Campaign reads in this preview are fictional; hosted database behavior was not exercised. This follow-up remains local for review.

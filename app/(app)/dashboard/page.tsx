@@ -19,6 +19,7 @@ interface DashboardCharacter {
   narrative: Record<string, unknown> | null;
   system_id: string;
   game_systems: { name: string }[] | { name: string } | null;
+  campaigns: { name: string } | null;
 }
 
 function systemName(character: DashboardCharacter): string | null {
@@ -62,7 +63,7 @@ export default async function DashboardPage() {
 
   const { data, error: charactersError } = await supabase
     .from("characters")
-    .select("id, name, level, primary_color, choices, narrative, system_id, game_systems(name)")
+    .select("id, name, level, primary_color, choices, narrative, system_id, game_systems(name), campaigns(name)")
     .eq("user_id", user!.id)
     .eq("archived", false)
     .order("created_at", { ascending: false })
@@ -197,7 +198,10 @@ export default async function DashboardPage() {
           <div className="min-w-0 flex-1">
             <p className="j-folio">Your latest character</p>
             <h2 className="j-display text-foreground">{latest.name}</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">{subtitleOf(latest)}</p>
+            <p className={`${styles.subtitle} text-muted-foreground`}>{subtitleOf(latest)}</p>
+            {latest.campaigns?.name && (
+              <p className={`${styles.subtitle} text-muted-foreground`}>Campaign · {latest.campaigns.name}</p>
+            )}
           </div>
           <Link
             href={`/characters/${latest.id}`}
@@ -237,6 +241,7 @@ export default async function DashboardPage() {
                 portraitUrl={portrait.url}
                 cropArea={portrait.crop}
                 primaryColor={character.primary_color}
+                campaignName={character.campaigns?.name}
               />
             );
           })}

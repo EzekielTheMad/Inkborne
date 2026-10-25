@@ -70,7 +70,7 @@ export function CharacterCard({ character }: CharacterCardProps) {
           <span className="text-accent" aria-hidden="true">★</span> {character.game_systems?.name ?? "Unknown system"}
         </span>
         {character.campaigns?.name && (
-          <span className={styles.campaign}>{character.campaigns.name}</span>
+          <span className={styles.campaign}>Campaign · {character.campaigns.name}</span>
         )}
         <span className={styles.open}>
           Open ›

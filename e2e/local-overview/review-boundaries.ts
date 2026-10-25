@@ -15,7 +15,7 @@ const names = [
 ] as const;
 export const fixtureCharacters: ReviewCharacter[] = names.map(([name, primary_color, slug, race, level], index) => ({
   id: `11111111-1111-4111-8111-${String(index + 1).padStart(12, '0')}`,
-  user_id: 'local-overview-reviewer', system_id: 'local-system', campaign_id: index === 0 || index === 2 ? 'local-campaign' : null,
+  user_id: 'local-overview-reviewer', system_id: 'local-system', campaign_id: index === 0 || index === 2 ? 'local-campaign' : index === 5 ? 'local-long-campaign' : null,
   name, primary_color, level, visibility: 'private', archived: false, base_stats: {},
   choices: slug ? { classes: [{ slug, level }], race } : {}, state: {}, narrative: {}, narrative_rich: {},
   created_at: `2026-10-${String(24 - index).padStart(2, '0')}T12:00:00Z`,

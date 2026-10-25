@@ -18,6 +18,7 @@ export interface CharacterRowProps {
   portraitUrl?: string | null;
   cropArea?: CropArea | null;
   primaryColor?: string | null;
+  campaignName?: string | null;
 }
 
 /** "wizard 3 / cleric 1" choices → "Wizard 3 / Cleric 1". */
@@ -37,6 +38,7 @@ export function CharacterRow({
   portraitUrl,
   cropArea,
   primaryColor,
+  campaignName,
 }: CharacterRowProps) {
   return (
     <Link
@@ -63,6 +65,9 @@ export function CharacterRow({
           )}
         </div>
         <p className={`${styles.subtitle} text-muted-foreground`}>{subtitle}</p>
+        {campaignName && (
+          <p className={`${styles.subtitle} text-muted-foreground`}>Campaign · {campaignName}</p>
+        )}
       </div>
       <span
         className={`${styles.arrow} shrink-0 text-sm`}
