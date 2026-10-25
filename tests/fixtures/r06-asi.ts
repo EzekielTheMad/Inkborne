@@ -30,7 +30,8 @@ export function originalAsiFixture(choice: AsiChoice = { mode: "asi", allocation
     feature_content_id: feature.id, feature_version: feature.version, feature_slug: feature.slug, unlock_level: 4, created_at: asiInstant };
   const ref = (definition: typeof cls, id: string, feature_grant_id: string | null = null, choice_source: string | null = null): ContentRefWithContent => ({
     id, character_id: asiId(1), content_id: definition.id, content_version: definition.version, feature_grant_id,
-    context: feature_grant_id === null ? {} : { source: "class_feature", controller_type: grant.controller_type, controller_slug: grant.controller_slug, feature_slug: grant.feature_slug, feature_level: grant.unlock_level },
+    context: feature_grant_id === null ? (definition.content_type === "race" ? { source: "race" } : {})
+      : { source: "class_feature", controller_type: grant.controller_type, controller_slug: grant.controller_slug, feature_slug: grant.feature_slug, feature_level: grant.unlock_level },
     choice_source: feature_grant_id === null ? choice_source : `auto:feature-grant:${feature_grant_id}`, created_at: asiInstant, content_definitions: definition,
   });
   const refs = [ref(cls, asiId(30)), ref(feature, asiId(31), grant.id), ref(race, asiId(32))];

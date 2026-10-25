@@ -50,6 +50,7 @@ describe("actual provider ASI acceptance and stale callbacks; persistence simula
   it("live provider/print use earned14; nonzero saving-throw and skill controls stop using fallback0", () => {
     render(<Fixture fixture={originalAsiFixture()} />);
     expect(latest.evalResult.stats.strength).toBe(14);
+    expect(latest.evalResult.ancestryDefenses).toEqual({ status: "available", dmgres: [] });
     expect(latest.mechanics.status).toBe("available");
     expect(buildCharacterPrintModel({ ...latest, isOwner: true, hasSheet: true, resources: [] }).abilities.find(entry => entry.name === "Strength")?.score).toBe(14);
     // Actual controls construct +2 requests; old stats-only lookups construct +0.

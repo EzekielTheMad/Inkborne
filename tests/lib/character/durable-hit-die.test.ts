@@ -147,7 +147,7 @@ describe("durable hit-die service-internal request and snapshot", () => {
   });
   it("adds ancestry and subclass bonuses independently on the same frozen character", () => {
     const s = resilienceSnapshot(), f = ancestryHpFixture();
-    for (const source of [f.raceRef, f.subraceRef]) s.pins.push(hitDieSnapshotSchema.shape.pins.element.parse({
+    for (const source of [f.raceRef, f.subraceRef, f.traitRef]) s.pins.push(hitDieSnapshotSchema.shape.pins.element.parse({
       id: source.id, character_id: s.character.id, content_id: source.content_id, content_version: source.content_version,
       feature_grant_id: null, context: source.context, choice_source: null,
       resolved: { ...source.content_definitions, system_id: s.system.id },
