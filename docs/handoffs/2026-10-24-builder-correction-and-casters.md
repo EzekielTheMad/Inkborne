@@ -50,7 +50,38 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
-### Latest continuation — 2026-10-25 05:55 UTC
+### Latest continuation — 2026-10-25 06:16 UTC
+
+The 3 GiB prepared-continuation attempt
+`local-subclass-update-app-20261025T060009Z` remains failed. Its four fresh
+native checkpoints passed: exact old fixture/current guard, atomic Fiend v2
+publication, cancel without writes and a concurrent ordinary ability edit.
+The stale review panel disappeared before correction confirmation; no content
+update receipt or history was created. Next stayed running and the OS guard
+did not trip. Logs and installed Webpack hot-reloader code support a dev refresh
+during first compilation of the ability route; an exact React remount was not
+captured. This is a test-environment inference, not an accepted product repair.
+
+`961b50b` warms the actual other-tab ability editor and waits for its enabled
+Strength control before opening the first review. All concurrent ordinary
+saves, lost-response paths and strict native/wire assertions remain. The old
+continuation guard is now inadmissible because publication and revision changed;
+it will not be reused. Fresh read-only capture at 06:15 UTC confirms target
+revision 33, both saved Fiend v1 pins, global v2, zero update receipts/history,
+zero capabilities and closed gates. Public failure evidence is archived under
+`history/repin-hmr-failure-20261025T061528Z`; credentials are excluded.
+The exact owned profile is being reset for a clean full run.
+
+The three remaining martial stories and their native readback are integrated
+through `73a9c65`/`c8de884`. They cover Lightfoot Halfling Rogue, Rock Gnome Monk
+and original Half-Orc Fighter plus secondary Rogue, with genuine starting gear,
+all six saved steps, sheet reloads and foreign-account refusals. Actual execution
+is pending. Integrated typecheck and zero-warning lint pass in
+`local-creation-browser-check-20261025T061242Z` (67.5 seconds; all eight observed
+identities exited). Broad suite/build repetition remains omitted under the
+focused-validation scope.
+
+### Previous continuation — 2026-10-25 05:55 UTC
 
 The stopped profile from the resource hold below was removed with exact owned
 identity checks. `runtime-teardown-readback.json` at 05:33:55 UTC confirms five

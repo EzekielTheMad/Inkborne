@@ -17,12 +17,13 @@ local acceptance work. [Current evidence and next actions](handoffs/2026-10-24-b
 The parent safeguard is staged through `d614952` with 32 focused checks; its
 contention verifier has seven simulated checks. Neither is native acceptance.
 The [remaining six-story matrix](specs/2026-10-24-builder-remaining-matrix.md)
-records three ready martial cases and three ancestry source blockers.
-The prior paused profile was archived and removed. A fresh loopback backend is
-ready with two genuine old-v1 drafts. A Webpack attempt stopped at Next's 2 GiB
-dev restart threshold before publication; its failure remains preserved. Next
-is stopped, while the owned backend is retained for an explicitly guarded
-continuation. Consult the latest handoff and external runtime/process receipts
+records three ready martial cases and three ancestry source blockers. Martial
+browser/readback source is integrated through `c8de884`; typecheck and lint pass.
+The 2 GiB dev restart and later 3 GiB stale-review fixture failure remain
+preserved. The latter made no correction update. `961b50b` warms the actual
+ability editor before review; a clean full run remains pending. The obsolete
+continuation guard is inadmissible. Next is stopped and the exact owned backend
+is being reset after public evidence archival. Consult the latest handoff and external runtime/process receipts
 before operations; serialize heavy checks and retain the OS resource guard.
 Vercel stays unchanged, global gates closed and M7 paused.
 

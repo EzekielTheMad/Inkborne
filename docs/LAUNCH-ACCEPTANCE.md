@@ -15,9 +15,12 @@ publication without character changes, both recovery paths and exactly one
 native update. Its self-contained complete receipt remains pending after
 preserved fixture failures and a host-memory interruption; this is not full
 actual-flow acceptance yet. The prior paused profile was archived and removed;
-a fresh owned backend is retained with two genuine old-v1 drafts. Its Webpack
-attempt failed before publication at Next's 2 GiB dev restart threshold. Next
-is stopped pending an explicitly guarded continuation; the failure stays failed.
+a later 3 GiB continuation also remains failed after four native checkpoints:
+the stale review disappeared during first dev compilation of the other-tab
+editor, before any correction. `961b50b` warms that editor before review. The
+old continuation guard is inadmissible; Next is stopped and the exact owned
+backend is being reset for a clean full run after public failure archival.
+The earlier 2 GiB dev restart failure stays failed.
 Eight complete caster walkthroughs are prepared.
 The reviewed Draconic HP/AC repair is integrated through `72ce5cf`, with fixture
 fixes in `a4700ce`; 266 focused checks, typecheck and zero-warning lint pass.
