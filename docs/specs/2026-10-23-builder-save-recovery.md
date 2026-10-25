@@ -1,6 +1,6 @@
 # Ordinary builder save recovery
 
-Continue the M1/R06 builder work from `753e9bd`. An ordinary builder selection
+Continue the R06 builder workstream from `753e9bd`. An ordinary builder selection
 must remain recoverable when the server commits but its response is lost and
 the user reloads. Vercel stays unchanged; M1–M6/M5.5 precede M8 and M7/creature
 imports remain paused.

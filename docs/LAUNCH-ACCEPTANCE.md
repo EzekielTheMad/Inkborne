@@ -1,11 +1,71 @@
 # Inkborne project-wide acceptance ledger
 
+## Current execution path
+
+Reconciled 2026-10-25 (America/Phoenix). **This is the single current plan:**
+milestone meanings, requirement status, execution order, scope decisions and
+completion gates live here. [CODEX-ORCHESTRATOR](CODEX-ORCHESTRATOR.md) is the
+operational entrypoint; its linked handoff supplies the exact source/runtime
+procedure. ROADMAP is a navigation page, GAME-PLAN is a handbook, the PRD is a
+feature baseline, and dated handoffs are evidence. None defines another backlog
+or overrides this queue. Historical completion counts are not current acceptance.
+
+### Names have one meaning
+
+- **M1–M8, including M5.5:** only the project milestones in the
+  [milestone matrix](#milestone-matrix). M1 is consolidation/operations (R01–R04).
+- **R06 builder workstream:** the character-builder work we have been following,
+  within roadmap M3's builder/gameplay foundation. Earlier notes called this
+  `M1/R06`; that alias is retired. Renaming it does not restart or redirect it.
+- **Legacy worker ID M1:** the historical magic-item worker, now tracked as R11
+  under M4. Its filenames, branch names and commits remain evidence, not another
+  milestone. A1–A6 story IDs, F1–F3 repairs, G1/G2 runtime steps, PRD "Phase 1"
+  and spell-management subphases are also not project milestone numbers.
+
+### Continue the existing queue
+
+1. **Finish the current R06 builder acceptance work**, in the existing dependency
+   order: actual Fiend historical-update acceptance → Draconic HP/AC acceptance →
+   native parent safeguard → ancestry companions/acceptance → queued complete
+   caster and martial walkthroughs. Preserve the exact prerequisites and remaining
+   source/aggregation tasks in the
+   [current handoff](handoffs/2026-10-24-builder-correction-and-casters.md) and
+   [finite remaining matrix](specs/2026-10-24-builder-remaining-matrix.md).
+   Source/unit passes do not close pending native/browser acceptance. The last
+   full attempt was memory-blocked; retain its resource guard and cleanup rules.
+2. **Continue remaining M1–M6 work, including M5.5**, from open requirement rows
+   after the builder work. Preserve accepted saving/recovery, Fiend eligibility,
+   class acquisition/removal and other accepted slices; do not queue them again
+   as missing implementation. Continue unaffected local work when a real
+   access/resource dependency blocks one lane.
+3. **M8 follows the required core acceptance**, including release/operations
+   gates and an explicit scope disposition. M7 PDF importing stays paused and
+   tracked as R22; the separately paused creature-import subset belongs to M5.
+   The PDF pause is neither completion nor a new post-beta deadline. Resolve its
+   beta disposition explicitly before launch, without resuming PDF work or
+   asking for layouts now. Daggerheart and public publishing remain deferred
+   from first beta under S2/S3, with their project backlog retained.
+
+Hosting remains Vercel. This reconciliation changes documentation and names,
+not product scope, feature priority, runtime permissions or release authority.
+The [scope decisions](#finite-scope-and-decisions), requirement rows and final
+completion gates remain mandatory. No roadmap milestone is accepted merely
+because an earlier dated document called its code complete.
+
+Documentation reconciliation evidence (2026-10-25): 18 Markdown files checked,
+275 relative links resolve, original ROADMAP/GAME-PLAN text preserved verbatim,
+and milestone/requirement ID assignments unchanged. Independent review found no
+scope or continuation-order conflict. Receipt:
+`../equipment-runtime/roadmap-reconciliation-20261025.json`, source baseline
+`5f99574`. This docs-only checkpoint ran no app tests, services or deployments
+and changes no implementation/native/browser acceptance result.
+
 ## Active continuation — 2026-10-25 UTC
 
 ### Current builder correction and complete caster work — in progress
 
-The user explicitly selected continuation through the current **M1/R06 builder
-queue**, preserving roadmap M1's separate meaning. Fiend's explicit per-character
+The user explicitly selected continuation through the current **R06 builder
+workstream** (formerly called `M1/R06`). Fiend's explicit per-character
 v1→v2 review/update and exact stale-review resolution are integrated through
 `63899a6`; the ordinary lost-response checkpoint below remains accepted. The
 correction's focused UI/action/protocol sweep passes **137 tests**, native
@@ -826,7 +886,7 @@ Later changes require a new combined check/build/browser gate; actual database
 acceptance remains open.
 Nonsecret receipts are in sibling `verification/launch-20261012/`.
 
-Victor answered the scope and durable-gameplay questions on 2026-10-12 UTC:
+Victor answered the scope and durable-gameplay questions on 2026-10-12 UTC (historical answers; the later M7 pause in [current scope decisions](#finite-scope-and-decisions) controls execution, so no PDF-layout prompt is active):
 
 | Decision | Explicit human answer / disposition |
 | --- | --- |
@@ -1880,7 +1940,7 @@ Updated 2026-10-12 UTC. This is the single durable development backlog and compl
 
 **User-selected project-wide objective:** complete ALL documented M1-M8 milestones (including M5.5) and account for every documented PRD requirement, including P1-P3. Every documented ambition must have an explicit included/completed/deferred/out-of-scope disposition; all included requirements must be accepted. Deferral or removal requires an explicit dated Victor decision, remains visible, and cannot be described as implemented. No documented requirement disappears merely because it was not selected for an earlier beta. This finite documented scope is not a license to invent new features.
 
-**Selected execution sequence:** Victor's 2026-10-13 priority is M1–M6 (including M5.5), then M8; M7 PDF importing is paused in the backlog. This supersedes the earlier active PDF-before-beta instruction without inventing a new post-beta deadline. Daggerheart and public publishing remain explicitly deferred from first beta. Monster/NPC import work is paused. Already-shipped narrative/wiki functionality is retained. Unselected P1-P3 contracts remain explicit open decisions; no blanket exclusion or acceptance is inferred.
+**Selected execution sequence:** Victor's 2026-10-13 priority is M1–M6 (including M5.5), then M8; continue the current R06 builder workstream first as recorded in the [current execution path](#current-execution-path). M7 PDF importing is paused in the backlog. This supersedes active PDF-before-beta execution without inventing a new post-beta deadline or silently completing/dropping R22; reconcile its beta disposition explicitly before launch. Daggerheart and public publishing remain explicitly deferred from first beta. Monster/NPC import work is paused separately within M5. Already-shipped narrative/wiki functionality is retained. Unselected P1-P3 contracts remain explicit open decisions; no blanket exclusion or acceptance is inferred.
 
 | Decision | Conflict / concrete choice | Recommended resolution and execution effect |
 | --- | --- | --- |
@@ -1907,11 +1967,11 @@ Stage columns: **I** implemented source; **T** tested at stated boundary; **G** 
 | --- | --- | --- |
 | M1 consolidation + operations: R01-R04 | P / local+H / P / H / open | [Current release checklist](RELEASE-READINESS.md), [backup implementation/runbook](../infra/backup/README.md). Local defects fixed; candidate publication, provider/admin acceptance, fresh scheduled backup/offsite evidence and actual restore drill remain. |
 | M2 visual implementation: R05 | yes / offline+H / yes / H / H, current open | [Journey references](design-briefs/design_handoff_journey_alpha/README.md), merged #67 and historical 53 offline checks. Current desktop/mobile/tablet auth/dashboard/builder/sheet journeys and accessibility still require acceptance after later gameplay changes. Preserve the established design. |
-| M3 gameplay: R06-R09 | P / local+model+H / P / H / open | [Gameplay plan](specs/2026-07-15-m3-gameplay-foundations-plan.md), [durable gaps/contract](specs/2026-10-11-durable-roll-state-contract.md), [equipment evidence](handoffs/2026-10-11-equipment-postgres-wasm.md). Core play is present; atomic equipment/full-trigger/concurrency and durable roll/state outcomes remain. Fresh real builder-to-play acceptance required. |
+| M3 builder + gameplay foundations: R06-R09 | P / local+model+H / P / H / open | **Current workstream: R06 builder**, with the exact continuation above; this is the work previously called `M1/R06`. [Gameplay plan](specs/2026-07-15-m3-gameplay-foundations-plan.md), [durable gaps/contract](specs/2026-10-11-durable-roll-state-contract.md), [equipment evidence](handoffs/2026-10-11-equipment-postgres-wasm.md). Core play is present; atomic equipment/full-trigger/concurrency and durable roll/state outcomes remain. Fresh real builder-to-play acceptance required. |
 | M4 homebrew/import/compendium: R10-R15 | P / local+H / P / H subset / open | [Spell](specs/2026-07-20-m4-private-homebrew-spell.md), [feat](specs/2026-07-21-m4-private-homebrew-feat.md), [background](specs/2026-07-21-m4-background-authoring-sharing.md), [compendium](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [MPMB parity](specs/2026-07-21-mpmb-representative-parity.md). Remaining authoring families, magic-item integration, sharing/custom-type decisions and supported importer coverage; don't declare whole M4 shipped. |
 | M5 monsters/library NPCs/companions/sidekicks: R16-R19 | P / local+model / P / - / open | [Roadmap M5](ROADMAP.md), [monster plan](specs/2026-10-12-monster-foundation-plan.md), [NPC plan](specs/2026-10-12-private-npc-authoring-plan.md), [companion plan](specs/2026-10-12-companion-library-foundation-plan.md). Library/private authoring and read-only companion templates have local acceptance. DM monster instances are staged/default-off with 134 focused passes and three UNVERIFIED stress requirements; their 44 browser cases and native authority remain open. Playable NPC actors, companion lifecycle/transformations/summons and sidekicks remain. Monster/NPC imports are paused; existing story relationships retain their identity. |
 | M5.5 campaigns + narrative: R20 | foundation / local+H / yes / H / H, current open | [Campaign design](specs/2026-07-19-campaign-foundation-design.md), [backlinks](specs/2026-07-19-campaign-backlinks-design.md), [timeline/relationships](specs/2026-07-19-character-timeline-relationships.md). Reaccept real DM/player membership, private/shared content, copy/assignment and revision conflicts on candidate. Optional publishing/presence remain S3/S5 decisions. |
-| M6 advanced spellcasting: R21 | P / local+model / P / H subset / open | [Inventory](handoffs/2026-10-11-m6-advanced-spellcasting-inventory.md), [Arcane Recovery](../lib/rest/arcane-recovery.ts), [disabled Arcanum source](handoffs/2026-10-13-arcanum-first-selection-source.md). Slots/source/subclass math and recovery have local acceptance. Arcanum storage/read/recovery and unconditional command refusal passed 157 focused tests; positive selection issuance, exact payment/casting, stable earned-feature lineage, copy and native authority remain open. Spell Mastery and Signature Spells remain unimplemented. |
+| M6 advanced spellcasting: R21 | P / local+model+actual acquisition / P / H subset / open | [Inventory](handoffs/2026-10-11-m6-advanced-spellcasting-inventory.md), [Arcane Recovery](../lib/rest/arcane-recovery.ts), [accepted bonus acquisitions](handoffs/2026-10-23-bonus-spells-and-lore.md). Slots/source/subclass math and ordinary recovery have local acceptance. Arcanum, Mastery and Signature **acquisition** save/reload locally; do not queue those choices again as unimplemented. Their durable advanced free-cast/payment/usage/recovery, copy and native authority acceptance remain open. |
 | M7 PDF import: R22 | -/U / - / - / - / paused S4 | Victor paused M7 on 2026-10-13. Retain [Roadmap M7](ROADMAP.md) and [import architecture](../lib/import) requirements for later resume: supported extraction -> review/repair -> immutable commit -> calculation parity. No current implementation or layout prompting. |
 | M8 public beta/community launch: R23-R27 | P / P / P / splash only+H / open | Roadmap M8, [release checklist](RELEASE-READINESS.md), [alpha evidence](alpha). Current performance/accessibility/onboarding/feedback/ops audits, rights/licensing/scope and actual reviewed deployment/auth acceptance remain. Splash readiness is not app launch. |
 
@@ -1926,12 +1986,12 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R03 M1/P0 safety | Reviewed dependencies, error/privacy boundaries, release/recovery compatibility. [Dependency evidence](handoffs/2026-10-12-r03-devtools-remediation-plan.md), [release checklist](RELEASE-READINESS.md). I=P/T=local/G=yes patches/D=- candidate/A=open. | Production audit zero; eight unpatched development-chain highs remain unaccepted. Final combined source/renderer gates, restore/migration replay and old-client compatibility remain required; audit counts do not prove exploit absence. |
 | R04 M1/M8 | Feedback capture/admin triage and alpha checkpoint A-D evidence. [Contract](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [alpha records](alpha). I=yes/T=local+H/G=yes/D=H/A=admin/current open. | Exact originating context/mobile feedback and permitted admin triage; record feedback rounds, disposition/blockers and Victor acceptance, not invented users or elapsed-time substitutes. |
 | R05 M2/PRD §11 | Established visual identity, responsive web, mobile/tablet workflows. [Journey](design-briefs/design_handoff_journey_alpha/README.md), [UI](../components), [offline configs](../e2e). I=yes/T=offline+H/G=yes/D=H/A=current open. | Real current routes at desktop/mobile/tablet; reachable controls, no clipping, keyboard/focus/labels/errors/contrast/zoom and screen-reader checks. Preserve shipped #67; no redesign. |
-| R06 PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md), [Fiend/removal actual app acceptance](handoffs/2026-10-23-fiend-and-class-removal.md), [ordinary save recovery](handoffs/2026-10-23-builder-save-recovery.md). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. Fiend expanded candidates and secondary removal/re-addition also pass actual save/reload; the original class stays fixed. Ordinary save-response/reload recovery passes three actual local stories and 14 native snapshots, including absent retry and a retained HP draw. R06 remains in progress: historical correction/repin, complete caster drafts, broader combinations/concurrency, enrolled writer fences and hosted/provider acceptance. Legacy race dual arithmetic stays visibly preserved. |
+| R06 M3; PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md), [Fiend/removal actual app acceptance](handoffs/2026-10-23-fiend-and-class-removal.md), [ordinary save recovery](handoffs/2026-10-23-builder-save-recovery.md). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. Fiend expanded candidates and secondary removal/re-addition also pass actual save/reload; the original class stays fixed. Ordinary save-response/reload recovery passes three actual local stories and 14 native snapshots, including absent retry and a retained HP draw. R06 remains in progress: historical correction/repin, complete caster drafts, broader combinations/concurrency, enrolled writer fences and hosted/provider acceptance. Legacy race dual arithmetic stays visibly preserved. |
 | R07 PRD §5; M3 | Equipment/custom inventory/equip/currency, atomic starting awards/copy. [Inventory](../lib/supabase/inventory.ts), [staged SQL/readme](../supabase/staged/README.md), [45-case executable test](../tests/supabase/starting-equipment-postgres.test.ts). I=staged/P/T=model+offline/G=yes, gate off/D=-/A=open. | Full migration/grants/triggers, per-write rollback, concurrent same/different intent, ownership/pin/copy races, replay after consumption and lost responses. No fabricated legacy eligibility/receipts. E1 runtime + approved legacy policy; rollout after actual acceptance. |
 | R08 PRD §3/§4/§9; M3 | HP/temp HP, death saves, conditions, dice/logs, cast/slots/resources, effects/concentration, rests/hit dice. [Provider](../lib/character/character-context.tsx), [sheet](../components/sheet), [core checks](handoffs/2026-10-11-orchestrator-local-queue.md). I=yes/P/T=offline+H/G=yes/D=H/A=current open. | Real multi-class play/rest/roll/calculation scenarios, pending/failure/conflict/reload/offline/expiration paths, no silent duplicate or lost spend. Do not confuse a simulated router/provider with hosted success. |
 | R09 M3 safety/D1 | Durable rolled action + revision/dependency/old-writer participation. [Contract and executable gaps](specs/2026-10-11-durable-roll-state-contract.md), [current gap tests](../tests/supabase/durable-action-current-gaps.test.ts). I=proposal/T=characterization/G=proposal/D=-/A=open. | Implement one hit-die command locally with operation identity/receipt and revision/dependency checks; prove rollback/lost-response replay/ABA/legacy-writer behavior, then reviewed death-save/concentration adapters. Local SQL-file edits/tests are ordinary work; actual DB/security execution uses G2/G3. |
 | R10 M4/PRD §7 | Spell/feat/background forms, immutable versioning, private + campaign sharing/discovery/revocation. [Forms](../components/library), [server boundaries](../lib/supabase), linked M4 specs above. I=yes/T=local+H/G=yes/D=H/A=current open. | Actual owner/non-owner, stale-version races, historical pins after edit/revoke, Library/builder/sheet effects parity. Preserve platform/personal/exact-campaign authorization and calculations. |
-| R11 M4/PRD §5/§7 | Reviewed/integrated private magic-item authoring, draft retention and raw effects preservation. [Original M1 evidence](handoffs/2026-10-11-m1-magic-item-revalidation.md), active combined receipts above. I=yes/T=local+12 offline/G=yes/D=-/A=open. | Actual two-owner discovery, immutable v1/v2, historical inventory pins and competing expected-version writes remain unaccepted. Candidate final gates must include later shared consumers; the old worker's standalone pass is historical. |
+| R11 M4/PRD §5/§7 | Reviewed/integrated private magic-item authoring, draft retention and raw effects preservation. [Original magic-item worker evidence (legacy ID M1)](handoffs/2026-10-11-m1-magic-item-revalidation.md), active combined receipts above. I=yes/T=local+12 offline/G=yes/D=-/A=open. | Actual two-owner discovery, immutable v1/v2, historical inventory pins and competing expected-version writes remain unaccepted. Candidate final gates must include later shared consumers; the old worker's standalone pass is historical. |
 | R12 M4/PRD MVP | Bounded private item/weapon/armor/core-race/trait/standalone-passive-feature forms are reviewed/integrated with local form acceptance. Class/subclass, feature application/relations/advanced mechanics and advanced race relations remain. [Core race evidence](handoffs/2026-10-11-r12-private-core-races.md), [schemas](../lib/schemas). I=P/T=local+offline forms/G=P/D=-/A=open. | Real owner/version races and pin continuity; exact race dependency manifests/atomic selection. New class authoring needs proven original-primary role and classified starting-save grants before meaningful creation. Private owned-book entry is retained; no guessed relations, effect deletion or public distribution promises. |
 | R13 M4 | Cross-type sharing, Homebrew filters/search/sort, custom-content-type registry UI. [Homebrew domain](../lib/homebrew), roadmap M4. I=P/-/T=P/G=P/D=H subset/A=open. | Extend selected type contracts without weakening isolation; verify registry-defined fields/evaluator compatibility and explicit unsupported mechanics. Public sharing is S3/R26, not implied by campaign sharing. |
 | R14 M4 | MPMB upload/static parse, validation/repair, audit, keep-both/replace, mandatory calculation preview and exact-pin character exit. [Parser/mapping](../lib/import/mpmb), [parity spec](specs/2026-07-21-mpmb-representative-parity.md), [T1](handoffs/2026-10-11-t1-e2e-drift.md). I=P/T=offline+H/G=yes/D=H/A=supported cases H, current open. | Publish explicit supported type/fixture matrix; extend documented gaps only with original schema/source evidence. Unsupported effect-coupled/candidate-less cases fail closed. Current owner/isolation/stale-preview/replace/race/calculation and builder-to-cast parity on a real approved target. Field-level merge was deliberately out of scope. |
@@ -1966,15 +2026,33 @@ Before saying the **total documented project** is finished, every documented amb
 
 ## First actions and dependency-driven execution
 
-1. **Review M1 integration now (R11):** refresh both Git common directories/clean states; review full PR99-derived delta plus `3d61ff3`; integrate in a new local branch off current core, preserving A1/equipment/conditional types. Run combined focused/full/build/offline magic-item/core checks and independent review. No push or deployment. Ordinary local integration does not need a second permission question.
-2. **Batch actual decisions/approvals early:** present S1-S5 and prepared G1-G5 requests, with concrete target/version/operation/resource manifest where ready. Resolve E1 supported bind/CLI/version details before asking to start it. Keep working on unambiguous R12/R23 inventory and missing forms/print/acceptance harnesses while access is pending.
-3. **Enable the real evidence lane (R07/R09/R11):** after actual runtime approval, replay full frozen migrations + reviewed stage on isolated PostgreSQL 17/Supabase; inspect baseline grants/triggers/ASI copy and multiple real connections. Fix discovered code/SQL-file defects locally; apply only approved fixture/schema operations to the named disposable target. Do not “repair” live history.
-4. **Continue milestone implementation:** prioritize remaining M1–M6 work, including M5.5, then M8. M7 PDF importing and proposed monster/NPC imports are paused; retain their requirements without further implementation or input-matrix prompting. Use measured requirement gaps to formulate the next bounded task even when the original local queue is empty. Plans without corresponding implementation/acceptance do not close rows.
-5. **Accept then release:** real browser->API->DB privacy/correctness/recovery tests, feedback and ops; approved publication of exact candidate, then verify actual deployed routes and record launch sign-off. Loop defect resolution and acceptance until the scope gate below passes.
+The live queue is the [current execution path](#current-execution-path), not the
+old October 12 R11 integration plan. That magic-item integration is already
+recorded above; its legacy worker ID M1 is not a new milestone-one task.
+
+1. Refresh the authoritative checkout/status and read the latest linked handoff.
+   Resume its first ready R06 dependency; preserve accepted slices and failures.
+2. Reuse existing human authorization and the exact resource/runtime guards.
+   Batch only genuinely missing scope/access approvals into concrete packages.
+   G1/G2 history is not a reason to restart or provision another environment.
+3. Require the evidence appropriate to the changed behavior: source tests do not
+   replace actual native/browser acceptance. Continue unaffected ready local work
+   when one access/resource lane is blocked. Do not repair live history.
+4. Continue remaining M1–M6/M5.5 requirements, then M8, under the selected scope.
+   Retain M7 and creature-import pauses without layout/contract prompting now.
+5. Accept the frozen candidate and release only after real workflow, privacy,
+   recovery, operations and explicit publication/deployment/sign-off gates pass.
 
 ## Grouped approvals: exact operation, target, risk, cleanup
 
-This pass authorizes none of these actions. The next orchestrator prepares a concrete reviewable package and asks for only the approvals actually required. Reuse valid human authorization already present; local source/SQL-file edits, offline PGlite/unit/UI tests, planning and local commits need no extra invented approval.
+These October 12 operation categories retain external-action boundaries, not a
+current setup queue or live availability report. G1/G2 subsequently received
+authorization and actual local execution evidence above. Reuse valid human
+authorization and the current handoff's exact target/resource manifest; do not
+restart setup, copy an obsolete port/fixture budget or ask for the same approval
+because of the historical templates below. Prepare a fresh concrete package
+only where a genuinely new external action needs it. Local source/SQL-file
+edits, focused tests, planning and local commits need no invented approval.
 
 | Group | Concrete package to request | Risk / limits / cleanup |
 | --- | --- | --- |

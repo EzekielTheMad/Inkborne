@@ -1,7 +1,8 @@
 # Builder correction and caster acceptance — work in progress
 
-The user selected the current **M1/R06 builder queue** on 2026-10-24
-America/Phoenix. This does not redefine roadmap M1/R01–R04. Continue authorized
+The user selected the current **R06 builder workstream** on 2026-10-24
+America/Phoenix. This is roadmap M3 builder work under the
+[single current plan](../LAUNCH-ACCEPTANCE.md#current-execution-path). Continue authorized
 local implementation and acceptance. Preserve the authoritative continuation
 checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
@@ -106,7 +107,7 @@ At 07:37:56 UTC, headroom was 9.60 GiB physical-free and 12.45 GiB commit-free,
 below the fourteen-GiB commit threshold; ports 3001/9997/9998/9999 had no listeners.
 No actual runtime was restarted, no credentials created, and no unrelated app was
 closed. All workers/check processes have finished. Worktrees, backup, Docker
-engine/cache and prior accepted/failed evidence remain preserved. M1/R06 remains
+engine/cache and prior accepted/failed evidence remain preserved. R06 remains
 in progress pending the actual acceptance lane; Vercel unchanged and M7 paused.
 
 ### Previous continuation — 2026-10-25 07:25 UTC
@@ -155,7 +156,7 @@ parent installation/session glue are being prepared without execution.
 
 Fresh headroom at 07:25:19 UTC was 9.79 GiB physical-free and 12.66 GiB commit-free,
 still below the fourteen-GiB commit threshold. No actual runtime was restarted;
-the cleanup and failure evidence below remain current. M1/R06 remains in progress.
+the cleanup and failure evidence below remain current. R06 remains in progress.
 
 ### Previous continuation — 2026-10-25 07:10 UTC
 
@@ -214,7 +215,7 @@ were corrected with explicit graph/SQL result types, without runtime changes.
 
 F3 earned Tiefling spell acquisition and A5 mixed-caster source remain in
 isolated workers. Neither source preparation nor PGlite checks accepts an
-actual browser/native flow. All global gates remain closed and M1/R06 remains
+actual browser/native flow. All global gates remain closed and R06 remains
 in progress.
 
 ### Previous continuation — 2026-10-25 06:33 UTC
@@ -255,7 +256,7 @@ application acceptance remain pending. F2/F3 are separate ongoing source work.
 `df80998` completes the parent catalog verifier's evidence list: all eleven
 instrumented writers and seven original callbacks have exact function
 profiles. This closes a source evidence gap; native parent execution remains
-pending. None of these source/test checkpoints completes M1/R06.
+pending. None of these source/test checkpoints completes R06.
 
 ### Previous continuation — 2026-10-25 06:16 UTC
 

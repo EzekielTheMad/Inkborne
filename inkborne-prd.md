@@ -5,6 +5,14 @@
 **Version:** Draft 1.0 — April 2026
 **Author:** Victor (with research assistance)
 
+**Current planning authority (2026-10-25):** this document is the feature and
+vision baseline. Use the [single execution path](docs/LAUNCH-ACCEPTANCE.md#current-execution-path)
+for milestone meanings, order, current acceptance and scope decisions. PRD
+priority levels and MVP "Phase 1" are not milestone M1. Current first-beta
+dispositions defer Daggerheart and public publishing; M7 PDF importing is paused
+and retained, with no new post-beta deadline inferred. Character print/PDF export
+is separate. Earlier scope wording below does not override these decisions.
+
 ---
 
 ## Vision
@@ -277,9 +285,11 @@ The following decisions need to be made early because they affect everything dow
 
 ---
 
-## MVP Scope (Phase 1)
+## Original MVP feature baseline (April 2026)
 
-For initial launch, Inkborne should ship with:
+This original feature grouping is not milestone M1 or the current beta gate.
+Its requirements remain tracked by the ledger; later explicit dispositions
+control the first-beta scope.
 
 - User accounts (email + Discord OAuth)
 - D&D 5e SRD character builder (full guided creation flow)
@@ -288,9 +298,11 @@ For initial launch, Inkborne should ship with:
 - Structured homebrew forms (species, subclass, spells, items, feats)
 - Print-friendly PDF export
 - Responsive web app (desktop + mobile)
-- Dagger Heart SRD support (proves multi-system architecture works)
+- Daggerheart SRD support (retained project requirement; explicitly deferred
+  from first beta, R24/S2)
 
-Everything else is Phase 2+.
+Other ambitions remain in the ledger's PRD crosswalk for individual disposition;
+the old "Phase 2+" wording does not silently exclude required pre-beta work.
 
 ---
 

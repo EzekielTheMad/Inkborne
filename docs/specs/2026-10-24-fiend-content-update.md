@@ -1,8 +1,8 @@
 # Explicit correction of a saved Fiend subclass
 
-The user selected continuation of the current **M1/R06 builder queue** on
-2026-10-24 (America/Phoenix). This execution label does not redefine roadmap
-Milestone 1, whose consolidation/operations criteria remain separately open.
+The user selected continuation of the current **R06 builder workstream** on
+2026-10-24 (America/Phoenix). This is roadmap M3 builder work; milestone M1's
+consolidation/operations criteria remain separately tracked in the ledger.
 Continue from `179fa5e`; preserve the backup, accepted work and inherited
 worktrees. Vercel stays unchanged and M7/creature imports remain paused.
 

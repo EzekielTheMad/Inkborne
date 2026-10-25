@@ -1,7 +1,8 @@
 # Finite remaining local builder matrix
 
-Selected for the current **M1/R06 builder queue** on 2026-10-24
-America/Phoenix. This label does not redefine roadmap M1/R01–R04. This is a
+Selected for the current **R06 builder workstream** on 2026-10-24
+America/Phoenix. R06 belongs to roadmap M3 in the
+[canonical milestone map](../LAUNCH-ACCEPTANCE.md#milestone-matrix). This is a
 bounded acceptance plan and source audit, not executed browser evidence. No
 tests, native SQL, services or hosted changes were started by this audit.
 Preserve the continuation checkout, old backup, inherited worktrees and accepted
@@ -157,7 +158,7 @@ provider/RI or writer-fence verdict.
   must first earn their full actual receipts. Prepare A1–A3 without weakening
   A4–A6; finish their finite source blockers before claiming this matrix passed.
 - Update the existing ledger/handoff with exact source, full stories/native
-  checks, preserved failures, runtime budget and owned-resource cleanup. M1/R06
+  checks, preserved failures, runtime budget and owned-resource cleanup. R06
   remains **in progress** until its selected local acceptance work is accepted.
   This representative matrix does not close wider enrolled parent/child/access/
   copy/campaign/lifecycle fences or open any of thirteen readiness gates.

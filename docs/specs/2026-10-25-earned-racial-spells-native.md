@@ -1,7 +1,7 @@
 # Finite native earned Infernal Legacy (F3)
 
 The 48 focused PGlite checks pass; native installation, import/publication,
-browser, provider and hosted execution remain unaccepted. M1 remains in
+browser, provider and hosted execution remain unaccepted. R06 remains in
 progress, M1–M6 retain priority, Vercel stays unchanged and M7 stays paused.
 All13 writer readiness/class/hit-die gates remain closed.
 

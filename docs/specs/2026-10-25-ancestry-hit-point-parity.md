@@ -1,7 +1,7 @@
 # Finite ancestry maximum-HP parity (F1)
 
-This is the current M1/R06 builder queue's Dwarven Toughness repair. The source
-finding is not an actual-app reproduction. M1 remains in progress; M1–M6 retain
+This is the current R06 builder workstream's Dwarven Toughness repair. The source
+finding is not an actual-app reproduction. R06 remains in progress; M1–M6 retain
 priority, Vercel stays unchanged, M7 stays paused and all activation gates remain
 closed. This slice does not claim hosted, provider, lifecycle or launch acceptance.
 

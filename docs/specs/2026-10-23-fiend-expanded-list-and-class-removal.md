@@ -1,6 +1,6 @@
 # Fiend expanded choices and added-class removal
 
-This is a bounded M1/R06 builder contract. Vercel is unchanged and M7/creature
+This is a bounded R06 builder contract (roadmap M3). Vercel is unchanged and M7/creature
 imports stay paused. The original starting class remains fixed, as selected by
 the user; replacing it and rebuilding starting proficiencies/equipment is outside
 this flow.

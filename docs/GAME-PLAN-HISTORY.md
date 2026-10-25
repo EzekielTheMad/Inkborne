@@ -1,0 +1,172 @@
+# Historical GAME-PLAN record
+
+Archived 2026-10-25 (America/Phoenix). This preserves the previous document verbatim below. Its old milestone completion claims, schedules, scope alternatives, pickup order and next actions are historical; they do not direct current work. Use [the single current plan](LAUNCH-ACCEPTANCE.md#current-execution-path) and [operational handoff](CODEX-ORCHESTRATOR.md).
+
+---
+
+# Inkborne — Game Plan & Working Handbook
+
+> **Current project-wide execution (2026-10-12):** [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) is the entrypoint; [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) is the canonical milestone/requirement evidence ledger and completion gate. The October 11 local queue is a completed checkpoint, not project completion. Open rows/unknowns remain active; local source/SQL-file edits and offline work do not require invented approval. Actual runtime/live/security/publication operations retain their real boundaries.
+
+**Last updated:** 2026-10-02 (current priority; historical milestone records retained)
+**Audience:** Any coding agent (Claude, Codex, etc.) or human picking up this project. This document is deliberately tool-agnostic and self-contained.
+**Companion docs:** [`ROADMAP.md`](ROADMAP.md) (milestone-level source of truth) · [`architecture/00-overview.md`](architecture/00-overview.md) (codebase map) · [`design-briefs/`](design-briefs/) (aesthetic direction)
+
+---
+
+## Current priority (2026-10-02)
+
+For current execution use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md): inspected worktrees, reconciled queue, evidence and approval boundaries. The October 11 checkpoint is paused for a new orchestrator; historical instructions below do not grant new authority.
+
+Character builder first: complete the fresh-character-to-play-sheet journey,
+including validation, understandable UI and recoverable saves. Preserve existing
+narrative/campaign integration; worldbuilding expansion is deferred because the
+group already uses LegendKeeper. See [current work and verification](CURRENT-STATE.md)
+and the [release checklist](RELEASE-READINESS.md) before using historical counts or shipped-status claims below. The isolated local
+stability branch is not a deployed release, and the alpha candidate remains separate.
+## 1. What Inkborne is
+
+An open-source **D&D Beyond × LegendKeeper** for Victor's playgroup (8 players/DMs), with ambition to grow beyond it:
+
+- **Character sheet engine** flexible enough to absorb homebrew mechanics as the group invents them — content is data (Zod-validated schemas + a deterministic effects evaluator), not hardcoded rules.
+- **Narrative as a first-class citizen** — each character has a rich narrative profile (backstory, timeline, relationships, images), not just a bio text field.
+- **Campaigns** — characters attach to campaigns; each campaign gets a LegendKeeper-style wiki/narrative space; the app serves both **players and DMs**.
+- **Bring-your-own content** — author homebrew in-app and import from existing sources (MPMB scripts first, PDFs later).
+- **A player-accessible compendium** — every authenticated user can search, filter, and read all platform, personal, and campaign-shared content they are entitled to use. DM status adds management powers; it is not a prerequisite for encyclopedia access.
+
+## 2. Workflow conventions (read before doing anything)
+
+The project previously used the **GSD** and **superpowers** skill systems. **Both are retired.** Do not run `/gsd:*` commands or follow `docs/superpowers/` process conventions. That directory remains as a valuable **archive** of design specs and implementation plans — read them for context, don't extend the system.
+
+Going forward:
+
+1. **Plain plan → PR workflow.** For non-trivial work, write a short design/plan markdown into `docs/specs/` first (or reuse an existing archived plan), then implement on a feature branch, then PR to `main`. Conventional-commit titles (`feat(builder): …`, `fix(sheet): …`, `docs: …`).
+2. **Tests gate merges.** Run `npm run check` before any PR. GitHub CI, GitGuardian, and the Vercel preview must also be green before merge. The active closed-alpha release candidate is **1,759 tests across 186 files as of 2026-07-22**.
+3. **This is a modified Next.js** (see `AGENTS.md`): read the relevant guide in `node_modules/next/dist/docs/` before writing framework-touching code.
+4. **UI kit is Base UI (`@base-ui/react`), not Radix** — trigger composition uses the `render` prop. Vaul for bottom sheets. Tailwind tokens per `docs/brand-reference.md` and `docs/design-briefs/*/inkborne-tokens.css`.
+5. **Supabase** is the backend (project ref `etcaodglvcspcmwecyxq`). Types are generated into `database.types.ts`; regenerate after migrations. Character state mutates through the `patch_character_state` RPC and the typed helpers from PR #56 — don't write ad-hoc state writes.
+6. **Design source of truth** for look & feel is `docs/design-briefs/` — Claude Design mockup bundles with tokens, JSX mockups, and screenshots. Match them; don't freestyle aesthetics.
+7. **Don't touch `.claude/worktrees/`** — session worktrees, excluded from vitest. When multiple agents work in parallel worktrees, **never use `git stash`** — stash refs are repo-wide and cross-pop between worktrees (this bit us on 2026-07-16); commit WIP to the branch instead. Reserve migration numbers explicitly when concurrent branches both add migrations.
+7b. **Supabase free-tier auto-pause:** the project pauses after ~a week of inactivity (it was found INACTIVE on 2026-07-15 and restored with data intact). Before alpha invites, either upgrade the plan or add a keep-alive; check `get_project` status before debugging "connection timeout" errors.
+8. **Update the status log** (§7 below) when you finish or abandon a work item, and keep `ROADMAP.md` snapshots honest.
+9. **Local dev:** `npm run dev` (port 3000; launch config `inkborne-dev` in `.claude/launch.json`); `.env.local` lives in the repo root on Victor's machine. UAT credentials are stored only in that uncommitted environment file; never print or commit them.
+
+## 3. Where the project actually stands (verified 2026-07-22)
+
+**Shipped on `main`** (see `ROADMAP.md` "Where we are today" for the full list): auth (email/Google/Discord), the full character builder and mobile sheet, M3 gameplay (casting, dice/roll log, hit dice, effects, concentration, rests), inventory, unified **sheet + narrative** character pages, the campaign workspace and wiki, content schema validation, spell authoring/sharing, the private MPMB importer through calculation preview, hardened backup tooling, feedback/error reporting, and 5e 2014 SRD content.
+
+**Shipped by PR #91:** feat authoring now uses the same immutable campaign-sharing contract as spells. Players can choose an eligible shared feat at an earned ASI, sheets apply its ability/action/resource effects once, exact versions remain pinned after edits or revocation, DMs can withdraw campaign access, and level-down removes the stale choice atomically.
+
+**Latest shipped slice:** the original journey-design compendium now uses `/library` for an entitlement-aware player/DM encyclopedia and `/homebrew` for authoring/imports. PR [#96](https://github.com/EzekielTheMad/Inkborne/pull/96) is deployed, and production UAT covers owner/player entitlements, SRD and campaign-shared content, private-content isolation, legacy redirects, preserved catalog state, and the mobile category/detail flow.
+
+**Not built yet:** effect-coupled/candidate-less importer repair; the remaining M4 authoring/content types; optional public publishing; monsters/library NPCs (M5); campaign live presence (later); and public-beta polish.
+
+**The remaining infrastructure gate to closed alpha #1 is operational:** backup hardening shipped in [#90](https://github.com/EzekielTheMad/Inkborne/pull/90), but the first Unraid deployment, fresh backup, and restore drill still need Victor's hardware and secrets (details in `infra/backup/README.md`).
+
+**Open release item:** [#80](https://github.com/EzekielTheMad/Inkborne/pull/80) (account linking) is green and mergeable; Google/Discord consent round trips, email security-code linking, and unlink behavior require Victor's browser UAT before release.
+
+**Housekeeping done on 2026-07-15:** the stranded UAT punch-list fixes (dialog a11y + duplicate level-row key) were found uncommitted on a detached HEAD and merged as [#58](https://github.com/EzekielTheMad/Inkborne/pull/58); the ~4,200-line journey design handoff bundle was rescued off the local-only `feat/mobile-builder` WIP commit into `docs/design-briefs/design_handoff_journey_alpha/`.
+
+## 4. The plan, in priority order
+
+Work the tracks top-down. Within a track, tasks are sized for a single focused agent session and are independently PR-able unless noted.
+
+### Track A — Close out alpha #1 (highest priority)
+
+The goal: **invite the 8 friends** from the April 2026 survey to build characters. Everything here serves that.
+
+- **A1 — Deploy backups + restore drill.** *(Victor + agent pairing; blocked on Victor's hardware.)* Backup hardening is merged in [#90](https://github.com/EzekielTheMad/Inkborne/pull/90). Deploy it on Unraid, produce a fresh backup, and complete the documented restore drill.
+- **A2–A7 — Complete.** Equipment chooser (#64), subclass discovery/direct-level gating (#63), dialog cleanup, database hygiene, and the Playwright smoke (#62) shipped during the 2026-07-16 sprint.
+- **A8 — Send the invites.** After A1, A9, A10, and the account-linking browser matrix: invite the 8 friends, collect via the in-app feedback widget, and triage into `docs/alpha/feedback-round-A.md`.
+- **A9 — Closed-alpha feedback hardening.** Implementation and component coverage are complete in the active release candidate: the desktop header is persistent and mobile has a direct feedback control. Protected-preview UAT proved exact originating path/query capture and mobile access. Remaining gate: open that submitted context in the admin dashboard with an admin browser session.
+- **A10 — Player compendium v1.** *(Shipped and production-UAT verified.)* `/library` covers all eight seeded categories for players and DMs, uses platform + personal + campaign-shared entitlements, and hides unrelated private/campaign content. Authoring/imports now live at `/homebrew` with compatibility redirects. Contract: `docs/specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md`.
+
+### Track B - M2 journey polish (complete)
+
+Journey polish shipped in [#67](https://github.com/EzekielTheMad/Inkborne/pull/67). B1-B4 below are historical scope, not an unfinished implementation queue.
+
+The landing → auth → dashboard → characters-list → sheet aesthetic pass. Design bundle: **`docs/design-briefs/design_handoff_journey_alpha/`** (start with its `README.md`); brief: `docs/design-briefs/journey-landing-to-sheet.md`. One focused PR per surface, mirroring how the builder polish shipped (#37–#54):
+
+- **B1 — Landing page** (bundle has variants A/B/C — **Victor picks**, see §6; screenshot of B in the bundle).
+- **B2 — Auth pages** (`journey-auth.jsx`).
+- **B3 — Dashboard + characters list** (`journey-dashboard.jsx`).
+- **B4 — Sheet first-arrival + typography/spacing polish pass** (no structural changes).
+
+### Track C — Repo housekeeping (cheap, do opportunistically)
+
+- **C1 — Complete.** The content-schema-validation refactor and audited drift fixes shipped in [#60](https://github.com/EzekielTheMad/Inkborne/pull/60).
+- **C2–C4 — Complete.** Stale branches/worktrees were removed, `docs/specs/` is active, and `docs/superpowers/` is explicitly archival.
+
+### Track D — Feature milestones (after alpha #1 feedback)
+
+These are specced at the milestone level in [`ROADMAP.md`](ROADMAP.md); each needs a design spec before implementation:
+
+1. **M3 — Gameplay foundations:** ✅ **COMPLETE 2026-07-16** (spec `docs/specs/2026-07-15-m3-gameplay-foundations-*.md`; PRs #61, #65, #66, #68–#72, #74; migrations 00038–00040 applied to prod; live-browser UAT green with zero bugs). Alpha #2 ("can you *play* a character?") is content-ready.
+2. **M4 — Homebrew + importer:** ◑ **Spell, feat, and background authoring/sharing plus the private importer workflow and representative character exit flow are shipped.** Campaign isolation, exact-version pins, DM revocation, ASI feat selection, fail-closed parsing/mapping, audited spell/feat repair, conflict resolution, the current-revision calculation gate, and upload → library → builder → sheet/cast parity are hosted-database and protected-preview verified. Atomic background replacement and exact pinned rendering are hosted/runtime and protected-preview verified in the active release candidate. Optional public publishing stays separate.
+3. **M5 — New content types:** monsters → NPCs → companions/sidekicks. Every type joins the shared entitlement-aware compendium for players and DMs; DM-only surfaces are for campaign management, not basic encyclopedia access.
+4. **M5.5 — Campaigns + narrative depth:** the campaign foundation shipped in [#76](https://github.com/EzekielTheMad/Inkborne/pull/76): CRUD/membership, roles, character copy/assignment, wiki tree/editor, bidirectional links/backlinks, timelines/relationships, visibility controls, revision conflicts, and authenticated DM/player UAT. Later work is optional public publishing and live presence.
+5. **M6/M7/M8** — Spell Phase 3, PDF importer, public-beta polish.
+
+## 5. Agent playbook — how to pick up work
+
+1. Read this file, then the ROADMAP section for your track, then `docs/architecture/00-overview.md` (and `01`–`04` as relevant).
+2. Check `git status` and open PRs (`gh pr list`) before starting — this project has been burned by stranded uncommitted work twice. **Never leave finished work uncommitted or on a detached HEAD.**
+3. For design work, open the relevant `docs/design-briefs/` bundle and match its tokens/mockups.
+4. Definition of done: implementation + tests, full suite green, PR opened with a summary and test evidence, status log updated (§7).
+5. Product decisions (anything in §6) belong to Victor — don't guess; leave the decision documented and pick a different task.
+
+## 6. Decisions Victor owns (agents: do not decide these)
+
+| # | Decision | Blocks | Status |
+|---|----------|--------|--------|
+| 1 | Equipment step: silently grant defaults vs build a chooser UI | A2 | **Session default applied 2026-07-16: chooser built** (PR #64) — veto/revise freely |
+| 2 | Landing page variant A / B / C | B1 | **Session default applied 2026-07-16: variant B** (bundle README's recommendation, PR #67) — A/C mockups remain in the bundle |
+| 3 | M5 vs M5.5 ordering (DM content first, or campaigns first?) | Track D sequencing | **Resolved 2026-07-19: campaigns first** |
+| 4 | Sharing model: public publishing vs campaign-only | M4 | **Resolved 2026-07-20: campaign-scoped sharing first; optional public publishing later with explicit visibility controls** |
+| 5 | Multi-system (e.g. Daggerheart) timing | post-beta | Open |
+| 6 | Real-time multiplayer vs async | M5.5 architecture | Open |
+| 7 | Pricing/monetization | M8 | Open |
+| 8 | **C1 schema drift — fix direction per category** (see table below) | C1 tasks 4–12, PR #60 | **Resolved and shipped in #60** |
+| 9 | Compendium audience and information architecture | Closed alpha / M4 / M5 | **Resolved 2026-07-22: encyclopedia access is entitlement-based for players and DMs; Homebrew is the separate authoring workspace** |
+
+**Decision #8 detail — the C1 drift audit found 22/1535 platform rows failing their schemas.** In every category the data matches what the app's consumers actually read, and the schema is the outlier — so the recommendation is to fix schemas, not data. Per category (details in PR #60):
+
+| Category | Recommendation |
+|---|---|
+| 8 caster classes: `spellcastingList.level` is `{min,max}` object, schema wants tuple | Change schema to the object shape |
+| paladin/ranger: empty `cantrips` array, schema demands length 20 | Allow empty/short arrays |
+| bard `toolProfs.from` is a plain string, schema wants `"any"\|string[]` | Widen schema to accept string (matches consumer) |
+| 11 magic items: `rarity: "Varies"` missing from enum | Add `"Varies"` to the enum |
+| 2 spells: `damage.type: null` | Allow null (consumers already tolerate it) |
+| ki feature: numeric per-level `additional` array | Widen schema to `(string\|number)[]` |
+
+## 7. Status log (append-only — newest first)
+
+- **2026-10-02 (historical checkpoint)** - Local builder-first reliability milestone on `codex/playable-core-stability`: save failures are visible/recoverable; cast/rest completion waits for persistence; new-character validation and failure copy are hardened. Final local check: **197 files / 1,817 tests**, strict lint/typecheck and production build passed. No hosted tests, schema changes or remote publication. See `docs/CURRENT-STATE.md` and the prepared builder journey task.
+
+- **2026-07-22** — Closed-alpha player/DM compendium shipped in PR [#96](https://github.com/EzekielTheMad/Inkborne/pull/96). `/library` is now a read-only encyclopedia across classes, species/races, backgrounds, feats, spells, items/magic items, weapons, and armor; `/homebrew` owns spell/feat/background authoring and MPMB imports with legacy redirects. The catalog uses the authenticated Supabase client and existing RLS for the platform + personal + campaign-shared union, includes provenance/current versions, search/sort/category filters/stable pagination, responsive category/detail layouts, and preserves full catalog state across detail navigation. Rollback-only hosted entitlement smoke and production browser UAT proved owner/player access, campaign sharing, unrelated-content isolation, legacy redirects, and mobile navigation with zero disposable fixture residue. Strict lint/typecheck, production build, **194 Vitest files / 1782 tests**, and the focused **4/4 production Playwright** suite are green.
+- **2026-07-22** — Closed-alpha background and feedback release candidate. Background selection is now one authorized database transaction with exact immutable pins, safe old-to-new replacement, background-only resolution/equipment cleanup, confirmed-equipment protection, copy fidelity, and exact feature rendering on builder/sheet surfaces. Protected-preview UAT proved SRD and homebrew selection, immutable v1→v2 pins, sheet feature rendering, safe cancellation, friendly confirmed-equipment blocking, exact page/query feedback capture, and a direct mobile feedback dialog. UAT also exposed and fixed a three-valued SQL boundary bug that rejected ordinary class/race/feat refs with a null optional source; character-deletion cascade and canonical metadata protections remain covered. Both hosted migrations, rollback-only authenticated smoke, Supabase advisors (zero errors), strict lint/typecheck, production build, and **186 Vitest files / 1759 tests** pass with zero disposable fixture residue. The only remaining feedback proof is the admin-dashboard browser check with an admin session.
+- **2026-07-21** — M4 homebrew background authoring and campaign sharing. PR [#94](https://github.com/EzekielTheMad/Inkborne/pull/94) adds finite structured create/edit forms, server-derived effects and ownership envelopes, optimistic immutable versions, exact-campaign sharing, author/DM revocation, and library/campaign-management surfaces. Verification: **176 Vitest files / 1732 tests**, strict lint/typecheck, production build, hosted migration/grant checks, post-migration advisors, and protected-preview two-account UAT. UAT proved private v1 creation, edited v2, first-share v3, final-unshare v4, player-owned sharing, DM discovery/revocation without edit access, and zero disposable definitions/versions/shares/campaign rows afterward. The next slice is atomic background selection plus exact pinned rendering; confirmed-equipment replacement remains deferred until its provenance/product rule is explicit.
+- **2026-07-21** — M4 representative importer-to-character exit flow. PR [#93](https://github.com/EzekielTheMad/Inkborne/pull/93) adds an original rights-safe MPMB fixture, parser→mapper→production-evaluator parity coverage, and an authenticated upload→review→preview→commit→library→builder→sheet/cast Playwright journey with exact-version assertions. Verification: **170 Vitest files / 1694 tests**, strict lint/typecheck, production build, Playwright discovery, Vercel preview, and protected-preview browser UAT. UAT proved a real file upload, private v1 feat/spell commit, ASI feat selection, DEX/AC/speed/senses/defense effects, spell preparation, attack +5, save DC 13, slot consumption, and `1d8 + 3` damage output; exact database pins/provenance were verified and every disposable fixture row was removed.
+- **2026-07-21** — M4 schema-known guided MPMB repairs. PR [#92](https://github.com/EzekielTheMad/Inkborne/pull/92) expands the finite, audited repair boundary to spell concentration/ritual and feat single-ability prerequisites, action economy, recovery, and spellcasting ability. Staged safe candidates now survive unrelated blocking diagnostics; mapper-version-aware dedup allows corrected mappings to be restaged; public RPCs validate narrow patches, keep retryable internals private, increment revisions, invalidate stale previews, and record resolved diagnostics/user-edited fields. Verification: **169 Vitest files / 1692 tests**, strict lint/typecheck, production build, hosted migration compile/apply, transactional smoke, generated live signatures, clean advisors, Vercel preview, and protected-preview browser UAT. UAT proved two broken candidates → six audited corrections → zero blockers → two passing calculations → private v1 spell/feat commit, with zero fixture residue and zero browser logs.
+- **2026-07-21** — M4 campaign-shared feat selection. PR [#91](https://github.com/EzekielTheMad/Inkborne/pull/91) adds feat authoring, immutable campaign sharing, exact-campaign discovery, atomic ASI-or-feat choices, exact-version pins, prerequisite/duplicate/cap enforcement, DM revocation, character-copy remapping, level-down pruning, and sheet ability/action/resource effects. Verification: **167 Vitest files / 1666 tests**, strict lint/typecheck, production build, CI/GitGuardian/Vercel green, hosted migrations/advisors/type signatures, rollback smoke, and protected-preview two-account UAT. UAT proved wrong-campaign exclusion, v2 pin survival after a v3 edit and final-unshare v4, DEX/AC/action/resource sheet parity, DM withdrawal, no resurrection after level down/up, and zero fixture residue.
+- **2026-07-21** — M4 MPMB calculation preview. Added an owner-only server-rendered calculation harness that evaluates every selected feat independently at levels 1/5/11/17 and test-casts every selected spell across its supported scaling range. Raw staged rules remain server-only; malformed schemas, formulas, dice, or calculations fail closed. Confirmation stamps only the exact import revision through a service-role-only RPC, and the public commit RPC refuses unstamped or stale revisions. Live-sheet structured feat sources now match preview behavior. Hosted rollback smoke also exposed and repaired a pre-existing renamed selection-function regression without leaving fixtures. Verification: strict lint/typecheck, production build, **157 Vitest files / 1585 tests**, hosted migration dry-run/apply, exact-revision commit/selection/idempotency smoke, zero preview-related advisor findings, and zero fixture residue. Protected-preview browser UAT remains before merge.
+- **2026-07-21** — M4 explicit MPMB conflict resolution. Added owner-only Keep both / Replace decisions with narrow server-owned inputs, optimistic import revisions, immutable replacement versions, exact provenance, existing-character pin preservation, and a fail-closed prohibition on replacing campaign-shared definitions. A live two-tab UAT exposed that optimistic conflicts were using retryable SQLSTATE `40001`; migration `20260721152500` now translates only those application conflicts to non-retryable `P0001` responses while keeping the audited implementations private. Draft PR [#87](https://github.com/EzekielTheMad/Inkborne/pull/87) is mergeable with CI, GitGuardian, and Vercel green. Verification: strict lint/typecheck, production build, **152 Vitest files / 1559 tests**, hosted rollback smoke, and protected-preview browser UAT proving Keep both, Replace, shared-target denial, immediate stale-tab recovery, atomic three-item commit, immutable history, and zero remaining UAT fixtures.
+- **2026-07-21** — M4 guided MPMB spell repair. Added owner-only, revision-safe correction of missing spell material text and unknown saving-throw outcomes without accepting raw candidate JSON from the browser. The repair RPC applies a narrow validated patch, records resolved diagnostics and user-edited fields, recomputes review status/selection/summary atomically, and preserves private-use provenance. Hosted migration `20260720235712`, authenticated rollback smoke, advisors, generated types, strict lint/typecheck, production build, and **149 Vitest files / 1521 tests** are green. Full protected-preview browser UAT proved upload → targeted repair → Ready/selected → atomic commit → private v1 library entry; the exact disposable definition/import were deleted afterward.
+- **2026-07-20** — M4 private MPMB import-review foundation. Added a fail-closed static parser and schema mapper, server-only 2 MiB upload boundary, owner-only durable review sessions, item selection with optimistic revisions, atomic commit of valid spells/feats as personal homebrew, and database-enforced private-use provenance that blocks campaign sharing. Raw JavaScript is never executed or persisted. Hosted migration `20260720233030`, authenticated rollback smoke, post-migration advisors, generated types, strict lint/typecheck, production build, and **146 Vitest files / 1500 tests** are green. Missing-info editing, conflict resolution, and preview-character validation remain the next importer slice.
+- **2026-07-20** — M4 campaign-scoped spell sharing. Added atomic owner-only share/unshare RPCs, same-system membership checks, character-aware spell discovery, Private/Shared library states, former-campaign removal, and immutable first/final share versions. Live UAT found and fixed an RLS recursion, an ambiguous RPC conflict target, and the old-pin update boundary; the final two-account flow proves wrong-campaign exclusion and that a v2 pin remains preparable/castable after edit and final unshare to v4. Verification: **134 Vitest files / 1424 tests**, strict lint/typecheck, production build, **9/9 Playwright**, hosted advisors with no errors, and zero leftover E2E fixtures.
+- **2026-07-20** — M4 private-homebrew spell vertical. Added `/library` spell create/edit surfaces, server-derived ownership/system/source envelopes, schema validation, optimistic version conflicts, owner-only queries, current-version discovery, and exact-version character pins with visible `Homebrew · vN` provenance. Live two-account UAT proved owner isolation and guessed-UUID denial; manual gameplay UAT proved attacks, damage, duration, and concentration use the existing cast engine. Automated Playwright now proves v1 → edit v2 → old pin/new pin behavior with service-role cleanup restricted to reserved E2E fixtures. Hosted Discord/manual-linking configuration is reported complete; application validation follows on the account-linking release branch.
+- **2026-07-19** — Character timeline + relationships. Added owner-authored rich timeline events and relationship cards with campaign mentions, “Campaign” vs “DM & me” visibility, owner-only CRUD, and read-only DM access. Reused and hardened the existing zero-row `npcs` model rather than creating a competing relationship table. Character copy now carries both record types atomically and resets them to DM-only in the new context. Migration `00055` is deployed; hosted RLS/copy UAT and Supabase advisors are green. Verification: **108 Vitest files / 1213 tests**, strict lint, TypeScript, production build, and authenticated DM/player Playwright UAT green.
+- **2026-07-19** — Character↔campaign narrative links and DM-note boundary. Moved `backstory_dm_notes` out of campaign-readable character JSON into an owner/campaign-DM-only table, preserved notes in atomic character copies, and added an owner-only atomic narrative-save RPC. Hosted RLS UAT proved owner + DM access and unrelated-user denial. Added bidirectional links: character stories/authorized DM notes backlink from wiki pages, and character narrative views backlink to visible campaign pages. Migrations `00052`–`00054` are deployed. Verification: **105 Vitest files / 1202 tests**, strict lint, TypeScript, production build, and authenticated two-account campaign Playwright UAT green.
+- **2026-07-19** — Campaign backlinks slice. Added `#` wiki-page and `@` character references with campaign-scoped, RLS-filtered suggestions; rendered references navigate by stable UUID. Each wiki page now derives a deduplicated “Linked from” panel only from source pages visible to the current user, preventing DM-only page titles from leaking to players. Added the backlink design contract, API/helper tests, and expanded two-account browser UAT to prove shared backlinks are visible while DM-only sources remain hidden. Verification: **103 Vitest files / 1193 tests**, strict lint, TypeScript, production build, and targeted auth + campaign Playwright UAT green.
+- **2026-07-19** — Auth + campaign continuation. Added unified profile linking for email/password, Google, and Discord identities, with safe OAuth return handling and provider availability flags; Supabase manual identity linking still needs to be enabled in the hosted dashboard, and Discord still needs OAuth client credentials. Added a disposable two-account Playwright campaign UAT covering create/join, DM/player views, DM-only/shared pages, player-authored secrets, character assignment, and DM read-only character entry points. The UAT found and fixed invalid empty TipTap content plus duplicate link registration; production migration `00051` normalized/constrained page documents and the post-migration UAT ran without editor warnings. Final verification: **100 Vitest files / 1185 tests**, strict lint, TypeScript, production build, and the targeted auth + campaign Playwright flow green. Production `inkborne.app` is still on the pre-campaign application build; merge/deploy remains.
+- **2026-07-19** — Campaign production rollout. Applied migrations `00041`–`00050`, including least-privilege API grants, policy/index advisor fixes, portrait-listing hardening, `INSERT ... RETURNING` visibility, and pgcrypto qualification for invite rotation. Generated types were reconciled with the live schema. A rollback-only authenticated database smoke test passed campaign creation, owner membership, page creation/update/conflict rejection, character copy, invite rotation, and owner-leave protection. Final verification: **96 Vitest files / 1169 tests**, strict lint, TypeScript, and production build green. Remaining hosted setting: enable leaked-password protection; authenticated browser DM/player UAT still recommended.
+
+- **2026-07-19** — Codex campaign foundation sprint. Patched production dependency vulnerabilities, established strict CI/check gates, fixed server spell reconciliation and narrative autosave retry behavior, then implemented the first M5.5 slice: owner/member/page authorization, character copy with optional campaign assignment, campaign CRUD/joining/roster, wiki tree + rich editor, DM/player page visibility, revision-safe saves, invite rotation, character attach/detach, and atomic leave/member-removal cleanup. Local verification: **96 Vitest files / 1159 tests**, strict lint, TypeScript, and production build green. Migrations `00041`–`00044` still require hosted Supabase apply plus authenticated DM/player UAT.
+
+- **2026-07-16** — Agentic sprint close-out (Claude, orchestrated session). **Tracks A (agent-doable), B, C (except C1), and D/M3 are DONE.** 17 PRs merged (#33, #57–#59, #61–#74 minus #60); tests 620 → **1109 unit + 6 live E2E**; migrations 00038–00040 applied to prod. Highlights: M2 journey polish shipped (landing variant B); equipment chooser shipped; subclass discoverability + set-level gating fixed (A4 confirmed real); M3 gameplay foundations complete and UAT-verified in-browser with zero bugs. Latent bugs fixed en route: `initializeState` dropped persisted play-state fields on load (PR #68); Supabase project found auto-paused and restored, data intact. **Still open:** PR #60 (C1, blocked on decision #8), A1 backups deploy (Victor's Unraid), A8 alpha invites (Victor). Session defaults applied for decisions #1/#2 (see §6). Also: UAT Smoke Cleric deleted from prod; 15 stale branches + worktrees removed; e2e selectors repaired post-redesign (#73).
+- **2026-07-16** — M3 T9 (Claude): added `e2e/m3-gameplay.spec.ts` — Playwright UAT proving M3 exit criteria against the live stack (cast → slot → effect → AC, upcast damage roll → toast/log/`character_rolls` persistence, no concentration prompt for non-concentration effects, hit-die spend + short rest with Arcane Recovery). Full e2e suite (now 6 tests) green twice consecutively; 1109 vitest unchanged.
+
+- **2026-07-15** — Project re-orientation session (Claude). Verified main @ `31a4996` + 620 tests green; merged stranded UAT a11y/dup-key fixes as #58; rescued journey design bundle into `docs/design-briefs/design_handoff_journey_alpha/`; added M5.5 campaigns milestone (proposed) to ROADMAP; wrote this game plan. Retired GSD/superpowers workflow. Next up: Track A (A1 needs Victor's Unraid access; A2 needs decision #1).
+- **2026-06-19** — Re-orientation + full build-a-character UAT (PASS end-to-end). Punch list captured; ROADMAP refreshed.
+- **2026-05 and earlier** — See `ROADMAP.md` "What changed since 2026-04-25" and git history (#19–#57).

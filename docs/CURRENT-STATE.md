@@ -1,6 +1,26 @@
 # Inkborne current work
 
-## Active execution — 2026-10-23 UTC
+Updated 2026-10-25 (America/Phoenix). This page provides navigation and a
+historical checkpoint archive; it does not maintain a second roadmap or backlog.
+
+- [Start here: execution entrypoint](CODEX-ORCHESTRATOR.md).
+- [Single current execution path](LAUNCH-ACCEPTANCE.md#current-execution-path).
+- [Canonical milestone definitions and acceptance](LAUNCH-ACCEPTANCE.md#milestone-matrix).
+- [Current R06 builder handoff](handoffs/2026-10-24-builder-correction-and-casters.md).
+
+The current builder workstream is **R06**, within roadmap **M3**. Use the current
+handoff's dependency order and the ledger's actual acceptance status. Follow
+those links rather than repeating the unfinished-task lists in old snapshots.
+
+## Historical checkpoint archive
+
+Everything below records earlier checkpoints. Its old status, next-step and
+operational statements apply only to their dated sources; they do not select
+current work or establish current runtime availability. Historical `M1/R06`
+means the former builder-queue alias. Historical magic-item `M1` worker/profile
+IDs are not roadmap milestone M1. Only the ledger defines project milestones.
+
+## Historical execution snapshot — 2026-10-23 UTC
 
 **Native multiclass acquisition and five class-choice families save/reload in
 the actual local app through `f5d7439`.** Six browser stories and matching native
@@ -20,7 +40,7 @@ junction remains after automatic approval review blocked its removal.
 
 ### Earlier checkpoint
 
-## Active execution — 2026-10-22 UTC
+## Historical execution snapshot — 2026-10-22 UTC
 
 **Race, abilities, background and starting equipment now save and reload in the
 actual local app at `2e2b252`.** One real browser signs in, creates a notebook,
@@ -246,7 +266,7 @@ Current integrated source `28966b4` passed typecheck and zero-warning lint; all 
 recorded identities exited for each gate. Reviewed saving-throw harness and valid
 motivation fixture match all eight worker blobs. Browser/PDF 30/43/eight results
 remain UNRUN; fresh combined check/build and measured allocations are pending.
-The separately reviewed M1 local test-budget correction preserves every oracle and
+The separately reviewed magic-item worker M1 local test-budget correction preserves every oracle and
 native cap; its combined retry remains pending.
 
 M6 disabled source `ee3d261` passed both reviews. First focused execution passed 88
@@ -281,7 +301,7 @@ proof passed, all451 identities exited. Magic inner34/36 passed, but whole gate
 FAILED600,000ms during final dependency proof; all612 identities exited/listeners
 zero. Preserve failures; finite outer-budget amendment needs review. Auth/DAL/
 actions/cache/persistence remain simulated; SQL/current authority unaccepted.
-M1 corrected5d7916 passed66 tests/typecheck/lint, all19 observed identities absent,
+Magic-item worker M1 corrected5d7916 passed66 tests/typecheck/lint, all19 observed identities absent,
 listeners/model temporary directories zero. Six exact worker blobs integrated
 throughbe54bf0; protected helpers/SQL/package bytes unchanged. Native and root
 combined acceptance remain open. Magic finite900s amendment3f8a835 is independently
@@ -333,7 +353,7 @@ review; R13 12 suites/195 tests/type/lint passed, all80 processes gone. Root ful
 `d3f5ed6` preserved two failures/4,527 passes: unchanged monster timeout and missing
 old-route campaign-access mock. Reviewed test-only `19e0d79` and unchanged monster
 tests passed three suites/23 tests at `11d2df9`; no timeout or product change.
-All369 full and eight focused processes exited. M1 profile plan53b69fc has both
+All369 full and eight focused processes exited. Magic-item worker M1 profile plan53b69fc has both
 owner reviews and is integrated; additive local preparation proceeds. Full
 combined/build and actual-form browser acceptance are still pending. SQL unapplied.
 
@@ -466,9 +486,9 @@ hosted/auth/publication/ops actions remain separately gated. No live or remote w
 has occurred in this continuation. A fresh read-only Docker request still finds
 the Linux-engine pipe unavailable; no startup or image pull was attempted.
 
-**Project-wide continuation:** use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) and the single [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) ledger. The bounded local queue is complete, not the project. Historical tested core `ada6c9b` and standalone M1 evidence remain indexed below. The magic-item slice is now reviewed/integrated locally; later local product changes require combined candidate acceptance. Continue ready documented milestone work while actual access/approval lanes are blocked.
+**Historical continuation note:** use [CODEX-ORCHESTRATOR.md](CODEX-ORCHESTRATOR.md) and the single [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) ledger. The bounded local queue is complete, not the project. Historical tested core `ada6c9b` and standalone M1 evidence remain indexed below. The magic-item slice is now reviewed/integrated locally; later local product changes require combined candidate acceptance. Continue ready documented milestone work while actual access/approval lanes are blocked.
 
-## October 11 local continuation
+## Historical October 11 local continuation
 
 The isolated branch includes [executable starting-equipment coverage](handoffs/2026-10-11-equipment-postgres-wasm.md): 45 synthetic PostgreSQL-WASM cases, application boundaries and offline component acceptance. A copy-function alias collision was fixed by renaming only the new ledger row variable. Full migration-chain/concurrent-connection acceptance remains outstanding; October 4's no-SQL-runtime statement is historical. PR101's ability implementation is now reviewed/integrated locally; its existing already-applied migration reference was copied unchanged, not reapplied. No hosted changes or deployment occurred. Equipment rollout remains default-off.
 
@@ -480,13 +500,13 @@ Start with the [consolidated project handoff](handoffs/2026-10-04-consolidated-p
 
 Branch: `codex/playable-core-stability`. Exact application checkpoint: `c1d622c5de71c54515f52208f88137cc9f5b7b73`; the closing documentation-only commit is reported separately. Checkout: `C:/Users/kaios/Documents/Codex/2026-10-02/task/inkborne-core`. Other worktrees remain untouched.
 
-## Direction and current scope
+## Historical direction and scope
 
 Victor prioritizes the character builder and fresh-character-to-play-sheet journey. Preserve mechanics, narrative, campaigns and LegendKeeper; no worldbuilding expansion. Local source work, safe local tests/builds/review and logical commits were authorized. This bounded cleanup pass is closed; do not invent more features or interpret it as deployment approval.
 
 Victor directly approved local-only equipment SQL staging and application integration; that scope is implemented. Runtime setup approval is pending. This reconciliation authorizes documentation only: no services/containers, SQL execution, install, configuration change, hosted fixture/write/test, credential/security change, remote push/merge/publication/deployment. All ten prior hosted fixtures remain exact-ID cleaned with zero attempts left. Historical proposals/approval quotes do not authorize new runtime or hosted work.
 
-## Current completed result
+## Historical completed result
 
 - Builder: supported exact-pin/choice/readiness validation, shared Saved labels, visible conflicts/unreadable references, pending/errors and draft recovery; explicit existing class-manifest restoration. Unpinned traits disclose current-catalog use; Saved is limited validation.
 - Sheet: relative HP gating, retained Activity recovery, conditional state-dependent actions and readable conflict/uncertainty. Rolled concentration/death-save gating occurs before RNG; death-save insertion is separately tracked and prevents duplicate responsive rolls. Independent notes preserved; mobile tools reachable.
@@ -494,7 +514,7 @@ Victor directly approved local-only equipment SQL staging and application integr
 - Latest equipment handoff **reports** types/zero-warning lint, **220 files / 2,185 tests**, build/24 static pages and v3 local review passing. Reconciliation independently confirmed committed artifacts, clean checkout and the browser receipt: **24 simulated real-component checks**, zero page errors/remote requests, `liveSupabase:false`. It did not rerun tests/build/review. Prior death-save validation was 217 files / 2,147 tests and 30 state-control Chrome checks; those are historical receipts, not the equipment count.
 - Hosted replacement: selected manual-state matrix **32 positive + 32 hidden recovery cases**, plus setup/ownership/denials. All Back cases remounted; full builder progression, current rolled changes and retained Activity remain unaccepted remotely. The final accepted receipts supersede listed historical failures within that matrix.
 
-## Next boundaries
+## Historical next boundaries
 
 Highest risks: unproved PostgreSQL equipment transaction/locking/permissions/rollback/copy behavior and legacy partial-grant policy; separate roll/state outcomes and legacy-writer/ABA coordination; current end-to-end hosted acceptance; content/HP decisions; release operations. Local staging is complete, not durable acceptance.
 

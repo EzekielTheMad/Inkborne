@@ -1,8 +1,45 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-25 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
+Updated 2026-10-25 (America/Phoenix). This is the operational entrypoint.
+[LAUNCH-ACCEPTANCE.md — current execution path](LAUNCH-ACCEPTANCE.md#current-execution-path)
+is the **single current plan, milestone map, backlog and acceptance gate**.
+ROADMAP is navigation, GAME-PLAN is working conventions, and the PRD is the
+feature baseline. None is an alternative roadmap.
 
 ## Resume and ownership
+
+Continue the **R06 builder workstream** (roadmap M3), in the dependency order in
+the [current plan](LAUNCH-ACCEPTANCE.md#current-execution-path) and
+[latest builder handoff](handoffs/2026-10-24-builder-correction-and-casters.md).
+Keep the accepted ordinary-save recovery and earlier builder slices accepted;
+complete the pending correction/native/full-story work rather than restarting.
+
+The authoritative continuation checkout is
+`C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, branch
+`codex/launch-integration-20261011`. Preserve `C:\Projects\Inkborne` as the old
+backup and preserve every inherited worktree. Refresh Git status/HEAD before
+editing; the last product/source checkpoint before this documentation
+reconciliation was `5f99574`.
+
+Actual correction/caster acceptance remains pending after the preserved
+memory-blocked attempts. Source/unit checks are not actual-flow acceptance.
+Before runtime work, consult the handoff and exact external process/runtime
+receipts; serialize heavy checks and retain its guard of at least **14 GiB
+commit-free and 8 GiB physical-free** before a fresh actual run. Last recorded
+cleanup is evidence, not a substitute for inspecting live state before operations.
+
+Vercel stays unchanged, global activation gates stay closed and M7 remains
+paused. The ledger owns milestone ordering, scope dispositions and external
+approval boundaries; this page introduces no new permission or release action.
+
+## Historical orchestration checkpoints
+
+The records below preserve original labels, counts, then-current status and
+then-next actions. They are evidence, not another executable queue. In these
+records, `M1/R06` was the retired builder alias and standalone magic-item `M1`
+was a worker ID. Only the ledger's milestone matrix defines project M1–M8.
+
+### Progress snapshot before the 2026-10-25 roadmap reconciliation
 
 **Current work in progress — 2026-10-24 America/Phoenix:** the user selected
 the current **M1/R06 builder queue**, rather than roadmap M1/R01–R04. The reviewed
