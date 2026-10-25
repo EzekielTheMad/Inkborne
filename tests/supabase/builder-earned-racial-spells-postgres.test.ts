@@ -494,4 +494,3 @@ describe("finite earned racial spell compiler and real installer", () => {
     } finally { await connection.close(); }
   });
 });
-

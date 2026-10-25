@@ -188,7 +188,7 @@ async function inspectSheet(page: Page, story: Story, paladinLevel: 1 | 2, phase
   for (const text of ["Cantrips: 6/6", "Ordinary Spells Known: 6/6", ...(paladinLevel === 2 ? ["Prepared: 4/4"] : [])]) await expect(page.getByText(text, { exact: true }).filter({ visible: true })).toBeVisible();
   await expect(page.getByText(/^Save DC\s*14$/).filter({ visible: true })).toBeVisible(); await expect(page.getByText(/^Attack\s*\+6$/).filter({ visible: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mark 1st slot used", exact: true }).filter({ visible: true })).toHaveCount(paladinLevel === 2 ? 3 : 2);
-  await expect(page.getByRole("button", { name: "Mark 2nd slot used", exact: true }).filter({ visible: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Mark BigInt(2)d slot used", exact: true }).filter({ visible: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Mark Pact slot used", exact: true }).filter({ visible: true })).toHaveCount(2);
   for (const owner of ["Sorcerer", "Warlock"] as const) for (const name of [...plans[owner].cantrips, ...plans[owner].spells]) {
     const replaced = phase === "concurrent" && (name === "Shield" || name === "Charm Person"); await expect(page.getByText(name, { exact: true }).filter({ visible: true })).toHaveCount(replaced ? 0 : 1);
@@ -199,7 +199,7 @@ async function inspectSheet(page: Page, story: Story, paladinLevel: 1 | 2, phase
   // from the two dots. No cast, slot spend, resource or state write is made.
   await page.getByRole("button", { name: "Cast Scorching Ray", exact: true }).click(); const dialog = page.getByRole("dialog", { name: "Cast: Scorching Ray", exact: true });
   await expect(dialog).toContainText("Cast as Warlock (Charisma)."); await expect(dialog).toContainText("Ranged spell attack +6");
-  await expect(dialog.getByRole("radio", { name: /^Pact 2nd/ })).toBeVisible(); await expect(dialog.getByRole("radio")).toHaveCount(1); await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog.getByRole("radio", { name: /^Pact BigInt(2)d/ })).toBeVisible(); await expect(dialog.getByRole("radio")).toHaveCount(1); await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
 }
 async function readback(info: TestInfo, story: Story, label: string, paladinLevel: 1 | 2 = 2, phase: Phase = "baseline"): Promise<Native> {
   const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG; if (!file || !uuid.test(story.id)) throw Error("Local native evidence configuration required");
@@ -274,10 +274,10 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
     await (await spellOption(second, "Warlock", "Charm Person", false)).uncheck(); await (await spellOption(second, "Warlock", "Shatter", false)).check();
     await assertBudget(page, "Sorcerer"); await assertBudget(second, "Warlock");
     await Promise.all([saveSpells(page, "Sorcerer"), saveSpells(second, "Warlock")]);
-    const after = await readback(info, story, "both-controller-saves-retained", 2, "concurrent"); expect(BigInt(after.actionRevision)).toBe(BigInt(before.actionRevision) + 2n); expect(after.historyCount).toBe(before.historyCount + 2);
+    const after = await readback(info, story, "both-controller-saves-retained", 2, "concurrent"); expect(BigInt(after.actionRevision)).toBe(BigInt(before.actionRevision) + BigInt(2)); expect(after.historyCount).toBe(before.historyCount + 2);
     const prior = new Set(before.receipts.map(receipt => receipt.operationId)), accepted = after.receipts.filter(receipt => !prior.has(receipt.operationId)); expect(accepted).toHaveLength(2);
     expect(accepted.map(receipt => receipt.fields.class_slug).sort()).toEqual(["sorcerer", "warlock"]); expect(new Set(accepted.map(receipt => receipt.operationId)).size).toBe(2);
-    expect(accepted.map(receipt => receipt.actionRevision)).toEqual([String(BigInt(before.actionRevision) + 1n), String(BigInt(before.actionRevision) + 2n)]);
+    expect(accepted.map(receipt => receipt.actionRevision)).toEqual([String(BigInt(before.actionRevision) + BigInt(1)), String(BigInt(before.actionRevision) + BigInt(2))]);
     for (const receipt of accepted) {
       expect(receipt.operationId).toMatch(uuid); expect(receipt.actorId).toBe(story.config.owner.id); expect(receipt.characterId).toBe(story.id); expect(receipt.command).toBe("select_class_spells");
       expect(receipt.receipt).toMatchObject({ actor_id: receipt.actorId, character_id: story.id, operation_id: receipt.operationId, command: receipt.command, fields: receipt.fields, action_revision: receipt.actionRevision });
