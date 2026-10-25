@@ -72,6 +72,7 @@ function resilienceSnapshot(): HitDieSnapshot {
   s.character.choices.hp_rolls = { "sorcerer-2": { method: "average", value: 4 }, "sorcerer-3": { method: "average", value: 4 } };
   s.character.state.hit_dice_spent = { sorcerer: 0 };
   pin.context = { source: "class", level: 1 }; pin.resolved.slug = "sorcerer"; pin.resolved.name = "Sorcerer"; pin.resolved.data.hit_die = 6;
+  (pin.resolved.data.levels as Array<{ level: number; subclass_level?: boolean }>)[0].subclass_level = true;
   pin.class_role = { action_revision: s.character.revision, occurrence_id: id(80), controller_ref_id: pin.id,
     content_id: pin.content_id, content_version: pin.content_version, role: "original", raw_data: structuredClone(pin.resolved.data),
     evaluation_data: structuredClone(pin.resolved.data), raw_effects: [], evaluation_effects: [] };
@@ -103,6 +104,9 @@ describe("durable hit-die service-internal request and snapshot", () => {
     expect(planDurableHitDie(changed, { ...request(changed), class_slug: "sorcerer" }, {
       enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
     })).toEqual({ status: "rejected", reason: "invalid_mechanics" });
+    const malformed = structuredClone(s); malformed.pins[0].class_role!.raw_data.bad = () => 1;
+    expect(planDurableHitDie(malformed, req, { enabled: true, evaluationInstant: instant, acceptanceInstant: instant,
+      acceptedDieFace: 3 })).toEqual({ status: "rejected", reason: "invalid_snapshot" });
   });
   it("resolves saved ability choices before baseline HP with the same choice projection used by the sheet", () => {
     const s = resilienceSnapshot();

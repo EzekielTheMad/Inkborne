@@ -56,6 +56,20 @@ describe("frozen selected subclass HP root bonus", () => {
     f.subclassRef.content_definitions.slug = "custom-scales";
     expect(resolveSubclassHitPointBonus(f.character, f.refs)).toEqual({ status: "available", bonus: 3 });
   });
+  it.each(["unearned-class", "unearned-subclass", "missing-class-gate", "missing-class-levels", "missing-subclass-levels", "missing-own-level", "duplicate-level", "malformed-gate"])(
+    "requires explicit earned immutable progression for %s", kind => {
+      const f = subclassHpFixture();
+      if (kind === "unearned-class") f.classRef.content_definitions.data.levels = [{ level: 3 }, { level: 4, subclass_level: true }];
+      if (kind === "unearned-subclass") f.subclassRef.content_definitions.data.levels = [{ level: 4, features: [] }];
+      if (kind === "missing-class-gate") f.classRef.content_definitions.data.levels = [{ level: 1 }, { level: 3 }];
+      if (kind === "missing-class-levels") delete f.classRef.content_definitions.data.levels;
+      if (kind === "missing-subclass-levels") delete f.subclassRef.content_definitions.data.levels;
+      if (kind === "missing-own-level") f.classRef.content_definitions.data.levels = [{ level: 1, subclass_level: true }];
+      if (kind === "duplicate-level") f.classRef.content_definitions.data.levels = [{ level: 1, subclass_level: true }, { level: 1 }, { level: 3 }];
+      if (kind === "malformed-gate") f.classRef.content_definitions.data.levels = [{ level: 1, subclass_level: "true" }, { level: 3 }];
+      f.classRef.class_role!.raw_data = structuredClone(f.classRef.content_definitions.data);
+      expect(resolveSubclassHitPointBonus(f.character, f.refs)).toEqual({ status: "unavailable" });
+    });
   it("counts only the owning class levels and preserves the proved original after reordering", () => {
     const f = subclassHpFixture();
     const secondary = structuredClone(f.classRef);

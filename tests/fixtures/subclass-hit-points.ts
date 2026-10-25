@@ -23,7 +23,8 @@ export function subclassHpFixture() {
   const classRef: SubclassHitPointRef & { content_definitions: { effects: Effect[] } } = {
     id: hpId(4), character_id: character.id, content_id: hpId(5), content_version: 2,
     context: { source: "class", level: 1 }, choice_source: null, feature_grant_id: null,
-    content_definitions: { ...definition(5, "class", "sorcerer", { hit_die: 6 }), effects: [] },
+    content_definitions: { ...definition(5, "class", "sorcerer", { hit_die: 6,
+      levels: [1, 2, 3].map(level => ({ level, features: [], ...(level === 1 ? { subclass_level: true } : {}) })) }), effects: [] },
   };
   const subclassRef: SubclassHitPointRef = {
     id: hpId(6), character_id: character.id, content_id: hpId(7), content_version: 2,

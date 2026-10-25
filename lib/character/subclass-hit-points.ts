@@ -16,6 +16,18 @@ export interface SubclassHitPointRef {
 export type SubclassHitPointBonus = { status: "available"; bonus: number } | { status: "unavailable" };
 const uuid = z.uuid(), version = z.number().int().min(1).max(2147483647);
 const bonusKey = "hit_points_bonus_per_class_level";
+function savedLevels(value: unknown): Array<{ level: number; subclass_level?: boolean }> | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 20) return null;
+  const rows: Array<{ level: number; subclass_level?: boolean }> = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const row = raw as Record<string, unknown>;
+    if (!Number.isInteger(row.level) || (row.level as number) < 1 || (row.level as number) > 20
+      || Object.hasOwn(row, "subclass_level") && typeof row.subclass_level !== "boolean") return null;
+    rows.push(row as { level: number; subclass_level?: boolean });
+  }
+  return new Set(rows.map(row => row.level)).size === rows.length ? rows : null;
+}
 
 /** Read only the selected immutable subclass roots. Catalog slugs and feature
  * prose never grant HP at read time. Older roots without metadata retain zero.
@@ -44,7 +56,7 @@ export function resolveSubclassHitPointBonus(character: {
       || !uuid.safeParse(ref.content_id).success || !version.safeParse(ref.content_version).success
       || ref.content_id !== ref.content_definitions.id || ref.content_version !== ref.content_definitions.version
       || ref.content_definitions.system_id !== character.system_id
-      || !["srd", "homebrew", "imported"].includes(ref.content_definitions.source)
+      || !["srd", "homebrew"].includes(ref.content_definitions.source)
       || !["platform", "personal", "shared"].includes(ref.content_definitions.scope ?? "")
       || !(ref.content_definitions.owner_id === null || uuid.safeParse(ref.content_definitions.owner_id).success))) return unavailable;
   let bonus = 0;
@@ -65,6 +77,12 @@ export function resolveSubclassHitPointBonus(character: {
       || pin.content_definitions.data.parent_class !== cls.slug) return unavailable;
     if (Object.hasOwn(pin.content_definitions.data, bonusKey)) {
       if (pin.content_definitions.data[bonusKey] !== 1) return unavailable;
+      const classLevels = savedLevels(classMatches[0].content_definitions.data.levels);
+      const subclassLevels = savedLevels(pin.content_definitions.data.levels);
+      const gates = classLevels?.filter(row => row.subclass_level === true) ?? [];
+      if (!classLevels || !subclassLevels || !classLevels.some(row => row.level === cls.level)
+        || !gates.length || Math.min(...gates.map(row => row.level)) > cls.level
+        || Math.min(...subclassLevels.map(row => row.level)) > cls.level) return unavailable;
       bonus += cls.level;
     }
   }
