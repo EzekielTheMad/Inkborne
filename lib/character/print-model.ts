@@ -52,6 +52,7 @@ function assertIdentity(row: { character_id?: string; content_definitions?: Pars
  * character narrative, arbitrary JSON, DM notes, campaign pages or item notes. */
 export function buildCharacterPrintModel(ctx: CharacterPrintInput, capturedAt = new Date().toISOString()): CharacterPrintModel {
   const { character, schema, evalResult: result, state } = ctx;
+  if (result.ancestryDefenses?.status !== "available") throw new Error("Saved ancestry defenses are unavailable. Reload or restore the saved ancestry content before printing.");
   ctx.assertMechanics({ computed: ["proficiency_bonus", "initiative"], values: [ctx.maxHp], savingThrows: schema.ability_scores.map(entry => entry.slug) });
   assertAbilityMechanics(ctx.mechanics, result, schema, { abilities: schema.ability_scores.map(entry => entry.slug), computed: ["proficiency_bonus", "initiative"], values: [ctx.maxHp] });
   if (!ctx.isOwner || !ctx.hasSheet) throw new Error("Print is available for your completed character sheets.");

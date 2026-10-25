@@ -42,6 +42,7 @@ describe("buildCharacterStructuredSources", () => {
     ], 5);
 
     expect(sources).toEqual({
+      ancestryDefenses: { status: "unavailable", reason: "incomplete_evidence" },
       raceData: { speed: 30 },
       classData: { attacks: [1] },
       featureData: [

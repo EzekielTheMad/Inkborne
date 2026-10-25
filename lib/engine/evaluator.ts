@@ -11,6 +11,7 @@ import { parseExpression } from "@/lib/engine/parser";
 import { checkCondition } from "@/lib/engine/conditions";
 import { resolveRaceAbilityContributions, type RaceAbilityData } from "@/lib/engine/race-ability-scores";
 import type { AsiContributions } from "@/lib/character/asi-contributions";
+import type { AncestryDefenses } from "@/lib/character/ancestry-defenses";
 
 // ---------------------------------------------------------------------------
 // Structured data types for Phase 1 mechanical aggregation
@@ -19,6 +20,7 @@ import type { AsiContributions } from "@/lib/character/asi-contributions";
 /** Structured data sourced from content ref JSONB `data` fields (race, features, class). */
 export interface StructuredSources {
   asi?: AsiContributions;
+  ancestryDefenses?: AncestryDefenses;
   raceData?: RaceAbilityData & {
     speed_detail?: SpeedData;
     speed?: number;
@@ -47,6 +49,7 @@ export interface StructuredSources {
 
 export interface EvaluationResult {
   asi?: AsiContributions;
+  ancestryDefenses?: AncestryDefenses;
   stats: Record<string, number>;
   computed: Record<string, number>;
   narratives: NarrativeEffect[];
@@ -315,7 +318,7 @@ export function evaluate(
   // 8. Collect structured data from content ref sources
   const structured = collectStructuredData(sources);
 
-  return { stats, computed, narratives, grants, ...structured, asi: sources?.asi };
+  return { stats, computed, narratives, grants, ...structured, asi: sources?.asi, ancestryDefenses: sources?.ancestryDefenses };
 }
 
 /** Apply a sorted list of static mechanical effects to a stats record in-place. */

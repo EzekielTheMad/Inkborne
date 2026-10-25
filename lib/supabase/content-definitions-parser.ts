@@ -3,6 +3,7 @@ import { z } from "zod";
 import { contentDefinitionSchema } from "@/lib/schemas/content";
 import { parseContentByType } from "@/lib/schemas/content-types";
 import type { Effect } from "@/lib/types/effects";
+import { ancestryResistanceDeclarationsSupported } from "@/lib/character/ancestry-defenses";
 
 /**
  * A content definition whose database envelope and type-specific payload have
@@ -191,6 +192,11 @@ export function parseContentVersionSnapshot(
       `[content-versions] Bad snapshot for ${typeof maybeContentId === "string" ? maybeContentId : "<unknown>"}:`,
       snapshot.error.issues,
     );
+    return null;
+  }
+
+  if (!ancestryResistanceDeclarationsSupported(snapshot.data.content_type_snapshot, snapshot.data.effects_snapshot)) {
+    console.error(`[content-versions] Unsupported ancestry declaration for ${snapshot.data.content_id}`);
     return null;
   }
 

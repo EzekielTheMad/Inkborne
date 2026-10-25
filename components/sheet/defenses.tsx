@@ -5,6 +5,12 @@ interface DefensesProps {
 }
 
 export function Defenses({ evalResult }: DefensesProps) {
+  if (evalResult.ancestryDefenses?.status !== "available") return (
+    <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+      <h3 className="text-accent font-semibold text-sm uppercase tracking-wide">Defenses</h3>
+      <p role="status" className="text-xs text-muted-foreground">Saved ancestry defenses are unavailable. Reload or restore the saved ancestry content.</p>
+    </div>
+  );
   const { dmgres, savetxt } = evalResult;
 
   const hasResistances = dmgres.length > 0;

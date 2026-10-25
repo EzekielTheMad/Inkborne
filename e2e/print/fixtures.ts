@@ -25,6 +25,8 @@ export function printFixture(kind: "martial" | "caster" | "long"): CharacterPrin
     state: { current_hp: 23, temp_hp: 4, notes: "FORBIDDEN_NOTES", quick_notes: "FORBIDDEN_QUICK", currency: { cp: 1, sp: 2, ep: 0, gp: 42, pp: 0 }, spell_slots_used: { "1": 1 } },
     maxHp: 38, contentRefs: [ref], inventory: [], spells: [], currency: { cp: 1, sp: 2, ep: 0, gp: 42, pp: 0 }, resources: [], hitDicePools: [{ classSlug: "fighter", die: 10, max: 5, spent: 2 }], casterInfo: { isCaster: false, classes: [], spellDc: 0, spellAttackBonus: 0 }, slotResolution: { status: "available", maxSlots: {}, pactSlotLevel: null }, maxSlots: {}, slotState: {}, pactSlotLevel: null, concentration: null,
   };
+  // Explicit loaded-result fixture status, not a production entitlement proof.
+  ctx.evalResult.ancestryDefenses = { status: "available", dmgres: [] };
   ctx.inventory = [{ id: "item", character_id: id, content_id: null, content_version: null, name: "Courier's Rope", content_type: "equipment", quantity: 2, equipped: false, attuned: false, sort_order: 0, notes: "FORBIDDEN_ITEM_NOTE", custom_data: { weight: 5, description: "A sturdy rope marked at regular intervals.", secret: "FORBIDDEN_CUSTOM" }, created_at: "2026-10-11" }];
   if (kind === "martial") {
     const weapon = { ...definition, id: "33333333-3333-4333-8333-333333333333", name: "Roadwarden Blade", slug: "roadwarden-blade", content_type: "weapon", data: weaponDataSchema.parse({ weapon_category: "Martial", weapon_range: "Melee", damage: { dice: "1d8", type: "slashing" }, range: { normal: 5 }, properties: ["versatile"], two_handed_damage: { dice: "1d10", type: "slashing" }, weight: 3, source_refs: [] }) };

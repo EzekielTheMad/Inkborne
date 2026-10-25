@@ -1,5 +1,6 @@
 import type { StructuredSources } from "@/lib/engine/evaluator";
 import { resolveCharacterAsiContributions, type AsiCharacter, type AsiEvidence } from "./asi-contributions";
+import { resolveOwnedAncestryDefenses } from "./ancestry-defenses";
 
 interface StructuredContentRef {
   id?: string;
@@ -45,6 +46,10 @@ export function buildCharacterStructuredSources(
     || ref.content_definitions?.content_type === "subrace"
   );
   const classes = asiInputs?.character.choices.classes;
+  const sameEvidence = asiInputs?.evidence?.status === "complete"
+    && JSON.stringify(contentRefs.map(asiRefEnvelope)) === JSON.stringify(asiInputs.evidence.refs.map(asiRefEnvelope));
+  const ancestryDefenses = asiInputs && sameEvidence ? resolveOwnedAncestryDefenses(asiInputs.character, asiInputs.evidence)
+    : { status: "unavailable" as const, reason: "incomplete_evidence" as const };
   const classProgression = classes?.map(cls => {
     const pins = contentRefs.filter(ref => ref.content_definitions?.content_type === "class"
       && ref.content_definitions.slug === cls.slug && ref.content_id === ref.content_definitions.id
@@ -55,9 +60,10 @@ export function buildCharacterStructuredSources(
   });
 
   return {
-    asi: asiInputs ? asiInputs.evidence?.status === "complete" && JSON.stringify(contentRefs.map(asiRefEnvelope)) !== JSON.stringify(asiInputs.evidence.refs.map(asiRefEnvelope))
+    asi: asiInputs ? asiInputs.evidence?.status === "complete" && !sameEvidence
       ? { status: "unavailable", reason: "incomplete_evidence" }
       : resolveCharacterAsiContributions(asiInputs.character, asiInputs.evidence) : undefined,
+    ancestryDefenses,
     raceData: race?.content_definitions?.data as StructuredSources["raceData"],
     classData: characterClass?.content_definitions?.data as StructuredSources["classData"],
     ...(classProgression ? { classProgression: classProgression.some(source => source === null)
@@ -68,7 +74,8 @@ export function buildCharacterStructuredSources(
           | NonNullable<StructuredSources["featureData"]>[number]
           | undefined,
       )
-      .filter((data): data is NonNullable<typeof data> => Boolean(data)),
+      .filter((data): data is NonNullable<typeof data> => Boolean(data))
+      .concat(ancestryDefenses.status === "available" && ancestryDefenses.dmgres.length ? [{ dmgres: ancestryDefenses.dmgres }] : []),
     level,
   };
 }

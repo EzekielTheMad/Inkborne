@@ -9,6 +9,7 @@ export function hasShippedAbilityDefinitions(schema: SystemSchemaDefinition): bo
   return schema.ability_scores.length === RACE_ABILITY_SLUGS.length && RACE_ABILITY_SLUGS.every(slug => schema.ability_scores.filter(entry => entry.slug === slug).length === 1);
 }
 export function resolveAbilityMechanics(base: Record<string, number>, result: EvaluationResult, schema: SystemSchemaDefinition, permanent = result): AbilityMechanics {
+  if (result.ancestryDefenses?.status === "unavailable" || permanent.ancestryDefenses?.status === "unavailable") return unavailable("Saved ancestry defenses are unavailable. Reload or restore the character's saved ancestry content.");
   if (result.asi?.status !== "available") return unavailable("Saved ASI evidence is unavailable. Reload or restore its exact class feature pins.");
   if (!hasShippedAbilityDefinitions(schema)) return unavailable("Saved mechanics are unavailable. The six saved ability definitions are missing or ambiguous.");
   if (!RACE_ABILITY_SLUGS.every(slug => Object.hasOwn(base, slug) && Number.isFinite(base[slug]) && Object.hasOwn(result.stats, slug) && Number.isFinite(result.stats[slug]))) return unavailable("Saved mechanics are unavailable. Complete finite saved ability scores are required. Draft defaults are not confirmed mechanics.");

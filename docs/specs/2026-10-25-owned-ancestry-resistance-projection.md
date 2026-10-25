@@ -24,8 +24,13 @@ Every dependency must be an exact owned trait pin with native
 `{source: racial_trait, root_controller_ref_id: <root>}` context,
 `builder:racial-trait:<slug>` choice source and null feature grant. Reject
 duplicate, missing, conflicting, orphan or foreign dependency evidence; bound
-the traversal and reject cycles. Validate declared ancestry scopes against the
-root. Raw source arrays and definitions stay unchanged.
+the traversal and reject cycles. Repeated same-version dependency edges may
+converge on one exact pin, matching the native compiler; duplicate pin rows or
+conflicting versions still refuse. The pin must be reachable from its actual
+saved owner root. Validate declared ancestry scopes against the root: empty or
+omitted scope adds no entitlement condition; nonempty race/subrace scopes must
+match the owning race, explicit subrace, or its validated parent race, with OR
+semantics. Raw source arrays and definitions stay unchanged.
 
 Project only explicit `dmgres` grants with one of the thirteen fixed damage
 types. Feed a cloned structured resistance contribution into the existing union
@@ -37,6 +42,16 @@ An unavailable closure must remain visible through the existing mechanics
 readiness channel and sheet defenses; print must refuse an unconfirmed result.
 It must not display a confirmed empty resistance list. A valid closure with no
 resistance declaration remains an available empty contribution.
+
+The immutable snapshot parser currently strips unknown effect keys. A narrow
+shared pre-normalization guard must therefore validate raw ancestry `dmgres`
+grants and `grant_type:trait` choices against their finite supported shapes.
+An unsupported raw condition must stay unavailable rather than turn into an
+unconditional grant. Preserve unrelated effect/parser behavior. The durable DTO
+already preserves raw effect JSON and uses the same guard through this resolver;
+no new DTO field, native graph projection or snapshot rewrite is needed. Carry
+an explicit resistance availability result through structured sources/evaluation,
+sheet Defenses/readiness and print; do not falsify otherwise valid ASI evidence.
 
 ## Verification boundary
 
