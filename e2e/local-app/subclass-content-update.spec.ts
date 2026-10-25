@@ -20,7 +20,7 @@ type Native = {
   startingAwards: Array<Record<string, unknown>>; hpDraws: Array<Record<string, unknown>>;
   receiptCount: number; updateReceipts: Array<{ operationId: string; request: unknown; receipt: { action_revision: string; fields: unknown } }>;
   updateHistoryCount: number; fiendDefinitionVersion: number; fiendSnapshots: Array<{ id: string; version: number; digest: string; extra: boolean; expanded: boolean }>;
-  controlFingerprint: string; controlCharacterId: string; controlActorId: string; controlFiendVersion: number;
+  profileCharacterCount: number; controlFingerprint: string; controlCharacterId: string; controlActorId: string; controlOriginalOccurrenceId: string; controlFiendVersion: number;
   orderBijections: Record<string, boolean>; parentOrderRevisionEqual: boolean;
   capsRemaining: number; readinessCount: number; writerReadiness: number; classGate: boolean; hitDieGate: boolean; servicePrivateUsage: boolean;
 };
@@ -159,6 +159,7 @@ async function readback(info: TestInfo, story: Story, label: string): Promise<Na
     "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", `character_id=${story.targetId}`, "--set", `control_id=${story.controlId}`, "--file", "-"], sql)) as Native;
   expect(data.characterId).toBe(story.targetId); expect(data.actorId).toBe(story.config.owner.id);
   expect(data.controlCharacterId).toBe(story.controlId); expect(data.controlActorId).toBe(story.config.owner.id); expect(data.controlFiendVersion).toBe(1);
+  expect(data.controlOriginalOccurrenceId).toMatch(/^[0-9a-f-]{36}$/);
   expect(data.parentOrderRevisionEqual).toBe(true); expect(Object.values(data.orderBijections)).toEqual([true, true, true, true, true]);
   expect(data.capsRemaining).toBe(0); expect(data.readinessCount).toBe(13); expect(data.writerReadiness).toBe(0);
   expect(data.classGate).toBe(false); expect(data.hitDieGate).toBe(false); expect(data.servicePrivateUsage).toBe(false);
@@ -262,8 +263,18 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
     await page.waitForURL(config.appOrigin + "/dashboard", { timeout: 60000 });
   } catch { await page.close(); throw Error("Actual local sign-in failed; credentials withheld"); }
   expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
-  await prepareTarget(page, story);
   const priorControlId = process.env.INKBORNE_SUBCLASS_CONTROL_ID;
+  let priorControl: Native | null = null;
+  if (priorControlId) {
+    expect(priorControlId).toMatch(/^[0-9a-f-]{36}$/);
+    story.targetId = priorControlId; story.controlId = priorControlId;
+    await page.goto(classUrl(story, priorControlId));
+    await expect(page.getByRole("combobox", { name: "Set level for Warlock", exact: true })).toHaveValue("1");
+    await expect(page.getByText(warning, { exact: true })).toBeVisible();
+    priorControl = await readback(info, story, "reused-app-control-before-new-target");
+    expect(priorControl.profileCharacterCount).toBe(1); expect(priorControl.level).toBe(1);
+  }
+  await prepareTarget(page, story);
   if (priorControlId) {
     // An earlier interrupted fixture may supply its app-created old-pin character
     // as this run's unchanged control. Preserve its complete native fingerprint.
@@ -274,6 +285,8 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
   } else story.controlId = await createFiend(page, story, `Old Fiend control ${randomUUID().slice(0, 8)}`);
   await page.goto(classUrl(story));
   const historical = await readback(info, story, "old-v1-before-publication");
+  expect(historical.profileCharacterCount).toBe(2);
+  if (priorControl) expect(historical.controlFingerprint).toBe(priorControl.controlFingerprint);
   expect(historical.fiendDefinitionVersion).toBe(1); expect(historical.fiendSnapshots).toHaveLength(1); expect(historical.fiendSnapshots[0].extra).toBe(true);
   expect(historical.fiendFreeRows).toBe(4); expect(historical.inventory.length).toBeGreaterThan(0); expect(historical.startingAwards).toHaveLength(1);
   expect(historical.hpDraws).toHaveLength(1); expect(historical.hpDraws[0]).toMatchObject({ level: 3, die: 8 });
