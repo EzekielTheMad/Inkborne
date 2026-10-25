@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { Effect } from "@/lib/types/effects";
-import { classRoleForRef, type BuilderClassRole } from "./builder-class-roles";
+import { classRoleForRef, originalClassOccurrence, type BuilderClassRole } from "./builder-class-roles";
 
 export interface SubclassHitPointRef {
   id: string; character_id?: string; content_id: string; content_version?: number;
@@ -59,6 +59,7 @@ export function resolveSubclassHitPointBonus(character: {
       || !["srd", "homebrew"].includes(ref.content_definitions.source)
       || !["platform", "personal", "shared"].includes(ref.content_definitions.scope ?? "")
       || !(ref.content_definitions.owner_id === null || uuid.safeParse(ref.content_definitions.owner_id).success))) return unavailable;
+  if (!originalClassOccurrence(classPins, character.choices)) return unavailable;
   let bonus = 0;
   for (const cls of classes) {
     const classMatches = classPins.filter(ref => ref.content_definitions.slug === cls.slug);

@@ -6,6 +6,7 @@ import { buildCharacterStructuredSources } from "@/lib/character/structured-sour
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
 import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
+import { originalClassOccurrence } from "@/lib/character/builder-class-roles";
 import { collectActiveEffects } from "@/lib/active-effects/helpers";
 import { generateArmorEffects } from "@/lib/inventory/armor-effects";
 import { computeHitDicePools, buildHitDieRollRequest, spendHitDiePatch } from "@/lib/hit-dice/helpers";
@@ -99,11 +100,17 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
     const classData = Object.fromEntries(snapshot.pins.filter(pin => pin.resolved.content_type === "class").map(pin => [pin.resolved.slug, { slug: pin.resolved.slug, data: pin.resolved.data }]));
     const rule = snapshot.system.schema_definition.hp_rule === undefined ? "free_choice" : hpRuleSchema.parse(snapshot.system.schema_definition.hp_rule);
     const hpRolls = snapshot.character.choices.hp_rolls;
-    if (rule === "rolled_only" && classes.some((cls, index) => Array.from({ length: cls.level }, (_, level) => level + 1)
-      .some(level => !(index === 0 && level === 1) && !Object.hasOwn(hpRolls, `${cls.slug}-${level}`)))) return reject("invalid_mechanics");
     const subclassHitPoints = resolveSubclassHitPointBonus(snapshot.character, refs);
     if (subclassHitPoints.status !== "available") return reject("invalid_mechanics");
-    const maxHp = computeMaxHp(classes, classData, baseline.stats.constitution, hpRolls, rule, undefined, subclassHitPoints.bonus);
+    // Preserve the older internal snapshot's array semantics only when no new
+    // metadata applies. Positive bonuses require the same original-role proof
+    // as their class roots, including the rolled-only first-level exemption.
+    const originalOccurrenceId = subclassHitPoints.bonus > 0 ? originalClassOccurrence(refs, snapshot.character.choices) : undefined;
+    if (subclassHitPoints.bonus > 0 && !originalOccurrenceId) return reject("invalid_mechanics");
+    if (rule === "rolled_only" && classes.some((cls, index) => Array.from({ length: cls.level }, (_, level) => level + 1)
+      .some(level => !((originalOccurrenceId === undefined ? index === 0 : cls.occurrence_id === originalOccurrenceId)
+        && level === 1) && !Object.hasOwn(hpRolls, `${cls.slug}-${level}`)))) return reject("invalid_mechanics");
+    const maxHp = computeMaxHp(classes, classData, baseline.stats.constitution, hpRolls, rule, originalOccurrenceId, subclassHitPoints.bonus);
 
     const itemData = (item: HitDieSnapshot['inventory'][number]) => ({ ...item.resolved?.data, ...item.custom_data });
     const bodyArmor = snapshot.inventory.find(item => item.equipped && item.content_type === "armor" && itemData(item).armor_category !== "Shield");

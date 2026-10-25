@@ -27,7 +27,7 @@ describe("frozen selected subclass HP root bonus", () => {
     expect(resolveSubclassHitPointBonus(f.character, f.refs)).toEqual({ status: "unavailable" });
   });
   it.each(["character", "system", "version", "id", "source", "context", "class", "owner", "occurrence", "level", "total", "orphan", "duplicate",
-    "missing-role", "stale-role", "wrong-controller", "changed-root", "extra-context", "feature-root"])(
+    "missing-role", "stale-role", "wrong-controller", "changed-root", "extra-context", "feature-root", "missing-original"])(
     "refuses %s mismatches rather than granting a slug-based bonus", kind => {
       const f = subclassHpFixture();
       if (kind === "character") f.subclassRef.character_id = hpId(99);
@@ -49,6 +49,7 @@ describe("frozen selected subclass HP root bonus", () => {
       if (kind === "changed-root") f.classRef.content_definitions.data.hit_die = 8;
       if (kind === "extra-context") f.subclassRef.context.level = 1;
       if (kind === "feature-root") f.subclassRef.feature_grant_id = hpId(99);
+      if (kind === "missing-original") f.classRef.class_role!.role = "secondary";
       expect(resolveSubclassHitPointBonus(f.character, f.refs)).toEqual({ status: "unavailable" });
     });
   it("uses metadata from another valid subclass identity rather than a Draconic read-time waiver", () => {
@@ -85,5 +86,7 @@ describe("frozen selected subclass HP root bonus", () => {
     expect(result).toEqual({ status: "available", bonus: 3 });
     expect(computeMaxHp(choices.classes, { sorcerer: f.classRef.content_definitions, cleric: secondary.content_definitions },
       15, {}, "free_choice", hpId(3), result.status === "available" ? result.bonus : Number.NaN)).toBe(37);
+    secondary.class_role.role = "original";
+    expect(resolveSubclassHitPointBonus({ ...f.character, level: 5, choices }, [...f.refs, secondary])).toEqual({ status: "unavailable" });
   });
 });

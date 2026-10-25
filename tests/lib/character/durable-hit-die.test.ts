@@ -108,6 +108,28 @@ describe("durable hit-die service-internal request and snapshot", () => {
     expect(planDurableHitDie(malformed, req, { enabled: true, evaluationInstant: instant, acceptanceInstant: instant,
       acceptedDieFace: 3 })).toEqual({ status: "rejected", reason: "invalid_snapshot" });
   });
+  it("keeps the proved original maximum after multiclass reordering and rejects two original roles", () => {
+    const s = resilienceSnapshot(), secondary = structuredClone(s.pins[0]);
+    secondary.id = id(92); secondary.content_id = id(93); secondary.resolved.id = id(93);
+    secondary.resolved.slug = "fighter"; secondary.resolved.name = "Fighter"; secondary.resolved.data.hit_die = 10;
+    secondary.class_role = { ...secondary.class_role!, occurrence_id: id(94), controller_ref_id: secondary.id,
+      content_id: secondary.content_id, role: "secondary", raw_data: structuredClone(secondary.resolved.data),
+      evaluation_data: structuredClone(secondary.resolved.data) };
+    s.pins.push(secondary); s.character.level = 5; s.character.state.hit_dice_spent = { fighter: 0, sorcerer: 0 };
+    s.character.choices.classes.unshift({ slug: "fighter", level: 2, occurrence_id: id(94) });
+    const candidate = () => planDurableHitDie(s, { ...request(s), class_slug: "sorcerer" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    });
+    expect(candidate()).toMatchObject({ status: "planned", max_hp: 39 });
+    s.system.schema_definition.hp_rule = "rolled_only";
+    s.character.choices.hp_rolls["fighter-1"] = { method: "rolled", value: 6 };
+    s.character.choices.hp_rolls["fighter-2"] = { method: "rolled", value: 6 };
+    s.character.choices.hp_rolls["sorcerer-2"] = { method: "rolled", value: 4 };
+    s.character.choices.hp_rolls["sorcerer-3"] = { method: "rolled", value: 4 };
+    expect(candidate()).toMatchObject({ status: "planned", max_hp: 39 });
+    secondary.class_role.role = "original";
+    expect(candidate()).toEqual({ status: "rejected", reason: "invalid_mechanics" });
+  });
   it("resolves saved ability choices before baseline HP with the same choice projection used by the sheet", () => {
     const s = resilienceSnapshot();
     s.character.choices.resolved_choices = { "saved-constitution-choice": ["constitution"] };
