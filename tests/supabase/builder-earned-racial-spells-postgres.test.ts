@@ -245,11 +245,13 @@ const contract = { version: 1, source_trait: "infernal-legacy", spellcasting_abi
 ] };
 let beforeFunctions: Array<{ oid: number; row: Json }>, beforeWires: Array<{ oid: number; row: Json }>;
 let savedGraph: Json, savedChoices: Json;
+let nativeRace: ReturnType<typeof pin> | undefined;
 const snapshotTime = "2026-10-25T01:00:00.000001Z", sourceTime = "2026-10-25T01:00:01.000001Z";
 const pin = (ref: string, content: string, context: Json, choice_source: string | null = null, version = 1) => ({
   id: ref, character_id: target, content_id: content, content_version: version, feature_grant_id: null, context, choice_source, created_at: snapshotTime,
 });
 const racePin = (version = 2) => pin(raceRoot, raceContent, { source: "race" }, null, version);
+const actualRacePin = (version = nativeRace?.content_version ?? 2) => ({ ...(nativeRace ?? racePin(version)), content_version: version });
 const traitPin = () => pin(traitRoot, traitContent, { source: "racial_trait", root_controller_ref_id: raceRoot }, "builder:racial-trait:infernal-legacy");
 const classPin = () => pin(classRoot, classContent, { source: "class", level: 1 });
 const occurrence = (which = original, root = classRoot, content = classContent, slug = "warlock") => ({
@@ -293,6 +295,7 @@ async function profile(connection = db) {
   return (await connection.query<{ oid: number; row: Json }>("SELECT p.oid::integer AS oid,to_jsonb(p) AS row FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN ('public','private') ORDER BY p.oid")).rows;
 }
 async function seed(level = 2, spells: Json[] = [spell(70)], version = 2, racial = true, classes?: Json[]) {
+  nativeRace = undefined;
   await db.exec(`TRUNCATE public.characters,public.content_versions,public.character_content_refs,public.character_spells,
     private.character_class_origin_v1,private.character_projection_order_v1,private.character_builder_capabilities_v1,private.character_parent_admissions_v1;
     SELECT set_config('test.original','${original}',false),set_config('test.prune_expertise','off',false);`);
@@ -319,9 +322,16 @@ async function seed(level = 2, spells: Json[] = [spell(70)], version = 2, racial
     await db.query("INSERT INTO public.character_content_refs SELECT * FROM jsonb_populate_record(NULL::public.character_content_refs,$1)", [row]);
   }
   for (const row of spells) await db.query("INSERT INTO public.character_spells SELECT * FROM jsonb_populate_record(NULL::public.character_spells,$1)", [row]);
+  // Native JSON is the captured preimage: PostgreSQL preserves timestamp
+  // microseconds and emits its canonical session-zone offset. A JavaScript Z
+  // spelling is not byte-equal to that stored row even for the same instant.
+  const nativeRefs = (await db.query<{ row: ReturnType<typeof pin> }>("SELECT to_jsonb(r) AS row FROM public.character_content_refs r ORDER BY id")).rows.map(row => row.row);
+  nativeRace = nativeRefs.find(row => row.id === raceRoot);
+  savedGraph.refs = nativeRefs.filter(row => row.id !== raceRoot);
+  savedGraph.spells = (await db.query<{ row: Json }>("SELECT to_jsonb(s) AS row FROM public.character_spells s ORDER BY id")).rows.map(row => row.row);
   await db.query("INSERT INTO private.character_projection_order_v1 VALUES($1,10,'{}','{}','{}','{}','{}')", [target]);
 }
-async function compile(next: Json = choices(3), projected: Json = savedGraph, supplemental: Json[] = [racePin()], command = "set_class_level") {
+async function compile(next: Json = choices(3), projected: Json = savedGraph, supplemental: Json[] = [actualRacePin()], command = "set_class_level") {
   await db.exec("BEGIN");
   try {
     await db.query("INSERT INTO private.character_builder_capabilities_v1(transaction_id,character_id,actor_id,command,context,before_parent,before_order,protected_graph,expected_graph,expected_classes,expected_choices,expected_state,expected_level,expected_name,before_inventory) SELECT pg_current_xact_id(),id,user_id,$2,$3,to_jsonb(c),'{}',$4,$4,choices->'classes',choices,state,level,name,'[]' FROM public.characters c WHERE id=$1", [target, command, context, savedGraph]);
@@ -357,7 +367,7 @@ describe("finite earned racial spell compiler and real installer", () => {
   });
   it("keeps old root v1 cantrip-only at pending character level5", async () => {
     await seed(2, [spell(70)], 1);
-    const output = await compile(choices(5), savedGraph, [racePin(1)]);
+    const output = await compile(choices(5), savedGraph, [actualRacePin(1)]);
     expect(earned(output.graph)).toEqual([]); expect(output.graph.spells).toEqual(savedGraph.spells);
   });
   it("keeps a post-first-class no-race builder's real normalizer result without a new original-proof dependency", async () => {
@@ -385,12 +395,12 @@ describe("finite earned racial spell compiler and real installer", () => {
     const secondaryPin = pin(secondaryRoot, secondaryContent, { source: "class", level: 1 }, `builder:class-acquisition:${id(90)}`);
     const projected = structuredClone(savedGraph); (projected.refs as Json[]).push(secondaryPin); (projected.occurrences as Json[]).push(occurrence(secondary, secondaryRoot, secondaryContent, "fighter"));
     const mixed = { ...choices(2), classes: [...choices(2).classes, { slug: "fighter", level: 1, occurrence_id: secondary }] };
-    expect(earned((await compile(mixed, projected, [racePin()], "add_class")).graph)).toHaveLength(1);
+    expect(earned((await compile(mixed, projected, [actualRacePin()], "add_class")).graph)).toHaveLength(1);
     const five = await initialFive();
     await seed(5, five, 2, true, [...choices(2).classes, { slug: "fighter", level: 3, occurrence_id: secondary }]);
     const removal = structuredClone(savedGraph); removal.refs = (removal.refs as Json[]).filter(row => row.id !== secondaryRoot);
     (removal.occurrences as Json[]).find(row => row.id === secondary)!.lifecycle = "ended";
-    expect(earned((await compile(choices(2), removal, [racePin()], "remove_class")).graph)).toEqual([]);
+    expect(earned((await compile(choices(2), removal, [actualRacePin()], "remove_class")).graph)).toEqual([]);
     await seed(5, five);
     const withoutRace = structuredClone(savedGraph); withoutRace.spells = (withoutRace.spells as Json[]).filter(row => row.source !== "racial_trait");
     withoutRace.refs = (withoutRace.refs as Json[]).filter(row => row.id !== traitRoot);
@@ -407,7 +417,7 @@ describe("finite earned racial spell compiler and real installer", () => {
   it("preserves an ordinary learned copy of the same spell independently of the racial grant", async () => {
     const ordinary = spell(80, "selection", "warlock", id(61), { builder_class_controller_ref_id: classRoot });
     await seed(2, [spell(70), ordinary]);
-    const result = await compile(choices(5)); expect((result.graph.spells as Json[]).find(row => row.id === ordinary.id)).toEqual(ordinary);
+    const result = await compile(choices(5)); expect((result.graph.spells as Json[]).find(row => row.id === ordinary.id)).toEqual((savedGraph.spells as Json[]).find(row => row.id === ordinary.id));
     expect(earned(result.graph)).toHaveLength(2);
   });
   it.each(["missing", "flags", "foreign", "source", "group", "metadata", "version", "duplicate", "naked-levelled"])("refuses prior %s claims instead of healing an unrelated mutation", async fault => {
@@ -422,7 +432,7 @@ describe("finite earned racial spell compiler and real installer", () => {
     if (fault === "duplicate") broken.push({ ...claim, id: id(998) });
     if (fault === "naked-levelled") delete (claim.custom_data as Json).builder_earned_racial_spell;
     await seed(5, broken);
-    await expect(compile(choices(5), savedGraph, [racePin()], "select_subclass")).rejects.toThrow(/builder_earned_racial_/);
+    await expect(compile(choices(5), savedGraph, [actualRacePin()], "select_subclass")).rejects.toThrow(/builder_earned_racial_/);
   });
   it("refuses a caller-changed incoming earned claim even when old proof is intact", async () => {
     const rows = await initialFive(); await seed(5, rows); const projected = structuredClone(savedGraph);
@@ -433,7 +443,7 @@ describe("finite earned racial spell compiler and real installer", () => {
     await expect(compile()).rejects.toThrow("builder_earned_racial_contract_unavailable");
   });
   it.each(["root-context", "trait-context", "trait-source", "trait-grant", "trait-missing", "trait-foreign", "ability", "trait-scope", "duplicate-root", "pending-occurrence", "pending-level"])("refuses %s source/level evidence", async fault => {
-    const projected = structuredClone(savedGraph), root = racePin(), trait = (projected.refs as Json[]).find(row => row.id === traitRoot)!;
+    const projected = structuredClone(savedGraph), root = actualRacePin(), trait = (projected.refs as Json[]).find(row => row.id === traitRoot)!;
     if (fault === "root-context") root.context.source = "other";
     if (fault === "trait-context") trait.context = { source: "racial_trait", root_controller_ref_id: id(99) };
     if (fault === "trait-source") trait.choice_source = "other";
@@ -448,7 +458,7 @@ describe("finite earned racial spell compiler and real installer", () => {
     await expect(compile(next, projected, [root])).rejects.toThrow(/builder_(earned_racial_|feature_choice_sources_unavailable)/);
   });
   it("rejects same-slug root version replacement without a correction workflow", async () => {
-    await seed(2, [spell(70)], 1); await expect(compile(choices(3), savedGraph, [racePin(2)], "select_race")).rejects.toThrow("builder_earned_racial_root_correction_required");
+    await seed(2, [spell(70)], 1); await expect(compile(choices(3), savedGraph, [actualRacePin(2)], "select_race")).rejects.toThrow("builder_earned_racial_root_correction_required");
   });
   it("uses exact root-as-of microseconds rather than the trait cutoff or current spell head", async () => {
     await db.query("INSERT INTO public.content_versions SELECT content_id,2,content_type_snapshot,slug_snapshot,system_id_snapshot,name_snapshot,data_snapshot,effects_snapshot,source_snapshot,scope_snapshot,owner_id_snapshot,$1 FROM public.content_versions WHERE content_id=$2 AND version=1", [sourceTime, id(61)]);
