@@ -25,7 +25,7 @@ type Native = {
   capsRemaining: number; readinessCount: number; writerReadiness: number; classGate: boolean; hitDieGate: boolean; servicePrivateUsage: boolean;
 };
 type Story = { config: Settings; targetId: string; controlId: string; blockedOrigins: string[]; pageErrors: string[];
-  snapshots: Array<{ label: string; path: string; data: Native }>; actions: Array<{ label: string; result: Record<string, unknown> }> };
+  actionsPath: string; snapshots: Array<{ label: string; path: string; data: Native }>; actions: Array<{ label: string; result: Record<string, unknown> }> };
 const originalScores = { Strength: "8", Dexterity: "14", Constitution: "12", Intelligence: "10", Wisdom: "13", Charisma: "15" };
 const ordinarySpells = ["Comprehend Languages", "Charm Person", "Expeditious Retreat", "Hellish Rebuke"];
 
@@ -201,6 +201,7 @@ async function dropConfirmation(page: Page, story: Story, label: string): Promis
     retained = await pending(page, story); expect(retained).not.toBeNull(); expect(retained?.intent.command).toBe("update_subclass_version");
     const response = await route.fetch(); expect(response.status()).toBe(200);
     story.actions.push({ label, result: actionResult(await response.text()) });
+    await writeFile(story.actionsPath, JSON.stringify(story.actions, null, 2));
     await route.abort("failed"); done();
   }, { times: 1 });
   await page.getByRole("region", { name: reviewName, exact: true }).getByRole("button", { name: "Confirm update for this character", exact: true }).click();
@@ -215,6 +216,7 @@ async function checkOriginal(page: Page, story: Story, label: string) {
     page.getByRole("region", { name: "Builder save recovery", exact: true }).getByRole("button", { name: "Check save", exact: true }).click(),
   ]);
   expect(response.status()).toBe(200); const result = actionResult(await response.text()); story.actions.push({ label, result });
+  await writeFile(story.actionsPath, JSON.stringify(story.actions, null, 2));
   await expect(page.getByRole("combobox", { name: "Set level for Warlock", exact: true })).toBeEnabled();
   expect(await pending(page, story)).toBeNull(); return result;
 }
@@ -257,7 +259,7 @@ function preserved(before: Native, after: Native) {
 test("owner reviews historical Fiend content, recovers stale and applied responses, and preserves other saved sources", async ({ page, context }, info) => {
   test.setTimeout(480000);
   const config = await settings();
-  const story: Story = { config, targetId: "", controlId: "", blockedOrigins: [], pageErrors: [], snapshots: [], actions: [] };
+  const story: Story = { config, targetId: "", controlId: "", blockedOrigins: [], pageErrors: [], snapshots: [], actions: [], actionsPath: info.outputPath("subclass-action-outcomes.json") };
   const allowed = new Set([config.appOrigin, config.supabaseOrigin]);
   await context.route("**/*", route => {
     const origin = new URL(route.request().url()).origin;
@@ -341,7 +343,7 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
   expect(selected.spells.filter(spell => spell.classSlug === "warlock" && spell.source === "selection").map(spell => spell.slug)).toContain("burning-hands");
   for (const key of ["classRoots", "inventory", "startingAwards", "hpDraws", "controlFingerprint"] as const) expect(selected[key]).toEqual(applied[key]);
   await page.goto(`${config.appOrigin}/characters/${story.targetId}`);
-  await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toHaveText(hpDisplay);
+  await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toHaveText(hpDisplay, { useInnerText: true });
   await page.getByRole("button", { name: "Inventory", exact: true }).click(); await expect(page.getByText("Pouch", { exact: true }).filter({ visible: true }).first()).toBeVisible();
   await page.reload(); expect(await readback(info, story, "repeat-sheet-reload")).toEqual(selected);
   expect(story.blockedOrigins).toEqual([]); expect(story.pageErrors).toEqual([]);
