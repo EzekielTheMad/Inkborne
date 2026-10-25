@@ -3,6 +3,8 @@ import { render, screen, within } from "@testing-library/react";
 import { StatPreview } from "@/components/builder/stat-preview";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
+import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
+import { hpId, subclassHpFixture } from "../../fixtures/subclass-hit-points";
 
 // Minimal schema for testing
 const mockSchema: SystemSchemaDefinition = {
@@ -42,6 +44,19 @@ describe("StatPreview", () => {
   const definition = (slug: string) => ({ id: `${slug}-pin`, version: 1, slug,
     name: slug === "warlock" ? "Warlock" : "Cleric", data: { hit_die: 8 } });
   const valueFor = (container: HTMLElement, label: string) => within(container).getByText(label).parentElement?.lastElementChild?.textContent;
+
+  it("shows the exact saved subclass HP bonus and refuses malformed bonus evidence", () => {
+    const f = subclassHpFixture();
+    const context = { available: true, choices: f.character.choices, classContent: { sorcerer: f.classRef.content_definitions },
+      hpRule: "free_choice" as const, originalOccurrenceId: hpId(3), castingSources: [],
+      subclassHitPoints: resolveSubclassHitPointBonus(f.character, f.refs) };
+    const rendered = render(<StatPreview baseStats={{ ...base, constitution: 15 }} effects={[]} schema={schema} level={3} sources={sources} classContext={context} />);
+    expect(valueFor(document.body, "Hit Point Maximum")).toBe("23");
+    f.subclassRef.choice_source = "unowned";
+    rendered.rerender(<StatPreview baseStats={{ ...base, constitution: 15 }} effects={[]} schema={schema} level={3} sources={sources}
+      classContext={{ ...context, subclassHitPoints: resolveSubclassHitPointBonus(f.character, f.refs) }} />);
+    expect(valueFor(document.body, "Hit Point Maximum")).toBe("Unavailable");
+  });
 
   it("shows saved Warlock HP and CHA-based casting instead of generic schema placeholders", () => {
     render(<StatPreview baseStats={base} effects={[]} schema={schema} level={2} sources={sources}

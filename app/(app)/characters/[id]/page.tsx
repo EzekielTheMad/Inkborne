@@ -7,6 +7,7 @@ import { evaluate } from "@/lib/engine/evaluator";
 import type { StructuredSources } from "@/lib/engine/evaluator";
 import { initializeState } from "@/lib/sheet/helpers";
 import { computeMaxHp } from "@/lib/character/max-hp";
+import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
 import { originalClassOccurrence } from "@/lib/character/builder-class-roles";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
@@ -282,8 +283,10 @@ export default async function CharacterPage({ params }: PageProps) {
   const constitutionScore = (evalResult.stats.constitution as number | undefined) ?? 10;
   const hpRolls = (character.choices?.hp_rolls ?? {}) as Record<string, import("@/lib/types/character").HpRollRecord>;
   const hpRule = (character.game_systems?.schema_definition as { hp_rule?: import("@/lib/builder/level-up-rules").HpRule } | undefined)?.hp_rule ?? "free_choice";
+  const subclassHitPoints = resolveSubclassHitPointBonus(character, contentRefs);
+  if (subclassHitPoints.status !== "available") throw Error("Saved hit-point mechanics are unavailable. Reload or restore the character's saved content.");
   const maxHp = computeMaxHp(classChoices, classData, constitutionScore, hpRolls, hpRule,
-    enrolledBuilder ? originalClassOccurrence(contentRefs, character.choices) ?? null : undefined);
+    enrolledBuilder ? originalClassOccurrence(contentRefs, character.choices) ?? null : undefined, subclassHitPoints.bonus);
   const initialState = initializeState(character.state, maxHp);
 
   const hasSheet = character.choices?.classes && character.choices.classes.length > 0;

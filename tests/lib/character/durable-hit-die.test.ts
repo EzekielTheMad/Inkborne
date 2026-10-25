@@ -5,6 +5,8 @@ import { actionRevisionSchema, hitDieRequestSchema, hitDieSnapshotSchema, hitDie
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { spendHitDiePatch } from "@/lib/hit-dice/helpers";
 import { syntheticRacePin } from "../../fixtures/r06-race-parity";
+import { draconicLevels, draconicResilienceSource, draconicRoot } from "../../fixtures/subclass-hit-points";
+import { subclassResilienceMechanics } from "@/scripts/transformers/classes";
 
 const id = (last: number) => `11111111-1111-4111-8111-${String(last).padStart(12, "0")}`;
 const instant = "2026-10-12T01:00:00.000Z";
@@ -63,7 +65,59 @@ function selectedSnapshot(): HitDieSnapshot {
   return s;
 }
 
+function resilienceSnapshot(): HitDieSnapshot {
+  const s = snapshot(), pin = s.pins[0];
+  s.character.level = 3; s.character.base_stats.constitution = 15; s.character.base_stats.dexterity = 14;
+  s.character.choices.classes = [{ slug: "sorcerer", subclass: "draconic", level: 3, occurrence_id: id(80) }];
+  s.character.choices.hp_rolls = { "sorcerer-2": { method: "average", value: 4 }, "sorcerer-3": { method: "average", value: 4 } };
+  s.character.state.hit_dice_spent = { sorcerer: 0 };
+  pin.context = { source: "class", level: 1 }; pin.resolved.slug = "sorcerer"; pin.resolved.name = "Sorcerer"; pin.resolved.data.hit_die = 6;
+  pin.class_role = { action_revision: s.character.revision, occurrence_id: id(80), controller_ref_id: pin.id,
+    content_id: pin.content_id, content_version: pin.content_version, role: "original", raw_data: structuredClone(pin.resolved.data),
+    evaluation_data: structuredClone(pin.resolved.data), raw_effects: [], evaluation_effects: [] };
+  const mechanics = subclassResilienceMechanics(draconicRoot, draconicLevels, draconicResilienceSource);
+  s.pins.push({ id: id(81), character_id: s.character.id, content_id: id(82), content_version: 2, feature_grant_id: null,
+    context: { source: "subclass", class: "sorcerer" }, choice_source: `builder:subclass:${id(80)}`,
+    resolved: { ...pin.resolved, id: id(82), version: 2, content_type: "subclass", slug: "draconic", name: "Draconic",
+      data: { parent_class: "sorcerer", levels: draconicLevels, hit_points_bonus_per_class_level: 1 },
+      effects: mechanics.effects as unknown as HitDieSnapshot["pins"][number]["resolved"]["effects"] } });
+  return s;
+}
+
 describe("durable hit-die service-internal request and snapshot", () => {
+  it("plans the same frozen root bonus with baseline CON while live CON modifies only recovery", () => {
+    const s = resilienceSnapshot(); s.character.state.active_effects = [activeEffect()];
+    const req = { ...request(s), class_slug: "sorcerer" }, before = JSON.stringify(s);
+    const result = planDurableHitDie(s, req, { enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3 });
+    expect(result).toMatchObject({ status: "planned", baseline_constitution: 15, live_constitution: 19, max_hp: 23 });
+    if (result.status !== "planned") throw Error("Expected a service-internal candidate");
+    expect(result.roll.modifier).toBe(4);
+    expect(JSON.stringify(s)).toBe(before);
+    expect(planDurableHitDie(s, req, { evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3 })).toEqual({ status: "disabled" });
+  });
+  it("retains occurrence and role evidence in the fingerprint and rejects an unsupported positive root", () => {
+    const s = resilienceSnapshot(), req = { ...request(s), class_slug: "sorcerer" };
+    expect(hitDieSnapshotSchema.parse(s).character.choices.classes[0].occurrence_id).toBe(id(80));
+    const changed = structuredClone(s); delete changed.pins[0].class_role;
+    expect(hitDieDependencyFingerprint(changed)).not.toBe(req.dependency_fingerprint);
+    expect(planDurableHitDie(changed, { ...request(changed), class_slug: "sorcerer" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    })).toEqual({ status: "rejected", reason: "invalid_mechanics" });
+  });
+  it("resolves saved ability choices before baseline HP with the same choice projection used by the sheet", () => {
+    const s = resilienceSnapshot();
+    s.character.choices.resolved_choices = { "saved-constitution-choice": ["constitution"] };
+    s.pins.push({ id: id(90), character_id: s.character.id, content_id: id(91), content_version: 1, feature_grant_id: null,
+      context: { source: "feature" }, choice_source: null,
+      resolved: { ...s.pins[0].resolved, id: id(91), version: 1, content_type: "feature", slug: "saved-constitution-choice", name: "Saved ability choice",
+        data: { class: "sorcerer", level: 1, feature_type: "choice" }, effects: [
+          { type: "choice", choice_id: "saved-constitution-choice", choose: 1, from: ["constitution"], grant_type: "ability_bonus" },
+        ] } });
+    const result = planDurableHitDie(s, { ...request(s), class_slug: "sorcerer" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    });
+    expect(result).toMatchObject({ status: "planned", baseline_constitution: 16, live_constitution: 16, max_hp: 26 });
+  });
   it.each(["imported", "declared-effects", "declared-scores", "dual"] as const)("uses %s race representation for baseline HP and separate live CON", mode => {
     const s = snapshot();
     s.character.base_stats.constitution = 12;

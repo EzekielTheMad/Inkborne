@@ -4,6 +4,8 @@ import { z } from "zod";
 import { evaluate } from "@/lib/engine/evaluator";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import { computeMaxHp } from "@/lib/character/max-hp";
+import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
+import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 import { collectActiveEffects } from "@/lib/active-effects/helpers";
 import { generateArmorEffects } from "@/lib/inventory/armor-effects";
 import { computeHitDicePools, buildHitDieRollRequest, spendHitDiePatch } from "@/lib/hit-dice/helpers";
@@ -84,7 +86,7 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
 
   try {
     const refs = snapshot.pins.map(pin => ({ ...pin, created_at: "captured", content_definitions: pin.resolved })) as unknown as ContentRefWithContent[];
-    const effects = snapshot.pins.flatMap(pin => pin.resolved.effects) as unknown as Effect[];
+    const effects = resolveCharacterChoiceEffects(refs, snapshot.character.choices);
     const schema = systemSchemaDefinitionSchema.parse(snapshot.system.schema_definition);
     const asiEvidence: AsiEvidence = { status: "complete", character_id: snapshot.character.id, system_id: snapshot.character.system_id,
       refs, grants: snapshot.feature_grants.map(grant => frozenFeatureGrantSchema.parse(grant)) };
@@ -99,7 +101,9 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
     const hpRolls = snapshot.character.choices.hp_rolls;
     if (rule === "rolled_only" && classes.some((cls, index) => Array.from({ length: cls.level }, (_, level) => level + 1)
       .some(level => !(index === 0 && level === 1) && !Object.hasOwn(hpRolls, `${cls.slug}-${level}`)))) return reject("invalid_mechanics");
-    const maxHp = computeMaxHp(classes, classData, baseline.stats.constitution, hpRolls, rule);
+    const subclassHitPoints = resolveSubclassHitPointBonus(snapshot.character, refs);
+    if (subclassHitPoints.status !== "available") return reject("invalid_mechanics");
+    const maxHp = computeMaxHp(classes, classData, baseline.stats.constitution, hpRolls, rule, undefined, subclassHitPoints.bonus);
 
     const itemData = (item: HitDieSnapshot['inventory'][number]) => ({ ...item.resolved?.data, ...item.custom_data });
     const bodyArmor = snapshot.inventory.find(item => item.equipped && item.content_type === "armor" && itemData(item).armor_category !== "Shield");

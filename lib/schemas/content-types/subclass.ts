@@ -60,6 +60,9 @@ export const subclassDataSchema = z.object({
   spellcastingList: spellcastingListSchema.optional(),
   spellcastingExtra: subclassSpellcastingExtraSchema.optional(),
   spellcastingExpanded: subclassSpellcastingExpandedSchema.optional(),
+  // Finite first contract. Absence preserves historical snapshots; it never
+  // supplies a default bonus to older subclass versions.
+  hit_points_bonus_per_class_level: z.literal(1).optional(),
   preparation_rule: z.enum(["class-level-plus-ability", "half-class-level-plus-ability"]).optional(),
 });
 export type SubclassData = z.infer<typeof subclassDataSchema>;

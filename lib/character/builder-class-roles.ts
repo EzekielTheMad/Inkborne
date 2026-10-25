@@ -15,6 +15,7 @@ const projection = z.strictObject({ status: z.literal("available"), contract_ver
 
 /** Separate server-read evidence. Immutable content snapshots stay unchanged. */
 export type BuilderClassRole = z.infer<typeof source> & { action_revision: string };
+export const builderClassRoleSchema = source.extend({ action_revision: classRoleRevisionSchema });
 export interface BuilderClassRoleRef {
   id?: string; character_id?: string; content_id?: string; content_version?: number;
   class_role?: BuilderClassRole;

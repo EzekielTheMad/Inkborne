@@ -7,6 +7,7 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
 import { getConfirmedAbilityModifier, resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 import { computeMaxHp } from "@/lib/character/max-hp";
+import type { SubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
 import { resolveCastingMath } from "@/lib/spells/casting-math";
 import type { CharacterChoices, HpRule } from "@/lib/types/character";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
@@ -17,6 +18,7 @@ export interface StatPreviewClassContext {
   classContent: Record<string, { id: string; version: number; slug: string; name?: string; data: Record<string, unknown> }>;
   hpRule: HpRule;
   originalOccurrenceId?: string | null;
+  subclassHitPoints?: SubclassHitPointBonus;
   castingSources: EffectiveCastingSource[];
 }
 
@@ -58,9 +60,10 @@ export function StatPreview({
   const originalReady = classContext?.originalOccurrenceId === undefined
     ? !classes.some(cls => cls.occurrence_id)
     : classes.filter(cls => cls.occurrence_id === classContext.originalOccurrenceId).length === 1;
-  const maxHp = classContextReady && originalReady && Number.isFinite(result.stats.constitution)
+  const subclassHitPoints: SubclassHitPointBonus = classContext?.subclassHitPoints ?? { status: "available", bonus: 0 };
+  const maxHp = classContextReady && originalReady && subclassHitPoints.status === "available" && Number.isFinite(result.stats.constitution)
     ? computeMaxHp(classes, classContext!.classContent, result.stats.constitution, classContext!.choices.hp_rolls,
-      classContext!.hpRule, classContext!.originalOccurrenceId) : null;
+      classContext!.hpRule, classContext!.originalOccurrenceId, subclassHitPoints.bonus) : null;
   const casting = (classContext?.castingSources ?? []).filter(source => source.active && source.config).map(source => {
     const definition = classContext?.classContent[source.classSlug];
     const exact = classContextReady && definition?.id === source.parentPin.contentId && definition.version === source.parentPin.version

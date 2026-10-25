@@ -57,6 +57,7 @@ export function computeMaxHp(
   hpRolls: Record<string, HpRollRecord> = {},
   hpRule: HpRule = "free_choice",
   originalOccurrenceId?: string | null,
+  validatedSubclassBonus = 0,
 ): number {
   if (classes.length === 0) return 0;
   const conMod = abilityMod(constitutionScore);
@@ -82,5 +83,8 @@ export function computeMaxHp(
     }
   });
 
-  return total;
+  // Subclass bonuses increase the maximum separately from the minimum +1 HP
+  // for each class level. Callers resolve them from exact saved root evidence.
+  if (!Number.isSafeInteger(validatedSubclassBonus) || validatedSubclassBonus < 0) return Number.NaN;
+  return total + validatedSubclassBonus;
 }

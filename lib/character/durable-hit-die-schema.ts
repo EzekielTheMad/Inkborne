@@ -5,6 +5,7 @@ import { systemSchemaDefinitionSchema } from "@/lib/schemas/system";
 import { getContentTypeSchema } from "@/lib/schemas/content-types";
 import { serializeHitDieIntent } from "@/lib/character/durable-hit-die-canonical";
 import { frozenFeatureGrantSchema } from "@/lib/character/asi-contributions";
+import { builderClassRoleSchema } from "@/lib/character/builder-class-roles";
 
 export const HIT_DIE_CONTRACT_VERSION = 1 as const;
 export const MAX_ACTION_REVISION = "9223372036854775807" as const;
@@ -47,9 +48,13 @@ const pinSchema = z.strictObject({
   feature_grant_id: z.uuid().nullable(),
   id: z.uuid(), character_id: z.uuid(), content_id: z.uuid(), content_version: z.number().int().positive(),
   context: jsonObject, choice_source: z.string().nullable(), resolved: definitionSchema,
+  // Advisory service-internal projection only. Adding it to the fingerprint
+  // does not introduce a native protected producer or activate a rollout gate.
+  class_role: builderClassRoleSchema.optional(),
 });
 const classesSchema = z.array(z.strictObject({
   slug: slugSchema, level: z.number().int().min(1).max(20), subclass: slugSchema.optional(),
+  occurrence_id: z.uuid().optional(),
 })).min(1);
 const choicesSchema = z.object({
   classes: classesSchema,

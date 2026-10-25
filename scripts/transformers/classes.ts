@@ -68,6 +68,34 @@ interface ApiSubclassChoiceController {
   feature_specific?: { subfeature_options?: ApiChoice };
 }
 
+interface ApiSubclassResilience {
+  index: string; name: string; class: { index: string }; subclass?: { index: string };
+  level: number; desc: string[];
+}
+
+/** Reviewed mechanics are attached to the selected root, so one immutable
+ * version owns HP and AC together. The genuine feature remains unchanged. */
+export function subclassResilienceMechanics(subclass: Pick<ApiSubclass, "index" | "class">,
+  levels: readonly { level: number; features: readonly string[] }[], feature?: ApiSubclassResilience): {
+    data: Record<string, unknown>; effects: Effect[];
+  } {
+  if (subclass.index !== "draconic") return { data: {}, effects: [] };
+  const prose = [
+    "As magic flows through your body, it causes physical traits of your dragon ancestors to emerge. At 1st level, your hit point maximum increases by 1 and increases by 1 again whenever you gain a level in this class.",
+    "Additionally, parts of your skin are covered by a thin sheen of dragon-like scales. When you aren't wearing armor, your AC equals 13 + your Dexterity modifier.",
+  ];
+  const owners = levels.flatMap(row => row.features.filter(slug => slug === "draconic-resilience").map(() => row.level));
+  if (subclass.class.index !== "sorcerer" || feature?.index !== "draconic-resilience" || feature.name !== "Draconic Resilience"
+    || feature.class.index !== "sorcerer" || feature.subclass?.index !== "draconic" || feature.level !== 1
+    || JSON.stringify(feature.desc) !== JSON.stringify(prose) || owners.length !== 1 || owners[0] !== 1) {
+    throw Error("The genuine SRD Draconic Resilience source is unavailable or changed");
+  }
+  return { data: { hit_points_bonus_per_class_level: 1 }, effects: [
+    { type: "mechanical", stat: "armor_class", op: "formula", expr: "13 + mod(dexterity)", tag: "ac_formula",
+      condition: { field: "equipped_armor", op: "eq", value: "none" } },
+  ] };
+}
+
 /** The API's Land level listing omits its terrain controller even though the
  * genuine feature resource owns the seven options and explicitly earns them
  * at Druid/Land level two. Restore that source relationship before publishing
@@ -285,6 +313,8 @@ export async function transformClasses(): Promise<TransformedContent[]> {
     const landController = sub.index === "land"
       ? await fetchFromApi<ApiSubclassChoiceController>("/features/circle-of-the-land") : undefined;
     const levels = subclassFeatureManifest(sub, subLevels, landController);
+    const resilience = subclassResilienceMechanics(sub, levels, sub.index === "draconic"
+      ? await fetchFromApi<ApiSubclassResilience>("/features/draconic-resilience") : undefined);
 
     results.push(buildContentEntry("subclass", sub.index, sub.name, {
       parent_class: sub.class.index,
@@ -293,7 +323,8 @@ export async function transformClasses(): Promise<TransformedContent[]> {
       levels,
       spells: [],
       ...subclassSpellMetadata(sub),
-    }));
+      ...resilience.data,
+    }, resilience.effects));
   }
 
   return results;

@@ -51,6 +51,7 @@ import { classRoleEvaluationRef, originalClassOccurrence, type BuilderClassRole 
 import { classRoleRevisionSchema } from "@/lib/character/class-role-effects-schema";
 import { resolveDefinitionClassFeatureChoices } from "@/lib/builder/class-feature-choices";
 import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
+import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
 
 interface ClassStepClientProps {
   accountId?: string;
@@ -896,6 +897,8 @@ export function ClassStepClient({
             draft={!mechanicsAvailable}
             state={character.state}
             classContext={{ available: mechanicsAvailable, choices: localChoices, hpRule,
+              subclassHitPoints: resolveSubclassHitPointBonus({ id: characterId, system_id: character.system_id ?? "",
+                level: localLevel, choices: localChoices, action_revision: currentRevision }, contentRefs),
               originalOccurrenceId: saveAction ? originalClassOccurrence(contentRefs, localChoices) ?? null : undefined,
               classContent: Object.fromEntries(contentRefs.filter(ref => ref.content_definitions.content_type === "class"
                 && ref.content_id === ref.content_definitions.id && ref.content_version === ref.content_definitions.version)
