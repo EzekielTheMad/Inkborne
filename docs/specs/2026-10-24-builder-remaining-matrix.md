@@ -87,7 +87,9 @@ ownership/consumer checks; A5 browser/readback source is registered through
 `5bfc44d`. F3 TypeScript source is integrated in `0627553`, with input-type
 corrections in `55640b1`; its staged native companion through `5baf432` passes
 48 focused checks. Final F3 source through `40a6f84` passes all 221 focused
-tests. All three actual workflows remain pending. These checkpoints do not open
+tests, with the final absent-subrace boundary passing the 60-test reader rerun.
+A6 source is registered in `1066b52`; final typecheck and lint pass. All three
+actual workflows remain pending. These checkpoints do not open
 their actual acceptance gates.
 
 1. **F1 — Dwarven Toughness HP:** the genuine cached

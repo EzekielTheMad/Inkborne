@@ -50,7 +50,66 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
-### Latest continuation — 2026-10-25 07:25 UTC
+### Latest continuation — 2026-10-25 07:40 UTC
+
+F3's final reader boundary `cbaee5a` rejects even an explicit empty subrace key,
+matching native absence semantics. Its **60/60** narrow reader rerun passes in
+`local-racial-spells-reader-20261025T072741Z`, 6.35 seconds, all six identities
+gone. The earlier twelve-file **221/221** receipt remains valid for the other
+source paths. A6 story/readback source is integrated in `4a07160`, registered in
+`1066b52`, with independent source review clear. It proves its own strict racial
+row branches rather than reusing the legacy cantrip-only readback verdict.
+Its old-control publication, tier pruning/re-earning, CHA/INT math, opposite-
+controller concurrency, completion/reload and foreign-account observations are
+prepared source, **not executed acceptance**.
+
+Final `npm.cmd run typecheck` and zero-warning `npm.cmd run lint` pass through
+`1066b52` in `local-creation-browser-check-20261025T072834Z`, 68.74 seconds; all
+eight observed identities are gone. The broad suite/build were not repeated.
+
+Six new external source tools in `../equipment-runtime/app-flow-runtime` are
+prepared, with root/independent source review clear. All five MJS pass parser-
+only `node --check`; none of their CLI modes, SQL, API writes, installations or
+publications was executed. Runtime state bytes remain unchanged. Final source
+hash/parser manifest: `m1-source-tools-20261025T073901Z.json`; its pending final
+normalization-review entry was cleared by the later independent source reread.
+The earlier `073748Z` manifest is preserved as superseded evidence.
+
+- `ancestry-hit-points-control.mjs` / `earned-racial-spells-control.mjs` derive
+  only the one reviewed normalized Hill/Tiefling root delta from genuine cached
+  inputs and the current accepted catalog. They bind the owned proxy/REST route
+  to the exact SQL preflight before publication, compare full function/EXEC,
+  trigger, role and membership profiles, and preserve all fifteen tables, every
+  old snapshot and all other definitions. Final shared implementation SHA256:
+  `4944bb0b675b5d31870c61ced393f6f6a9bb7d3975b4c87a4fe2c67a07c6defd`.
+- `install-parent-ancestry-20261025.mjs` installs exactly one pinned companion
+  per mode. `parent-admission-sessions-20261025.mjs`,
+  `parent-admission-control-20261025.mjs` and
+  `parent-admission-closure-20261025.sql` bind the actual app-flow DB and require
+  a genuine app-created unawarded Fighter4/Acolyte descriptor. Native-only
+  results always retain `authenticationAccepted:false`. Partial-init and cleanup
+  sessions have journaled unique tags; captured backend PID/birth/tag absence is
+  independently proved, separately from Docker-client exit. Final sessions hash:
+  `0367e3390f47299d451fc3ffa3cf3f1e37a7596f9e5fbdb49427c7328fc96427`.
+
+The finite next order is now **accepted Fiend → accepted Draconic → parent
+install/acceptance → ancestry install/A4 → queued caster/martial/A5/A6 stories**.
+The exact five accepted Fiend/Draconic IDs are required before parent install.
+This tests the wider workflows with the accepted parent fence present. F3 native
+installation is required before A6. These remain hard pending source/prerequisite
+items: genuine Fighter4 preparation/descriptor, full positive parent acceptance
+aggregator (including the planned six steps/ASI/background/Fiend checks), strict
+A4 actual aggregator and the F3 actual companion installer. No receipt is
+fabricated to bypass them.
+
+At 07:37:56 UTC, headroom was 9.60 GiB physical-free and 12.45 GiB commit-free,
+below the fourteen-GiB commit threshold; ports 3001/9997/9998/9999 had no listeners.
+No actual runtime was restarted, no credentials created, and no unrelated app was
+closed. All workers/check processes have finished. Worktrees, backup, Docker
+engine/cache and prior accepted/failed evidence remain preserved. M1/R06 remains
+in progress pending the actual acceptance lane; Vercel unchanged and M7 paused.
+
+### Previous continuation — 2026-10-25 07:25 UTC
 
 F3 earned Infernal Legacy source is integrated through `40a6f84`; its staged
 native companion and fixture repair are through `5baf432`. The meaningful new

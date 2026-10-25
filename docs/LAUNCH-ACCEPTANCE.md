@@ -42,11 +42,16 @@ F2 owned ancestry defense projection (`3524785`) passes 115 core checks and
 ten affected consumer files passed in the earlier 194-test sweep. F3 earned
 Tiefling source through `40a6f84` passes 221 focused tests, and its staged native
 companion through `5baf432` passes 48 PGlite checks. A5 mixed-caster source is
-registered through `5bfc44d`; A6 is under independent review. Neither new native
-companion has been installed in the actual runtime. External guarded publication
-and parent-session glue remain pending. Typecheck/zero-warning lint pass at
-`9e6eb4b` in `local-creation-browser-check-20261025T072234Z`; the final repeat
-will include the latest claim guard and A6 source.
+registered through `5bfc44d`; A6 is registered in `1066b52`. The final absent-
+subrace boundary (`cbaee5a`) passes its 60-test reader suite. Neither new native
+companion has been installed in the actual runtime. Six external guarded
+publication/parent-session tools are source-reviewed; all five JavaScript parser
+checks pass, with no runtime/SQL/publication execution. Genuine parent app
+preparation/full aggregation, A4 aggregation and the F3 native installer remain
+pending. Final typecheck/zero-warning lint pass at `1066b52` in
+`local-creation-browser-check-20261025T072834Z`. Latest host headroom is 9.60 GiB
+physical-free/12.45 GiB commit-free, below the fourteen-GiB commit threshold;
+task ports remain closed.
 Eight complete caster walkthroughs are prepared.
 The reviewed Draconic HP/AC repair is integrated through `72ce5cf`, with fixture
 fixes in `a4700ce`; 266 focused checks, typecheck and zero-warning lint pass.

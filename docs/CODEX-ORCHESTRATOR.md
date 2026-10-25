@@ -24,9 +24,13 @@ browser source (`79843fc`) remain pending. F2 selected ancestry defenses is
 integrated in `3524785`: 115 core checks and the final 70 ASI/HP checks pass
 after strict fixture ownership repairs. F3 earned Tiefling source through
 `40a6f84` passes 221 focused checks and its staged native companion through
-`5baf432` passes 48 PGlite checks. A5 mixed-caster source is registered through
-`5bfc44d`; A6 source is under independent review. Actual acceptance and finite
-external publication/parent-session glue remain pending. Martial
+`5baf432` passes 48 PGlite checks. The final absent-subrace boundary (`cbaee5a`)
+passes its 60-test reader suite. A5/A6 browser/readback source is registered
+through `1066b52`, and final typecheck/zero-warning lint pass. Six external
+publication/parent-session source tools have cleared independent review and
+five JavaScript parser checks; none was executed against a runtime. Actual
+acceptance, genuine parent app preparation/aggregation, A4 aggregation and the
+F3 native installation tool remain pending. Martial
 browser/readback source is integrated through `c8de884`; typecheck and lint pass.
 The 2 GiB dev restart and later 3 GiB stale-review fixture failure remain
 preserved. The latter made no correction update. `961b50b` warms the actual
