@@ -138,3 +138,64 @@ and three-session guard-before-parent contention with bounded lock timeouts.
 Preserve all accepted snapshots/worktrees and tear down only task-owned
 processes. Copy, campaign/access and provider/RI lock families require their own
 later acceptance; this parent checkpoint cannot mark the full writer queue ready.
+
+## Finite native verification prerequisites
+
+The source-prepared verification package is
+`scripts/builder-parent-admission-concurrency.ts` and
+`supabase/verification/builder-parent-admission-{catalog,cases,readback}.sql`.
+Its seven simulated runner assertions establish protocol behavior only. No
+native run, installed profile or application completion follows from that
+result.
+
+The catalog reader captures 32 finite function signatures, including every one
+of the eleven instrumented writers and all seven original trigger callbacks.
+Each entry records existence, owner, definer mode, volatility, config, ACL and
+the normalized source body's exact MD5 and byte length. Missing functions stay
+visible as `found=false`; the acceptance wrapper must require the exact complete
+signature set and compare all profiles with the admitted installation evidence.
+The trigger wires, deferred closure callbacks, role grants, empty proof tables
+and closed gates remain separate required comparisons. The catalog query is
+read-only and changes no installation precondition or authority.
+
+Use a genuine authenticated app-created original Fighter at level four with
+Acolyte, six valid saved integer base scores, an active unique earned ASI, a
+legal changed +2 allocation, and an unconfirmed eligible starting award. Freeze
+its actor and character IDs and take fresh native readbacks. The verifier
+creates no character, origin, class proof, seal, Auth row or catalog entry.
+
+The caller must supply three sessions bound to the exact current disposable
+app-flow engine/database identities. The existing `openCharacterPsqlSession`
+opener targets the older equipment runtime and must not be reused unchanged.
+Require actual native postgres NOSUPERUSER/BYPASSRLS posture and the complete
+installed function/trigger/grant profile before contention. No runtime is
+authorized merely by passing session objects to the runner.
+
+Each of eight scenarios requires an observed checker-to-blocker PID edge while
+the blocker holds only the singleton guard, followed by a third-session parent
+`FOR UPDATE NOWAIT` probe. Then release the probe and guard, require refusal,
+roll back, compare the complete retained fixture digest, and prove capability
+and seal absence. The successful path waits for every pending statement and
+rollback before closing its sessions. A failure can force closure of a local
+Docker client; that alone does not prove the remote psql/backend transaction
+has ended. The caller must independently verify disappearance of all three
+recorded backend PIDs and fresh fixture digest/empty proof tables, including
+after partial setup or probe failure, before reporting cleanup. It must also
+verify the exact owned OS process records have exited.
+
+The SQL case file uses real `authenticated` and `service_role` SQL roles with
+owner claims; its 32 mechanical/RPC refusals and two allowed-then-rolled-back
+metadata probes do not establish JWT authentication. An inaccessible service
+RPC can refuse at its existing EXEC privilege check, so `refused_unchanged`
+does not imply the new parent fence caused every RPC denial. The contention
+edge for direct service UPDATE supplies that separate causal evidence. Keep
+`authenticationAccepted:false` for these reports. Run the file with
+`ON_ERROR_STOP=1`, require all 34 exact outcomes, and preserve the outer rollback
+and before/after digest equality.
+
+Actual positive ordinary saves, B3 full commit, background zero/one/two-update
+paths, Fiend correction/replay, native starting awards and JWT/browser access
+remain separate acceptance. Acolyte is the only prepared SRD background; the
+two-update Expertise-pruning vector needs an explicitly admitted native fixture
+or separately reviewed genuine background authoring, rather than an invented
+Soldier entry or silently reclassified simulated evidence.

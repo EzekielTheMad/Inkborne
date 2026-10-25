@@ -1,12 +1,15 @@
 -- Read-only installed-profile evidence, after HP and parent companions.
+-- The 32 signatures include all eleven instrumented writers and all seven
+-- preserved original trigger callbacks (R09 appears once). A missing function
+-- remains an explicit found=false entry; the caller must reject it.
 BEGIN READ ONLY;
 SELECT jsonb_build_object(
  'kind','builder-parent-admission-installed-catalog-v1',
  'runtimeRole',current_user,
  'postgresPosture',(SELECT jsonb_build_object('superuser',rolsuper,'bypassRls',rolbypassrls) FROM pg_roles WHERE rolname='postgres'),
- 'functions',(SELECT jsonb_agg(jsonb_build_object('signature',wanted.signature,'owner',pg_get_userbyid(p.proowner),
+ 'functions',(SELECT jsonb_agg(jsonb_build_object('signature',wanted.signature,'found',p.oid IS NOT NULL,'owner',pg_get_userbyid(p.proowner),
    'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl::text,
-   'bodyMd5',md5(replace(p.prosrc,E'\r\n',E'\n'))) ORDER BY wanted.signature)
+   'bodyMd5',md5(replace(p.prosrc,E'\r\n',E'\n')),'bodyBytes',octet_length(replace(p.prosrc,E'\r\n',E'\n'))) ORDER BY wanted.signature)
   FROM (VALUES
    ('private.enrolled_character_parent_v1(uuid)'),('private.lock_enrolled_parent_guard_v1()'),
    ('public.lock_character_parent_write_guard_v1()'),('private.character_parent_mechanics_v1(jsonb)'),
@@ -16,9 +19,17 @@ SELECT jsonb_build_object(
    ('private.enrolled_parent_observed_v1()'),('private.finish_parent_admission_v1(uuid,text)'),
    ('private.require_parent_admission_finished_v1()'),('private.hit_die_character_revision_v1()'),
    ('private.builder_multiclass_max_hp_v1(uuid,jsonb,jsonb)'),
+   ('private.apply_builder_catalog_command_v1(uuid,text,jsonb)'),
+   ('private.apply_builder_progression_graph_v1(uuid,jsonb,jsonb,integer)'),
+   ('private.apply_builder_details_v1(uuid,jsonb)'),
+   ('public.character_builder_command_before_catalog_v1(jsonb,jsonb)'),
+   ('public.commit_character_builder_equipment_v1(jsonb,jsonb)'),
    ('public.save_character_abilities(uuid,text,jsonb,text,jsonb)'),('public.patch_character_state_if_current(uuid,jsonb,jsonb)'),
    ('public.set_character_background(uuid,uuid,integer)'),('public.set_character_asi_choice(uuid,text,text,jsonb,uuid,integer)'),
-   ('private.finish_builder_step_v1(jsonb,uuid)'),('private.observe_first_class_choices_revision_v1(jsonb,uuid)')
+   ('private.finish_builder_step_v1(jsonb,uuid)'),('private.observe_first_class_choices_revision_v1(jsonb,uuid)'),
+   ('private.enforce_asi_choice_map_boundary()'),('private.enforce_background_choice_map_boundary()'),
+   ('private.hit_die_order_revision_rebind_v1()'),('private.prune_inactive_asi_choices_before_choices()'),
+   ('private.prune_inactive_feature_refs_after_choices()'),('private.validate_character_content_boundaries()')
   ) wanted(signature) LEFT JOIN pg_proc p ON p.oid=to_regprocedure(wanted.signature)),
  'parentTriggers',(SELECT jsonb_agg(jsonb_build_object('name',tgname,'mask',tgtype,'enabled',tgenabled,
    'callback',tgfoid::regprocedure::text,'deferred',tgdeferrable,'initiallyDeferred',tginitdeferred,
