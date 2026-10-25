@@ -78,6 +78,14 @@ async function createFiend(page: Page, story: Story, name: string) {
 async function abilities(page: Page, story: Story, id: string, scores: Record<string, string>) {
   await page.goto(`${story.config.appOrigin}/characters/${id}/builder/abilities`);
   for (const [ability, score] of Object.entries(scores)) {
+    // The real standard-array editor reserves an assigned value. Release its
+    // existing assignment through the app before a deliberate concurrent swap.
+    for (const other of Object.keys(originalScores)) {
+      if (other !== ability && await page.getByRole("combobox", { name: `${other} score`, exact: true }).inputValue() === score) {
+        await save(page, () => page.getByRole("combobox", { name: `${other} score`, exact: true }).selectOption(""));
+        await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
+      }
+    }
     await save(page, () => page.getByRole("combobox", { name: `${ability} score`, exact: true }).selectOption(score));
     await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
   }
