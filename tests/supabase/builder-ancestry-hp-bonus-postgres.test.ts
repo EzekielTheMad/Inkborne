@@ -293,7 +293,7 @@ beforeEach(async () => {
   await db.query("INSERT INTO public.characters(id,user_id,system_id,name,level,choices,base_stats,state,action_revision) VALUES($1,$2,$3,'Hill control',3,$4,'{\"constitution\":16}','{\"current_hp\":60}',10)", [target, actor, system, choices()]);
   for (const [content, kind, slug, data] of [
     [barbarianContent, "class", "barbarian", { hit_die: 12 }],
-    [sorcererContent, "class", "sorcerer", { hit_die: 6, levels: [{ level: 1, subclass_level: true }] }],
+    [sorcererContent, "class", "sorcerer", { hit_die: 6, levels: [{ level: 1, subclass_level: true }, { level: 2 }, { level: 3 }] }],
     [raceContent, "race", "dwarf", { traits: ["dwarven-resilience"] }],
   ] as const) await db.query("INSERT INTO public.content_versions(content_id,version,content_type_snapshot,slug_snapshot,system_id_snapshot,data_snapshot) VALUES($1,1,$2,$3,$4,$5)", [content, kind, slug, system, data]);
   for (const version of [1, 2]) {
@@ -421,7 +421,7 @@ describe("real ordered ancestry HP companion with explicit compiler/Auth doubles
       expect(md5(String((await profile(connection)).prosrc))).toBe(preimage);
       expect((await connection.query<{ missing: boolean }>("SELECT to_regprocedure('private.builder_ancestry_hit_point_bonus_v1(uuid,jsonb)') IS NULL AS missing")).rows[0].missing).toBe(true);
       const row = (await connection.query<{ definition: string; prosrc: string }>("SELECT pg_get_functiondef(oid) AS definition,prosrc FROM pg_proc WHERE oid=$1::regprocedure", [hpSignature])).rows[0];
-      await connection.exec(row.definition.replace(row.prosrc,row.prosrc.replaceAll("\n","\r\n")));
+      await connection.exec(row.definition.replace(row.prosrc, () => row.prosrc.replaceAll("\n","\r\n")));
       await connection.exec(stage); await connection.exec(ancestryStage);
       expect(md5(String((await profile(connection)).prosrc))).toBe(postimage);
     } finally { await connection.close(); }
@@ -432,7 +432,7 @@ describe("real ordered ancestry HP companion with explicit compiler/Auth doubles
       if (fault === "body" || fault === "hp-body") {
         const signature = fault === "body" ? "private.seal_builder_parent_admission_v1(uuid,jsonb)" : hpSignature;
         const row = (await baseline.query<{ definition: string; prosrc: string }>("SELECT pg_get_functiondef(oid) AS definition,prosrc FROM pg_proc WHERE oid=$1::regprocedure", [signature])).rows[0];
-        await baseline.exec(row.definition.replace(row.prosrc, row.prosrc + "\n-- profile drift\n"));
+        await baseline.exec(row.definition.replace(row.prosrc, () => row.prosrc + "\n-- profile drift\n"));
       }
       if (fault === "owner") await baseline.exec("ALTER FUNCTION private.seal_builder_parent_admission_v1(uuid,jsonb) OWNER TO inkborne_hit_die_authority_owner");
       if (fault === "config") await baseline.exec("ALTER FUNCTION private.seal_builder_parent_admission_v1(uuid,jsonb) SET search_path=public");
