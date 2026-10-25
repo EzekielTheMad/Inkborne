@@ -54,7 +54,7 @@ class ScriptedModel {
       }
       return [];
     }
-    if (side === "checker" && (/^(UPDATE|DELETE) public\./.test(sql) || /^SELECT (?:\* FROM )?public\./.test(sql))) {
+    if (side === "checker" && (/^(?:UPDATE public\.|DELETE FROM public\.)/.test(sql) || /^SELECT (?:\* FROM )?public\./.test(sql))) {
       if (this.fault === "refuses-before-guard") throw { code: "42501" };
       if (!this.held) throw Error("simulated writer bypassed held guard");
       this.waiting = true;
@@ -68,7 +68,7 @@ describe("SIMULATED parent admission contention protocol; no native acceptance",
   it("requires all eight guard edges plus third-session parent probes and unchanged rows", async () => {
     const model = new ScriptedModel();
     const report = await runBuilderParentAdmissionContention(model.sessions, fixture, { pollMs: 1 });
-    expect(report).toMatchObject({ authenticationAccepted: false, passed: true, sessionsClosed: true, backendPids: [101, 102, 103] });
+    expect(report, JSON.stringify(report.cases)).toMatchObject({ authenticationAccepted: false, passed: true, sessionsClosed: true, backendPids: [101, 102, 103] });
     expect(report.cases.map(item => item.name)).toEqual(PARENT_CONTENTION_CASES);
     for (const item of report.cases) expect(item).toMatchObject({ status: "passed", parentProbeSucceeded: true,
       edge: { waiterPid: 102, blockerPid: 101 }, observedSqlstate: "42501", beforeDigest: "a".repeat(32), afterDigest: "a".repeat(32) });
