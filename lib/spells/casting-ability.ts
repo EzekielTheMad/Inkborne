@@ -50,6 +50,9 @@ export function resolveCastingAbility(target: CharacterSpell, input: CastingAbil
     typeof definition.data?.level !== "number" || !Number.isInteger(definition.data.level) || definition.data.level < 0 || definition.data.level > 9) {
     return unavailable("exact spell snapshot is missing or mismatched");
   }
+  if (hasEarnedRacialSpellClaim(spell) && spell.source !== "racial_trait") {
+    return unavailable("earned racial spell marker has a mismatched acquisition source");
+  }
   if (spell.source === "racial_trait") {
     if (definition.data.level > 0 || hasEarnedRacialSpellClaim(spell)) {
       const earned = resolveEarnedRacialSpell(spell, input.character, input.contentRefs, input.contentSnapshotsComplete === true);

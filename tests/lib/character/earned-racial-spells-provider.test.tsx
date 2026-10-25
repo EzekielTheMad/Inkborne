@@ -13,6 +13,7 @@ import { transformTraitEntry } from "@/scripts/transformers/traits";
 import { resolveOwnedAncestryDefenses } from "@/lib/character/ancestry-defenses";
 import darkvision from "../../fixtures/earned-racial-spells/darkvision.json";
 import hellishResistance from "../../fixtures/earned-racial-spells/hellish-resistance.json";
+import { getSpellCastability, isRitualEligible } from "@/lib/spells/casting";
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ rpc }) }));
@@ -28,7 +29,7 @@ function Probe({ target }: { target: CharacterSpell }) {
   return <><SpellsTab /><button onClick={() => setOpen(true)}>Inspect racial spell</button>
     <CastDialog spell={target} castability="full" open={open} onClose={() => setOpen(false)} /></>;
 }
-function fixture() {
+function fixture(forgedOrdinary = false) {
   const f = earnedRacialFixture(), target = f.spells[0];
   // Complete the genuine root's mandatory trait closure. F2 requires all three
   // owned immutable traits before any provider mechanical action is available.
@@ -48,6 +49,10 @@ function fixture() {
       content_definitions: { ...target.content_definitions!, id: racialId(n + 1), name, data: { ...target.content_definitions!.data, classes: [classSlug] } } };
   };
   const spells = [...f.spells, ordinary("bard", 40, false), ordinary("wizard", 42, true)];
+  if (forgedOrdinary) {
+    spells[2].custom_data = { builder_earned_racial_spell: structuredClone(target.custom_data!.builder_earned_racial_spell) };
+    spells[2].content_definitions!.data.ritual = true;
+  }
   const schema = { ability_scores: providerAbilities, derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }],
     skills: [], proficiency_levels: [], resources: [], currencies: [], content_types: [], creation_steps: [], sheet_sections: [] };
   const base = { ...providerBase, intelligence: 15, charisma: 8, constitution: 12 };
@@ -96,6 +101,20 @@ describe("earned racial source in the actual provider and spell surfaces", () =>
       await expect(latest.castSpell(target, choice)).rejects.toThrow(/Racial spell casting.*not available/);
       expect(stored).toEqual(before); expect(rpc).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled();
     });
+  it("refuses an earned marker on an otherwise valid ordinary acquisition without writes or borrowed slots", async () => {
+    fixture(true);
+    const forged = latest.spells.find(spell => spell.name === "Bard ordinary control")!;
+    const ordinary = latest.spells.find(spell => spell.name === "Wizard ordinary control")!;
+    expect(latest.getCastingAbility(ordinary).status).toBe("available");
+    expect(getSpellCastability(ordinary, latest.casterInfo)).toBe("full");
+    expect(latest.getCastingAbility(forged).status).toBe("unavailable");
+    expect(getSpellCastability(forged, latest.casterInfo)).toBe("none");
+    expect(isRitualEligible(forged, latest.casterInfo)).toBe(false);
+    for (const choice of [{ type: "slot", level: 2 }, { type: "pact", level: 2 }, { type: "ritual" }, { type: "cantrip" }] as const) {
+      await expect(latest.castSpell(forged, choice)).rejects.toThrow(/mismatched acquisition source/);
+    }
+    expect(rpc).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled();
+  });
   it("rejects a stale callback and the current unconfirmed parent revision without a write", async () => {
     const f = fixture(), oldCast = latest.castSpell;
     await act(async () => { f.character.action_revision = "8"; f.refresh(); });

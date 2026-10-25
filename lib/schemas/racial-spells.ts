@@ -44,6 +44,6 @@ export function infernalLegacyDeclarationsSupported(type: unknown, slug: unknown
 
 /** A claim is not positive evidence. Malformed claims also cannot use slots. */
 export function hasEarnedRacialSpellClaim(spell: { source?: string; custom_data?: unknown }): boolean {
-  return spell.source === "racial_trait" && !!spell.custom_data && typeof spell.custom_data === "object"
+  return !!spell.custom_data && typeof spell.custom_data === "object"
     && Object.hasOwn(spell.custom_data, "builder_earned_racial_spell");
 }
