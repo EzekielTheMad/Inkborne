@@ -50,7 +50,47 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
-### Latest continuation — 2026-10-25 06:16 UTC
+### Latest continuation — 2026-10-25 06:33 UTC
+
+The next fresh full attempt, `local-subclass-update-app-20261025T062148Z`,
+was stopped by the unchanged OS guard at 92.0686% system commit. Its four
+fresh native checkpoints passed through the concurrent ordinary edit; final
+readback equals that last checkpoint. There are two genuine characters, both
+saved Fiend v1/global v2, target revision 33, zero correction receipts/history
+and zero capabilities. No wire outcome or complete acceptance is invented.
+The wrapper records resource-aborted exit -1 and all 29 identities gone.
+Next is stopped and port 3001 closed; the backend is retained pending an exact
+reset. Public evidence is archived in
+`history/repin-resource-abort-20261025T0625Z` with 22 hashed files and no credentials.
+
+At the guard sample the exact owned Next tree used 3.20 GiB private memory and
+the test tree 2.12 GiB. `7de8248` bounds only the disposable local Chrome V8 old
+generation to 512 MiB; it does not bound renderer private/native/DOM memory.
+The actual Chrome 155 probe measured a 631.33 MiB heap limit. Improved native
+capture and wrapper `local-chrome-heap-probe-20261025T063201Z` confirm all 15
+observed identities gone. Next remains at 3 GiB with automatic restart enabled;
+the 1 GiB physical-free / 92% commit guard and every product oracle remain.
+One clean capped-browser run is next after another exact fresh reset.
+
+The independently reviewed F1 ancestry HP source is integrated as `dbafbc4`.
+Its eight-file sweep passes **157 tests** in
+`local-ancestry-hp-focused-20261025T062621Z` (41.2 seconds; eleven identities gone).
+Typecheck caught three fixture typing errors; `9890225` uses the actual strict
+durable DTO parsers rather than broad casts. The affected durable rerun passes
+**62 tests** in `local-ancestry-hp-durable-20261025T063253Z` (6.7 seconds;
+six identities gone). Typecheck and zero-warning lint pass in
+`local-creation-browser-check-20261025T063041Z` (52.3 seconds; eight gone).
+The [finite ancestry plan](../specs/2026-10-25-ancestry-hit-point-parity.md)
+records old-root zero, exact positive source proof, total-level HP and the
+separate current-HP state limitation. Native companion and actual publication/
+application acceptance remain pending. F2/F3 are separate ongoing source work.
+
+`df80998` completes the parent catalog verifier's evidence list: all eleven
+instrumented writers and seven original callbacks have exact function
+profiles. This closes a source evidence gap; native parent execution remains
+pending. None of these source/test checkpoints completes M1/R06.
+
+### Previous continuation — 2026-10-25 06:16 UTC
 
 The 3 GiB prepared-continuation attempt
 `local-subclass-update-app-20261025T060009Z` remains failed. Its four fresh

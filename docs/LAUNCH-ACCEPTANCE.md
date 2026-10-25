@@ -21,6 +21,14 @@ editor, before any correction. `961b50b` warms that editor before review. The
 old continuation guard is inadmissible; Next is stopped and the exact owned
 backend is being reset for a clean full run after public failure archival.
 The earlier 2 GiB dev restart failure stays failed.
+The next fresh attempt `local-subclass-update-app-20261025T062148Z` stopped at
+the OS commit guard after four native checkpoints, with zero correction
+receipts/history. Its failed evidence is preserved. Local Chrome's V8 old
+generation is bounded by `7de8248` and an actual heap/cleanup probe passes;
+the unchanged full acceptance story remains pending. F1 ancestry HP source is
+integrated as `dbafbc4` with 157 focused passes plus the affected 62-test durable
+rerun; typecheck/zero-warning lint pass. Native companion and actual acceptance
+remain open, alongside F2/F3.
 Eight complete caster walkthroughs are prepared.
 The reviewed Draconic HP/AC repair is integrated through `72ce5cf`, with fixture
 fixes in `a4700ce`; 266 focused checks, typecheck and zero-warning lint pass.
