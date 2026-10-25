@@ -250,10 +250,10 @@ async function equipLeather(page: Page, equipped: boolean) {
   // Armor & Shields section so the Equipped summary cannot duplicate the row.
   const section = page.getByRole("button", { name: /^Armor & Shields/ }).locator("..");
   const row = section.getByText("Leather Armor", { exact: true }).locator("..").locator("..").locator("..");
-  const toggle = row.getByRole("button", { name: equipped ? "Equip" : "Unequip", exact: true });
+  const toggle = row.getByTitle(equipped ? "Equip" : "Unequip", { exact: true });
   const [response] = await Promise.all([page.waitForResponse(item => item.request().method() === "PATCH" && new URL(item.url()).pathname === "/rest/v1/character_inventory"), toggle.click()]);
   expect(response.ok()).toBe(true);
-  await expect(row.getByRole("button", { name: equipped ? "Unequip" : "Equip", exact: true })).toBeVisible();
+  await expect(row.getByTitle(equipped ? "Unequip" : "Equip", { exact: true })).toBeVisible();
 }
 async function otherAccount(browser: Browser, story: Story, ids: string[]) {
   const context = await browser.newContext(); await restrictOrigins(context, story);

@@ -103,7 +103,11 @@ SELECT jsonb_build_object(
          AND r.request#>>'{fields,method}'='rolled' AND r.request#>'{fields,value}'='null'::jsonb
          AND r.receipt#>ARRAY['saved_choices','hp_rolls','sorcerer-2']=jsonb_build_object('method','rolled','value',d.value)))),
    'inventoryFromAcceptedStartingAward',NOT EXISTS(SELECT 1 FROM inventory i WHERE NOT exact_version OR kind<>'armor' AND kind NOT IN ('item','weapon')
-     OR system_id<>t.system_id OR NOT EXISTS(SELECT 1 FROM public.character_starting_grants a WHERE a.character_id=t.id AND a.id=i.starting_grant_id AND a.receipt->'inventory_ids' @> jsonb_build_array(i.id))),
+     OR system_id<>t.system_id OR NOT EXISTS(SELECT 1 FROM public.character_starting_grants a WHERE a.character_id=t.id AND a.id=i.starting_grant_id
+       AND a.status='awarded' AND a.grant_kind='starting_equipment' AND a.completed_at IS NOT NULL
+       AND a.receipt->>'grant_id'=a.id::text AND a.receipt->'inventory_ids' @> jsonb_build_array(i.id)
+       AND EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND r.actor_id=t.user_id
+         AND r.request->>'command'='award_equipment' AND r.request->'canonical_intent'=a.canonical_intent AND r.receipt=a.receipt))),
    'fiveOrderBijections',(SELECT count(*)=5 AND bool_and(bijection) FROM order_checks),
    'parentOrderRevision',(SELECT producer_revision=t.action_revision FROM private.character_projection_order_v1 WHERE character_id=t.id),
    'boundariesClosed',(SELECT count(*)=0 FROM private.character_builder_capabilities_v1)
