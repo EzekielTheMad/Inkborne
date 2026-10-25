@@ -50,7 +50,55 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
-### Latest continuation — 2026-10-25 07:10 UTC
+### Latest continuation — 2026-10-25 07:25 UTC
+
+F3 earned Infernal Legacy source is integrated through `40a6f84`; its staged
+native companion and fixture repair are through `5baf432`. The meaningful new
+Tiefling root declares only the reviewed level-three Hellish Rebuke and
+level-five Darkness grants, both fixed cast level two and CHA. Old roots and
+the original Thaumaturgy/CHA trait remain unchanged. Pending total character
+levels, current accepted class roles/revision and exact owned frozen source
+tuples earn the rows; complete prior claims must validate before pruning or
+allocation. Retained IDs/timestamps persist, malformed claims refuse, and no
+ordinary class budget or slot can authorize a racial claim. Native latest-as-of
+dependency resolution preserves microseconds; the loaded reader validates its
+exact tuple and root cutoff separately. Unsupported raw Infernal grant fields
+refuse before parser normalization. Actual immutable parsing now preserves the
+validated version creation timestamp needed by that reader.
+
+The final twelve-file source sweep passes **221/221** in
+`local-racial-spells-focused-20261025T072413Z`, 25.09 seconds, all sixteen observed
+identities gone. The focused native installer/normalizer suite passes **48/48**
+in `local-racial-spells-native-20261025T071719Z`, 11.90 seconds, all six gone.
+These tests use documented native collaborators and do not establish actual JWT,
+full compiler, parent contention, publication or app acceptance. Native stage
+LF-byte SHA256 is `15ba6f048db128488d57b67616d8ea8dbbc3dfa9024abbff1e7339c6f738eb86`;
+normalizer postimage is `ecd93787a191f3074ae6b458b763e932` and reconciler body MD5
+is `05989bdb6d1683d31d781e67b302a04d`.
+
+Preserved failures exposed one unparenthesized native CASE expression, fixture
+timestamp encoding differences, missing mandatory provider trait pins and an
+ambiguous ordinary-copy assertion. Repairs preserve strict source comparison and
+complete owned ancestry. Genuine API input types are now represented truthfully:
+the optional race proficiency list retains its existing empty default, and damage
+arrays retain their existing neutral transformer output. Expanding spell damage
+arrays is a separate source finding; no damage behavior repair is claimed here.
+Ordinary unmarked copies remain castable; marker-bearing ordinary rows refuse
+before provider state/roll/resource/effect work. Free use/recovery remains M6.
+
+Typecheck and zero-warning lint pass through `9e6eb4b` in
+`local-creation-browser-check-20261025T072234Z`, 69.95 seconds, all eight identities
+gone. The final repeat will include the last marker guard and A6 source.
+A5 mixed-caster story/readback is integrated in `b29ef6b`, registered in
+`5bfc44d`, with ordinal selector corrections `600bc94`. It remains unexecuted.
+A6 source is under independent review. New finite external publication and
+parent installation/session glue are being prepared without execution.
+
+Fresh headroom at 07:25:19 UTC was 9.79 GiB physical-free and 12.66 GiB commit-free,
+still below the fourteen-GiB commit threshold. No actual runtime was restarted;
+the cleanup and failure evidence below remain current. M1/R06 remains in progress.
+
+### Previous continuation — 2026-10-25 07:10 UTC
 
 The capped-Chrome fresh attempt `local-subclass-update-app-20261025T063955Z`
 remains failed: the unchanged resource guard observed 93.781% system commit.

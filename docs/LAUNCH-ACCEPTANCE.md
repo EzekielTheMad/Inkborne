@@ -40,7 +40,13 @@ browser/readback source is registered in `79843fc`, without actual execution.
 F2 owned ancestry defense projection (`3524785`) passes 115 core checks and
 70 final ASI/HP checks after source-complete fixture repairs. The remaining
 ten affected consumer files passed in the earlier 194-test sweep. F3 earned
-Tiefling spells and A5 mixed-caster source remain in isolated workers.
+Tiefling source through `40a6f84` passes 221 focused tests, and its staged native
+companion through `5baf432` passes 48 PGlite checks. A5 mixed-caster source is
+registered through `5bfc44d`; A6 is under independent review. Neither new native
+companion has been installed in the actual runtime. External guarded publication
+and parent-session glue remain pending. Typecheck/zero-warning lint pass at
+`9e6eb4b` in `local-creation-browser-check-20261025T072234Z`; the final repeat
+will include the latest claim guard and A6 source.
 Eight complete caster walkthroughs are prepared.
 The reviewed Draconic HP/AC repair is integrated through `72ce5cf`, with fixture
 fixes in `a4700ce`; 266 focused checks, typecheck and zero-warning lint pass.

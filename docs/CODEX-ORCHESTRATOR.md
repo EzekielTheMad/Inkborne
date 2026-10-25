@@ -22,8 +22,11 @@ is integrated as `dbafbc4` with 157 focused passes. Its native companion through
 `a8c40ec` passes 41 PGlite checks; actual installation/publication and the A4
 browser source (`79843fc`) remain pending. F2 selected ancestry defenses is
 integrated in `3524785`: 115 core checks and the final 70 ASI/HP checks pass
-after strict fixture ownership repairs. F3 earned Tiefling spells and A5
-mixed-caster source remain in isolated workers. Martial
+after strict fixture ownership repairs. F3 earned Tiefling source through
+`40a6f84` passes 221 focused checks and its staged native companion through
+`5baf432` passes 48 PGlite checks. A5 mixed-caster source is registered through
+`5bfc44d`; A6 source is under independent review. Actual acceptance and finite
+external publication/parent-session glue remain pending. Martial
 browser/readback source is integrated through `c8de884`; typecheck and lint pass.
 The 2 GiB dev restart and later 3 GiB stale-review fixture failure remain
 preserved. The latter made no correction update. `961b50b` warms the actual

@@ -1,7 +1,7 @@
 # Finite native earned Infernal Legacy (F3)
 
-Source checkpoint only. No installer, PGlite, native SQL, import/publication,
-browser, provider or hosted execution is implied by these files. M1 remains in
+The 48 focused PGlite checks pass; native installation, import/publication,
+browser, provider and hosted execution remain unaccepted. M1 remains in
 progress, M1–M6 retain priority, Vercel stays unchanged and M7 stays paused.
 All13 writer readiness/class/hit-die gates remain closed.
 
@@ -135,12 +135,20 @@ capability minting, choice callbacks/materializers, Lore/Expertise/favored
 collaborators and physical graph application are explicit doubles. There is no
 claim of full genuine compiler/JWT/receipt/B3/concurrency or actual app acceptance.
 
-Planned cases cover old v1, no-race nonparticipant, tier crossing/downlevels,
+Passing cases cover old v1, no-race nonparticipant, tier crossing/downlevels,
 pending mixed addition/removal, pending new root before its physical insert,
 ordinary same-spell copies, complete prior proof, forged incoming claims,
 malformed declarations/owned sources/levels, same-slug correction refusal,
 microsecond source cutoff, rollback, owner-only ACLs, exact profile drift,
-wrong installer order and CRLF source normalization. Execution is still held.
+wrong installer order and CRLF source normalization. Receipt
+`local-racial-spells-native-20261025T071719Z` passes 48/48 in 11.90 seconds
+including wrapper overhead; all six observed identities are gone. Preserved
+failures exposed an unparenthesized PL/pgSQL CASE expression and fixture-only
+timestamp text differences. The repaired fixture captures actual native JSON
+timestamps, preserving offset and microseconds; production full-pin equality
+remains exact. Stage LF-byte SHA256 is
+`15ba6f048db128488d57b67616d8ea8dbbc3dfa9024abbff1e7339c6f738eb86`.
+The reconciler normalized body MD5 is `05989bdb6d1683d31d781e67b302a04d`.
 
 After root releases a serialized recorded check slot, use the existing script:
 

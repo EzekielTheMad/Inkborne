@@ -79,7 +79,16 @@ level is distinct from implementing its free use/recovery transaction.
 
 ## Three finite R06 source findings
 
-These are independently inspected source paths, **not actual-app reproductions**.
+These are the initial independently inspected source findings, **not actual-app
+reproductions**. F1 source is now integrated in `dbafbc4`, its staged native
+companion passes 41 focused checks, and the A4 browser/readback source is
+registered in `79843fc`. F2 source is integrated in `3524785` with strict
+ownership/consumer checks; A5 browser/readback source is registered through
+`5bfc44d`. F3 TypeScript source is integrated in `0627553`, with input-type
+corrections in `55640b1`; its staged native companion through `5baf432` passes
+48 focused checks. Final F3 source through `40a6f84` passes all 221 focused
+tests. All three actual workflows remain pending. These checkpoints do not open
+their actual acceptance gates.
 
 1. **F1 — Dwarven Toughness HP:** the genuine cached
    `responses/traits/dwarven-toughness.json` says maximum HP increases by one
