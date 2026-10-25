@@ -45,5 +45,11 @@ export function ancestryHpFixture() {
     content_definitions: definition(109, "subrace", "hill-dwarf", { parent_race: "dwarf", traits: ["dwarven-toughness"],
       hit_points_bonus_per_character_level: 1 }, [{ type: "mechanical", stat: "wisdom", op: "add", value: 1 }]),
   };
-  return { character, classRef, raceRef, subraceRef, refs: [classRef, raceRef, subraceRef] };
+  const traitRef: AncestryHitPointRef = { id: hpId(110), character_id: character.id, content_id: hpId(111), content_version: 2,
+    context: { source: "racial_trait", root_controller_ref_id: subraceRef.id },
+    choice_source: "builder:racial-trait:dwarven-toughness", feature_grant_id: null,
+    content_definitions: definition(111, "trait", "dwarven-toughness", { description: dwarvenToughnessSource.desc[0],
+      races: [], subraces: ["hill-dwarf"] }, [{ type: "narrative", text: dwarvenToughnessSource.desc[0], tag: "Racial Trait" }]),
+  };
+  return { character, classRef, raceRef, subraceRef, traitRef, refs: [classRef, raceRef, subraceRef, traitRef] };
 }
