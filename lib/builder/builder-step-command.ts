@@ -112,7 +112,9 @@ export const builderStepResponseSchema = z.discriminatedUnion("status", [
     actor_id: z.uuid(), character_id: z.uuid(), operation_id: z.uuid(),
     command: z.literal("update_subclass_version"), fields: subclassContentUpdateFieldsSchema,
     reason: z.literal("stale_review"), observed_action_revision: classRoleRevisionSchema,
-  }).refine(proof => BigInt(proof.observed_action_revision) > BigInt(proof.fields.expected_action_revision),
+  }).refine(proof => classRoleRevisionSchema.safeParse(proof.observed_action_revision).success
+    && classRoleRevisionSchema.safeParse(proof.fields.expected_action_revision).success
+    && BigInt(proof.observed_action_revision) > BigInt(proof.fields.expected_action_revision),
     "Only a monotonically stale review is terminal") }),
 ]);
 export type BuilderStepResponse = z.infer<typeof builderStepResponseSchema>;

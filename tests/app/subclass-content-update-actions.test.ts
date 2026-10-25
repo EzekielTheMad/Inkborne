@@ -98,7 +98,7 @@ describe("reviewed subclass update server boundary (Auth/RPC doubles)", () => {
     expect(mocks.rpc.mock.calls[0][1].p_request).toEqual(original());
     expect(mocks.rpc.mock.calls[0][0]).toBe(method === "submit" ? "character_builder_command_v1" : "character_builder_subclass_update_resolution_v1");
   });
-  it.each(["actor", "target", "operation", "fields", "equal", "earlier", "malformed", "unknown"])(
+  it.each(["actor", "target", "operation", "fields", "equal", "earlier", "malformed", "non-numeric", "unknown"])(
     "refuses a stale-review proof with %s mismatch", async mode => {
       const raw = rejected();
       if (mode === "actor") raw.rejection.actor_id = other;
@@ -108,6 +108,7 @@ describe("reviewed subclass update server boundary (Auth/RPC doubles)", () => {
       if (mode === "equal") raw.rejection.observed_action_revision = "4";
       if (mode === "earlier") raw.rejection.observed_action_revision = "3";
       if (mode === "malformed") raw.rejection.observed_action_revision = "05";
+      if (mode === "non-numeric") raw.rejection.observed_action_revision = "unavailable";
       mocks.rpc.mockResolvedValue({ data: mode === "unknown" ? { ...raw, extra: true } : raw, error: null });
       await expect(checkBuilderStep(actor, original())).rejects.toThrow("could not be confirmed");
     });

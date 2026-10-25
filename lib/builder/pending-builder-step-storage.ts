@@ -48,7 +48,7 @@ export function persistPendingBuilderStep(input: BuilderStepIntent, lease: Creat
   return pending;
 }
 
-/** Only an exact owned receipt may authorize clearing this exact stored record. */
+/** Caller validates an exact owned receipt or terminal stale-review proof first. */
 export function clearConfirmedBuilderStep(pending: PendingBuilderStep, lease: CreationScope, storage: Storage): void {
   const key = builderStepStorageKey(pending.account_id, pending.intent.character_id);
   if (!creationLeaseIsCurrent(lease, storage) || lease.accountId !== pending.account_id

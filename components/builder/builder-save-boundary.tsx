@@ -126,7 +126,6 @@ export function BuilderSaveBoundary({ accountId, characterId, submitAction, chec
         return null;
       }
       setView({ epoch: lease.epoch, accountId, characterId, pending: null, blocked: false, notice: "" });
-      if (parsed.data.status === "rejected") return null;
       return { choices: parsed.data.receipt.saved_choices, scores: parsed.data.receipt.saved_scores,
         action_revision: parsed.data.receipt.action_revision };
     } catch (error) {
