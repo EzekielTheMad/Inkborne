@@ -1,4 +1,4 @@
-import { fetchAllFromApi, buildContentEntry, buildMechanicalEffect, buildAbilityBonusEffects, buildGrantEffect, buildChoiceEffect, normalizeSlug, expandAbilityAbbreviation } from "./common";
+import { fetchFromApi, fetchAllFromApi, buildContentEntry, buildMechanicalEffect, buildAbilityBonusEffects, buildGrantEffect, buildChoiceEffect, normalizeSlug, expandAbilityAbbreviation } from "./common";
 import type { TransformedContent } from "./common";
 import type { Effect } from "@/lib/types/effects";
 
@@ -124,7 +124,27 @@ interface ApiSubrace {
   };
 }
 
-export function transformSubraceEntry(apiSubrace: ApiSubrace): TransformedContent {
+interface ApiSubraceHitPoints {
+  index: string; name: string; desc: string[]; races: Array<{ index: string }>; subraces: Array<{ index: string }>;
+}
+
+/** Publish the reviewed mechanic on a meaningful new root, keeping its genuine
+ * trait unchanged. Older pinned roots retain their original data and behavior.
+ */
+export function subraceHitPointMechanics(subrace: Pick<ApiSubrace, "index" | "race" | "racial_traits">,
+  trait?: ApiSubraceHitPoints): Record<string, unknown> {
+  if (subrace.index !== "hill-dwarf") return {};
+  if (subrace.race.index !== "dwarf" || subrace.racial_traits.filter(entry => entry.index === "dwarven-toughness").length !== 1
+    || trait?.index !== "dwarven-toughness" || trait.name !== "Dwarven Toughness"
+    || JSON.stringify(trait.desc) !== JSON.stringify(["Your hit point maximum increases by 1, and it increases by 1 every time you gain a level."])
+    || !Array.isArray(trait.races) || trait.races.length !== 0 || !Array.isArray(trait.subraces)
+    || trait.subraces.length !== 1 || trait.subraces[0]?.index !== "hill-dwarf") {
+    throw Error("The genuine SRD Dwarven Toughness source is unavailable or changed");
+  }
+  return { hit_points_bonus_per_character_level: 1 };
+}
+
+export function transformSubraceEntry(apiSubrace: ApiSubrace, hitPointTrait?: ApiSubraceHitPoints): TransformedContent {
   const effects: Effect[] = [];
 
   effects.push(...buildAbilityBonusEffects(apiSubrace.ability_bonuses));
@@ -140,6 +160,7 @@ export function transformSubraceEntry(apiSubrace: ApiSubrace): TransformedConten
   }
 
   return buildContentEntry("subrace", apiSubrace.index, apiSubrace.name, {
+    ...subraceHitPointMechanics(apiSubrace, hitPointTrait),
     parent_race: apiSubrace.race.index,
     description: apiSubrace.desc,
     traits: (apiSubrace.racial_traits ?? []).map((t) => t.index),
@@ -150,8 +171,10 @@ export function transformSubraceEntry(apiSubrace: ApiSubrace): TransformedConten
 export async function transformRaces(): Promise<TransformedContent[]> {
   const races = await fetchAllFromApi<ApiRace>("/races");
   const subraces = await fetchAllFromApi<ApiSubrace>("/subraces");
+  const hitPointTrait = subraces.some(subrace => subrace.index === "hill-dwarf")
+    ? await fetchFromApi<ApiSubraceHitPoints>("/traits/dwarven-toughness") : undefined;
   return [
     ...races.map(transformRaceEntry),
-    ...subraces.map(transformSubraceEntry),
+    ...subraces.map(subrace => transformSubraceEntry(subrace, hitPointTrait)),
   ];
 }

@@ -7,6 +7,7 @@ import { spendHitDiePatch } from "@/lib/hit-dice/helpers";
 import { syntheticRacePin } from "../../fixtures/r06-race-parity";
 import { draconicLevels, draconicResilienceSource, draconicRoot } from "../../fixtures/subclass-hit-points";
 import { subclassResilienceMechanics } from "@/scripts/transformers/classes";
+import { ancestryHpFixture } from "../../fixtures/ancestry-hit-points";
 
 const id = (last: number) => `11111111-1111-4111-8111-${String(last).padStart(12, "0")}`;
 const instant = "2026-10-12T01:00:00.000Z";
@@ -85,7 +86,80 @@ function resilienceSnapshot(): HitDieSnapshot {
   return s;
 }
 
+function ancestrySnapshot(): HitDieSnapshot {
+  const s = snapshot(), f = ancestryHpFixture();
+  s.character.id = f.character.id; s.character.system_id = f.character.system_id; s.system.id = f.character.system_id;
+  s.character.level = f.character.level; s.character.revision = f.character.action_revision;
+  s.character.base_stats = f.character.base_stats;
+  s.character.choices = { ...f.character.choices, classes: f.character.choices.classes!, hp_rolls: f.character.choices.hp_rolls! };
+  s.character.state.hit_dice_spent = { barbarian: 0 };
+  s.pins = f.refs.map(ref => ({ id: ref.id, character_id: ref.character_id, content_id: ref.content_id,
+    content_version: ref.content_version, context: ref.context, choice_source: ref.choice_source,
+    feature_grant_id: ref.feature_grant_id, resolved: ref.content_definitions, ...(ref.class_role ? { class_role: ref.class_role } : {}),
+  })) as HitDieSnapshot["pins"];
+  return s;
+}
+
 describe("durable hit-die service-internal request and snapshot", () => {
+  it("keeps frozen ancestry HP38 separate from live Constitution and does not repair stored HP", () => {
+    const s = ancestrySnapshot(); s.character.state.active_effects = [activeEffect()];
+    const before = JSON.stringify(s), candidate = () => planDurableHitDie(s, { ...request(s), class_slug: "barbarian" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    });
+    expect(candidate()).toMatchObject({ status: "planned", baseline_constitution: 16, live_constitution: 20,
+      max_hp: 38, roll: { modifier: 5, total: 8 }, patch: { current_hp: 12 } });
+    expect(JSON.stringify(s)).toBe(before);
+    s.character.state.current_hp = 39;
+    expect(candidate()).toEqual({ status: "rejected", reason: "invalid_mechanics" });
+    expect(s.character.state.current_hp).toBe(39);
+  });
+  it("fingerprints raw ancestry metadata and rejects malformed or unproved positive roots", () => {
+    const s = ancestrySnapshot(), req = { ...request(s), class_slug: "barbarian" };
+    const old = structuredClone(s); delete old.pins[2].resolved.data.hit_points_bonus_per_character_level;
+    expect(hitDieDependencyFingerprint(old)).not.toBe(req.dependency_fingerprint);
+    expect(planDurableHitDie(old, { ...request(old), class_slug: "barbarian" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    })).toMatchObject({ status: "planned", max_hp: 35 });
+    delete s.pins[0].class_role;
+    expect(planDurableHitDie(s, { ...request(s), class_slug: "barbarian" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    })).toEqual({ status: "rejected", reason: "invalid_mechanics" });
+    s.pins[2].resolved.data.hit_points_bonus_per_character_level = null;
+    expect(planDurableHitDie(s, req, { enabled: true, evaluationInstant: instant,
+      acceptanceInstant: instant, acceptedDieFace: 3 })).toEqual({ status: "rejected", reason: "invalid_snapshot" });
+  });
+  it("uses the proved original after ancestry-only multiclass reordering", () => {
+    const s = ancestrySnapshot(), secondary = structuredClone(s.pins[0]);
+    secondary.id = id(160); secondary.content_id = id(161); secondary.resolved.id = id(161);
+    secondary.resolved.slug = "sorcerer"; secondary.resolved.name = "Sorcerer"; secondary.resolved.data.hit_die = 6;
+    secondary.class_role = { ...secondary.class_role!, controller_ref_id: secondary.id, content_id: secondary.content_id,
+      occurrence_id: id(162), role: "secondary", raw_data: structuredClone(secondary.resolved.data),
+      evaluation_data: structuredClone(secondary.resolved.data) };
+    s.pins.unshift(secondary); s.character.level = 5;
+    s.character.choices.classes.unshift({ slug: "sorcerer", level: 2, occurrence_id: id(162) });
+    s.character.state.hit_dice_spent = { barbarian: 0, sorcerer: 0 };
+    const candidate = () => planDurableHitDie(s, { ...request(s), class_slug: "barbarian" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    });
+    expect(candidate()).toMatchObject({ status: "planned", max_hp: 54 });
+    secondary.class_role.role = "original";
+    expect(candidate()).toEqual({ status: "rejected", reason: "invalid_mechanics" });
+  });
+  it("adds ancestry and subclass bonuses independently on the same frozen character", () => {
+    const s = resilienceSnapshot(), f = ancestryHpFixture();
+    for (const source of [f.raceRef, f.subraceRef]) s.pins.push({
+      id: source.id, character_id: s.character.id, content_id: source.content_id, content_version: source.content_version!,
+      feature_grant_id: null, context: source.context as HitDieSnapshot["pins"][number]["context"], choice_source: null,
+      resolved: { ...source.content_definitions, system_id: s.system.id } as HitDieSnapshot["pins"][number]["resolved"],
+    });
+    s.character.choices.race = "dwarf"; s.character.choices.subrace = "hill-dwarf";
+    // Base CON13 + Dwarf2 =15; Draconic3 + ancestry3 add after the d6 base20.
+    s.character.base_stats.constitution = 13;
+    const result = planDurableHitDie(s, { ...request(s), class_slug: "sorcerer" }, {
+      enabled: true, evaluationInstant: instant, acceptanceInstant: instant, acceptedDieFace: 3,
+    });
+    expect(result).toMatchObject({ status: "planned", baseline_constitution: 15, max_hp: 26 });
+  });
   it("plans the same frozen root bonus with baseline CON while live CON modifies only recovery", () => {
     const s = resilienceSnapshot(); s.character.state.active_effects = [activeEffect()];
     const req = { ...request(s), class_slug: "sorcerer" }, before = JSON.stringify(s);

@@ -12,6 +12,18 @@ describe("computeMaxHp", () => {
     expect(computeMaxHp([], {}, 10)).toBe(0);
   });
 
+  it("keeps separately validated ancestry and subclass bonuses outside each per-level minimum", () => {
+    const choices = [{ slug: "barbarian", level: 3 }];
+    expect(computeMaxHp(choices, classData("barbarian", 12), 16, {}, "free_choice", undefined, 0, 3)).toBe(38);
+    expect(computeMaxHp([{ slug: "sorcerer", level: 3 }], classData("sorcerer", 6), 1,
+      {}, "free_choice", undefined, 2, 3)).toBe(8);
+    expect(computeMaxHp(choices, classData("barbarian", 12), 16)).toBe(35);
+  });
+  it.each([Number.NaN, Infinity, -1, 1.5])("refuses an unvalidated ancestry term %s", value => {
+    expect(computeMaxHp([{ slug: "fighter", level: 1 }], classData("fighter", 10), 14,
+      {}, "free_choice", undefined, 0, value)).toBeNaN();
+  });
+
   it("Fighter L1, CON 14 → 12 (10 + 2)", () => {
     const result = computeMaxHp(
       [{ slug: "fighter", level: 1 }],

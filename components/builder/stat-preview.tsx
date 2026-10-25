@@ -8,6 +8,7 @@ import type { Effect } from "@/lib/types/effects";
 import { getConfirmedAbilityModifier, resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 import { computeMaxHp } from "@/lib/character/max-hp";
 import type { SubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
+import type { AncestryHitPointBonus } from "@/lib/character/ancestry-hit-points";
 import { resolveCastingMath } from "@/lib/spells/casting-math";
 import type { CharacterChoices, HpRule } from "@/lib/types/character";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
@@ -19,6 +20,7 @@ export interface StatPreviewClassContext {
   hpRule: HpRule;
   originalOccurrenceId?: string | null;
   subclassHitPoints?: SubclassHitPointBonus;
+  ancestryHitPoints?: AncestryHitPointBonus;
   castingSources: EffectiveCastingSource[];
 }
 
@@ -61,9 +63,10 @@ export function StatPreview({
     ? !classes.some(cls => cls.occurrence_id)
     : classes.filter(cls => cls.occurrence_id === classContext.originalOccurrenceId).length === 1;
   const subclassHitPoints: SubclassHitPointBonus = classContext?.subclassHitPoints ?? { status: "available", bonus: 0 };
-  const maxHp = classContextReady && originalReady && subclassHitPoints.status === "available" && Number.isFinite(result.stats.constitution)
+  const ancestryHitPoints: AncestryHitPointBonus = classContext?.ancestryHitPoints ?? { status: "available", bonus: 0 };
+  const maxHp = classContextReady && originalReady && subclassHitPoints.status === "available" && ancestryHitPoints.status === "available" && Number.isFinite(result.stats.constitution)
     ? computeMaxHp(classes, classContext!.classContent, result.stats.constitution, classContext!.choices.hp_rolls,
-      classContext!.hpRule, classContext!.originalOccurrenceId, subclassHitPoints.bonus) : null;
+      classContext!.hpRule, classContext!.originalOccurrenceId, subclassHitPoints.bonus, ancestryHitPoints.bonus) : null;
   const casting = (classContext?.castingSources ?? []).filter(source => source.active && source.config).map(source => {
     const definition = classContext?.classContent[source.classSlug];
     const exact = classContextReady && definition?.id === source.parentPin.contentId && definition.version === source.parentPin.version

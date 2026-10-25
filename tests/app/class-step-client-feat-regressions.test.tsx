@@ -7,6 +7,8 @@ import type { ContentEntry } from "@/components/builder/content-browser";
 import type { ClassPreviewModalProps } from "@/components/builder/class-preview-modal";
 import type { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices, UsableFeatOption } from "@/lib/types/character";
+import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
+import { ancestryHpFixture } from "../fixtures/ancestry-hit-points";
 
 const mocks = vi.hoisted(() => ({
   updateCharacter: vi.fn(),
@@ -164,6 +166,18 @@ function deferred<T>() {
 describe("ClassStepClient feat regressions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+  it("passes the exact saved ancestry bonus and complete evidence to the class sidebar", () => {
+    const f = ancestryHpFixture(), definition = { ...f.classRef.content_definitions, name: "Barbarian", effects: [] };
+    const schema = { ability_scores: ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
+      .map(slug => ({ slug, name: slug, abbr: slug.slice(0, 3) })),
+      proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
+    render(<ClassStepClient characterId={f.character.id} character={{ ...f.character, name: "Hill control", state: {} }}
+      classes={[definition]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={f.refs as ComponentProps<typeof ClassStepClient>["contentRefs"]}
+      schema={schema} classRolesAvailable saveAction={vi.fn()} asiEvidence={{ status: "complete", character_id: f.character.id,
+        system_id: f.character.system_id, refs: f.refs as ContentRefWithContent[], grants: [] }} />);
+    expect(currentStatPreview.classContext?.ancestryHitPoints).toEqual({ status: "available", bonus: 3 });
+    expect(currentStatPreview.classContext?.originalOccurrenceId).toBe(f.character.choices.classes![0].occurrence_id);
   });
   it("passes saved equipment effects and derived state to the actual sidebar instead of stale parent equipment fields", () => {
     const equipmentPreview = { effects: [{ type: "mechanical" as const, stat: "armor_class", op: "formula" as const,

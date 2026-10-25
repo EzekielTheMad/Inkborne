@@ -5,6 +5,8 @@ import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EffectiveCastingSource } from "@/lib/spells/effective-sources";
 import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
 import { hpId, subclassHpFixture } from "../../fixtures/subclass-hit-points";
+import { ancestryHpFixture } from "../../fixtures/ancestry-hit-points";
+import { resolveAncestryHitPointBonus } from "@/lib/character/ancestry-hit-points";
 
 // Minimal schema for testing
 const mockSchema: SystemSchemaDefinition = {
@@ -55,6 +57,17 @@ describe("StatPreview", () => {
     f.subclassRef.choice_source = "unowned";
     rendered.rerender(<StatPreview baseStats={{ ...base, constitution: 15 }} effects={[]} schema={schema} level={3} sources={sources}
       classContext={{ ...context, subclassHitPoints: resolveSubclassHitPointBonus(f.character, f.refs) }} />);
+    expect(valueFor(document.body, "Hit Point Maximum")).toBe("Unavailable");
+  });
+
+  it("shows Hill Dwarf HP38 and refuses unavailable ancestry evidence", () => {
+    const f = ancestryHpFixture(), context = { available: true, choices: f.character.choices,
+      classContent: { barbarian: f.classRef.content_definitions }, hpRule: "free_choice" as const,
+      originalOccurrenceId: hpId(103), castingSources: [], ancestryHitPoints: resolveAncestryHitPointBonus(f.character, f.refs, true) };
+    const rendered = render(<StatPreview baseStats={{ ...base, constitution: 16 }} effects={[]} schema={schema} level={3} sources={sources} classContext={context} />);
+    expect(valueFor(document.body, "Hit Point Maximum")).toBe("38");
+    rendered.rerender(<StatPreview baseStats={{ ...base, constitution: 16 }} effects={[]} schema={schema} level={3} sources={sources}
+      classContext={{ ...context, ancestryHitPoints: resolveAncestryHitPointBonus(f.character, f.refs, false) }} />);
     expect(valueFor(document.body, "Hit Point Maximum")).toBe("Unavailable");
   });
 

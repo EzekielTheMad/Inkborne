@@ -5,6 +5,7 @@ import { evaluate } from "@/lib/engine/evaluator";
 import { buildCharacterStructuredSources } from "@/lib/character/structured-sources";
 import { computeMaxHp } from "@/lib/character/max-hp";
 import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
+import { resolveAncestryHitPointBonus } from "@/lib/character/ancestry-hit-points";
 import { resolveCharacterChoiceEffects } from "@/lib/character/choice-effects";
 import { originalClassOccurrence } from "@/lib/character/builder-class-roles";
 import { collectActiveEffects } from "@/lib/active-effects/helpers";
@@ -101,16 +102,18 @@ export function planDurableHitDie(rawSnapshot: unknown, rawRequest: unknown, inp
     const rule = snapshot.system.schema_definition.hp_rule === undefined ? "free_choice" : hpRuleSchema.parse(snapshot.system.schema_definition.hp_rule);
     const hpRolls = snapshot.character.choices.hp_rolls;
     const subclassHitPoints = resolveSubclassHitPointBonus(snapshot.character, refs);
-    if (subclassHitPoints.status !== "available") return reject("invalid_mechanics");
+    const ancestryHitPoints = resolveAncestryHitPointBonus(snapshot.character, refs, true);
+    if (subclassHitPoints.status !== "available" || ancestryHitPoints.status !== "available") return reject("invalid_mechanics");
     // Preserve the older internal snapshot's array semantics only when no new
     // metadata applies. Positive bonuses require the same original-role proof
     // as their class roots, including the rolled-only first-level exemption.
-    const originalOccurrenceId = subclassHitPoints.bonus > 0 ? originalClassOccurrence(refs, snapshot.character.choices) : undefined;
-    if (subclassHitPoints.bonus > 0 && !originalOccurrenceId) return reject("invalid_mechanics");
+    const hasRootBonus = subclassHitPoints.bonus > 0 || ancestryHitPoints.bonus > 0;
+    const originalOccurrenceId = hasRootBonus ? originalClassOccurrence(refs, snapshot.character.choices) : undefined;
+    if (hasRootBonus && !originalOccurrenceId) return reject("invalid_mechanics");
     if (rule === "rolled_only" && classes.some((cls, index) => Array.from({ length: cls.level }, (_, level) => level + 1)
       .some(level => !((originalOccurrenceId === undefined ? index === 0 : cls.occurrence_id === originalOccurrenceId)
         && level === 1) && !Object.hasOwn(hpRolls, `${cls.slug}-${level}`)))) return reject("invalid_mechanics");
-    const maxHp = computeMaxHp(classes, classData, baseline.stats.constitution, hpRolls, rule, originalOccurrenceId, subclassHitPoints.bonus);
+    const maxHp = computeMaxHp(classes, classData, baseline.stats.constitution, hpRolls, rule, originalOccurrenceId, subclassHitPoints.bonus, ancestryHitPoints.bonus);
 
     const itemData = (item: HitDieSnapshot['inventory'][number]) => ({ ...item.resolved?.data, ...item.custom_data });
     const bodyArmor = snapshot.inventory.find(item => item.equipped && item.content_type === "armor" && itemData(item).armor_category !== "Shield");

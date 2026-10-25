@@ -58,6 +58,7 @@ export function computeMaxHp(
   hpRule: HpRule = "free_choice",
   originalOccurrenceId?: string | null,
   validatedSubclassBonus = 0,
+  validatedAncestryBonus = 0,
 ): number {
   if (classes.length === 0) return 0;
   const conMod = abilityMod(constitutionScore);
@@ -83,8 +84,8 @@ export function computeMaxHp(
     }
   });
 
-  // Subclass bonuses increase the maximum separately from the minimum +1 HP
-  // for each class level. Callers resolve them from exact saved root evidence.
-  if (!Number.isSafeInteger(validatedSubclassBonus) || validatedSubclassBonus < 0) return Number.NaN;
-  return total + validatedSubclassBonus;
+  // Root bonuses apply after the minimum +1 per class level. Each term has
+  // separate saved-source validation; ancestry counts total character levels.
+  if (![validatedSubclassBonus, validatedAncestryBonus].every(value => Number.isSafeInteger(value) && value >= 0)) return Number.NaN;
+  return total + validatedSubclassBonus + validatedAncestryBonus;
 }
