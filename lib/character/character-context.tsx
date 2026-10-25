@@ -287,6 +287,9 @@ export function CharacterProvider({
   onPrimaryColorChange,
   children,
 }: CharacterProviderProps) {
+  // The parent row is selected with its native revision. Never infer it from
+  // attached roles when a partial/legacy parent projection omits the column.
+  const parentActionRevision = (character as CharacterWithSystem & { action_revision?: string | number }).action_revision;
   const [state, setState] = useState<CharacterState>(initialState);
   const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
   const [portrait, setPortraitState] = useState<PortraitData>({
@@ -480,7 +483,8 @@ export function CharacterProvider({
         const spell = spells.find(entry => entry.id === id);
         if (!spell) throw new Error("Saved spell is unavailable.");
         assertMechanics();
-        const resolved = resolveCastingAbility(spell, { character: { id: character.id, system_id: character.system_id, choices: character.choices }, spells, contentRefs,
+        const resolved = resolveCastingAbility(spell, { character: { id: character.id, system_id: character.system_id, choices: character.choices,
+          level: character.level, action_revision: parentActionRevision }, contentSnapshotsComplete, spells, contentRefs,
           abilities: schema.ability_scores, abilityScores: evalResult.stats, proficiencyBonus: evalResult.computed.proficiency_bonus });
         if (resolved.status !== "available") throw new Error(resolved.reason);
         assertMechanics({ abilities: [resolved.profile.ability], computed: ["proficiency_bonus"] });
@@ -495,7 +499,7 @@ export function CharacterProvider({
       await updateCharacterSpell(id, updates);
       setSpells((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
     },
-    [spells, assertMechanics, character, contentRefs, schema, evalResult],
+    [spells, assertMechanics, character, contentRefs, contentSnapshotsComplete, parentActionRevision, schema, evalResult],
   );
 
   const removeSpell = useCallback(
@@ -619,10 +623,12 @@ export function CharacterProvider({
   // concentration + active effects) as ONE atomic patch, apply it, and hand
   // back the roll requests the dialog's result pane offers (design §4.3).
   const castingInputs = useMemo(() => ({
-    character: { id: character.id, system_id: character.system_id, choices: character.choices },
+    character: { id: character.id, system_id: character.system_id, choices: character.choices,
+      level: character.level, action_revision: parentActionRevision }, contentSnapshotsComplete,
     spells, contentRefs, abilities: schema.ability_scores,
     abilityScores: evalResult.stats, proficiencyBonus: evalResult.computed.proficiency_bonus,
-  }), [character.id, character.system_id, character.choices, spells, contentRefs, schema.ability_scores, evalResult.stats, evalResult.computed.proficiency_bonus]);
+  }), [character.id, character.system_id, character.choices, character.level, parentActionRevision, contentSnapshotsComplete,
+    spells, contentRefs, schema.ability_scores, evalResult.stats, evalResult.computed.proficiency_bonus]);
   // State may be unchanged while an acquisition, pin, evaluated ability or viewer
   // changes. Reject callbacks from a previous committed source as well as state.
   const castingSnapshot = useMemo(() => ({ inputs: castingInputs, isOwner, characterLevel: character.level }), [castingInputs, isOwner, character.level]);
@@ -646,6 +652,7 @@ export function CharacterProvider({
       if (slotResolution.status !== "available") throw new Error(slotResolution.reason);
       const resolved = getCastingAbility(spell);
       if (resolved.status !== "available") throw new Error(resolved.reason);
+      if (resolved.earnedRacial) throw new Error("Racial spell casting and once-per-long-rest use tracking are not available.");
       assertMechanics({ abilities: [resolved.profile.ability], computed: ["proficiency_bonus"] });
       const source = castSourceFromCharacterSpell(resolved.spell);
       if (!source) {

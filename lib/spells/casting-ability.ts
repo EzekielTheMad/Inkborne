@@ -5,6 +5,8 @@ import type { CharacterSpell } from "@/lib/types/spells";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { resolveCastingMath } from "./casting-math";
 import { z } from "zod";
+import { hasEarnedRacialSpellClaim } from "@/lib/schemas/racial-spells";
+import { resolveEarnedRacialSpell, type EarnedRacialCharacter, type EarnedRacialSpellInfo } from "@/lib/character/earned-racial-spells";
 
 /** Mathematical inputs only. The provider resolves acquisition/pin authority. */
 export interface ResolvedCastingProfile {
@@ -15,12 +17,13 @@ export interface ResolvedCastingProfile {
   spellDc: number;
 }
 export type CastingAbilityResolution =
-  | { status: "available"; spell: CharacterSpell; profile: ResolvedCastingProfile; classPin: { contentId: string; version: number }; subclassPin?: { contentId: string; version: number } }
-  | { status: "available"; spell: CharacterSpell; profile: ResolvedCastingProfile; racialPin: { contentId: string; version: number }; traitPin: { contentId: string; version: number } }
+  | { status: "available"; spell: CharacterSpell; profile: ResolvedCastingProfile; classPin: { contentId: string; version: number }; subclassPin?: { contentId: string; version: number }; earnedRacial?: never }
+  | { status: "available"; spell: CharacterSpell; profile: ResolvedCastingProfile; racialPin: { contentId: string; version: number }; traitPin: { contentId: string; version: number }; earnedRacial?: EarnedRacialSpellInfo }
   | { status: "unavailable"; reason: string };
 
 export interface CastingAbilityInput {
-  character: Pick<CharacterWithSystem, "id" | "system_id" | "choices">;
+  character: Pick<CharacterWithSystem, "id" | "system_id" | "choices"> & Pick<EarnedRacialCharacter, "level" | "action_revision" | "revision">;
+  contentSnapshotsComplete?: boolean;
   spells: readonly CharacterSpell[];
   contentRefs: ContentRefWithContent[];
   abilities: readonly Pick<AbilityScoreDefinition, "slug">[];
@@ -48,6 +51,14 @@ export function resolveCastingAbility(target: CharacterSpell, input: CastingAbil
     return unavailable("exact spell snapshot is missing or mismatched");
   }
   if (spell.source === "racial_trait") {
+    if (definition.data.level > 0 || hasEarnedRacialSpellClaim(spell)) {
+      const earned = resolveEarnedRacialSpell(spell, input.character, input.contentRefs, input.contentSnapshotsComplete === true);
+      if (earned.status !== "available") return unavailable("earned racial spell provenance is invalid or unearned");
+      const math = resolveCastingMath(earned.earnedRacial.ability, input.abilities, input.abilityScores, input.proficiencyBonus);
+      if (math.status !== "available") return unavailable(math.reason);
+      return { ...earned, spell, profile: { classSlug: spell.class_slug, ability: earned.earnedRacial.ability,
+        abilityModifier: math.abilityModifier, spellAttackBonus: math.spellAttackBonus, spellDc: math.spellDc } };
+    }
     const source = z.strictObject({ builder_source_pin_id: z.uuid(), builder_root_ref_id: z.uuid(),
       builder_choice_id: z.string().min(1).nullable(), spellcasting_ability: z.string().min(1) }).safeParse(spell.custom_data);
     if (!source.success || definition.data.level !== 0) return unavailable("racial cantrip provenance is invalid");

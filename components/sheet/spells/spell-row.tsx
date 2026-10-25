@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { CharacterSpell } from "@/lib/types/spells";
 import type { SpellCastability } from "@/lib/spells/casting";
+import type { ResolvedCastingProfile } from "@/lib/spells/casting-ability";
+import type { EarnedRacialSpellInfo } from "@/lib/character/earned-racial-spells";
 
 interface SpellRowProps {
   spell: CharacterSpell;
@@ -18,6 +20,8 @@ interface SpellRowProps {
   onTogglePrepared: () => void;
   onRemove: () => void;
   onCast?: () => void;
+  racialCasting?: { profile: ResolvedCastingProfile; earned: EarnedRacialSpellInfo };
+  racialSourceUnavailable?: boolean;
 }
 
 function formatSchool(school: string): string {
@@ -37,6 +41,8 @@ export function SpellRow({
   onTogglePrepared,
   onRemove,
   onCast,
+  racialCasting,
+  racialSourceUnavailable = false,
 }: SpellRowProps) {
   const [expanded, setExpanded] = useState(false);
   const data = (spell.content_definitions?.data ?? {}) as {
@@ -93,11 +99,12 @@ export function SpellRow({
           )}
           {school && <span className="text-xs text-muted-foreground shrink-0">{school}</span>}
           {components && <span className="text-xs text-muted-foreground shrink-0">{components}</span>}
-          {spell.always_prepared && (
+          {spell.always_prepared && !racialCasting && (
             <Badge variant="secondary" className="text-[9px] shrink-0">
               Always
             </Badge>
           )}
+          {racialCasting && <Badge variant="outline" className="text-[9px] shrink-0">Racial trait</Badge>}
           {spell.source === "bonus" && <Badge variant="outline" className="text-[9px] shrink-0">Bonus</Badge>}
           {spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum" && <Badge variant="outline" className="text-[9px] shrink-0">Arcanum · 1/long rest</Badge>}
           {data.ritual && (
@@ -142,6 +149,11 @@ export function SpellRow({
 
       {expanded && (
         <div className="border-t border-border/50 bg-card/30 px-3 py-2 space-y-1.5 text-xs">
+          {racialCasting && <>
+            <p>Charisma · save DC {racialCasting.profile.spellDc} · spell attack {racialCasting.profile.spellAttackBonus >= 0 ? "+" : ""}{racialCasting.profile.spellAttackBonus}.</p>
+            <p>Cast at 2nd level · once per long rest. Casting and use tracking are not available in this spell dialog.</p>
+          </>}
+          {racialSourceUnavailable && <p role="status">The saved racial spell source is unavailable. Reload the character or restore its saved racial content.</p>}
           {spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum" && <p>Mystic Arcanum uses its own once-per-long-rest feature. Casting and use tracking are not available in this spell dialog.</p>}
           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
             {data.casting_time && (

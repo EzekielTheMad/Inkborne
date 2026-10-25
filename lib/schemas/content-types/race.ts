@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CREATURE_SIZES } from "@/lib/types/taxonomies";
+import { earnedRacialSpellsSchema } from "@/lib/schemas/racial-spells";
 import {
   abilityScoreArraySchema,
   speedSchema,
@@ -26,6 +27,7 @@ export const raceDataSchema = z.object({
   // Phase 1 mechanical fields
   scores: abilityScoreArraySchema.optional(),
   ability_score_representation: abilityScoreRepresentationSchema.optional(),
+  earned_racial_spells: earnedRacialSpellsSchema.optional(),
   scorestxt: z.string().optional(),
   speed_detail: speedSchema.optional(),
   vision: z.array(visionEntrySchema).default([]),

@@ -39,7 +39,7 @@ interface PageProps {
 const SNAPSHOT_FIELDS = `
   content_id, version, system_id_snapshot, content_type_snapshot,
   slug_snapshot, name_snapshot, data_snapshot, effects_snapshot,
-  source_snapshot, scope_snapshot, owner_id_snapshot
+  source_snapshot, scope_snapshot, owner_id_snapshot, created_at
 `;
 const INVENTORY_WITH_VERSION_SELECT =
   `*, content_versions!character_inventory_content_version_fkey(${SNAPSHOT_FIELDS})`;

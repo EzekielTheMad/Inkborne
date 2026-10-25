@@ -15,6 +15,7 @@ import {
   type BuildActiveEffectOptions,
 } from "@/lib/active-effects/helpers";
 import { parseSpellDuration } from "@/lib/spells/duration";
+import { hasEarnedRacialSpellClaim } from "@/lib/schemas/racial-spells";
 
 // ---------------------------------------------------------------------------
 // Spell casting — pure domain helpers (design §4, T5).
@@ -208,6 +209,8 @@ export function getSpellCastability(
 ): SpellCastability {
   const data = spell.content_definitions?.data as CastSpellData | undefined;
   if (!data || typeof data.level !== "number") return "none";
+  // Earned racial spells have no ordinary-slot or automatic use-tracking path.
+  if (hasEarnedRacialSpellClaim(spell) || spell.source === "racial_trait" && data.level > 0) return "none";
   // Arcanum has a separate once-per-long-rest payment. The ordinary slot
   // dialog must not spend an unrelated multiclass slot for this acquisition.
   if (spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum") return "none";
@@ -233,6 +236,7 @@ export function isRitualEligible(
   casterInfo: CasterInfo,
 ): boolean {
   const data = spell.content_definitions?.data as CastSpellData | undefined;
+  if (hasEarnedRacialSpellClaim(spell) || spell.source === "racial_trait" && (data?.level ?? 0) > 0) return false;
   if (data?.ritual !== true) return false;
   if (spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "arcanum") return false;
   if (spell.source === "bonus" && spell.custom_data?.builder_bonus_mode === "ritual") return true;

@@ -17,6 +17,8 @@ export interface CharacterSpell {
   always_prepared: boolean;
   in_spellbook: boolean;
   source: "selection" | "bonus" | "feature" | "feat" | "item" | "racial_trait";
+  /** Native grant ownership is explicit on positive earned racial rows. */
+  spell_grant_id?: string | null;
   custom_data: Record<string, unknown> | null;
   created_at: string;
   content_definitions?: ParsedContentDefinition | null;

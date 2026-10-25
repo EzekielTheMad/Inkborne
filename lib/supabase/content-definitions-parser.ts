@@ -4,6 +4,7 @@ import { contentDefinitionSchema } from "@/lib/schemas/content";
 import { parseContentByType } from "@/lib/schemas/content-types";
 import type { Effect } from "@/lib/types/effects";
 import { ancestryResistanceDeclarationsSupported } from "@/lib/character/ancestry-defenses";
+import { infernalLegacyDeclarationsSupported } from "@/lib/schemas/racial-spells";
 
 /**
  * A content definition whose database envelope and type-specific payload have
@@ -199,8 +200,12 @@ export function parseContentVersionSnapshot(
     console.error(`[content-versions] Unsupported ancestry declaration for ${snapshot.data.content_id}`);
     return null;
   }
+  if (!infernalLegacyDeclarationsSupported(snapshot.data.content_type_snapshot, snapshot.data.slug_snapshot, snapshot.data.effects_snapshot)) {
+    console.error(`[content-versions] Unsupported Infernal Legacy declaration for ${snapshot.data.content_id}`);
+    return null;
+  }
 
-  return parseContentDefinition({
+  const parsed = parseContentDefinition({
     id: snapshot.data.content_id,
     system_id: snapshot.data.system_id_snapshot,
     content_type: snapshot.data.content_type_snapshot,
@@ -212,8 +217,8 @@ export function parseContentVersionSnapshot(
     scope: snapshot.data.scope_snapshot,
     owner_id: snapshot.data.owner_id_snapshot,
     version: snapshot.data.version,
-    version_created_at: snapshot.data.created_at,
   });
+  return parsed === null ? null : { ...parsed, ...(snapshot.data.created_at === undefined ? {} : { version_created_at: snapshot.data.created_at }) };
 }
 
 /** Parse a PostgREST to-one snapshot relationship. */

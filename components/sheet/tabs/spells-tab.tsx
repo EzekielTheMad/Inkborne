@@ -34,7 +34,7 @@ function levelLabel(level: number): string {
 
 export function SpellsTab() {
   const { character } = useCharacter();
-  const { casterInfo, spells, slotResolution, updateSpell, removeSpell } = useSpells();
+  const { casterInfo, spells, slotResolution, updateSpell, removeSpell, getCastingAbility } = useSpells();
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [castTarget, setCastTarget] = useState<{
     spell: CharacterSpell;
@@ -129,12 +129,17 @@ export function SpellsTab() {
                   const caster = casterInfo.classes.find(caster => caster.slug === spell.class_slug);
                   const validMath = caster?.castingMath?.status !== "unavailable";
                   const castability = slotResolution?.status === "available" && validMath ? getSpellCastability(spell, casterInfo) : "none";
+                  const racialSource = spell.source === "racial_trait" ? getCastingAbility(spell) : null;
+                  const racialCasting = racialSource?.status === "available" && racialSource.earnedRacial
+                    ? { profile: racialSource.profile, earned: racialSource.earnedRacial } : undefined;
                   return (
                     <SpellRow
                       key={spell.id}
                       spell={spell}
                       allowPrepareToggle={slotResolution?.status === "available" && validMath && !!caster?.prepared}
                       castability={castability}
+                      racialCasting={racialCasting}
+                      racialSourceUnavailable={racialSource?.status === "unavailable"}
                       onTogglePrepared={() =>
                         updateSpell(spell.id, { is_prepared: !spell.is_prepared })
                       }

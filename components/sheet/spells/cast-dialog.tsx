@@ -115,17 +115,18 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
 
   const sourceResolution = getCastingAbility(spell);
   const profile = sourceResolution.status === "available" ? sourceResolution.profile : null;
+  const earnedRacial = sourceResolution.status === "available" ? sourceResolution.earnedRacial : undefined;
   const resolvedSpell = sourceResolution.status === "available" ? sourceResolution.spell : spell;
   const data = (resolvedSpell.content_definitions?.data ?? {}) as CastSpellData;
   const spellLevel = data.level ?? 0;
   const isCantrip = spellLevel === 0;
 
-  const slotOptions = isCantrip || slotResolution?.status !== "available"
+  const slotOptions = earnedRacial || isCantrip || slotResolution?.status !== "available"
     ? []
     : getEligibleSlotOptions(spellLevel, maxSlots, slotState, pactSlotLevel);
 
   const ritualEligible =
-    castability === "ritual-only" || isRitualEligible(resolvedSpell, casterInfo);
+    !earnedRacial && (castability === "ritual-only" || isRitualEligible(resolvedSpell, casterInfo));
 
   const [selectedKey, setSelectedKey] = useState<string | null>(
     () => getDefaultSlotOption(slotOptions)?.key ?? null,
@@ -148,10 +149,10 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     slotOptions.find((o) => o.key === selectedKey && o.free > 0) ?? null;
   const noSlotsAvailable = !isCantrip && !slotOptions.some((o) => o.free > 0);
   const canCast =
-    isOwner && profile !== null && slotResolution?.status === "available" && (isCantrip || ritual || (selectedOption !== null && !noSlotsAvailable));
+    isOwner && !earnedRacial && profile !== null && slotResolution?.status === "available" && (isCantrip || ritual || (selectedOption !== null && !noSlotsAvailable));
 
   // --- Preview at the currently-selected cast level ---
-  const previewLevel = isCantrip
+  const previewLevel = earnedRacial ? earnedRacial.castLevel : isCantrip
     ? character.level
     : ritual
       ? spellLevel
@@ -234,6 +235,8 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
             <> Scales with character level (currently level {character.level}).</>
           )}
         </p>
+      ) : earnedRacial ? (
+        <p role="status" className="text-xs text-muted-foreground">Racial trait · cast at 2nd level · once per long rest. Casting and use tracking are not available in this dialog.</p>
       ) : (
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">

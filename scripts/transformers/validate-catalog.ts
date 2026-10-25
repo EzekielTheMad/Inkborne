@@ -29,6 +29,13 @@ export function validateSrdCatalog(entries: readonly TransformedContent[]): Tran
   for (const entry of normalized) {
     const data = entry.data;
     if (["race", "subrace"].includes(entry.content_type)) for (const slug of list(data.traits)) check(entry, "trait", slug);
+    if (entry.content_type === "race" && data.earned_racial_spells) {
+      if (entry.slug !== "tiefling") throw Error("Earned racial spells require the reviewed Tiefling root");
+      const policy = data.earned_racial_spells as { source_trait: string; grants: Array<{ spell: string }> };
+      check(entry, "trait", policy.source_trait);
+      for (const grant of policy.grants) check(entry, "spell", grant.spell);
+      if (list(data.traits).filter(slug => slug === policy.source_trait).length !== 1) throw Error("Earned racial spells require their unique mandatory trait");
+    }
     if (entry.content_type === "race") for (const slug of list(data.subraces)) check(entry, "subrace", slug);
     if (entry.content_type === "subrace") check(entry, "race", data.parent_race);
     if (["class", "subclass"].includes(entry.content_type)) {
