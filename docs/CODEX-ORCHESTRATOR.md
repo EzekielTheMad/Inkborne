@@ -4,6 +4,17 @@ Updated 2026-10-24 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 
 ## Resume and ownership
 
+**Current work in progress — 2026-10-24 America/Phoenix:** the user selected
+the current **M1/R06 builder queue**, rather than roadmap M1/R01–R04. The reviewed
+Fiend-only historical update is integrated through `63899a6`; browser fixture
+corrections are through `08d1352`. Source checks pass; actual acceptance remains
+pending. Eight complete caster stories are prepared, with a discovered Draconic
+HP/AC repair isolated in workers. Continue this queue through its remaining
+local acceptance work. [Current evidence and next actions](handoffs/2026-10-24-builder-correction-and-casters.md).
+The disposable backend is being rebuilt after preserved fixture failures;
+consult the external runtime state and process receipts before starting anything.
+Vercel stays unchanged, global gates closed and M7 paused.
+
 **Ordinary builder saves recover after lost responses and reload through
 `0f1a4e6`.** All six steps retain the complete account/character-scoped operation
 before sending, resolve or retry only the original intent, and clear it only

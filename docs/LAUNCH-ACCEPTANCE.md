@@ -2,6 +2,21 @@
 
 ## Active continuation — 2026-10-24 UTC
 
+### Current builder correction and complete caster work — in progress
+
+The user explicitly selected continuation through the current **M1/R06 builder
+queue**, preserving roadmap M1's separate meaning. Fiend's explicit per-character
+v1→v2 review/update and exact stale-review resolution are integrated through
+`63899a6`; the ordinary lost-response checkpoint below remains accepted. The
+correction's focused UI/action/protocol sweep passes **137 tests**, native
+companion tests pass **23**, and integrated typecheck/zero-warning lint pass.
+The actual local app has proved immutable v1 preservation and an atomic v2
+publication without character changes, but its complete recovery walkthrough is
+still pending after two preserved test-fixture failures. This is not actual-flow
+acceptance yet. Eight complete caster walkthroughs are prepared; a missing
+Draconic HP/AC benefit is being repaired in isolated workers before acceptance.
+[Current sources, evidence and remaining work](handoffs/2026-10-24-builder-correction-and-casters.md).
+
 ### Actual application character builder save/reload
 
 **Latest bounded checkpoint: `0f1a4e6`.** All six ordinary builder steps retain
