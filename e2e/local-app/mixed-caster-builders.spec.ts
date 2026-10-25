@@ -188,7 +188,7 @@ async function inspectSheet(page: Page, story: Story, paladinLevel: 1 | 2, phase
   for (const text of ["Cantrips: 6/6", "Ordinary Spells Known: 6/6", ...(paladinLevel === 2 ? ["Prepared: 4/4"] : [])]) await expect(page.getByText(text, { exact: true }).filter({ visible: true })).toBeVisible();
   await expect(page.getByText(/^Save DC\s*14$/).filter({ visible: true })).toBeVisible(); await expect(page.getByText(/^Attack\s*\+6$/).filter({ visible: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mark 1st slot used", exact: true }).filter({ visible: true })).toHaveCount(paladinLevel === 2 ? 3 : 2);
-  await expect(page.getByRole("button", { name: "Mark BigInt(2)d slot used", exact: true }).filter({ visible: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Mark 2nd slot used", exact: true }).filter({ visible: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Mark Pact slot used", exact: true }).filter({ visible: true })).toHaveCount(2);
   for (const owner of ["Sorcerer", "Warlock"] as const) for (const name of [...plans[owner].cantrips, ...plans[owner].spells]) {
     const replaced = phase === "concurrent" && (name === "Shield" || name === "Charm Person"); await expect(page.getByText(name, { exact: true }).filter({ visible: true })).toHaveCount(replaced ? 0 : 1);
@@ -199,7 +199,7 @@ async function inspectSheet(page: Page, story: Story, paladinLevel: 1 | 2, phase
   // from the two dots. No cast, slot spend, resource or state write is made.
   await page.getByRole("button", { name: "Cast Scorching Ray", exact: true }).click(); const dialog = page.getByRole("dialog", { name: "Cast: Scorching Ray", exact: true });
   await expect(dialog).toContainText("Cast as Warlock (Charisma)."); await expect(dialog).toContainText("Ranged spell attack +6");
-  await expect(dialog.getByRole("radio", { name: /^Pact BigInt(2)d/ })).toBeVisible(); await expect(dialog.getByRole("radio")).toHaveCount(1); await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog.getByRole("radio", { name: /^Pact 2nd/ })).toBeVisible(); await expect(dialog.getByRole("radio")).toHaveCount(1); await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
 }
 async function readback(info: TestInfo, story: Story, label: string, paladinLevel: 1 | 2 = 2, phase: Phase = "baseline"): Promise<Native> {
   const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG; if (!file || !uuid.test(story.id)) throw Error("Local native evidence configuration required");
