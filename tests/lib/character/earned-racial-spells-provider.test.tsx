@@ -73,13 +73,13 @@ describe("earned racial source in the actual provider and spell surfaces", () =>
     fireEvent.click(screen.getAllByRole("button", { name: /Hellish Rebuke/ })[0]);
     expect(screen.getByText(/Charisma · save DC 11 · spell attack \+3/)).toBeInTheDocument();
     expect(screen.getByText(/Cast at 2nd level · once per long rest/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Cast Hellish Rebuke", exact: true })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cast Hellish Rebuke" })).not.toBeInTheDocument();
     expect(rpc).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled();
   });
   it("disables a forced ordinary cast dialog without exposing unrelated slot or ritual controls", () => {
     fixture(); fireEvent.click(screen.getByRole("button", { name: "Inspect racial spell" }));
     expect(screen.getByText(/Racial trait · cast at 2nd level · once per long rest/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cast", exact: true })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cast" })).toBeDisabled();
     expect(screen.queryByRole("radiogroup", { name: "Spell slot level" })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(rpc).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled();

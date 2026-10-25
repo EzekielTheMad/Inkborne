@@ -18,7 +18,7 @@ interface ApiRace {
   language_desc: string;
   traits: Array<{ index: string; name: string }>;
   subraces: Array<{ index: string; name: string }>;
-  starting_proficiencies: Array<{ index: string; name: string }>;
+  starting_proficiencies?: Array<{ index: string; name: string }>;
   starting_proficiency_options?: {
     choose: number;
     from: { options: Array<{ item: { index: string; name: string } }> };

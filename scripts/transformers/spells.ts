@@ -1,6 +1,12 @@
 import { fetchAllFromApi, buildContentEntry, expandAbilityAbbreviation } from "./common";
 import type { TransformedContent } from "./common";
 
+interface ApiSpellDamage {
+  damage_type: { index: string; name: string };
+  damage_at_slot_level?: Record<string, string>;
+  damage_at_character_level?: Record<string, string>;
+}
+
 interface ApiSpell {
   index: string;
   name: string;
@@ -15,11 +21,7 @@ interface ApiSpell {
   casting_time: string;
   level: number;
   attack_type?: string;
-  damage?: {
-    damage_type: { index: string; name: string };
-    damage_at_slot_level?: Record<string, string>;
-    damage_at_character_level?: Record<string, string>;
-  };
+  damage?: ApiSpellDamage | ApiSpellDamage[];
   heal_at_slot_level?: Record<string, string>;
   dc?: {
     dc_type: { index: string; name: string };
@@ -35,10 +37,13 @@ interface ApiSpell {
 }
 
 export function transformSpellEntry(apiSpell: ApiSpell): TransformedContent {
+  // Cached 2014 responses also contain damage arrays. Retain the existing
+  // neutral array output; expanding multi-part damage is separate reviewed work.
+  const damageObject = Array.isArray(apiSpell.damage) ? undefined : apiSpell.damage;
   const damage = apiSpell.damage
     ? {
-        type: apiSpell.damage.damage_type?.index ?? null,
-        dice_at_slot_level: apiSpell.damage.damage_at_slot_level ?? apiSpell.damage.damage_at_character_level ?? {},
+        type: damageObject?.damage_type?.index ?? null,
+        dice_at_slot_level: damageObject?.damage_at_slot_level ?? damageObject?.damage_at_character_level ?? {},
       }
     : null;
 

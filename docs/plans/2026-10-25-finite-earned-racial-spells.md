@@ -61,6 +61,11 @@ Charisma, fixed cast level and once-per-long-rest text is descriptive only. No
 resource metadata, use counters, rest behavior or new CastChoice is introduced.
 The separate R09 authority cohort is not expanded.
 
+The genuine cached spell API uses an array damage payload. This checkpoint only
+makes the importer's input type truthful and preserves its existing neutral
+array output (`type: null`, empty dice map). Interpreting multi-part damage remains
+a separate source finding; this does not add casting or damage execution.
+
 Publish only race/tiefling v2 after a genuine app-created old-v1 control. Derive
 from the current accepted catalog chain, preserving Draconic and Hill Dwarf
 corrections. Definitions stay constant and versions increase by one. Preserve all

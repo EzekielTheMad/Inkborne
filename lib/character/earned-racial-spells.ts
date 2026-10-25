@@ -2,6 +2,7 @@ import { z } from "zod";
 import { earnedRacialSpellsSchema, earnedRacialSpellSourceSchema, infernalLegacyDeclarationsSupported } from "@/lib/schemas/racial-spells";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { CharacterSpell } from "@/lib/types/spells";
+import type { Effect } from "@/lib/types/effects";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import { builderClassRoleSchema, classRoleForRef, originalClassOccurrence } from "./builder-class-roles";
 import { classRoleRevisionSchema } from "./class-role-effects-schema";
@@ -66,8 +67,9 @@ export function resolveEarnedRacialSpell(spell: CharacterSpell, character: Earne
     || (trait.content_definitions.data.subraces !== undefined && (!Array.isArray(trait.content_definitions.data.subraces)
       || trait.content_definitions.data.subraces.length !== 0))
     || !infernalLegacyDeclarationsSupported("trait", "infernal-legacy", trait.content_definitions.effects)) return unavailable;
-  const abilities = trait.content_definitions.effects.filter(effect => effect.type === "grant" && effect.stat === "spellcasting_ability");
-  const fixedSpells = trait.content_definitions.effects.filter(effect => effect.type === "grant" && effect.stat === "spell");
+  const traitEffects: readonly Effect[] = trait.content_definitions.effects;
+  const abilities = traitEffects.filter(effect => effect.type === "grant" && effect.stat === "spellcasting_ability");
+  const fixedSpells = traitEffects.filter(effect => effect.type === "grant" && effect.stat === "spell");
   if (abilities.length !== 1 || abilities[0].type !== "grant" || abilities[0].value !== "charisma"
     || fixedSpells.length !== 1 || fixedSpells[0].type !== "grant" || fixedSpells[0].value !== "thaumaturgy") return unavailable;
 

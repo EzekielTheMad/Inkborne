@@ -7,6 +7,12 @@ import { validateSrdCatalog } from "@/scripts/transformers/validate-catalog";
 import { infernalInputs } from "../fixtures/earned-racial-spells";
 
 describe("meaningful immutable Tiefling root publication", () => {
+  it("retains the existing neutral array-damage output without altering genuine source bytes", () => {
+    const before = JSON.stringify(infernalInputs.spells);
+    expect(transformSpellEntry(infernalInputs.spells[1]).data.damage).toEqual({ type: null, dice_at_slot_level: {} });
+    expect(transformSpellEntry(infernalInputs.spells[0]).data.damage).toEqual({ type: null, dice_at_slot_level: {} });
+    expect(JSON.stringify(infernalInputs.spells)).toBe(before);
+  });
   it("adds the reviewed policy to the root while preserving genuine inputs and old trait effects", () => {
     const inputs = structuredClone(infernalInputs), before = JSON.stringify(inputs), oldTrait = transformTraitEntry(inputs.trait);
     const root = transformRaceEntry(inputs.tiefling, { trait: inputs.trait, spells: inputs.spells });
