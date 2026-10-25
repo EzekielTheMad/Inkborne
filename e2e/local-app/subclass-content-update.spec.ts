@@ -1,4 +1,4 @@
-import { test, expect, type Locator, type Page, type TestInfo } from "@playwright/test";
+import { test, expect, type Browser, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -7,7 +7,8 @@ import { dirname, resolve } from "node:path";
 const pendingPrefix = "inkborne:pending-builder-step:v1:";
 const reviewName = "Fiend content update review";
 const warning = "Your saved Fiend content uses an earlier spell-list version. Your choices are preserved. Correct expanded spell choices require a reviewed content-version update.";
-type Settings = { appOrigin: string; supabaseOrigin: string; owner: { email: string; password: string; id: string } };
+type Account = { email: string; password: string; id: string };
+type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account };
 type Pending = { account_id: string; intent: { contract_version: number; operation_id: string; character_id: string; command: string; fields: Record<string, unknown> } };
 type Native = {
   characterId: string; actorId: string; actionRevision: string; level: number; choices: Record<string, unknown>;
@@ -37,7 +38,10 @@ async function settings(): Promise<Settings> {
     const url = new URL(origin);
     if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.origin !== origin) throw Error("Content update stories require explicit local loopback origins");
   }
-  if (!config.owner?.email || !config.owner.password || !/^[0-9a-f-]{36}$/.test(config.owner.id)) throw Error("Disposable owner required");
+  for (const account of [config.owner, config.other]) {
+    if (!account?.email || !account.password || !/^[0-9a-f-]{36}$/.test(account.id)) throw Error("Disposable verification accounts required");
+  }
+  if (config.owner.id === config.other.id) throw Error("Distinct disposable accounts required");
   return config;
 }
 async function save(page: Page, change: () => Promise<unknown>) {
@@ -187,7 +191,7 @@ function actionResult(body: string): Record<string, unknown> {
     try {
       const value: unknown = JSON.parse(line.slice(line.indexOf(":") + 1));
       if (value && typeof value === "object" && "status" in value
-        && ["applied", "replayed", "recorded", "rejected", "absent"].includes(String(value.status))) return value as Record<string, unknown>;
+        && ["applied", "replayed", "recorded", "rejected", "absent", "available"].includes(String(value.status))) return value as Record<string, unknown>;
     } catch { /* Ignore Flight metadata/module rows. Never log a response body. */ }
   }
   throw Error("A strict action outcome was not found in the actual app response");
@@ -256,7 +260,92 @@ function preserved(before: Native, after: Native) {
   expect(after.fiendSnapshots).toEqual(before.fiendSnapshots);
 }
 
-test("owner reviews historical Fiend content, recovers stale and applied responses, and preserves other saved sources", async ({ page, context }, info) => {
+async function foreignRefusal(page: Page, browser: Browser, story: Story, saved: Native) {
+  await page.goto(classUrl(story, story.controlId));
+  const panel = page.getByRole("region", { name: reviewName, exact: true });
+  const pathname = new URL(page.url()).pathname;
+  const [response] = await Promise.all([
+    page.waitForResponse(item => item.request().method() === "POST" && new URL(item.url()).pathname === pathname),
+    panel.getByRole("button", { name: "Review content update", exact: true }).click(),
+  ]);
+  expect(response.status()).toBe(200);
+  const available = actionResult(await response.text()) as { status: string; preview: { actor_id: string; character_id: string; fields: Record<string, unknown> } };
+  expect(available.status).toBe("available"); expect(available.preview.actor_id).toBe(story.config.owner.id);
+  expect(available.preview.character_id).toBe(story.controlId);
+  expect(available.preview.fields).toMatchObject({ expected_content_version: 1, target_content_version: 2,
+    content_id: saved.subclassRoots.find(root => root.slug === "fiend")!.contentId });
+  await expect(panel.getByRole("button", { name: "Confirm update for this character", exact: true })).toBeEnabled();
+  await panel.getByRole("button", { name: "Keep saved version", exact: true }).click();
+  await expect(panel.getByRole("button", { name: "Confirm update for this character", exact: true })).toHaveCount(0);
+
+  const configPath = process.env.INKBORNE_LOCAL_FLOW_CONFIG!;
+  const environment = JSON.parse(await readFile(resolve(dirname(configPath), "server-env.json"), "utf8"));
+  expect(environment.NEXT_PUBLIC_SUPABASE_URL).toBe(story.config.supabaseOrigin);
+  const apikey: string = environment.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (typeof apikey !== "string") throw Error("Local anonymous API key required; value withheld");
+  async function authenticate(account: Account) {
+    const result = await fetch(story.config.supabaseOrigin + "/auth/v1/token?grant_type=password", {
+      method: "POST", headers: { apikey, "Content-Type": "application/json" },
+      body: JSON.stringify({ email: account.email, password: account.password }), signal: AbortSignal.timeout(15000),
+    });
+    if (!result.ok) throw Error("Scoped local authentication failed; credentials and response withheld");
+    const session = await result.json();
+    if (typeof session.access_token !== "string") throw Error("Local JWT unavailable; response withheld");
+    const claims = JSON.parse(Buffer.from(session.access_token.split(".")[1], "base64url").toString("utf8"));
+    expect(claims.sub).toBe(account.id); expect(claims.role).toBe("authenticated");
+    expect(claims.session_id).toMatch(/^[0-9a-f-]{36}$/); expect(Number.isInteger(claims.exp)).toBe(true);
+    return { token: session.access_token as string, context: { context_version: 1, actor_id: account.id, session_id: claims.session_id as string,
+      jwt_expires_at: new Date(claims.exp * 1000).toISOString().replace(".000Z", ".000000Z") } };
+  }
+  const owner = await authenticate(story.config.owner), other = await authenticate(story.config.other);
+  async function rpc(token: string, name: string, input: Record<string, unknown>) {
+    const result = await fetch(story.config.supabaseOrigin + "/rest/v1/rpc/" + name, { method: "POST",
+      headers: { apikey, Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify(input), signal: AbortSignal.timeout(15000) });
+    return { http: result.status, body: await result.json() as Record<string, unknown> };
+  }
+  const previewInput = { p_character_id: story.controlId, p_subclass_ref_id: available.preview.fields.subclass_ref_id, p_target_content_version: 2 };
+  const ownerPreview = await rpc(owner.token, "character_builder_subclass_update_preview_v1", { ...previewInput, p_context: owner.context });
+  expect(ownerPreview.http).toBe(200); expect(ownerPreview.body).toEqual(available);
+  const original = saved.updateReceipts[0].request;
+  const recorded = await rpc(owner.token, "character_builder_subclass_update_resolution_v1", { p_context: owner.context, p_request: original });
+  expect(recorded).toEqual({ http: 200, body: { status: "recorded", receipt: saved.updateReceipts[0].receipt } });
+  const refusals: Array<{ rpc: string; context: string; http: number; code: unknown }> = [];
+  for (const [contextLabel, nativeContext] of [["other account", other.context], ["owner context mismatch", owner.context]] as const) {
+    for (const [name, input] of [
+      ["character_builder_subclass_update_preview_v1", previewInput],
+      ["character_builder_subclass_update_resolution_v1", { p_request: original }],
+      ["character_builder_command_v1", { p_request: original }],
+    ] as const) {
+      const denied = await rpc(other.token, name, { ...input, p_context: nativeContext });
+      if (denied.http === 200) throw Error("Foreign account access unexpectedly succeeded; stop verification");
+      expect(denied.http).toBe(403); expect(denied.body.code).toBe("42501");
+      refusals.push({ rpc: name, context: contextLabel, http: denied.http, code: denied.body.code });
+    }
+  }
+  const foreign = await browser.newContext();
+  try {
+    const allowed = new Set([story.config.appOrigin, story.config.supabaseOrigin]);
+    await foreign.route("**/*", route => {
+      const origin = new URL(route.request().url()).origin;
+      if (!allowed.has(origin)) { story.blockedOrigins.push(origin); return route.abort(); } return route.continue();
+    });
+    const foreignPage = await foreign.newPage(); foreignPage.on("pageerror", () => story.pageErrors.push("browser error in other account"));
+    try {
+      await foreignPage.goto(story.config.appOrigin + "/login");
+      await foreignPage.getByLabel("Email", { exact: true }).fill(story.config.other.email);
+      await foreignPage.getByLabel("Password", { exact: true }).fill(story.config.other.password);
+      await foreignPage.getByRole("button", { name: /sign in/i }).click();
+      await foreignPage.waitForURL(story.config.appOrigin + "/dashboard", { timeout: 60000 });
+    } catch { await foreignPage.close(); throw Error("Actual other-account sign-in failed; credentials withheld"); }
+    expect((await foreign.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
+    const inaccessible = await foreignPage.goto(`${story.config.appOrigin}/characters/${story.targetId}`);
+    expect(inaccessible?.status()).toBe(404);
+    await expect(foreignPage.getByText("This page could not be found.", { exact: true })).toBeVisible();
+  } finally { await foreign.close(); }
+  return { ownerControlPreview: available, ownerRecordedReceipt: recorded.body, foreignRouteStatus: 404, foreignRpcRefusals: refusals };
+}
+
+test("owner reviews historical Fiend content, recovers stale and applied responses, and preserves other saved sources", async ({ page, context, browser }, info) => {
   test.setTimeout(480000);
   const config = await settings();
   const story: Story = { config, targetId: "", controlId: "", blockedOrigins: [], pageErrors: [], snapshots: [], actions: [], actionsPath: info.outputPath("subclass-action-outcomes.json") };
@@ -345,7 +434,11 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
   await page.goto(`${config.appOrigin}/characters/${story.targetId}`);
   await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toHaveText(hpDisplay, { useInnerText: true });
   await page.getByRole("button", { name: "Inventory", exact: true }).click(); await expect(page.getByText("Pouch", { exact: true }).filter({ visible: true }).first()).toBeVisible();
-  await page.reload(); expect(await readback(info, story, "repeat-sheet-reload")).toEqual(selected);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toHaveText(hpDisplay, { useInnerText: true });
+  await page.getByRole("button", { name: "Inventory", exact: true }).click(); await expect(page.getByText("Pouch", { exact: true }).filter({ visible: true }).first()).toBeVisible();
+  const authorization = await foreignRefusal(page, browser, story, selected);
+  expect(await readback(info, story, "repeat-sheet-reload-and-foreign-refusal-no-write")).toEqual(selected);
   expect(story.blockedOrigins).toEqual([]); expect(story.pageErrors).toEqual([]);
   const output = info.outputPath("subclass-content-update.json");
   await writeFile(output, JSON.stringify({ actualApp: true, actualAuthCookies: true, actualPostgrest: true, characterWritesThroughAppOnly: true,
@@ -353,6 +446,6 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
     cancelNoWrite: true, staleOriginalTerminalProofReadOnly: true, sameCharacterFreshReview: true, lostAppliedResponseRecovered: true,
     appliedReceiptBeforeLaterStaleCheck: true, exactlyOneUpdateReceipt: true, ordinarySpellAllowancePreserved: true,
     targetId: story.targetId, controlId: story.controlId, staleOperationId: staleIntent.intent.operation_id, operationId: original.intent.operation_id,
-    snapshots: story.snapshots, actions: story.actions, blockedOrigins: story.blockedOrigins, pageErrors: story.pageErrors }, null, 2));
+    snapshots: story.snapshots, actions: story.actions, authorization, blockedOrigins: story.blockedOrigins, pageErrors: story.pageErrors }, null, 2));
   await info.attach("subclass-content-update", { path: output, contentType: "application/json" });
 });
