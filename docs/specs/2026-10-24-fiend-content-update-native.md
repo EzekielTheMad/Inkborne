@@ -10,9 +10,13 @@ old subclass ref/content/version, chosen higher current version, expected parent
 revision and native preview digest. The preview RPC verifies the actual signed
 actor/session through `begin_builder_step_v1`, takes the shared guard and parent
 lock, and returns a finite display summary without writing a capability or row.
-The digest binds the full parent/graph/order, raw old/new root snapshots, complete
-feature and spell dependency snapshots, and displayed consequences. Generated
-projection UUIDs are allocated only during confirmation.
+The digest binds the explicit parent mechanics (identity, owner, system,
+campaign, archive status, level, choices, state, base scores and action revision),
+full graph/order, raw old/new root snapshots, complete feature and spell
+dependency snapshots, and displayed consequences. Metadata-only edits such as a
+character rename do not invalidate this review. Confirmation captures the fresh
+whole parent and preserves its current metadata. Generated projection UUIDs are
+allocated only during confirmation.
 
 This first policy accepts only the genuine ten-spell Fiend list moving from
 `spellcastingExtra` to `spellcastingExpanded`. The old and new tiers must match;

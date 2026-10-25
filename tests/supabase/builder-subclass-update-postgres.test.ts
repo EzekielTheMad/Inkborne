@@ -35,7 +35,8 @@ const ref = (key: string, content: string, extra: Json = {}) => ({ id: key, char
 const fixtureSchema = `CREATE SCHEMA private;
     CREATE ROLE inkborne_hit_die_authority_owner NOLOGIN;
     CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN;
-    CREATE TABLE public.characters(id uuid PRIMARY KEY,user_id uuid,system_id uuid,campaign_id uuid,name text,level integer,choices jsonb,state jsonb,base_stats jsonb,action_revision bigint,archived boolean);
+    CREATE TABLE public.characters(id uuid PRIMARY KEY,user_id uuid,system_id uuid,campaign_id uuid,name text,level integer,choices jsonb,state jsonb,base_stats jsonb,action_revision bigint,archived boolean,
+      updated_at timestamptz DEFAULT '2026-10-23T00:00:00Z');
     CREATE TABLE public.content_versions(content_id uuid,version integer,name_snapshot text,slug_snapshot text,content_type_snapshot text,system_id_snapshot uuid,
       source_snapshot text,scope_snapshot text,owner_id_snapshot uuid,effects_snapshot jsonb,data_snapshot jsonb,created_at timestamptz,PRIMARY KEY(content_id,version));
     CREATE TABLE public.content_definitions(id uuid PRIMARY KEY,version integer,is_retired boolean DEFAULT false);
@@ -198,6 +199,17 @@ describe("explicit Fiend correction SQL boundary", () => {
     expect((await preview()).preview!.fields.preview_digest).not.toBe(before);
     await db.query("UPDATE public.character_inventory SET quantity=3 WHERE character_id=$1", [target]);
     expect((await preview()).preview!.fields.preview_digest).not.toBe(before);
+  });
+  it("keeps a reviewed intent valid across metadata-only edits and preserves the fresh metadata on commit", async () => {
+    const request = await intent();
+    await db.query("UPDATE public.characters SET name='Renamed notebook',updated_at='2026-10-24T12:00:00Z' WHERE id=$1", [target]);
+    const before = await state();
+    expect(before.parent).toMatchObject({ name: "Renamed notebook", action_revision: 10 });
+    expect(Date.parse((before.parent as Json).updated_at as string)).toBe(Date.parse("2026-10-24T12:00:00Z"));
+    expect((await preview()).preview!.fields).toEqual(request.fields);
+    expect(await state()).toEqual(before);
+    expect((await execute(request)).status).toBe("applied");
+    expect((await state()).parent).toMatchObject({ name: "Renamed notebook", action_revision: 11, updated_at: (before.parent as Json).updated_at });
   });
   it("applies once, preserves parent choices/state/HP/inventory and ordinary spell identity, then replays the old receipt", async () => {
     const request = await intent(), before = await state(); const result = await execute(request);

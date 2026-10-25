@@ -154,7 +154,13 @@ BEGIN
   fields:=pg_catalog.jsonb_build_object('class_slug','warlock','occurrence_id',occurrence->'id','subclass_ref_id',ref_id,
     'content_id',old_pin.content_id,'expected_content_version',old_pin.content_version,'target_content_version',target_version,
     'expected_action_revision',parent.action_revision::text);
-  digest_input:=pg_catalog.jsonb_build_object('contract_version',1,'parent',pg_catalog.to_jsonb(parent),'graph',graph,
+  -- Bind the parent mechanics reviewed here. Metadata-only edits do not advance
+  -- action_revision or change these consequences, and must not strand an exact
+  -- retained intent. The commit still captures/preserves the fresh whole parent.
+  digest_input:=pg_catalog.jsonb_build_object('contract_version',1,'parent',pg_catalog.jsonb_build_object(
+    'id',parent.id,'user_id',parent.user_id,'system_id',parent.system_id,'campaign_id',parent.campaign_id,
+    'archived',parent.archived,'level',parent.level,'choices',parent.choices,'state',parent.state,
+    'base_stats',parent.base_stats,'action_revision',parent.action_revision),'graph',graph,
     'order',(SELECT pg_catalog.to_jsonb(o) FROM private.character_projection_order_v1 o WHERE character_id=target),
     'old_snapshot',pg_catalog.to_jsonb(prior),'target_snapshot',pg_catalog.to_jsonb(desired),
     'old_features',old_features,'target_features',new_features,'spell_dependencies',dependencies,'fields',fields,
