@@ -8,8 +8,11 @@ Updated 2026-10-24 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEP
 the current **M1/R06 builder queue**, rather than roadmap M1/R01–R04. The reviewed
 Fiend-only historical update is integrated through `63899a6`; browser fixture
 corrections are through `08d1352`. Source checks pass; actual acceptance remains
-pending. Eight complete caster stories are prepared, with a discovered Draconic
-HP/AC repair isolated in workers. Continue this queue through its remaining
+pending. Eight complete caster stories are prepared. The reviewed Draconic
+HP/AC repair is integrated through `72ce5cf`, with test fixture fixes in
+`a4700ce`; 266 focused tests, typecheck and zero-warning lint pass. Its actual
+new-root publication, HP/AC and roll-retention acceptance remain pending.
+Continue this queue through its remaining
 local acceptance work. [Current evidence and next actions](handoffs/2026-10-24-builder-correction-and-casters.md).
 Actual verification is on a host-memory hold. Next, Chrome, the proxy and all
 five owned containers are stopped; protected config, volumes and networks are
@@ -35,9 +38,9 @@ complete playable caster drafts and broader combinations/concurrency. Enrolled
 writer/lifecycle fences and hosted/provider/backup-restore acceptance remain
 open. Global gates stay closed. Vercel unchanged; M1–M6/M5.5 precede M8 and
 M7/creature imports stay paused. Preserve the backup and every inherited worktree.
-Owned app/backend services, five containers, two networks, two volumes and three
-private credential files are removed; task ports are closed. Shared engine/cache
-and dependency junctions remain.
+That accepted ordinary-save checkpoint removed its owned runtime. The latest
+correction profile is instead stopped and preserved as described above. Shared
+engine/cache and dependency junctions remain.
 
 ### Prior Fiend and class-removal checkpoint
 

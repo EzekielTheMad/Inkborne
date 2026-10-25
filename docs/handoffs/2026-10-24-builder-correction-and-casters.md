@@ -119,7 +119,7 @@ Resume requires fresh headroom and explicit orchestration release, followed by
 honest complete actual acceptance and final cleanup. The user was asked to free
 roughly 8 GiB; code/review work continues meanwhile.
 
-## Isolated Draconic repair and next work
+## Integrated Draconic repair and next work
 
 Complete-caster source review found that Draconic Resilience lacks mechanical
 HP/AC support in the genuine prepared catalog. The level-three oracle remains
@@ -133,15 +133,23 @@ Exact frozen class-role/occurrence/subclass evidence and earned progression bind
 positive HP; absence retains historical zero, malformed positive evidence refuses.
 Native progression/removal clamps and sheet/preview/durable calculations must
 agree. This does not add a historical Draconic update command or enable a durable
-hit-die producer/gate. Native candidate `3ca8743` passes 32 focused tests; TS/source
-candidate `222b4dd`/`78a2f69` remains isolated pending its focused checks/review.
+hit-die producer/gate. Native worker `3ca8743` passes 32 focused tests and is
+integrated as `72ce5cf`. Reviewed TS/source worker `222b4dd`/`78a2f69` is integrated
+as `6c38cee`/`7937d51`.
 
 TS follow-ups `c0cd5cb`/`11cb7f4` retain one proved original class after array
 reordering and align rolled-only history with that proof. The original six-file
 sweep is 134 distinct green tests after one fixture-only repair; the affected
-two-file rerun passes 97. Gear-preview candidate `4e72090` reads exact equipped
-inventory snapshots for the class sidebar; its four-file tests are pending under
-the resource hold. The source shows an existing sheet shield-bonus omission;
+two-file rerun passes 97. Gear-preview worker `4e72090`, integrated as `65f2306`,
+reads exact equipped inventory snapshots for the class sidebar; all 40 checks
+in its four-file sweep pass. Main fixture-only fixes in `a4700ce` supply the real
+class display name and express stale gear state without duplicate object keys.
+The integrated twelve-file HP/gear/class/Fiend/recovery sweep passes **266 tests**
+in `local-draconic-integrated-20261025T052844Z` (29 seconds; 15 identities exited).
+Integrated typecheck and zero-warning lint pass in
+`local-creation-browser-check-20261025T052648Z` (51.2 seconds; eight identities
+exited). The preceding typecheck failures remain preserved in their receipts.
+The source shows an existing sheet shield-bonus omission;
 that remains an R07/R09 source finding without an actual-app reproduction and is
 not repaired or accepted by this bounded subclass change.
 
@@ -150,7 +158,12 @@ finite enrolled-parent companion/tests/plan. Independent design review caught
 background's two-write normalization and valid zero-write return; exact bounded
 proof sequences must preserve both existing behaviors and native revisions.
 Legacy prelocked RPCs need guard-before-parent adapters, while new seals must
-close at transaction end. No fence tests, installation or acceptance have run.
+close at transaction end. Independent source review caught and corrected an
+enrollment lookup that could be filtered by RLS. The draft now pins the admitted
+native postgres NOT SUPER/BYPASS posture, uses `row_security=off`, and faults on
+owner/attribute drift. Two initial focused harness attempts failed setup before
+assertions (reserved bootstrap-role demotion, then installer syntax); neither
+accepts this stage. No native installation or concurrency acceptance has run.
 
 Next: finish the Fiend actual recovery story; integrate/review/verify the
 Draconic repair; publish only its reviewed new root through the existing atomic
