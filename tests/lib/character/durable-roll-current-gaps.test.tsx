@@ -1,4 +1,4 @@
-import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
+import { providerAbilities, providerBase, providerSources, providerCharacterId, providerSystemId } from "../../fixtures/provider-mechanics";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { useEffect } from "react";
 import { act, render } from "@testing-library/react";
@@ -25,8 +25,8 @@ function Probe() {
   return null;
 }
 function Fixture() {
-  const character = { id: "local-character", system_id: "local-system", user_id: "local-owner", level: 2, state: baseline, choices: { classes: [{ slug: "fighter", level: 2 }] }, base_stats: providerBase, narrative: {} };
-  const refs = [pinnedSlotClass("fighter", 2, null, null)];
+  const character = { id: providerCharacterId, system_id: providerSystemId, user_id: "local-owner", level: 2, state: baseline, choices: { classes: [{ slug: "fighter", level: 2 }] }, base_stats: providerBase, narrative: {} };
+  const refs = [pinnedSlotClass("fighter", 2, null, null, providerCharacterId, providerSystemId)];
   return <CharacterProvider
     character={character as never}
     schema={{ ability_scores: providerAbilities, proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] } as never}

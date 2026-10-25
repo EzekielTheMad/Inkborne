@@ -1,4 +1,4 @@
-import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
+import { providerAbilities, providerBase, providerSources, providerCharacterId, providerSystemId } from "../../fixtures/provider-mechanics";
 import { useEffect, useState } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -32,8 +32,13 @@ function Probe({ target }: { target: CharacterSpell }) {
   return <><SpellHeader /><button onClick={() => setOpen(true)}>Inspect cast</button><CastDialog open={open} spell={target} castability="full" onClose={() => setOpen(false)} /></>;
 }
 function fixture(intelligence = 18, charisma = 10, options: { classSlug?: string; viewer?: boolean; missing?: boolean } = {}) {
-  const input = castingAbilityFixture(intelligence, charisma), target = input.spells.find(row => row.class_slug === (options.classSlug ?? "warlock"))!;
-  input.contentRefs = input.contentRefs.map((ref, index) => ({ ...ref, id: `c1111111-1111-4111-8111-${String(index + 1).padStart(12, "0")}`, feature_grant_id: null }));
+  const input = castingAbilityFixture(intelligence, charisma);
+  input.character = { ...input.character, id: providerCharacterId, system_id: providerSystemId };
+  input.spells = input.spells.map(row => ({ ...row, character_id: providerCharacterId,
+    content_definitions: { ...row.content_definitions!, system_id: providerSystemId } }));
+  input.contentRefs = input.contentRefs.map((ref, index) => ({ ...ref, id: `c1111111-1111-4111-8111-${String(index + 1).padStart(12, "0")}`,
+    character_id: providerCharacterId, feature_grant_id: null, content_definitions: { ...ref.content_definitions, system_id: providerSystemId } }));
+  const target = input.spells.find(row => row.class_slug === (options.classSlug ?? "warlock"))!;
   let schema = { ability_scores: providerAbilities, derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }], skills: [], proficiency_levels: [], resources: [], currencies: [], content_types: [], creation_steps: [], sheet_sections: [] };
   const provider = () => {
     const character = { ...input.character, name: "Original Multiclass Fixture", level: 6, state: structuredClone(stored), narrative: {}, base_stats: { ...providerBase, intelligence, charisma } };
@@ -125,7 +130,7 @@ describe("actual provider acquisition casting", () => {
     const random = vi.spyOn(Math, "random").mockReturnValue(0.999);
     try {
       await act(async () => { const rolling = rolls.rollWithPersistence(outcome.rollRequests[0], { abilities: ["charisma"], computed: ["proficiency_bonus"] }); expect(rolling.result.natural).toBe(20); await rolling.persistence; });
-      expect(insertRoll).toHaveBeenCalledWith("local-character", expect.objectContaining({ request: expect.objectContaining({ expression: "1d20+3" }), natural: 20, total: 23 }), { requireConfirmation: true });
+      expect(insertRoll).toHaveBeenCalledWith(providerCharacterId, expect.objectContaining({ request: expect.objectContaining({ expression: "1d20+3" }), natural: 20, total: 23 }), { requireConfirmation: true });
     } finally { random.mockRestore(); }
   });
 });

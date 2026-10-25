@@ -1,4 +1,4 @@
-import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
+import { providerAbilities, providerBase, providerSources, providerCharacterId, providerSystemId } from "../../fixtures/provider-mechanics";
 import { useEffect } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,7 +30,7 @@ function Probe({ dialogs }: { dialogs: boolean }) {
 }
 function fixture(refs: ContentRefWithContent[], choices = [{ slug: "paladin", level: 3 }], dialogs = false) {
   const level = choices.reduce((sum, entry) => sum + entry.level, 0);
-  const character = { id: "local-character", system_id: "local-system", user_id: "owner", name: "Local Caster", level, choices: { classes: choices }, state: {}, base_stats: providerBase, narrative: {} };
+  const character = { id: providerCharacterId, system_id: providerSystemId, user_id: "owner", name: "Local Caster", level, choices: { classes: choices }, state: {}, base_stats: providerBase, narrative: {} };
   return render(<CharacterProvider character={character as never}
     schema={schema as never} contentRefs={refs} contentSnapshotsComplete initialState={{ current_hp: 12, temp_hp: 0, spell_slots_used: { "1": 1, pact: 1 } }} initialInventory={[]} initialSpells={[]}
     classData={Object.fromEntries(refs.map(ref => [ref.content_definitions.slug, { slug: ref.content_definitions.slug, data: ref.content_definitions.data }])) as never}
@@ -39,26 +39,26 @@ function fixture(refs: ContentRefWithContent[], choices = [{ slug: "paladin", le
 beforeEach(() => { vi.clearAllMocks(); });
 describe("real provider slot evidence and action guards", () => {
   it("exposes one direct half-caster snapshot to tracker, rest and print", () => {
-    fixture([pinnedSlotClass("paladin", 3, "half", [3, 0, 0, 0, 0, 0, 0, 0, 0])]);
+    fixture([pinnedSlotClass("paladin", 3, "half", [3, 0, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId)]);
     expect(spells.slotResolution).toEqual({ status: "available", maxSlots: { "1": 3 }, pactSlotLevel: null });
     expect(screen.getByText("2/3")).toBeInTheDocument();
     expect(rest.canLongRest).toBe(true);
     expect(screen.getByRole("button", { name: "Print / Save PDF", hidden: true })).toBeEnabled();
   });
   it("resolves custom Pact Magic with one regular source from the same numbered snapshot", () => {
-    fixture([pinnedSlotClass("paladin", 3, "half", [3, 0, 0, 0, 0, 0, 0, 0, 0]), pinnedSlotClass("local-pact", 3, "pact", [0, 2, 0, 0, 0, 0, 0, 0, 0])], [{ slug: "paladin", level: 3 }, { slug: "local-pact", level: 3 }]);
+    fixture([pinnedSlotClass("paladin", 3, "half", [3, 0, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId), pinnedSlotClass("local-pact", 3, "pact", [0, 2, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId)], [{ slug: "paladin", level: 3 }, { slug: "local-pact", level: 3 }]);
     expect(spells.slotResolution).toEqual({ status: "available", maxSlots: { "1": 3, pact: 2 }, pactSlotLevel: 2 });
     expect(spells.pactSlotLevel).toBe(2);
     expect(screen.getByText("1/2")).toBeInTheDocument();
   });
   it("leaves valid noncasters able to execute a normal atomic rest", async () => {
-    fixture([pinnedSlotClass("fighter", 3, null, null)], [{ slug: "fighter", level: 3 }]);
+    fixture([pinnedSlotClass("fighter", 3, null, null, providerCharacterId, providerSystemId)], [{ slug: "fighter", level: 3 }]);
     expect(spells.slotResolution).toEqual({ status: "available", maxSlots: {}, pactSlotLevel: null });
     await act(async () => expect(await rest.longRest()).toBe(true));
     expect(updateCharacterState).toHaveBeenCalledTimes(1);
   });
   it.each(["missing", "duplicate", "malformed", "wrong-version"])("blocks cast/rest/tracker/print when %s evidence is unresolved", async kind => {
-    const ref = pinnedSlotClass("paladin", 3, "half", [3, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const ref = pinnedSlotClass("paladin", 3, "half", [3, 0, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId);
     if (kind === "wrong-version") ref.content_version = 2;
     if (kind === "malformed") (ref.content_definitions.data as { levels: unknown[] }).levels = [{ level: 3 }];
     fixture(kind === "missing" ? [] : kind === "duplicate" ? [ref, ref] : [ref], undefined, true);

@@ -1,4 +1,4 @@
-import { providerSources, providerPassiveFeature } from "../../fixtures/provider-mechanics";
+import { providerSources, providerPassiveFeature, providerCharacterId, providerSystemId } from "../../fixtures/provider-mechanics";
 import { stateCastingAcquisition } from "../../fixtures/casting-acquisitions";
 import type { CharacterSpell } from "@/lib/types/spells";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
@@ -62,9 +62,9 @@ const mockedAddInventoryItem = vi.mocked(addInventoryItem);
 const mockedAddSpell = vi.mocked(addCharacterSpell);
 
 const mockCharacter = {
-  id: "char-1",
+  id: providerCharacterId,
   user_id: "user-1",
-  system_id: "system-1",
+  system_id: providerSystemId,
   campaign_id: null,
   name: "Test Character",
   visibility: "private",
@@ -84,7 +84,7 @@ const mockCharacter = {
   narrative_rich: {},
   primary_color: null,
   game_systems: {
-    id: "system-1",
+    id: providerSystemId,
     name: "D&D 5e",
     slug: "dnd-5e",
     schema_definition: {} as unknown,
@@ -163,8 +163,11 @@ describe("<CharacterProvider> public hook surface", () => {
     if (!pin.system_id) throw new Error("Original race pin must retain its system");
     const baseline = evaluateSyntheticPin(pin);
     const maximum = computeMaxHp([{ slug: "fighter", level: 3 }], { fighter: { slug: "fighter", data: { hit_die: 8 } } }, baseline.stats.constitution);
-    const character = { ...mockCharacter, system_id: pin.system_id, level: 3, base_stats: raceParityBase };
+    const character = { ...mockCharacter, system_id: pin.system_id, level: 3, base_stats: raceParityBase,
+      choices: { classes: [], race: pin.slug } };
     const refs = [{ ...pinnedRaceRef(pin), character_id: character.id, feature_grant_id: null, created_at: "2026-10-12T16:00:00.000Z" }] as ContentRefWithContent[];
+    const sources = providerSources(character, refs);
+    expect(sources.ancestryDefenses).toEqual({ status: "available", dmgres: [] });
     const initial = { current_hp: 4, temp_hp: 0, active_effects: [{ id: "r06-active", name: "Synthetic temporary CON", slug: "custom", source: "custom",
       content_id: null, effects: [{ type: "mechanical", stat: "constitution", op: "add", value: 2 }],
       duration: { type: "hours", value: 1 }, concentration: false, applied_at: "2026-10-12T01:00:00Z", expires_at: null,
@@ -172,7 +175,7 @@ describe("<CharacterProvider> public hook surface", () => {
     function Probe() { const live = useCharacter(); return <p data-testid="r06-live">{live.evalResult.stats.constitution}:{live.maxHp}</p>; }
     render(<CharacterProvider character={character} schema={raceParitySchema}
       contentRefs={refs} contentSnapshotsComplete initialState={initial} initialInventory={[]} initialSpells={[]} classData={{}}
-      allEffects={pin.effects} baseStatsWithLevel={raceParityBase} structuredSources={providerSources(character, refs)}
+      allEffects={pin.effects} baseStatsWithLevel={raceParityBase} structuredSources={sources}
       isOwner isDm={false} hasSheet maxHp={maximum} primaryColor={null} onPrimaryColorChange={() => {}}><Probe /></CharacterProvider>);
     const once = mode === "imported" || mode === "declared-effects";
     expect(screen.getByTestId("r06-live")).toHaveTextContent(once ? "16:24" : "18:27");
@@ -249,7 +252,7 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/try that action again/i);
     await act(async () => { expect(await save!({ current_hp: maxHp - 3 })).toBe(true); });
     expect(screen.getByTestId("new-fighter-hp")).toHaveTextContent("9");
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { current_hp: 9 }, {});
+    expect(mockedUpdateState).toHaveBeenLastCalledWith(providerCharacterId, { current_hp: 9 }, {});
   });
 
   it("rejects a hit-die heal during pending UI damage before rolling, then heals confirmed HP on retry", async () => {
@@ -276,7 +279,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: /spend & roll/i })); });
     expect(screen.getByTestId("hp")).toHaveTextContent("13");
     expect(screen.getByTestId("spent")).toHaveTextContent("1");
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", expect.objectContaining({ current_hp: 13, hit_dice_spent: { fighter: 1 } }), {});
+    expect(mockedUpdateState).toHaveBeenLastCalledWith(providerCharacterId, expect.objectContaining({ current_hp: 13, hit_dice_spent: { fighter: 1 } }), {});
   });
 
   it.each(["shortRest", "longRest"] as const)("refuses %s computed from pending HP/resource edits and preserves an independent absolute edit", async (action) => {
@@ -391,7 +394,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => {
       screen.getByTestId("apply").click();
     });
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", { current_hp: 7 }, {});
+    expect(mockedUpdateState).toHaveBeenCalledWith(providerCharacterId, { current_hp: 7 }, {});
     expect(screen.getByTestId("apply").textContent).toBe("7");
   });
 
@@ -421,7 +424,7 @@ describe("<CharacterProvider> public hook surface", () => {
   it("useInventory().addItem appends the returned row to local inventory", async () => {
     mockedAddInventoryItem.mockResolvedValueOnce({
       id: "inv-1",
-      character_id: "char-1",
+      character_id: providerCharacterId,
       content_id: "potion-of-healing",
       name: "Potion of Healing",
       quantity: 1,
@@ -453,7 +456,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => {
       screen.getByTestId("add").click();
     });
-    expect(mockedAddInventoryItem).toHaveBeenCalledWith("char-1", {
+    expect(mockedAddInventoryItem).toHaveBeenCalledWith(providerCharacterId, {
       content_id: "potion-of-healing",
       name: "Potion of Healing",
       content_type: "item",
@@ -464,7 +467,7 @@ describe("<CharacterProvider> public hook surface", () => {
   it("useSpells().addSpell appends the returned row to local spells", async () => {
     mockedAddSpell.mockResolvedValueOnce({
       id: "spell-1",
-      character_id: "char-1",
+      character_id: providerCharacterId,
       content_id: "magic-missile",
       class_slug: "wizard",
       content_version: 1,
@@ -494,7 +497,7 @@ describe("<CharacterProvider> public hook surface", () => {
         </div>
       );
     }
-    renderWithProvider(Probe, { character: { ...mockCharacter, choices: { classes: [{ slug: "wizard", level: 1 }] } }, contentRefs: [pinnedSlotClass("wizard", 1, "full", [2, 0, 0, 0, 0, 0, 0, 0, 0], "char-1", "system-1")] });
+    renderWithProvider(Probe, { character: { ...mockCharacter, choices: { classes: [{ slug: "wizard", level: 1 }] } }, contentRefs: [pinnedSlotClass("wizard", 1, "full", [2, 0, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId)] });
     expect(screen.getByTestId("count").textContent).toBe("0");
     await act(async () => {
       screen.getByTestId("add").click();
@@ -599,7 +602,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => {
       screen.getByTestId("remove").click();
     });
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
+    expect(mockedUpdateState).toHaveBeenCalledWith(providerCharacterId, {
       active_effects: [],
       concentrating_on: null,
     }, {});
@@ -651,8 +654,8 @@ describe("<CharacterProvider> public hook surface", () => {
     choices: { classes: [{ slug: "wizard", level: 3 }] },
   } as unknown as CharacterWithSystem;
 
-  const savedSpell = stateCastingAcquisition("local-focus", { characterId: "char-1", systemId: "system-1", duration: "Instantaneous", concentration: false });
-  const wizardRef = pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0], "char-1", "system-1");
+  const savedSpell = stateCastingAcquisition("local-focus", { characterId: providerCharacterId, systemId: providerSystemId, duration: "Instantaneous", concentration: false });
+  const wizardRef = pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId);
   const wizardClassData = {
     wizard: {
       slug: "wizard",
@@ -676,7 +679,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await act(async () => {
       await expect(cast(savedSpell, { type: "slot", level: 1 })).rejects.toThrow("could not be saved");
     });
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", { spell_slots_used: { "1": 1 } }, {});
+    expect(mockedUpdateState).toHaveBeenCalledWith(providerCharacterId, { spell_slots_used: { "1": 1 } }, {});
     expect(screen.getByTestId("slots")).toHaveTextContent("0");
     expect(screen.getByRole("alert")).toHaveTextContent("could not be saved");
   });
@@ -706,7 +709,7 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(screen.getByTestId("queued-slots")).toHaveTextContent("0");
     await act(async () => { await cast(spell, { type: "slot", level: 1 }); });
     expect(mockedUpdateState).toHaveBeenCalledTimes(2);
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 1 } }, {});
+    expect(mockedUpdateState).toHaveBeenLastCalledWith(providerCharacterId, { spell_slots_used: { "1": 1 } }, {});
     expect(screen.getByTestId("queued-slots")).toHaveTextContent("1");
   });
 
@@ -731,7 +734,7 @@ describe("<CharacterProvider> public hook surface", () => {
     await expect(staleCast(spell, { type: "slot", level: 1 })).rejects.toThrow(/saving|changed/i);
     await act(async () => { await cast(spell, { type: "slot", level: 1 }); });
     expect(mockedUpdateState).toHaveBeenCalledTimes(2);
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", { spell_slots_used: { "1": 2 } }, { spell_slots_used: { "1": 1 } });
+    expect(mockedUpdateState).toHaveBeenLastCalledWith(providerCharacterId, { spell_slots_used: { "1": 2 } }, { spell_slots_used: { "1": 1 } });
   });
 
   it("returns failure for an unsaved rest and restores HP before retry", async () => {
@@ -750,7 +753,7 @@ describe("<CharacterProvider> public hook surface", () => {
     expect(screen.getByTestId("hp")).toHaveTextContent("10");
   });
 
-  const arcaneRecoveryRef = providerPassiveFeature(3, "arcane-recovery", "Arcane Recovery", "wizard", 1, "long rest", "char-1", "system-1");
+  const arcaneRecoveryRef = providerPassiveFeature(3, "arcane-recovery", "Arcane Recovery", "wizard", 1, "long rest", providerCharacterId, providerSystemId);
 
   function renderRestProbe(initialState: CharacterState, picks: Record<string, number>) {
     function Probe() {
@@ -780,7 +783,7 @@ describe("<CharacterProvider> public hook surface", () => {
       screen.getByTestId("rest").click();
     });
     expect(mockedUpdateState).toHaveBeenCalledTimes(1);
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
+    expect(mockedUpdateState).toHaveBeenCalledWith(providerCharacterId, {
       spell_slots_used: { "1": 0 },
       feature_uses: { "arcane-recovery": 1 },
     }, {});

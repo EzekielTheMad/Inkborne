@@ -1,4 +1,4 @@
-import { providerAbilities, providerBase, providerSources } from "../../fixtures/provider-mechanics";
+import { providerAbilities, providerBase, providerSources, providerCharacterId, providerSystemId } from "../../fixtures/provider-mechanics";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
@@ -34,9 +34,9 @@ import { insertRoll } from "@/lib/supabase/rolls";
 const mockedInsertRoll = vi.mocked(insertRoll);
 
 const mockCharacter = {
-  id: "char-1",
+  id: providerCharacterId,
   user_id: "user-1",
-  system_id: "system-1",
+  system_id: providerSystemId,
   campaign_id: null,
   name: "Test Character",
   visibility: "private",
@@ -56,7 +56,7 @@ const mockCharacter = {
   narrative_rich: {},
   primary_color: null,
   game_systems: {
-    id: "system-1",
+    id: providerSystemId,
     name: "D&D 5e",
     slug: "dnd-5e",
     schema_definition: {} as unknown,
@@ -107,7 +107,7 @@ function renderWithProvider(
 
 const hydratedEntry: RollLogEntry = {
   id: "roll-db-1",
-  character_id: "char-1",
+  character_id: providerCharacterId,
   user_id: "user-1",
   kind: "save",
   label: "Wisdom Save",
@@ -179,7 +179,7 @@ describe("useRolls()", () => {
       string,
       RollResult,
     ];
-    expect(characterId).toBe("char-1");
+    expect(characterId).toBe(providerCharacterId);
     expect(result.request).toMatchObject({
       kind: "check",
       label: "Athletics Check",
@@ -233,7 +233,7 @@ describe("useRolls()", () => {
     expect(captured).toHaveLength(2);
     expect(captured[0].id).not.toBe(captured[1].id);
     expect(captured[0]).toMatchObject({
-      character_id: "char-1",
+      character_id: providerCharacterId,
       user_id: "user-1",
       kind: "damage",
       label: "Dagger",

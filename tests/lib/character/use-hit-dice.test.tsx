@@ -1,4 +1,4 @@
-import { providerAbilities, providerSources } from "../../fixtures/provider-mechanics";
+import { providerAbilities, providerSources, providerCharacterId, providerSystemId } from "../../fixtures/provider-mechanics";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import {
@@ -37,9 +37,9 @@ const mockedInsertRoll = vi.mocked(insertRoll);
 
 // Fighter 3 / Wizard 2, CON 14 (+2).
 const mockCharacter = {
-  id: "char-1",
+  id: providerCharacterId,
   user_id: "user-1",
-  system_id: "system-1",
+  system_id: providerSystemId,
   campaign_id: null,
   name: "Test Multiclasser",
   visibility: "private",
@@ -64,7 +64,7 @@ const mockCharacter = {
   narrative_rich: {},
   primary_color: null,
   game_systems: {
-    id: "system-1",
+    id: providerSystemId,
     name: "D&D 5e",
     slug: "dnd-5e",
     schema_definition: {} as unknown,
@@ -89,7 +89,7 @@ const classData = {
 } as never;
 
 const MAX_HP = 40;
-const contentRefs = [pinnedSlotClass("fighter", 3, null, null, "char-1", "system-1"), pinnedSlotClass("wizard", 2, null, null, "char-1", "system-1")];
+const contentRefs = [pinnedSlotClass("fighter", 3, null, null, providerCharacterId, providerSystemId), pinnedSlotClass("wizard", 2, null, null, providerCharacterId, providerSystemId)];
 
 function renderWithProvider(
   Probe: React.ComponentType,
@@ -179,7 +179,7 @@ describe("useRest() — hit dice", () => {
 
     // Exactly one state write carrying BOTH the spend and the heal.
     expect(mockedUpdateState).toHaveBeenCalledTimes(1);
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
+    expect(mockedUpdateState).toHaveBeenCalledWith(providerCharacterId, {
       hit_dice_spent: { fighter: 1 },
       current_hp: 18,
     }, {});
@@ -194,7 +194,7 @@ describe("useRest() — hit dice", () => {
     });
 
     expect(lastResult?.request.expression).toBe("1d6+2");
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
+    expect(mockedUpdateState).toHaveBeenCalledWith(providerCharacterId, {
       hit_dice_spent: { wizard: 1 },
       current_hp: 16, // d6 face 4 + 2
     }, {});
@@ -213,7 +213,7 @@ describe("useRest() — hit dice", () => {
       string,
       RollResult,
     ];
-    expect(characterId).toBe("char-1");
+    expect(characterId).toBe(providerCharacterId);
     expect(result.request.kind).toBe("hit_die");
   });
 
@@ -225,7 +225,7 @@ describe("useRest() — hit dice", () => {
       screen.getByTestId("spend-fighter").click();
     });
 
-    expect(mockedUpdateState).toHaveBeenCalledWith("char-1", {
+    expect(mockedUpdateState).toHaveBeenCalledWith(providerCharacterId, {
       hit_dice_spent: { fighter: 1 },
       current_hp: MAX_HP,
     }, {});
@@ -292,7 +292,7 @@ describe("useRest() — hit dice", () => {
     });
 
     expect(mockedUpdateState).toHaveBeenCalledTimes(2);
-    expect(mockedUpdateState).toHaveBeenLastCalledWith("char-1", {
+    expect(mockedUpdateState).toHaveBeenLastCalledWith(providerCharacterId, {
       hit_dice_spent: { fighter: 2 },
       current_hp: 21, // 5 + 8 + 8
     }, { hit_dice_spent: { fighter: 1 }, current_hp: 13 });

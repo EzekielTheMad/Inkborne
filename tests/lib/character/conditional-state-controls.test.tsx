@@ -1,4 +1,4 @@
-import { providerAbilities, providerBase, providerSources, providerPassiveFeature } from "../../fixtures/provider-mechanics";
+import { providerAbilities, providerBase, providerSources, providerCharacterId, providerSystemId, providerPassiveFeature } from "../../fixtures/provider-mechanics";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
 import { Activity, useEffect, useRef } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -33,9 +33,9 @@ vi.mock("@/lib/supabase/rolls", () => ({ insertRoll: vi.fn() }));
 
 const schema = { ability_scores: providerAbilities, proficiency_levels: [], derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
 const refs = [
-  pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0]),
-  pinnedSlotClass("fighter", 1, null, null),
-  pinnedSlotClass("barbarian", 1, null, null),
+  pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId),
+  pinnedSlotClass("fighter", 1, null, null, providerCharacterId, providerSystemId),
+  pinnedSlotClass("barbarian", 1, null, null, providerCharacterId, providerSystemId),
   providerPassiveFeature(1, "arcane-recovery", "Arcane Recovery", "wizard", 1, "long rest"),
   providerPassiveFeature(2, "second-wind", "Second Wind", "fighter", 3, "short rest"),
 ];
@@ -89,7 +89,7 @@ function Probe({ label, surface }: { label: string; surface: Surface }) {
   </>;
 }
 function Fixture({ raw, label = "sheet", surface = "none" }: { raw: CharacterState; label?: string; surface?: Surface }) {
-  const character = { id: "local-character", system_id: "local-system", user_id: "local-user", name: "Local Character", level: 5, state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }, { slug: "barbarian", level: 1 }] }, base_stats: providerBase, narrative: {} };
+  const character = { id: providerCharacterId, system_id: providerSystemId, user_id: "local-user", name: "Local Character", level: 5, state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }, { slug: "barbarian", level: 1 }] }, base_stats: providerBase, narrative: {} };
   return <CharacterProvider
     character={character as never}
     schema={schema as never} contentRefs={refs} contentSnapshotsComplete

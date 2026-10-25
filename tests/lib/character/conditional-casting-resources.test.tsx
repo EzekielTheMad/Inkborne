@@ -1,4 +1,4 @@
-import { providerAbilities, providerBase, providerSources, providerPassiveFeature } from "../../fixtures/provider-mechanics";
+import { providerAbilities, providerBase, providerSources, providerCharacterId, providerSystemId, providerPassiveFeature } from "../../fixtures/provider-mechanics";
 import { stateCastingAcquisition } from "../../fixtures/casting-acquisitions";
 import { Activity, useEffect, useState } from "react";
 import { pinnedSlotClass } from "../../fixtures/pinned-slot-class";
@@ -20,8 +20,8 @@ vi.mock("@/lib/supabase/rolls", () => ({ insertRoll: vi.fn() }));
 
 const schema = { ability_scores: providerAbilities, proficiency_levels: [], derived_stats: [{ slug: "proficiency_bonus", base: 2 }], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] };
 const refs = [
-  pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0]),
-  pinnedSlotClass("fighter", 1, null, null),
+  pinnedSlotClass("wizard", 3, "full", [4, 2, 0, 0, 0, 0, 0, 0, 0], providerCharacterId, providerSystemId),
+  pinnedSlotClass("fighter", 1, null, null, providerCharacterId, providerSystemId),
   providerPassiveFeature(1, "arcane-recovery", "Arcane Recovery", "wizard", 1, "long rest"),
   providerPassiveFeature(2, "second-wind", "Second Wind", "fighter", 3, "short rest"),
 ];
@@ -45,9 +45,9 @@ function deferred() {
   const promise = new Promise<void>((yes) => { resolve = yes; });
   return { promise, resolve };
 }
-const spell = stateCastingAcquisition();
-const instant = stateCastingAcquisition("instant-focus", { level: 0, duration: "Instantaneous", concentration: false, ritual: true });
-const lasting = stateCastingAcquisition("lasting-focus", { level: 0, concentration: false });
+const spell = stateCastingAcquisition("local-spell", { characterId: providerCharacterId, systemId: providerSystemId });
+const instant = stateCastingAcquisition("instant-focus", { characterId: providerCharacterId, systemId: providerSystemId, level: 0, duration: "Instantaneous", concentration: false, ritual: true });
+const lasting = stateCastingAcquisition("lasting-focus", { characterId: providerCharacterId, systemId: providerSystemId, level: 0, concentration: false });
 type Surface = "none" | "cast" | "widget" | "card" | "slots";
 function Probe({ label, surface }: { label: string; surface: Surface }) {
   const rest = useRest(); const saves = useCharacterState();
@@ -62,7 +62,7 @@ function Probe({ label, surface }: { label: string; surface: Surface }) {
   </>;
 }
 function Fixture({ raw, label = "sheet", surface = "none" }: { raw: CharacterState; label?: string; surface?: Surface }) {
-  const character = { id: "local-character", system_id: "local-system", level: 4, state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }] }, base_stats: providerBase, narrative: {} };
+  const character = { id: providerCharacterId, system_id: providerSystemId, level: 4, state: raw, choices: { classes: [{ slug: "wizard", level: 3 }, { slug: "fighter", level: 1 }] }, base_stats: providerBase, narrative: {} };
   return <CharacterProvider
     character={character as never}
     schema={schema as never} contentRefs={refs} contentSnapshotsComplete
