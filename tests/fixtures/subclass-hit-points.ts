@@ -10,7 +10,7 @@ export const draconicResilienceSource = {
     "Additionally, parts of your skin are covered by a thin sheen of dragon-like scales. When you aren't wearing armor, your AC equals 13 + your Dexterity modifier.",
   ],
 };
-export const draconicRoot = { index: "draconic", class: { index: "sorcerer" } };
+export const draconicRoot = { index: "draconic", class: { index: "sorcerer", name: "Sorcerer" } };
 export const draconicLevels = [{ level: 1, features: ["dragon-ancestor", "draconic-resilience"] }];
 export function subclassHpFixture() {
   const character = { id: hpId(1), system_id: hpId(2), level: 3, action_revision: "7", choices: {

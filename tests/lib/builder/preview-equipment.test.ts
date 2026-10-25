@@ -31,7 +31,8 @@ describe("class preview equipped snapshot context", () => {
   it.each([["Light", 11, 13], ["Medium", 14, 16], ["Heavy", 18, 18]] as const)("uses saved %s body armor instead of treating gear as absent", (category, base, expected) => {
     const item = equippedArmor(category, base); if (category === "Heavy") item.custom_data = { armor_class: { base, dex_bonus: false } };
     const before = JSON.stringify(item), preview = resolveBuilderEquipmentPreview(hpId(1), hpId(2), [item]);
-    const state = { equipped_armor: "none", shield_equipped: false, ...preview.state };
+    const staleState = { equipped_armor: "none", shield_equipped: false };
+    const state = { ...staleState, ...preview.state };
     expect(evaluate({ dexterity: 14 }, [...scales, ...preview.effects], schema, undefined, state).computed.armor_class).toBe(expected);
     expect(JSON.stringify(item)).toBe(before);
   });
