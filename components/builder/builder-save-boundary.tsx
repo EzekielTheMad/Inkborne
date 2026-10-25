@@ -115,7 +115,7 @@ export function BuilderSaveBoundary({ accountId, characterId, submitAction, chec
           notice: "Your original save is confirmed. Its local record could not be cleared. Restore this browser session before editing again." });
         throw error;
       }
-      if (recovery || parsed.data.status !== "applied") {
+      if (recovery || parsed.data.status !== "applied" || pending.intent.command === "update_subclass_version") {
         // A fresh document reads the current server snapshot and drops all
         // in-memory editor drafts/queues, including module-scoped ability data.
         setView({ epoch: lease.epoch, accountId, characterId, pending: null, blocked: true,

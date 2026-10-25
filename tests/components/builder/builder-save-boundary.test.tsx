@@ -101,6 +101,23 @@ describe("ordinary builder recovery boundary", () => {
     expect(screen.getByRole("textbox")).toBeEnabled(); expect(router.refresh).not.toHaveBeenCalled();
   });
 
+  it("reloads a newly applied subclass content update after clearing the exact retained operation and editor guards", async () => {
+    const fields = { class_slug: "warlock", occurrence_id: id(7), subclass_ref_id: id(8), content_id: id(9),
+      expected_content_version: 1, target_content_version: 2, expected_action_revision: "2", preview_digest: "a".repeat(64) };
+    function UpdateEditor() {
+      const save = useBuilderStepSave(fallback)!;
+      return <button type="button" onClick={() => { void save("update_subclass_version", fields).then(accepted).catch(() => {}); }}>Confirm update</button>;
+    }
+    const handlers = actions(); handlers.submit.mockImplementation(async intent => result(intent));
+    render(<BuilderSaveBoundary accountId={account} characterId={target} submitAction={handlers.submit} checkAction={handlers.check}><UpdateEditor /></BuilderSaveBoundary>);
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm update" }));
+    await waitFor(() => expect(reload.call).toHaveBeenCalledExactlyOnceWith(account, target));
+    expect(handlers.submit.mock.calls[0][0]).toMatchObject({ command: "update_subclass_version", fields });
+    expect(readPendingBuilderStep(account, target, sessionStorage)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Confirm update" })).not.toBeInTheDocument();
+    expect(accepted).not.toHaveBeenCalled(); expect(reload.blocked).toBe(false);
+  });
+
   it.each(["check", "retry"])("%s recovery reloads the current document without applying historical receipt choices", async method => {
     const handlers = actions(); await open(handlers);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "uncertain draft" } });
