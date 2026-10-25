@@ -1,6 +1,6 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-24 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
+Updated 2026-10-25 UTC. Start here, then use [LAUNCH-ACCEPTANCE.md](LAUNCH-ACCEPTANCE.md) as the **single durable backlog, requirement/evidence ledger and completion gate**. [GAME-PLAN](GAME-PLAN.md), [ROADMAP](ROADMAP.md), [PRD](../inkborne-prd.md), [CURRENT-STATE](CURRENT-STATE.md) and [RELEASE-READINESS](RELEASE-READINESS.md) provide product requirements and historical/current evidence. The completed October 11 local queue is a checkpoint, not project completion or a stop rule. The human kickoff is executing; historical snapshots below do not describe the current candidate.
 
 ## Resume and ownership
 
@@ -14,12 +14,16 @@ HP/AC repair is integrated through `72ce5cf`, with test fixture fixes in
 new-root publication, HP/AC and roll-retention acceptance remain pending.
 Continue this queue through its remaining
 local acceptance work. [Current evidence and next actions](handoffs/2026-10-24-builder-correction-and-casters.md).
-Actual verification is on a host-memory hold. Next, Chrome, the proxy and all
-five owned containers are stopped; protected config, volumes and networks are
-preserved for explicit resume. All four task ports are closed. Consult the
-external runtime state/process receipts; ordinary reset/start refuses this
-preserved profile. Continue source/review work; no new heavy checks or app starts
-until fresh headroom and an explicit orchestration release.
+The parent safeguard is staged through `d614952` with 32 focused checks; its
+contention verifier has seven simulated checks. Neither is native acceptance.
+The [remaining six-story matrix](specs/2026-10-24-builder-remaining-matrix.md)
+records three ready martial cases and three ancestry source blockers.
+The prior paused profile was archived and removed. A fresh loopback backend is
+ready with two genuine old-v1 drafts. A Webpack attempt stopped at Next's 2 GiB
+dev restart threshold before publication; its failure remains preserved. Next
+is stopped, while the owned backend is retained for an explicitly guarded
+continuation. Consult the latest handoff and external runtime/process receipts
+before operations; serialize heavy checks and retain the OS resource guard.
 Vercel stays unchanged, global gates closed and M7 paused.
 
 **Ordinary builder saves recover after lost responses and reload through
@@ -39,7 +43,7 @@ writer/lifecycle fences and hosted/provider/backup-restore acceptance remain
 open. Global gates stay closed. Vercel unchanged; M1–M6/M5.5 precede M8 and
 M7/creature imports stay paused. Preserve the backup and every inherited worktree.
 That accepted ordinary-save checkpoint removed its owned runtime. The latest
-correction profile is instead stopped and preserved as described above. Shared
+correction backend is instead retained as described above. Shared
 engine/cache and dependency junctions remain.
 
 ### Prior Fiend and class-removal checkpoint

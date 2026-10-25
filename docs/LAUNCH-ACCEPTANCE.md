@@ -1,6 +1,6 @@
 # Inkborne project-wide acceptance ledger
 
-## Active continuation — 2026-10-24 UTC
+## Active continuation — 2026-10-25 UTC
 
 ### Current builder correction and complete caster work — in progress
 
@@ -14,11 +14,18 @@ The actual local app has proved immutable v1 preservation, an atomic v2
 publication without character changes, both recovery paths and exactly one
 native update. Its self-contained complete receipt remains pending after
 preserved fixture failures and a host-memory interruption; this is not full
-actual-flow acceptance yet. Owned services are stopped with the current profile
-preserved for explicit resume. Eight complete caster walkthroughs are prepared.
+actual-flow acceptance yet. The prior paused profile was archived and removed;
+a fresh owned backend is retained with two genuine old-v1 drafts. Its Webpack
+attempt failed before publication at Next's 2 GiB dev restart threshold. Next
+is stopped pending an explicitly guarded continuation; the failure stays failed.
+Eight complete caster walkthroughs are prepared.
 The reviewed Draconic HP/AC repair is integrated through `72ce5cf`, with fixture
 fixes in `a4700ce`; 266 focused checks, typecheck and zero-warning lint pass.
 Actual new-root publication, HP/AC and raw-roll retention remain unaccepted.
+The parent safeguard is staged in `d614952` with 32 focused checks; its prepared
+contention runner has seven simulated checks. Native installation and contention
+remain unaccepted. The [six-story remaining matrix](specs/2026-10-24-builder-remaining-matrix.md)
+records three ready martial cases and three ancestry source blockers.
 [Current sources, evidence and remaining work](handoffs/2026-10-24-builder-correction-and-casters.md).
 
 ### Actual application character builder save/reload
@@ -40,8 +47,8 @@ and hosted/provider/backup-restore acceptance. Global gates stay closed. No host
 change, push or deployment. Vercel unchanged; M1–M6/M5.5 precede M8;
 M7/creature imports paused.
 That ordinary-save checkpoint removed its task resources. The current correction
-profile is stopped and preserved under the resource hold above; its four task
-ports are closed. Shared engine/cache and worktrees remain.
+backend is retained as described above; Next is stopped. Use external identity
+receipts for its live loopback resources. Shared engine/cache and worktrees remain.
 
 ### Prior Fiend and class-removal checkpoint
 
