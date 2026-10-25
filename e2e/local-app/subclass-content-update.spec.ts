@@ -522,8 +522,13 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
   await expect(panel.getByRole("button", { name: "Confirm update for this character", exact: true })).toHaveCount(0);
   expect(await readback(info, story, "cancel-no-write")).toEqual(published);
 
-  await review(page);
   const concurrent = await context.newPage(); watch(concurrent);
+  // Compile the other editor before opening a review: a first Webpack dev
+  // compilation can refresh existing pages and discard their client state.
+  await concurrent.goto(`${config.appOrigin}/characters/${story.targetId}/builder/abilities`);
+  await expect(concurrent.getByRole("combobox", { name: "Strength score", exact: true })).toBeVisible();
+  await page.goto(classUrl(story));
+  await review(page);
   await abilities(concurrent, story, story.targetId, { Strength: "10", Intelligence: "8" });
   const changed = await readback(info, story, "concurrent-ordinary-edit"); expect(BigInt(changed.actionRevision)).toBeGreaterThan(BigInt(published.actionRevision));
   const staleIntent = await dropConfirmation(page, story, "stale-rejection-response-lost");
