@@ -20,14 +20,14 @@ type Native = {
   startingAwards: Array<Record<string, unknown>>; hpDraws: Array<Record<string, unknown>>;
   receiptCount: number; updateReceipts: Array<{ operationId: string; request: unknown; receipt: { action_revision: string; fields: unknown } }>;
   updateHistoryCount: number; fiendDefinitionVersion: number; fiendSnapshots: Array<{ id: string; version: number; digest: string; extra: boolean; expanded: boolean }>;
-  controlFingerprint: string; controlCharacterId: string; controlFiendVersion: number;
+  controlFingerprint: string; controlCharacterId: string; controlActorId: string; controlFiendVersion: number;
   orderBijections: Record<string, boolean>; parentOrderRevisionEqual: boolean;
   capsRemaining: number; readinessCount: number; writerReadiness: number; classGate: boolean; hitDieGate: boolean; servicePrivateUsage: boolean;
 };
 type Story = { config: Settings; targetId: string; controlId: string; blockedOrigins: string[]; pageErrors: string[];
   snapshots: Array<{ label: string; path: string; data: Native }>; actions: Array<{ label: string; result: Record<string, unknown> }> };
 const originalScores = { Strength: "8", Dexterity: "14", Constitution: "12", Intelligence: "10", Wisdom: "13", Charisma: "15" };
-const ordinarySpells = ["Armor of Agathys", "Charm Person", "Hex", "Hellish Rebuke"];
+const ordinarySpells = ["Comprehend Languages", "Charm Person", "Expeditious Retreat", "Hellish Rebuke"];
 
 async function settings(): Promise<Settings> {
   const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
@@ -158,7 +158,7 @@ async function readback(info: TestInfo, story: Story, label: string): Promise<Na
   const data = JSON.parse(run(["exec", "-i", db.id, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "supabase_admin", "--dbname", "postgres",
     "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", `character_id=${story.targetId}`, "--set", `control_id=${story.controlId}`, "--file", "-"], sql)) as Native;
   expect(data.characterId).toBe(story.targetId); expect(data.actorId).toBe(story.config.owner.id);
-  expect(data.controlCharacterId).toBe(story.controlId); expect(data.controlFiendVersion).toBe(1);
+  expect(data.controlCharacterId).toBe(story.controlId); expect(data.controlActorId).toBe(story.config.owner.id); expect(data.controlFiendVersion).toBe(1);
   expect(data.parentOrderRevisionEqual).toBe(true); expect(Object.values(data.orderBijections)).toEqual([true, true, true, true, true]);
   expect(data.capsRemaining).toBe(0); expect(data.readinessCount).toBe(13); expect(data.writerReadiness).toBe(0);
   expect(data.classGate).toBe(false); expect(data.hitDieGate).toBe(false); expect(data.servicePrivateUsage).toBe(false);
@@ -263,7 +263,15 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
   } catch { await page.close(); throw Error("Actual local sign-in failed; credentials withheld"); }
   expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
   await prepareTarget(page, story);
-  story.controlId = await createFiend(page, story, `Old Fiend control ${randomUUID().slice(0, 8)}`);
+  const priorControlId = process.env.INKBORNE_SUBCLASS_CONTROL_ID;
+  if (priorControlId) {
+    // An earlier interrupted fixture may supply its app-created old-pin character
+    // as this run's unchanged control. Preserve its complete native fingerprint.
+    expect(priorControlId).toMatch(/^[0-9a-f-]{36}$/); expect(priorControlId).not.toBe(story.targetId);
+    story.controlId = priorControlId; await page.goto(classUrl(story, priorControlId));
+    await expect(page.getByRole("combobox", { name: "Set level for Warlock", exact: true })).toHaveValue("1");
+    await expect(page.getByText(warning, { exact: true })).toBeVisible();
+  } else story.controlId = await createFiend(page, story, `Old Fiend control ${randomUUID().slice(0, 8)}`);
   await page.goto(classUrl(story));
   const historical = await readback(info, story, "old-v1-before-publication");
   expect(historical.fiendDefinitionVersion).toBe(1); expect(historical.fiendSnapshots).toHaveLength(1); expect(historical.fiendSnapshots[0].extra).toBe(true);

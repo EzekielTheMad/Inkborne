@@ -56,6 +56,7 @@ SELECT jsonb_build_object('characterId',t.id,'actorId',t.user_id,'actionRevision
    'extra',data_snapshot ? 'spellcastingExtra','expanded',data_snapshot ? 'spellcastingExpanded') ORDER BY version)
    FROM public.content_versions v WHERE content_type_snapshot='subclass' AND slug_snapshot='fiend' AND system_id_snapshot=t.system_id),
  'controlFingerprint',(SELECT md5(data::text) FROM control_graph),'controlCharacterId',:'control_id'::uuid,
+ 'controlActorId',(SELECT user_id FROM public.characters WHERE id=:'control_id'::uuid),
  'controlFiendVersion',(SELECT r.content_version FROM public.character_content_refs r JOIN public.content_versions v ON v.content_id=r.content_id AND v.version=r.content_version
    WHERE r.character_id=:'control_id'::uuid AND v.content_type_snapshot='subclass' AND v.slug_snapshot='fiend'),
  'orderBijections',(SELECT jsonb_object_agg(domain,bijection) FROM order_checks),
