@@ -91,12 +91,12 @@ function ancestrySnapshot(): HitDieSnapshot {
   s.character.id = f.character.id; s.character.system_id = f.character.system_id; s.system.id = f.character.system_id;
   s.character.level = f.character.level; s.character.revision = f.character.action_revision;
   s.character.base_stats = f.character.base_stats;
-  s.character.choices = { ...f.character.choices, classes: f.character.choices.classes!, hp_rolls: f.character.choices.hp_rolls! };
+  s.character.choices = hitDieSnapshotSchema.shape.character.shape.choices.parse(f.character.choices);
   s.character.state.hit_dice_spent = { barbarian: 0 };
-  s.pins = f.refs.map(ref => ({ id: ref.id, character_id: ref.character_id, content_id: ref.content_id,
+  s.pins = hitDieSnapshotSchema.shape.pins.parse(f.refs.map(ref => ({ id: ref.id, character_id: ref.character_id, content_id: ref.content_id,
     content_version: ref.content_version, context: ref.context, choice_source: ref.choice_source,
     feature_grant_id: ref.feature_grant_id, resolved: ref.content_definitions, ...(ref.class_role ? { class_role: ref.class_role } : {}),
-  })) as HitDieSnapshot["pins"];
+  })));
   return s;
 }
 
@@ -147,11 +147,11 @@ describe("durable hit-die service-internal request and snapshot", () => {
   });
   it("adds ancestry and subclass bonuses independently on the same frozen character", () => {
     const s = resilienceSnapshot(), f = ancestryHpFixture();
-    for (const source of [f.raceRef, f.subraceRef]) s.pins.push({
-      id: source.id, character_id: s.character.id, content_id: source.content_id, content_version: source.content_version!,
-      feature_grant_id: null, context: source.context as HitDieSnapshot["pins"][number]["context"], choice_source: null,
-      resolved: { ...source.content_definitions, system_id: s.system.id } as HitDieSnapshot["pins"][number]["resolved"],
-    });
+    for (const source of [f.raceRef, f.subraceRef]) s.pins.push(hitDieSnapshotSchema.shape.pins.element.parse({
+      id: source.id, character_id: s.character.id, content_id: source.content_id, content_version: source.content_version,
+      feature_grant_id: null, context: source.context, choice_source: null,
+      resolved: { ...source.content_definitions, system_id: s.system.id },
+    }));
     s.character.choices.race = "dwarf"; s.character.choices.subrace = "hill-dwarf";
     // Base CON13 + Dwarf2 =15; Draconic3 + ancestry3 add after the d6 base20.
     s.character.base_stats.constitution = 13;
