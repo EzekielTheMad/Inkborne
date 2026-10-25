@@ -41,9 +41,12 @@ function fixture() {
   expect(resolveOwnedAncestryDefenses(f.character, { status: "complete", character_id: f.character.id,
     system_id: f.character.system_id, refs: f.refs, grants: [] }).status).toBe("available");
   expect(providerSources(f.character, f.refs).asi?.status).toBe("available");
-  const ordinary = (classSlug: string, n: number, prepared: boolean): CharacterSpell => ({ ...target, id: racialId(n), content_id: racialId(n + 1),
-    class_slug: classSlug, source: "selection", always_prepared: false, is_prepared: prepared, in_spellbook: classSlug === "wizard", custom_data: null,
-    content_definitions: { ...target.content_definitions!, id: racialId(n + 1), data: { ...target.content_definitions!.data, classes: [classSlug] } } });
+  const ordinary = (classSlug: string, n: number, prepared: boolean): CharacterSpell => {
+    const name = `${classSlug === "bard" ? "Bard" : "Wizard"} ordinary control`;
+    return { ...target, id: racialId(n), content_id: racialId(n + 1), name,
+      class_slug: classSlug, source: "selection", always_prepared: false, is_prepared: prepared, in_spellbook: classSlug === "wizard", custom_data: null,
+      content_definitions: { ...target.content_definitions!, id: racialId(n + 1), name, data: { ...target.content_definitions!.data, classes: [classSlug] } } };
+  };
   const spells = [...f.spells, ordinary("bard", 40, false), ordinary("wizard", 42, true)];
   const schema = { ability_scores: providerAbilities, derived_stats: [{ slug: "proficiency_bonus", name: "Proficiency bonus", base: 3 }],
     skills: [], proficiency_levels: [], resources: [], currencies: [], content_types: [], creation_steps: [], sheet_sections: [] };
@@ -70,10 +73,12 @@ describe("earned racial source in the actual provider and spell surfaces", () =>
     fixture();
     expect(screen.getByText("Ordinary Spells Known: 1/6")).toBeInTheDocument();
     expect(screen.getByText("Prepared: 1/5")).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: /Hellish Rebuke/ })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Hellish Rebuke/ }));
     expect(screen.getByText(/Charisma · save DC 11 · spell attack \+3/)).toBeInTheDocument();
     expect(screen.getByText(/Cast at 2nd level · once per long rest/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cast Hellish Rebuke" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cast Bard ordinary control" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Cast Wizard ordinary control" })).toBeEnabled();
     expect(rpc).not.toHaveBeenCalled(); expect(insertRoll).not.toHaveBeenCalled();
   });
   it("disables a forced ordinary cast dialog without exposing unrelated slot or ritual controls", () => {
