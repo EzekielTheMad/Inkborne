@@ -50,6 +50,41 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
+### Latest continuation — 2026-10-25 05:55 UTC
+
+The stopped profile from the resource hold below was removed with exact owned
+identity checks. `runtime-teardown-readback.json` at 05:33:55 UTC confirms five
+containers, two networks, two volumes and three protected files removed, all
+four ports closed and the shared engine retained. Public evidence is archived
+under `history/webpack-fresh-release-20261025T053314Z`; no credentials were copied.
+
+A fresh official profile replayed the baseline and accepted companions. Its
+ready receipt is `fresh-builder-profile-ready-20261025T0539Z.json`. Actual
+postgres is NOSUPERUSER/BYPASSRLS; this was observed read-only, without changing
+roles. The exact current DB is
+`96004d6ea16553d64ba4351c15de2a67727244e645e140cb3545e1ba489264d0`.
+The genuine catalog has 1,535 v1 snapshots and closed gates. HP and parent
+companions are **not installed** in this runtime.
+
+`local-subclass-update-app-20261025T054031Z` failed after 111.8 seconds when
+Next's Webpack dev worker automatically restarted at its 2 GiB heap threshold,
+causing sheet navigation to refuse the connection. Its 21 test identities
+exited. One native checkpoint verifies two genuine app-created old-v1 drafts:
+target `e416af73-1a7e-451b-846b-e87ad3840891`, revision 30, and control
+`9dcb6f1f-8ffa-43d3-b7a3-c210fd8c7c7a`. No corrected publication or update
+occurred. This remains a failed run, not a complete acceptance receipt.
+
+Next was stopped using recorded birth/parent identities and port 3001 closed;
+the owned backend remains available for continued verification. Independent
+review permits an explicit continuation using those exact genuine fixtures,
+fresh login, archived-native equality and a separately captured current
+full-parent/fifteen-table guard. It skips only fixture creation and must collect
+all eleven native snapshots, four wire outcomes and foreign-account refusals
+again. It must retain failed-preparation provenance, without importing old wire
+proof or retrospectively making the earlier run green. A 3 GiB external-only
+heap setting is prepared; automatic restart and the OS guard remain enabled.
+No repository/Vercel configuration change is involved.
+
 The disposable official PostgreSQL/Auth/PostgREST/Storage profile replays the
 83 baseline migrations, 17 baseline stages and accepted builder companions.
 The genuine old prepared catalog (1,535 entries) is published through the
@@ -153,20 +188,36 @@ The source shows an existing sheet shield-bonus omission;
 that remains an R07/R09 source finding without an actual-app reproduction and is
 not repaired or accepted by this bounded subclass change.
 
-An isolated `builder-parent-fence-worker` is preparing only the documented
-finite enrolled-parent companion/tests/plan. Independent design review caught
+The reviewed finite enrolled-parent companion is integrated as `d614952`, with
+**32 focused tests passing** in
+`local-parent-admission-native-20261025T053303Z` (six identities exited).
+Independent design review caught
 background's two-write normalization and valid zero-write return; exact bounded
 proof sequences must preserve both existing behaviors and native revisions.
 Legacy prelocked RPCs need guard-before-parent adapters, while new seals must
 close at transaction end. Independent source review caught and corrected an
 enrollment lookup that could be filtered by RLS. The draft now pins the admitted
 native postgres NOT SUPER/BYPASS posture, uses `row_security=off`, and faults on
-owner/attribute drift. Two initial focused harness attempts failed setup before
-assertions (reserved bootstrap-role demotion, then installer syntax); neither
-accepts this stage. No native installation or concurrency acceptance has run.
+owner/attribute drift. Initial setup, real CASE syntax and three harness errors
+are preserved and explained in the [native plan](../specs/2026-10-24-enrolled-parent-admission-native.md).
+Prepared contention source is `6cf6f5d`/`1b587b3`; its seven **simulated** protocol
+tests pass in `local-parent-contention-simulated-20261025T055248Z`, with six
+identities exited. Native SQL and real contention remain unexecuted. No parent
+native installation or acceptance follows from these focused tests.
 
-Next: finish the Fiend actual recovery story; integrate/review/verify the
-Draconic repair; publish only its reviewed new root through the existing atomic
+The Draconic actual-story/readback source is integrated as `0c400b1`/`11fdb23`,
+registered in `bd75fae`. It includes one retained real server d6 and genuine
+native-awarded Leather armor, rather than direct inventory insertion. Final
+typecheck and zero-warning lint pass in
+`local-creation-browser-check-20261025T054801Z` (83.2 seconds, eight identities
+exited). Actual execution remains pending. The finite remaining
+[six-story matrix](../specs/2026-10-24-builder-remaining-matrix.md), integrated in
+`0b697f7`, records three ready martial stories and three source blockers:
+Dwarven Toughness HP, selected Dragonborn resistance and earned Tiefling spells.
+These source findings are not actual-app reproductions.
+
+Next: finish the Fiend actual recovery story; verify the integrated Draconic
+repair; publish only its reviewed new root through the existing atomic
 publisher; run eight complete caster stories with native readbacks. Then continue
 the documented broader combinations/concurrency and enrolled writer/access/copy/
 lifecycle fences. Hosted/provider and backup/restore acceptance remain separate
