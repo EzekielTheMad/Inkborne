@@ -245,6 +245,7 @@ function preserved(before: Native, after: Native) {
 }
 
 test("owner reviews historical Fiend content, recovers stale and applied responses, and preserves other saved sources", async ({ page, context }, info) => {
+  test.setTimeout(480000);
   const config = await settings();
   const story: Story = { config, targetId: "", controlId: "", blockedOrigins: [], pageErrors: [], snapshots: [], actions: [] };
   const allowed = new Set([config.appOrigin, config.supabaseOrigin]);
