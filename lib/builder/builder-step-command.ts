@@ -3,6 +3,7 @@ import type { CharacterChoices } from "@/lib/types/character";
 import { equipmentSelectionsSchema } from "./starting-equipment-contract";
 import { boundedClassRoleJson, classRoleRevisionSchema } from "@/lib/character/class-role-effects-schema";
 import { equalEquipmentIntent } from "./starting-equipment-contract";
+import { subclassContentUpdateFieldsSchema } from "./subclass-content-update";
 
 const content = z.strictObject({ content_id: z.uuid(), content_version: z.number().int().positive() });
 const choice = z.strictObject({ choice_id: z.string().min(1).max(200),
@@ -17,6 +18,7 @@ const asi = z.discriminatedUnion("mode", [
   z.strictObject({ mode: z.literal("feat"), feat_id: z.uuid(), feat_version: z.number().int().positive() }),
 ]);
 export const builderStepInputSchema = z.discriminatedUnion("command", [
+  z.strictObject({ command: z.literal("update_subclass_version"), fields: subclassContentUpdateFieldsSchema }),
   z.strictObject({ command: z.literal("favored_enemy"), fields: z.strictObject({ feature_slug: z.string().min(1).max(200),
     selection: z.discriminatedUnion("mode", [
       z.strictObject({ mode: z.literal("type"), enemy_type: z.string().regex(/^[a-z][a-z-]*$/).max(100) }),

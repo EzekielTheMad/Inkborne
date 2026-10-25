@@ -8,6 +8,9 @@ import { builderStepResponseSchema, parseBuilderStepIntent,
 import { equalEquipmentIntent } from "@/lib/builder/starting-equipment-contract";
 import { createClient } from "@/lib/supabase/server";
 import type { CharacterChoices } from "@/lib/types/character";
+import { creationUUID } from "@/lib/character/pending-creation-schema";
+import { parseSubclassContentUpdateResponse, subclassContentUpdateRequestSchema,
+  type SubclassContentUpdateResponse } from "@/lib/builder/subclass-content-update";
 
 async function run(expectedAccountId: string, input: unknown, recovery: boolean): Promise<BuilderStepResponse> {
   const original = parseBuilderStepIntent(input);
@@ -53,6 +56,33 @@ export async function submitBuilderStep(expectedAccountId: string, input: unknow
 
 export async function checkBuilderStep(expectedAccountId: string, input: unknown): Promise<BuilderStepResponse> {
   return run(expectedAccountId, input, true);
+}
+
+/** Read-only review of one supported historical source correction. The native
+ * descriptor binds the complete closure, not just the browser's root diff. */
+export async function previewSubclassContentUpdate(expectedAccountId: string, characterId: string,
+  input: unknown): Promise<SubclassContentUpdateResponse> {
+  const unavailable: SubclassContentUpdateResponse = { status: "unavailable", reason: "unavailable" };
+  try {
+    if (!characterCreationUIEnabled() || !creationUUID.safeParse(expectedAccountId).success
+      || !creationUUID.safeParse(characterId).success || !boundedClassRoleJson(input)) return unavailable;
+    const request = subclassContentUpdateRequestSchema.safeParse(input);
+    if (!request.success) return unavailable;
+    const verified = await resolveCharacterCommandContext();
+    if (verified.status !== "token_verified" || verified.context.actor_id !== expectedAccountId) return unavailable;
+    const client = await createClient();
+    const result = await client.rpc("character_builder_subclass_update_preview_v1", {
+      p_context: { ...verified.context }, p_character_id: characterId,
+      p_subclass_ref_id: request.data.subclass_ref_id, p_target_content_version: request.data.target_content_version,
+    });
+    if (result.error) return unavailable;
+    const parsed = parseSubclassContentUpdateResponse(result.data);
+    if (!parsed || parsed.status === "unavailable") return parsed ?? unavailable;
+    if (parsed.preview.actor_id !== expectedAccountId || parsed.preview.character_id !== characterId
+      || parsed.preview.fields.subclass_ref_id !== request.data.subclass_ref_id
+      || parsed.preview.fields.target_content_version !== request.data.target_content_version) return unavailable;
+    return parsed;
+  } catch { return unavailable; }
 }
 
 /** Bound page adapter. Ordinary clients use the shared retained-intent boundary. */
