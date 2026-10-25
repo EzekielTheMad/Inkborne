@@ -4,7 +4,7 @@ import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
 import { redirect, notFound } from "next/navigation";
 import { ClassStepClient } from "./class-step-client";
 import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
-import { saveBuilderStep } from "../step-actions";
+import { saveBuilderStep, previewSubclassContentUpdate } from "../step-actions";
 import { parseNestedContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
 import { resolveEffectiveCastingSources } from "@/lib/spells/effective-sources";
 
@@ -62,6 +62,8 @@ export default async function ClassStepPage({ params }: PageProps) {
 
   return (
     <ClassStepClient
+      accountId={user.id}
+      previewContentUpdateAction={characterCreationUIEnabled() ? previewSubclassContentUpdate.bind(null, user.id, id) : undefined}
       saveAction={characterCreationUIEnabled() ? saveBuilderStep.bind(null, user.id, id) : undefined}
       classRolesAvailable={contentSnapshot.classRoles.status === "available" && contentSnapshot.classRoles.action_revision === String(character.action_revision)}
       castingSources={casting.status === "available" ? casting.sources : []}

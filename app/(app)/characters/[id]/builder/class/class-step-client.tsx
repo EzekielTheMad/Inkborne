@@ -41,6 +41,8 @@ import {
 import { activeFeatureSlugs, fightingStyleSlugs, fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
+import { SubclassContentUpdate } from "@/components/builder/subclass-content-update";
+import { findFiendContentUpdate, type PreviewSubclassContentUpdate } from "@/lib/builder/subclass-content-update";
 import { BonusSpellsPanel } from "@/components/builder/bonus-spells-panel";
 import { readBonusSpellChoices, ordinaryKnownSpellBudget, resolveLoreSkillChoice } from "@/lib/builder/bonus-spells";
 import { ClassSpellsPanel, type BuilderSpellSelection } from "@/components/builder/class-spells-panel";
@@ -51,6 +53,8 @@ import { resolveDefinitionClassFeatureChoices } from "@/lib/builder/class-featur
 import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 
 interface ClassStepClientProps {
+  accountId?: string;
+  previewContentUpdateAction?: PreviewSubclassContentUpdate;
   saveAction?: SaveBuilderStep;
   classRolesAvailable?: boolean;
   castingSources?: EffectiveCastingSource[];
@@ -74,6 +78,7 @@ interface ClassStepClientProps {
   spells: ContentEntry[];
   contentRefs: Array<{
     id: string;
+    character_id?: string;
     content_id: string;
     context: Record<string, unknown>;
     choice_source: string | null;
@@ -121,6 +126,8 @@ function pinnedEntries(
 const subscribeToHydration = () => () => {};
 
 export function ClassStepClient({
+  accountId,
+  previewContentUpdateAction,
   characterId,
   character,
   classes,
@@ -184,6 +191,7 @@ export function ClassStepClient({
     && contentRefs.some(ref => ref.content_id === ref.content_definitions.id && ref.content_version === ref.content_definitions.version
       && ref.content_definitions.content_type === "subclass" && ref.content_definitions.slug === "fiend"
       && Object.hasOwn(ref.content_definitions.data, "spellcastingExtra") && !Object.hasOwn(ref.content_definitions.data, "spellcastingExpanded")));
+  const fiendUpdate = legacyFiendList ? findFiendContentUpdate(characterId, selectedClasses, contentRefs, subclasses) : null;
   const referencedFeatures = [...savedClasses.entries.filter(entry => selectedClasses.some(cls => cls.slug === entry.slug)),
     ...savedSubclasses.entries.filter(entry => selectedClasses.some(cls => cls.subclass === entry.slug))]
     .flatMap(entry => (entry.data.levels as Array<{ features?: string[] }> | undefined) ?? [])
@@ -826,6 +834,10 @@ export function ClassStepClient({
         {legacyFiendList && <p role="status" className="rounded-md border border-border p-3 text-sm text-muted-foreground">
           Your saved Fiend content uses an earlier spell-list version. Your choices are preserved. Correct expanded spell choices require a reviewed content-version update.
         </p>}
+        {fiendUpdate && accountId && previewContentUpdateAction && saveAction && <SubclassContentUpdate
+          accountId={accountId} characterId={characterId} candidate={fiendUpdate} actionRevision={currentRevision}
+          previewAction={previewContentUpdateAction} saveAction={saveAction}
+          disabled={!hydrated || saving || refreshing || unsavedSpells || snapshotConflict || missingFeatures.length > 0 || !classRolesAvailable} />}
         {saveAction && adjustedCastingSources.filter(source => source.active && source.config).map(source => <ClassSpellsPanel
           key={source.classSlug}
           source={source} catalog={spells.filter(spell => !grantedSpells.some(grant => grant.class_slug === source.classSlug && grant.content_id === spell.id))}
