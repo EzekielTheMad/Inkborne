@@ -9,6 +9,10 @@ import { providerAbilities, providerBase, providerSources } from "../../fixtures
 import type { CharacterState } from "@/lib/types/character";
 import type { CharacterSpell } from "@/lib/types/spells";
 import { insertRoll } from "@/lib/supabase/rolls";
+import { transformTraitEntry } from "@/scripts/transformers/traits";
+import { resolveOwnedAncestryDefenses } from "@/lib/character/ancestry-defenses";
+import darkvision from "../../fixtures/earned-racial-spells/darkvision.json";
+import hellishResistance from "../../fixtures/earned-racial-spells/hellish-resistance.json";
 
 const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ rpc }) }));
@@ -26,6 +30,17 @@ function Probe({ target }: { target: CharacterSpell }) {
 }
 function fixture() {
   const f = earnedRacialFixture(), target = f.spells[0];
+  // Complete the genuine root's mandatory trait closure. F2 requires all three
+  // owned immutable traits before any provider mechanical action is available.
+  for (const [index, api] of [darkvision, hellishResistance].entries()) {
+    const trait = transformTraitEntry(api), contentId = racialId(51 + index * 2);
+    f.refs.push({ ...f.trait, id: racialId(50 + index * 2), content_id: contentId,
+      choice_source: `builder:racial-trait:${api.index}`, content_definitions: { ...f.trait.content_definitions,
+        id: contentId, slug: api.index, name: api.name, data: trait.data, effects: trait.effects } });
+  }
+  expect(resolveOwnedAncestryDefenses(f.character, { status: "complete", character_id: f.character.id,
+    system_id: f.character.system_id, refs: f.refs, grants: [] }).status).toBe("available");
+  expect(providerSources(f.character, f.refs).asi?.status).toBe("available");
   const ordinary = (classSlug: string, n: number, prepared: boolean): CharacterSpell => ({ ...target, id: racialId(n), content_id: racialId(n + 1),
     class_slug: classSlug, source: "selection", always_prepared: false, is_prepared: prepared, in_spellbook: classSlug === "wizard", custom_data: null,
     content_definitions: { ...target.content_definitions!, id: racialId(n + 1), data: { ...target.content_definitions!.data, classes: [classSlug] } } });
