@@ -114,7 +114,7 @@ describe("durable hit-die service-internal request and snapshot", () => {
     s.pins.push({ id: id(90), character_id: s.character.id, content_id: id(91), content_version: 1, feature_grant_id: null,
       context: { source: "feature" }, choice_source: null,
       resolved: { ...s.pins[0].resolved, id: id(91), version: 1, content_type: "feature", slug: "saved-constitution-choice", name: "Saved ability choice",
-        data: { class: "sorcerer", level: 1, feature_type: "choice" }, effects: [
+        data: { class: "sorcerer", level: 1, feature_type: "choice", description: "A finite saved ability choice." }, effects: [
           { type: "choice", choice_id: "saved-constitution-choice", choose: 1, from: ["constitution"], grant_type: "ability_bonus" },
         ] } });
     const result = planDurableHitDie(s, { ...request(s), class_slug: "sorcerer" }, {
