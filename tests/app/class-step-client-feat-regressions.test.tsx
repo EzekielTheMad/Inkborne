@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClassStepRail } from "@/components/builder/class-step-rail";
 import type { ContentEntry } from "@/components/builder/content-browser";
 import type { ClassPreviewModalProps } from "@/components/builder/class-preview-modal";
+import type { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices, UsableFeatOption } from "@/lib/types/character";
 
 const mocks = vi.hoisted(() => ({
@@ -44,8 +45,9 @@ vi.mock("@/components/builder/class-preview-modal", () => ({
   ClassPreviewModal: (props: ClassPreviewModalProps) => { currentPreview = props; return null; },
 }));
 
+let currentStatPreview: ComponentProps<typeof StatPreview>;
 vi.mock("@/components/builder/stat-preview", () => ({
-  StatPreview: () => null,
+  StatPreview: (props: ComponentProps<typeof StatPreview>) => { currentStatPreview = props; return null; },
 }));
 
 type RailProps = ComponentProps<typeof ClassStepRail>;
@@ -111,11 +113,13 @@ const emberSentinel: UsableFeatOption = {
 
 function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typeof ClassStepClient>["saveAction"],
   native?: { classRolesAvailable?: boolean; action_revision?: string;
-    contentRefs?: ComponentProps<typeof ClassStepClient>["contentRefs"] }) {
+    contentRefs?: ComponentProps<typeof ClassStepClient>["contentRefs"];
+    equipmentPreview?: ComponentProps<typeof ClassStepClient>["equipmentPreview"]; schema?: ComponentProps<typeof ClassStepClient>["schema"] }) {
   return render(
     <ClassStepClient
       saveAction={saveAction}
       classRolesAvailable={native?.classRolesAvailable}
+      equipmentPreview={native?.equipmentPreview}
       characterId="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
       character={{
         id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -124,6 +128,7 @@ function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typ
         action_revision: native?.action_revision,
         base_stats: {},
         choices,
+        state: { equipped_armor: "none", shield_equipped: false },
       }}
       classes={[fighter]}
       subclasses={[]}
@@ -131,7 +136,7 @@ function renderClient(choices: CharacterChoices, saveAction?: ComponentProps<typ
       feats={[emberSentinel]}
       spells={[]}
       contentRefs={native?.contentRefs ?? []}
-      schema={undefined}
+      schema={native?.schema}
     />,
   );
 }
@@ -159,6 +164,15 @@ function deferred<T>() {
 describe("ClassStepClient feat regressions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+  it("passes saved equipment effects and derived state to the actual sidebar instead of stale parent equipment fields", () => {
+    const equipmentPreview = { effects: [{ type: "mechanical" as const, stat: "armor_class", op: "formula" as const,
+      expr: "11 + mod(dexterity)", tag: "ac_formula" }], state: { equipped_armor: "light", shield_equipped: true } };
+    renderClient({ classes: [{ slug: "fighter", level: 4 }] }, undefined, { equipmentPreview, schema: {
+      ability_scores: [], proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [],
+    } });
+    expect(currentStatPreview.state).toEqual(equipmentPreview.state);
+    expect(currentStatPreview.effects).toEqual(equipmentPreview.effects);
   });
 
   it("adds a native class with the displayed revision and never uses legacy writes or native removal", async () => {

@@ -7,6 +7,8 @@ import { characterCreationUIEnabled } from "@/lib/character/creation-ui-server";
 import { saveBuilderStep, previewSubclassContentUpdate } from "../step-actions";
 import { parseNestedContentVersionSnapshot } from "@/lib/supabase/content-definitions-parser";
 import { resolveEffectiveCastingSources } from "@/lib/spells/effective-sources";
+import { resolveBuilderEquipmentPreview } from "@/lib/builder/preview-equipment";
+import type { InventoryItem } from "@/lib/types/inventory";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -37,7 +39,7 @@ export default async function ClassStepPage({ params }: PageProps) {
 
   const systemId = character.system_id;
 
-  const [classContent, subclassContent, featureContent, spells, contentSnapshot, languages, savedSpells] =
+  const [classContent, subclassContent, featureContent, spells, contentSnapshot, languages, savedSpells, savedEquipment] =
     await Promise.all([
       getContentByType(systemId, "class"),
       getContentByType(systemId, "subclass"),
@@ -48,8 +50,17 @@ export default async function ClassStepPage({ params }: PageProps) {
       supabase.from("character_spells").select(`content_id,content_version,is_prepared,always_prepared,in_spellbook,source,class_slug,
         content_versions!character_spells_content_version_fkey(content_id,version,system_id_snapshot,content_type_snapshot,slug_snapshot,name_snapshot,data_snapshot,effects_snapshot,source_snapshot,scope_snapshot,owner_id_snapshot)`)
         .eq("character_id", id),
+      supabase.from("character_inventory").select(`*,
+        content_versions!character_inventory_content_version_fkey(content_id,version,system_id_snapshot,content_type_snapshot,slug_snapshot,name_snapshot,data_snapshot,effects_snapshot,source_snapshot,scope_snapshot,owner_id_snapshot)`, { count: "exact" })
+        .eq("character_id", id).eq("equipped", true),
     ]);
   if (savedSpells.error) throw Error("The saved spell selections could not be read. Reload before editing.");
+  if (savedEquipment.error || !Array.isArray(savedEquipment.data) || savedEquipment.count !== savedEquipment.data.length) {
+    throw Error("Saved equipped items are unavailable. Reload or restore the character's saved equipment.");
+  }
+  const equipmentPreview = resolveBuilderEquipmentPreview(id, systemId, savedEquipment.data.map(row => ({ ...row,
+    content_definitions: parseNestedContentVersionSnapshot(row.content_versions),
+  })) as InventoryItem[]);
   const savedSpellEntries = (savedSpells.data ?? []).flatMap(row => {
     const definition = parseNestedContentVersionSnapshot(row.content_versions);
     return definition && definition.id === row.content_id && definition.version === row.content_version ? [definition] : [];
@@ -78,6 +89,7 @@ export default async function ClassStepPage({ params }: PageProps) {
       grantedSpells={(savedSpells.data ?? []).filter(row => row.source !== "selection" && row.content_id)
         .map(row => ({ content_id: row.content_id!, class_slug: row.class_slug }))}
       characterId={id}
+      equipmentPreview={equipmentPreview}
       character={character}
       classes={classContent}
       subclasses={subclassContent}

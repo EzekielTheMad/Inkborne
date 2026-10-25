@@ -52,8 +52,10 @@ import { classRoleRevisionSchema } from "@/lib/character/class-role-effects-sche
 import { resolveDefinitionClassFeatureChoices } from "@/lib/builder/class-feature-choices";
 import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 import { resolveSubclassHitPointBonus } from "@/lib/character/subclass-hit-points";
+import type { BuilderEquipmentPreview } from "@/lib/builder/preview-equipment";
 
 interface ClassStepClientProps {
+  equipmentPreview?: BuilderEquipmentPreview;
   accountId?: string;
   previewContentUpdateAction?: PreviewSubclassContentUpdate;
   saveAction?: SaveBuilderStep;
@@ -127,6 +129,7 @@ function pinnedEntries(
 const subscribeToHydration = () => () => {};
 
 export function ClassStepClient({
+  equipmentPreview,
   accountId,
   previewContentUpdateAction,
   characterId,
@@ -890,12 +893,12 @@ export function ClassStepClient({
         <div className="hidden lg:block">
           <StatPreview
             baseStats={character.base_stats ?? {}}
-            effects={allEffects}
+            effects={equipmentPreview ? [...allEffects, ...equipmentPreview.effects] : allEffects}
             schema={schema}
             level={localLevel}
             sources={confirmedSources}
             draft={!mechanicsAvailable}
-            state={character.state}
+            state={equipmentPreview ? { ...character.state, ...equipmentPreview.state } : character.state}
             classContext={{ available: mechanicsAvailable, choices: localChoices, hpRule,
               subclassHitPoints: resolveSubclassHitPointBonus({ id: characterId, system_id: character.system_id ?? "",
                 level: localLevel, choices: localChoices, action_revision: currentRevision }, contentRefs),

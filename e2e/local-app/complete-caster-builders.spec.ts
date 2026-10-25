@@ -366,6 +366,14 @@ for (const story of stories) test(`complete SRD ${story.name} level-three caster
   await chooseLevelThreeOptions(page, base, story); await checkpoint("level three subclass, feature and average HP choices saved");
   await chooseSpells(page, story); await checkpoint("complete class spell choices and allowances saved and reloaded");
   await chooseEquipmentAndDetails(page, base, name);
+  if (story.slug === "sorcerer") {
+    // Starting awards create unequipped items. The known no-equipped-gear
+    // class sidebar must agree with the independently expected sheet scales.
+    await page.goto(base + "/class");
+    const stats = page.getByRole("heading", { name: "Stats", exact: true }).locator("..");
+    await expect(stats.getByText("Armor Class", { exact: true }).locator("..").locator("span").last()).toHaveText("15");
+    await page.goto(base + "/details");
+  }
   await checkpoint("all six builder steps display Saved");
   const before = await nativeReadback(info, characterId, "builder-complete");
   await page.getByRole("button", { name: "Review & Finish", exact: true }).click();
