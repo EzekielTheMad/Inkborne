@@ -16,6 +16,10 @@ const preview = () => ({ status: "available", preview: { contract_version: 1, ch
   removed: [{ kind: "spell_grant", label: "Automatic Burning Hands grant" }],
   added: [{ kind: "expanded_spell", label: "Burning Hands as an ordinary candidate" }], automatic_spells_learned: 0 } });
 const unavailable = { status: "unavailable", reason: "unavailable" };
+const original = () => parseBuilderStepIntent({ contract_version: 1, command: "update_subclass_version",
+  operation_id: operation, character_id: target, fields })!;
+const rejected = () => ({ status: "rejected", rejection: { actor_id: actor, character_id: target,
+  operation_id: operation, command: "update_subclass_version", fields, reason: "stale_review", observed_action_revision: "5" } });
 
 beforeEach(() => {
   vi.resetAllMocks(); vi.stubEnv("INKBORNE_CLASS_ORIGIN_CREATION_UI", "true");
@@ -85,7 +89,35 @@ describe("reviewed subclass update server boundary (Auth/RPC doubles)", () => {
     expect(await submitBuilderStep(actor, original)).toEqual(saved);
     expect(await checkBuilderStep(actor, original)).toEqual({ ...saved, status: "recorded" });
     expect(mocks.rpc.mock.calls[0][1].p_request).toEqual(original);
-    expect(mocks.rpc.mock.calls[1][1].p_request).toEqual({ contract_version: 1, command: "resolve_builder", operation_id: operation, character_id: target });
+    expect(mocks.rpc.mock.calls[1][0]).toBe("character_builder_subclass_update_resolution_v1");
+    expect(mocks.rpc.mock.calls[1][1].p_request).toEqual(original);
+  });
+  it.each(["submit", "check"])("accepts an exact native stale-review proof on %s", async method => {
+    mocks.rpc.mockResolvedValue({ data: rejected(), error: null });
+    expect(await (method === "submit" ? submitBuilderStep : checkBuilderStep)(actor, original())).toEqual(rejected());
+    expect(mocks.rpc.mock.calls[0][1].p_request).toEqual(original());
+    expect(mocks.rpc.mock.calls[0][0]).toBe(method === "submit" ? "character_builder_command_v1" : "character_builder_subclass_update_resolution_v1");
+  });
+  it.each(["actor", "target", "operation", "fields", "equal", "earlier", "malformed", "unknown"])(
+    "refuses a stale-review proof with %s mismatch", async mode => {
+      const raw = rejected();
+      if (mode === "actor") raw.rejection.actor_id = other;
+      if (mode === "target") raw.rejection.character_id = other;
+      if (mode === "operation") raw.rejection.operation_id = other;
+      if (mode === "fields") raw.rejection.fields = { ...fields, preview_digest: "b".repeat(64) };
+      if (mode === "equal") raw.rejection.observed_action_revision = "4";
+      if (mode === "earlier") raw.rejection.observed_action_revision = "3";
+      if (mode === "malformed") raw.rejection.observed_action_revision = "05";
+      mocks.rpc.mockResolvedValue({ data: mode === "unknown" ? { ...raw, extra: true } : raw, error: null });
+      await expect(checkBuilderStep(actor, original())).rejects.toThrow("could not be confirmed");
+    });
+  it.each(["throw", "error"])("resolves a lost %s submission using the complete original update", async mode => {
+    if (mode === "throw") mocks.rpc.mockRejectedValueOnce(Error("private transport details"));
+    else mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: "private database details" } });
+    mocks.rpc.mockResolvedValueOnce({ data: rejected(), error: null });
+    expect(await submitBuilderStep(actor, original())).toEqual(rejected());
+    expect(mocks.rpc.mock.calls.map(call => call[0])).toEqual(["character_builder_command_v1", "character_builder_subclass_update_resolution_v1"]);
+    expect(mocks.rpc.mock.calls[1][1].p_request).toEqual(original());
   });
   it.each([{ ...fields, target_content_version: 1 }, { ...fields, expected_action_revision: "04" },
     { ...fields, preview_digest: "guessed" }, { ...fields, occurrence_id: "bad" }, { ...fields, class_slug: "wizard" }])(

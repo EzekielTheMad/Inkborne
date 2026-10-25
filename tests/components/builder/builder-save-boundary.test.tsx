@@ -30,7 +30,15 @@ const id = (n: number) => `10000000-0000-4000-8000-${String(n).padStart(12, "0")
 const account = id(1), target = id(2), operation = id(3), other = id(4);
 const original = (characterId = target) => parseBuilderStepIntent({ contract_version: 1, operation_id: operation,
   character_id: characterId, command: "save_details", fields: { name: "Original name", alignment: null } })!;
-const result = (intent = original(), status: "applied" | "replayed" | "recorded" = "applied"): BuilderStepResponse => ({ status,
+type Confirmed = Extract<BuilderStepResponse, { receipt: unknown }>;
+const updateFields = { class_slug: "warlock", occurrence_id: id(7), subclass_ref_id: id(8), content_id: id(9),
+  expected_content_version: 1, target_content_version: 2, expected_action_revision: "2", preview_digest: "a".repeat(64) };
+const updateOriginal = () => parseBuilderStepIntent({ contract_version: 1, operation_id: operation,
+  character_id: target, command: "update_subclass_version", fields: updateFields })!;
+const rejection = () => ({ status: "rejected", rejection: { actor_id: account, character_id: target,
+  operation_id: operation, command: "update_subclass_version", fields: updateFields,
+  reason: "stale_review", observed_action_revision: "3" } });
+const result = (intent = original(), status: "applied" | "replayed" | "recorded" = "applied"): Confirmed => ({ status,
   receipt: { operation_id: intent.operation_id, character_id: intent.character_id, actor_id: account,
     command: intent.command, fields: intent.fields, saved_choices: { alignment: "historical" }, saved_scores: { strength: 15 }, action_revision: "3" } });
 function actions() {
@@ -134,13 +142,46 @@ describe("ordinary builder recovery boundary", () => {
     expect(accepted).not.toHaveBeenCalled();
   });
 
+  it.each(["check", "retry"])("%s clears an exactly proved stale update and reloads for a fresh review", async method => {
+    persistPendingBuilderStep(updateOriginal(), getCreationScope(), sessionStorage);
+    const untouched = persistPendingBuilderStep(original(other), getCreationScope(), sessionStorage);
+    const handlers = actions();
+    if (method === "check") handlers.check.mockResolvedValue(rejection());
+    else handlers.submit.mockResolvedValue(rejection());
+    await open(handlers);
+    fireEvent.click(screen.getByRole("button", { name: method === "check" ? "Check save" : "Retry original save" }));
+    await waitFor(() => expect(reload.call).toHaveBeenCalledExactlyOnceWith(account, target));
+    expect(readPendingBuilderStep(account, target, sessionStorage)).toBeNull();
+    expect(readPendingBuilderStep(account, other, sessionStorage)).toEqual(untouched);
+    expect(accepted).not.toHaveBeenCalled(); expect(reload.blocked).toBe(false);
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it.each(["actor", "character", "operation", "fields", "equal", "earlier", "malformed", "unknown"])(
+    "retains the exact update when a stale proof has %s mismatch", async mode => {
+      persistPendingBuilderStep(updateOriginal(), getCreationScope(), sessionStorage);
+      const raw = rejection();
+      if (mode === "actor") raw.rejection.actor_id = other;
+      if (mode === "character") raw.rejection.character_id = other;
+      if (mode === "operation") raw.rejection.operation_id = other;
+      if (mode === "fields") raw.rejection.fields = { ...updateFields, preview_digest: "b".repeat(64) };
+      if (mode === "equal") raw.rejection.observed_action_revision = "2";
+      if (mode === "earlier") raw.rejection.observed_action_revision = "1";
+      if (mode === "malformed") raw.rejection.observed_action_revision = "03";
+      const handlers = actions(); handlers.check.mockResolvedValue(mode === "unknown" ? { ...raw, extra: true } : raw);
+      await open(handlers); fireEvent.click(screen.getByRole("button", { name: "Check save" }));
+      await waitFor(() => expect(screen.getByRole("button", { name: "Check save" })).toBeEnabled());
+      expect(readPendingBuilderStep(account, target, sessionStorage)?.intent).toEqual(updateOriginal());
+      expect(reload.call).not.toHaveBeenCalled(); expect(accepted).not.toHaveBeenCalled();
+    });
+
   it.each([
-    { ...result(), receipt: { ...(result() as Exclude<BuilderStepResponse, { status: "absent" }>).receipt, actor_id: other } },
-    { ...result(), receipt: { ...(result() as Exclude<BuilderStepResponse, { status: "absent" }>).receipt, character_id: other } },
-    { ...result(), receipt: { ...(result() as Exclude<BuilderStepResponse, { status: "absent" }>).receipt, operation_id: other } },
-    { ...result(), receipt: { ...(result() as Exclude<BuilderStepResponse, { status: "absent" }>).receipt, command: "clear_race", fields: {} } },
-    { ...result(), receipt: { ...(result() as Exclude<BuilderStepResponse, { status: "absent" }>).receipt, fields: { name: "Replacement", alignment: null } } },
-    { ...result(), receipt: { ...(result() as Exclude<BuilderStepResponse, { status: "absent" }>).receipt, fields: { name: " Original name ", alignment: null } } },
+    { ...result(), receipt: { ...(result() as Confirmed).receipt, actor_id: other } },
+    { ...result(), receipt: { ...(result() as Confirmed).receipt, character_id: other } },
+    { ...result(), receipt: { ...(result() as Confirmed).receipt, operation_id: other } },
+    { ...result(), receipt: { ...(result() as Confirmed).receipt, command: "clear_race", fields: {} } },
+    { ...result(), receipt: { ...(result() as Confirmed).receipt, fields: { name: "Replacement", alignment: null } } },
+    { ...result(), receipt: { ...(result() as Confirmed).receipt, fields: { name: " Original name ", alignment: null } } },
     { ...result(), unexpected: true }, { status: "recorded", receipt: {} },
   ])("retains and blocks replacement on malformed/mismatched receipt %j", async raw => {
     persistPendingBuilderStep(original(), getCreationScope(), sessionStorage);
@@ -226,7 +267,7 @@ describe("ordinary builder recovery boundary", () => {
 
   it("real ability editor sends its first and next edits through the current committed save adapter", async () => {
     const handlers = actions(); handlers.submit.mockImplementation(async intent => ({ ...result(intent),
-      receipt: { ...(result(intent) as Exclude<BuilderStepResponse, { status: "absent" }>).receipt,
+      receipt: { ...(result(intent) as Confirmed).receipt,
         saved_scores: (intent.fields as { scores: Record<string, number> }).scores } }));
     render(<BuilderSaveBoundary accountId={account} characterId={target} submitAction={handlers.submit} checkAction={handlers.check}>
       <AbilitiesStepClient {...abilityProps()} />
@@ -251,7 +292,7 @@ describe("ordinary builder recovery boundary", () => {
     await waitFor(() => expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument());
     const pending = readPendingBuilderStep(account, target, sessionStorage)!;
     handlers.check.mockResolvedValue({ ...result(pending.intent, "recorded"), receipt: {
-      ...(result(pending.intent) as Exclude<BuilderStepResponse, { status: "absent" }>).receipt,
+      ...(result(pending.intent) as Confirmed).receipt,
       saved_scores: { strength: 14, dexterity: 14 } } });
     fireEvent.click(screen.getByRole("button", { name: "Check save" }));
     await waitFor(() => expect(reload.call).toHaveBeenCalledExactlyOnceWith(account, target));
@@ -260,7 +301,7 @@ describe("ordinary builder recovery boundary", () => {
     // Emulate the document's next server snapshot, newer than the receipt.
     const latest = abilityProps(); latest.character.base_stats.strength = 17;
     handlers.submit.mockImplementation(async intent => ({ ...result(intent), receipt: {
-      ...(result(intent) as Exclude<BuilderStepResponse, { status: "absent" }>).receipt,
+      ...(result(intent) as Confirmed).receipt,
       saved_scores: (intent.fields as { scores: Record<string, number> }).scores } }));
     render(<BuilderSaveBoundary {...props}><AbilitiesStepClient {...latest} /></BuilderSaveBoundary>);
     expect((await screen.findAllByRole("spinbutton"))[0]).toHaveValue(17);

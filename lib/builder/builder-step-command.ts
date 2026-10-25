@@ -108,5 +108,11 @@ export const builderStepReceiptSchema = z.strictObject({
 export const builderStepResponseSchema = z.discriminatedUnion("status", [
   z.strictObject({ status: z.enum(["applied", "replayed", "recorded"]), receipt: builderStepReceiptSchema }),
   z.strictObject({ status: z.literal("absent") }),
+  z.strictObject({ status: z.literal("rejected"), rejection: z.strictObject({
+    actor_id: z.uuid(), character_id: z.uuid(), operation_id: z.uuid(),
+    command: z.literal("update_subclass_version"), fields: subclassContentUpdateFieldsSchema,
+    reason: z.literal("stale_review"), observed_action_revision: classRoleRevisionSchema,
+  }).refine(proof => BigInt(proof.observed_action_revision) > BigInt(proof.fields.expected_action_revision),
+    "Only a monotonically stale review is terminal") }),
 ]);
 export type BuilderStepResponse = z.infer<typeof builderStepResponseSchema>;

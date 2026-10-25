@@ -50,7 +50,8 @@ version, expected action revision and SHA256 preview digest. The transaction
 checks a matching historical receipt before stale-preview/version checks, then
 rederives the descriptor under the existing guard/parent/source locks. Changed
 ownership, source, revision, old ref, occurrence, dependency closure or preview
-must refuse atomically. A changed request cannot reuse the same operation ID.
+must refuse atomically. After an accepted receipt, a changed request cannot
+reuse its operation ID.
 
 Only the old Fiend source closure changes. Unrelated classes/occurrences,
 controller identities, choices, ordinary spell selections, base scores,
@@ -64,6 +65,17 @@ validate the exact receipt, clear that exact account-scoped pending record,
 unmount editor guards/portals and reload current server values. Lost-response
 check/retry reuses the original operation and never reapplies a historical
 choices snapshot over current state.
+
+A stale review without a receipt can be released only by the dedicated
+read-only resolution RPC and its exact-intent terminal proof. Under the same
+owner/session, global writer guard and parent lock, receipt lookup comes first.
+Only an enrolled character whose native action revision is strictly greater
+than this intent's expected revision proves that exact original can never
+commit. The proof binds actor, character, operation, command and complete raw
+fields. The boundary clears that matching local intent and reloads for a new
+review with a newly minted operation. Absence, catalog changes, transport
+errors, access loss and unproved lifecycle changes remain unresolved. This
+does not reserve a never-applied UUID for every different future request.
 
 ## Revision and native authority
 

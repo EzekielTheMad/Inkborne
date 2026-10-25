@@ -26,13 +26,16 @@ async function run(expectedAccountId: string, input: unknown, recovery: boolean)
     operation_id: original.operation_id, character_id: original.character_id };
   // The user's actual cookies are compared independently to the context under
   // native ownership/session locks. A receipt lookup never performs a save.
-  const args = { p_context: { ...verified.context }, p_request: recovery ? resolveRequest : original };
-  const sent = await client.rpc("character_builder_command_v1", args).then(result => result, () => null);
+  const update = original.command === "update_subclass_version";
+  const resolutionName = update ? "character_builder_subclass_update_resolution_v1" : "character_builder_command_v1";
+  const resolutionRequest = update ? original : resolveRequest;
+  const args = { p_context: { ...verified.context }, p_request: recovery ? resolutionRequest : original };
+  const sent = await client.rpc(recovery ? resolutionName : "character_builder_command_v1", args).then(result => result, () => null);
   let response: unknown = sent && !sent.error ? sent.data : null;
   if ((!sent || sent.error) && !recovery) {
     // Resolve only this retained operation; no new UUID or changed request.
-    const resolved = await client.rpc("character_builder_command_v1", {
-      p_context: args.p_context, p_request: resolveRequest,
+    const resolved = await client.rpc(resolutionName, {
+      p_context: args.p_context, p_request: resolutionRequest,
     }).then(result => result, () => null);
     response = resolved && !resolved.error ? resolved.data : null;
   }
@@ -41,7 +44,7 @@ async function run(expectedAccountId: string, input: unknown, recovery: boolean)
     throw Error("This selection could not be confirmed. Check or retry the original save.");
   }
   if (parsed.data.status === "absent") return parsed.data;
-  const receipt = parsed.data.receipt;
+  const receipt = parsed.data.status === "rejected" ? parsed.data.rejection : parsed.data.receipt;
   if (receipt.operation_id !== original.operation_id || receipt.character_id !== original.character_id
     || receipt.actor_id !== expectedAccountId || receipt.command !== original.command
     || !equalEquipmentIntent(receipt.fields, original.fields)) {
@@ -91,7 +94,7 @@ export async function saveBuilderStep(expectedAccountId: string, characterId: st
   const result = await submitBuilderStep(expectedAccountId, {
     contract_version: 1, operation_id: operationId, character_id: characterId, command, fields,
   });
-  if (result.status === "absent") throw Error("This selection could not be confirmed. Check or retry the original save.");
+  if (result.status === "absent" || result.status === "rejected") throw Error("This selection could not be confirmed. Check or retry the original save.");
   return { choices: result.receipt.saved_choices as CharacterChoices,
     scores: result.receipt.saved_scores, action_revision: result.receipt.action_revision };
 }

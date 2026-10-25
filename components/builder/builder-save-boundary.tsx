@@ -99,7 +99,8 @@ export function BuilderSaveBoundary({ accountId, characterId, submitAction, chec
           notice: (parsed.success ? "No saved result was found yet. " : "The save is not confirmed yet. ") + retained });
         throw new Error("The original builder save is not confirmed");
       }
-      const receipt = parsed.data.receipt;
+      const rejected = parsed.data.status === "rejected";
+      const receipt = parsed.data.status === "rejected" ? parsed.data.rejection : parsed.data.receipt;
       const receivedIntent = parseBuilderStepIntent({ contract_version: 1, operation_id: receipt.operation_id,
         character_id: receipt.character_id, command: receipt.command, fields: receipt.fields });
       if (receipt.actor_id !== pending.account_id || !receivedIntent || !sameBuilderStepIntent(receivedIntent, pending.intent)
@@ -119,12 +120,15 @@ export function BuilderSaveBoundary({ accountId, characterId, submitAction, chec
         // A fresh document reads the current server snapshot and drops all
         // in-memory editor drafts/queues, including module-scoped ability data.
         setView({ epoch: lease.epoch, accountId, characterId, pending: null, blocked: true,
-          notice: "Your original save is confirmed. Loading the current saved choices…" });
+          notice: rejected ? "This review is out of date. Loading the current saved build so you can review again."
+            : "Your original save is confirmed. Loading the current saved choices…" });
         setReloadRequest({ lease, accountId: pending.account_id, characterId: pending.intent.character_id });
         return null;
       }
       setView({ epoch: lease.epoch, accountId, characterId, pending: null, blocked: false, notice: "" });
-      return { choices: receipt.saved_choices, scores: receipt.saved_scores, action_revision: receipt.action_revision };
+      if (parsed.data.status === "rejected") return null;
+      return { choices: parsed.data.receipt.saved_choices, scores: parsed.data.receipt.saved_scores,
+        action_revision: parsed.data.receipt.action_revision };
     } catch (error) {
       if (mounted.current && currentTarget.current.accountId === pending.account_id
         && currentTarget.current.characterId === pending.intent.character_id && getCreationScope().epoch === lease.epoch) {
