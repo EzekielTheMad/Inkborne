@@ -23,7 +23,17 @@ The authoritative continuation checkout is
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, branch
 `codex/launch-integration-20261011`. Preserve `C:\Projects\Inkborne` as the old
 backup and preserve every inherited worktree. Refresh Git status/HEAD before
-editing; the latest product/source checkpoint is `c705d5f`.
+editing; the latest product/source checkpoint is `7311ca2`.
+
+The user-requested creation dropdown refinement is implemented locally:
+finite picks use dropdowns offering currently valid options, retaining visible
+saved values and explicit recovery. This covers languages/skills, ancestry,
+class features, ASI/feats, HP, spells, personality and equipment. All 392 focused
+checks, typecheck/lint and 27 desktop/mobile component-browser scenarios pass;
+independent review is clear. Browser persistence is simulated, not new database
+acceptance. All owned UI processes/ports are closed. Exact sources, retained
+worker dependency links and evidence are in the
+[latest handoff](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-dropdown-refinement).
 
 Fiend historical correction/recovery and Draconic HP/AC now pass actual local
 app acceptance at `7c31afb`, eleven native checkpoints each. The parent safeguard

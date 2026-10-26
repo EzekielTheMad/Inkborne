@@ -51,6 +51,93 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
+### Latest continuation — 2026-10-26 dropdown refinement
+
+The user added an explicit creation UX requirement: **finite character-creation
+choices use dropdowns, and menus contain only currently valid options**. Keep
+this consistent across creation; do not restore bubble/card/checkbox pick lists.
+Custom narrative and manual number entry remain inputs, and navigation,
+confirmation/recovery actions and rich detail previews remain available.
+
+Implemented locally through `7311ca2`, with spell worker integration `ceadb64`,
+class-control integration `90683c8` and actual-story selector adaptation `dbbde16`.
+The authoritative branch and old-backup boundaries are unchanged.
+
+- Shared `selection-dropdowns.tsx` / `choice-selector.tsx` offer bounded pick
+  slots with no duplicate candidate in another occupied slot. Race/background,
+  subrace, additional class, personality presets, class features, subclass
+  previews, ASI/feats, HP methods, spells and equipment alternatives use selects.
+  Existing system, first-class, alignment and category-item dropdowns remain.
+- Options respect current class/subclass, earned level, manifests, known
+  languages/proficiencies, other valid selections, feat prerequisites, spell
+  eligibility and cantrip/known/book/prepared allowances. Used standard-array
+  scores and unaffordable point-buy values are omitted. Initial class selection
+  retains its separate rules; multiclass prerequisites apply only to additions.
+- `asi-option-scores.ts` validates existing complete character evidence and
+  re-evaluates the saved sources without this occurrence's old allocation or
+  exact owned feat. It does not subtract a capped display score. Fighting-style
+  reservations require exact owned active feature grants; stale catalog choices
+  cannot suppress an otherwise legal style. Favored Enemy excludes valid picks
+  already earned at another active tier.
+- Builder discovery opts into `getContentByType(..., true)` to exclude retired
+  options. Other library callers retain their old query behavior; immutable
+  saved snapshots stay separate. No schema, SQL/native writer, auth, RLS,
+  dependency or hosting change was made.
+- Unavailable saved values remain visible and retained. Invalid duplicate or
+  over-limit narrative picks have an explicit Clear path. Unavailable vocabulary
+  stays locked without an automatic clear. Failed saves retain drafts, and spell
+  replacement keeps keyboard focus on its dropdown.
+
+Final focused verification:
+
+- **392/392 tests across 17 directly affected files pass**, using existing
+  `npm.cmd test`, one worker. Receipt
+  `../equipment-runtime/evidence/local-builder-choice-dropdowns-20261026T214353Z`;
+  all 24 observed identities exited. Earlier selector failures remain preserved;
+  their test interactions were adapted without dropping recovery or native
+  request assertions.
+- `npm.cmd run typecheck` and zero-warning `npm.cmd run lint` pass in
+  `local-creation-browser-check-20261026T214510Z`; all 12 identities exited.
+  Full suite/build repetition was omitted under the focused scope.
+- `npm.cmd run test:e2e -- --config e2e/local-builder/playwright.config.ts`
+  passes **27 desktop/mobile Chrome scenarios** in
+  `local-builder-dropdowns-browser-20261026T214236Z`; all 19 identities exited.
+  These render the actual editor/components with **simulated persistence and
+  routing**, not a new PostgreSQL/Auth acceptance result. They exercise pinned
+  choices, language eligibility, dropdown interaction, pending/error/hidden
+  Activity recovery, native score CAS payloads, HP and equipment receipt recovery.
+  Browser/port closure is independently checked in
+  `test-results/builder-local-2026-10-26T21-42-39-543Z/cleanup.json` (port 49690).
+  Two mobile screenshots were visually inspected. Earlier fixture bundling,
+  stale-selector and missing-schema failures remain in distinct output folders.
+- Independent read-only review cleared the exact 32-file product manifest after
+  fixing spell focus, stale style reservations and saved-value/recovery display
+  gaps. Reviewed sources are pinned in
+  `../equipment-runtime/builder-dropdown-source-after-fixes-20261026.json`;
+  only rail indentation changed afterward. Final source hashes, wrapper receipts,
+  UI limitations and cleanup are collected in
+  `../equipment-runtime/builder-dropdown-checkpoint-20261026.json`.
+- All fourteen actual-app stories now use the new controls. Static inspection
+  preserves all **129 native checkpoint/readback/publication calls**, reader
+  bodies and checklists; receipt
+  `../equipment-runtime/builder-dropdown-e2e-source-inspection-final-20261026.json`.
+  Three formerly constructible over-budget drafts now assert absence of an add
+  dropdown at the limit. These actual database stories were **not rerun** here.
+
+No new database runtime/credentials were created. Owned browser/test processes
+are gone, and ports 3001/9997/9998/9999 plus the ephemeral UI port are closed.
+Two isolated worker dependency junctions remain in
+`parent-app-preparation-20261026` and `builder-spell-dropdowns-20261026`.
+Automatic approval review rejected removal of the latter with the generic reason
+"blocked by policy"; no alternative deletion path was attempted. Both links
+point to authoritative dependencies and have no running worker/server.
+
+R06 remains in progress. Resume **full parent positive story/aggregation and
+the F3 actual installer**, then ancestry/A4 and the existing caster/martial/A5/A6
+queue. Historical Fiend/Draconic local acceptance below remains accepted at its
+recorded source; this UI checkpoint adds no full parent, hosted or launch
+acceptance. Vercel unchanged, M7/creature imports paused; nothing pushed/deployed.
+
 ### Latest continuation — 2026-10-26 21:03 UTC
 
 **Fiend historical update and Draconic HP/AC are now accepted in the actual
