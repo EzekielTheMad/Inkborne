@@ -51,6 +51,81 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
+### Latest continuation — 2026-10-26 16:50 UTC
+
+Source `bcfa8a6` completes the previously missing strict **A4 acceptance
+recorder**, without executing a runtime or accepting A4. The authoritative
+checkout was clean at `a90bc97` before this work; branch remains
+`codex/launch-integration-20261011`. The backup and inherited worktrees were
+preserved. No product mechanics, database, credentials or hosting were changed.
+
+- `scripts/ancestry-hp-acceptance.ts` validates all eleven ordered native
+  checkpoints, exact HP35/38 and retained-d12 arithmetic, unchanged original
+  source/inventory identities, advancing edit receipts/revisions, five-bijection
+  and family checks, completion/reload and foreign-account observations. It
+  refuses interrupted prefixes, replaced dice and wider current-HP claims.
+- `scripts/record-ancestry-hp-acceptance.ts` binds the successful wrapper to the
+  browser story using its unique run ID and execution window. Source HEAD/diff
+  is captured before/after the actual story and checked again by the recorder.
+  Distinct standalone native artifacts and the three installation receipts are
+  hash-bound; a fresh owned DB readback must equal the final story snapshot.
+- `supabase/verification/ancestry-hp-acceptance-profile.sql` compares current
+  function bodies/owners/ACLs, trigger wires, roles and memberships to the exact
+  publication postimage. Catalog roots and immutable-snapshot digest are freshly
+  checked; the result supplies `catalog.chainRoots` required by the existing A6
+  publisher. Closed capabilities/seals/readiness/gates remain mandatory.
+- Native reads have 15-second statement/5-second lock deadlines and a 45-second
+  client bound. Finally cleanup independently observes both unique query tags,
+  captures PID/birth, terminates only matching owned leftovers if needed and
+  requires their absence. No native operation follows an unproved engine/DB
+  identity. Current-HP coverage remains **initial absence preserved only**;
+  present-value or race/ability clamp acceptance is not asserted.
+
+The external `../equipment-runtime/builder-repin-check.ps1` now has two narrow
+gates: `ancestry-hp-recorder` and `ancestry-hp-app`; only the latter supplies the
+new per-run environment ID and matching summary. Its original bytes remain in
+`builder-repin-check.ps1.before-a4-recorder-20261026.bak`. Parser check passes;
+final SHA256 is `f67250b989d5a6fec8ad14fddb0b018519b9f4296468e7e83fbfe0c0cc8b0d7d`.
+
+Verification, serialized with no app services:
+
+- `& ../equipment-runtime/builder-repin-check.ps1 -Gate ancestry-hp-recorder
+  -WorkerLimit 1`: **12/12 pass**, receipt
+  `local-ancestry-hp-recorder-20261026T164620Z`; all six observed identities gone.
+  These are explicitly synthetic evidence-validator tests, not native or browser
+  execution. The earlier ten-test receipt remains preserved.
+- `-Gate creation-browser-check -WorkerLimit 1`: `npm.cmd run typecheck` and
+  zero-warning `npm.cmd run lint` pass, receipt
+  `local-creation-browser-check-20261026T164729Z`; all eight identities gone.
+  Broad suite/build and actual E2E were not run under the focused scope/resource
+  hold. The new native profile query/recorder have not run against PostgreSQL.
+- Independent read-only review of base `a90bc97` through the five exact source
+  hashes and external wrapper caught wrapper/story mismatch, absent native
+  profile/A6 output and failure-cleanup gaps. All three were fixed and re-reviewed
+  with no remaining concrete source blocker. Manifest:
+  `../equipment-runtime/a4-acceptance-source-20261026.json`. Source review does
+  not close actual acceptance or any global gate.
+
+At 16:49:05 UTC, headroom was **7.46 GiB physical-free/12.56 GiB commit-free**,
+below the unchanged **8/14 GiB** fresh-app guard. Ports 3001/9997/9998/9999 had
+no listeners; no actual runtime, credential or service was created. Exact
+readback is `../equipment-runtime/a4-recorder-resource-hold-20261026.json`;
+runtime `state.json` SHA256 remains
+`a5decfc4360811faec43781250678cd71e71dc0878cb4b28b17fa98b8643e0e6`.
+The threshold comes from previous actual resource failures, not an application
+minimum; the user asked why it was needed and received the observed explanation.
+
+Next retains the existing order: fresh accepted Fiend, Draconic, parent native
+installation/full acceptance, then ancestry installation and A4. Once those
+prerequisites and fresh headroom hold, run the new `-Gate ancestry-hp-app
+-WorkerLimit 1`; then invoke
+`node --import tsx scripts/record-ancestry-hp-acceptance.ts <actual-story-path>
+<that-run-wrapper-summary-path>`. The recorder writes a new
+`app-flow-runtime/ancestry-hit-points-actual-readback.json` only after all checks
+and cleanup succeed; it never overwrites prior acceptance. Genuine Fighter4
+preparation/full parent aggregation and F3 actual installer remain pending
+source work. Vercel unchanged, M7/creature imports paused and R06 in progress.
+
 ### Latest continuation — 2026-10-25 07:40 UTC
 
 F3's final reader boundary `cbaee5a` rejects even an explicit empty subrace key,

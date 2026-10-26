@@ -1,6 +1,6 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-25 (America/Phoenix). This is the operational entrypoint.
+Updated 2026-10-26 (America/Phoenix). This is the operational entrypoint.
 [LAUNCH-ACCEPTANCE.md — current execution path](LAUNCH-ACCEPTANCE.md#current-execution-path)
 is the **single current plan, milestone map, backlog and acceptance gate**.
 ROADMAP is navigation, GAME-PLAN is working conventions, and the PRD is the
@@ -28,6 +28,11 @@ reconciliation was `5f99574`.
 
 Actual correction/caster acceptance remains pending after the preserved
 memory-blocked attempts. Source/unit checks are not actual-flow acceptance.
+The strict A4 ancestry-HP acceptance recorder is now source-reviewed in
+`bcfa8a6`: 12 focused checks, typecheck and zero-warning lint pass. It binds the
+full eleven-checkpoint story to its exact wrapper/source, fresh native profiles
+and catalog, and verified tagged-backend cleanup. No actual A4/native execution
+or acceptance is added. The latest handoff records its invocation and evidence.
 Before runtime work, consult the handoff and exact external process/runtime
 receipts; serialize heavy checks and retain its guard of at least **14 GiB
 commit-free and 8 GiB physical-free** before a fresh actual run. Last recorded

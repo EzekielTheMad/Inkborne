@@ -60,7 +60,34 @@ scope or continuation-order conflict. Receipt:
 `5f99574`. This docs-only checkpoint ran no app tests, services or deployments
 and changes no implementation/native/browser acceptance result.
 
-## Active continuation — 2026-10-25 UTC
+## Active continuation — 2026-10-26 UTC
+
+### A4 acceptance recorder — source prerequisite complete, actual run pending
+
+Source `bcfa8a6` adds the previously missing strict A4 aggregation tool and
+binds its browser story to the exact source and unique bounded-wrapper run.
+It requires all eleven ordered native snapshots, old Hill Dwarf HP35/new HP38,
+one retained original d12, unchanged source/inventory identities and reloads,
+all native/family checks, a fresh owned native readback and installed-profile
+comparison. Its accepted catalog contract supplies the subsequent A6 publisher.
+Current-HP coverage remains **absence preserved only**, without a present-value
+clamp claim. No actual-app or native acceptance follows from this source work.
+
+The 12 focused evidence-validation tests, typecheck and zero-warning lint pass;
+all six/eight respective observed process identities exited. Independent review
+of base `a90bc97` to the recorded five-file/wrapper hashes found three initial
+blockers (wrapper binding, native profile/A6 contract, timeout cleanup), all fixed
+and re-reviewed with no remaining concrete blocker. Exact evidence and commands:
+[current handoff](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-1650-utc),
+`../equipment-runtime/a4-acceptance-source-20261026.json`.
+
+At 16:49:05 UTC, live headroom was 7.46 GiB physical-free/12.56 GiB commit-free,
+below the unchanged 8/14 GiB fresh-app guard. Task ports were closed, no actual
+runtime was started, and existing runtime-state bytes were preserved. Keep the
+same finite Fiend → Draconic → parent → ancestry/A4 → caster/martial/A5/A6 order.
+Genuine Fighter4 preparation/full parent aggregation and the F3 native installer
+remain missing source prerequisites. R06 stays in progress; Vercel unchanged,
+global gates closed and M7/creature imports paused.
 
 ### Current builder correction and complete caster work — in progress
 
