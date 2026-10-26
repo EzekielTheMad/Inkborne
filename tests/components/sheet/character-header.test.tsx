@@ -108,7 +108,7 @@ function wrap(
 }
 
 describe("<CharacterHeader> color carry-through", () => {
-  it("applies the gradient backed by --character-color to the outer element", () => {
+  it("presents identity without raw-color backgrounds or fixed white text", () => {
     const { container } = wrap(
       <CharacterHeader
         character={mockCharacter}
@@ -116,12 +116,11 @@ describe("<CharacterHeader> color carry-through", () => {
         onToggleInspiration={() => {}}
       />,
     );
-    const styled =
-      container.querySelector('[style*="--character-color"]') ??
-      container.querySelector('[style*="linear-gradient"]');
-    expect(styled).toBeTruthy();
-    expect(styled!.getAttribute("style")).toContain("var(--character-color)");
-    expect(styled!.getAttribute("style")).toContain("linear-gradient(135deg");
+    const header = container.querySelector("header");
+    expect(header).toHaveTextContent("Test Character");
+    expect(header?.querySelector("h1")).toHaveTextContent("Test Character");
+    expect(header?.getAttribute("style")).toBeNull();
+    expect(header?.querySelector('[class*="text-white"]')).toBeNull();
   });
 
   it("renders an editable color trigger for owners", () => {

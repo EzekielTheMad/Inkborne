@@ -16,6 +16,7 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import SignupPage from "@/app/(auth)/signup/page";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function submitSignup() {
   fireEvent.change(screen.getByRole("textbox", { name: "What should we call you?" }), {
@@ -38,7 +39,7 @@ describe("SignupPage", () => {
   });
 
   it("submits named account fields to the signup server action", async () => {
-    render(<SignupPage />);
+    render(<ThemeProvider><SignupPage /></ThemeProvider>);
 
     submitSignup();
 
@@ -53,7 +54,7 @@ describe("SignupPage", () => {
 
   it("renders safe action errors and restores the form", async () => {
     mocks.signup.mockResolvedValue({ error: "Unable to create your account. Please try again." });
-    render(<SignupPage />);
+    render(<ThemeProvider><SignupPage /></ThemeProvider>);
 
     submitSignup();
 
@@ -68,7 +69,7 @@ describe("SignupPage", () => {
     mocks.signup.mockImplementation(
       () => new Promise((resolve) => { finish = resolve; }),
     );
-    render(<SignupPage />);
+    render(<ThemeProvider><SignupPage /></ThemeProvider>);
 
     submitSignup();
 
@@ -79,7 +80,7 @@ describe("SignupPage", () => {
   });
 
   it("keeps OAuth signup client-side with the current callback origin", async () => {
-    render(<SignupPage />);
+    render(<ThemeProvider><SignupPage /></ThemeProvider>);
 
     fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
 

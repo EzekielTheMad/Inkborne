@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1320" viewBox="0 0 1440 1320" role="img" aria-labelledby="title description">
+  <title id="title">Inkborne field journal — visual direction reference</title>
+  <desc id="description">Version 1, 22 October 2026. Editable vector reference showing serif headings, readable interface text, the light and dark brand palettes, fictional character sheet and story layout studies, and a compact mobile composition. These are visual studies, not production screens or feature commitments.</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; fill: #282A25; }
+    .serif { font-family: Georgia, "Times New Roman", serif; }
+    .eyebrow { font-size: 11px; font-weight: 650; letter-spacing: 1.7px; }
+    .small { font-size: 12px; }
+    .body { font-size: 15px; }
+    .muted { fill: #63675D; }
+    .rule { stroke: #D4CDBF; stroke-width: 1; }
+    .dark-text { fill: #EEEBDD; }
+    .dark-muted { fill: #B7B9AC; }
+    .dark-rule { stroke: #3B443D; stroke-width: 1; }
+    .number { font-size: 26px; font-variant-numeric: tabular-nums; }
+    .stat { font-size: 10px; font-weight: 600; letter-spacing: 1px; }
+  </style>
+
+  <rect width="1440" height="1320" fill="#F4F0E6"/>
+  <text x="56" y="40" class="eyebrow muted">INKBORNE / VISUAL IDENTITY</text>
+  <text x="56" y="91" class="serif" font-size="48">Inkborne field journal</text>
+  <text x="58" y="119" class="body muted">Direction reference · version 1 · 22 October 2026</text>
+  <g transform="translate(1320 43)" fill="none" stroke="#282A25" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M8 57 23 9 56 0 47 33 8 57Z"/>
+    <path d="m8 57 28-30M23 9l13 18 11 6"/>
+    <circle cx="36" cy="27" r="3.5" fill="#F4F0E6"/>
+    <path d="M1 65h58"/>
+  </g>
+  <line x1="56" y1="142" x2="1384" y2="142" class="rule"/>
+
+  <text x="56" y="174" class="eyebrow muted">TYPE &amp; TONE</text>
+  <text x="56" y="211" class="serif" font-size="30">A record worth keeping.</text>
+  <text x="56" y="240" class="body muted">Editorial headings. Clear controls. Room to read.</text>
+  <text x="56" y="269" class="small muted">Georgia / serif display reference · system sans interface</text>
+  <rect x="56" y="287" width="126" height="36" rx="2" fill="#713B40"/>
+  <text x="119" y="310" text-anchor="middle" font-size="13" font-weight="600" fill="#FFFCF5" style="fill:#FFFCF5">View character</text>
+  <text x="205" y="310" font-size="13" font-weight="600" fill="#3F5E50" style="fill:#3F5E50" text-decoration="underline">Read the story</text>
+
+  <text x="720" y="174" class="eyebrow muted">LIGHT / DARK PALETTE</text>
+  <g class="small">
+    <rect x="720" y="188" width="104" height="28" fill="#F4F0E6" stroke="#D4CDBF"/>
+    <rect x="832" y="188" width="104" height="28" fill="#FFFCF5" stroke="#D4CDBF"/>
+    <rect x="944" y="188" width="104" height="28" fill="#282A25"/>
+    <rect x="1056" y="188" width="104" height="28" fill="#63675D"/>
+    <rect x="1168" y="188" width="104" height="28" fill="#713B40"/>
+    <rect x="1280" y="188" width="104" height="28" fill="#3F5E50"/>
+    <text x="720" y="235" class="muted">#F4F0E6</text>
+    <text x="832" y="235" class="muted">#FFFCF5</text>
+    <text x="944" y="235" class="muted">#282A25</text>
+    <text x="1056" y="235" class="muted">#63675D</text>
+    <text x="1168" y="235" class="muted">#713B40</text>
+    <text x="1280" y="235" class="muted">#3F5E50</text>
+    <rect x="720" y="253" width="104" height="28" fill="#191D1B"/>
+    <rect x="832" y="253" width="104" height="28" fill="#232925"/>
+    <rect x="944" y="253" width="104" height="28" fill="#EEEBDD"/>
+    <rect x="1056" y="253" width="104" height="28" fill="#B7B9AC"/>
+    <rect x="1168" y="253" width="104" height="28" fill="#DBB9AD"/>
+    <rect x="1280" y="253" width="104" height="28" fill="#B8CBB4"/>
+    <text x="720" y="300" class="muted">#191D1B</text>
+    <text x="832" y="300" class="muted">#232925</text>
+    <text x="944" y="300" class="muted">#EEEBDD</text>
+    <text x="1056" y="300" class="muted">#B7B9AC</text>
+    <text x="1168" y="300" class="muted">#DBB9AD</text>
+    <text x="1280" y="300" class="muted">#B8CBB4</text>
+    <text x="720" y="322" class="muted">Background</text>
+    <text x="832" y="322" class="muted">Surface</text>
+    <text x="944" y="322" class="muted">Text</text>
+    <text x="1056" y="322" class="muted">Secondary</text>
+    <text x="1168" y="322" class="muted">Primary</text>
+    <text x="1280" y="322" class="muted">Link / focus</text>
+  </g>
+
+  <text x="56" y="367" class="eyebrow muted">01 / PAPER &amp; INK</text>
+  <text x="896" y="367" class="eyebrow muted">02 / AFTER DARK</text>
+
+  <!-- Light desktop composition. All names, values, and prose are fictional. -->
+  <rect x="56" y="387" width="816" height="547" rx="2" fill="#FFFCF5" stroke="#D4CDBF"/>
+  <text x="80" y="422" class="serif" font-size="22">Inkborne</text>
+  <text x="675" y="419" font-size="12" font-weight="600" fill="#713B40" style="fill:#713B40">Character</text>
+  <text x="766" y="419" class="small muted">Journal</text>
+  <line x1="673" y1="432" x2="739" y2="432" stroke="#713B40" stroke-width="2"/>
+  <line x1="80" y1="443" x2="848" y2="443" class="rule"/>
+  <text x="80" y="485" class="serif" font-size="34">Mara Vale</text>
+  <text x="80" y="511" class="body muted">Level 3 Ranger · The north road</text>
+  <line x1="80" y1="532" x2="848" y2="532" class="rule"/>
+  <line x1="536" y1="553" x2="536" y2="866" class="rule"/>
+  <text x="80" y="558" class="eyebrow muted">ABILITY SCORES</text>
+  <line x1="80" y1="574" x2="512" y2="574" class="rule"/>
+  <line x1="80" y1="634" x2="512" y2="634" class="rule"/>
+  <path d="M152 583v42m72-42v42m72-42v42m72-42v42m72-42v42" class="rule"/>
+  <g text-anchor="middle">
+    <text x="116" y="603" class="serif number">14</text>
+    <text x="188" y="603" class="serif number">16</text>
+    <text x="260" y="603" class="serif number">12</text>
+    <text x="332" y="603" class="serif number">10</text>
+    <text x="404" y="603" class="serif number">15</text>
+    <text x="476" y="603" class="serif number">11</text>
+    <text x="116" y="622" class="stat muted">STR</text>
+    <text x="188" y="622" class="stat muted">DEX</text>
+    <text x="260" y="622" class="stat muted">CON</text>
+    <text x="332" y="622" class="stat muted">INT</text>
+    <text x="404" y="622" class="stat muted">WIS</text>
+    <text x="476" y="622" class="stat muted">CHA</text>
+  </g>
+  <text x="80" y="663" class="small muted">HIT POINTS</text>
+  <text x="80" y="693" class="serif" font-size="25">24 <tspan font-size="17" fill="#63675D">/ 28</tspan></text>
+  <text x="242" y="663" class="small muted">ARMOR CLASS</text>
+  <text x="242" y="693" class="serif" font-size="25">15</text>
+  <text x="404" y="663" class="small muted">SPEED</text>
+  <text x="404" y="693" class="serif" font-size="25">30 <tspan font-size="17" fill="#63675D">ft.</tspan></text>
+  <line x1="80" y1="713" x2="512" y2="713" class="rule"/>
+  <text x="80" y="740" class="eyebrow muted">ATTACKS</text>
+  <text x="80" y="771" class="body">Longbow</text>
+  <text x="340" y="771" class="body" text-anchor="end">+5</text>
+  <text x="512" y="771" class="body" text-anchor="end">1d8 + 3</text>
+  <line x1="80" y1="784" x2="512" y2="784" class="rule"/>
+  <text x="80" y="811" class="body">Shortsword</text>
+  <text x="340" y="811" class="body" text-anchor="end">+5</text>
+  <text x="512" y="811" class="body" text-anchor="end">1d6 + 3</text>
+  <line x1="80" y1="824" x2="512" y2="824" class="rule"/>
+  <text x="80" y="855" class="small muted">A working sheet, shaped by clear hierarchy.</text>
+
+  <text x="560" y="558" class="eyebrow muted">STORY</text>
+  <text x="560" y="593" class="serif" font-size="27">The north road</text>
+  <text x="560" y="624" class="body muted">
+    <tspan x="560" dy="0">Mara kept the brass compass</tspan>
+    <tspan x="560" dy="25">long after its needle stopped.</tspan>
+    <tspan x="560" dy="25">At the river crossing, she turned</tspan>
+    <tspan x="560" dy="25">north and began a new record.</tspan>
+  </text>
+  <line x1="560" y1="729" x2="848" y2="729" class="rule"/>
+  <text x="560" y="755" class="eyebrow muted">A SMALL DETAIL</text>
+  <text x="560" y="784" class="serif" font-size="20">
+    <tspan x="560" dy="0">A pressed fern between</tspan>
+    <tspan x="560" dy="27">the last two pages.</tspan>
+  </text>
+  <text x="560" y="855" font-size="13" font-weight="600" fill="#3F5E50" style="fill:#3F5E50" text-decoration="underline">Read entry</text>
+  <line x1="80" y1="885" x2="848" y2="885" class="rule"/>
+  <text x="80" y="912" class="small muted">Fictional character · layout study</text>
+
+  <!-- Dark composition uses the same content and hierarchy. -->
+  <rect x="896" y="387" width="488" height="547" rx="2" fill="#232925" stroke="#3B443D"/>
+  <rect x="897" y="388" width="486" height="55" fill="#191D1B"/>
+  <text x="920" y="422" class="serif dark-text" font-size="22">Inkborne</text>
+  <text x="1288" y="419" class="small dark-muted">Journal</text>
+  <line x1="920" y1="443" x2="1360" y2="443" class="dark-rule"/>
+  <text x="920" y="485" class="serif dark-text" font-size="34">Mara Vale</text>
+  <text x="920" y="511" class="body dark-muted">Level 3 Ranger · The north road</text>
+  <line x1="920" y1="532" x2="1360" y2="532" class="dark-rule"/>
+  <text x="920" y="558" class="eyebrow dark-muted">ABILITY SCORES</text>
+  <line x1="920" y1="574" x2="1360" y2="574" class="dark-rule"/>
+  <line x1="920" y1="634" x2="1360" y2="634" class="dark-rule"/>
+  <path d="M993 583v42m74-42v42m73-42v42m73-42v42m74-42v42" class="dark-rule"/>
+  <g text-anchor="middle">
+    <text x="957" y="603" class="serif number dark-text">14</text>
+    <text x="1030" y="603" class="serif number dark-text">16</text>
+    <text x="1103" y="603" class="serif number dark-text">12</text>
+    <text x="1177" y="603" class="serif number dark-text">10</text>
+    <text x="1250" y="603" class="serif number dark-text">15</text>
+    <text x="1323" y="603" class="serif number dark-text">11</text>
+    <text x="957" y="622" class="stat dark-muted">STR</text>
+    <text x="1030" y="622" class="stat dark-muted">DEX</text>
+    <text x="1103" y="622" class="stat dark-muted">CON</text>
+    <text x="1177" y="622" class="stat dark-muted">INT</text>
+    <text x="1250" y="622" class="stat dark-muted">WIS</text>
+    <text x="1323" y="622" class="stat dark-muted">CHA</text>
+  </g>
+  <text x="920" y="665" class="small dark-muted">HP <tspan fill="#EEEBDD">24 / 28</tspan></text>
+  <text x="1080" y="665" class="small dark-muted">AC <tspan fill="#EEEBDD">15</tspan></text>
+  <text x="1240" y="665" class="small dark-muted">SPEED <tspan fill="#EEEBDD">30 ft.</tspan></text>
+  <line x1="920" y1="685" x2="1360" y2="685" class="dark-rule"/>
+  <text x="920" y="713" class="eyebrow dark-muted">STORY</text>
+  <text x="920" y="747" class="serif dark-text" font-size="27">The north road</text>
+  <text x="920" y="779" class="body dark-muted">
+    <tspan x="920" dy="0">Mara kept the brass compass long after its</tspan>
+    <tspan x="920" dy="25">needle stopped. At the river crossing, she</tspan>
+    <tspan x="920" dy="25">turned north and began a new record.</tspan>
+  </text>
+  <rect x="920" y="849" width="114" height="30" rx="2" fill="#DBB9AD"/>
+  <text x="977" y="869" text-anchor="middle" font-size="12" font-weight="600" fill="#2A2621" style="fill:#2A2621">Read entry</text>
+  <line x1="920" y1="891" x2="1360" y2="891" class="dark-rule"/>
+  <text x="920" y="914" class="small dark-muted">Fictional character · layout study</text>
+
+  <text x="56" y="973" class="eyebrow muted">03 / COMPACT MOBILE COMPOSITION</text>
+  <rect x="56" y="991" width="320" height="266" rx="2" fill="#FFFCF5" stroke="#D4CDBF"/>
+  <text x="76" y="1028" class="serif" font-size="28">Mara Vale</text>
+  <text x="76" y="1052" class="small muted">Level 3 Ranger</text>
+  <line x1="76" y1="1068" x2="356" y2="1068" class="rule"/>
+  <text x="76" y="1093" class="small muted">HP <tspan fill="#282A25">24 / 28</tspan></text>
+  <text x="196" y="1093" class="small muted">AC <tspan fill="#282A25">15</tspan></text>
+  <text x="277" y="1093" class="small muted">30 ft.</text>
+  <line x1="76" y1="1108" x2="356" y2="1108" class="rule"/>
+  <text x="76" y="1141" class="serif" font-size="23">The north road</text>
+  <text x="76" y="1168" font-size="14" class="muted">
+    <tspan x="76" dy="0">Mara kept the brass compass long</tspan>
+    <tspan x="76" dy="22">after its needle stopped.</tspan>
+  </text>
+  <text x="76" y="1218" font-size="13" font-weight="600" fill="#3F5E50" style="fill:#3F5E50" text-decoration="underline">Read entry</text>
+  <text x="76" y="1242" font-size="10" class="muted">Fictional character · layout study</text>
+
+  <text x="416" y="1026" class="serif" font-size="29">Reflow the page.</text>
+  <text x="416" y="1060" class="body muted">
+    <tspan x="416" dy="0">Keep the character name, key values,</tspan>
+    <tspan x="416" dy="25">and story readable at narrow widths.</tspan>
+    <tspan x="416" dy="38">Tables become simple rows when needed.</tspan>
+    <tspan x="416" dy="25">Give actions comfortable touch targets.</tspan>
+    <tspan x="416" dy="38">This crop illustrates hierarchy;</tspan>
+    <tspan x="416" dy="25">it does not define a complete screen.</tspan>
+  </text>
+
+  <text x="912" y="1026" class="serif" font-size="29">Structure carries the identity.</text>
+  <text x="912" y="1060" class="body muted">
+    <tspan x="912" dy="0">Use fine rules, aligned values, warm surfaces,</tspan>
+    <tspan x="912" dy="25">and one restrained accent. Decoration stays</tspan>
+    <tspan x="912" dy="25">secondary to a character’s information.</tspan>
+  </text>
+  <rect x="914" y="1145" width="154" height="44" rx="2" fill="none" stroke="#3F5E50" stroke-width="2"/>
+  <rect x="919" y="1150" width="144" height="34" rx="1" fill="#FFFCF5" stroke="#85877C"/>
+  <text x="991" y="1172" text-anchor="middle" font-size="13" font-weight="600">Read entry</text>
+  <text x="1090" y="1172" class="small muted">Visible keyboard focus</text>
+  <text x="912" y="1227" class="small muted">The nib above is an identity study, pending logo review.</text>
+
+  <line x1="56" y1="1282" x2="1384" y2="1282" class="rule"/>
+  <text x="56" y="1307" class="small muted">INKBORNE · FIELD JOURNAL DIRECTION</text>
+  <text x="1384" y="1307" class="small muted" text-anchor="end">Visual reference · no production behavior implied</text>
+</svg>

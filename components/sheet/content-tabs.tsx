@@ -10,6 +10,7 @@ import { SpellsTab } from "@/components/sheet/tabs/spells-tab";
 import { InventoryTab } from "@/components/sheet/tabs/inventory-tab";
 import { FeaturesTab } from "@/components/sheet/tabs/features-tab";
 import { NotesTab } from "@/components/sheet/tabs/notes-tab";
+import styles from "@/components/character/character-notebook.module.css";
 
 type TabId = "actions" | "spells" | "inventory" | "features" | "notes";
 
@@ -29,6 +30,7 @@ interface ContentTabsProps {
   state: CharacterState;
   patchState: (patch: Partial<CharacterState>) => Promise<void>;
   initialTab?: TabId;
+  showNavigation?: boolean;
 }
 
 export function ContentTabs({
@@ -39,16 +41,18 @@ export function ContentTabs({
   state,
   patchState,
   initialTab = "actions",
+  showNavigation = true,
 }: ContentTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex border-b border-border bg-background shrink-0">
+    <div className={styles.content}>
+      {showNavigation && <nav className={styles.contentNav} aria-label="Character content">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
+            aria-pressed={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
@@ -59,9 +63,9 @@ export function ContentTabs({
             {tab.label}
           </button>
         ))}
-      </div>
+      </nav>}
 
-      <div className="flex-1 overflow-y-auto">
+      <div className={styles.contentBody}>
         {activeTab === "actions" && (
           <ActionsTab
             character={character}

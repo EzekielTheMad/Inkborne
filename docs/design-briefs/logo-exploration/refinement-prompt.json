@@ -1,0 +1,8 @@
+{
+  "id": "A-refined",
+  "method": "Built-in image_gen edit",
+  "input": "a-the-scribe.png",
+  "output": "a-the-scribe-refined.png",
+  "transparent_background": false,
+  "prompt": "Use case: logo-brand. Edit the supplied Inkborne logo concept A.\nPreserve the upright nib's outer silhouette, centered composition, warm ivory backdrop, large dark-ink mark, exact wordmark \"Inkborne\", serif character and overall proportions.\nChange only the interior negative-space design of the nib: make the capital I simpler and unmistakably typographic, with a broad straight stem and short flat horizontal serif bars. Remove the pointed star/sparkle-shaped shoulders entirely. Use clean orthogonal or softly squared transitions instead of four-point star cusps. Widen the very thin upper slit enough to keep it useful at small sizes. The ink instrument should remain the dominant silhouette.\nNo sparkles, stars, swords, diamonds inside the mark, extra symbols, slogans or labels. Do not redesign the outer mark or the wordmark. This is a refinement of the same candidate, not a new logo direction."
+}

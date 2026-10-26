@@ -1,0 +1,302 @@
+[
+  {
+    "route": "dashboard",
+    "size": "desktop",
+    "theme": "dark",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-desktop-dark.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 1440,
+    "viewportWidth": 1440,
+    "operations": [
+      {
+        "table": "profiles",
+        "select": "display_name, preferences",
+        "filters": [
+          [
+            "id",
+            "local-overview-reviewer"
+          ]
+        ],
+        "limit": null
+      },
+      {
+        "table": "characters",
+        "select": "id, name, level, choices, narrative, system_id, game_systems(name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": 8
+      }
+    ]
+  },
+  {
+    "route": "characters",
+    "size": "desktop",
+    "theme": "dark",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-desktop-dark.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 1440,
+    "viewportWidth": 1440,
+    "operations": [
+      {
+        "table": "characters",
+        "select": "*, game_systems (name), campaigns (name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": null
+      }
+    ]
+  },
+  {
+    "route": "dashboard",
+    "size": "desktop",
+    "theme": "light",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-desktop-light.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 1440,
+    "viewportWidth": 1440,
+    "operations": [
+      {
+        "table": "profiles",
+        "select": "display_name, preferences",
+        "filters": [
+          [
+            "id",
+            "local-overview-reviewer"
+          ]
+        ],
+        "limit": null
+      },
+      {
+        "table": "characters",
+        "select": "id, name, level, choices, narrative, system_id, game_systems(name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": 8
+      }
+    ]
+  },
+  {
+    "route": "characters",
+    "size": "desktop",
+    "theme": "light",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-desktop-light.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 1440,
+    "viewportWidth": 1440,
+    "operations": [
+      {
+        "table": "characters",
+        "select": "*, game_systems (name), campaigns (name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": null
+      }
+    ]
+  },
+  {
+    "route": "dashboard",
+    "size": "mobile",
+    "theme": "dark",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-mobile-dark.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 390,
+    "viewportWidth": 390,
+    "operations": [
+      {
+        "table": "profiles",
+        "select": "display_name, preferences",
+        "filters": [
+          [
+            "id",
+            "local-overview-reviewer"
+          ]
+        ],
+        "limit": null
+      },
+      {
+        "table": "characters",
+        "select": "id, name, level, choices, narrative, system_id, game_systems(name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": 8
+      }
+    ]
+  },
+  {
+    "route": "characters",
+    "size": "mobile",
+    "theme": "dark",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-mobile-dark.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 742,
+    "viewportWidth": 390,
+    "operations": [
+      {
+        "table": "characters",
+        "select": "*, game_systems (name), campaigns (name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": null
+      }
+    ]
+  },
+  {
+    "route": "dashboard",
+    "size": "mobile",
+    "theme": "light",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-mobile-light.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 390,
+    "viewportWidth": 390,
+    "operations": [
+      {
+        "table": "profiles",
+        "select": "display_name, preferences",
+        "filters": [
+          [
+            "id",
+            "local-overview-reviewer"
+          ]
+        ],
+        "limit": null
+      },
+      {
+        "table": "characters",
+        "select": "id, name, level, choices, narrative, system_id, game_systems(name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": 8
+      }
+    ]
+  },
+  {
+    "route": "characters",
+    "size": "mobile",
+    "theme": "light",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-mobile-light.png",
+    "unexpected": [],
+    "errors": [],
+    "pageWidth": 742,
+    "viewportWidth": 390,
+    "operations": [
+      {
+        "table": "characters",
+        "select": "*, game_systems (name), campaigns (name)",
+        "filters": [
+          [
+            "user_id",
+            "local-overview-reviewer"
+          ],
+          [
+            "archived",
+            false
+          ]
+        ],
+        "limit": null
+      }
+    ]
+  },
+  {
+    "route": "dashboard",
+    "scenario": "empty",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-empty-desktop-dark.png"
+  },
+  {
+    "route": "characters",
+    "scenario": "empty",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-empty-desktop-dark.png"
+  },
+  {
+    "route": "dashboard",
+    "scenario": "single",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-single-desktop-dark.png"
+  },
+  {
+    "route": "characters",
+    "scenario": "single",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-single-desktop-dark.png"
+  },
+  {
+    "route": "dashboard",
+    "scenario": "error",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-error-desktop-dark.png"
+  },
+  {
+    "route": "characters",
+    "scenario": "error",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-error-desktop-dark.png"
+  },
+  {
+    "route": "dashboard",
+    "scenario": "long",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-dashboard-long-desktop-dark.png"
+  },
+  {
+    "route": "characters",
+    "scenario": "long",
+    "screenshot": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-24\\inkborne-overview-harness\\baseline\\original-characters-long-desktop-dark.png"
+  }
+]

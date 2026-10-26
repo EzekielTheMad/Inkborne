@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Character } from "@/lib/types/character";
 import { PortraitAvatar, type CropArea } from "@/components/narrative/portrait-avatar";
 import { formatClassLine } from "@/components/characters/character-row";
+import { characterNotebookStyle } from "@/lib/character/notebook-colors";
+import styles from "./notebook-overview.module.css";
 
 interface CharacterCardProps {
   character: Character & {
@@ -34,41 +36,43 @@ export function CharacterCard({ character }: CharacterCardProps) {
   return (
     <Link
       href={`/characters/${character.id}`}
-      className="j-card-paper group block p-4 transition-colors hover:border-accent/40"
+      className={`${styles.entry} ${styles.card} j-card-paper group transition-colors`}
+      style={characterNotebookStyle(character.primary_color)}
     >
-      <div className="flex items-center gap-3.5">
+      <div className={`${styles.cardIdentity} flex`}>
         <PortraitAvatar
           portraitUrl={narrative?.portrait_url}
           cropArea={narrative?.portrait_crop}
           characterName={character.name}
           size="md"
+          className={styles.portrait}
         />
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="j-display truncate text-[17px] text-foreground">
+          <div className={`${styles.cardHeading} flex items-baseline`}>
+            <span className={`${styles.name} j-display text-foreground`} title={character.name}>
               {character.name}
             </span>
             {built && (
-              <span className="j-display shrink-0 text-[11px] tracking-[0.1em] text-accent">
+              <span className={`${styles.level} j-display shrink-0 text-[11px] tracking-[0.1em]`}>
                 · LVL {character.level}
               </span>
             )}
           </div>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className={`${styles.subtitle} text-muted-foreground`}>
             {built
               ? [raceLine, classLine].filter(Boolean).join(" · ")
               : "Unwritten — the builder awaits"}
           </p>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-2.5 text-[11px] text-muted-foreground">
-        <span>
-          <span className="text-accent">★</span> {character.game_systems?.name ?? "Unknown system"}
+      <div className={`${styles.metadata} text-muted-foreground`}>
+        <span className={styles.system}>
+          <span className="text-accent" aria-hidden="true">★</span> {character.game_systems?.name ?? "Unknown system"}
         </span>
         {character.campaigns?.name && (
-          <span className="truncate">· {character.campaigns.name}</span>
+          <span className={styles.campaign}>Campaign · {character.campaigns.name}</span>
         )}
-        <span className="ml-auto text-muted-foreground/70 transition-colors group-hover:text-accent">
+        <span className={styles.open}>
           Open ›
         </span>
       </div>

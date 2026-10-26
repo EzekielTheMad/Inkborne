@@ -8,6 +8,7 @@ import { ConcentrationBadge } from "@/components/sheet/spells/concentration-badg
 import { ConcentrationPrompt } from "@/components/sheet/concentration-prompt";
 import { RollLayer } from "@/components/sheet/rolls/roll-layer";
 import { FirstArrival } from "@/components/sheet/first-arrival";
+import styles from "./character-notebook.module.css";
 import {
   useCharacter,
   useCharacterState,
@@ -38,7 +39,7 @@ export function CharacterShell({
     patchState({ inspiration: !(state.inspiration ?? false) });
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className={styles.shell}>
       {hasSheet && (
         <FirstArrival
           characterId={character.id}
@@ -67,31 +68,31 @@ export function CharacterShell({
         />
       </div>
 
-      <Tabs defaultValue="sheet" className="flex-1 flex flex-col">
-        <TabsList className="border-b bg-transparent rounded-none w-full justify-start h-auto p-0 shrink-0">
+      <Tabs defaultValue="sheet" className={styles.primaryTabs}>
+        <TabsList className={styles.bookmarks}>
           <TabsTrigger
             value="sheet"
-            className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-2"
+            className={styles.bookmark}
           >
             Character Sheet
           </TabsTrigger>
           <TabsTrigger
             value="narrative"
-            className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-2"
+            className={styles.bookmark}
           >
             Narrative
           </TabsTrigger>
-          <div className="ml-auto flex items-center gap-1 pr-3">
+          <div className={styles.playTools}>
             <ConcentrationBadge />
             <RollLayer />
           </div>
         </TabsList>
 
-        <TabsContent value="sheet" className="flex-1 flex flex-col mt-0">
+        <TabsContent value="sheet" className={styles.tabPage}>
           <SheetPanel />
         </TabsContent>
 
-        <TabsContent value="narrative" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="narrative" className={styles.tabPage}>
           <NarrativePanel
             campaignPageBacklinks={campaignPageBacklinks}
             timelineEvents={timelineEvents}

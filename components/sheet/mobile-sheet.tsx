@@ -22,6 +22,7 @@ import { Proficiencies } from "@/components/sheet/proficiencies";
 import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { SkillsList } from "@/components/sheet/skills-list";
 import { ContentTabs } from "@/components/sheet/content-tabs";
+import styles from "@/components/character/character-notebook.module.css";
 
 const TABS = [
   { id: "stats", label: "Stats" },
@@ -83,7 +84,8 @@ export function MobileSheet({
     if (!container) return;
     const index = TABS.findIndex((t) => t.id === tabId);
     if (index === -1) return;
-    container.scrollTo({ left: index * container.clientWidth, behavior: "smooth" });
+    const reducedMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    container.scrollTo({ left: index * container.clientWidth, behavior: reducedMotion ? "auto" : "smooth" });
     setActiveTab(tabId);
   }, []);
 
@@ -111,13 +113,15 @@ export function MobileSheet({
   const speed = computed.speed ?? computed.movement_speed ?? 30;
 
   return (
-    <div className="flex flex-col flex-1 md:hidden">
+    <div className={styles.mobileNotebook}>
       {/* Fixed tab bar */}
-      <nav className="sticky top-0 z-10 bg-background border-b border-border overflow-x-auto">
+      <nav className={styles.mobileNav} aria-label="Sheet sections">
         <div className="flex whitespace-nowrap">
           {TABS.map((tab) => (
             <button
               key={tab.id}
+              type="button"
+              aria-pressed={activeTab === tab.id}
               onClick={() => scrollToTab(tab.id)}
               className={`px-4 py-2 text-sm shrink-0 transition-colors ${
                 activeTab === tab.id
@@ -134,12 +138,12 @@ export function MobileSheet({
       {/* Scroll-snap section container */}
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto snap-x snap-mandatory flex-1"
+        className={styles.mobilePages}
         onScroll={handleScroll}
         style={{ scrollbarWidth: "none" }}
       >
         {/* Stats section */}
-        <section className="snap-start w-full shrink-0 min-h-screen p-4 space-y-4">
+        <section className={`${styles.mobilePage} space-y-4`} aria-label="Stats" aria-hidden={activeTab !== "stats"} inert={activeTab !== "stats"}>
           {/* Ability scores 3x2 grid */}
           <div className="rounded-lg border border-border bg-card p-3">
             <h3 className="text-accent font-semibold text-sm uppercase tracking-wide mb-2">
@@ -240,14 +244,14 @@ export function MobileSheet({
         </section>
 
         {/* Skills section */}
-        <section className="snap-start w-full shrink-0 min-h-screen p-4">
+        <section className={styles.mobilePage} aria-label="Skills" aria-hidden={activeTab !== "skills"} inert={activeTab !== "skills"}>
           <SkillsList schema={schema} evalResult={evalResult} />
         </section>
 
         {/* Actions / Spells / Inventory / Features / Notes sections */}
         {(["actions", "spells", "inventory", "features", "notes"] as ContentTabId[]).map(
           (tabId) => (
-            <section key={tabId} className="snap-start w-full shrink-0 min-h-screen p-4">
+            <section key={tabId} className={styles.mobilePage} aria-label={TABS.find(tab => tab.id === tabId)?.label} aria-hidden={activeTab !== tabId} inert={activeTab !== tabId}>
               <div className="rounded-lg border border-border bg-card overflow-hidden h-full">
                 <ContentTabs
                   character={character}
@@ -257,6 +261,7 @@ export function MobileSheet({
                   state={state}
                   patchState={patchState}
                   initialTab={tabId}
+                  showNavigation={false}
                 />
               </div>
             </section>

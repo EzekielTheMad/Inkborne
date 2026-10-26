@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { formatModifier } from "@/lib/sheet/helpers";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import type { SpeedData } from "@/lib/schemas/content-types/mechanical";
+import styles from "@/components/character/character-notebook.module.css";
 
 interface CombatStatCardProps {
   label: string;
@@ -14,7 +15,7 @@ interface CombatStatCardProps {
 
 function combatStatCardClasses(ring?: boolean): string {
   return cn(
-    "rounded-lg border bg-card p-2.5 text-center min-w-[60px]",
+    "rounded-lg border bg-card p-2.5 text-center min-w-[60px]", styles.combatCard,
     ring ? "border-primary" : "border-border",
   );
 }
@@ -81,7 +82,7 @@ export function CombatStats({
   const walkSpeed = speedDetail?.walk ?? speed;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={cn("flex items-center gap-2", styles.combat)}>
       <CombatStatCard
         label="PROF"
         value={formatModifier(proficiencyBonus)}

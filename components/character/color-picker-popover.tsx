@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import styles from "./character-notebook.module.css";
 
 const PRESETS = [
   { name: "Gold", hex: "#c9a44a" },
@@ -27,6 +28,7 @@ export function ColorPickerPopover({
   children,
 }: ColorPickerPopoverProps) {
   const [open, setOpen] = useState(false);
+  const fieldId = useId();
   const [hexInput, setHexInput] = useState(currentColor ?? "");
   const [nativeColorDraft, setNativeColorDraft] = useState<string | null>(null);
 
@@ -55,12 +57,13 @@ export function ColorPickerPopover({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger render={children as React.ReactElement} />
-      <PopoverContent className="w-64 p-3">
+      <PopoverContent className="w-72 p-4" aria-label="Character color">
         <div className="space-y-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="text-sm font-semibold text-foreground">
             Character color
           </div>
-          <div className="flex gap-1.5">
+          <p className="text-xs text-muted-foreground">{currentColor ?? "Site accent"} · adapts to light and dark</p>
+          <div className="grid grid-cols-6 gap-2">
             {PRESETS.map((p) => {
               const isSelected = currentColor?.toLowerCase() === p.hex.toLowerCase();
               return (
@@ -68,18 +71,17 @@ export function ColorPickerPopover({
                   key={p.hex}
                   type="button"
                   aria-label={`Set character color to ${p.name}`}
+                  aria-pressed={isSelected}
                   onClick={() => applyColor(p.hex)}
-                  className={cn(
-                    "h-[18px] w-[18px] rounded-full border border-border transition-shadow",
-                    isSelected && "ring-1 ring-white/70 ring-offset-1 ring-offset-popover",
-                  )}
-                  style={{ backgroundColor: p.hex }}
-                />
+                  className={styles.colorSwatch}
+                ><span aria-hidden="true" style={{ backgroundColor: p.hex }} />{isSelected && <b className={styles.swatchMark} aria-hidden="true">✓</b>}</button>
               );
             })}
           </div>
-          <div className="flex items-center gap-2">
+          <label htmlFor={fieldId} className="block text-xs text-muted-foreground">Custom hex</label>
+          <div className="flex items-center gap-3">
             <input
+              id={fieldId}
               type="text"
               value={hexInput}
               onChange={(e) => setHexInput(e.target.value)}
@@ -92,8 +94,7 @@ export function ColorPickerPopover({
               }}
               aria-invalid={!isHexValid}
               className={cn(
-                "h-7 w-24 rounded border px-2 font-mono text-xs uppercase",
-                "bg-background text-foreground",
+                styles.colorField, "min-w-0 flex-1 font-mono",
                 isHexValid ? "border-border" : "border-destructive",
               )}
               placeholder="#xxxxxx"
@@ -101,8 +102,8 @@ export function ColorPickerPopover({
               spellCheck={false}
             />
             <label
-              className="relative h-6 w-6 cursor-pointer overflow-hidden rounded border border-border"
-              style={{ backgroundColor: currentColor ?? "transparent" }}
+              className="relative size-10 shrink-0 cursor-pointer overflow-hidden rounded border border-input"
+              style={{ backgroundColor: currentColor ?? "var(--character-color)" }}
               aria-label="Open native color picker"
             >
               <input
@@ -122,7 +123,7 @@ export function ColorPickerPopover({
               type="button"
               aria-label="Reset character color to default"
               onClick={() => applyColor(null)}
-              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+              className={styles.colorReset}
             >
               Reset
             </button>

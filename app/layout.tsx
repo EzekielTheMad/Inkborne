@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Marcellus, EB_Garamond } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { THEME_INITIALIZATION_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 /**
@@ -39,6 +40,9 @@ export default function RootLayout({
       className={`dark h-full antialiased ${marcellus.variable} ${ebGaramond.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INITIALIZATION_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider>{children}</ThemeProvider>
       </body>

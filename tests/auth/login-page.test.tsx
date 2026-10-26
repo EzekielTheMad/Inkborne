@@ -16,6 +16,7 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import LoginPage from "@/app/(auth)/login/page";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function submitCredentials() {
   fireEvent.change(screen.getByRole("textbox", { name: "Email" }), {
@@ -35,7 +36,7 @@ describe("LoginPage", () => {
   });
 
   it("submits named credentials to the password server action", async () => {
-    render(<LoginPage />);
+    render(<ThemeProvider><LoginPage /></ThemeProvider>);
 
     submitCredentials();
 
@@ -49,7 +50,7 @@ describe("LoginPage", () => {
 
   it("renders the safe error returned by the action", async () => {
     mocks.login.mockResolvedValue({ error: "Email or password was incorrect." });
-    render(<LoginPage />);
+    render(<ThemeProvider><LoginPage /></ThemeProvider>);
 
     submitCredentials();
 
@@ -64,7 +65,7 @@ describe("LoginPage", () => {
     mocks.login.mockImplementation(
       () => new Promise((resolve) => { finish = resolve; }),
     );
-    render(<LoginPage />);
+    render(<ThemeProvider><LoginPage /></ThemeProvider>);
 
     submitCredentials();
 
@@ -75,7 +76,7 @@ describe("LoginPage", () => {
   });
 
   it("keeps OAuth sign-in client-side with the current callback origin", async () => {
-    render(<LoginPage />);
+    render(<ThemeProvider><LoginPage /></ThemeProvider>);
 
     fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
 

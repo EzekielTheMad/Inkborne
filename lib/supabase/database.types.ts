@@ -1834,6 +1834,19 @@ export type Database = {
           saved_feature_slug: string
         }[]
       }
+      save_character_abilities: {
+        Args: {
+          ability_method: string
+          ability_scores: Json
+          expected_method: string | null
+          expected_scores: Json
+          target_character_id: string
+        }
+        Returns: {
+          saved_method: string
+          saved_scores: Json
+        }[]
+      }
       set_character_background: {
         Args: {
           target_character_id: string

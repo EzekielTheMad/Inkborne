@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { updateCharacter } from "@/lib/supabase/character-client";
+import { discardAbilityScoreDraft, useAbilityScoreDraft } from "@/lib/builder/use-ability-score-draft";
+import type { AbilityMethod } from "@/lib/supabase/ability-scores-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,8 +17,6 @@ import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { Effect } from "@/lib/types/effects";
 
-type AbilityMethod = "standard_array" | "point_buy" | "manual";
-
 const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 const POINT_BUY_BUDGET = 27;
 const POINT_BUY_COSTS: Record<number, number> = {
@@ -25,6 +24,7 @@ const POINT_BUY_COSTS: Record<number, number> = {
 };
 
 interface AbilitiesStepClientProps {
+  ownerId: string;
   characterId: string;
   character: {
     id: string;
@@ -49,7 +49,12 @@ interface AbilitiesStepClientProps {
   schema: SystemSchemaDefinition | undefined;
 }
 
-export function AbilitiesStepClient({
+export function AbilitiesStepClient(props: AbilitiesStepClientProps) {
+  return <AbilitiesEditor key={`${props.ownerId}:${props.characterId}`} {...props} />;
+}
+
+function AbilitiesEditor({
+  ownerId,
   characterId,
   character,
   contentRefs,
@@ -61,27 +66,28 @@ export function AbilitiesStepClient({
     [schema?.ability_scores],
   );
 
-  const [method, setMethod] = useState<AbilityMethod>(
-    character.choices?.ability_method ?? "standard_array",
-  );
-  const [scores, setScores] = useState<Record<string, number>>(() => {
-    const existing = character.base_stats ?? {};
-    if (Object.keys(existing).length > 0) return existing;
-    // Default: all scores at 10 for manual, empty for standard_array
-    const defaults: Record<string, number> = {};
-    for (const ability of abilities) {
-      defaults[ability.slug] = method === "point_buy" ? 8 : 10;
-    }
-    return defaults;
-  });
+  function defaultScores(method: AbilityMethod): Record<string, number> {
+    return method === "standard_array" ? {} : Object.fromEntries(
+      abilities.map((ability) => [ability.slug, method === "point_buy" ? 8 : 10]),
+    );
+  }
 
-  // For standard array: track which array value is assigned to which ability
-  const [arrayAssignments, setArrayAssignments] = useState<Record<string, number>>(() => {
-    if (character.choices?.ability_method === "standard_array") {
-      return character.base_stats ?? {};
-    }
-    return {};
-  });
+  const initialMethod = character.choices?.ability_method ?? "standard_array";
+  const persistedScores = character.base_stats ?? {};
+  const { draft, status, changeDraft, retry } = useAbilityScoreDraft(
+    ownerId,
+    characterId,
+    {
+      method: initialMethod,
+      scores: character.choices?.ability_method && Object.keys(persistedScores).length
+        ? persistedScores : defaultScores(initialMethod),
+    },
+    { method: character.choices?.ability_method ?? null, scores: persistedScores },
+  );
+  const { method, scores } = draft;
+  const arrayAssignments = scores;
+  const cannotNavigate = status !== "saved";
+  const hasConflict = status === "conflict" || status === "session_changed";
 
   const allEffects: Effect[] = contentRefs.flatMap(
     (ref) => ref.content_definitions?.effects ?? [],
@@ -170,94 +176,71 @@ export function AbilitiesStepClient({
     );
   }, [scores, method]);
 
-  const currentScores = method === "standard_array" ? arrayAssignments : scores;
-
-  async function saveScores(
-    newScores: Record<string, number>,
-    prevScores: Record<string, number>,
-    revertTo: (scores: Record<string, number>) => void,
-  ) {
-    const newChoices = { ...character.choices, ability_method: method };
-    try {
-      await updateCharacter(characterId, {
-        base_stats: newScores,
-        choices: newChoices,
-      });
-    } catch (err) {
-      revertTo(prevScores);
-      console.error("Failed to save ability scores:", err);
-    }
-  }
+  const currentScores = scores;
 
   function handleMethodChange(newMethod: AbilityMethod) {
-    setMethod(newMethod);
-    const defaults: Record<string, number> = {};
-    for (const ability of abilities) {
-      defaults[ability.slug] = newMethod === "point_buy" ? 8 : 10;
-    }
-    setScores(defaults);
-    setArrayAssignments({});
+    changeDraft((previous) => previous.method === newMethod ? previous : {
+      method: newMethod, scores: defaultScores(newMethod),
+    });
   }
 
   function handleStandardArrayAssign(abilitySlug: string, value: string) {
-    const numValue = parseInt(value);
-    if (isNaN(numValue)) return;
-
-    const newAssignments = { ...arrayAssignments };
-
-    // Remove this value from any other ability
-    for (const key of Object.keys(newAssignments)) {
-      if (newAssignments[key] === numValue && key !== abilitySlug) {
-        delete newAssignments[key];
+    const numValue = value === "" ? null : Number(value);
+    if (numValue !== null && !STANDARD_ARRAY.includes(numValue)) return;
+    changeDraft((previous) => {
+      const newAssignments = { ...previous.scores };
+      for (const key of Object.keys(newAssignments)) {
+        if (newAssignments[key] === numValue && key !== abilitySlug) delete newAssignments[key];
       }
-    }
-
-    if (numValue === 0) {
-      delete newAssignments[abilitySlug];
-    } else {
-      newAssignments[abilitySlug] = numValue;
-    }
-
-    const prev = arrayAssignments;
-    setArrayAssignments(newAssignments);
-    // `void` documents that we intentionally don't await — saveScores handles its
-    // own try/catch + revert. Handlers stay sync so React event responsiveness
-    // isn't blocked on the supabase write.
-    void saveScores(newAssignments, prev, setArrayAssignments);
+      if (numValue === null) delete newAssignments[abilitySlug];
+      else newAssignments[abilitySlug] = numValue;
+      return { ...previous, scores: newAssignments };
+    });
   }
 
   function handlePointBuyChange(abilitySlug: string, delta: number) {
-    const current = scores[abilitySlug] ?? 8;
-    const next = current + delta;
-    if (next < 8 || next > 15) return;
-
-    const newScores = { ...scores, [abilitySlug]: next };
-    const newPointsUsed = Object.values(newScores).reduce(
-      (sum, score) => sum + (POINT_BUY_COSTS[score] ?? 0),
-      0,
-    );
-    if (newPointsUsed > POINT_BUY_BUDGET) return;
-
-    const prev = scores;
-    setScores(newScores);
-    void saveScores(newScores, prev, setScores);
+    changeDraft((previous) => {
+      const next = (previous.scores[abilitySlug] ?? 8) + delta;
+      if (next < 8 || next > 15) return previous;
+      const newScores = { ...previous.scores, [abilitySlug]: next };
+      const newPointsUsed = Object.values(newScores).reduce(
+        (sum, score) => sum + (POINT_BUY_COSTS[score] ?? 0), 0,
+      );
+      return newPointsUsed > POINT_BUY_BUDGET ? previous : { ...previous, scores: newScores };
+    });
   }
 
   function handleManualChange(abilitySlug: string, value: string) {
-    const numValue = parseInt(value);
-    if (isNaN(numValue) || numValue < 1 || numValue > 30) return;
-
-    const newScores = { ...scores, [abilitySlug]: numValue };
-
-    const prev = scores;
-    setScores(newScores);
-    void saveScores(newScores, prev, setScores);
+    const numValue = Number(value);
+    if (!Number.isInteger(numValue) || numValue < 1 || numValue > 30) return;
+    changeDraft((previous) => ({ ...previous, scores: { ...previous.scores, [abilitySlug]: numValue } }));
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
       <div className="space-y-6">
         <h2 className="text-xl font-semibold">Ability Scores</h2>
+
+        <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+          {status === "saving" ? "Saving ability scores… Stay on this step until saving finishes." : status === "saved" ? "Changes save automatically." : "Ability scores have not been saved. Stay on this step to resolve the save."}
+        </p>
+        {status === "error" && (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>Could not save ability scores. Your changes are still here. Retry before continuing.</p>
+            <Button variant="outline" size="sm" onClick={retry}>Retry save</Button>
+          </div>
+        )}
+        {hasConflict && (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>{status === "session_changed"
+              ? "Your sign-in session changed. Reload before editing ability scores."
+              : "Ability scores changed in another editor. Reload the saved scores before editing again."}</p>
+            <Button variant="outline" size="sm" onClick={() => {
+              discardAbilityScoreDraft(ownerId, characterId);
+              window.location.reload();
+            }}>Reload saved scores</Button>
+          </div>
+        )}
 
         {/* Method selector */}
         <div className="space-y-2">
@@ -274,6 +257,8 @@ export function AbilitiesStepClient({
                 key={value}
                 variant={method === value ? "default" : "outline"}
                 size="sm"
+                disabled={hasConflict}
+                aria-pressed={method === value}
                 onClick={() => handleMethodChange(value)}
               >
                 {label}
@@ -314,6 +299,8 @@ export function AbilitiesStepClient({
 
                   {method === "standard_array" && (
                     <select
+                      aria-label={`${ability.name} standard-array score`}
+                      disabled={hasConflict}
                       value={arrayAssignments[ability.slug] ?? ""}
                       onChange={(e) =>
                         handleStandardArrayAssign(ability.slug, e.target.value)
@@ -351,8 +338,9 @@ export function AbilitiesStepClient({
                           handlePointBuyChange(ability.slug, -1)
                         }
                         disabled={
-                          (scores[ability.slug] ?? 8) <= 8
+                          hasConflict || (scores[ability.slug] ?? 8) <= 8
                         }
+                        aria-label={`Decrease ${ability.name}`}
                         className="h-8 w-8 p-0"
                       >
                         -
@@ -367,8 +355,9 @@ export function AbilitiesStepClient({
                           handlePointBuyChange(ability.slug, 1)
                         }
                         disabled={
-                          (scores[ability.slug] ?? 8) >= 15
+                          hasConflict || (scores[ability.slug] ?? 8) >= 15
                         }
+                        aria-label={`Increase ${ability.name}`}
                         className="h-8 w-8 p-0"
                       >
                         +
@@ -379,6 +368,8 @@ export function AbilitiesStepClient({
                   {method === "manual" && (
                     <Input
                       type="number"
+                      aria-label={`${ability.name} score`}
+                      disabled={hasConflict}
                       min={1}
                       max={30}
                       value={scores[ability.slug] ?? 10}
@@ -427,6 +418,7 @@ export function AbilitiesStepClient({
         <div className="flex justify-between pt-4">
           <Button
             variant="outline"
+            disabled={cannotNavigate}
             onClick={() =>
               router.push(`/characters/${characterId}/builder/class`)
             }
@@ -435,6 +427,7 @@ export function AbilitiesStepClient({
           </Button>
           <Button
             className="bg-character-fg text-background hover:opacity-90"
+            disabled={cannotNavigate}
             onClick={() =>
               router.push(`/characters/${characterId}/builder/background`)
             }

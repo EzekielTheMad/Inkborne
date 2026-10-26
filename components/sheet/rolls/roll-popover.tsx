@@ -14,6 +14,7 @@ import {
 } from "@/lib/rolls/requests";
 import type { RollKind, RollMode, RollResult } from "@/lib/dice/types";
 import { cn } from "@/lib/utils";
+import { CharacterPortalScope } from "@/components/character/character-notebook-scope";
 
 export interface RollPopoverProps {
   kind: RollKind;
@@ -126,6 +127,7 @@ export function RollPopover({
       </PopoverPrimitive.Trigger>
 
       <PopoverPrimitive.Portal>
+        <CharacterPortalScope>
         <PopoverPrimitive.Positioner side="bottom" align="center" sideOffset={8}>
           <PopoverPrimitive.Popup
             className={cn(
@@ -168,6 +170,7 @@ export function RollPopover({
             </div>
           </PopoverPrimitive.Popup>
         </PopoverPrimitive.Positioner>
+        </CharacterPortalScope>
       </PopoverPrimitive.Portal>
     </PopoverPrimitive.Root>
   );

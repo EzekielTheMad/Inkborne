@@ -1,0 +1,38 @@
+.trigger {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0; flex-shrink: 0;
+  border: 0; border-radius: 5px; background: transparent;
+  color: var(--ink); cursor: pointer;
+}
+.trigger:hover,.trigger[data-popup-open] { background: var(--surface); }
+.trigger:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.sun { display: block; }
+.moon { display: none; }
+:global(.dark) .sun { display: none; }
+:global(.dark) .moon { display: block; }
+
+/* The menu is portaled to the document, outside the homepage's token scope. */
+.menu {
+  --appearance-surface: #FFFCF5; --appearance-text: #282A25;
+  --appearance-raised: #F7F0E2; --appearance-boundary: #8A7B92;
+  --appearance-focus: #70448D;
+  width: 164px; padding: 5px; border: 1px solid var(--appearance-boundary);
+  border-radius: 5px; background: var(--appearance-surface); color: var(--appearance-text);
+  font: 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  box-shadow: 0 8px 24px #00000022; color-scheme: light;
+}
+:global(.dark) .menu {
+  --appearance-surface: #1A1626; --appearance-text: #F0EEF5;
+  --appearance-raised: #211B30; --appearance-boundary: #81718E;
+  --appearance-focus: #D0ABEE; color-scheme: dark;
+}
+.menu .item {
+  min-height: 44px; gap: 10px; padding: 10px 32px 10px 10px;
+  border-radius: 3px; color: var(--appearance-text); cursor: pointer;
+}
+.menu .item[data-highlighted],.menu .item:focus-visible {
+  background: var(--appearance-raised); color: var(--appearance-text);
+  outline: 2px solid var(--appearance-focus); outline-offset: -2px;
+}
+.menu .item svg { width: 16px; height: 16px; color: inherit; }
+@media(prefers-reduced-motion:reduce) { .menu { animation: none; transition: none; } }

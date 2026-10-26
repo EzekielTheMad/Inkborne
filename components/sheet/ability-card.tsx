@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { formatModifier } from "@/lib/sheet/helpers";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
+import styles from "@/components/character/character-notebook.module.css";
 
 interface AbilityCardProps {
   name: string;
@@ -25,7 +26,7 @@ export function AbilityCard({
   rollLabel,
 }: AbilityCardProps) {
   const cardClasses = cn(
-    "rounded-lg border border-border bg-card p-3 text-center min-w-[70px]",
+    "rounded-lg border border-border bg-card p-3 text-center min-w-[70px]", styles.abilityCard,
     className,
   );
 

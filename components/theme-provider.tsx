@@ -1,9 +1,20 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
-
-type Theme = "dark" | "light" | "system";
-type ResolvedTheme = "dark" | "light";
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useState,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
+import {
+  DEFAULT_THEME,
+  isTheme,
+  THEME_STORAGE_KEY,
+  type Theme,
+  type ResolvedTheme,
+} from "@/lib/theme";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -13,11 +24,53 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "inkborne-theme";
+const THEME_CHANGE_EVENT = "inkborne-theme-change";
+
+function getStoredTheme(): Theme {
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isTheme(stored) ? stored : DEFAULT_THEME;
+  } catch {
+    return DEFAULT_THEME;
+  }
+}
+
+function getServerTheme(): "dark" {
+  return "dark";
+}
+
+function subscribeToTheme(onChange: () => void) {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === THEME_STORAGE_KEY || event.key === null) onChange();
+  };
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(THEME_CHANGE_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+  };
+}
 
 function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  } catch {
+    return "dark";
+  }
+}
+
+function subscribeToSystemTheme(onChange: () => void) {
+  try {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", onChange);
+    return () => mediaQuery.removeEventListener("change", onChange);
+  } catch {
+    return () => {};
+  }
+}
+
+function resolveTheme(theme: Theme, systemTheme: ResolvedTheme): ResolvedTheme {
+  return theme === "system" ? systemTheme : theme;
 }
 
 function applyTheme(resolved: ResolvedTheme) {
@@ -36,40 +89,36 @@ export function ThemeProvider({
   children: React.ReactNode;
   defaultTheme?: Theme;
 }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (defaultTheme) return defaultTheme;
-    if (typeof window === "undefined") return "dark";
-    return (localStorage.getItem(STORAGE_KEY) as Theme) || "dark";
-  });
-
-  // Track system preference separately so resolved can be computed without setState in effect
-  const [systemPreference, setSystemPreference] = useState<ResolvedTheme>(() => getSystemTheme());
-
-  const resolvedTheme = useMemo<ResolvedTheme>(() => {
-    if (theme === "system") return systemPreference;
-    return theme === "light" ? "light" : "dark";
-  }, [theme, systemPreference]);
+  // The server and first hydration render use the same snapshot. The document
+  // itself already has its saved appearance from the small script in <head>.
+  const storedTheme = useSyncExternalStore(subscribeToTheme, getStoredTheme, getServerTheme);
+  const systemPreference = useSyncExternalStore(
+    subscribeToSystemTheme,
+    getSystemTheme,
+    getServerTheme,
+  );
+  // A supplied default retains the existing initial override behavior. Explicit
+  // changes also work for this session when browser storage is unavailable.
+  const [selectedTheme, setSelectedTheme] = useState<Theme | undefined>(defaultTheme);
+  const theme = selectedTheme ?? storedTheme;
+  const resolvedTheme = resolveTheme(theme, systemPreference);
 
   const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem(STORAGE_KEY, newTheme);
+    setSelectedTheme(newTheme);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    } catch {
+      // Keep the current page usable when storage is blocked or full.
+    }
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }, []);
 
-  // Apply class to DOM whenever resolved theme changes
-  useEffect(() => {
-    applyTheme(resolvedTheme);
-  }, [resolvedTheme]);
-
-  // Listen for OS preference changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => {
-      setSystemPreference(e.matches ? "dark" : "light");
-    };
-
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, []);
+  useLayoutEffect(() => {
+    // Read the actual browser preference here, rather than applying the Dark
+    // hydration snapshot over the early script's Light/System result. This also
+    // restores the class after development Strict Mode document remounts.
+    applyTheme(resolveTheme(selectedTheme ?? getStoredTheme(), getSystemTheme()));
+  }, [selectedTheme, theme, systemPreference]);
 
   return (
     <ThemeContext value={{ theme, setTheme, resolvedTheme }}>

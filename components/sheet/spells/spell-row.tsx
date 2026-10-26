@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { CharacterSpell } from "@/lib/types/spells";
 import type { SpellCastability } from "@/lib/spells/casting";
+import styles from "@/components/character/character-notebook.module.css";
 
 interface SpellRowProps {
   spell: CharacterSpell;
@@ -60,7 +61,7 @@ export function SpellRow({
 
   return (
     <div className="text-sm">
-      <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent/30">
+      <div className={`flex items-center gap-2 px-3 py-1.5 hover:bg-accent/30 ${styles.spellRow}`}>
         {allowPrepareToggle && !spell.always_prepared && !isCantrip && (
           <button
             type="button"
@@ -80,12 +81,12 @@ export function SpellRow({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex-1 min-w-0 text-left flex items-center gap-2"
+          className={`flex-1 min-w-0 text-left flex items-center gap-2 ${styles.spellSummary}`}
         >
           <ChevronDown
             className={cn("size-3 text-muted-foreground transition-transform", expanded && "rotate-180")}
           />
-          <span className="truncate font-medium">{spell.name}</span>
+          <span className={`truncate font-medium ${styles.spellName}`}>{spell.name}</span>
           {definition?.source === "homebrew" && (
             <Badge variant="outline" className="text-[9px] shrink-0 text-accent">
               Homebrew · v{definition.version}

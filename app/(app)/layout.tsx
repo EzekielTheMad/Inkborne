@@ -5,6 +5,7 @@ import { MobileNav } from "@/components/nav/mobile-nav";
 import { ErrorListeners } from "@/components/error/error-listeners";
 import { isAdminUserId } from "@/lib/auth/is-admin";
 import { FeedbackProvider } from "@/components/feedback/feedback-provider";
+import { CharacterRouteFrame } from "@/components/character/character-route-frame";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -26,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isAdmin = isAdminUserId(user.id);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <CharacterRouteFrame>
       {/* Global error + promise-rejection listeners (authenticated only). */}
       <ErrorListeners />
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -40,6 +41,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="flex-1 container mx-auto px-4 py-6">
         {children}
       </main>
-    </div>
+    </CharacterRouteFrame>
   );
 }

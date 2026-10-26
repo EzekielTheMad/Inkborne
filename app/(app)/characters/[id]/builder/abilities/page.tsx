@@ -33,6 +33,7 @@ export default async function AbilitiesStepPage({ params }: PageProps) {
 
   return (
     <AbilitiesStepClient
+      ownerId={user.id}
       characterId={id}
       character={character}
       contentRefs={contentRefs}

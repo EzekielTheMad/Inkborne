@@ -17,6 +17,7 @@ import { ActivationToggles } from "@/components/sheet/activation-toggles";
 import { MobileSheet } from "@/components/sheet/mobile-sheet";
 import { ResourcesWidget } from "@/components/sheet/resources-widget";
 import { ActiveEffectsWidget } from "@/components/sheet/active-effects-widget";
+import styles from "./character-notebook.module.css";
 import type { HPConcentrationProps } from "@/components/sheet/hp-tracker";
 import {
   useCharacter,
@@ -85,7 +86,7 @@ export function SheetPanel() {
 
   return (
     <>
-      <div className="hidden md:block px-4 py-3 border-b border-border">
+      <div className={styles.statSection}>
         <StatRibbon
           schema={schema}
           evalResult={evalResult}
@@ -97,8 +98,8 @@ export function SheetPanel() {
         />
       </div>
 
-      <div className="hidden md:grid grid-cols-[280px_1fr_1fr] gap-4 flex-1 p-4 overflow-hidden">
-        <div className="space-y-4 overflow-y-auto">
+      <div className={styles.columns}>
+        <div className={styles.rail}>
           <SavingThrows schema={schema} evalResult={evalResult} />
           <PassiveSenses schema={schema} evalResult={evalResult} />
           <Defenses evalResult={evalResult} />
@@ -116,10 +117,10 @@ export function SheetPanel() {
           <Proficiencies grants={evalResult.grants} contentRefs={contentRefs} />
           <QuickNotes state={state} patchState={patchState} />
         </div>
-        <div className="overflow-y-auto">
+        <div className={styles.skills}>
           <SkillsList schema={schema} evalResult={evalResult} />
         </div>
-        <div className="overflow-hidden rounded-lg border border-border bg-card flex flex-col">
+        <div className={styles.workspace}>
           <ContentTabs
             character={character}
             schema={schema}

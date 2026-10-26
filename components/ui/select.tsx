@@ -4,6 +4,7 @@ import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 
 import { cn } from "@/lib/utils"
+import { CharacterPortalScope } from "@/components/character/character-notebook-scope"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
 const Select = SelectPrimitive.Root
@@ -72,6 +73,7 @@ function SelectContent({
   >) {
   return (
     <SelectPrimitive.Portal>
+      <CharacterPortalScope>
       <SelectPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}
@@ -91,6 +93,7 @@ function SelectContent({
           <SelectScrollDownButton />
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
+      </CharacterPortalScope>
     </SelectPrimitive.Portal>
   )
 }
