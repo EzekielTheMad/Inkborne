@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useId } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -17,7 +17,6 @@ import {
   type CategorySlot,
   type EquipmentCatalogItem,
   type EquipmentGroup,
-  type EquipmentOption,
 } from "@/lib/builder/equipment-choices";
 
 interface EquipmentChooserProps {
@@ -81,6 +80,7 @@ function EquipmentGroupCard({
   onPick: (slotKey: string, value: string) => void;
 }) {
   const activeOption = getActiveOption(group, selections);
+  const id = useId();
   const slots = activeOption ? getOptionCategorySlots(group, activeOption) : [];
 
   return (
@@ -95,16 +95,18 @@ function EquipmentGroupCard({
       </header>
 
       {group.kind === "choice" ? (
-        <div className="grid gap-2" role="group" aria-label={group.label}>
-          {group.options.map((option) => (
-            <OptionButton
-              key={option.id}
-              option={option}
-              selected={activeOption?.id === option.id}
-              disabled={disabled}
-              onClick={() => onSelectOption(group.key, option.id)}
-            />
-          ))}
+        <div className="space-y-1" role="group" aria-label={group.label}>
+          <label htmlFor={id} className="text-sm text-muted-foreground">{group.label}</label>
+          <select id={id} disabled={disabled || group.options.length === 0} value={activeOption?.id ?? ""}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            onChange={event => {
+              const option = group.options.find(candidate => candidate.id === event.target.value);
+              if (!disabled && option) onSelectOption(group.key, option.id);
+            }}>
+            <option value="">Choose equipment…</option>
+            {group.options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </select>
+          {!!selections[group.key] && !activeOption && <p role="alert" className="text-sm text-destructive">The saved equipment choice is unavailable. Choose an available replacement.</p>}
         </div>
       ) : (
         <div className="flex items-start gap-2 text-sm">
@@ -131,51 +133,6 @@ function EquipmentGroupCard({
         </div>
       )}
     </article>
-  );
-}
-
-function OptionButton({
-  option,
-  selected,
-  disabled,
-  onClick,
-}: {
-  option: EquipmentOption;
-  selected: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        "flex items-start gap-3 rounded-md border bg-card/30 px-3 py-2.5 text-left transition-colors",
-        "border-border",
-        !disabled && "cursor-pointer hover:border-accent/50",
-        selected && "border-accent bg-accent/10",
-        disabled && !selected && "opacity-60",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2",
-          selected ? "border-accent" : "border-muted-foreground",
-        )}
-      >
-        {selected && <span className="size-2 rounded-full bg-accent" />}
-      </span>
-      <span className="text-sm">
-        <span className="mr-1.5 font-semibold text-muted-foreground">
-          ({option.id})
-        </span>
-        {option.label}
-      </span>
-    </button>
   );
 }
 
@@ -207,7 +164,7 @@ function CategorySlotSelect({
         items={items}
         value={value ?? null}
         onValueChange={(next) => {
-          if (typeof next === "string") onPick(slot.key, next);
+          if (!disabled && typeof next === "string" && choices.some(choice => choice.value === next)) onPick(slot.key, next);
         }}
         disabled={disabled}
       >
@@ -226,6 +183,7 @@ function CategorySlotSelect({
           ))}
         </SelectContent>
       </Select>
+      {!!value && !choices.some(choice => choice.value === value) && <p role="alert" className="text-sm text-destructive">The saved item is unavailable. Choose an available replacement.</p>}
     </div>
   );
 }

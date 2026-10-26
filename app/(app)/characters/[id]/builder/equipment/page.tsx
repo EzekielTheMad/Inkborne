@@ -44,7 +44,7 @@ export default async function EquipmentStepPage({ params }: PageProps) {
     if (!snapshot.complete) throw Error("The saved build could not be read. Reload before finishing.");
     const refs = snapshot.refs;
     const hasLanguageCategory = refs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && isLanguageChoiceCategory(effect)));
-    const languages = hasLanguageCategory ? await getContentByType(character.system_id, "language").then(rows => rows.map(row => row.slug)) : undefined;
+    const languages = hasLanguageCategory ? await getContentByType(character.system_id, "language", true).then(rows => rows.map(row => row.slug)) : undefined;
     const schema = character.game_systems?.schema_definition;
     const steps: CreationStep[] = schema?.creation_steps ?? [];
     const classSpellsComplete = !characterCreationUIEnabled() || await savedBuilderClassSpellsComplete(character, snapshot, schema);
@@ -82,9 +82,9 @@ export default async function EquipmentStepPage({ params }: PageProps) {
   const { refs: contentRefs, incomplete: incompleteSteps } = await readBuild();
 
   const [weapons, armor, items] = await Promise.all([
-    getContentByType(character.system_id, "weapon"),
-    getContentByType(character.system_id, "armor"),
-    getContentByType(character.system_id, "item"),
+    getContentByType(character.system_id, "weapon", true),
+    getContentByType(character.system_id, "armor", true),
+    getContentByType(character.system_id, "item", true),
   ]);
 
   const classContent =

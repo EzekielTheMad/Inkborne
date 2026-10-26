@@ -41,12 +41,12 @@ export default async function ClassStepPage({ params }: PageProps) {
 
   const [classContent, subclassContent, featureContent, spells, contentSnapshot, languages, savedSpells, savedEquipment] =
     await Promise.all([
-      getContentByType(systemId, "class"),
-      getContentByType(systemId, "subclass"),
-      getContentByType(systemId, "feature"),
-      getContentByType(systemId, "spell"),
+      getContentByType(systemId, "class", true),
+      getContentByType(systemId, "subclass", true),
+      getContentByType(systemId, "feature", true),
+      getContentByType(systemId, "spell", true),
       getCharacterContentRefSnapshot(id),
-      getContentByType(systemId, "language"),
+      getContentByType(systemId, "language", true),
       supabase.from("character_spells").select(`content_id,content_version,is_prepared,always_prepared,in_spellbook,source,class_slug,
         content_versions!character_spells_content_version_fkey(content_id,version,system_id_snapshot,content_type_snapshot,slug_snapshot,name_snapshot,data_snapshot,effects_snapshot,source_snapshot,scope_snapshot,owner_id_snapshot)`)
         .eq("character_id", id),

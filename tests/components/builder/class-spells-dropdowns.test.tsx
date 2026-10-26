@@ -17,6 +17,13 @@ const cantrip = spell(1, 0), otherCantrip = spell(2, 0), first = spell(3, 1), se
 const pin = (entry: ContentEntry, prepared = false) => ({ content_id: entry.id, content_version: entry.version, is_prepared: prepared });
 
 describe("class spell dropdown eligibility and allowances", () => {
+  it("offers no acquisition slot at the global 200-spell limit", () => {
+    const catalog = Array.from({ length: 200 }, (_, index) => spell(index + 10, 1));
+    render(<ClassSpellsPanel source={source} catalog={[...catalog, cantrip]} selected={catalog.map(entry => pin(entry))}
+      abilityScores={{ wisdom: 16 }} saveAction={vi.fn()} />);
+    expect(screen.queryByRole("combobox", { name: /^Add cleric/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Cleric levelled spells 1" })).toBeEnabled();
+  });
   it("offers only unselected, earned spells and cannot add over the cantrip allowance", () => {
     render(<ClassSpellsPanel source={source} catalog={[cantrip, otherCantrip, first, spell(5, 2)]} selected={[]}
       abilityScores={{ wisdom: 8 }} saveAction={vi.fn()} />);
@@ -26,8 +33,10 @@ describe("class spell dropdown eligibility and allowances", () => {
     expect(screen.queryByRole("option", { name: /Spell 5/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     const row = screen.getByRole("combobox", { name: "Cleric cantrips 1" });
+    row.focus();
     fireEvent.change(row, { target: { value: `${otherCantrip.id}:1` } });
-    expect(row).not.toBeInTheDocument();
+    expect(row).toBeInTheDocument();
+    expect(row).toHaveFocus();
     expect(screen.getByRole("combobox", { name: "Cleric cantrips 1" })).toHaveValue(`${otherCantrip.id}:1`);
   });
 
@@ -38,7 +47,7 @@ describe("class spell dropdown eligibility and allowances", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "Add cleric levelled spells" }), { target: { value: `${second.id}:1` } });
     expect(screen.getByText("Prepared spells: 1 / 1. Always-prepared feature spells do not use this allowance.")).toBeInTheDocument();
     const otherPreparation = screen.getByRole("combobox", { name: `Prepare ${second.name}` });
-    expect(within(otherPreparation).queryByRole("option", { name: "Prepared", exact: true })).not.toBeInTheDocument();
+    expect(within(otherPreparation).queryByRole("option", { name: "Prepared" })).not.toBeInTheDocument();
     fireEvent.change(screen.getByRole("combobox", { name: `Prepare ${first.name}` }), { target: { value: "not-prepared" } });
     fireEvent.change(otherPreparation, { target: { value: "prepared" } });
     fireEvent.click(screen.getByRole("button", { name: "Save spells" }));

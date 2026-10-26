@@ -103,7 +103,7 @@ export function BonusSpellsPanel({ feature, choice, catalog, selected, spellbook
       <div className="space-y-3">{rows.map((pin, index) => {
         const current = pin ? candidates.find(spell => spell.id === pin.content_id && spell.version === pin.content_version) : undefined;
         const options = current ? [current, ...available] : available;
-        return <div key={pin ? `${pin.content_id}:${pin.content_version}` : "add"} className="space-y-1">
+        return <div key={index} className="space-y-1">
           <label className="block space-y-1 text-sm">
             <span>{pin ? `${feature.name} spell ${index + 1}` : `Add ${feature.name} spell`}</span>
             <select className={selectClassName} value={current ? spellKey(current) : ""} disabled={locked}

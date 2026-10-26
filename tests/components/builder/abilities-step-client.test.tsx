@@ -102,7 +102,7 @@ describe("AbilitiesStepClient saves", () => {
     ["Standard Array", "standard_array", {}],
   ])("persists a switch to %s without requiring another edit", async (label, method, scores) => {
     render(<AbilitiesStepClient {...props()} />);
-    fireEvent.click(screen.getByRole("button", { name: label }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Method" }), { target: { value: method } });
     await waitFor(() => expect(update).toHaveBeenCalledWith("char-1", {
       method, scores,
     }, expect.anything()));
@@ -110,7 +110,7 @@ describe("AbilitiesStepClient saves", () => {
 
   it("persists manual defaults when switching from point buy", async () => {
     render(<AbilitiesStepClient {...props({ method: "point_buy" })} />);
-    fireEvent.click(screen.getByRole("button", { name: "Manual Entry" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Method" }), { target: { value: "manual" } });
     await waitFor(() => expect(update).toHaveBeenCalledWith("char-1", {
       method: "manual", scores: { str: 10, dex: 10 },
     }, expect.anything()));
@@ -118,7 +118,7 @@ describe("AbilitiesStepClient saves", () => {
 
   it("does not reset scores or write when the active method is selected again", () => {
     render(<AbilitiesStepClient {...props()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Manual Entry" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Method" }), { target: { value: "manual" } });
     expect(screen.getAllByRole("spinbutton")[0]).toHaveValue(12);
     expect(screen.getAllByRole("spinbutton")[1]).toHaveValue(14);
     expect(update).not.toHaveBeenCalled();
@@ -126,13 +126,27 @@ describe("AbilitiesStepClient saves", () => {
 
   it("clears a standard-array assignment and makes its value available again", async () => {
     render(<AbilitiesStepClient {...props({ method: "standard_array", scores: { str: 15, dex: 14 } })} />);
-    const [strength, dexterity] = screen.getAllByRole("combobox");
+    const [strength, dexterity] = screen.getAllByRole("combobox", { name: /score$/ });
+    expect(within(dexterity).queryByRole("option", { name: "15" })).not.toBeInTheDocument();
     fireEvent.change(strength, { target: { value: "" } });
     expect(strength).toHaveValue("");
     expect(within(dexterity).getByRole("option", { name: "15" })).toBeEnabled();
     await waitFor(() => expect(update).toHaveBeenCalledWith("char-1", {
       method: "standard_array", scores: { dex: 14 },
     }, expect.anything()));
+  });
+  it("offers only affordable point-buy values and retains each current value", () => {
+    const initial = props({ method: "point_buy", scores: { str: 15, dex: 15, con: 15, int: 8, wis: 8, cha: 8 } });
+    initial.schema = { ...schema, ability_scores: [
+      { slug: "str", name: "Strength", abbr: "STR" }, { slug: "dex", name: "Dexterity", abbr: "DEX" },
+      { slug: "con", name: "Constitution", abbr: "CON" }, { slug: "int", name: "Intelligence", abbr: "INT" },
+      { slug: "wis", name: "Wisdom", abbr: "WIS" }, { slug: "cha", name: "Charisma", abbr: "CHA" },
+    ] };
+    render(<AbilitiesStepClient {...initial} />);
+    const wisdom = screen.getByRole("combobox", { name: "Wisdom score" });
+    expect(within(wisdom).queryByRole("option", { name: "9" })).not.toBeInTheDocument();
+    expect(within(wisdom).getByRole("option", { name: "8" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Strength score" })).toHaveValue("15");
   });
 
   it("serializes rapid edits while immediately retaining both changes", async () => {
@@ -159,7 +173,7 @@ describe("AbilitiesStepClient saves", () => {
     update.mockReturnValueOnce(first.promise);
     render(<AbilitiesStepClient {...props()} />);
     editManual(0, "16");
-    fireEvent.click(screen.getByRole("button", { name: "Point Buy" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Method" }), { target: { value: "point_buy" } });
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
     expect(screen.getByText("27 / 27")).toBeInTheDocument();
     await act(async () => first.resolve());
@@ -208,7 +222,7 @@ describe("AbilitiesStepClient saves", () => {
     const initial = props({ scores: {} });
     initial.character.choices.ability_method = undefined;
     render(<AbilitiesStepClient {...initial} />);
-    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "15" } });
+    fireEvent.change(screen.getAllByRole("combobox", { name: /score$/ })[0], { target: { value: "15" } });
     await waitFor(() => expect(update).toHaveBeenCalledWith("char-1", {
       method: "standard_array", scores: { str: 15 },
     }, { method: null, scores: {} }));

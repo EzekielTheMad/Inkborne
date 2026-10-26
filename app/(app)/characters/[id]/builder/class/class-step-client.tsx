@@ -1,5 +1,7 @@
 "use client";
 import type { AsiEvidence } from "@/lib/character/asi-contributions";
+import { asiOptionScores } from "@/lib/builder/asi-option-scores";
+import { resolveBuilderChoices } from "@/lib/builder/choice-options";
 import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 
 
@@ -229,7 +231,7 @@ export function ClassStepClient({
     const loreResolved = { ...projected, effects: projected.effects?.map(effect => effect.type === "choice"
       ? resolveLoreSkillChoice(effect, contentRefs, localChoices) : effect) };
     return resolveDefinitionClassFeatureChoices(resolveDefinitionExpertise(
-      resolveDefinitionChoices(loreResolved, availableLanguages, grantedLanguages), contentRefs, localChoices), contentRefs, localChoices,
+      resolveBuilderChoices(resolveDefinitionChoices(loreResolved, availableLanguages, grantedLanguages), contentRefs, localChoices, availableLanguages), contentRefs, localChoices), contentRefs, localChoices,
       { features, knownSpellSlugs });
   });
 
@@ -277,6 +279,12 @@ export function ClassStepClient({
   const confirmedMechanics = schema && confirmedResult ? resolveAbilityMechanics(character.base_stats, confirmedResult, schema) : { status: "unavailable" as const, reason: "Saved mechanics are unavailable." };
   const mechanicsAvailable = confirmedMechanics.status === "available" && localLevel === character.level && JSON.stringify(localChoices) === JSON.stringify(character.choices) && !saving && !refreshing;
   const resolvedStats = confirmedResult?.stats ?? {};
+  const asiAbilityScores = mechanicsAvailable ? asiOptionScores({ ...character, system_id: character.system_id ?? "" }, asiEvidence, schema) : {};
+  const ownedFeatureSlugs = new Set(asiEvidence?.status === "complete" && confirmedSources.asi?.status === "available"
+    ? asiEvidence.refs.filter(ref => ref.feature_grant_id !== null && activeSlugs.includes(ref.content_definitions.slug)
+      && asiEvidence.grants.some(grant => grant.id === ref.feature_grant_id && grant.feature_content_id === ref.content_id
+        && grant.feature_version === ref.content_version && grant.feature_slug === ref.content_definitions.slug))
+      .map(ref => ref.content_definitions.slug) : []);
 
   function beginSave() {
     if (unsavedSpells) {
@@ -792,6 +800,8 @@ export function ClassStepClient({
             subclasses={resolveEntries(savedSubclasses.entries)}
             features={resolveEntries(savedFeatures.entries)}
             feats={feats}
+            asiAbilityScores={asiAbilityScores}
+            ownedFeatureSlugs={ownedFeatureSlugs}
             onFeatSearch={handleFeatSearch}
             selectedClasses={selectedClasses}
             localChoices={localChoices}

@@ -43,12 +43,12 @@ export default async function RaceStepPage({ params }: PageProps) {
 
   const [raceContent, subraceContent, traitContent, contentSnapshot, languages] =
     await Promise.all([
-      getContentByType(systemId, "race"),
-      getContentByType(systemId, "subrace"),
+      getContentByType(systemId, "race", true),
+      getContentByType(systemId, "subrace", true),
       // Traits resolve race choices such as Dwarf tool proficiency.
-      getContentByType(systemId, "trait"),
+      getContentByType(systemId, "trait", true),
       getCharacterContentRefSnapshot(id),
-      getContentByType(systemId, "language"),
+      getContentByType(systemId, "language", true),
     ]);
 
   return (

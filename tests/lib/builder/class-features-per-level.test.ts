@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   classFeaturesPerLevel,
   availableFightingStyles,
+  unoccupiedFightingStyleSlugs,
   buildRenderedPerLevel,
   pendingChoicesUpTo,
   type PerLevel,
@@ -307,6 +308,15 @@ describe("classFeaturesPerLevel", () => {
 });
 
 describe("feature-owned choices", () => {
+  it("excludes the same earned style name across classes while ignoring unearned choices", () => {
+    const fighter = feature("fighter-styles", "Fighting Style", 1, "fighter", { feature_type: "fighting_style", choices: [{ options: ["fighter-defense"] }] });
+    const paladin = feature("paladin-styles", "Fighting Style", 2, "paladin", { feature_type: "fighting_style", choices: [{ options: ["paladin-defense"] }] });
+    const entries = [fighter, paladin, feature("fighter-defense", "Defense", 1, "fighter"), feature("paladin-defense", "Defense", 2, "paladin")];
+    const choices: CharacterChoices = { classes: [{ slug: "fighter", level: 1 }, { slug: "paladin", level: 2 }], resolved_choices: { [paladin.slug]: ["paladin-defense"] } };
+    expect(unoccupiedFightingStyleSlugs(fighter, entries, choices, new Set([paladin.slug]))).toEqual([]);
+    expect(unoccupiedFightingStyleSlugs(fighter, entries, choices, new Set())).toEqual(["fighter-defense"]);
+    expect(unoccupiedFightingStyleSlugs(fighter, entries, { ...choices, classes: [{ slug: "fighter", level: 1 }, { slug: "paladin", level: 1 }] }, new Set([paladin.slug]))).toEqual(["fighter-defense"]);
+  });
   it("offers a passive real-catalog style only through its owning controller", () => {
     const controller = feature("fighter-fighting-style", "Fighting Style", 1, "fighter", { feature_type: "fighting_style",
       choices: [{ type: "fighting_style", options: ["fighter-defense"] }] });

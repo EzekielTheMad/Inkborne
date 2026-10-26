@@ -6,19 +6,24 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import http from "node:http";
+import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
+import postcss from "postcss";
+import tailwind from "@tailwindcss/postcss";
 import { chromium } from "playwright";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const output = path.join(root, "test-results", "builder-local");
+const output = path.join(root, "test-results", "builder-local-" + new Date().toISOString().replace(/[:.]/g, "-"));
 await fs.mkdir(output, { recursive: true });
+console.log(JSON.stringify({ builderDropdownOutput: output }));
 const runStartedUtc = new Date().toISOString();
 await fs.writeFile(path.join(output, "evidence.json"), JSON.stringify({
   simulated: true, liveSupabase: false, status: "running", runStartedUtc,
 }, null, 2));
 const stubs = {
+  "next/link": `import React from 'react'; export default function Link({children,...props}){return React.createElement('a',props,children)}`,
   "next/navigation": `export function useRouter(){return {push:to=>window.dispatchEvent(new CustomEvent('fixture-navigation',{detail:to})),refresh:()=>{if(location.pathname==='/fresh-race')window.dispatchEvent(new Event('fixture-refresh'))}}}`,
   "@/lib/supabase/client": `export function createClient(){return {
     auth:{onAuthStateChange:callback=>{window.fixture.authChange=callback;return {data:{subscription:{unsubscribe(){window.fixture.authChange=null}}}}}},
@@ -104,7 +109,7 @@ await build({
           <Activity mode={route==='/background'?'visible':'hidden'}><BackgroundStepClient characterId='local-character' character={{...character,choices:{background:'courier'}}} backgrounds={[courier]} contentRefs={[{id:'background-pin',content_id:'courier',context:{},choice_source:null,content_definitions:courier}]} schema={undefined}/></Activity>
           <Activity mode={route==='/equipment'?'visible':'hidden'}><EquipmentStepClient characterId='local-character' character={{id:'local-character',level:1,choices:{starting_equipment:{selections:{'class:0':'a'},picks:{}}},state:null}} classContent={{id:'class',slug:'fighter',name:'Fighter',version:1,data:{equipment:'A mace or a warhammer; a shield'}}} backgroundContent={null} catalog={[{id:'mace',slug:'mace',name:'Mace',version:1,content_type:'weapon',weapon_category:'Simple',weapon_range:'Melee'},{id:'warhammer',slug:'warhammer',name:'Warhammer',version:1,content_type:'weapon',weapon_category:'Martial',weapon_range:'Melee'},{id:'shield',slug:'shield',name:'Shield',version:1,content_type:'armor',weapon_category:null,weapon_range:null}]}/></Activity>
           {route==='/rolled-legacy'&&<ClassStepClient characterId='local-character' character={{...character,level:2,choices:{classes:[{slug:'wizard',level:2}],hp_rolls:{'wizard-2':{method:'manual',value:3}}},campaigns:{hp_rule:'rolled_only'}}} classes={[{...emptyFighter,id:'wizard',slug:'wizard',name:'Legacy Wizard',effects:[],data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
-          {route==='/low-con'&&<ClassStepClient characterId='local-character' character={{...character,base_stats:{constitution:3},choices:{classes:[{slug:'wizard',level:1}]}}} classes={[{...emptyFighter,id:'wizard',slug:'wizard',name:'Low CON Wizard',effects:[],data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
+          {route==='/low-con'&&<ClassStepClient characterId='local-character' character={{...character,base_stats:{strength:10,dexterity:10,constitution:3,intelligence:10,wisdom:10,charisma:10},choices:{classes:[{slug:'wizard',level:1}]}}} classes={[{...emptyFighter,id:'wizard',slug:'wizard',name:'Low CON Wizard',effects:[],data:{hit_die:6,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={{...schema,ability_scores:['strength','dexterity','constitution','intelligence','wisdom','charisma'].map(slug=>({slug,name:slug,abbr:slug.slice(0,3)}))}}/>}
           {(route==='/locked-average'||route==='/locked-max')&&<ClassStepClient characterId='local-character' character={{...character,name:'Locked HP fighter',choices:{classes:[{slug:'fighter',level:1}]},campaigns:{hp_rule:route==='/locked-average'?'average_only':'max_for_all'}}} classes={[{...emptyFighter,effects:[],data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/>}
           <Activity mode={route==='/hp-recovery'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Recovery fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[{...emptyFighter,effects:[],data:{hit_die:10,levels:[{level:1,features:[]},{level:2,features:[]}]}}]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[]} schema={undefined}/></Activity>
           <Activity mode={route==='/empty-class'?'visible':'hidden'}><ClassStepClient characterId='local-character' character={{...character,name:'Choice fighter',choices:{classes:[{slug:'fighter',level:1}]}}} classes={[emptyFighter]} subclasses={[]} features={[]} feats={[]} spells={[]} contentRefs={[{id:'empty-class-pin',content_id:'fighter',context:{},choice_source:null,content_definitions:emptyFighter}]} schema={undefined}/></Activity>
@@ -121,15 +126,15 @@ await build({
   plugins: [{
     name: "isolated-boundaries",
     setup(builder) {
-      builder.onResolve({ filter: /^(next\/navigation|@\/lib\/supabase\/(client|character-client|content-refs-client|background-selection-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
+      builder.onResolve({ filter: /^(next\/(navigation|link)|@\/lib\/supabase\/(client|character-client|content-refs-client|background-selection-client)|@\/components\/builder\/stat-preview)$/ }, args => ({ path: args.path, namespace: "fixture" }));
       builder.onResolve({filter: /^@\/lib\/(supabase\/inventory|sheet\/update-state)$/}, args=>({path:args.path,namespace:"fixture"}));
       builder.onResolve({filter: /^\.\/actions$/}, args => args.importer.endsWith("class-step-client.tsx") ? {path:"class-actions",namespace:"fixture"} : args.importer.endsWith("equipment-step-client.tsx") ? {path:"equipment-actions",namespace:"fixture"} : undefined);
-      builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: stubs[args.path], loader: "js" }));
+      builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: stubs[args.path], loader: "js", resolveDir: root }));
     },
   }],
 });
-const cssFiles = (await fs.readdir(path.join(root, ".next/static/chunks"))).filter(name => name.endsWith(".css"));
-const css = (await Promise.all(cssFiles.map(name => fs.readFile(path.join(root, ".next/static/chunks", name), "utf8")))).join("\n");
+const css = (await postcss([tailwind({ base: root })]).process(await fs.readFile(path.join(root, "app/globals.css"), "utf8"),
+  { from: path.join(root, "app/globals.css") })).css;
 const server = http.createServer(async (request, response) => {
   if (request.url === "/fixture.js") { response.setHeader("Content-Type", "text/javascript"); response.end(await fs.readFile(path.join(output, "fixture.js"))); }
   else if (request.url === "/style.css") { response.setHeader("Content-Type", "text/css"); response.end(css); }
@@ -137,14 +142,23 @@ const server = http.createServer(async (request, response) => {
 });
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const origin = `http://127.0.0.1:${server.address().port}`;
+const ownedPort = server.address().port;
 console.log(JSON.stringify({ taskProcess: { pid: process.pid, parentPid: process.ppid, command: 'node scripts/verify-builder-local.mjs', cwd: root, startTime: new Date().toISOString(), listeningPort: server.address().port } }));
 let browser;
 let page;
 const evidence = [];
 const blockedRequests = [];
 const errors = [];
+const selectContaining = (scope, name) => scope.locator("select").filter({ has: page.getByRole("option", { name, exact: true }) }).first();
+async function pickOption(scope, name) {
+  const select = selectContaining(scope, name);
+  const value = await select.getByRole("option", { name, exact: true }).getAttribute("value");
+  assert.notEqual(value, null);
+  await select.selectOption(value);
+}
 try {
-  browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true });
+  browser = await chromium.launch({ executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe", headless: true,
+    args: ["--js-flags=--max-old-space-size=512"] });
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await context.route("**/*", route => {
     if (new URL(route.request().url()).origin !== origin) { blockedRequests.push(route.request().url()); return route.abort(); }
@@ -175,19 +189,19 @@ try {
   evidence.push("Native Back/Forward with SPA remount restores the failed draft and retries the exact CAS snapshot.");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("link", { name: "Race", exact: true }).click();
-  const preview = page.getByRole("button", { name: "Preview Human" });
-  await preview.focus(); await page.keyboard.press("Enter");
+  const preview = page.getByRole("combobox", { name: "Choose Race" });
+  await preview.focus(); await preview.selectOption({ label: "Human" });
   await page.getByRole("button", { name: "Add Race" }).click();
   await page.getByRole("alert").filter({ hasText: "race change could not be confirmed" }).waitFor();
   await page.screenshot({ path: path.join(output, "race-failure-mobile.png"), fullPage: true });
-  evidence.push("Keyboard Enter opens the real preview dialog; simulated race failure renders a readable mobile alert.");
+  evidence.push("The focused race dropdown opens the real preview dialog; simulated race failure renders a readable mobile alert.");
   await page.getByRole("link", { name: "Pinned Race", exact: true }).click();
   await page.getByText("Authorized pinned race description.", { exact: true }).waitFor();
   assert.equal(await page.getByText("New catalog race description.", { exact: true }).isVisible(), false);
-  assert.equal(await page.getByRole("button", { name: "Athletics", exact: true }).isVisible(), true);
-  assert.equal(await page.getByRole("button", { name: "Stealth", exact: true }).isVisible(), false);
-  assert.equal(await page.getByRole("button", { name: "Tool Smith", exact: true }).isVisible(), true);
-  assert.equal(await page.getByRole("button", { name: "Tool Dice", exact: true }).isVisible(), false);
+  assert.equal(await page.getByRole("option", { name: "Athletics", exact: true }).count(), 1);
+  assert.equal(await page.getByRole("option", { name: "Stealth", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("option", { name: "Tool Smith", exact: true }).count(), 1);
+  assert.equal(await page.getByRole("option", { name: "Tool Dice", exact: true }).count(), 0);
   await page.screenshot({ path: path.join(output, "pinned-race-mobile.png"), fullPage: true });
   evidence.push("Saved race and referenced trait UI display pinned data and choices against newer catalog entries.");
   await page.getByRole("link", { name: "Abilities", exact: true }).click();
@@ -255,7 +269,7 @@ try {
   await page.getByRole("button",{name:"Change Background",exact:true}).focus();
   await page.keyboard.press("Enter");
   assert.equal(await page.getByRole("textbox",{name:"Ideals",exact:true}).inputValue(),"Protect my village");
-  assert.equal(await page.getByRole("button",{name:"Preview Scholar",exact:true}).count(),0);
+  assert.equal(await page.getByRole("combobox",{name:"Choose Background",exact:true}).count(),0);
   assert.equal(await page.evaluate(()=>window.fixture.backgroundReplacements.length),0);
   await page.getByRole("alert").filter({hasText:"Save your unconfirmed notes"}).waitFor();
   await page.screenshot({path:path.join(output,"background-replacement-recovery-mobile.png"),fullPage:true});
@@ -264,20 +278,20 @@ try {
   await page.waitForFunction(()=>window.fixture.backgroundCalls.length===2);
   await page.evaluate(()=>window.fixture.resolveBackground());
   await page.getByRole("button",{name:"Change Background",exact:true}).click();
-  await page.getByRole("button",{name:"Preview Scholar",exact:true}).click();
+  await page.getByRole("combobox",{name:"Choose Background",exact:true}).selectOption({label:"Scholar"});
   await page.getByRole("button",{name:"Add Background",exact:true}).click();
-  await page.getByRole("button",{name:"Study old maps",exact:true}).waitFor();
+  await page.getByRole("option",{name:"Study old maps",exact:true}).waitFor({state:"attached"});
   assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[1].choices.ideals),["Protect my village"]);
   assert.equal(await page.evaluate(()=>window.fixture.backgroundReplacements.length),1);
   assert.equal(await page.getByText(/You have unsaved notes/).count(),0);
   evidence.push({check:"failed custom note remains accessible until saved before replacing with preset background",passed:true});
   await page.goto(origin + "/invalid-choice");
   await page.evaluate(()=>{window.fixture.backgroundMode='success'});
-  assert.equal(await page.getByRole("button",{name:"Athletics",exact:true}).isDisabled(),true);
+  assert.equal(await selectContaining(page,"Athletics").isDisabled(),true);
   assert.equal(await page.evaluate(()=>window.fixture.backgroundCalls.length),0);
   await page.getByRole("button",{name:"Clear saved selections",exact:true}).click();
   await page.getByRole("button",{name:"Clear saved selections",exact:true}).waitFor({state:"hidden"});
-  await page.getByRole("button",{name:"Athletics",exact:true}).click();
+  await pickOption(page,"Athletics");
   await page.waitForFunction(()=>window.fixture.backgroundCalls.length===2);
   assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[0].choices.resolved_choices),{'courier-skill':[]});
   assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[1].choices.resolved_choices),{'courier-skill':['skill-athletics']});
@@ -285,14 +299,14 @@ try {
   evidence.push({check:"unavailable pinned choice requires explicit clearing before a replacement selection",passed:true});
   await page.goto(origin + "/empty-class");
   await page.getByRole("button",{name:/^Level 1:/}).click();
-  await page.getByRole("button",{name:"Athletics",exact:true}).click();
+  await pickOption(page,"Athletics");
   await page.locator('[aria-label="Choice made"]:visible').waitFor();
   assert.deepEqual(await page.evaluate(()=>window.fixture.classChoiceCalls[0].choices.resolved_choices),{'fighter-skill':['skill-athletics']});
   evidence.push({check:"first-level class choice remains usable with no feature rows",passed:true});
   await page.goto(origin + "/hp-recovery");
   await page.getByRole("button",{name:/Level up Choice Fighter to level 2/i}).click();
   const hpDrawer=page.getByRole("dialog");
-  await page.getByRole("radio",{name:"Manual",exact:true}).click();
+  await page.getByRole("combobox",{name:"Hit point method",exact:true}).selectOption("manual");
   await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).fill("3.5");
   await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).press("Enter");
   await hpDrawer.getByRole("alert").filter({hasText:"whole number from 1 to 10"}).waitFor();
@@ -303,14 +317,15 @@ try {
   await page.waitForFunction(()=>window.fixture.hpCalls.length===1);
   await hpDrawer.getByRole("status",{name:"",exact:true}).filter({hasText:"Saving this class change"}).waitFor();
   await page.screenshot({path:path.join(output,"class-hp-pending-mobile.png"),fullPage:true,animations:"disabled"});
-  assert.equal(await hpDrawer.getByRole("radio",{name:/^Manual/}).isDisabled(),true);
+  assert.equal(await hpDrawer.getByRole("combobox",{name:"Hit point method",exact:true}).isDisabled(),true);
   await page.evaluate(()=>window.fixture.rejectHp());
   await hpDrawer.getByRole("alert").filter({hasText:"class change could not be confirmed"}).waitFor();
   await page.screenshot({path:path.join(output,"class-hp-failure-mobile.png"),fullPage:true,animations:"disabled"});
   assert.equal(await page.getByRole("button",{name:/Confirm level 2/i}).isDisabled(),true);
-  assert.equal(await page.getByRole("radio",{name:"Manual",exact:true}).getAttribute("aria-checked"),"false");
+  assert.equal(await page.getByRole("combobox",{name:"Hit point method",exact:true}).inputValue(),"manual");
+  assert.equal(await page.getByText(/Total HP gain this level:/).count(),0);
   await page.evaluate(()=>{window.fixture.hpMode='success'});
-  await page.getByRole("radio",{name:/Average/i}).click();
+  await page.getByRole("combobox",{name:"Hit point method",exact:true}).selectOption("average");
   await page.waitForFunction(()=>window.fixture.hpCalls.length===2);
   await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(button=>button.offsetParent && /Confirm level 2/i.test(button.textContent) && !button.disabled));
   assert.equal(await page.getByRole("button",{name:/Confirm level 2/i}).isEnabled(),true);
@@ -319,7 +334,7 @@ try {
   for (const route of ["locked-average","locked-max"]) {
     await page.goto(origin + "/" + route);
     await page.getByRole("button",{name:/Level up Choice Fighter to level 2/i}).click();
-    assert.equal(await page.getByRole("radio").count(),0);
+    assert.equal(await page.getByRole("combobox", { name: "Hit point method" }).count(),0);
     assert.equal(await page.getByRole("button",{name:/Confirm level 2/i}).isEnabled(),true);
     await page.getByRole("button",{name:/Confirm level 2/i}).click();
     await page.waitForFunction(()=>window.fixture.classCalls.length===1);
@@ -330,14 +345,14 @@ try {
   }
   await page.goto(origin + "/rolled-legacy");
   await page.getByRole("button",{name:/Level 2/}).click();
-  await page.getByRole("radio",{name:"Roll d6",exact:true}).waitFor();
+  await page.getByRole("option",{name:"Roll d6",exact:true}).waitFor({state:"attached"});
   assert.equal(await page.getByRole("spinbutton",{name:"Manual HP value",exact:true}).count(),0);
   assert.equal(await page.getByText(/Total HP gain this level:/).textContent(),"Total HP gain this level: +3");
   assert.equal(await page.evaluate(()=>window.fixture.hpCalls.length),0);
   evidence.push({check:"rolled-only controls preserve the existing manual record as read-only",passed:true});
   await page.goto(origin + "/low-con");
   await page.getByRole("button",{name:/Level up Low CON Wizard to level 2/i}).click();
-  await page.getByRole("radio",{name:"Average (+1)",exact:true}).click();
+  await page.getByRole("combobox",{name:"Hit point method",exact:true}).selectOption("average");
   await page.waitForFunction(()=>window.fixture.hpCalls.length===1);
   assert.deepEqual(await page.evaluate(()=>window.fixture.hpCalls[0].choices.hp_rolls),{'wizard-2':{method:'average',value:4}});
   await page.getByText(/Total HP gain this level:/).waitFor();
@@ -345,22 +360,22 @@ try {
   evidence.push({check:"mobile HP preview uses the existing minimum gain while preserving raw die contribution",passed:true});
   await page.setViewportSize({width:1280,height:900});
   await page.goto(origin + "/pinned-style");
-  const selectedStyle=page.getByRole("button",{name:/Pinned Defense/});
+  const selectedStyle=selectContaining(page,/Pinned Defense/);
   await selectedStyle.waitFor();
-  assert.equal(await selectedStyle.getAttribute("aria-pressed"),"true");
+  assert.equal(await selectedStyle.inputValue(),"defense");
   assert.equal(await page.getByText("Catalog Defense",{exact:true}).count(),0);
-  await selectedStyle.click();
+  await selectedStyle.selectOption("defense");
   assert.equal(await page.getByRole("alert").count(),0);
   assert.equal(await page.evaluate(()=>window.fixture.classCalls.length),0);
-  assert.equal(await selectedStyle.getAttribute("aria-pressed"),"true");
+  assert.equal(await selectedStyle.inputValue(),"defense");
   evidence.push({check:"selected fighting style preserves its compatible pinned snapshot and does not resave",passed:true});
-  const selectedSubclass=page.getByRole("button",{name:/Pinned Champion/});
-  assert.equal(await selectedSubclass.getAttribute("aria-pressed"),"true");
+  const selectedSubclass=selectContaining(page,/Pinned Champion/);
+  assert.equal(await selectedSubclass.inputValue(),"champion");
   assert.equal(await page.getByText("Catalog Champion",{exact:true}).count(),0);
-  await selectedSubclass.click();
+  await selectedSubclass.selectOption("champion");
   assert.equal(await page.getByRole("alert").count(),0);
   assert.equal(await page.evaluate(()=>window.fixture.classCalls.length),0);
-  assert.equal(await selectedSubclass.getAttribute("aria-pressed"),"true");
+  assert.equal(await selectedSubclass.inputValue(),"champion");
   evidence.push({check:"selected subclass preserves its pinned definition and does not resave",passed:true});
   await page.goto(origin + "/pinned-class");
   await page.getByRole("button", { name: "Remove Pinned Fighter", exact: true }).waitFor();
@@ -381,17 +396,17 @@ try {
   assert.equal(await page.getByRole("button", {name:"Next: Abilities",exact:true}).isEnabled(),true);
   evidence.push({check:"pending canonical class save locks competing controls and releases after confirmation",passed:true});
   await page.goto(origin+"/equipment");
-  await page.getByRole("button", {name:/warhammer/i}).click();
+  await pickOption(page,/warhammer/i);
   await page.getByRole("status").filter({hasText:"Saving equipment selection."}).waitFor();
   assert.equal(await page.getByRole("button", {name:"Confirm Equipment",exact:true}).isDisabled(),true);
-  assert.equal(await page.getByRole("button", {name:/a mace/i}).isDisabled(),true);
+  assert.equal(await selectContaining(page,/a mace/i).isDisabled(),true);
   assert.equal(await page.evaluate(()=>window.fixture.grants.length),0);
   await page.evaluate(()=>window.fixture.rejectEquipment());
   await page.getByRole("alert").filter({hasText:"selection could not be confirmed"}).waitFor();
   assert.equal(await page.getByRole("alert").textContent().then(text=>text.includes("private selection detail")),false);
-  assert.equal(await page.getByRole("button", {name:/a mace/i}).getAttribute("aria-pressed"),"true");
+  assert.equal(await selectContaining(page,/a mace/i).inputValue(),"a");
   await page.evaluate(()=>{window.fixture.equipmentMode='success'});
-  await page.getByRole("button", {name:/warhammer/i}).click();
+  await pickOption(page,/warhammer/i);
   await page.waitForFunction(()=>!document.querySelector('[aria-busy="true"]'));
   await page.getByRole("button", {name:"Confirm Equipment",exact:true}).click();
   await page.getByRole("alert").filter({hasText:"Check the saved award"}).waitFor();
@@ -405,7 +420,7 @@ try {
   await page.getByText('Added to inventory',{exact:true}).waitFor();
   await page.getByText('Recorded warhammer',{exact:true}).waitFor();
   assert.deepEqual(await page.evaluate(()=>window.fixture.grants[1]),await page.evaluate(()=>window.fixture.grants[0]));
-  assert.equal(await page.getByRole('button',{name:/a mace/i}).isDisabled(),true);
+  assert.equal(await selectContaining(page,/a mace/i).isDisabled(),true);
   await page.screenshot({path:path.join(output,'equipment-receipt-recovery-mobile.png'),fullPage:true,animations:'disabled'});
   evidence.push({check:'explicit mobile recovery reuses exact request and displays original receipt without sequential item/currency writes',passed:true});
   await page.setViewportSize({width:390,height:844});
@@ -422,22 +437,22 @@ try {
   await page.getByRole('button',{name:'Restore saved class features'}).click();
   await page.getByRole('button',{name:'Restore saved class features'}).waitFor({state:'hidden'});
   await page.getByRole('button',{name:/^Level 1:/}).click();
-  await page.getByRole('button',{name:'Old Option',exact:true}).waitFor();
+  await page.getByRole('option',{name:'Old Option',exact:true}).waitFor({state:'attached'});
   assert.equal(await page.getByText('Current Feature',{exact:true}).count(),0);
-  await page.getByRole('button',{name:'Old Option',exact:true}).click();
+  await pickOption(page,'Old Option');
   await page.waitForFunction(()=>window.fixture.classChoiceCalls.length===1);
   assert.deepEqual(await page.evaluate(()=>window.fixture.classChoiceCalls[0].choices.resolved_choices),{training:['old-option']});
   await page.screenshot({path:path.join(output,'feature-recovery-mobile.png'),fullPage:true,animations:'disabled'});
   evidence.push({check:'mobile retained Activity feature recovery settles hidden, retries, and restores historical feature choices',passed:true});
   await page.goto(origin+'/language-category');
-  await page.getByRole('button',{name:'Elvish',exact:true}).waitFor();
-  assert.equal(await page.getByRole('button',{name:'Common',exact:true}).count(),0);
-  await page.getByRole('button',{name:'Elvish',exact:true}).click();
+  await page.getByRole('option',{name:'Elvish',exact:true}).waitFor({state:'attached'});
+  assert.equal(await page.getByRole('option',{name:'Common',exact:true}).count(),0);
+  await pickOption(page,'Elvish');
   await page.waitForFunction(()=>window.fixture.backgroundCalls.length===1);
   assert.deepEqual(await page.evaluate(()=>window.fixture.backgroundCalls[0].choices.resolved_choices),{language:['elvish']});
   evidence.push({check:'authoring-defined any-language category excludes fixed grants and persists an accessible language',passed:true});
   await page.goto(origin+'/fresh-race');
-  await page.getByRole('button',{name:'Preview Fresh Human',exact:true}).click();
+  await page.getByRole('combobox',{name:'Choose Race',exact:true}).selectOption({label:'Fresh Human'});
   await page.getByRole('button',{name:'Add Race',exact:true}).click();
   await page.getByRole('status').filter({hasText:'Trait versions were not recorded'}).waitFor();
   assert.equal(await page.evaluate(()=>window.fixture.raceRefCalls.length),1);
@@ -445,10 +460,10 @@ try {
   assert.equal(await page.getByRole('alert').count(),0);
   await page.getByRole('link',{name:'Overview',exact:true}).click();
   await page.goBack();
-  await page.getByText('Fresh Training (current catalog): Choose 1',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Elvish',exact:true}).click();
+  await page.getByRole('combobox',{name:'Fresh Training (current catalog): Choose 1',exact:true}).waitFor();
+  await pickOption(page,'Elvish');
   await page.waitForFunction(()=>window.fixture.raceCalls.length===2&&!document.querySelector('[aria-busy="true"]'));
-  await page.getByRole('button',{name:'Tool Dice',exact:true}).click();
+  await pickOption(page,'Tool Dice');
   await page.waitForFunction(()=>window.fixture.raceCalls.length===3&&!document.querySelector('[aria-busy="true"]'));
   assert.deepEqual(await page.evaluate(()=>window.fixture.raceChoices.resolved_choices),{'race-language':['elvish'],'race-tool':['tool-dice']});
   assert.equal(await page.evaluate(()=>window.fixture.raceRefCalls.length),1);
@@ -461,7 +476,7 @@ try {
   await page.getByRole("spinbutton", { name: "Strength score" }).fill("16");
   await page.waitForFunction(() => window.fixture.calls.length === 1);
   await page.getByRole("spinbutton", { name: "Dexterity score" }).fill("18");
-  await page.getByRole("button", { name: "Point Buy", exact: true }).click();
+  await page.getByRole("combobox", { name: "Method", exact: true }).selectOption("point_buy");
   assert.equal(await page.evaluate(() => window.fixture.calls.length), 1);
   await page.evaluate(() => { window.fixture.mode = "success"; window.fixture.resolve(); });
   await page.getByRole("status").filter({ hasText: "Changes save automatically." }).waitFor();
@@ -475,7 +490,7 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => { window.fixture.mode = "pending"; });
-  await page.getByRole("button", { name: "Increase Strength", exact: true }).click();
+  await page.getByRole("combobox", { name: "Strength score", exact: true }).selectOption("9");
   await page.waitForFunction(() => window.fixture.calls.length === 4);
   await page.evaluate(() => {
     window.fixture.abilitySaved = { method: "point_buy", scores: { strength: 10, dexterity: 8 } };
@@ -526,4 +541,12 @@ try {
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => server.close(resolve));
+  const portClosed = await new Promise(resolve => {
+    const socket = net.connect({ host: "127.0.0.1", port: ownedPort });
+    socket.once("connect", () => { socket.destroy(); resolve(false); });
+    socket.once("error", () => resolve(true));
+    socket.setTimeout(2000, () => { socket.destroy(); resolve(false); });
+  });
+  await fs.writeFile(path.join(output, "cleanup.json"), JSON.stringify({ observedUtc: new Date().toISOString(), ownedPort, portClosed, browserClosed: !browser || !browser.isConnected() }));
+  assert.equal(portClosed, true, "Owned offline fixture port remains open");
 }

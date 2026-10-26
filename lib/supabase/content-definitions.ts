@@ -23,16 +23,18 @@ export type { ParsedContentDefinition } from "@/lib/supabase/content-definitions
 export const getContentByType = cache(async function getContentByType(
   systemId: string,
   contentType: string,
+  selectableOnly = false,
 ): Promise<ParsedContentDefinition[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("content_definitions")
     .select(
       "id, name, slug, content_type, data, effects, version, source, system_id, scope, owner_id",
     )
     .eq("system_id", systemId)
-    .eq("content_type", contentType)
-    .order("name");
+    .eq("content_type", contentType);
+  if (selectableOnly) query = query.eq("is_retired", false);
+  const { data, error } = await query.order("name");
 
   if (error) throw error;
 

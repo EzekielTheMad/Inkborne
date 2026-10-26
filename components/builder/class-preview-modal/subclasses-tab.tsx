@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { useId } from "react";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
 interface SubclassesTabProps {
@@ -8,53 +8,24 @@ interface SubclassesTabProps {
   onSelect: (slug: string | null) => void;
 }
 
-export function SubclassesTab({
-  classContent,
-  subclasses,
-  selectedSlug,
-  onSelect,
-}: SubclassesTabProps) {
-  // Defensive filter — parent should have already filtered by class, but in
-  // case it didn't. Subclass data uses the `parent_class` field (snake_case).
-  const matching = subclasses.filter(
-    (sc) => (sc.data as Record<string, unknown>).parent_class === classContent.slug,
-  );
-
-  if (matching.length === 0) {
-    return <p className="text-sm text-muted-foreground">No subclasses found.</p>;
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {matching.map((sc) => {
-        const data = sc.data as Record<string, unknown>;
-        const description = typeof data.description === "string" ? data.description : null;
-        const isSelected = selectedSlug === sc.slug;
-        return (
-          <button
-            key={sc.id}
-            type="button"
-            aria-pressed={isSelected}
-            // `|| undefined` so React omits the attribute entirely when
-            // false; Tailwind's data-[selected=true] selector applies only
-            // when the attribute is present with value "true".
-            data-selected={isSelected || undefined}
-            onClick={() => onSelect(isSelected ? null : sc.slug)}
-            className={cn(
-              "text-left rounded-md border bg-card/40 px-3 py-3 transition-colors",
-              "border-border hover:border-accent/50",
-              "data-[selected=true]:border-character-border data-[selected=true]:bg-character-bg",
-            )}
-          >
-            <p className="text-sm font-medium">{sc.name}</p>
-            {description && (
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-3">
-                {description}
-              </p>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
+export function SubclassesTab({ classContent, subclasses, selectedSlug, onSelect }: SubclassesTabProps) {
+  const id = useId();
+  const matching = subclasses.filter(entry => entry.data.parent_class === classContent.slug);
+  const selected = matching.find(entry => entry.slug === selectedSlug);
+  if (!matching.length) return <p className="text-sm text-muted-foreground">No subclasses found.</p>;
+  return <div className="space-y-3">
+    <label htmlFor={id} className="text-sm font-medium">Preview subclass</label>
+    <select id={id} value={selected?.slug ?? ""} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+      onChange={event => {
+        const value = event.target.value;
+        if (value === "" || matching.some(entry => entry.slug === value)) onSelect(value || null);
+      }}>
+      <option value="">Choose a subclass to preview…</option>
+      {matching.map(entry => <option key={entry.id} value={entry.slug}>{entry.name}</option>)}
+    </select>
+    {selected && <div className="rounded-md border border-border bg-card/40 p-3">
+      <p className="text-sm font-medium">{selected.name}</p>
+      {typeof selected.data.description === "string" && <p className="mt-1 text-sm text-muted-foreground">{selected.data.description}</p>}
+    </div>}
+  </div>;
 }

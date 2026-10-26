@@ -30,7 +30,7 @@ import type { Effect, ChoiceEffect } from "@/lib/types/effects";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 
-import { fixedLanguages, resolveDefinitionChoices } from "@/lib/builder/choice-validation";
+import { resolveBuilderChoices } from "@/lib/builder/choice-options";
 
 const ABILITY_ABBR = ["STR", "DEX", "CON", "INT", "WIS", "CHA"];
 
@@ -138,8 +138,7 @@ export function RaceStepClient({
   // Collect all effects for stat preview
   const allEffects: Effect[] = resolveCharacterChoiceEffects(contentRefs, localChoices);
 
-  const grantedLanguages = fixedLanguages(contentRefs.map(ref => ref.content_definitions));
-  const resolveChoices = (entry: ContentEntry | undefined) => entry ? resolveDefinitionChoices(entry, availableLanguages, grantedLanguages).effects ?? [] : [];
+  const resolveChoices = (entry: ContentEntry | undefined) => entry ? resolveBuilderChoices(entry, contentRefs, localChoices, availableLanguages).effects ?? [] : [];
 
   // Get choice effects from race and subrace
   const raceChoices: ChoiceEffect[] = resolveChoices(selectedRaceContent).filter(
@@ -592,24 +591,16 @@ export function RaceStepClient({
                       ))}
                     </div>
                   ) : (
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {availableSubraces.map((sr) => (
-                        <Card
-                          key={sr.id}
-                          className="cursor-pointer hover:bg-accent/50 transition-colors"
-                        >
-                          <button type="button" aria-label={`Select ${sr.name}`} onClick={() => handleSelectSubrace(sr)} className="w-full text-left outline-offset-4 focus-visible:outline-2 focus-visible:outline-ring">
-                          <CardContent className="p-3">
-                            <p className="font-medium text-sm">{sr.name}</p>
-                            {typeof sr.data.description === "string" && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {sr.data.description.slice(0, 100)}
-                              </p>
-                            )}
-                          </CardContent>
-                          </button>
-                        </Card>
-                      ))}
+                    <div className="space-y-1">
+                      <label htmlFor="builder-subrace" className="text-sm font-medium">Subrace</label>
+                      <select id="builder-subrace" value="" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        onChange={event => {
+                          const selected = availableSubraces.find(candidate => candidate.id === event.target.value);
+                          if (selected) void handleSelectSubrace(selected);
+                        }}>
+                        <option value="">Choose a subrace…</option>
+                        {availableSubraces.map(sr => <option key={sr.id} value={sr.id}>{sr.name}</option>)}
+                      </select>
                     </div>
                   )}
                 </CardContent>

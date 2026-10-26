@@ -47,7 +47,7 @@ export async function confirmStartingEquipment(input: unknown): Promise<Starting
     if ((character.choices?.background ?? null) !== (background?.slug ?? null)) return { status: "conflict" };
     const sources = { class: { id: primary.id, version: primary.version }, background: background ? { id: background.id, version: background.version } : null };
     if (!equalEquipmentIntent(sources, request.sources)) return { status: "conflict" };
-    const catalog = (await Promise.all(["weapon", "armor", "item"].map(type => getContentByType(character.system_id, type)))).flat().map(row => ({
+    const catalog = (await Promise.all(["weapon", "armor", "item"].map(type => getContentByType(character.system_id, type, true)))).flat().map(row => ({
       id: row.id, version: row.version, name: row.name, slug: row.slug, content_type: row.content_type,
       weapon_category: typeof row.data.weapon_category === "string" ? row.data.weapon_category : null,
       weapon_range: typeof row.data.weapon_range === "string" ? row.data.weapon_range : null,

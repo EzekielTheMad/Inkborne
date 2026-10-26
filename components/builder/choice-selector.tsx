@@ -1,7 +1,7 @@
 "use client";
 
 import { resolveChoiceOptions } from "@/lib/builder/choice-validation";
-import { cn } from "@/lib/utils";
+import { SelectionDropdowns } from "@/components/builder/selection-dropdowns";
 import type { ChoiceEffect } from "@/lib/types/effects";
 
 interface ChoiceSelectorProps {
@@ -22,35 +22,26 @@ export function ChoiceSelector({
   const resolvedOptions = resolveChoiceOptions(choiceEffect);
   const options = resolvedOptions ?? [];
   const maxSelections = choiceEffect.choose;
-  const invalidSelections = Array.isArray(choiceEffect.from) && (
-    currentSelections.length > maxSelections ||
+  const invalidSelections = !!resolvedOptions && (
+    !Number.isInteger(maxSelections) || maxSelections < 1 || maxSelections > 100 || currentSelections.length > maxSelections ||
     new Set(currentSelections).size !== currentSelections.length ||
     currentSelections.some(selection => !options.includes(selection))
   );
 
-  function handleToggle(option: string) {
-    if (disabled) return;
-    if (currentSelections.includes(option)) {
-      // Deselect
-      onSelect(currentSelections.filter((s) => s !== option));
-    } else if (currentSelections.length < maxSelections) {
-      // Select
-      onSelect([...currentSelections, option]);
-    }
-    // If at max, do nothing (already at limit)
-  }
+  const choiceLabel = label ?? `Choose ${maxSelections} ${choiceEffect.grant_type.replace(/_/g, " ")}`;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">
-          {label ?? `Choose ${maxSelections} ${choiceEffect.grant_type.replace(/_/g, " ")}`}
+          {choiceLabel}
         </p>
         <span className="text-xs text-muted-foreground">
           {currentSelections.length} / {maxSelections} selected
         </span>
       </div>
       {!resolvedOptions && <p role="alert" className="text-sm text-destructive">Options for this choice are unavailable. Saved picks are kept. Reload the saved content before choosing again.</p>}
+      {(!resolvedOptions || invalidSelections) && currentSelections.length > 0 && <p className="text-sm text-muted-foreground">Saved selections: {currentSelections.map(value => value.replace(/^skill-/, "").replace(/-/g, " ")).join(", ")}.</p>}
       {invalidSelections && (
         <div className="space-y-2">
           <p role="alert" className="text-sm text-destructive">Saved selections do not match the available choices. Clear them and choose again.</p>
@@ -59,36 +50,9 @@ export function ChoiceSelector({
           </button>
         </div>
       )}
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
-          const isSelected = currentSelections.includes(option);
-          const isDisabled =
-            !isSelected && currentSelections.length >= maxSelections;
-
-          return (
-            <button
-              key={option}
-              type="button"
-              onClick={() => handleToggle(option)}
-              aria-pressed={isSelected}
-              disabled={disabled || isDisabled}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-sm border transition-colors",
-                isSelected
-                  ? "bg-character-bg text-character-fg border-character-border"
-                  : isDisabled
-                    ? "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-50"
-                    : "bg-card text-card-foreground border-border hover:bg-accent hover:text-accent-foreground cursor-pointer",
-              )}
-            >
-              {option
-                .replace(/^skill-/, "")
-                .replace(/-/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase())}
-            </button>
-          );
-        })}
-      </div>
+      <SelectionDropdowns label={choiceLabel} options={options} selected={currentSelections} limit={maxSelections}
+        disabled={disabled || !resolvedOptions || invalidSelections} onChange={onSelect}
+        optionLabel={option => option.replace(/^skill-/, "").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())} />
     </div>
   );
 }

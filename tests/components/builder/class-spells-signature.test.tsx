@@ -14,6 +14,21 @@ const spell: ContentEntry = { id: "00000000-0000-4000-8000-000000000001", versio
   slug: "fireball", name: "Fireball", effects: [], source: "srd", data: { classes: ["wizard"], level: 3 } };
 
 describe("Wizard Signature preparation intent", () => {
+  it("replaces a Signature spell without consuming an extra prepared place at a full allowance", async () => {
+    const ordinary = Array.from({ length: 24 }, (_, index) => ({ ...spell,
+      id: `00000000-0000-4000-8000-${String(index + 10).padStart(12, "0")}`, slug: `ordinary-${index}`, name: `Ordinary ${index}` }));
+    const saveAction = vi.fn().mockResolvedValue({ choices: {}, scores: {}, action_revision: "2" });
+    render(<ClassSpellsPanel source={source} catalog={[spell, ...ordinary]} selected={[
+      { content_id: spell.id, content_version: 1, is_prepared: true, always_prepared: true, prepared_intent: false },
+      ...ordinary.slice(0, 23).map(entry => ({ content_id: entry.id, content_version: 1, is_prepared: true })),
+    ]} abilityScores={{ intelligence: 16 }} saveAction={saveAction} />);
+    fireEvent.change(screen.getByRole("combobox", { name: "Wizard levelled spells 1" }), { target: { value: `${ordinary[23].id}:1` } });
+    expect(screen.getByRole("combobox", { name: "Prepare Ordinary 23" })).toHaveValue("not-prepared");
+    expect(screen.getByText("Prepared spells: 23 / 23. Always-prepared feature spells do not use this allowance.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save spells" }));
+    await waitFor(() => expect(saveAction).toHaveBeenCalledWith("select_class_spells", { class_slug: "wizard",
+      spells: expect.arrayContaining([{ content_id: ordinary[23].id, content_version: 1, prepared: false }]) }));
+  });
   it("keeps always-prepared projection out of the ordinary prepared intent and allowance", async () => {
     const saveAction = vi.fn().mockResolvedValue({ choices: {}, scores: {}, action_revision: "2" });
     render(<ClassSpellsPanel source={source} catalog={[spell]} selected={[{

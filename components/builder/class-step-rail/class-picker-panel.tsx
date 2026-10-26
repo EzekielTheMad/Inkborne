@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ClassPickerCard } from "@/components/builder/class-step-rail/class-picker-card";
+import { useId } from "react";
 import { multiclassPrereqsForAll } from "@/lib/builder/multiclass-prereqs";
 import type { ContentEntry } from "@/components/builder/content-browser";
 
@@ -27,6 +27,8 @@ export function ClassPickerPanel({
   chrome = "default",
 }: ClassPickerPanelProps) {
   const prereqs = multiclassPrereqsForAll(resolvedStats, selectedClasses, classes, mechanicsAvailable);
+  const id = useId();
+  const available = levelsRemaining > 0 ? classes.filter((_, index) => prereqs[index]?.state === "met") : [];
 
   return (
     <section
@@ -56,16 +58,19 @@ export function ClassPickerPanel({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {classes.map((c, i) => (
-          <ClassPickerCard
-            key={c.slug}
-            classContent={c}
-            prereq={prereqs[i]}
-            onSelect={onSelect}
-          />
-        ))}
+      <div className="space-y-1">
+        <label htmlFor={id} className="text-sm font-medium">Choose an additional class</label>
+        <select id={id} value="" disabled={available.length === 0}
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          onChange={event => {
+            const entry = available.find(candidate => candidate.id === event.target.value);
+            if (entry) onSelect(entry);
+          }}>
+          <option value="">Choose a class to preview…</option>
+          {available.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+        </select>
       </div>
+      {available.length === 0 && <p className="text-sm text-muted-foreground">No additional classes are available with your current saved ability scores and remaining levels.</p>}
     </section>
   );
 }

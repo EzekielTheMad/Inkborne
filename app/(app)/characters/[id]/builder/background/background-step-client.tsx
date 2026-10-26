@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { ContentBrowser, type ContentEntry } from "@/components/builder/content-browser";
 import { ContentPreview } from "@/components/builder/content-preview";
 import { ChoiceSelector } from "@/components/builder/choice-selector";
+import { SelectionDropdowns } from "@/components/builder/selection-dropdowns";
 import { StatPreview } from "@/components/builder/stat-preview";
 import type { CharacterChoices } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
@@ -29,7 +30,7 @@ import type { Effect, ChoiceEffect } from "@/lib/types/effects";
 import type { SaveBuilderStep } from "@/lib/builder/builder-step-command";
 import { useBuilderStepSave } from "@/components/builder/builder-save-boundary";
 
-import { fixedLanguages, resolveChoiceOptions } from "@/lib/builder/choice-validation";
+import { resolveBuilderChoice } from "@/lib/builder/choice-options";
 
 type NarrativeField = "personality_traits" | "ideals" | "bonds" | "flaws";
 
@@ -274,6 +275,7 @@ export function BackgroundStepClient({
   ) => {
     const current = customDrafts[field] ?? localChoices[field] ?? [];
     const selectedCount = current.filter(note => note.trim().length > 0).length;
+    const invalidSaved = current.length > max || new Set(current).size !== current.length || current.some(value => !options.includes(value));
 
     return (
       <div className="space-y-2">
@@ -281,39 +283,15 @@ export function BackgroundStepClient({
           {label} ({selectedCount}/{max})
         </p>
         {options.length > 0 ? (
-          <div className="space-y-1">
-            {options.map((option, i) => {
-              const isSelected = current.includes(option);
-              const isDisabled = !isSelected && selectedCount >= max;
-
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    if (isSelected) {
-                      handleNarrativeChange(
-                        field,
-                        current.filter((v) => v !== option),
-                      );
-                    } else if (!isDisabled) {
-                      handleNarrativeChange(field, [...current, option]);
-                    }
-                  }}
-                  disabled={isDisabled}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm border transition-colors ${
-                    isSelected
-                      ? "bg-character-bg text-character-fg border-character-border"
-                      : isDisabled
-                        ? "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-50"
-                        : "bg-card text-card-foreground border-border hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                  }`}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
+          <>
+            <SelectionDropdowns label={label} options={options} selected={current} limit={max}
+              disabled={isSavingBackground} onChange={values => void handleNarrativeChange(field, values)} />
+            {invalidSaved && <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Saved notes: {current.join("; ")}</p>
+              <Button type="button" variant="outline" disabled={isSavingBackground}
+                onClick={() => void handleNarrativeChange(field, [])}>Clear {label.toLowerCase()}</Button>
+            </div>}
+          </>
         ) : (
           <Input
             aria-label={label}
@@ -445,11 +423,9 @@ export function BackgroundStepClient({
                 )}
 
                 {bgChoices.map((choice) => {
-                  const options = resolveChoiceOptions(choice, availableLanguages, fixedLanguages([
-                    ...contentRefs.filter(ref => ref.content_definitions.content_type !== "background").map(ref => ref.content_definitions),
-                    ...(selectedBgContent ? [selectedBgContent] : []),
-                  ]));
-                  const resolvedChoice = options ? { ...choice, from: [...options] } : choice;
+                  const sources = [...contentRefs.filter(ref => ref.content_definitions.content_type !== "background"),
+                    { content_definitions: selectedBgContent }];
+                  const resolvedChoice = resolveBuilderChoice(choice, sources, localChoices, availableLanguages);
 
                   return (
                     <ChoiceSelector

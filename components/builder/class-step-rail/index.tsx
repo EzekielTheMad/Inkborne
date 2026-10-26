@@ -58,6 +58,7 @@ export interface ClassStepRailProps {
   onFightingStyleSelect: (featureSlug: string, classSlug: string, styleSlug: string | undefined) => Promise<void> | void;
   onChoiceSelect: (choiceId: string, selections: string[]) => Promise<void> | void;
   availableLanguages?: readonly string[];
+  ownedFeatureSlugs?: ReadonlySet<string>;
   onFavoredEnemySelect?: (featureSlug: string, value: FavoredEnemyChoice) => Promise<void> | void;
   /** Called when a met card in the picker is clicked. Parent opens the existing ClassPreviewModal. */
   onAddClass: (content: ContentEntry) => void;
@@ -115,6 +116,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     onFightingStyleSelect,
     onChoiceSelect,
     availableLanguages,
+    ownedFeatureSlugs,
     onFavoredEnemySelect,
     onAddClass,
     onConfirmLevelUp,
@@ -220,6 +222,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       characterChoices: localChoices,
       classIndex: idx,
       availableLanguages,
+      ownedFeatureSlugs,
     });
 
     const draftClassIndex = levelUpDraft?.classIndex ?? -1;
@@ -352,6 +355,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
           characterChoices: localChoices,
           classIndex: draft.classIndex,
           availableLanguages,
+          ownedFeatureSlugs,
         });
         const draftRow = perLevel.find((r) => r.level === draft.draftLevel) ?? {
           level: draft.draftLevel,
@@ -430,6 +434,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
           characterChoices: localChoices,
           classIndex: mobileDetail.classIndex,
           availableLanguages,
+          ownedFeatureSlugs,
         });
         const row = perLevel.find((r) => r.level === mobileDetail.level);
         const styleOptions = availableFightingStyles(features, cls.slug);
@@ -584,6 +589,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         characterChoices: localChoices,
         classIndex: draft.classIndex,
         availableLanguages,
+        ownedFeatureSlugs,
       });
       const draftRow = perLevel.find((r) => r.level === draft.draftLevel) ?? {
         level: draft.draftLevel,
@@ -660,6 +666,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
         characterChoices: localChoices,
         classIndex: selected.classIndex,
         availableLanguages,
+        ownedFeatureSlugs,
       });
       const activeRow = activePerLevel.find((r) => r.level === selected.level);
       const styleOptionsForActive = availableFightingStyles(features, activeClass.slug);

@@ -46,15 +46,15 @@ describe("ability-score save recovery", () => {
     const first = deferred(); const second = deferred();
     persist.mockImplementationOnce(first.save).mockImplementationOnce(second.save);
     mount();
-    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "15" } });
+    fireEvent.change(screen.getAllByRole("combobox", { name: /score$/ })[0], { target: { value: "15" } });
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
-    fireEvent.change(screen.getAllByRole("combobox")[1], { target: { value: "14" } });
+    fireEvent.change(screen.getAllByRole("combobox", { name: /score$/ })[1], { target: { value: "14" } });
     expect(persist).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Next: Background" })).toBeDisabled();
     await act(async () => first.reject(new Error("offline")));
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
-    expect(screen.getAllByRole("combobox")[0]).toHaveValue("15");
-    expect(screen.getAllByRole("combobox")[1]).toHaveValue("14");
+    expect(screen.getAllByRole("combobox", { name: /score$/ })[0]).toHaveValue("15");
+    expect(screen.getAllByRole("combobox", { name: /score$/ })[1]).toHaveValue("14");
     expect(persist).toHaveBeenLastCalledWith("char-1", { method: "standard_array", scores: { strength: 15, dexterity: 14 } }, { method: "standard_array", scores: {} });
     await act(async () => second.resolve());
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -77,9 +77,9 @@ describe("ability-score save recovery", () => {
   it("saves method changes immediately and orders them after pending edits", async () => {
     const first = deferred(); persist.mockImplementationOnce(first.save);
     mount();
-    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "15" } });
+    fireEvent.change(screen.getAllByRole("combobox", { name: /score$/ })[0], { target: { value: "15" } });
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
-    fireEvent.click(screen.getByRole("button", { name: "Point Buy" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Method" }), { target: { value: "point_buy" } });
     expect(persist).toHaveBeenCalledTimes(1);
     await act(async () => first.resolve());
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(2));
@@ -88,9 +88,9 @@ describe("ability-score save recovery", () => {
 
   it("persists clearing an array assignment as a partial draft", async () => {
     mount("standard_array", { strength: 15 });
-    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "" } });
+    fireEvent.change(screen.getAllByRole("combobox", { name: /score$/ })[0], { target: { value: "" } });
     await waitFor(() => expect(persist).toHaveBeenCalledWith("char-1", { method: "standard_array", scores: {} }, { method: "standard_array", scores: { strength: 15 } }));
-    expect(screen.getAllByRole("combobox")[0]).toHaveValue("");
+    expect(screen.getAllByRole("combobox", { name: /score$/ })[0]).toHaveValue("");
   });
 
   it("retains the newest rapid edit when its save fails and retries that value", async () => {
@@ -115,8 +115,8 @@ describe("ability-score save recovery", () => {
     const first = deferred(); persist.mockImplementationOnce(first.save);
     mount("point_buy", { strength: 8, dexterity: 8 });
     act(() => {
-      fireEvent.click(screen.getAllByRole("button", { name: "Increase Strength" })[0]);
-      fireEvent.click(screen.getAllByRole("button", { name: "Increase Strength" })[0]);
+      fireEvent.change(screen.getByRole("combobox", { name: "Strength score" }), { target: { value: "9" } });
+      fireEvent.change(screen.getByRole("combobox", { name: "Strength score" }), { target: { value: "10" } });
     });
     await waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
     await act(async () => first.resolve());
@@ -132,7 +132,8 @@ describe("ability-score save recovery", () => {
     mounted.unmount();
     discardAbilityScoreDraft("owner-1", "char-1");
     mount("point_buy", { strength: 8, dexterity: 8 });
-    expect(screen.getAllByRole("button", { name: "Decrease Strength" })[0]).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Strength score" })).toHaveValue("8");
+    expect(screen.queryByRole("option", { name: "7" })).not.toBeInTheDocument();
   });
 
   it("does not present existing scores as assigned array values before a method was chosen", () => {
@@ -140,7 +141,7 @@ describe("ability-score save recovery", () => {
       id: "char-1", level: 1, choices: {}, base_stats: { strength: 10, dexterity: 10 },
     }} contentRefs={[]} schema={schema as never} />);
     expect(screen.getByRole("combobox", { name: "Strength score" })).toHaveValue("");
-    expect(screen.getByRole("button", { name: "Standard Array" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("combobox", { name: "Method" })).toHaveValue("standard_array");
     expect(persist).not.toHaveBeenCalled();
   });
   it("blocks header links and unload until the pending draft is confirmed", async () => {

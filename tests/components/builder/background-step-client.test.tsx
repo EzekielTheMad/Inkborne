@@ -119,6 +119,18 @@ function renderStep({
 }
 
 describe("BackgroundStepClient", () => {
+  it.each([["one", "one"], ["one", "two", "three"]])("shows and explicitly clears invalid saved narrative picks: %j", async (...values) => {
+    const choices: CharacterChoices = { background: "lantern-courier", personality_traits: values };
+    const pin = { ...pinnedRef, content_definitions: { ...pinnedRef.content_definitions,
+      data: { ...pinnedRef.content_definitions.data, personality_traits: ["one", "two", "three"] } } };
+    renderStep({ choices, contentRefs: [pin] });
+    expect(screen.getByText(`Saved notes: ${values.join("; ")}`)).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Personality Traits 1" })).toBeDisabled();
+    expect(updateCharacter).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Clear personality traits" }));
+    await waitFor(() => expect(updateCharacter).toHaveBeenCalledWith("22222222-2222-4222-8222-222222222222",
+      { choices: { background: "lantern-courier", personality_traits: [] } }));
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(updateCharacter).mockResolvedValue(undefined);

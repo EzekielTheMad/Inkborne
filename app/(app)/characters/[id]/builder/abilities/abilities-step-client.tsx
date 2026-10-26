@@ -192,9 +192,7 @@ function AbilitiesEditor({
     if (numValue !== null && !STANDARD_ARRAY.includes(numValue)) return;
     changeDraft((previous) => {
       const newAssignments = { ...previous.scores };
-      for (const key of Object.keys(newAssignments)) {
-        if (newAssignments[key] === numValue && key !== abilitySlug) delete newAssignments[key];
-      }
+      if (numValue !== null && Object.entries(newAssignments).some(([key, score]) => key !== abilitySlug && score === numValue)) return previous;
       if (numValue === null) delete newAssignments[abilitySlug];
       else newAssignments[abilitySlug] = numValue;
       return { ...previous, scores: newAssignments };
@@ -204,7 +202,7 @@ function AbilitiesEditor({
   function handlePointBuyChange(abilitySlug: string, delta: number) {
     changeDraft((previous) => {
       const next = (previous.scores[abilitySlug] ?? 8) + delta;
-      if (next < 8 || next > 15) return previous;
+      if (!Number.isInteger(next) || next < 8 || next > 15) return previous;
       const newScores = { ...previous.scores, [abilitySlug]: next };
       const newPointsUsed = Object.values(newScores).reduce(
         (sum, score) => sum + (POINT_BUY_COSTS[score] ?? 0), 0,
@@ -266,27 +264,17 @@ function AbilitiesEditor({
 
         {/* Method selector */}
         <div className="space-y-2">
-          <Label>Method</Label>
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                { value: "standard_array", label: "Standard Array" },
-                { value: "point_buy", label: "Point Buy" },
-                { value: "manual", label: "Manual Entry" },
-              ] as const
-            ).map(({ value, label }) => (
-              <Button
-                key={value}
-                variant={method === value ? "default" : "outline"}
-                size="sm"
-                disabled={hasConflict || !interactive}
-                aria-pressed={method === value}
-                onClick={() => handleMethodChange(value)}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
+          <Label htmlFor="ability-score-method">Method</Label>
+          <select id="ability-score-method" value={method} disabled={hasConflict || !interactive}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            onChange={event => {
+              const value = event.target.value;
+              if (value === "standard_array" || value === "point_buy" || value === "manual") handleMethodChange(value);
+            }}>
+            <option value="standard_array">Standard Array</option>
+            <option value="point_buy">Point Buy</option>
+            <option value="manual">Manual Entry</option>
+          </select>
         </div>
 
         {method === "point_buy" && (
@@ -331,61 +319,19 @@ function AbilitiesEditor({
                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-center text-lg font-bold"
                     >
                       <option value="">--</option>
-                      {STANDARD_ARRAY.map((val) => {
-                        const assignedTo = Object.entries(
-                          arrayAssignments,
-                        ).find(
-                          ([, v]) => v === val,
-                        )?.[0];
-                        const isAvailable =
-                          !assignedTo || assignedTo === ability.slug;
-                        return (
-                          <option
-                            key={val}
-                            value={val}
-                            disabled={!isAvailable}
-                          >
-                            {val}
-                          </option>
-                        );
-                      })}
+                      {STANDARD_ARRAY.filter(value => !Object.entries(arrayAssignments).some(([key, assigned]) => key !== ability.slug && assigned === value))
+                        .map(value => <option key={value} value={value}>{value}</option>)}
                     </select>
                   )}
 
                   {method === "point_buy" && (
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handlePointBuyChange(ability.slug, -1)
-                        }
-                        disabled={
-                          hasConflict || !interactive || (scores[ability.slug] ?? 8) <= 8
-                        }
-                        aria-label={`Decrease ${ability.name}`}
-                        className="h-8 w-8 p-0"
-                      >
-                        -
-                      </Button>
-                      <span className="text-2xl font-bold w-10 text-center">
-                        {scores[ability.slug] ?? 8}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handlePointBuyChange(ability.slug, 1)
-                        }
-                        disabled={
-                          hasConflict || !interactive || (scores[ability.slug] ?? 8) >= 15
-                        }
-                        aria-label={`Increase ${ability.name}`}
-                        className="h-8 w-8 p-0"
-                      >
-                        +
-                      </Button>
-                    </div>
+                    <select aria-label={`${ability.name} score`} value={scores[ability.slug] ?? 8}
+                      disabled={hasConflict || !interactive}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 text-center text-lg font-bold"
+                      onChange={event => handlePointBuyChange(ability.slug, Number(event.target.value) - (scores[ability.slug] ?? 8))}>
+                      {Object.keys(POINT_BUY_COSTS).map(Number).filter(value => pointsUsed - (POINT_BUY_COSTS[scores[ability.slug] ?? 8] ?? 0)
+                        + POINT_BUY_COSTS[value] <= POINT_BUY_BUDGET).map(value => <option key={value} value={value}>{value}</option>)}
+                    </select>
                   )}
 
                   {method === "manual" && (

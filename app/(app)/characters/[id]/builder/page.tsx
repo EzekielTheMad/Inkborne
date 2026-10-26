@@ -75,7 +75,7 @@ export default async function BuilderOverviewPage({ params }: PageProps) {
   const hasLanguageCategory = contentRefs.some(ref => ref.content_definitions.effects?.some(effect => effect.type === "choice" && isLanguageChoiceCategory(effect)));
   // A failed catalog read leaves category choices incomplete; it never upgrades a pin.
   const languages = hasLanguageCategory
-    ? await getContentByType(character.system_id, "language").then(rows => rows.map(row => row.slug)).catch(() => undefined)
+    ? await getContentByType(character.system_id, "language", true).then(rows => rows.map(row => row.slug)).catch(() => undefined)
     : undefined;
   const schema = character.game_systems?.schema_definition;
   const steps: CreationStep[] = schema?.creation_steps ?? [];

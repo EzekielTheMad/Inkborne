@@ -40,10 +40,10 @@ export default async function BackgroundStepPage({ params }: PageProps) {
   }
 
   const [backgroundContent, contentSnapshot, languages] = await Promise.all([
-    getContentByType(character.system_id, "background"),
+    getContentByType(character.system_id, "background", true),
     getCharacterContentRefSnapshot(id),
     // Used to resolve the "all_languages" choice.
-    getContentByType(character.system_id, "language"),
+    getContentByType(character.system_id, "language", true),
   ]);
 
   return (

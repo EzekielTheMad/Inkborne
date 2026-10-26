@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 const mockOrder = vi.fn();
-const mockEq2 = vi.fn(() => ({ order: mockOrder }));
+const mockActiveEq = vi.fn(() => ({ order: mockOrder }));
+const mockEq2 = vi.fn(() => ({ order: mockOrder, eq: mockActiveEq }));
 const mockEq1 = vi.fn(() => ({ eq: mockEq2 }));
 const mockSelect = vi.fn(() => ({ eq: mockEq1 }));
 const mockFrom = vi.fn(() => ({ select: mockSelect }));
@@ -39,6 +40,7 @@ const validClassRow = {
 describe("getContentByType", () => {
   beforeEach(() => {
     mockOrder.mockReset();
+    mockActiveEq.mockClear();
     mockEq2.mockClear();
     mockEq1.mockClear();
     mockSelect.mockClear();
@@ -69,6 +71,11 @@ describe("getContentByType", () => {
       scope: "platform",
       owner_id: null,
     });
+  });
+  it("excludes retired discovery options only when requested by the builder", async () => {
+    mockOrder.mockResolvedValue({ data: [validClassRow], error: null });
+    await getContentByType(validClassRow.system_id, "class", true);
+    expect(mockActiveEq).toHaveBeenCalledExactlyOnceWith("is_retired", false);
   });
 
   it("drops a malformed row without discarding valid rows", async () => {

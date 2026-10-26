@@ -85,11 +85,11 @@ describe("EquipmentChooser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /warhammer/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: /a mace or/i }), { target: { value: "b" } });
     expect(onSelectOption).toHaveBeenCalledWith("class:0", "b");
   });
 
-  it("marks the selected option with aria-pressed", () => {
+  it("retains the selected equipment alternative in its dropdown", () => {
     render(
       <EquipmentChooser
         groups={chooserGroups()}
@@ -101,14 +101,7 @@ describe("EquipmentChooser", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /a mace/i })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: /warhammer/i })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
+    expect(screen.getByRole("combobox", { name: /a mace or/i })).toHaveValue("a");
   });
 
   it("renders a category picker for the fixed holy-symbol slot", () => {
@@ -179,7 +172,7 @@ describe("EquipmentChooser", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /a mace/i })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: /a mace or/i })).toBeDisabled();
     expect(
       screen.getByRole("combobox", { name: "Holy symbol" }),
     ).toBeDisabled();

@@ -74,7 +74,7 @@ function SpellSection({ label, entries, selections, showPrepared, expandedSpellS
     {!filtered.length && <p className="text-sm text-muted-foreground">No matching spells.</p>}
     <div className="space-y-3">{rows.map(({ selection, entry }, index) => {
       const options = entry ? [entry, ...available] : available;
-      return <div key={entry ? spellKey(entry) : "add"} className="space-y-2">
+      return <div key={index} className="space-y-2">
           <label className="block space-y-1 text-sm">
             <span>{entry ? `${label} ${index + 1}` : `Add ${label.toLowerCase()}`}</span>
             <select className={selectClassName} value={entry ? spellKey(entry) : ""} disabled={disabled}
