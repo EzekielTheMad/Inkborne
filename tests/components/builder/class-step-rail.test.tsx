@@ -998,9 +998,10 @@ describe("ClassPickerPanel", () => {
     intelligence: 13, wisdom: 13, charisma: 13,
   };
 
-  it("renders one card per class in the input list", () => {
+  it("offers one dropdown option per class whose prerequisites are met", () => {
     render(
       <ClassPickerPanel
+        mechanicsAvailable
         classes={TWELVE_CLASSES}
         resolvedStats={stats}
         selectedClasses={[]}
@@ -1011,7 +1012,7 @@ describe("ClassPickerPanel", () => {
     );
     for (const slug of ["barbarian", "wizard", "paladin", "fighter"]) {
       const name = slug.charAt(0).toUpperCase() + slug.slice(1);
-      expect(screen.getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name })).toBeInTheDocument();
     }
   });
 
@@ -1047,7 +1048,7 @@ describe("ClassPickerPanel", () => {
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it("clicking a met card calls onSelect with that class content", () => {
+  it("selecting an eligible class calls onSelect with that class content", () => {
     const onSelect = vi.fn();
     render(
       <ClassPickerPanel
@@ -1060,12 +1061,12 @@ describe("ClassPickerPanel", () => {
         onCancel={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Choose an additional class" }), { target: { value: "c-paladin" } });
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0][0].slug).toBe("paladin");
   });
 
-  it("clicking a not-met card does not call onSelect", () => {
+  it("omits classes with unmet prerequisites and explains the empty picker", () => {
     const onSelect = vi.fn();
     const lowStats = {
       strength: 8, dexterity: 8, constitution: 8,
@@ -1073,6 +1074,7 @@ describe("ClassPickerPanel", () => {
     };
     render(
       <ClassPickerPanel
+        mechanicsAvailable
         classes={TWELVE_CLASSES}
         resolvedStats={lowStats}
         selectedClasses={[]}
@@ -1081,14 +1083,17 @@ describe("ClassPickerPanel", () => {
         onCancel={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    expect(screen.queryByRole("option", { name: "Paladin" })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Choose an additional class" })).toBeDisabled();
+    expect(screen.getByText(/No additional classes are available with your current saved ability scores and remaining levels/)).toBeVisible();
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("marks already-selected classes as already-in-build", () => {
+  it("omits a class already in the build and explains when no additions remain", () => {
     render(
       <ClassPickerPanel
-        classes={TWELVE_CLASSES}
+        mechanicsAvailable
+        classes={[pickerClass("paladin", "Paladin")]}
         resolvedStats={stats}
         selectedClasses={[{ slug: "paladin" }]}
         levelsRemaining={20}
@@ -1096,7 +1101,23 @@ describe("ClassPickerPanel", () => {
         onCancel={vi.fn()}
       />,
     );
-    expect(screen.getByText(/Already in this build/i)).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Paladin" })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Choose an additional class" })).toBeDisabled();
+    expect(screen.getByText(/No additional classes are available with your current saved ability scores and remaining levels/)).toBeVisible();
+  });
+  it.each([
+    { mechanicsAvailable: false, levelsRemaining: 20, reason: "saved mechanics are unknown" },
+    { mechanicsAvailable: true, levelsRemaining: 0, reason: "no levels remain" },
+  ])("offers no classes when $reason", ({ mechanicsAvailable, levelsRemaining }) => {
+    const onSelect = vi.fn();
+    render(<ClassPickerPanel classes={TWELVE_CLASSES} mechanicsAvailable={mechanicsAvailable}
+      resolvedStats={stats} selectedClasses={[]} levelsRemaining={levelsRemaining} onSelect={onSelect} onCancel={vi.fn()} />);
+    const select = screen.getByRole("combobox", { name: "Choose an additional class" });
+    expect(select).toBeDisabled();
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(screen.queryByRole("option", { name: "Paladin" })).not.toBeInTheDocument();
+    expect(screen.getByText(/No additional classes are available with your current saved ability scores and remaining levels/)).toBeVisible();
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });
 
@@ -1171,10 +1192,10 @@ describe("ClassStepRail — multiclass picker", () => {
     expect(screen.queryByRole("heading", { level: 2, name: /Add a class/i })).not.toBeInTheDocument();
   });
 
-  it("calls onAddClass when a met card in the picker is clicked", () => {
+  it("calls onAddClass when an eligible class is selected", () => {
     const { onAddClass } = setupForPicker();
     fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Barbarian/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Choose an additional class" }), { target: { value: "c-barbarian" } });
     expect(onAddClass).toHaveBeenCalledTimes(1);
     expect(onAddClass.mock.calls[0][0].slug).toBe("barbarian");
   });
@@ -1182,7 +1203,7 @@ describe("ClassStepRail — multiclass picker", () => {
   it("does not auto-close the picker when onAddClass is invoked (modal will close it via length increment)", () => {
     setupForPicker();
     fireEvent.click(screen.getByRole("button", { name: /Add a class · 17 levels remaining/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Barbarian/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Choose an additional class" }), { target: { value: "c-barbarian" } });
     expect(screen.getByRole("heading", { level: 2, name: /Add a class/i })).toBeInTheDocument();
   });
 
@@ -2088,9 +2109,10 @@ describe("ClassPickerPanel — chrome prop", () => {
     expect(screen.queryByText(/levels remaining/i)).not.toBeInTheDocument();
   });
 
-  it("chrome='embedded' still renders the cards", () => {
+  it("chrome='embedded' still renders eligible class options", () => {
     render(
       <ClassPickerPanel
+        mechanicsAvailable
         classes={oneClass}
         resolvedStats={stats}
         selectedClasses={[]}
@@ -2100,7 +2122,8 @@ describe("ClassPickerPanel — chrome prop", () => {
         chrome="embedded"
       />,
     );
-    expect(screen.getByRole("button", { name: /Paladin/i })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Choose an additional class" })).toBeEnabled();
+    expect(screen.getByRole("option", { name: "Paladin" })).toBeInTheDocument();
   });
 
   it("chrome='embedded' still renders the Cancel button", () => {
@@ -2238,9 +2261,10 @@ describe("ClassPickerSheet", () => {
     expect(screen.getByText(/17 levels remaining/i)).toBeInTheDocument();
   });
 
-  it("renders the picker cards inside the sheet", () => {
+  it("renders eligible class options inside the sheet", () => {
     render(
       <ClassPickerSheet
+        mechanicsAvailable
         open={true}
         onOpenChange={vi.fn()}
         classes={TWELVE_CLASSES}
@@ -2253,11 +2277,11 @@ describe("ClassPickerSheet", () => {
     );
     for (const slug of ["paladin", "fighter"]) {
       const name = slug.charAt(0).toUpperCase() + slug.slice(1);
-      expect(screen.getByRole("button", { name: new RegExp(name) })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name })).toBeInTheDocument();
     }
   });
 
-  it("calls onSelect when a card is tapped", () => {
+  it("calls onSelect when an eligible class is selected", () => {
     const onSelect = vi.fn();
     render(
       <ClassPickerSheet
@@ -2272,7 +2296,7 @@ describe("ClassPickerSheet", () => {
         onCancel={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Paladin/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Choose an additional class" }), { target: { value: "c-paladin" } });
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0][0].slug).toBe("paladin");
   });
