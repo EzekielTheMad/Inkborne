@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { captureAncestryHpSource as captureSource } from "../../scripts/ancestry-hp-acceptance";
-import { PARENT_ASI_ELIGIBILITY_SQL, validateParentPreparationNative } from "../../scripts/record-parent-admission-fixture";
+import { PARENT_ASI_ELIGIBILITY_SQL, validateParentPreparationNative } from "../../scripts/parent-admission-fixture";
 
 type Account = { id: string; email: string; password: string };
 type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account };
