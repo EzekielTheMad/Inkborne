@@ -165,15 +165,23 @@ SELECT jsonb_build_object(
       OR NOT EXISTS(SELECT 1 FROM refs b WHERE b.kind='background' AND b.slug='acolyte'
         AND a.canonical_intent#>>'{sources,background,id}'=b.content_id::text
         AND a.canonical_intent#>>'{sources,background,version}'=b.content_version::text)),
-  'inventoryFromAcceptedStartingAward',(SELECT count(*)>0 FROM inventory) AND NOT EXISTS(SELECT 1 FROM inventory i
-    WHERE NOT i.exact_version OR i.kind NOT IN ('item','weapon','armor') OR i.system_id<>t.system_id OR i.quantity<=0
-      OR i.source<>'srd' OR i.scope<>'platform' OR i.owner_id IS NOT NULL
-      OR NOT EXISTS(SELECT 1 FROM awards a WHERE a.id=i.starting_grant_id AND a.status='awarded' AND a.completed_at IS NOT NULL
-        AND a.receipt->>'grant_id'=a.id::text AND a.receipt->'inventory_ids' @> jsonb_build_array(i.id)
-        AND jsonb_array_length(a.receipt->'inventory_ids')=(SELECT count(*) FROM inventory)
-        AND (SELECT count(DISTINCT value) FROM jsonb_array_elements_text(a.receipt->'inventory_ids'))=(SELECT count(*) FROM inventory)
-        AND EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND r.actor_id=t.user_id
-          AND r.request->>'command'='award_equipment' AND r.request->'canonical_intent'=a.canonical_intent AND r.receipt=a.receipt))),
+  'inventoryFromAcceptedStartingAward',(SELECT count(*)>0 FROM inventory) AND NOT EXISTS(SELECT 1 FROM inventory i WHERE i.quantity<=0
+    OR (CASE WHEN i.content_id IS NULL THEN i.content_version IS NULL
+      ELSE i.exact_version AND i.kind IN ('item','weapon','armor') AND i.kind=i.content_type
+        AND i.system_id=t.system_id AND i.source='srd' AND i.scope='platform' AND i.owner_id IS NULL END) IS DISTINCT FROM true
+    OR NOT EXISTS(SELECT 1 FROM public.character_starting_grants a WHERE a.character_id=t.id AND a.id=i.starting_grant_id
+      AND a.status='awarded' AND a.grant_kind='starting_equipment' AND a.completed_at IS NOT NULL
+      AND a.receipt->>'grant_id'=a.id::text AND a.receipt->'plan'=a.canonical_intent->'plan'
+      AND jsonb_array_length(a.receipt->'inventory_ids')=(SELECT count(*) FROM inventory)
+      AND jsonb_array_length(a.receipt#>'{plan,items}')=(SELECT count(*) FROM inventory)
+      AND (SELECT count(DISTINCT value) FROM jsonb_array_elements_text(a.receipt->'inventory_ids'))=(SELECT count(*) FROM inventory)
+      -- Award insertion appends each created row ID alongside the same plan
+      -- item. Match that exact position, including named noncatalog items.
+      AND EXISTS(SELECT 1 FROM jsonb_array_elements_text(a.receipt->'inventory_ids') WITH ORDINALITY line(id,position)
+        WHERE line.id=i.id::text AND a.receipt#>ARRAY['plan','items',(line.position-1)::text]=jsonb_build_object(
+          'content_id',i.content_id,'content_version',i.content_version,'name',i.name,'content_type',i.content_type,'quantity',i.quantity))
+      AND EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND r.actor_id=t.user_id
+        AND r.request->>'command'='award_equipment' AND r.request->'canonical_intent'=a.canonical_intent AND r.receipt=a.receipt))),
   'detailsConfirmed',t.choices->'details_confirmed'='true'::jsonb AND t.choices->>'alignment'='Neutral Good' AND t.name LIKE 'Complete martial '||o.case_id||' %',
   'ownedOrdinaryReceipts',(SELECT count(*)>0 FROM private.character_builder_receipts_v1 WHERE character_id=t.id)
     AND NOT EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND

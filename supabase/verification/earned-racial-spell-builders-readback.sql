@@ -172,10 +172,23 @@ SELECT jsonb_build_object(
   'oneOriginalNativeAward',(SELECT count(*)=1 FROM awards) AND t.choices#>'{starting_equipment,confirmed}'='true'::jsonb AND t.state#>'{currency,gp}'='15'::jsonb AND (SELECT count(*)=1 FROM private.character_builder_receipts_v1 WHERE character_id=t.id AND request->>'command'='award_equipment')
     AND NOT EXISTS(SELECT 1 FROM awards award WHERE NOT EXISTS(SELECT 1 FROM classes c WHERE c.slug='bard' AND c.id=(p.original->>'id')::uuid AND award.canonical_intent#>>'{sources,class,id}'=c.content_id::text AND award.canonical_intent#>>'{sources,class,version}'=c.content_version::text)
       OR NOT EXISTS(SELECT 1 FROM refs bg WHERE bg.kind='background' AND bg.slug='acolyte' AND award.canonical_intent#>>'{sources,background,id}'=bg.content_id::text AND award.canonical_intent#>>'{sources,background,version}'=bg.content_version::text)),
-  'inventoryFromAcceptedAward',(SELECT count(*)>0 FROM inventory) AND NOT EXISTS(SELECT 1 FROM inventory i WHERE NOT i.exact_version OR i.equipped OR i.kind NOT IN ('item','weapon','armor') OR i.system_id<>t.system_id OR i.source<>'srd' OR i.scope<>'platform' OR i.owner_id IS NOT NULL OR i.quantity<=0
-    OR NOT EXISTS(SELECT 1 FROM awards award WHERE award.id=i.starting_grant_id AND award.status='awarded' AND award.completed_at IS NOT NULL AND award.receipt->>'grant_id'=award.id::text AND award.receipt->'inventory_ids' @> jsonb_build_array(i.id)
-      AND jsonb_array_length(award.receipt->'inventory_ids')=(SELECT count(*) FROM inventory) AND (SELECT count(DISTINCT value) FROM jsonb_array_elements_text(award.receipt->'inventory_ids'))=(SELECT count(*) FROM inventory)
-      AND EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND r.actor_id=t.user_id AND r.request->>'command'='award_equipment' AND r.request->'canonical_intent'=award.canonical_intent AND r.receipt=award.receipt))),
+  'inventoryFromAcceptedAward',(SELECT count(*)>0 FROM inventory) AND NOT EXISTS(SELECT 1 FROM inventory i WHERE i.equipped OR i.quantity<=0
+    OR (CASE WHEN i.content_id IS NULL THEN i.content_version IS NULL
+      ELSE i.exact_version AND i.kind IN ('item','weapon','armor') AND i.kind=i.content_type
+        AND i.system_id=t.system_id AND i.source='srd' AND i.scope='platform' AND i.owner_id IS NULL END) IS DISTINCT FROM true
+    OR NOT EXISTS(SELECT 1 FROM public.character_starting_grants a WHERE a.character_id=t.id AND a.id=i.starting_grant_id
+      AND a.status='awarded' AND a.grant_kind='starting_equipment' AND a.completed_at IS NOT NULL
+      AND a.receipt->>'grant_id'=a.id::text AND a.receipt->'plan'=a.canonical_intent->'plan'
+      AND jsonb_array_length(a.receipt->'inventory_ids')=(SELECT count(*) FROM inventory)
+      AND jsonb_array_length(a.receipt#>'{plan,items}')=(SELECT count(*) FROM inventory)
+      AND (SELECT count(DISTINCT value) FROM jsonb_array_elements_text(a.receipt->'inventory_ids'))=(SELECT count(*) FROM inventory)
+      -- Award insertion appends each created row ID alongside the same plan
+      -- item. Match that exact position, including named noncatalog items.
+      AND EXISTS(SELECT 1 FROM jsonb_array_elements_text(a.receipt->'inventory_ids') WITH ORDINALITY line(id,position)
+        WHERE line.id=i.id::text AND a.receipt#>ARRAY['plan','items',(line.position-1)::text]=jsonb_build_object(
+          'content_id',i.content_id,'content_version',i.content_version,'name',i.name,'content_type',i.content_type,'quantity',i.quantity))
+      AND EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND r.actor_id=t.user_id
+        AND r.request->>'command'='award_equipment' AND r.request->'canonical_intent'=a.canonical_intent AND r.receipt=a.receipt))),
   'detailsConfirmed',t.choices->'details_confirmed'='true'::jsonb AND t.choices->>'alignment'='Neutral Good' AND t.name LIKE 'Earned A6 %',
   'ownedReceiptsAndHistory',EXISTS(SELECT 1 FROM private.character_builder_progression_history_v1 WHERE character_id=t.id AND command='set_class_level')
     AND NOT EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND (r.actor_id IS DISTINCT FROM t.user_id OR (r.request->>'command'<>'award_equipment' AND
