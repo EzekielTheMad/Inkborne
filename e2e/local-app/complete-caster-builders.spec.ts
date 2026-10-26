@@ -1,3 +1,4 @@
+import { choiceOption, choiceGroup, optionPicked, pickOption, hpOption, setSpell, selectedSpell, setPrepared } from "./dropdown-helpers";
 import { test, expect, type Browser, type BrowserContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -107,12 +108,12 @@ async function save(page: Page, change: () => Promise<unknown>) {
   expect(response.status(), "An actual app save must succeed before the next edit").toBe(200);
 }
 async function choose(page: Page, option: Locator) {
-  await save(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true"); await expect(option).toBeEnabled();
+  await save(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true); await expect(option).toBeEnabled();
 }
 function group(page: Page, label: string, option?: string) {
   const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: label, exact: true, level: 4 }) });
-  return option ? article.filter({ has: page.getByRole("button", { name: option, exact: true }) }) : article;
+  return option ? article.filter({ has: choiceOption(page, option) }) : article;
 }
 async function openLevel(page: Page, level: number) {
   await page.getByRole("button", { name: new RegExp(`^Level ${level}:`) }).click();
@@ -120,12 +121,12 @@ async function openLevel(page: Page, level: number) {
 }
 async function chooseRootClassOptions(page: Page, story: Story) {
   await openLevel(page, 1);
-  for (const name of story.skills) await choose(page, group(page, `Choose ${story.skills.length} proficiency`, story.skills[0]).getByRole("button", { name, exact: true }));
-  if (story.slug === "bard") for (const name of ["Drum", "Flute", "Lute"]) await choose(page, group(page, "Choose 3 proficiency", "Lute").getByRole("button", { name, exact: true }));
-  if (story.subclassLevel === 1) await choose(page, page.getByRole("button", { name: new RegExp(`^${story.subclass}(?:\\s|$)`) }));
-  if (story.slug === "sorcerer") await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: /^Dragon Ancestor Gold\s+Fire Damage$/ }));
+  for (const name of story.skills) await choose(page, choiceOption(group(page, `Choose ${story.skills.length} proficiency`, story.skills[0]), name));
+  if (story.slug === "bard") for (const name of ["Drum", "Flute", "Lute"]) await choose(page, choiceOption(group(page, "Choose 3 proficiency", "Lute"), name));
+  if (story.subclassLevel === 1) await choose(page, choiceOption(page, new RegExp(`^${story.subclass}(?:\\s|$)`)));
+  if (story.slug === "sorcerer") await choose(page, choiceOption(group(page, "Choose 1 feature"), /^Dragon Ancestor Gold(?:\s|$)/));
   if (story.slug === "ranger") {
-    await choose(page, group(page, "Choose 1 favored terrain").getByRole("button", { name: "Forest", exact: true }));
+    await choose(page, choiceOption(group(page, "Choose 1 favored terrain"), "Forest"));
     const enemy = page.getByRole("article").filter({ has: page.getByRole("button", { name: "Save favored enemy", exact: true }) });
     await enemy.getByRole("combobox", { name: "Favored enemy", exact: true }).selectOption("beasts");
     await save(page, () => enemy.getByRole("button", { name: "Save favored enemy", exact: true }).click());
@@ -134,12 +135,12 @@ async function chooseRootClassOptions(page: Page, story: Story) {
 }
 async function chooseHumanAbilitiesAndBackground(page: Page, base: string, story: Story) {
   await page.goto(base + "/race");
-  await page.getByRole("button", { name: "Preview Human", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Human" });
   await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
-  const languages = page.getByText("Choose 1 language", { exact: true }).locator("..").locator("..");
-  await choose(page, languages.getByRole("button", { name: "Dwarvish", exact: true }));
-  await page.reload(); await expect(languages.getByRole("button", { name: "Dwarvish", exact: true })).toHaveAttribute("aria-pressed", "true");
+  const languages = choiceGroup(page, "Choose 1 language");
+  await choose(page, choiceOption(languages, "Dwarvish"));
+  await page.reload(); await expect(choiceOption(languages, "Dwarvish").first()).toHaveJSProperty("selected", true);
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
   for (const [ability, score] of Object.entries(story.scores)) {
     await save(page, () => page.getByRole("combobox", { name: `${ability} score`, exact: true }).selectOption(score));
@@ -148,14 +149,14 @@ async function chooseHumanAbilitiesAndBackground(page: Page, base: string, story
   await page.reload();
   for (const [ability, score] of Object.entries(story.scores)) await expect(page.getByRole("combobox", { name: `${ability} score`, exact: true })).toHaveValue(score);
   await page.getByRole("button", { name: "Next: Background", exact: true }).click();
-  await page.getByRole("button", { name: "Preview Acolyte", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
   await save(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Background", exact: true })).toBeVisible();
-  const choices = page.getByText("Choose 2 language", { exact: true }).locator("..").locator("..");
-  for (const name of ["Celestial", "Elvish"]) await choose(page, choices.getByRole("button", { name, exact: true }));
-  await save(page, () => page.getByRole("button", { name: "Nothing can shake my optimistic attitude.", exact: true }).click());
+  const choices = choiceGroup(page, "Choose 2 language");
+  for (const name of ["Celestial", "Elvish"]) await choose(page, choiceOption(choices, name));
+  await save(page, () => pickOption(choiceOption(page, "Nothing can shake my optimistic attitude.")));
   await page.reload();
-  for (const name of ["Celestial", "Elvish"]) await expect(choices.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Celestial", "Elvish"]) await expect(choiceOption(choices, name)).toHaveJSProperty("selected", true);
 }
 async function chooseLevelThreeOptions(page: Page, base: string, story: Story) {
   await page.goto(base + "/class");
@@ -163,32 +164,32 @@ async function chooseLevelThreeOptions(page: Page, base: string, story: Story) {
   await save(page, () => level.selectOption("3")); await expect(level).toHaveValue("3"); await expect(level).toBeEnabled();
   if (story.subclassLevel > 1) {
     await openLevel(page, story.subclassLevel);
-    await choose(page, page.getByRole("button", { name: new RegExp(`^${story.subclass}(?:\\s|$)`) }));
+    await choose(page, choiceOption(page, new RegExp(`^${story.subclass}(?:\\s|$)`)));
   }
   if (story.slug === "bard") {
     await openLevel(page, 3);
-    for (const name of ["Perception", "Stealth"]) await choose(page, group(page, "Choose 2 expertise").getByRole("button", { name, exact: true }));
-    for (const name of ["Athletics", "Medicine", "Nature"]) await choose(page, group(page, "Choose 3 proficiency", "Athletics").getByRole("button", { name, exact: true }));
+    for (const name of ["Perception", "Stealth"]) await choose(page, choiceOption(group(page, "Choose 2 expertise"), name));
+    for (const name of ["Athletics", "Medicine", "Nature"]) await choose(page, choiceOption(group(page, "Choose 3 proficiency", "Athletics"), name));
   } else if (story.slug === "druid") {
-    await openLevel(page, 2); await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Circle Of The Land Forest", exact: true }));
+    await openLevel(page, 2); await choose(page, choiceOption(group(page, "Choose 1 feature"), "Circle Of The Land Forest"));
     const bonus = page.getByRole("form", { name: /: bonus-cantrip$/ });
-    await bonus.getByRole("textbox").last().fill("Guidance"); await bonus.getByRole("checkbox", { name: "Select Guidance", exact: true }).check();
+    await bonus.getByRole("textbox").last().fill("Guidance"); await setSpell(bonus, "Guidance", true);
     await save(page, () => bonus.getByRole("button", { name: /^Save / }).click()); await expect(bonus.getByRole("button", { name: /^Save / })).toBeEnabled();
   } else if (story.slug === "sorcerer") {
     await openLevel(page, 3);
-    for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await choose(page, group(page, "Choose 2 feature").getByRole("button", { name, exact: true }));
+    for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await choose(page, choiceOption(group(page, "Choose 2 feature"), name));
   } else if (story.slug === "warlock") {
-    await openLevel(page, 3); await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Pact Of The Blade", exact: true }));
+    await openLevel(page, 3); await choose(page, choiceOption(group(page, "Choose 1 feature"), "Pact Of The Blade"));
   } else if (story.slug === "paladin" || story.slug === "ranger") {
-    await openLevel(page, 2); await choose(page, page.getByRole("button", { name: story.slug === "paladin" ? /^Defense(?:\s|$)/ : /^Archery(?:\s|$)/ }));
+    await openLevel(page, 2); await choose(page, choiceOption(page, story.slug === "paladin" ? /^Defense(?:\s|$)/ : /^Archery(?:\s|$)/));
     if (story.slug === "ranger") {
-      await openLevel(page, 3); await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Hunters Prey Colossus Slayer", exact: true }));
+      await openLevel(page, 3); await choose(page, choiceOption(group(page, "Choose 1 feature"), "Hunters Prey Colossus Slayer"));
     }
   }
   for (const value of [2, 3]) {
     await openLevel(page, value);
-    const average = page.getByRole("radio", { name: /^Average \(\+/ });
-    await save(page, () => average.click()); await expect(average).toHaveAttribute("aria-checked", "true"); await expect(average).toBeEnabled();
+    const average = hpOption(page, "average");
+    await save(page, () => pickOption(average)); await expect(average).toHaveJSProperty("selected", true); await expect(average).toBeEnabled();
   }
 }
 async function chooseSpells(page: Page, story: Story) {
@@ -196,12 +197,12 @@ async function chooseSpells(page: Page, story: Story) {
   await expect(form.getByText(`Cantrips: 0 / ${story.cantrips.length}`, { exact: true })).toBeVisible();
   async function find(name: string, cantrip: boolean) {
     await form.getByRole("textbox", { name: `Search ${story.name.toLowerCase()} ${cantrip ? "cantrips" : "levelled spells"}`, exact: true }).fill(name);
-    return form.getByRole("checkbox", { name: `Select ${name}`, exact: true });
+    return selectedSpell(form, name);
   }
-  for (const name of story.cantrips) await (await find(name, true)).check();
+  for (const name of story.cantrips) await setSpell(form, name, true);
   for (const name of story.spells) {
-    await (await find(name, false)).check();
-    if (story.prepared && !story.prepared.includes(name)) await form.getByRole("checkbox", { name: `Prepare ${name}`, exact: true }).uncheck();
+    await setSpell(form, name, true);
+    if (story.prepared && !story.prepared.includes(name)) await setPrepared(form, name, false);
   }
   if (story.known !== undefined) await expect(form.getByText(`Spells known: ${story.known} / ${story.known}`, { exact: true })).toBeVisible();
   if (story.book) await expect(form.getByText(`Spellbook: ${story.book} / ${story.book} spells`, { exact: true })).toBeVisible();
@@ -210,35 +211,35 @@ async function chooseSpells(page: Page, story: Story) {
   await save(page, () => form.getByRole("button", { name: "Save spells", exact: true }).click());
   await expect(form.getByText("Spell choices saved.", { exact: true })).toBeVisible();
   await page.reload();
-  for (const name of story.cantrips) await expect(await find(name, true)).toBeChecked();
+  for (const name of story.cantrips) await expect(await find(name, true)).toHaveCount(1);
   for (const name of story.spells) {
-    await expect(await find(name, false)).toBeChecked();
+    await expect(await find(name, false)).toHaveCount(1);
     if (story.prepared) {
-      const prepared = form.getByRole("checkbox", { name: `Prepare ${name}`, exact: true });
-      if (story.prepared.includes(name)) await expect(prepared).toBeChecked(); else await expect(prepared).not.toBeChecked();
+      const prepared = form.getByRole("combobox", { name: `Prepare ${name}`, exact: true });
+      if (story.prepared.includes(name)) await expect(prepared).toHaveValue("prepared"); else await expect(prepared).toHaveValue("not-prepared");
     }
   }
   if (story.slug === "warlock") {
     await openLevel(page, 2);
-    for (const name of ["Eldritch Invocation Agonizing Blast", "Eldritch Invocation Repelling Blast"]) await choose(page, group(page, "Choose 2 invocation").getByRole("button", { name, exact: true }));
+    for (const name of ["Eldritch Invocation Agonizing Blast", "Eldritch Invocation Repelling Blast"]) await choose(page, choiceOption(group(page, "Choose 2 invocation"), name));
     await page.reload();
   }
   await expect(page.getByRole("navigation", { name: "Character builder", exact: true }).locator('a[href$="/builder/class"]')).toContainText("Saved");
 }
 async function chooseEquipmentAndDetails(page: Page, base: string, name: string) {
   await page.goto(base + "/equipment");
-  const groups = page.getByRole("group").filter({ has: page.getByRole("button", { name: /^\(a\)/ }) });
+  const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
-    const option = groups.nth(index).getByRole("button").first();
-    if (await option.getAttribute("aria-pressed") !== "true") await choose(page, option);
+    const option = groups.nth(index).locator('select option[value="a"]');
+    if (!await optionPicked(option)) await choose(page, option);
   }
-  const slots = page.getByRole("combobox");
+  const slots = page.locator('button[data-slot="select-trigger"]');
   for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
     const longsword = page.getByRole("option", { name: "Longsword", exact: true });
     const option = await longsword.count() ? longsword : page.getByRole("option").first();
-    await save(page, () => option.click());
+    await save(page, () => pickOption(option));
     await expect(slot).toBeEnabled();
   }
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled();

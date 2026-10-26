@@ -1,3 +1,4 @@
+import { choiceOption, pickOption, clearOption, setSpell, selectedSpell } from "./dropdown-helpers";
 import { test, expect, type BrowserContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -31,14 +32,14 @@ async function saveThroughApp(page: Page, change: () => Promise<unknown>) {
 }
 
 async function choose(page: Page, option: Locator) {
-  await saveThroughApp(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true");
+  await saveThroughApp(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true);
   await expect(option).toBeEnabled();
 }
 
 function group(page: Page, label: string, option?: string): Locator {
   const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: label, exact: true, level: 4 }) });
-  return option ? article.filter({ has: page.getByRole("button", { name: option, exact: true }) }) : article;
+  return option ? article.filter({ has: choiceOption(page, option) }) : article;
 }
 
 async function setLevel(page: Page, className: string, level: number) {
@@ -153,7 +154,7 @@ function bonusForm(page: Page, id: string) {
 }
 async function pickSpell(form: Locator, name: string, checked = true) {
   await form.getByRole("textbox").last().fill(name);
-  await form.getByRole("checkbox", { name: `Select ${name}`, exact: true }).setChecked(checked);
+  await setSpell(form, name, checked);
 }
 async function saveSpells(page: Page, form: Locator) {
   const save = form.getByRole("button", { name: /^Save / });
@@ -171,7 +172,7 @@ async function reloadedBonus(page: Page, id: string, names: string[]) {
   const form = bonusForm(page, id);
   for (const name of names) {
     await form.getByRole("textbox").last().fill(name);
-    await expect(form.getByRole("checkbox", { name: `Select ${name}`, exact: true })).toBeChecked();
+    await expect(selectedSpell(form, name)).toHaveCount(1);
   }
 }
 async function sheetSpells(page: Page, family: Family, present: string[], absent: string[] = []) {
@@ -183,13 +184,13 @@ async function sheetSpells(page: Page, family: Family, present: string[], absent
 
 test("bonus Bard Secrets budgets and Lore skills save reload and prune", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Bard", "bonus-bard-lore");
-  for (const name of ["Arcana", "Perception", "Stealth"]) await choose(page, group(page, "Choose 3 proficiency", "Stealth").getByRole("button", { name, exact: true }));
+  for (const name of ["Arcana", "Perception", "Stealth"]) await choose(page, choiceOption(group(page, "Choose 3 proficiency", "Stealth"), name));
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "10", Charisma: "15" });
   await setLevel(page, "Bard", 3); await openLevel(page, 3);
-  await choose(page, page.getByRole("button", { name: /^Lore(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Lore(?:\s|$)/));
   const lore = group(page, "Choose 3 proficiency", "Athletics");
-  await expect(lore.getByRole("button", { name: "Arcana", exact: true })).toHaveCount(0);
-  for (const name of ["Athletics", "Medicine", "Nature"]) await choose(page, lore.getByRole("button", { name, exact: true }));
+  await expect(choiceOption(lore, "Arcana")).toHaveCount(0);
+  for (const name of ["Athletics", "Medicine", "Nature"]) await choose(page, choiceOption(lore, name));
   await setLevel(page, "Bard", 18);
   const choices = { "additional-magical-secrets": ["Fireball", "Counterspell"], "magical-secrets-1": ["Guidance", "Bless"],
     "magical-secrets-2": ["Heal", "Disintegrate"], "magical-secrets-3": ["Wish", "Meteor Swarm"] };
@@ -197,13 +198,13 @@ test("bonus Bard Secrets budgets and Lore skills save reload and prune", async (
   const ordinary = page.getByRole("form", { name: "Bard spell choices", exact: true });
   const names = ["Animal Friendship", "Animal Messenger", "Bane", "Bestow Curse", "Blindness/Deafness", "Calm Emotions", "Charm Person", "Clairvoyance", "Comprehend Languages", "Cure Wounds", "Detect Magic", "Detect Thoughts", "Disguise Self", "Dispel Magic", "Enhance Ability", "Enthrall"];
   for (const name of names) await pickSpell(ordinary, name);
-  await pickSpell(ordinary, "Feather Fall");
-  await expect(ordinary.getByRole("button", { name: "Save spells", exact: true })).toBeDisabled();
-  await pickSpell(ordinary, "Feather Fall", false); await saveSpells(page, ordinary);
+  await expect(ordinary.getByRole("combobox", { name: "Add bard levelled spells", exact: true })).toHaveCount(0);
+  await expect(ordinary.getByRole("button", { name: "Save spells", exact: true })).toBeEnabled();
+  await saveSpells(page, ordinary);
   await page.reload();
   for (const [id, picks] of Object.entries(choices)) await reloadedBonus(page, id, picks);
   await openLevel(page, 3);
-  for (const name of ["Athletics", "Medicine", "Nature"]) await expect(lore.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Athletics", "Medicine", "Nature"]) await expect(choiceOption(lore, name)).toHaveJSProperty("selected", true);
   await checkpoint(info, family, "all four Secrets groups and three Lore skills reloaded; ordinary allowance rejects seventeenth spell");
   await sheetSpells(page, family, Object.values(choices).flat());
   for (const name of ["Athletics", "Medicine", "Nature"]) await expect(page.getByRole("button", { name: `Roll ${name} check`, exact: true }).getByLabel("Proficient", { exact: true })).toBeVisible();
@@ -217,8 +218,8 @@ test("bonus Druid Land cantrip and conditional circle spells save reload and cha
   const family = await begin(page, context, info, "Druid", "bonus-druid-land");
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "15", Charisma: "10" });
   await setLevel(page, "Druid", 2); await openLevel(page, 2);
-  await choose(page, page.getByRole("button", { name: /^Land(?:\s|$)/ }));
-  await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Circle Of The Land Forest", exact: true }));
+  await choose(page, choiceOption(page, /^Land(?:\s|$)/));
+  await choose(page, choiceOption(group(page, "Choose 1 feature"), "Circle Of The Land Forest"));
   await bonus(page, "bonus-cantrip", ["Guidance"]);
   await setLevel(page, "Druid", 9); await page.reload();
   await reloadedBonus(page, "bonus-cantrip", ["Guidance"]);
@@ -226,8 +227,8 @@ test("bonus Druid Land cantrip and conditional circle spells save reload and cha
   await checkpoint(info, family, "bonus cantrip and all four earned Forest spell tiers reloaded");
   await page.goto(family.builderUrl); await openLevel(page, 2);
   const terrain = group(page, "Choose 1 feature");
-  await saveThroughApp(page, () => terrain.getByRole("button", { name: "Circle Of The Land Forest", exact: true }).click());
-  await choose(page, terrain.getByRole("button", { name: "Circle Of The Land Coast", exact: true }));
+  await saveThroughApp(page, () => clearOption(choiceOption(terrain, "Circle Of The Land Forest")));
+  await choose(page, choiceOption(terrain, "Circle Of The Land Coast"));
   await page.reload(); await reloadedBonus(page, "bonus-cantrip", ["Guidance"]);
   await sheetSpells(page, family, ["Guidance", "Mirror Image", "Misty Step", "Water Breathing", "Water Walk", "Control Water", "Freedom of Movement", "Conjure Elemental", "Scrying"], ["Spider Climb", "Tree Stride"]);
   await page.goto(family.builderUrl); await setLevel(page, "Druid", 1); await page.reload();
@@ -238,14 +239,14 @@ test("bonus Druid Land cantrip and conditional circle spells save reload and cha
 
 test("bonus Warlock Tome rituals and four Arcanum choices save reload and prune", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Warlock", "bonus-warlock");
-  await choose(page, page.getByRole("button", { name: /^Fiend(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Fiend(?:\s|$)/));
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "10", Charisma: "15" });
   await setLevel(page, "Warlock", 17); await openLevel(page, 3);
   const pact = group(page, "Choose 1 feature");
-  await choose(page, pact.getByRole("button", { name: "Pact Of The Tome", exact: true }));
+  await choose(page, choiceOption(pact, "Pact Of The Tome"));
   await bonus(page, "pact-of-the-tome", ["Guidance", "Sacred Flame", "Shillelagh"]);
   await openLevel(page, 2);
-  await choose(page, group(page, "Choose 7 invocation").getByRole("button", { name: "Eldritch Invocation Book Of Ancient Secrets", exact: true }));
+  await choose(page, choiceOption(group(page, "Choose 7 invocation"), "Eldritch Invocation Book Of Ancient Secrets"));
   await bonus(page, "eldritch-invocation-book-of-ancient-secrets", ["Identify", "Find Familiar"]);
   const arcana = { "mystic-arcanum-6th-level": ["Mass Suggestion"], "mystic-arcanum-7th-level": ["Plane Shift"],
     "mystic-arcanum-8th-level": ["Demiplane"], "mystic-arcanum-9th-level": ["Foresight"] };
@@ -257,8 +258,8 @@ test("bonus Warlock Tome rituals and four Arcanum choices save reload and prune"
   await sheetSpells(page, family, ["Guidance", "Sacred Flame", "Shillelagh", "Identify", "Find Familiar", ...Object.values(arcana).flat()]);
   await checkpoint(info, family, "Tome three cantrips, two rituals and all four Arcanum choices reloaded");
   await page.goto(family.builderUrl); await openLevel(page, 3);
-  await saveThroughApp(page, () => pact.getByRole("button", { name: "Pact Of The Tome", exact: true }).click());
-  await choose(page, pact.getByRole("button", { name: "Pact Of The Chain", exact: true }));
+  await saveThroughApp(page, () => clearOption(choiceOption(pact, "Pact Of The Tome")));
+  await choose(page, choiceOption(pact, "Pact Of The Chain"));
   await page.reload();
   await expect(bonusForm(page, "pact-of-the-tome")).toHaveCount(0);
   await expect(bonusForm(page, "eldritch-invocation-book-of-ancient-secrets")).toHaveCount(0);
@@ -288,7 +289,7 @@ test("bonus Wizard Mastery and Signature choices use saved book and reload", asy
   await page.reload(); await reloadedBonus(page, "spell-mastery-1", ["Magic Missile"]);
   const mastery2 = bonusForm(page, "spell-mastery-2");
   await mastery2.getByRole("textbox").fill("Misty Step");
-  await expect(mastery2.getByRole("checkbox", { name: "Select Misty Step", exact: true })).toHaveCount(0);
+  await expect(choiceOption(mastery2, /^Misty Step —/)).toHaveCount(0);
   await setLevel(page, "Wizard", 17); await page.reload();
   for (const id of ["spell-mastery-1", "spell-mastery-2", "signature-spell"]) await expect(bonusForm(page, id)).toHaveCount(0);
   await sheetSpells(page, family, ["Magic Missile", "Counterspell"], ["Fireball", "Misty Step"]);

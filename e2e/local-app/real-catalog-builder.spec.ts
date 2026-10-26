@@ -1,3 +1,4 @@
+import { choiceOption, choiceGroup, optionPicked, pickOption, clearOption, hpOption, asiOption, setSpell, selectedSpell } from "./dropdown-helpers";
 import { test, expect, type Browser, type BrowserContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -53,14 +54,9 @@ async function saveThroughApp(page: Page, change: () => Promise<unknown>) {
 }
 
 async function choose(page: Page, option: Locator) {
-  await saveThroughApp(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true");
+  await saveThroughApp(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true);
   await expect(option).toBeEnabled();
-}
-
-function choiceGroup(page: Page, label: string) {
-  // The displayed choice label and its ordinary buttons share this small UI container.
-  return page.getByText(label, { exact: true }).locator("..").locator("..");
 }
 
 async function chooseClass(page: Page, story: Story, info: TestInfo) {
@@ -71,44 +67,44 @@ async function chooseClass(page: Page, story: Story, info: TestInfo) {
   await expect(page.getByText(story.className + " · Level 1", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Complete class choices", exact: true }).click();
   await page.getByRole("button", { name: /^Level 1:/ }).click();
-  for (const skill of story.classSkills) await choose(page, page.getByRole("button", { name: skill, exact: true }));
+  for (const skill of story.classSkills) await choose(page, choiceOption(page, skill));
   if (story.className === "Fighter") {
-    await choose(page, page.getByRole("button", { name: /^Defense(?:\s|$)/ }));
+    await choose(page, choiceOption(page, /^Defense(?:\s|$)/));
   } else {
-    await choose(page, page.getByRole("button", { name: /^Life(?:\s|$)/ }));
+    await choose(page, choiceOption(page, /^Life(?:\s|$)/));
   }
   await page.reload();
-  for (const skill of story.classSkills) await expect(page.getByRole("button", { name: skill, exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("button", { name: story.className === "Fighter" ? /^Defense(?:\s|$)/ : /^Life(?:\s|$)/ })).toHaveAttribute("aria-pressed", "true");
+  for (const skill of story.classSkills) await expect(choiceOption(page, skill).first()).toHaveJSProperty("selected", true);
+  await expect(choiceOption(page, story.className === "Fighter" ? /^Defense(?:\s|$)/ : /^Life(?:\s|$)/).first()).toHaveJSProperty("selected", true);
   await page.screenshot({ path: info.outputPath("class-choices-after-reload.png"), fullPage: true });
   await page.getByRole("button", { name: "Next: Race", exact: true }).click();
 }
 
 async function chooseRace(page: Page, story: Story) {
-  await page.getByRole("button", { name: "Preview " + story.race, exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "\" + story.rac" });
   await saveThroughApp(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
   if (story.race === "Half-Elf") {
     const bonuses = choiceGroup(page, "Choose 2 ability bonus");
-    for (const ability of ["Strength", "Constitution"]) await choose(page, bonuses.getByRole("button", { name: ability, exact: true }));
+    for (const ability of ["Strength", "Constitution"]) await choose(page, choiceOption(bonuses, ability));
     const skills = choiceGroup(page, "Skill Versatility: Choose 2");
-    for (const skill of ["Arcana", "Stealth"]) await choose(page, skills.getByRole("button", { name: skill, exact: true }));
-    await choose(page, choiceGroup(page, "Choose 1 language").getByRole("button", { name: "Dwarvish", exact: true }));
+    for (const skill of ["Arcana", "Stealth"]) await choose(page, choiceOption(skills, skill));
+    await choose(page, choiceOption(choiceGroup(page, "Choose 1 language"), "Dwarvish"));
   } else {
-    await saveThroughApp(page, () => page.getByRole("button", { name: "Select High Elf", exact: true }).click());
+    await saveThroughApp(page, () => page.getByRole("combobox", { name: "Subrace", exact: true }).selectOption({ label: "High Elf" }));
     await expect(page.getByRole("button", { name: "Change Subrace", exact: true })).toBeVisible();
-    await choose(page, choiceGroup(page, "High Elf Cantrip: Choose 1").getByRole("button", { name: "Light", exact: true }));
-    await choose(page, choiceGroup(page, "Extra Language: Choose 1").getByRole("button", { name: "Dwarvish", exact: true }));
+    await choose(page, choiceOption(choiceGroup(page, "High Elf Cantrip: Choose 1"), "Light"));
+    await choose(page, choiceOption(choiceGroup(page, "Extra Language: Choose 1"), "Dwarvish"));
   }
   await page.reload();
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Dwarvish", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(page, "Dwarvish").first()).toHaveJSProperty("selected", true);
   if (story.race === "Half-Elf") {
     for (const option of ["Strength", "Constitution", "Arcana", "Stealth"]) {
-      await expect(page.getByRole("button", { name: option, exact: true })).toHaveAttribute("aria-pressed", "true");
+      await expect(choiceOption(page, option).first()).toHaveJSProperty("selected", true);
     }
   } else {
-    await expect(page.getByRole("button", { name: "Light", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(choiceOption(page, "Light").first()).toHaveJSProperty("selected", true);
   }
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
 }
@@ -137,7 +133,7 @@ async function chooseClericSpells(page: Page, info: TestInfo) {
   await expect(page.getByRole("navigation", { name: "Character builder", exact: true }).locator('a[href$="/builder/class"]')).toContainText("In progress");
   await expect(panel.getByText("Cantrips: 0 / 3", { exact: true })).toBeVisible();
   for (const name of [...clericCantrips, ...clericPrepared]) {
-    await panel.getByRole("checkbox", { name: "Select " + name, exact: true }).check();
+    await setSpell(panel, name, true);
   }
   await expect(panel.getByText("Cantrips: 3 / 3", { exact: true })).toBeVisible();
   await expect(panel.getByText(/^Prepared spells: 3 \/ 3\./)).toBeVisible();
@@ -147,9 +143,9 @@ async function chooseClericSpells(page: Page, info: TestInfo) {
   await page.reload();
   await expect(page.getByRole("navigation", { name: "Character builder", exact: true }).locator('a[href$="/builder/class"]')).toContainText("Saved");
   for (const name of [...clericCantrips, ...clericPrepared]) {
-    await expect(panel.getByRole("checkbox", { name: "Select " + name, exact: true })).toBeChecked();
+    await expect(selectedSpell(panel, name)).toHaveCount(1);
   }
-  for (const name of clericPrepared) await expect(panel.getByRole("checkbox", { name: "Prepare " + name, exact: true })).toBeChecked();
+  for (const name of clericPrepared) await expect(panel.getByRole("combobox", { name: "Prepare " + name, exact: true })).toHaveValue("prepared");
   await page.screenshot({ path: info.outputPath("class-spells-after-reload.png"), fullPage: true });
   await page.getByRole("button", { name: "Next: Race", exact: true }).click();
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
@@ -158,32 +154,32 @@ async function chooseClericSpells(page: Page, info: TestInfo) {
 
 const personality = "Nothing can shake my optimistic attitude.";
 async function chooseBackground(page: Page) {
-  await page.getByRole("button", { name: "Preview Acolyte", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
   await saveThroughApp(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Background", exact: true })).toBeVisible();
   for (const language of ["Celestial", "Draconic"]) {
-    await choose(page, choiceGroup(page, "Choose 2 language").getByRole("button", { name: language, exact: true }));
+    await choose(page, choiceOption(choiceGroup(page, "Choose 2 language"), language));
   }
-  await saveThroughApp(page, () => page.getByRole("button", { name: personality, exact: true }).click());
+  await saveThroughApp(page, () => pickOption(choiceOption(page, personality)));
   await expect(page.getByText("Personality Traits (1/2)", { exact: true })).toBeVisible();
   await page.reload();
-  for (const language of ["Celestial", "Draconic"]) await expect(page.getByRole("button", { name: language, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const language of ["Celestial", "Draconic"]) await expect(choiceOption(page, language).first()).toHaveJSProperty("selected", true);
   await expect(page.getByText("Personality Traits (1/2)", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Next: Equipment", exact: true }).click();
 }
 
 async function chooseEquipment(page: Page) {
   const selectedOptions: string[] = [], categoryPicks: string[] = [];
-  const groups = page.getByRole("group").filter({ has: page.getByRole("button", { name: /^\(a\)/ }) });
+  const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
-    const option = groups.nth(index).getByRole("button").first();
+    const option = groups.nth(index).locator('select option[value="a"]');
     selectedOptions.push((await option.innerText()).trim());
-    if (await option.getAttribute("aria-pressed") !== "true") await choose(page, option);
+    if (!await optionPicked(option)) await choose(page, option);
   }
   // Category placeholders use the actual catalog-backed menu. Prefer Longsword
   // for the Fighter's martial slot, and ordinary first entries for other slots.
-  const slots = page.getByRole("combobox");
+  const slots = page.locator('button[data-slot="select-trigger"]');
   for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index);
     await slot.click();
@@ -191,7 +187,7 @@ async function chooseEquipment(page: Page) {
     const longsword = page.getByRole("option", { name: "Longsword", exact: true });
     const option = await longsword.count() ? longsword : page.getByRole("option").first();
     categoryPicks.push((await option.innerText()).trim());
-    await saveThroughApp(page, () => option.click());
+    await saveThroughApp(page, () => pickOption(option));
     await expect(slot).toBeEnabled();
   }
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled();
@@ -350,11 +346,11 @@ test("real SRD multiclass Fighter and Cleric acquire, advance independently and 
   const stale = await context.newPage();
   await stale.goto(builderUrl);
   await stale.getByRole("button", { name: /^Add a class/ }).click();
-  await stale.getByRole("button", { name: /^Rogue\s/ }).click();
+  await stale.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: "Rogue" });
   await expect(stale.getByRole("dialog", { name: "Rogue class details", exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^Add a class/ }).click();
-  await expect(page.getByRole("button", { name: /^Bard\s/ })).toHaveAttribute("aria-disabled", "true");
-  await page.getByRole("button", { name: /^Cleric\s/ }).click();
+  await expect(page.getByRole("combobox", { name: "Choose an additional class", exact: true }).locator("option").filter({ hasText: /^Bard$/ })).toHaveCount(0);
+  await page.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: "Cleric" });
   await saveThroughApp(page, () => page.getByRole("button", { name: "Pick this class", exact: true }).click());
   await expect(page.getByRole("combobox", { name: "Set level for Cleric", exact: true })).toHaveValue("1");
   await Promise.all([stale.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === new URL(builderUrl).pathname),
@@ -366,31 +362,31 @@ test("real SRD multiclass Fighter and Cleric acquire, advance independently and 
   await stale.close();
   const clericRail = page.getByRole("combobox", { name: "Set level for Cleric", exact: true }).locator("..").locator("..").locator("..");
   await clericRail.getByRole("button", { name: /^Level 1:/ }).click();
-  const secondaryRoll = page.getByRole("radio", { name: /^Roll d8/ });
-  await saveThroughApp(page, () => secondaryRoll.click());
-  await expect(secondaryRoll).toHaveAttribute("aria-checked", "true");
+  const secondaryRoll = hpOption(page, "rolled");
+  await saveThroughApp(page, () => pickOption(secondaryRoll));
+  await expect(secondaryRoll).toHaveJSProperty("selected", true);
   const retainedSecondaryRoll = await secondaryRoll.innerText();
   await page.reload();
   await clericRail.getByRole("button", { name: /^Level 1:/ }).click();
   await expect(secondaryRoll).toHaveText(retainedSecondaryRoll);
-  await saveThroughApp(page, () => secondaryRoll.click());
+  await saveThroughApp(page, () => pickOption(secondaryRoll));
   await expect(secondaryRoll).toHaveText(retainedSecondaryRoll);
-  await saveThroughApp(page, () => page.getByRole("radio", { name: "Average (+6)", exact: true }).click());
+  await saveThroughApp(page, () => pickOption(hpOption(page, "average")));
   await expect(page.getByText("Choose 2 proficiency", { exact: true })).toHaveCount(0);
-  await choose(page, page.getByRole("button", { name: /^Life(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Life(?:\s|$)/));
   const panel = page.getByRole("form", { name: "Cleric spell choices", exact: true });
-  for (const spell of [...clericCantrips, "Bane", "Command"]) await panel.getByRole("checkbox", { name: "Select " + spell, exact: true }).check();
+  for (const spell of [...clericCantrips, "Bane", "Command"]) await setSpell(panel, spell, true);
   await saveThroughApp(page, () => panel.getByRole("button", { name: "Save spells", exact: true }).click());
   await page.reload();
-  for (const spell of [...clericCantrips, "Bane", "Command"]) await expect(panel.getByRole("checkbox", { name: "Select " + spell, exact: true })).toBeChecked();
+  for (const spell of [...clericCantrips, "Bane", "Command"]) await expect(selectedSpell(panel, spell)).toHaveCount(1);
   await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).selectOption("4"));
   const fighterRail = page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).locator("..").locator("..").locator("..");
   await fighterRail.getByRole("button", { name: /^Level 3:/ }).click();
-  await choose(page, page.getByRole("button", { name: /^Champion(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Champion(?:\s|$)/));
   await fighterRail.getByRole("button", { name: /^Level 4:/ }).click();
-  await choose(page, page.getByRole("button", { name: "STR +2", exact: true }));
+  await choose(page, asiOption(page, "strength"));
   await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Cleric", exact: true }).selectOption("2"));
-  await panel.getByRole("checkbox", { name: "Select Guiding Bolt", exact: true }).check();
+  await setSpell(panel, "Guiding Bolt", true);
   await saveThroughApp(page, () => panel.getByRole("button", { name: "Save spells", exact: true }).click());
   await page.reload();
   for (const [className, level] of [["Fighter", "4"], ["Cleric", "2"]]) {
@@ -405,7 +401,7 @@ test("real SRD multiclass Fighter and Cleric acquire, advance independently and 
   await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).selectOption("3"));
   await page.reload();
   await expect(page.getByRole("combobox", { name: "Set level for Cleric", exact: true })).toHaveValue("2");
-  for (const spell of [...clericCantrips, ...clericPrepared]) await expect(panel.getByRole("checkbox", { name: "Select " + spell, exact: true })).toBeChecked();
+  for (const spell of [...clericCantrips, ...clericPrepared]) await expect(selectedSpell(panel, spell)).toHaveCount(1);
   await page.goto(sheetUrl);
   await page.reload();
   await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
@@ -442,21 +438,21 @@ test("saved Fighter advances to Champion level four with HP and an ability impro
   await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).selectOption("4"));
   await expect(page.getByRole("combobox", { name: "Set level for Fighter", exact: true })).toHaveValue("4");
   await page.getByRole("button", { name: /^Level 3:/ }).click();
-  await choose(page, page.getByRole("button", { name: /^Champion(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Champion(?:\s|$)/));
   for (const level of [2, 3, 4]) {
     await page.getByRole("button", { name: new RegExp(`^Level ${level}:`) }).click();
-    const average = page.getByRole("radio", { name: "Average (+8)", exact: true });
-    await saveThroughApp(page, () => average.click());
-    await expect(average).toHaveAttribute("aria-checked", "true");
+    const average = hpOption(page, "average");
+    await saveThroughApp(page, () => pickOption(average));
+    await expect(average).toHaveJSProperty("selected", true);
     await expect(average).toBeEnabled();
   }
-  await choose(page, page.getByRole("button", { name: "STR +2", exact: true }));
+  await choose(page, asiOption(page, "strength"));
   await page.reload();
   await expect(page.getByRole("combobox", { name: "Set level for Fighter", exact: true })).toHaveValue("4");
-  await expect(page.getByRole("button", { name: "STR +2", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(asiOption(page, "strength")).toHaveJSProperty("selected", true);
   for (const level of [2, 3, 4]) {
     await page.getByRole("button", { name: new RegExp(`^Level ${level}:`) }).click();
-    await expect(page.getByRole("radio", { name: "Average (+8)", exact: true })).toHaveAttribute("aria-checked", "true");
+    await expect(hpOption(page, "average")).toHaveJSProperty("selected", true);
   }
   await page.goto(`${config.appOrigin}/characters/${prior.characterId}`);
   for (let reload = 0; reload < 2; reload++) {
@@ -484,35 +480,35 @@ test("saved Fighter can choose a feat and retains one server HP roll across relo
   const builderUrl = `${config.appOrigin}/characters/${prior.characterId}/builder/class`;
   await page.goto(builderUrl);
   await expect(page.getByRole("combobox", { name: "Set level for Fighter", exact: true })).toHaveValue("4");
-  await page.getByRole("button", { name: "Feat", exact: true }).click();
+  await page.getByRole("combobox", { name: "Improvement type", exact: true }).selectOption("feat");
   await page.getByRole("textbox", { name: "Search feats", exact: true }).fill("Grappler");
-  await choose(page, page.getByRole("button", { name: /^Grappler\b/ }));
+  await choose(page, choiceOption(page, /^Grappler\b/));
   await page.reload();
-  await expect(page.getByRole("button", { name: /^Grappler\b/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(page, /^Grappler\b/).first()).toHaveJSProperty("selected", true);
   await page.goto(`${config.appOrigin}/characters/${prior.characterId}`);
   await expect(page.getByRole("button", { name: "Roll Strength check", exact: true }).locator("p").last()).toHaveText("16");
   await page.getByRole("button", { name: "Features", exact: true }).click();
   await expect(page.getByText("Grappler", { exact: true }).first()).toBeVisible();
   await page.goto(builderUrl);
-  await page.getByRole("button", { name: "Ability scores", exact: true }).click();
-  await choose(page, page.getByRole("button", { name: "STR +2", exact: true }));
+  await page.getByRole("combobox", { name: "Improvement type", exact: true }).selectOption("ability");
+  await choose(page, asiOption(page, "strength"));
   await page.getByRole("button", { name: /^Level 2:/ }).click();
-  const rolled = page.getByRole("radio", { name: /^Roll d10/ });
-  await saveThroughApp(page, () => rolled.click());
-  await expect(rolled).toHaveAttribute("aria-checked", "true");
+  const rolled = hpOption(page, "rolled");
+  await saveThroughApp(page, () => pickOption(rolled));
+  await expect(rolled).toHaveJSProperty("selected", true);
   await expect(rolled).toBeEnabled();
   const firstRoll = await rolled.innerText();
   await page.reload();
   await page.getByRole("button", { name: /^Level 2:/ }).click();
   await expect(rolled).toHaveText(firstRoll);
-  const average = page.getByRole("radio", { name: "Average (+8)", exact: true });
-  await saveThroughApp(page, () => average.click());
+  const average = hpOption(page, "average");
+  await saveThroughApp(page, () => pickOption(average));
   await expect(average).toBeEnabled();
-  await saveThroughApp(page, () => rolled.click());
+  await saveThroughApp(page, () => pickOption(rolled));
   await expect(rolled).toHaveText(firstRoll);
   await expect(rolled).toBeEnabled();
-  await saveThroughApp(page, () => average.click());
-  await expect(average).toHaveAttribute("aria-checked", "true");
+  await saveThroughApp(page, () => pickOption(average));
+  await expect(average).toHaveJSProperty("selected", true);
   await page.goto(`${config.appOrigin}/characters/${prior.characterId}`);
   await expect(page.getByRole("button", { name: "Roll Strength check", exact: true }).locator("p").last()).toHaveText("18");
   await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toContainText("/36");
@@ -563,13 +559,13 @@ test("real SRD Rogue Expertise saves, reloads and follows its source proficienci
   await page.getByRole("button", { name: /^Level 1:/ }).click();
   const skills = choiceGroup(page, "Choose 4 proficiency");
   for (const skill of ["Acrobatics", "Perception", "Sleight Of Hand", "Stealth"]) {
-    await choose(page, skills.getByRole("button", { name: skill, exact: true }));
+    await choose(page, choiceOption(skills, skill));
   }
   const expertise = choiceGroup(page, "Choose 2 expertise");
-  await expect(expertise.getByRole("button", { name: "Arcana", exact: true })).toHaveCount(0);
-  for (const skill of ["Stealth", "Thieves Tools"]) await choose(page, expertise.getByRole("button", { name: skill, exact: true }));
+  await expect(choiceOption(expertise, "Arcana")).toHaveCount(0);
+  for (const skill of ["Stealth", "Thieves Tools"]) await choose(page, choiceOption(expertise, skill));
   await page.reload();
-  for (const skill of ["Stealth", "Thieves Tools"]) await expect(expertise.getByRole("button", { name: skill, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const skill of ["Stealth", "Thieves Tools"]) await expect(choiceOption(expertise, skill).first()).toHaveJSProperty("selected", true);
   await page.goto(`${config.appOrigin}/characters/${characterId}/builder/abilities`);
   await chooseAbilities(page, { baseScores: { Strength: "10", Dexterity: "15", Constitution: "14", Intelligence: "13", Wisdom: "12", Charisma: "8" } });
   await page.goto(sheetUrl);
@@ -582,26 +578,26 @@ test("real SRD Rogue Expertise saves, reloads and follows its source proficienci
 
   await page.goto(builderUrl);
   await page.getByRole("button", { name: /^Level 1:/ }).click();
-  await saveThroughApp(page, () => skills.getByRole("button", { name: "Stealth", exact: true }).click());
-  await expect(skills.getByRole("button", { name: "Stealth", exact: true })).toHaveAttribute("aria-pressed", "false");
-  await choose(page, skills.getByRole("button", { name: "Deception", exact: true }));
+  await saveThroughApp(page, () => clearOption(choiceOption(skills, "Stealth")));
+  await expect(choiceOption(skills, "Stealth").first()).toHaveJSProperty("selected", false);
+  await choose(page, choiceOption(skills, "Deception"));
   await page.reload();
-  await expect(expertise.getByRole("button", { name: "Stealth", exact: true })).toHaveCount(0);
+  await expect(choiceOption(expertise, "Stealth")).toHaveCount(0);
   await expect(expertise.getByText("1 / 2 selected", { exact: true })).toBeVisible();
   await page.goto(sheetUrl);
   await expect(stealth.getByLabel("Expertise", { exact: true })).toHaveCount(0);
   await expect(stealth).toContainText("+2");
   await page.goto(builderUrl);
   await page.getByRole("button", { name: /^Level 1:/ }).click();
-  await choose(page, expertise.getByRole("button", { name: "Acrobatics", exact: true }));
+  await choose(page, choiceOption(expertise, "Acrobatics"));
   await saveThroughApp(page, () => page.getByRole("combobox", { name: "Set level for Rogue", exact: true }).selectOption("6"));
   await expect(page.getByRole("combobox", { name: "Set level for Rogue", exact: true })).toHaveValue("6");
   await page.getByRole("button", { name: /^Level 6:/ }).click();
-  await expect(expertise.getByRole("button", { name: "Acrobatics", exact: true })).toHaveCount(0);
-  await expect(expertise.getByRole("button", { name: "Thieves Tools", exact: true })).toHaveCount(0);
-  for (const skill of ["Perception", "Sleight Of Hand"]) await choose(page, expertise.getByRole("button", { name: skill, exact: true }));
+  await expect(choiceOption(expertise, "Acrobatics")).toHaveCount(0);
+  await expect(choiceOption(expertise, "Thieves Tools")).toHaveCount(0);
+  for (const skill of ["Perception", "Sleight Of Hand"]) await choose(page, choiceOption(expertise, skill));
   await page.reload();
-  for (const skill of ["Perception", "Sleight Of Hand"]) await expect(expertise.getByRole("button", { name: skill, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const skill of ["Perception", "Sleight Of Hand"]) await expect(choiceOption(expertise, skill).first()).toHaveJSProperty("selected", true);
   await page.goto(sheetUrl);
   await page.reload();
   for (const skill of ["Acrobatics", "Perception", "Sleight of Hand"]) {

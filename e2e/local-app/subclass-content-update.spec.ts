@@ -1,3 +1,4 @@
+import { choiceOption, choiceGroup, optionPicked, pickOption, hpOption, setSpell } from "./dropdown-helpers";
 import { test, expect, type Browser, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, realpath, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -177,15 +178,15 @@ async function save(page: Page, change: () => Promise<unknown>) {
   expect(response.status()).toBe(200);
 }
 async function choose(page: Page, option: Locator) {
-  await save(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true"); await expect(option).toBeEnabled();
+  await save(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true); await expect(option).toBeEnabled();
 }
 async function openLevel(page: Page, level: number) {
   await page.getByRole("button", { name: new RegExp(`^Level ${level}:`) }).first().click();
 }
 async function selectSpell(panel: Locator, name: string, checked = true, cantrip = false) {
   const searches = panel.getByRole("textbox"); await (cantrip ? searches.first() : searches.last()).fill(name);
-  await panel.getByRole("checkbox", { name: `Select ${name}`, exact: true }).setChecked(checked);
+  await setSpell(panel, name, checked);
 }
 async function saveSpells(page: Page, panel: Locator) {
   await save(page, () => panel.getByRole("button", { name: "Save spells", exact: true }).click());
@@ -202,7 +203,7 @@ async function createFiend(page: Page, story: Story, name: string) {
   await page.getByRole("button", { name: "Save first class", exact: true }).click();
   await expect(page.getByText("Warlock · Level 1", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, 1);
-  await choose(page, page.getByRole("button", { name: /^Fiend(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Fiend(?:\s|$)/));
   await expect(page.getByText(warning, { exact: true })).toBeVisible();
   return id;
 }
@@ -224,25 +225,25 @@ async function abilities(page: Page, story: Story, id: string, scores: Record<st
 }
 async function awardGear(page: Page, story: Story) {
   await page.goto(`${story.config.appOrigin}/characters/${story.targetId}/builder/race`);
-  await page.getByRole("button", { name: "Preview Human", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Human" });
   await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
-  const language = page.getByText("Choose 1 language", { exact: true }).locator("..").locator("..");
-  await choose(page, language.getByRole("button", { name: "Dwarvish", exact: true }));
+  const language = choiceGroup(page, "Choose 1 language");
+  await choose(page, choiceOption(language, "Dwarvish"));
   await page.goto(`${story.config.appOrigin}/characters/${story.targetId}/builder/background`);
-  await page.getByRole("button", { name: "Preview Acolyte", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
   await save(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
-  const languages = page.getByText("Choose 2 language", { exact: true }).locator("..").locator("..");
-  for (const name of ["Celestial", "Draconic"]) await choose(page, languages.getByRole("button", { name, exact: true }));
-  await save(page, () => page.getByRole("button", { name: "Nothing can shake my optimistic attitude.", exact: true }).click());
+  const languages = choiceGroup(page, "Choose 2 language");
+  for (const name of ["Celestial", "Draconic"]) await choose(page, choiceOption(languages, name));
+  await save(page, () => pickOption(choiceOption(page, "Nothing can shake my optimistic attitude.")));
   await page.goto(`${story.config.appOrigin}/characters/${story.targetId}/builder/equipment`);
-  const groups = page.getByRole("group").filter({ has: page.getByRole("button", { name: /^\(a\)/ }) });
+  const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
-    const option = groups.nth(index).getByRole("button").first();
-    if (await option.getAttribute("aria-pressed") !== "true") await choose(page, option);
+    const option = groups.nth(index).locator('select option[value="a"]');
+    if (!await optionPicked(option)) await choose(page, option);
   }
-  const slots = page.getByRole("combobox");
+  const slots = page.locator('button[data-slot="select-trigger"]');
   for (let index = 0; index < await slots.count(); index++) {
     await slots.nth(index).click(); await expect(page.getByRole("listbox")).toBeVisible();
     await save(page, () => page.getByRole("option").first().click()); await expect(slots.nth(index)).toBeEnabled();
@@ -253,7 +254,7 @@ async function awardGear(page: Page, story: Story) {
 }
 async function prepareTarget(page: Page, story: Story) {
   story.targetId = await createFiend(page, story, `Repin target ${randomUUID().slice(0, 8)}`);
-  for (const skill of ["Arcana", "Intimidation"]) await choose(page, page.getByRole("button", { name: skill, exact: true }));
+  for (const skill of ["Arcana", "Intimidation"]) await choose(page, choiceOption(page, skill));
   await abilities(page, story, story.targetId, originalScores);
   await page.goto(classUrl(story));
   const panel = page.getByRole("form", { name: "Warlock spell choices", exact: true });
@@ -261,18 +262,18 @@ async function prepareTarget(page: Page, story: Story) {
   for (const name of ordinarySpells.slice(0, 2)) await selectSpell(panel, name);
   await saveSpells(page, panel); await awardGear(page, story); await page.goto(classUrl(story));
   await save(page, () => page.getByRole("combobox", { name: "Set level for Warlock", exact: true }).selectOption("2"));
-  await openLevel(page, 2); await save(page, () => page.getByRole("radio", { name: /^Average/ }).click());
+  await openLevel(page, 2); await save(page, () => pickOption(hpOption(page, "average")));
   await save(page, () => page.getByRole("combobox", { name: "Set level for Warlock", exact: true }).selectOption("3"));
-  await openLevel(page, 3); await save(page, () => page.getByRole("radio", { name: /^Roll d8/ }).click());
-  await expect(page.getByRole("radio", { name: /^Roll d8/ })).toHaveAttribute("aria-checked", "true");
+  await openLevel(page, 3); await save(page, () => pickOption(hpOption(page, "rolled")));
+  await expect(hpOption(page, "rolled")).toHaveJSProperty("selected", true);
   for (const name of ordinarySpells.slice(2)) await selectSpell(panel, name);
   await saveSpells(page, panel);
   await page.getByRole("button", { name: /^Add a class/ }).click();
-  await page.getByRole("button", { name: /^Cleric\s/ }).click();
+  await page.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: "Cleric" });
   await save(page, () => page.getByRole("button", { name: "Pick this class", exact: true }).click());
   const rail = page.getByRole("combobox", { name: "Set level for Cleric", exact: true }).locator("..").locator("..").locator("..");
   await rail.getByRole("button", { name: /^Level 1:/ }).click();
-  await choose(page, page.getByRole("button", { name: /^Life(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Life(?:\s|$)/));
   await page.reload();
 }
 async function readback(info: TestInfo, story: Story, label: string): Promise<Native> {
@@ -564,8 +565,9 @@ test("owner reviews historical Fiend content, recovers stale and applied respons
   await page.goto(classUrl(story));
   const spells = page.getByRole("form", { name: "Warlock spell choices", exact: true });
   await expect(spells.getByText("Spells known: 4 / 4", { exact: true })).toBeVisible();
-  await selectSpell(spells, "Burning Hands"); await expect(spells.getByRole("button", { name: "Save spells", exact: true })).toBeDisabled();
-  await selectSpell(spells, "Hellish Rebuke", false); await saveSpells(page, spells); await page.reload();
+  await expect(spells.getByRole("combobox", { name: "Add warlock levelled spells", exact: true })).toHaveCount(0);
+  await expect(spells.getByRole("button", { name: "Save spells", exact: true })).toBeEnabled();
+  await selectSpell(spells, "Hellish Rebuke", false); await selectSpell(spells, "Burning Hands"); await saveSpells(page, spells); await page.reload();
   const selected = await readback(info, story, "expanded-choice-spends-ordinary-place");
   expect(selected.warlockKnown).toBe(4); expect(selected.fiendFreeRows).toBe(0);
   expect(selected.spells.filter(spell => spell.classSlug === "warlock" && spell.source === "selection").map(spell => spell.slug)).toContain("burning-hands");

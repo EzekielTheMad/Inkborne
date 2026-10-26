@@ -1,3 +1,4 @@
+import { choiceOption, pickOption } from "./dropdown-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -80,7 +81,7 @@ test("sign in, build a character, save and reload every step in the actual app",
   await page.screenshot({ path: info.outputPath("saved-class-after-reload.png"), fullPage: true });
   const notebook = config.appOrigin + "/characters/" + characterId;
   await page.getByRole("link", { name: "Continue to race", exact: true }).click();
-  await page.getByRole("button", { name: "Preview Human", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Human" });
   await saveThroughApp(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
   await expect(page.getByText("Saving race choices. Keep this page open.", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
@@ -103,10 +104,10 @@ test("sign in, build a character, save and reload every step in the actual app",
   await page.screenshot({ path: info.outputPath("saved-abilities-after-reload.png"), fullPage: true });
   await page.getByRole("button", { name: "Next: Background", exact: true }).click();
   await expect(page).toHaveURL(notebook + "/builder/background");
-  await page.getByRole("button", { name: "Preview Soldier", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Soldier" });
   await saveThroughApp(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Background", exact: true })).toBeVisible();
-  await saveThroughApp(page, () => page.getByRole("button", { name: "I keep my word.", exact: true }).click());
+  await saveThroughApp(page, () => pickOption(choiceOption(page, "I keep my word.")));
   await expect(page.getByText("Personality Traits (1/2)", { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("button", { name: "Change Background", exact: true })).toBeVisible();
@@ -115,7 +116,7 @@ test("sign in, build a character, save and reload every step in the actual app",
   await page.screenshot({ path: info.outputPath("saved-background-after-reload.png"), fullPage: true });
   await page.getByRole("button", { name: "Next: Equipment", exact: true }).click();
   await expect(page).toHaveURL(notebook + "/builder/equipment");
-  await saveThroughApp(page, () => page.getByRole("button", { name: /^\(a\)\s*A backpack$/ }).click());
+  await saveThroughApp(page, () => pickOption(choiceOption(page, /^A backpack$/i)));
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Confirm Equipment", exact: true }).click();
   await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();

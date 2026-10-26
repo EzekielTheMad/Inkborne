@@ -1,3 +1,4 @@
+import { choiceOption, pickOption, asiOption, setSpell, selectedSpell } from "./dropdown-helpers";
 import { test, expect, type BrowserContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -31,8 +32,8 @@ async function saveThroughApp(page: Page, change: () => Promise<unknown>) {
 }
 
 async function choose(page: Page, option: Locator) {
-  await saveThroughApp(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true");
+  await saveThroughApp(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true);
   await expect(option).toBeEnabled();
 }
 
@@ -148,7 +149,7 @@ async function abilities(page: Page, family: Family, scores: Record<string, stri
 async function pickSpell(form: Locator, name: string, checked = true, cantrip = false) {
   const searches = form.getByRole("textbox");
   await (cantrip ? searches.first() : searches.last()).fill(name);
-  await form.getByRole("checkbox", { name: `Select ${name}`, exact: true }).setChecked(checked);
+  await setSpell(form, name, checked);
 }
 async function saveSpells(page: Page, form: Locator) {
   const button = form.getByRole("button", { name: "Save spells", exact: true });
@@ -163,27 +164,27 @@ async function sheetSpells(page: Page, family: Family, present: string[], absent
 
 test("Fiend expanded spells use ordinary budgets and save reload across all five tiers", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Warlock", "fiend-expanded-list");
-  await choose(page, page.getByRole("button", { name: /^Fiend(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Fiend(?:\s|$)/));
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "10", Charisma: "15" });
   const panel = page.getByRole("form", { name: "Warlock spell choices", exact: true });
   await expect(panel.getByText("Spells known: 0 / 2", { exact: true })).toBeVisible();
   await panel.getByRole("textbox").last().fill("Command");
-  await expect(panel.getByRole("checkbox", { name: "Select Command", exact: true })).toBeEnabled();
+  await expect(choiceOption(panel, /^Command —/).first()).toBeEnabled();
   await panel.getByRole("textbox").last().fill("Fireball");
-  await expect(panel.getByRole("checkbox", { name: "Select Fireball", exact: true })).toHaveCount(0);
+  await expect(choiceOption(panel, /^Fireball —/)).toHaveCount(0);
   await checkpoint(info, family, "patron expands earned options without granting free known or prepared spells");
   for (const name of ["Eldritch Blast", "Mage Hand"]) await pickSpell(panel, name, true, true);
   for (const name of ["Burning Hands", "Charm Person"]) await pickSpell(panel, name);
-  await pickSpell(panel, "Command");
-  await expect(panel.getByRole("button", { name: "Save spells", exact: true })).toBeDisabled();
-  await pickSpell(panel, "Command", false); await saveSpells(page, panel);
+  await expect(panel.getByRole("combobox", { name: "Add warlock levelled spells", exact: true })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "Save spells", exact: true })).toBeEnabled();
+  await saveSpells(page, panel);
   const selected = ["Burning Hands", "Charm Person"];
   for (const [level, names] of [[3, ["Blindness/Deafness", "Scorching Ray"]], [5, ["Fireball", "Stinking Cloud"]],
     [7, ["Fire Shield", "Wall of Fire"]], [9, ["Flame Strike", "Hallow"]]] as const) {
     await setLevel(page, "Warlock", level);
     for (const name of names) { await pickSpell(panel, name); selected.push(name); }
     await saveSpells(page, panel); await page.reload();
-    for (const name of names) { await panel.getByRole("textbox").last().fill(name); await expect(panel.getByRole("checkbox", { name: `Select ${name}`, exact: true })).toBeChecked(); }
+    for (const name of names) { await panel.getByRole("textbox").last().fill(name); await expect(selectedSpell(panel, name)).toHaveCount(1); }
   }
   await expect(panel.getByText("Spells known: 10 / 10", { exact: true })).toBeVisible();
   await sheetSpells(page, family, [...selected, "Eldritch Blast", "Mage Hand"], ["Command"]);
@@ -200,7 +201,7 @@ test("Fiend expanded spells use ordinary budgets and save reload across all five
 
 async function addCleric(page: Page) {
   await page.getByRole("button", { name: /^Add a class/ }).click();
-  await page.getByRole("button", { name: /^Cleric\s/ }).click();
+  await page.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: "Cleric" });
   await saveThroughApp(page, () => page.getByRole("button", { name: "Pick this class", exact: true }).click());
   await expect(page.getByRole("combobox", { name: "Set level for Cleric", exact: true })).toHaveValue("1");
 }
@@ -208,13 +209,13 @@ test("added class removal retains starting class and re-adds a fresh occurrence"
   const family = await begin(page, context, info, "Fighter", "secondary-class-removal");
   await abilities(page, family, { Strength: "15", Dexterity: "12", Constitution: "13", Intelligence: "8", Wisdom: "14", Charisma: "10" });
   await setLevel(page, "Fighter", 4); await openLevel(page, 3);
-  await choose(page, page.getByRole("button", { name: /^Champion(?:\s|$)/ }));
-  await openLevel(page, 4); await choose(page, page.getByRole("button", { name: "STR +2", exact: true }));
+  await choose(page, choiceOption(page, /^Champion(?:\s|$)/));
+  await openLevel(page, 4); await choose(page, asiOption(page, "strength"));
   await expect(page.getByRole("button", { name: "Remove Fighter", exact: true })).toHaveCount(0);
   await addCleric(page);
   const clericRail = page.getByRole("combobox", { name: "Set level for Cleric", exact: true }).locator("..").locator("..").locator("..");
   await clericRail.getByRole("button", { name: /^Level 1:/ }).click();
-  await choose(page, page.getByRole("button", { name: /^Life(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Life(?:\s|$)/));
   await setLevel(page, "Cleric", 2);
   const panel = page.getByRole("form", { name: "Cleric spell choices", exact: true });
   for (const name of ["Guidance", "Resistance", "Sacred Flame"]) await pickSpell(panel, name, true, true);

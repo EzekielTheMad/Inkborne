@@ -1,3 +1,4 @@
+import { pickOption, hpOption } from "./dropdown-helpers";
 import { test, expect, type BrowserContext, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -198,7 +199,7 @@ test("rolled HP recovers one server draw after its save response is lost and the
   await save(page, () => page.getByRole("combobox", { name: "Set level for Fighter", exact: true }).selectOption("2"));
   await page.getByRole("button", { name: /^Level 2:/ }).click();
   const before = await readback(info, story, "before"); expect(before.hpDraws).toHaveLength(0);
-  const original = await loseResponse(page, story, () => page.getByRole("radio", { name: /^Roll d10/ }).click(), true);
+  const original = await loseResponse(page, story, () => pickOption(hpOption(page, "rolled")), true);
   const committed = await readback(info, story, "committed-response-lost"); sameCommit(before, committed, original, "save_hp_roll");
   expect(committed.hpDraws).toHaveLength(1); expect(committed.hpDraws[0]).toMatchObject({ operationId: original.intent.operation_id, actorId: story.config.owner.id, level: 2, die: 10 });
   expect(committed.hpDraws[0].value).toBeGreaterThanOrEqual(1); expect(committed.hpDraws[0].value).toBeLessThanOrEqual(10);
@@ -210,8 +211,8 @@ test("rolled HP recovers one server draw after its save response is lost and the
   await expect(page.getByRole("combobox", { name: "Set level for Fighter", exact: true })).toBeEnabled();
   expect(await pending(page, story)).toBeNull();
   await page.getByRole("button", { name: /^Level 2:/ }).click();
-  const rolled = page.getByRole("radio", { name: /^Roll d10/ });
-  await expect(rolled).toHaveAttribute("aria-checked", "true");
+  const rolled = hpOption(page, "rolled");
+  await expect(rolled).toHaveJSProperty("selected", true);
   // No Constitution assignment in this bounded draft: its default modifier is zero.
   await expect(rolled).toContainText(`(+${committed.hpDraws[0].value})`);
   await finish(info, page, story, original);

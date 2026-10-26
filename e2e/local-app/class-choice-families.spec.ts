@@ -1,3 +1,4 @@
+import { choiceOption, pickOption, clearOption, setSpell } from "./dropdown-helpers";
 import { test, expect, type BrowserContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -29,14 +30,14 @@ async function saveThroughApp(page: Page, change: () => Promise<unknown>) {
 }
 
 async function choose(page: Page, option: Locator) {
-  await saveThroughApp(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true");
+  await saveThroughApp(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true);
   await expect(option).toBeEnabled();
 }
 
 function group(page: Page, label: string, option?: string): Locator {
   const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: label, exact: true, level: 4 }) });
-  return option ? article.filter({ has: page.getByRole("button", { name: option, exact: true }) }) : article;
+  return option ? article.filter({ has: choiceOption(page, option) }) : article;
 }
 
 async function setLevel(page: Page, className: string, level: number) {
@@ -118,26 +119,26 @@ async function abilities(page: Page, family: Family, scores: Record<string, stri
 test("Bard Expertise at three and ten saves and reloads earned skill selections", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Bard", "bard-expertise");
   const skills = group(page, "Choose 3 proficiency", "Stealth");
-  for (const name of ["Arcana", "Perception", "Stealth"]) await choose(page, skills.getByRole("button", { name, exact: true }));
+  for (const name of ["Arcana", "Perception", "Stealth"]) await choose(page, choiceOption(skills, name));
   await page.goto(`${family.config.appOrigin}/characters/${family.characterId}/builder/background`);
-  await page.getByRole("button", { name: "Preview Acolyte", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
   await saveThroughApp(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Background", exact: true })).toBeVisible();
   await abilities(page, family, { Strength: "8", Dexterity: "15", Constitution: "14", Intelligence: "13", Wisdom: "12", Charisma: "10" });
   await setLevel(page, "Bard", 3);
   await openLevel(page, 3);
-  await choose(page, page.getByRole("button", { name: /^Lore(?:\s|$)/ }));
+  await choose(page, choiceOption(page, /^Lore(?:\s|$)/));
   const expertise = group(page, "Choose 2 expertise");
-  await expect(expertise.getByRole("button", { name: "Athletics", exact: true })).toHaveCount(0);
-  for (const name of ["Perception", "Stealth"]) await choose(page, expertise.getByRole("button", { name, exact: true }));
+  await expect(choiceOption(expertise, "Athletics")).toHaveCount(0);
+  for (const name of ["Perception", "Stealth"]) await choose(page, choiceOption(expertise, name));
   await page.reload(); await openLevel(page, 3);
-  for (const name of ["Perception", "Stealth"]) await expect(expertise.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Perception", "Stealth"]) await expect(choiceOption(expertise, name)).toHaveJSProperty("selected", true);
   await checkpoint(info, family, "level three Expertise saved and reloaded");
   await setLevel(page, "Bard", 10); await openLevel(page, 10);
-  for (const name of ["Perception", "Stealth"]) await expect(expertise.getByRole("button", { name, exact: true })).toHaveCount(0);
-  for (const name of ["Arcana", "Insight"]) await choose(page, expertise.getByRole("button", { name, exact: true }));
+  for (const name of ["Perception", "Stealth"]) await expect(choiceOption(expertise, name)).toHaveCount(0);
+  for (const name of ["Arcana", "Insight"]) await choose(page, choiceOption(expertise, name));
   await page.reload(); await openLevel(page, 10);
-  for (const name of ["Arcana", "Insight"]) await expect(expertise.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Arcana", "Insight"]) await expect(choiceOption(expertise, name)).toHaveJSProperty("selected", true);
   await page.goto(family.sheetUrl); await page.reload();
   for (const [skill, bonus] of [["Arcana", "+9"], ["Insight", "+9"], ["Perception", "+9"], ["Stealth", "+10"]]) {
     const check = page.getByRole("button", { name: `Roll ${skill} check`, exact: true });
@@ -149,29 +150,29 @@ test("Bard Expertise at three and ten saves and reloads earned skill selections"
 test("Ranger terrain Favored Enemy and Hunter choices save reload and prune on downgrade", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Ranger", "ranger-terrain-enemies-hunter");
   const skills = group(page, "Choose 3 proficiency");
-  for (const name of ["Athletics", "Perception", "Survival"]) await choose(page, skills.getByRole("button", { name, exact: true }));
+  for (const name of ["Athletics", "Perception", "Survival"]) await choose(page, choiceOption(skills, name));
   const terrain = group(page, "Choose 1 favored terrain");
-  await choose(page, terrain.getByRole("button", { name: "Forest", exact: true }));
+  await choose(page, choiceOption(terrain, "Forest"));
   const enemy = page.getByRole("article").filter({ has: page.getByRole("button", { name: "Save favored enemy", exact: true }) });
   await enemy.getByRole("combobox", { name: "Favored enemy", exact: true }).selectOption("beasts");
   await saveThroughApp(page, () => enemy.getByRole("button", { name: "Save favored enemy", exact: true }).click());
   await expect(enemy.getByRole("button", { name: "Save favored enemy", exact: true })).toBeEnabled();
   await page.reload(); await openLevel(page, 1);
-  await expect(terrain.getByRole("button", { name: "Forest", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(terrain, "Forest").first()).toHaveJSProperty("selected", true);
   await expect(enemy.getByRole("combobox", { name: "Favored enemy", exact: true })).toHaveValue("beasts");
   await expect(enemy.getByRole("combobox", { name: "Language spoken by your favored enemies", exact: true })).toHaveValue("");
   await checkpoint(info, family, "first terrain and enemy reloaded with explicit no-language choice");
   await abilities(page, family, { Strength: "10", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "15", Charisma: "8" });
   await setLevel(page, "Ranger", 3); await openLevel(page, 3);
-  await choose(page, page.getByRole("button", { name: /^Hunter(?:\s|$)/ }));
-  await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Hunters Prey Colossus Slayer", exact: true }));
+  await choose(page, choiceOption(page, /^Hunter(?:\s|$)/));
+  await choose(page, choiceOption(group(page, "Choose 1 feature"), "Hunters Prey Colossus Slayer"));
   await setLevel(page, "Ranger", 7); await openLevel(page, 7);
-  await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Defensive Tactics Escape The Horde", exact: true }));
+  await choose(page, choiceOption(group(page, "Choose 1 feature"), "Defensive Tactics Escape The Horde"));
   await page.reload(); await openLevel(page, 7);
-  await expect(page.getByRole("button", { name: "Defensive Tactics Escape The Horde", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(page, "Defensive Tactics Escape The Horde").first()).toHaveJSProperty("selected", true);
   await openLevel(page, 6);
-  await expect(terrain.getByRole("button", { name: "Forest", exact: true })).toHaveCount(0);
-  await choose(page, terrain.getByRole("button", { name: "Swamp", exact: true }));
+  await expect(choiceOption(terrain, "Forest")).toHaveCount(0);
+  await choose(page, choiceOption(terrain, "Swamp"));
   await enemy.getByRole("combobox", { name: "Favored enemy", exact: true }).selectOption("humanoids");
   await enemy.getByRole("combobox", { name: "Humanoid race 1", exact: true }).selectOption("gnoll");
   await enemy.getByRole("combobox", { name: "Humanoid race 2", exact: true }).selectOption("orc");
@@ -179,7 +180,7 @@ test("Ranger terrain Favored Enemy and Hunter choices save reload and prune on d
   await saveThroughApp(page, () => enemy.getByRole("button", { name: "Save favored enemy", exact: true }).click());
   await expect(enemy.getByRole("button", { name: "Save favored enemy", exact: true })).toBeEnabled();
   await page.reload(); await openLevel(page, 6);
-  await expect(terrain.getByRole("button", { name: "Swamp", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(terrain, "Swamp").first()).toHaveJSProperty("selected", true);
   await expect(enemy.getByRole("combobox", { name: "Humanoid race 1", exact: true })).toHaveValue("gnoll");
   await expect(enemy.getByRole("combobox", { name: "Humanoid race 2", exact: true })).toHaveValue("orc");
   await expect(enemy.getByRole("combobox", { name: "Language spoken by your favored enemies", exact: true })).toHaveValue("orc");
@@ -191,7 +192,7 @@ test("Ranger terrain Favored Enemy and Hunter choices save reload and prune on d
   await checkpoint(info, family, "Hunter options and second terrain humanoids language reloaded");
   await page.goto(family.builderUrl); await setLevel(page, "Ranger", 1); await page.reload(); await openLevel(page, 1);
   await expect(page.getByRole("button", { name: /^Level 6:/ })).toHaveCount(0);
-  await expect(terrain.getByRole("button", { name: "Forest", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(terrain, "Forest").first()).toHaveJSProperty("selected", true);
   await expect(enemy.getByRole("combobox", { name: "Favored enemy", exact: true })).toHaveValue("beasts");
   await page.goto(family.sheetUrl); await page.reload();
   await expect(page.getByText("Orc", { exact: true }).filter({ visible: true })).toHaveCount(0);
@@ -203,24 +204,24 @@ test("Ranger terrain Favored Enemy and Hunter choices save reload and prune on d
 test("Sorcerer Draconic Ancestry and distinct Metamagic tiers save and reload", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Sorcerer", "sorcerer-ancestry-metamagic");
   const skills = group(page, "Choose 2 proficiency");
-  for (const name of ["Arcana", "Insight"]) await choose(page, skills.getByRole("button", { name, exact: true }));
-  await choose(page, page.getByRole("button", { name: /^Draconic(?:\s|$)/ }));
-  await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: /^Dragon Ancestor Gold\s+Fire Damage$/ }));
+  for (const name of ["Arcana", "Insight"]) await choose(page, choiceOption(skills, name));
+  await choose(page, choiceOption(page, /^Draconic(?:\s|$)/));
+  await choose(page, choiceOption(group(page, "Choose 1 feature"), /^Dragon Ancestor Gold(?:\s|$)/));
   await page.reload(); await openLevel(page, 1);
-  await expect(page.getByRole("button", { name: /^Dragon Ancestor Gold\s+Fire Damage$/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(page, /^Dragon Ancestor Gold(?:\s|$)/).first()).toHaveJSProperty("selected", true);
   await checkpoint(info, family, "Draconic ancestry saved and reloaded");
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "10", Charisma: "15" });
   await setLevel(page, "Sorcerer", 3); await openLevel(page, 3);
   const first = group(page, "Choose 2 feature");
-  for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await choose(page, first.getByRole("button", { name, exact: true }));
+  for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await choose(page, choiceOption(first, name));
   await page.reload(); await openLevel(page, 3);
-  for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await expect(first.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await expect(choiceOption(first, name)).toHaveJSProperty("selected", true);
   await setLevel(page, "Sorcerer", 10); await openLevel(page, 10);
   const second = group(page, "Choose 1 feature");
-  for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await expect(second.getByRole("button", { name, exact: true })).toHaveCount(0);
-  await choose(page, second.getByRole("button", { name: "Metamagic Careful Spell", exact: true }));
+  for (const name of ["Metamagic Quickened Spell", "Metamagic Subtle Spell"]) await expect(choiceOption(second, name)).toHaveCount(0);
+  await choose(page, choiceOption(second, "Metamagic Careful Spell"));
   await page.reload(); await openLevel(page, 10);
-  await expect(second.getByRole("button", { name: "Metamagic Careful Spell", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(second, "Metamagic Careful Spell").first()).toHaveJSProperty("selected", true);
   await page.goto(family.sheetUrl); await page.reload();
   await page.getByRole("button", { name: "Features", exact: true }).click();
   for (const name of ["Dragon Ancestor: Gold - Fire Damage", "Metamagic: Quickened Spell", "Metamagic: Subtle Spell", "Metamagic: Careful Spell"]) {
@@ -232,13 +233,13 @@ test("Sorcerer Draconic Ancestry and distinct Metamagic tiers save and reload", 
 test("Druid Circle of the Land choice saves and reloads its actual child feature", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Druid", "druid-land");
   const skills = group(page, "Choose 2 proficiency");
-  for (const name of ["Nature", "Perception"]) await choose(page, skills.getByRole("button", { name, exact: true }));
+  for (const name of ["Nature", "Perception"]) await choose(page, choiceOption(skills, name));
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "15", Charisma: "10" });
   await setLevel(page, "Druid", 2); await openLevel(page, 2);
-  await choose(page, page.getByRole("button", { name: /^Land(?:\s|$)/ }));
-  await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Circle Of The Land Forest", exact: true }));
+  await choose(page, choiceOption(page, /^Land(?:\s|$)/));
+  await choose(page, choiceOption(group(page, "Choose 1 feature"), "Circle Of The Land Forest"));
   await page.reload(); await openLevel(page, 2);
-  await expect(page.getByRole("button", { name: "Circle Of The Land Forest", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(page, "Circle Of The Land Forest").first()).toHaveJSProperty("selected", true);
   await page.goto(family.sheetUrl); await page.reload();
   await page.getByRole("button", { name: "Features", exact: true }).click();
   await expect(page.getByText("Circle of the Land: Forest", { exact: true }).filter({ visible: true })).toBeVisible();
@@ -248,8 +249,8 @@ test("Druid Circle of the Land choice saves and reloads its actual child feature
 test("Warlock pact and invocation choices respect saved spell prerequisites capacity and loss", async ({ page, context }, info) => {
   const family = await begin(page, context, info, "Warlock", "warlock-pact-invocations");
   const skills = group(page, "Choose 2 proficiency");
-  for (const name of ["Arcana", "History"]) await choose(page, skills.getByRole("button", { name, exact: true }));
-  await choose(page, page.getByRole("button", { name: /^Fiend(?:\s|$)/ }));
+  for (const name of ["Arcana", "History"]) await choose(page, choiceOption(skills, name));
+  await choose(page, choiceOption(page, /^Fiend(?:\s|$)/));
   await abilities(page, family, { Strength: "8", Dexterity: "14", Constitution: "13", Intelligence: "12", Wisdom: "10", Charisma: "15" });
   await setLevel(page, "Warlock", 2); await openLevel(page, 2);
   await expect(page.getByText("Hit Point Maximum", { exact: true }).locator("..").locator("span").last()).toHaveText("15");
@@ -257,38 +258,38 @@ test("Warlock pact and invocation choices respect saved spell prerequisites capa
   await expect(casting.getByText("Spell Save DC", { exact: true }).locator("..").locator("span").last()).toHaveText("12");
   await expect(casting.getByText("Spell Attack Bonus", { exact: true }).locator("..").locator("span").last()).toHaveText("+4");
   let invocations = group(page, "Choose 2 invocation");
-  await expect(invocations.getByRole("button", { name: "Eldritch Invocation Agonizing Blast", exact: true })).toHaveCount(0);
-  for (const name of ["Eldritch Invocation Armor Of Shadows", "Eldritch Invocation Beguiling Influence"]) await choose(page, invocations.getByRole("button", { name, exact: true }));
+  await expect(choiceOption(invocations, "Eldritch Invocation Agonizing Blast")).toHaveCount(0);
+  for (const name of ["Eldritch Invocation Armor Of Shadows", "Eldritch Invocation Beguiling Influence"]) await choose(page, choiceOption(invocations, name));
   await page.reload(); await openLevel(page, 2);
-  for (const name of ["Eldritch Invocation Armor Of Shadows", "Eldritch Invocation Beguiling Influence"]) await expect(invocations.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Eldritch Invocation Armor Of Shadows", "Eldritch Invocation Beguiling Influence"]) await expect(choiceOption(invocations, name)).toHaveJSProperty("selected", true);
   await checkpoint(info, family, "two level-two invocations saved and reloaded without unearned spell option");
   await setLevel(page, "Warlock", 3); await openLevel(page, 3);
   const pact = group(page, "Choose 1 feature");
-  await choose(page, pact.getByRole("button", { name: "Pact Of The Blade", exact: true }));
+  await choose(page, choiceOption(pact, "Pact Of The Blade"));
   await setLevel(page, "Warlock", 5); await openLevel(page, 2);
   invocations = group(page, "Choose 3 invocation");
-  await choose(page, invocations.getByRole("button", { name: "Eldritch Invocation Thirsting Blade", exact: true }));
+  await choose(page, choiceOption(invocations, "Eldritch Invocation Thirsting Blade"));
   const spells = page.getByRole("form", { name: "Warlock spell choices", exact: true });
-  await spells.getByRole("checkbox", { name: "Select Eldritch Blast", exact: true }).check();
+  await setSpell(spells, "Eldritch Blast", true);
   await saveThroughApp(page, () => spells.getByRole("button", { name: /^Save (?:spell choices|spells)$/ }).click());
   await expect(spells.getByText("Spell choices saved.", { exact: true })).toBeVisible();
   await page.reload(); await openLevel(page, 2);
-  const armor = invocations.getByRole("button", { name: "Eldritch Invocation Armor Of Shadows", exact: true });
-  await saveThroughApp(page, () => armor.click()); await expect(armor).toHaveAttribute("aria-pressed", "false");
-  await choose(page, invocations.getByRole("button", { name: "Eldritch Invocation Agonizing Blast", exact: true }));
+  const armor = choiceOption(invocations, "Eldritch Invocation Armor Of Shadows");
+  await saveThroughApp(page, () => clearOption(armor)); await expect(armor.first()).toHaveJSProperty("selected", false);
+  await choose(page, choiceOption(invocations, "Eldritch Invocation Agonizing Blast"));
   await page.reload(); await openLevel(page, 2);
   for (const name of ["Eldritch Invocation Beguiling Influence", "Eldritch Invocation Thirsting Blade", "Eldritch Invocation Agonizing Blast"]) {
-    await expect(invocations.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(choiceOption(invocations, name)).toHaveJSProperty("selected", true);
   }
   await checkpoint(info, family, "level-five capacity pact prerequisite and actual Eldritch Blast knowledge saved and reloaded");
   await openLevel(page, 3);
-  const blade = pact.getByRole("button", { name: "Pact Of The Blade", exact: true });
-  await saveThroughApp(page, () => blade.click()); await expect(blade).toHaveAttribute("aria-pressed", "false");
-  await choose(page, pact.getByRole("button", { name: "Pact Of The Chain", exact: true }));
+  const blade = choiceOption(pact, "Pact Of The Blade");
+  await saveThroughApp(page, () => clearOption(blade)); await expect(blade.first()).toHaveJSProperty("selected", false);
+  await choose(page, choiceOption(pact, "Pact Of The Chain"));
   await page.reload(); await openLevel(page, 3);
-  await expect(pact.getByRole("button", { name: "Pact Of The Chain", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(choiceOption(pact, "Pact Of The Chain").first()).toHaveJSProperty("selected", true);
   await openLevel(page, 2);
-  await expect(invocations.getByRole("button", { name: "Eldritch Invocation Thirsting Blade", exact: true })).toHaveCount(0);
+  await expect(choiceOption(invocations, "Eldritch Invocation Thirsting Blade")).toHaveCount(0);
   await expect(invocations.getByText("2 / 3 selected", { exact: true })).toBeVisible();
   await page.goto(family.sheetUrl); await page.reload();
   for (const skill of ["Deception", "Persuasion"]) await expect(page.getByRole("button", { name: `Roll ${skill} check`, exact: true }).getByLabel("Proficient", { exact: true })).toBeVisible();

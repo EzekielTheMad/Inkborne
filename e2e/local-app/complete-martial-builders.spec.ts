@@ -1,3 +1,4 @@
+import { choiceOption, choiceGroup, optionPicked, pickOption, hpOption } from "./dropdown-helpers";
 import { test, expect, type Browser, type BrowserContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -89,12 +90,12 @@ async function save(page: Page, change: () => Promise<unknown>) {
   expect(response.status(), "Actual app save before the next edit").toBe(200);
 }
 async function choose(page: Page, option: Locator) {
-  if (await option.getAttribute("aria-pressed") !== "true") await save(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true"); await expect(option).toBeEnabled();
+  if (!await optionPicked(option)) await save(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true); await expect(option).toBeEnabled();
 }
 function group(page: Page, label: string, option?: string) {
   const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: label, exact: true, level: 4 }) });
-  return option ? article.filter({ has: page.getByRole("button", { name: option, exact: true }) }) : article;
+  return option ? article.filter({ has: choiceOption(page, option) }) : article;
 }
 async function openLevel(page: Page, level: number, className?: string) {
   const rail = className ? page.getByRole("combobox", { name: `Set level for ${className}`, exact: true }).locator("..").locator("..").locator("..") : page;
@@ -103,11 +104,11 @@ async function openLevel(page: Page, level: number, className?: string) {
 }
 async function ancestryAbilitiesBackground(page: Page, base: string, story: Story) {
   await page.goto(base + "/race");
-  await page.getByRole("button", { name: `Preview ${story.race}`, exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: story.race });
   await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
   if (story.subrace) {
-    await save(page, () => page.getByRole("button", { name: `Select ${story.subrace}`, exact: true }).click());
+    await save(page, () => page.getByRole("combobox", { name: "Subrace", exact: true }).selectOption({ label: story.subrace }));
     await expect(page.getByRole("button", { name: "Change Subrace", exact: true })).toBeVisible();
   }
   await page.reload(); await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
@@ -129,28 +130,28 @@ async function ancestryAbilitiesBackground(page: Page, base: string, story: Stor
   await page.reload();
   for (const [ability, score] of Object.entries(story.scores)) await expect(page.getByRole("combobox", { name: `${ability} score`, exact: true })).toHaveValue(score);
   await page.getByRole("button", { name: "Next: Background", exact: true }).click();
-  await page.getByRole("button", { name: "Preview Acolyte", exact: true }).click();
+  await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
   await save(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
-  const languages = page.getByText("Choose 2 language", { exact: true }).locator("..").locator("..");
-  for (const name of ["Celestial", "Elvish"]) await choose(page, languages.getByRole("button", { name, exact: true }));
-  await save(page, () => page.getByRole("button", { name: "Nothing can shake my optimistic attitude.", exact: true }).click());
+  const languages = choiceGroup(page, "Choose 2 language");
+  for (const name of ["Celestial", "Elvish"]) await choose(page, choiceOption(languages, name));
+  await save(page, () => pickOption(choiceOption(page, "Nothing can shake my optimistic attitude.")));
   await page.reload();
-  for (const name of ["Celestial", "Elvish"]) await expect(languages.getByRole("button", { name, exact: true })).toHaveAttribute("aria-pressed", "true");
+  for (const name of ["Celestial", "Elvish"]) await expect(choiceOption(languages, name)).toHaveJSProperty("selected", true);
 }
 async function awardEquipment(page: Page, base: string) {
   await page.goto(base + "/equipment");
-  const groups = page.getByRole("group").filter({ has: page.getByRole("button", { name: /^\(a\)/ }) });
+  const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
-    const leather = groups.nth(index).getByRole("button", { name: /leather/i });
-    await choose(page, await leather.count() ? leather : groups.nth(index).getByRole("button").first());
+    const leather = choiceOption(groups.nth(index), /leather/i);
+    await choose(page, await leather.count() ? leather : groups.nth(index).locator('select option[value="a"]'));
   }
-  const slots = page.getByRole("combobox");
+  const slots = page.locator('button[data-slot="select-trigger"]');
   for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
     const sword = page.getByRole("option", { name: "Longsword", exact: true });
     const option = await sword.count() ? sword : page.getByRole("option").first();
-    await save(page, () => option.click());
+    await save(page, () => pickOption(option));
     await expect(slot).toBeEnabled();
   }
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled();
@@ -164,22 +165,22 @@ async function completeClass(page: Page, base: string, story: Story) {
   await page.goto(base + "/class");
   if (story.id === "A3") {
     await page.getByRole("button", { name: /^Add a class/ }).click();
-    await page.getByRole("button", { name: /^Rogue\s/ }).click();
+    await page.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: "Rogue" });
     await save(page, () => page.getByRole("button", { name: "Pick this class", exact: true }).click());
     const rail = page.getByRole("combobox", { name: "Set level for Rogue", exact: true }).locator("..").locator("..").locator("..");
     await rail.getByRole("button", { name: /^Level 1:/ }).click();
-    await choose(page, group(page, "Choose 1 proficiency", "Stealth").getByRole("button", { name: "Stealth", exact: true }));
-    for (const name of ["Athletics", "Thieves Tools"]) await choose(page, group(page, "Choose 2 expertise").getByRole("button", { name, exact: true }));
+    await choose(page, choiceOption(group(page, "Choose 1 proficiency", "Stealth"), "Stealth"));
+    for (const name of ["Athletics", "Thieves Tools"]) await choose(page, choiceOption(group(page, "Choose 2 expertise"), name));
   }
   const className = story.id === "A2" ? "Monk" : "Rogue";
   const level = page.getByRole("combobox", { name: `Set level for ${className}`, exact: true });
   await save(page, () => level.selectOption("3")); await expect(level).toHaveValue("3"); await expect(level).toBeEnabled();
   await openLevel(page, 3, className);
-  await choose(page, page.getByRole("button", { name: story.id === "A2" ? /^Open Hand(?:\s|$)/ : /^Thief(?:\s|$)/ }));
+  await choose(page, choiceOption(page, story.id === "A2" ? /^Open Hand(?:\s|$)/ : /^Thief(?:\s|$)/));
   for (const value of story.id === "A3" ? [1, 2, 3] : [2, 3]) {
     await openLevel(page, value, className);
-    const average = page.getByRole("radio", { name: /^Average \(\+/ });
-    await save(page, () => average.click()); await expect(average).toHaveAttribute("aria-checked", "true"); await expect(average).toBeEnabled();
+    const average = hpOption(page, "average");
+    await save(page, () => pickOption(average)); await expect(average).toHaveJSProperty("selected", true); await expect(average).toBeEnabled();
   }
   await page.reload();
   await expect(page.getByRole("navigation", { name: "Character builder", exact: true }).locator('a[href$="/builder/class"]')).toContainText("Saved");
@@ -302,10 +303,10 @@ for (const story of stories) test(`complete martial ${story.id} ${story.race} ${
   await page.getByRole("button", { name: "Save first class", exact: true }).click();
   await expect(page.getByText(`${story.first} · Level 1`, { exact: true })).toBeVisible();
   await page.reload(); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, 1);
-  for (const skill of story.initialSkills) await choose(page, group(page, `Choose ${story.initialSkills.length} proficiency`, story.initialSkills[0]).getByRole("button", { name: skill, exact: true }));
-  if (story.id === "A1") for (const skill of story.expertise) await choose(page, group(page, "Choose 2 expertise").getByRole("button", { name: skill, exact: true }));
-  if (story.id === "A2") await choose(page, group(page, "Choose 1 proficiency", "Smiths Tools").getByRole("button", { name: "Smiths Tools", exact: true }));
-  if (story.id === "A3") await choose(page, page.getByRole("button", { name: /^Dueling(?:\s|$)/ }));
+  for (const skill of story.initialSkills) await choose(page, choiceOption(group(page, `Choose ${story.initialSkills.length} proficiency`, story.initialSkills[0]), skill));
+  if (story.id === "A1") for (const skill of story.expertise) await choose(page, choiceOption(group(page, "Choose 2 expertise"), skill));
+  if (story.id === "A2") await choose(page, choiceOption(group(page, "Choose 1 proficiency", "Smiths Tools"), "Smiths Tools"));
+  if (story.id === "A3") await choose(page, choiceOption(page, /^Dueling(?:\s|$)/));
   await checkpoint("genuine first class and starting proficiency choices saved");
   await ancestryAbilitiesBackground(page, base, story); await checkpoint("race, subrace, standard array and Acolyte saved and reloaded");
   // Award from the original Fighter before adding Rogue. Secondary acquisition

@@ -1,3 +1,4 @@
+import { choiceOption, choiceGroup, optionPicked, pickOption, hpOption, setSpell, selectedSpell, setPrepared } from "./dropdown-helpers";
 import { test, expect, type Browser, type BrowserContext, type Locator, type Page, type TestInfo } from "@playwright/test";
 import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -67,13 +68,13 @@ async function save(page: Page, change: () => Promise<unknown>) {
   expect(response.status()).toBe(200);
 }
 async function choose(page: Page, option: Locator) {
-  if (await option.getAttribute("aria-pressed") !== "true") await save(page, () => option.click());
-  await expect(option).toHaveAttribute("aria-pressed", "true"); await expect(option).toBeEnabled();
+  if (!await optionPicked(option)) await save(page, () => pickOption(option));
+  await expect(option).toHaveJSProperty("selected", true); await expect(option).toBeEnabled();
 }
 const builder = (story: Story) => `${story.config.appOrigin}/characters/${story.id}/builder`;
 function group(page: Page, title: string, option?: string) {
   const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: title, exact: true, level: 4 }) });
-  return option ? article.filter({ has: page.getByRole("button", { name: option, exact: true }) }) : article;
+  return option ? article.filter({ has: choiceOption(page, option) }) : article;
 }
 async function openLevel(page: Page, owner: Owner, level: number) {
   const rail = page.getByRole("combobox", { name: `Set level for ${owner}`, exact: true }).locator("..").locator("..").locator("..");
@@ -85,24 +86,24 @@ async function setLevel(page: Page, story: Story, owner: Owner, level: number) {
   await save(page, () => control.selectOption(String(level))); await expect(control).toHaveValue(String(level)); await expect(control).toBeEnabled();
 }
 async function average(page: Page, owner: Owner, level: number) {
-  await openLevel(page, owner, level); const radio = page.getByRole("radio", { name: /^Average \(\+/ });
-  await save(page, () => radio.click()); await expect(radio).toHaveAttribute("aria-checked", "true"); await expect(radio).toBeEnabled();
+  await openLevel(page, owner, level); const radio = hpOption(page, "average");
+  await save(page, () => pickOption(radio)); await expect(radio).toHaveJSProperty("selected", true); await expect(radio).toBeEnabled();
 }
 async function addClass(page: Page, story: Story, owner: "Sorcerer" | "Warlock") {
   await page.goto(builder(story) + "/class"); await page.getByRole("button", { name: /^Add a class/ }).click();
-  await page.getByRole("button", { name: new RegExp(`^${owner}\\s`) }).click();
+  await page.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: owner });
   await save(page, () => page.getByRole("button", { name: "Pick this class", exact: true }).click());
   await expect(page.getByRole("combobox", { name: `Set level for ${owner}`, exact: true })).toHaveValue("1");
   await openLevel(page, owner, 1);
-  await choose(page, page.getByRole("button", { name: owner === "Sorcerer" ? /^Draconic(?:\s|$)/ : /^Fiend(?:\s|$)/ }));
-  if (owner === "Sorcerer") await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: /^Dragon Ancestor Gold\s+Fire Damage$/ }));
+  await choose(page, choiceOption(page, owner === "Sorcerer" ? /^Draconic(?:\s|$)/ : /^Fiend(?:\s|$)/));
+  if (owner === "Sorcerer") await choose(page, choiceOption(group(page, "Choose 1 feature"), /^Dragon Ancestor Gold(?:\s|$)/));
   await average(page, owner, 1);
 }
 const form = (page: Page, owner: Owner) => page.getByRole("form", { name: `${owner} spell choices`, exact: true });
 async function spellOption(page: Page, owner: Owner, name: string, cantrip: boolean) {
   const area = form(page, owner);
   await area.getByRole("textbox", { name: `Search ${owner.toLowerCase()} ${cantrip ? "cantrips" : "levelled spells"}`, exact: true }).fill(name);
-  return area.getByRole("checkbox", { name: `Select ${name}`, exact: true });
+  return selectedSpell(area, name);
 }
 async function saveSpells(page: Page, owner: Owner) {
   const area = form(page, owner); await expect(area.getByRole("button", { name: "Save spells", exact: true })).toBeEnabled();
@@ -110,13 +111,13 @@ async function saveSpells(page: Page, owner: Owner) {
   await expect(area.getByText("Spell choices saved.", { exact: true })).toBeVisible(); await expect(area.getByRole("button", { name: "Save spells", exact: true })).toBeEnabled();
 }
 async function selectSpells(page: Page, owner: Owner) {
-  for (const name of plans[owner].cantrips) await (await spellOption(page, owner, name, true)).check();
+  for (const name of plans[owner].cantrips) await setSpell(form(page, owner), name, true);
   for (const name of plans[owner].spells) {
-    await (await spellOption(page, owner, name, false)).check();
-    if (owner === "Paladin") await form(page, owner).getByRole("checkbox", { name: `Prepare ${name}`, exact: true }).check();
+    await setSpell(form(page, owner), name, true);
+    if (owner === "Paladin") await setPrepared(form(page, owner), name, true);
   }
   await assertBudget(page, owner); await saveSpells(page, owner); await page.reload();
-  for (const name of [...plans[owner].cantrips, ...plans[owner].spells]) await expect(await spellOption(page, owner, name, plans[owner].cantrips.includes(name))).toBeChecked();
+  for (const name of [...plans[owner].cantrips, ...plans[owner].spells]) await expect(await spellOption(page, owner, name, plans[owner].cantrips.includes(name))).toHaveCount(1);
 }
 async function assertBudget(page: Page, owner: Owner) {
   const area = form(page, owner);
@@ -131,12 +132,12 @@ async function createAndComplete(page: Page, story: Story) {
   await page.getByRole("combobox", { name: "First class", exact: true }).selectOption({ label: "Paladin" });
   await page.getByRole("button", { name: "Save first class", exact: true }).click(); await expect(page.getByText("Paladin · Level 1", { exact: true })).toBeVisible();
   await page.reload(); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, "Paladin", 1);
-  for (const skill of ["Athletics", "Persuasion"]) await choose(page, group(page, "Choose 2 proficiency", "Athletics").getByRole("button", { name: skill, exact: true }));
-  await page.goto(builder(story) + "/race"); await page.getByRole("button", { name: "Preview Dragonborn", exact: true }).click();
+  for (const skill of ["Athletics", "Persuasion"]) await choose(page, choiceOption(group(page, "Choose 2 proficiency", "Athletics"), skill));
+  await page.goto(builder(story) + "/race"); await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Dragonborn" });
   await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click()); await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
-  const ancestry = page.getByText("Draconic Ancestry: Choose 1", { exact: true }).locator("..").locator("..");
-  await choose(page, ancestry.getByRole("button", { name: "Draconic Ancestry Gold", exact: true })); await page.reload();
-  await expect(ancestry.getByRole("button", { name: "Draconic Ancestry Gold", exact: true })).toHaveAttribute("aria-pressed", "true");
+  const ancestry = choiceGroup(page, "Draconic Ancestry: Choose 1");
+  await choose(page, choiceOption(ancestry, "Draconic Ancestry Gold")); await page.reload();
+  await expect(choiceOption(ancestry, "Draconic Ancestry Gold").first()).toHaveJSProperty("selected", true);
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
   for (const [ability, score] of Object.entries(scores)) {
     const control = page.getByRole("combobox", { name: `${ability} score`, exact: true }); if (await control.inputValue() === score) continue;
@@ -147,28 +148,28 @@ async function createAndComplete(page: Page, story: Story) {
     await save(page, () => control.selectOption(score)); await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
   }
   await page.reload(); for (const [ability, score] of Object.entries(scores)) await expect(page.getByRole("combobox", { name: `${ability} score`, exact: true })).toHaveValue(score);
-  await page.getByRole("button", { name: "Next: Background", exact: true }).click(); await page.getByRole("button", { name: "Preview Acolyte", exact: true }).click();
+  await page.getByRole("button", { name: "Next: Background", exact: true }).click(); await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
   await save(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
-  const languages = page.getByText("Choose 2 language", { exact: true }).locator("..").locator("..");
-  for (const language of ["Celestial", "Elvish"]) await choose(page, languages.getByRole("button", { name: language, exact: true }));
-  await save(page, () => page.getByRole("button", { name: "Nothing can shake my optimistic attitude.", exact: true }).click());
+  const languages = choiceGroup(page, "Choose 2 language");
+  for (const language of ["Celestial", "Elvish"]) await choose(page, choiceOption(languages, language));
+  await save(page, () => pickOption(choiceOption(page, "Nothing can shake my optimistic attitude.")));
   await setLevel(page, story, "Paladin", 2); await average(page, "Paladin", 2); await openLevel(page, "Paladin", 2);
-  await choose(page, page.getByRole("button", { name: /^Dueling(?:\s|$)/ })); await selectSpells(page, "Paladin");
+  await choose(page, choiceOption(page, /^Dueling(?:\s|$)/)); await selectSpells(page, "Paladin");
   // The one real starting award belongs to the original class before adding
   // secondary casters. No sheet inventory insertion or second award is used.
-  await page.goto(builder(story) + "/equipment"); const groups = page.getByRole("group").filter({ has: page.getByRole("button", { name: /^\(a\)/ }) });
-  await expect(groups.first()).toBeVisible(); for (let index = 0; index < await groups.count(); index++) await choose(page, groups.nth(index).getByRole("button").first());
-  const slots = page.getByRole("combobox"); for (let index = 0; index < await slots.count(); index++) {
+  await page.goto(builder(story) + "/equipment"); const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
+  await expect(groups.first()).toBeVisible(); for (let index = 0; index < await groups.count(); index++) await choose(page, groups.nth(index).locator('select option[value="a"]'));
+  const slots = page.locator('button[data-slot="select-trigger"]'); for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
     const sword = page.getByRole("option", { name: "Longsword", exact: true }); const option = await sword.count() ? sword : page.getByRole("option").first();
-    await save(page, () => option.click()); await expect(slot).toBeEnabled();
+    await save(page, () => pickOption(option)); await expect(slot).toBeEnabled();
   }
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled(); await page.getByRole("button", { name: "Confirm Equipment", exact: true }).click();
   await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible(); await page.reload(); await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
   await addClass(page, story, "Sorcerer"); await selectSpells(page, "Sorcerer"); await addClass(page, story, "Warlock");
-  await setLevel(page, story, "Warlock", 3); await openLevel(page, "Warlock", 3); await choose(page, group(page, "Choose 1 feature").getByRole("button", { name: "Pact Of The Blade", exact: true }));
+  await setLevel(page, story, "Warlock", 3); await openLevel(page, "Warlock", 3); await choose(page, choiceOption(group(page, "Choose 1 feature"), "Pact Of The Blade"));
   await average(page, "Warlock", 2); await average(page, "Warlock", 3); await selectSpells(page, "Warlock"); await openLevel(page, "Warlock", 2);
-  for (const name of ["Eldritch Invocation Agonizing Blast", "Eldritch Invocation Repelling Blast"]) await choose(page, group(page, "Choose 2 invocation").getByRole("button", { name, exact: true }));
+  for (const name of ["Eldritch Invocation Agonizing Blast", "Eldritch Invocation Repelling Blast"]) await choose(page, choiceOption(group(page, "Choose 2 invocation"), name));
   await page.goto(builder(story) + "/details"); await page.getByRole("textbox", { name: "Character name", exact: true }).fill(name);
   await page.getByRole("combobox", { name: "Alignment", exact: true }).selectOption("Neutral Good"); await save(page, () => page.getByRole("button", { name: "Save details", exact: true }).click());
   await expect(page.getByText("Character details saved.", { exact: true })).toBeVisible(); await page.reload();
@@ -262,7 +263,7 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
   const down = await readback(info, story, "paladin-one-prunes-only-own-preparation", 1);
   for (const owner of ["sorcerer", "warlock"]) sameOwnerSources(initial, down, owner); expect(down.originalOccurrenceId).toBe(initial.originalOccurrenceId); expect(down.inventory).toEqual(initial.inventory); expect(ownerSpells(down, "paladin")).toEqual([]);
   await inspectSheet(page, story, 1, "baseline"); await setLevel(page, story, "Paladin", 2); await average(page, "Paladin", 2); await openLevel(page, "Paladin", 2);
-  await choose(page, page.getByRole("button", { name: /^Dueling(?:\s|$)/ })); await expect(form(page, "Paladin").getByText(/^Prepared spells: 0 \/ 4\./)).toBeVisible(); await selectSpells(page, "Paladin");
+  await choose(page, choiceOption(page, /^Dueling(?:\s|$)/)); await expect(form(page, "Paladin").getByText(/^Prepared spells: 0 \/ 4\./)).toBeVisible(); await selectSpells(page, "Paladin");
   const restored = await readback(info, story, "paladin-two-spells-reselected"); for (const owner of ["sorcerer", "warlock"]) sameOwnerSources(initial, restored, owner);
   expect(restored.originalOccurrenceId).toBe(initial.originalOccurrenceId); expect(restored.inventory).toEqual(initial.inventory); await checkpoint(info, story, "half-caster down/up changes only own preparation and regular contribution; secondary identities retained");
   const second = await context.newPage(); second.on("pageerror", () => story.pageErrors.push("second owner page error"));
@@ -270,8 +271,8 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
     await page.goto(builder(story) + "/class"); await second.goto(builder(story) + "/class");
     for (const owner of ["Paladin", "Sorcerer", "Warlock"] as const) { await assertBudget(page, owner); await assertBudget(second, owner); }
     const before = await readback(info, story, "two-pages-same-baseline"); expect(before.completeFingerprint).toBe(restored.completeFingerprint);
-    await (await spellOption(page, "Sorcerer", "Shield", false)).uncheck(); await (await spellOption(page, "Sorcerer", "Sleep", false)).check();
-    await (await spellOption(second, "Warlock", "Charm Person", false)).uncheck(); await (await spellOption(second, "Warlock", "Shatter", false)).check();
+    await setSpell(form(page, "Sorcerer"), "Shield", false); await setSpell(form(page, "Sorcerer"), "Sleep", true);
+    await setSpell(form(second, "Warlock"), "Charm Person", false); await setSpell(form(second, "Warlock"), "Shatter", true);
     await assertBudget(page, "Sorcerer"); await assertBudget(second, "Warlock");
     await Promise.all([saveSpells(page, "Sorcerer"), saveSpells(second, "Warlock")]);
     const after = await readback(info, story, "both-controller-saves-retained", 2, "concurrent"); expect(BigInt(after.actionRevision)).toBe(BigInt(before.actionRevision) + BigInt(2)); expect(after.historyCount).toBe(before.historyCount + 2);
@@ -290,8 +291,8 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
     for (const owner of ["sorcerer", "warlock"]) { const removed = owner === "sorcerer" ? "shield" : "charm-person", added = owner === "sorcerer" ? "sleep" : "shatter";
       expect(ownerSpells(after, owner).filter(spell => spell.slug !== added)).toEqual(ownerSpells(before, owner).filter(spell => spell.slug !== removed)); }
     await page.reload(); await second.reload(); for (const tab of [page, second]) {
-      await expect(await spellOption(tab, "Sorcerer", "Sleep", false)).toBeChecked(); await expect(await spellOption(tab, "Sorcerer", "Shield", false)).not.toBeChecked();
-      await expect(await spellOption(tab, "Warlock", "Shatter", false)).toBeChecked(); await expect(await spellOption(tab, "Warlock", "Charm Person", false)).not.toBeChecked();
+      await expect(await spellOption(tab, "Sorcerer", "Sleep", false)).toHaveCount(1); await expect(await spellOption(tab, "Sorcerer", "Shield", false)).toHaveCount(0);
+      await expect(await spellOption(tab, "Warlock", "Shatter", false)).toHaveCount(1); await expect(await spellOption(tab, "Warlock", "Charm Person", false)).toHaveCount(0);
       for (const owner of ["Paladin", "Sorcerer", "Warlock"] as const) await assertBudget(tab, owner);
     }
     await inspectSheet(page, story, 2, "concurrent"); await page.reload(); const reloaded = await readback(info, story, "both-pages-and-sheet-reloaded", 2, "concurrent"); expect(reloaded).toEqual(after);
