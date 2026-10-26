@@ -20,7 +20,7 @@ WITH target AS (
  FROM public.character_content_refs r JOIN target t ON t.id=r.character_id
  LEFT JOIN public.content_versions v ON v.content_id=r.content_id AND v.version=r.content_version
 ), classes AS (
- SELECT c.value AS choice,o.*,r.content_id AS pinned_content_id,r.content_version AS pinned_version,r.slug
+ SELECT c.value AS choice,o.*,to_jsonb(o) AS occurrence,r.content_id AS pinned_content_id,r.content_version AS pinned_version,r.slug
  FROM target t CROSS JOIN LATERAL jsonb_array_elements(t.choices->'classes') c(value)
  JOIN private.character_class_occurrences_v1 o ON o.character_id=t.id AND o.id=(c.value->>'occurrence_id')::uuid
  JOIN refs r ON r.id=o.controller_ref_id AND r.kind='class'
@@ -87,10 +87,23 @@ SELECT jsonb_build_object(
      FROM public.content_versions v WHERE content_type_snapshot='feature' AND slug_snapshot='draconic-resilience')),
  'checks',jsonb_build_object(
    'oneOwnedTargetAndOldControl',(SELECT count(*)=1 FROM target) AND (SELECT count(*)=1 AND bool_and(user_id=t.user_id) FROM control),
-   'oneEarnedDraconicSorcerer',(SELECT count(*)=1 FROM sorcerer) AND s.lifecycle='accepted' AND (s.choice->>'level')::integer BETWEEN 1 AND 20,
+   -- The original occurrence retains its immutable B3 allocation lifecycle.
+   -- Only a later, independently acquired secondary occurrence is accepted.
+   'oneEarnedDraconicSorcerer',(SELECT count(*)=1 FROM sorcerer)
+     AND s.lifecycle=CASE WHEN s.id=(p.original->>'id')::uuid THEN 'provisional' ELSE 'accepted' END
+     AND (s.choice->>'level')::integer BETWEEN 1 AND 20,
    'exactSelectedClassRoots',(SELECT count(*) FROM classes)=jsonb_array_length(t.choices->'classes')
-     AND NOT EXISTS(SELECT 1 FROM classes WHERE content_id<>pinned_content_id OR content_version<>pinned_version OR lifecycle<>'accepted'),
+     AND NOT EXISTS(SELECT 1 FROM classes c WHERE c.content_id<>c.pinned_content_id OR c.content_version<>c.pinned_version
+       OR c.lifecycle<>CASE WHEN c.id=(p.original->>'id')::uuid THEN 'provisional' ELSE 'accepted' END
+       OR (c.id=(p.original->>'id')::uuid AND c.occurrence IS DISTINCT FROM p.original)
+       OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(p.roles->'class_sources') r(value)
+         WHERE r.value->>'occurrence_id'=c.id::text AND r.value->>'controller_ref_id'=c.controller_ref_id::text
+           AND r.value->>'content_id'=c.content_id::text AND r.value->>'content_version'=c.content_version::text
+           AND r.value->>'role'=CASE WHEN c.id=(p.original->>'id')::uuid THEN 'original' ELSE 'secondary' END)),
    'originalProofAndCurrentRoles',EXISTS(SELECT 1 FROM classes WHERE id=(p.original->>'id')::uuid AND controller_ref_id=(p.original->>'controller_ref_id')::uuid)
+     AND p.roles->>'status'='available' AND p.roles->'contract_version'='1'::jsonb
+     AND p.roles->>'character_id'=t.id::text AND p.roles->>'system_id'=t.system_id::text
+     AND jsonb_array_length(p.roles->'class_sources')=(SELECT count(*) FROM classes)
      AND p.roles->>'action_revision'=t.action_revision::text AND p.roles->'source_order'=(SELECT to_jsonb(o)->'pins' FROM private.character_projection_order_v1 o WHERE character_id=t.id),
    'exactFrozenSubclassOwner',s.subclass_data->>'parent_class'='sorcerer' AND s.subclass_context='{"source":"subclass","class":"sorcerer"}'::jsonb
      AND s.subclass_choice_source='builder:subclass:'||s.id::text,

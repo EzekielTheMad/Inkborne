@@ -16,7 +16,7 @@ WITH target AS (
  FROM public.character_content_refs r JOIN target t ON t.id=r.character_id
  LEFT JOIN public.content_versions v ON v.content_id=r.content_id AND v.version=r.content_version
 ), selected_class AS (
- SELECT c.value AS choice,o.*,root.content_id AS pinned_content_id,root.content_version AS pinned_version,
+ SELECT c.value AS choice,o.*,to_jsonb(o) AS occurrence,root.content_id AS pinned_content_id,root.content_version AS pinned_version,
    root.slug,root.data,sub.id AS subclass_pin_id,sub.slug AS subclass_slug,sub.data AS subclass_data,
    sub.context AS subclass_context,sub.choice_source AS subclass_choice_source
  FROM target t CROSS JOIN LATERAL jsonb_array_elements(t.choices->'classes') c(value)
@@ -104,11 +104,14 @@ SELECT jsonb_build_object(
  'checks',jsonb_build_object(
   'oneOwnedTargetAndControl',(SELECT count(*)=1 FROM target) AND (SELECT count(*)=1 AND bool_and(user_id=t.user_id AND maximum_hp=35 AND subrace_version=1) FROM old_control),
   'originalBarbarianProvenance',(SELECT count(*)=1 FROM selected_class) AND jsonb_array_length(t.choices->'classes')=1
-    AND b.slug='barbarian' AND b.lifecycle='accepted' AND b.id=(p.original->>'id')::uuid AND b.controller_ref_id=(p.original->>'controller_ref_id')::uuid
+    AND b.slug='barbarian' AND b.lifecycle='provisional' AND b.occurrence=p.original
+    AND b.id=(p.original->>'id')::uuid AND b.controller_ref_id=(p.original->>'controller_ref_id')::uuid
     AND b.content_id=b.pinned_content_id AND b.content_version=b.pinned_version AND b.data->'hit_die'='12'::jsonb
     AND (SELECT count(*)=1 FROM private.character_class_commands_v1 WHERE character_id=t.id)
     AND NOT EXISTS(SELECT 1 FROM private.character_builder_class_acquisitions_v1 WHERE character_id=t.id)
-    AND p.roles->>'status'='available' AND p.roles->>'original_occurrence_id'=b.id::text
+    AND p.roles->>'status'='available' AND p.roles->'contract_version'='1'::jsonb
+    AND p.roles->>'character_id'=t.id::text AND p.roles->>'system_id'=t.system_id::text
+    AND p.roles->>'original_occurrence_id'=b.id::text
     AND jsonb_array_length(p.roles->'class_sources')=1 AND p.roles#>>'{class_sources,0,role}'='original'
     AND p.roles#>>'{class_sources,0,occurrence_id}'=b.id::text AND p.roles#>>'{class_sources,0,controller_ref_id}'=b.controller_ref_id::text
     AND p.roles#>>'{class_sources,0,content_id}'=b.content_id::text AND p.roles#>>'{class_sources,0,content_version}'=b.content_version::text
