@@ -69,10 +69,39 @@ required security, data-integrity and release acceptance gates.
 - Coordinate verification centrally. Workers run affected checks; the main
   agent runs necessary integration checks without repeating unchanged passes.
   Serialize memory-heavy tests, browsers and development servers.
-- Use focused independent review for consequential changes. Repeat review only
-  when changes or findings justify it. Request concise findings, file references,
-  commits and verification results instead of full logs. Avoid nested delegation
-  without a concrete benefit.
+- Request concise findings, file references, commits and verification results
+  instead of full logs. Avoid nested delegation without a concrete benefit.
+
+## Review at the right boundary
+
+- For a completed feature or consequential fix, use one independent, read-only
+  agent review of the exact change and directly supporting code before marking
+  that slice accepted. Supply the intended behavior, relevant invariants and
+  known limitations. Small copy/layout edits need self-review and relevant
+  checks, not an automatic independent security-review cycle.
+- Include explicit security/data-integrity review for changes to authentication,
+  account ownership, sharing, permissions/RLS, privileged calls, imports/uploads,
+  migrations, native transactions, save recovery, or copy/delete behavior. The
+  same independent reviewer can cover these risks in the feature review; do not
+  automatically create another agent or expand into a whole-repository audit.
+- Ask for concrete bugs/regressions with file/line references, a failure or
+  attack scenario, impact and supporting evidence. Distinguish confirmed issues
+  from hypotheses; use the smallest relevant check to resolve material doubt.
+  Confirmed cross-account leaks, data loss, duplicate writes and broken critical
+  workflows block acceptance. Track minor findings without unrelated rewrites.
+- Record the reviewed base/head commits (or exact uncommitted diff digest),
+  material findings, their disposition and remaining verification in the existing
+  handoff/ledger. Review approval applies only to that recorded source. Re-review
+  relevant fixes or material later changes, not unchanged code after every commit.
+- Use existing CI and integration gates for the assembled change. Verify whether
+  dependency/secret scanning is actually configured before claiming coverage;
+  do not infer live GitHub settings from local workflow files.
+- Before launch, perform the broader frozen-candidate review and actual
+  environment checks required by [RELEASE-READINESS.md](RELEASE-READINESS.md) and
+  the [ledger's completion gates](LAUNCH-ACCEPTANCE.md#completion-gates-and-durable-tracking).
+  Development review does not establish deployed permissions, provider behavior,
+  production configuration or backup/restore acceptance. Keep those release gates
+  separate from the lightweight development loop.
 
 ## Preserve boundaries and leave a usable handoff
 
