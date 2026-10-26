@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
+import { captureAncestryHpSource } from "../../scripts/ancestry-hp-acceptance";
 
 type Account = { id: string; email: string; password: string };
 type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account };
@@ -255,6 +256,9 @@ async function foreign404(browser: Browser, story: Story, ids: string[]) {
 
 test("A4 full Hill Dwarf Barbarian preserves old HP35 and new HP38 with one retained native d12", async ({ page, context, browser }, info) => {
   test.setTimeout(600000);
+  const runId = process.env.INKBORNE_LOCAL_FLOW_RUN_ID;
+  if (!runId || !uuid.test(runId)) throw Error("Run A4 through its bounded ancestry-hp-app wrapper");
+  const source = captureAncestryHpSource(process.cwd());
   const story: Story = { config: await configuration(), controlId: "", snapshots: [], blockedOrigins: [], pageErrors: [], checkpoints: [] };
   await restrictOrigins(context, story); page.on("pageerror", () => story.pageErrors.push("owner browser error"));
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startedUtc: new Date().toISOString(), story: "A4 ancestry HP" }));
@@ -309,7 +313,9 @@ test("A4 full Hill Dwarf Barbarian preserves old HP35 and new HP38 with one reta
   expect(story.blockedOrigins).toEqual([]); expect(story.pageErrors).toEqual([]);
   await checkpoint(info, story, "new38HP AC14 speed25 Rage3; one native d12 retained through reload/reselection/down/up; old35 and foreign404 preserved");
   const path = info.outputPath("ancestry-hit-points-workflow.json");
+  expect(captureAncestryHpSource(process.cwd())).toEqual(source);
   await writeFile(path, JSON.stringify({ actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true, caseId: "A4",
+    source, runId,
     oldControlId: story.controlId, newCharacterId: id, allSixBuilderStepsSaved: true, completedSheetReloadPassed: true, foreignAccountRefused: true, rawDraw: draw,
     independent2014Expectations: { oldLevel3Hp: 35, newLevel3Hp: 38, rolledLevel3Hp: 31 + draw.value, rolledLevel2Hp: 20 + draw.value,
       unarmoredAc: 14, speed: 25, rageCapacity: 3, baseScores: scores, effectiveScores: effective },
