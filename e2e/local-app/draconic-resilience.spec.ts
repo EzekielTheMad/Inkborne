@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
+import { captureAncestryHpSource as captureSource } from "../../scripts/ancestry-hp-acceptance";
 
 type Account = { id: string; email: string; password: string };
 type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account };
@@ -269,6 +270,9 @@ async function otherAccount(browser: Browser, story: Story, ids: string[]) {
 
 test("new Draconic mechanics preserve historical pins, one raw HP draw and native awarded armor parity", async ({ page, context, browser }, info) => {
   test.setTimeout(360000);
+  const runId = process.env.INKBORNE_LOCAL_FLOW_RUN_ID;
+  if (!runId || !uuid.test(runId)) throw Error("Use the bounded draconic-app wrapper");
+  const source = captureSource(process.cwd());
   const story: Story = { config: await configuration(), controlId: "", snapshots: [], blockedOrigins: [], pageErrors: [], checkpoints: [] };
   await restrictOrigins(context, story); page.on("pageerror", () => story.pageErrors.push("owner browser error"));
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startedUtc: new Date().toISOString(), story: "Draconic immutable HP and AC" }));
@@ -345,7 +349,9 @@ test("new Draconic mechanics preserve historical pins, one raw HP draw and nativ
   await otherAccount(browser, story, [story.controlId, id, armorId]); expect(story.blockedOrigins).toEqual([]); expect(story.pageErrors).toEqual([]);
   await checkpoint(info, story, "native awarded armor switches AC15 to13 to15 without changing HP, draw, pins or order; foreign account404");
   const path = info.outputPath("draconic-resilience-workflow.json");
+  expect(captureSource(process.cwd())).toEqual(source);
   await writeFile(path, JSON.stringify({ actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true,
+    source, runId,
     oldControlId: story.controlId, newSorcererId: id, armorControlId: armorId, rawDraw: draw,
     independent2014Expectations: { oldLevel3Hp: 20, newLevel3Hp: 23, rolledLevel3Hp: 19 + draw.value,
       rolledLevel2Hp: 12 + draw.value, fighter1Sorcerer1Hp: 21, unarmoredAc: 15, leatherAc: 13 },
