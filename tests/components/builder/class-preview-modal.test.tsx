@@ -263,14 +263,14 @@ describe("ClassPreviewModal — features tab", () => {
 
     // Pick the subclass on the Subclasses tab.
     fireEvent.click(screen.getByRole("tab", { name: /subclasses/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Oath of Devotion/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Preview subclass" }), { target: { value: "oath-of-devotion" } });
     fireEvent.click(screen.getByRole("tab", { name: /features/i }));
     expect(screen.getByText("Channel Divinity: Sacred Weapon")).toBeInTheDocument();
   });
 });
 
 describe("ClassPreviewModal — subclasses tab", () => {
-  it("toggles subclass selection on click", () => {
+  it("selects and clears a subclass preview through its dropdown", () => {
     const subclasses: ContentEntry[] = [
       {
         id: "sc1",
@@ -278,6 +278,16 @@ describe("ClassPreviewModal — subclasses tab", () => {
         slug: "oath-of-devotion",
         content_type: "subclass",
         data: { parent_class: "paladin", description: "Holy paladin." },
+        effects: [],
+        version: 1,
+        source: "srd",
+      },
+      {
+        id: "sc-foreign",
+        name: "School of Evocation",
+        slug: "school-of-evocation",
+        content_type: "subclass",
+        data: { parent_class: "wizard", description: "A foreign subclass." },
         effects: [],
         version: 1,
         source: "srd",
@@ -295,12 +305,16 @@ describe("ClassPreviewModal — subclasses tab", () => {
       />,
     );
     fireEvent.click(screen.getByRole("tab", { name: /subclasses/i }));
-    const card = screen.getByRole("button", { name: /Oath of Devotion/i });
-    expect(card.dataset.selected).toBeUndefined();
-    fireEvent.click(card);
-    expect(card.dataset.selected).toBe("true");
-    fireEvent.click(card);
-    expect(card.dataset.selected).toBeUndefined();
+    const select = screen.getByRole("combobox", { name: "Preview subclass" });
+    expect(select).toHaveValue("");
+    expect(screen.queryByRole("option", { name: "School of Evocation" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Holy paladin.")).not.toBeInTheDocument();
+    fireEvent.change(select, { target: { value: "oath-of-devotion" } });
+    expect(select).toHaveValue("oath-of-devotion");
+    expect(screen.getByText("Holy paladin.")).toBeVisible();
+    fireEvent.change(select, { target: { value: "" } });
+    expect(select).toHaveValue("");
+    expect(screen.queryByText("Holy paladin.")).not.toBeInTheDocument();
   });
 });
 
@@ -386,7 +400,7 @@ describe("ClassPreviewModal — callbacks", () => {
       />,
     );
     fireEvent.click(screen.getByRole("tab", { name: /subclasses/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Oath of Devotion/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Preview subclass" }), { target: { value: "oath-of-devotion" } });
     fireEvent.click(screen.getByRole("button", { name: /Pick this class/i }));
     expect(onPick).toHaveBeenCalledTimes(1);
     expect(onPick).toHaveBeenCalledWith({
