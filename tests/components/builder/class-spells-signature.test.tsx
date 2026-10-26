@@ -31,7 +31,7 @@ describe("Wizard Signature preparation intent", () => {
     render(<ClassSpellsPanel source={source} catalog={[{ ...spell, version: 2 }, spell]} selected={[{
       content_id: spell.id, content_version: 1, is_prepared: false,
     }]} abilityScores={{ intelligence: 16 }} saveAction={saveAction} />);
-    expect(screen.getByLabelText("Select Fireball")).toBeChecked();
+    expect(screen.getByRole("combobox", { name: "Wizard levelled spells 1" })).toHaveValue(`${spell.id}:1`);
     fireEvent.click(screen.getByRole("button", { name: "Save spells" }));
     await waitFor(() => expect(saveAction).toHaveBeenCalledWith("select_class_spells", { class_slug: "wizard",
       spells: [{ content_id: spell.id, content_version: 1, prepared: false }] }));

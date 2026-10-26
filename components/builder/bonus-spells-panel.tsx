@@ -24,7 +24,8 @@ interface BonusSpellsPanelProps {
 }
 
 const keyOf = (pins: BonusSpellPin[]) => JSON.stringify([...pins].sort((a, b) => a.content_id.localeCompare(b.content_id)));
-const PAGE_SIZE = 20;
+const spellKey = (spell: ContentEntry) => `${spell.id}:${spell.version}`;
+const selectClassName = "block w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50";
 
 /** Bonus picks retain their feature owner and their own allowance. In particular,
  * a Wizard marks an existing book spell instead of learning a second copy. */
@@ -37,7 +38,6 @@ export function BonusSpellsPanel({ feature, choice, catalog, selected, spellbook
   const sourceKey = JSON.stringify([feature.id, feature.version, choice, spellbook, classMaxSpellLevel, [...occupied].sort()]);
   const [draft, setDraft] = useState(() => ({ baselineKey: incomingKey, sourceKey, value: selected, dirty: false }));
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const { notice, setBlocked } = useSaveNavigationGuard("bonus spell choices");
@@ -60,14 +60,15 @@ export function BonusSpellsPanel({ feature, choice, catalog, selected, spellbook
     .sort((a, b) => Number(a.data.level) - Number(b.data.level) || a.name.localeCompare(b.name)),
   [catalog, choice, classMaxSpellLevel, spellbook, selected]);
   const candidates = entries.filter(spell => !occupied.has(spell.id) || selected.some(pin => pin.content_id === spell.id));
-  const unavailable = draft.value.some(pin => !candidates.some(spell => spell.id === pin.content_id && spell.version === pin.content_version));
+  const unavailable = draft.value.some(pin => candidates.filter(spell => spell.id === pin.content_id && spell.version === pin.content_version).length !== 1);
   const duplicate = new Set(draft.value.map(pin => pin.content_id)).size !== draft.value.length;
   const valid = !unavailable && !duplicate && draft.value.length <= choice.choose && !changedWhileEditing;
   const locked = disabled || pending || changedWhileEditing || unavailable || duplicate;
-  const filtered = candidates.filter(spell => spell.name.toLowerCase().includes(query.trim().toLowerCase()));
-  const lastPage = Math.max(0, Math.ceil(filtered.length / PAGE_SIZE) - 1);
-  const currentPage = Math.min(page, lastPage);
-  const shown = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const filtered = candidates.filter(spell => spell.name.toLowerCase().includes(query.trim().toLowerCase())
+    && candidates.filter(other => other.id === spell.id).length === 1);
+  const available = filtered.filter(spell => !draft.value.some(pin => pin.content_id === spell.id));
+  const rows: Array<BonusSpellPin | undefined> = [...draft.value];
+  if (draft.value.length < choice.choose && available.length > 0) rows.push(undefined);
   const label = `${feature.name}: ${choice.choice_id}`;
   return <form aria-label={label} className="space-y-3 rounded-md border border-border p-4" onSubmit={event => {
     event.preventDefault();
@@ -97,25 +98,36 @@ export function BonusSpellsPanel({ feature, choice, catalog, selected, spellbook
     {duplicate && <p role="alert">The saved choices contain duplicate spells. Reload before editing.</p>}
     <fieldset disabled={locked} className="space-y-3 border-0 p-0">
       <Input aria-label={`Search ${feature.name} spells`} placeholder="Search bonus spells" value={query}
-        onChange={event => { setQuery(event.target.value); setPage(0); }} />
-      {!shown.length ? <p className="text-sm text-muted-foreground">No eligible spells match. {choice.spellbook_only ? "Save your spellbook choices first." : ""}</p>
-        : <div className="space-y-2">{shown.map(spell => {
-          const checked = draft.value.some(pin => pin.content_id === spell.id && pin.content_version === spell.version);
-          return <label key={`${spell.id}:${spell.version}`} className="flex items-center gap-3 rounded-md border border-border p-3 text-sm">
-            <input type="checkbox" aria-label={`Select ${spell.name}`} checked={checked}
-              disabled={!checked && draft.value.length >= choice.choose}
-              onChange={() => {
-                setDraft(previous => ({ ...previous, dirty: true, value: checked ? previous.value.filter(pin => pin.content_id !== spell.id)
-                  : [...previous.value, { content_id: spell.id, content_version: spell.version }] })); setError(null); setSaved(false);
-              }} />
-            <span>{spell.name}</span><span className="ml-auto text-muted-foreground">{spell.data.level === 0 ? "Cantrip" : `Level ${spell.data.level}`}</span>
-          </label>;
-        })}</div>}
-      {filtered.length > PAGE_SIZE && <div className="flex items-center justify-between gap-2 text-sm">
-        <Button type="button" variant="outline" size="sm" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)} aria-label={`Previous ${choice.choice_id} spells page`}>Previous</Button>
-        <span>Page {currentPage + 1} of {lastPage + 1}</span>
-        <Button type="button" variant="outline" size="sm" disabled={currentPage === lastPage} onClick={() => setPage(currentPage + 1)} aria-label={`Next ${choice.choice_id} spells page`}>Next</Button>
-      </div>}
+        onChange={event => setQuery(event.target.value)} />
+      {!filtered.length && <p className="text-sm text-muted-foreground">No eligible spells match. {choice.spellbook_only ? "Save your spellbook choices first." : ""}</p>}
+      <div className="space-y-3">{rows.map((pin, index) => {
+        const current = pin ? candidates.find(spell => spell.id === pin.content_id && spell.version === pin.content_version) : undefined;
+        const options = current ? [current, ...available] : available;
+        return <div key={pin ? `${pin.content_id}:${pin.content_version}` : "add"} className="space-y-1">
+          <label className="block space-y-1 text-sm">
+            <span>{pin ? `${feature.name} spell ${index + 1}` : `Add ${feature.name} spell`}</span>
+            <select className={selectClassName} value={current ? spellKey(current) : ""} disabled={locked}
+              onChange={event => {
+                if (locked) return;
+                const next = options.find(spell => spellKey(spell) === event.target.value);
+                if (event.target.value && !next) return;
+                if (next && draft.value.some(other => other.content_id === next.id && other.content_id !== pin?.content_id)) return;
+                if (!pin && next && draft.value.length >= choice.choose) return;
+                const nextPin = next ? { content_id: next.id, content_version: next.version } : undefined;
+                setDraft(previous => ({ ...previous, dirty: true, value: pin
+                  ? previous.value.flatMap(other => other.content_id !== pin.content_id ? [other] : nextPin ? [nextPin] : [])
+                  : nextPin ? [...previous.value, nextPin] : previous.value }));
+                setError(null); setSaved(false);
+              }}>
+              <option value="">{pin ? "Remove this spell" : "Choose a spell"}</option>
+              {options.map(spell => <option key={spellKey(spell)} value={spellKey(spell)}>
+                {spell.name} — {spell.data.level === 0 ? "Cantrip" : `Level ${spell.data.level}`}
+              </option>)}
+            </select>
+          </label>
+          {current && typeof current.data.description === "string" && <p className="text-sm text-muted-foreground">{current.data.description}</p>}
+        </div>;
+      })}</div>
     </fieldset>
     <Button type="submit" disabled={locked || !valid}>{pending ? "Saving bonus spells…" : `Save ${feature.name} spells`}</Button>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

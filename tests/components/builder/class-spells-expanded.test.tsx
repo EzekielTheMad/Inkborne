@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ClassSpellsPanel } from "@/components/builder/class-spells-panel";
 import type { ContentEntry } from "@/components/builder/content-browser";
@@ -32,18 +32,16 @@ describe("Fiend expanded spell choices", () => {
     const saveAction = vi.fn().mockResolvedValue({ choices: {}, scores, action_revision: "2" });
     render(<ClassSpellsPanel source={source} catalog={catalog} selected={[]} abilityScores={scores} saveAction={saveAction} />);
     expect(screen.getByText("Your patron's expanded spells are available below. They count toward your spells-known allowance.")).toBeInTheDocument();
-    expect(screen.getByText("Expanded list")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Select Scorching Ray")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Select Magic Missile")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Select Sacred Flame")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText("Select Burning Hands"));
-    fireEvent.click(screen.getByLabelText("Select Hellish Rebuke"));
+    const add = () => screen.getByRole("combobox", { name: "Add warlock levelled spells" });
+    expect(within(add()).getByRole("option", { name: /Burning Hands — Expanded list/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Scorching Ray|Magic Missile|Sacred Flame/ })).not.toBeInTheDocument();
+    fireEvent.change(add(), { target: { value: `${burningHands.id}:1` } });
+    fireEvent.change(add(), { target: { value: `${hellishRebuke.id}:1` } });
     expect(screen.getByText("Spells known: 2 / 2")).toBeInTheDocument();
     expect(screen.queryByLabelText("Prepare Burning Hands")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText("Select Armor of Agathys"));
-    expect(screen.getByText("Spells known: 3 / 2")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save spells" })).toBeDisabled();
-    fireEvent.click(screen.getByLabelText("Select Armor of Agathys"));
+    expect(screen.queryByRole("combobox", { name: "Add warlock levelled spells" })).not.toBeInTheDocument();
+    expect(within(screen.getByRole("combobox", { name: "Warlock levelled spells 1" })).queryByRole("option", { name: /Hellish Rebuke/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save spells" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Save spells" }));
     await waitFor(() => expect(saveAction).toHaveBeenCalledWith("select_class_spells", { class_slug: "warlock", spells: [
       { content_id: burningHands.id, content_version: 1, prepared: false },
@@ -57,12 +55,12 @@ describe("Fiend expanded spell choices", () => {
       { content_id: hellishRebuke.id, content_version: 1, is_prepared: false }];
     const { rerender } = render(<ClassSpellsPanel source={source} catalog={catalog} selected={selected}
       abilityScores={scores} saveAction={saveAction} />);
-    expect(screen.getByLabelText("Select Burning Hands")).toBeChecked();
-    expect(screen.getByLabelText("Select Hellish Rebuke")).toBeChecked();
+    expect(screen.getByRole("combobox", { name: "Warlock levelled spells 1" })).toHaveValue(`${burningHands.id}:1`);
+    expect(screen.getByRole("combobox", { name: "Warlock levelled spells 2" })).toHaveValue(`${hellishRebuke.id}:1`);
     rerender(<ClassSpellsPanel source={{ ...source, expandedSpellSlugs: [], subclassSlug: undefined, subclassPin: undefined }}
       catalog={catalog} selected={[selected[1]]} abilityScores={scores} saveAction={saveAction} />);
-    expect(screen.queryByLabelText("Select Burning Hands")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Select Hellish Rebuke")).toBeChecked();
+    expect(screen.queryByRole("option", { name: /Burning Hands/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Warlock levelled spells 1" })).toHaveValue(`${hellishRebuke.id}:1`);
     expect(screen.getByText("Spells known: 1 / 2")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save spells" })).toBeEnabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();

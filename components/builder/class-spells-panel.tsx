@@ -33,9 +33,10 @@ export interface ClassSpellsPanelProps {
   onDirtyChange?: (classSlug: string, dirty: boolean) => void;
 }
 
-const PAGE_SIZE = 20;
 const title = (slug: string) => slug.replace(/-/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
 const selectionKey = (value: BuilderSpellSelection[]) => JSON.stringify([...value].sort((a, b) => a.content_id.localeCompare(b.content_id)));
+const spellKey = (entry: ContentEntry) => `${entry.id}:${entry.version}`;
+const selectClassName = "block w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50";
 
 function spellLevel(entry: ContentEntry | undefined): number | null {
   const level = entry?.data.level;
@@ -49,46 +50,57 @@ interface SpellSectionProps {
   showPrepared: boolean;
   expandedSpellSlugs: readonly string[];
   disabled: boolean;
-  onToggle: (entry: ContentEntry) => void;
+  limit: number;
+  canPrepare: boolean;
+  onChange: (previous: BuilderSpellSelection | undefined, entry: ContentEntry | undefined) => void;
   onPrepare: (entry: ContentEntry, prepared: boolean) => void;
 }
 
-function SpellSection({ label, entries, selections, showPrepared, expandedSpellSlugs, disabled, onToggle, onPrepare }: SpellSectionProps) {
+function SpellSection({ label, entries, selections, showPrepared, expandedSpellSlugs, disabled, limit, canPrepare, onChange, onPrepare }: SpellSectionProps) {
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(0);
   const filtered = useMemo(() => entries.filter(entry => entry.name.toLowerCase().includes(query.trim().toLowerCase())), [entries, query]);
-  const lastPage = Math.max(0, Math.ceil(filtered.length / PAGE_SIZE) - 1);
-  const currentPage = Math.min(page, lastPage);
-  const visible = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const selectedEntries = selections.flatMap(selection => {
+    const entry = entries.find(candidate => candidate.id === selection.content_id && candidate.version === selection.content_version);
+    return entry ? [{ selection, entry }] : [];
+  });
+  const occupied = new Set(selections.map(selection => selection.content_id));
+  const available = filtered.filter(entry => !occupied.has(entry.id));
+  const rows: Array<{ selection: BuilderSpellSelection | undefined; entry: ContentEntry | undefined }> = [...selectedEntries];
+  if (selectedEntries.length < limit && available.length > 0) rows.push({ selection: undefined, entry: undefined });
   return <section aria-label={label} className="space-y-3">
     <h4 className="text-sm font-semibold">{label}</h4>
     <Input aria-label={`Search ${label.toLowerCase()}`} placeholder="Search spells" value={query} disabled={disabled}
-      onChange={event => { setQuery(event.target.value); setPage(0); }} />
-    {!visible.length ? <p className="text-sm text-muted-foreground">No matching spells.</p> :
-      <div className="space-y-2">{visible.map(entry => {
-        const selected = selections.find(item => item.content_id === entry.id && item.content_version === entry.version);
-        return <div key={`${entry.id}:${entry.version}`} className="rounded-md border border-border bg-card/40 p-3">
-          <label className="flex items-center gap-3 text-sm">
-            <input type="checkbox" aria-label={`Select ${entry.name}`} checked={!!selected} disabled={disabled}
-              onChange={() => onToggle(entry)} />
-            <span className="font-medium">{entry.name}</span>
-            {expandedSpellSlugs.includes(entry.slug) && <span className="rounded border border-border px-1.5 py-0.5 text-xs text-muted-foreground">Expanded list</span>}
-            <span className="ml-auto text-xs text-muted-foreground">{spellLevel(entry) === 0 ? "Cantrip" : `Level ${spellLevel(entry)}`}</span>
+      onChange={event => setQuery(event.target.value)} />
+    {!filtered.length && <p className="text-sm text-muted-foreground">No matching spells.</p>}
+    <div className="space-y-3">{rows.map(({ selection, entry }, index) => {
+      const options = entry ? [entry, ...available] : available;
+      return <div key={entry ? spellKey(entry) : "add"} className="space-y-2">
+          <label className="block space-y-1 text-sm">
+            <span>{entry ? `${label} ${index + 1}` : `Add ${label.toLowerCase()}`}</span>
+            <select className={selectClassName} value={entry ? spellKey(entry) : ""} disabled={disabled}
+              onChange={event => {
+                const next = options.find(option => spellKey(option) === event.target.value);
+                if (!event.target.value || next) onChange(selection, next);
+              }}>
+              <option value="">{entry ? "Remove this spell" : "Choose a spell"}</option>
+              {options.map(option => <option key={spellKey(option)} value={spellKey(option)}>
+                {option.name}{expandedSpellSlugs.includes(option.slug) ? " — Expanded list" : ""}
+                {spellLevel(option) === 0 ? " — Cantrip" : ` — Level ${spellLevel(option)}`}
+              </option>)}
+            </select>
           </label>
-          {selected?.always_prepared && <p className="mt-2 pl-6 text-sm text-muted-foreground">Always prepared by Signature Spells.</p>}
-          {selected && !selected.always_prepared && showPrepared && <label className="mt-2 flex items-center gap-2 pl-6 text-sm text-muted-foreground">
-            <input type="checkbox" aria-label={`Prepare ${entry.name}`} checked={selected.is_prepared} disabled={disabled}
-              onChange={event => onPrepare(entry, event.target.checked)} />Prepared
+          {entry && typeof entry.data.description === "string" && <p className="text-sm text-muted-foreground">{entry.data.description}</p>}
+          {selection?.always_prepared && <p className="text-sm text-muted-foreground">Always prepared by Signature Spells.</p>}
+          {entry && selection && !selection.always_prepared && showPrepared && <label className="block space-y-1 text-sm">
+            <span>Prepare {entry.name}</span>
+            <select className={selectClassName} value={selection.is_prepared ? "prepared" : "not-prepared"} disabled={disabled}
+              onChange={event => onPrepare(entry, event.target.value === "prepared")}>
+              <option value="not-prepared">Not prepared</option>
+              {(selection.is_prepared || canPrepare) && <option value="prepared">Prepared</option>}
+            </select>
           </label>}
         </div>;
-      })}</div>}
-    {filtered.length > PAGE_SIZE && <div className="flex items-center justify-between gap-2 text-sm">
-      <Button type="button" variant="outline" size="sm" disabled={disabled || currentPage === 0} onClick={() => setPage(currentPage - 1)}
-        aria-label={`Previous ${label.toLowerCase()} page`}>Previous</Button>
-      <span>Page {currentPage + 1} of {lastPage + 1}</span>
-      <Button type="button" variant="outline" size="sm" disabled={disabled || currentPage === lastPage} onClick={() => setPage(currentPage + 1)}
-        aria-label={`Next ${label.toLowerCase()} page`}>Next</Button>
-    </div>}
+      })}</div>
   </section>;
 }
 
@@ -150,17 +162,31 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
     && cantripCount <= source.cantripsKnown && (!wizardBook || leveledCount <= bookSize)
     && (source.prepared ? preparedLimit !== null && preparedCount <= preparedLimit
       : source.spellsKnown === "all" || leveledCount <= source.spellsKnown);
-  const locked = disabled || pending || !sourceReady || changedWhileEditing || unavailable.length > 0 || duplicateSelections;
+  const locked = disabled || pending || !sourceReady || !knownCountReady || changedWhileEditing || unavailable.length > 0 || duplicateSelections;
+  const cantripLimit = Math.min(source.cantripsKnown, 200 - leveledCount);
+  const leveledLimit = Math.min(wizardBook ? bookSize : !source.prepared && source.spellsKnown !== "all" ? source.spellsKnown : 200, 200 - cantripCount);
+  const canPrepare = preparedLimit !== null && preparedCount < preparedLimit;
   const update = (value: BuilderSpellSelection[]) => {
     setDraft(previous => ({ ...previous, value, dirty: true })); setError(null); setSaved(false);
   };
-  function toggle(entry: ContentEntry) {
-    const existing = draft.value.find(item => item.content_id === entry.id);
-    update(existing ? draft.value.filter(item => item.content_id !== entry.id) : [...draft.value, {
-      content_id: entry.id, content_version: entry.version, is_prepared: source.prepared && spellLevel(entry)! > 0,
-    }]);
+  function changeSpell(previous: BuilderSpellSelection | undefined, entry: ContentEntry | undefined) {
+    if (locked) return;
+    if (!entry) { if (previous) update(draft.value.filter(item => item.content_id !== previous.content_id)); return; }
+    if (previous?.content_id === entry.id && previous.content_version === entry.version) return;
+    if (draft.value.some(item => item.content_id === entry.id && item.content_id !== previous?.content_id)) return;
+    const matches = byId.get(entry.id);
+    if (matches?.length !== 1 || matches[0].version !== entry.version) return;
+    const count = spellLevel(entry) === 0 ? cantripCount : leveledCount;
+    const limit = spellLevel(entry) === 0 ? cantripLimit : leveledLimit;
+    if (!previous && count >= limit) return;
+    const wantsPrepared = previous ? previous.always_prepared ? previous.prepared_intent ?? false : previous.is_prepared : true;
+    const availablePrepared = preparedLimit !== null && preparedCount - (previous?.is_prepared && !previous.always_prepared ? 1 : 0) < preparedLimit;
+    const next = { content_id: entry.id, content_version: entry.version,
+      is_prepared: source.prepared && spellLevel(entry)! > 0 && wantsPrepared && availablePrepared };
+    update(previous ? draft.value.map(item => item.content_id === previous.content_id ? next : item) : [...draft.value, next]);
   }
   function prepare(entry: ContentEntry, is_prepared: boolean) {
+    if (locked || is_prepared && !canPrepare) return;
     update(draft.value.map(item => item.content_id === entry.id ? { ...item, is_prepared } : item));
   }
   const className = title(source.classSlug);
@@ -202,9 +228,9 @@ export function ClassSpellsPanel({ source, catalog, selected, abilityScores, sav
     {duplicateSelections && <p role="alert" className="text-sm text-destructive">The saved spell selections contain duplicates. Reload the character before editing.</p>}
     <fieldset disabled={locked} className="space-y-5 border-0 p-0">
       <SpellSection label={`${className} cantrips`} entries={entries.filter(entry => spellLevel(entry) === 0)} selections={draft.value}
-        showPrepared={false} expandedSpellSlugs={source.expandedSpellSlugs ?? []} disabled={locked} onToggle={toggle} onPrepare={prepare} />
+        showPrepared={false} expandedSpellSlugs={source.expandedSpellSlugs ?? []} disabled={locked} limit={cantripLimit} canPrepare={false} onChange={changeSpell} onPrepare={prepare} />
       {maxLevel > 0 && <SpellSection label={`${className} levelled spells`} entries={entries.filter(entry => spellLevel(entry)! > 0)} selections={draft.value}
-        showPrepared={source.prepared} expandedSpellSlugs={source.expandedSpellSlugs ?? []} disabled={locked} onToggle={toggle} onPrepare={prepare} />}
+        showPrepared={source.prepared} expandedSpellSlugs={source.expandedSpellSlugs ?? []} disabled={locked} limit={leveledLimit} canPrepare={canPrepare} onChange={changeSpell} onPrepare={prepare} />}
     </fieldset>
     <Button type="submit" disabled={locked || !valid}>{pending ? "Saving spells…" : "Save spells"}</Button>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
