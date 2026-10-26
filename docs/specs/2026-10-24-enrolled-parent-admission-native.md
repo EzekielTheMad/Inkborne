@@ -29,7 +29,11 @@ and ASI selection. The first two retain SECURITY INVOKER and their original ACLs
 owner, RLS behavior and validation. They call a public NOARG guard-only bridge
 owned by the admitted existing guard authority. Its EXEC union comes only from
 the actual existing authenticated/service RPC grants plus internal postgres;
-anon/PUBLIC and private-schema access remain closed. The bridge only locks and
+anon/PUBLIC bridge execution and every new private helper remain closed. The
+installer preserves the complete existing private-schema ACL and effective
+USAGE/CREATE profile. In particular, migration 00041's authenticated USAGE for
+explicitly granted campaign-policy helpers is retained; anon/service USAGE
+remain false. The bridge only locks and
 supplies no actor, plan, mutation or revision authority. The definer background
 and ASI RPCs use a closed internal guard wrapper. The simple SQL state-patch RPC
 already starts with UPDATE, so the statement trigger supplies its lock edge.
@@ -85,7 +89,10 @@ no proof, an unfinished proof, or deletion of a proof while its capability
 remains. Failure at any point rolls back parent, native revision/order, phase
 changes, graph and receipt together. Metadata-only updates outside an active
 capability/proof retain the same mechanical tuple and existing behavior. Every
-enrolled DELETE refuses until an explicit lifecycle protocol is reviewed.
+enrolled row reached by DELETE refuses until an explicit lifecycle protocol is
+reviewed. The maintained catalog has no authenticated DELETE policy, so that
+role's DELETE instead affects zero rows. This is RLS retention, not execution
+of the enrolled row guard; the unconditional statement guard still runs.
 
 The installer admits exact source-body hashes for eleven existing functions and
 fixed occurrence-counted substitutions. It verifies the exact resulting bytes
@@ -184,7 +191,8 @@ after partial setup or probe failure, before reporting cleanup. It must also
 verify the exact owned OS process records have exited.
 
 The SQL case file uses real `authenticated` and `service_role` SQL roles with
-owner claims; its 32 mechanical/RPC refusals and two allowed-then-rolled-back
+owner claims; its 31 mechanical/RPC refusals, one authenticated DELETE with an
+explicitly observed zero affected rows, and two allowed-then-rolled-back
 metadata probes do not establish JWT authentication. An inaccessible service
 RPC can refuse at its existing EXEC privilege check, so `refused_unchanged`
 does not imply the new parent fence caused every RPC denial. The contention
@@ -192,6 +200,14 @@ edge for direct service UPDATE supplies that separate causal evidence. Keep
 `authenticationAccepted:false` for these reports. Run the file with
 `ON_ERROR_STOP=1`, require all 34 exact outcomes, and preserve the outer rollback
 and before/after digest equality.
+
+The owner-delete contention case likewise requires command SQLSTATE `00000`
+and a native `ROW_COUNT=0` recorded by its fixed DO block, then read before
+rollback. It still requires the actual guard edge and third-session parent
+probe. All seven other scenarios require `42501`. Empty transport output alone
+cannot prove zero affected rows, and neither a positive count nor a different
+SQLSTATE is accepted. Existing reachable authenticated/service DELETE tests
+remain to check the row guard independently of the maintained RLS filter.
 
 Actual positive ordinary saves, B3 full commit, background zero/one/two-update
 paths, Fiend correction/replay, native starting awards and JWT/browser access

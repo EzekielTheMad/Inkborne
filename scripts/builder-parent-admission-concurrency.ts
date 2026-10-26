@@ -15,7 +15,7 @@ export type ParentContentionReport = {
   kind: "builder-parent-admission-contention-v1";
   authenticationAccepted: false;
   cases: Array<{ name: Case; status: "passed" | "failed"; beforeDigest?: string; afterDigest?: string;
-    edge?: Edge; parentProbeSucceeded?: boolean; expectedSqlstate: "42501"; observedSqlstate?: string; reason?: string }>;
+    edge?: Edge; parentProbeSucceeded?: boolean; expectedSqlstate: "42501" | "00000"; observedSqlstate?: string; affectedRows?: number; reason?: string }>;
   backendPids: number[]; sessionsClosed: boolean; passed: boolean;
 };
 const names = { blocker: "inkborne-parent-blocker", checker: "inkborne-parent-checker", observer: "inkborne-parent-observer" };
@@ -76,7 +76,11 @@ function readInputs(rows: Json[], fixture: Fixture): Inputs {
 function command(name: Case, fixture: Fixture, inputs: Inputs) {
   const target = `'${fixture.characterId}'::uuid`, nextState = { ...inputs.state, current_hp: inputs.state.current_hp === 1 ? 0 : 1 };
   if (name === "owner-update" || name === "service-update") return `UPDATE public.characters SET state=${json(nextState)} WHERE id=${target}`;
-  if (name === "owner-delete") return `DELETE FROM public.characters WHERE id=${target}`;
+  if (name === "owner-delete") return `DO $parent_delete$ DECLARE affected bigint; BEGIN
+DELETE FROM public.characters WHERE id=${target}; GET DIAGNOSTICS affected=ROW_COUNT;
+PERFORM set_config('inkborne.parent_delete_affected',affected::text,true);
+IF affected<>0 THEN RAISE EXCEPTION 'parent_delete_unexpected_row_count' USING ERRCODE='ZP001'; END IF;
+END $parent_delete$`;
   if (name === "state-patch") return `SELECT public.patch_character_state(${target},${json({ current_hp: nextState.current_hp })})`;
   if (name === "state-cas") return `SELECT * FROM public.patch_character_state_if_current(${target},${json(inputs.state)},${json(nextState)})`;
   if (name === "ability-rpc") {
@@ -129,7 +133,7 @@ export async function runBuilderParentAdmissionContention(sessions: CommandSessi
     const inputs = readInputs(await run(sessions.observer, inputSql(fixture)), fixture);
     for (const name of PARENT_CONTENTION_CASES) {
       deadline = Date.now() + maxMs;
-      const item: ParentContentionReport["cases"][number] = { name, status: "failed", expectedSqlstate: "42501" };
+      const item: ParentContentionReport["cases"][number] = { name, status: "failed", expectedSqlstate: name === "owner-delete" ? "00000" : "42501" };
       report.cases.push(item);
       try {
         item.beforeDigest = await digest();
@@ -138,7 +142,7 @@ export async function runBuilderParentAdmissionContention(sessions: CommandSessi
         await run(sessions.checker, `SET LOCAL ROLE ${name === "service-update" ? "service_role" : "authenticated"}`);
         await run(sessions.checker, `SELECT set_config('request.jwt.claims',${json({ sub: fixture.actorId, role: "authenticated" })}::text,true),set_config('request.jwt.claim.sub','${fixture.actorId}',true)`);
         let settled = false;
-        const pending = run(sessions.checker, command(name, fixture, inputs)).then(() => undefined, error => {
+        const pending = run(sessions.checker, command(name, fixture, inputs)).then(() => name === "owner-delete" ? "00000" : undefined, error => {
           if (!(error instanceof Refusal) || !error.sqlstate) throw error;
           return error.sqlstate;
         }).finally(() => { settled = true; });
@@ -165,8 +169,15 @@ FROM pg_stat_activity w CROSS JOIN pg_stat_activity h WHERE w.pid=${sessions.che
         item.parentProbeSucceeded = true;
         await run(sessions.observer, "ROLLBACK"); await run(sessions.blocker, "ROLLBACK");
         item.observedSqlstate = await pending;
+        if (item.observedSqlstate !== item.expectedSqlstate) throw new Refusal("Unexpected post-guard mutation outcome", item.observedSqlstate);
+        if (name === "owner-delete") {
+          // The fixed DO block records the real ROW_COUNT. Empty protocol rows
+          // alone cannot establish a zero-row DELETE.
+          const result = await run(sessions.checker, "SELECT current_setting('inkborne.parent_delete_affected',true)::integer AS affected_rows");
+          if (result.length !== 1 || result[0].affected_rows !== 0) throw new Refusal("Authenticated DELETE affected-row proof unavailable");
+          item.affectedRows = 0;
+        }
         await run(sessions.checker, "ROLLBACK");
-        if (item.observedSqlstate !== "42501") throw new Refusal("Unexpected post-guard mutation outcome", item.observedSqlstate);
         item.afterDigest = await digest();
         if (item.afterDigest !== item.beforeDigest) throw new Refusal("Failed mutation changed retained fixture rows");
         const closure = await run(sessions.observer, "SELECT (SELECT count(*)::integer FROM private.character_parent_admissions_v1) AS seals,(SELECT count(*)::integer FROM private.character_builder_capabilities_v1) AS caps");

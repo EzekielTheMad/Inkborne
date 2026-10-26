@@ -300,6 +300,23 @@ describe("finite enrolled parent admission", () => {
     } finally { await db.exec("SET ROLE postgres"); }
     expect(await parent()).toMatchObject({ name: "Visible metadata edit", action_revision: "10", state: { current_hp: 21 } });
   });
+  it("retains the enrolled parent when authenticated DELETE has no RLS policy", async () => {
+    const before = await parent(), beforeOrder = await order();
+    await administrator(async () => { await db.exec("DROP POLICY owner_delete ON public.characters"); });
+    try {
+      await db.exec("SET ROLE authenticated");
+      try {
+        const result = await db.query("DELETE FROM public.characters WHERE id=$1 RETURNING id", [target]);
+        expect(result.rows).toEqual([]); expect(result.affectedRows).toBe(0);
+      } finally { await db.exec("SET ROLE postgres"); }
+      expect(await parent()).toEqual(before); expect(await order()).toEqual(beforeOrder);
+      await db.exec("SET ROLE service_role");
+      try { await expect(db.query("DELETE FROM public.characters WHERE id=$1", [target])).rejects.toThrow("enrolled_parent_delete_unavailable"); }
+      finally { await db.exec("SET ROLE postgres"); }
+    } finally {
+      await administrator(async () => { await db.exec("CREATE POLICY owner_delete ON public.characters FOR DELETE TO authenticated USING(user_id=auth.uid())"); });
+    }
+  });
   it("keeps actual enrollment visible after restrictive or changed origin SELECT policies", async () => {
     for (const fault of ["restrictive", "changed_read_policy"]) {
       await administrator(async () => {

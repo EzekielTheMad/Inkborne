@@ -9,14 +9,14 @@ const fixture = { characterId: "30000000-0000-4000-8000-000000000001", actorId: 
 const names = { blocker: "inkborne-parent-blocker", checker: "inkborne-parent-checker", observer: "inkborne-parent-observer" };
 const pids = { blocker: 101, checker: 102, observer: 103 };
 type Side = keyof typeof pids;
-type Fault = "none" | "parent-before-guard" | "refuses-before-guard" | "wrong-refusal" | "mutates-after-refusal" | "close-fails" | "invalid-fixture";
+type Fault = "none" | "parent-before-guard" | "refuses-before-guard" | "wrong-refusal" | "mutates-after-refusal" | "close-fails" | "invalid-fixture" | "delete-positive-count" | "delete-wrong-refusal";
 class ScriptedModel {
   held = false;
   waiting = false;
   released = false;
   closeCalls: Side[] = [];
   statements: Array<{ side: Side; sql: string }> = [];
-  pending?: { reject(error: unknown): void };
+  pending?: { resolve(value: Record<string, unknown>[]): void; reject(error: unknown): void; deletion: boolean };
   readonly sessions: CommandSessions;
   constructor(readonly fault: Fault = "none") {
     const session = (side: Side): NativeSession => ({ backendPid: pids[side],
@@ -39,6 +39,7 @@ class ScriptedModel {
     } }];
     if (sql.includes(" AS digest")) return [{ digest: this.released && this.fault === "mutates-after-refusal" ? "b".repeat(32) : "a".repeat(32) }];
     if (sql.includes("AS seals")) return [{ seals: 0, caps: 0 }];
+    if (sql.includes("AS affected_rows")) return [{ affected_rows: this.fault === "delete-positive-count" ? 1 : 0 }];
     if (sql.startsWith("SELECT private.lock_enrolled_parent_guard_v1()")) { this.held = true; this.released = false; return []; }
     if (sql.startsWith("SELECT w.pid AS waiter_pid")) return [{ waiter_pid: pids.checker, blocker_pid: pids.blocker,
       waiter_name: names.checker, blocker_name: names.blocker, wait_event_type: this.waiting ? "Lock" : null,
@@ -50,15 +51,18 @@ class ScriptedModel {
     if (sql === "ROLLBACK") {
       if (side === "blocker" && this.held) {
         this.held = false; this.waiting = false; this.released = true;
-        this.pending?.reject({ code: this.fault === "wrong-refusal" ? "P0001" : "42501" }); this.pending = undefined;
+        if (this.pending?.deletion && this.fault !== "delete-wrong-refusal") {
+          this.pending.resolve([]);
+        } else this.pending?.reject({ code: this.fault === "wrong-refusal" ? "P0001" : "42501" });
+        this.pending = undefined;
       }
       return [];
     }
-    if (side === "checker" && (/^(?:UPDATE public\.|DELETE FROM public\.)/.test(sql) || /^SELECT (?:\* FROM )?public\./.test(sql))) {
+    if (side === "checker" && (/^(?:UPDATE public\.|DELETE FROM public\.|DO \$parent_delete\$)/.test(sql) || /^SELECT (?:\* FROM )?public\./.test(sql))) {
       if (this.fault === "refuses-before-guard") throw { code: "42501" };
       if (!this.held) throw Error("simulated writer bypassed held guard");
       this.waiting = true;
-      return new Promise((_, reject) => { this.pending = { reject }; });
+      return new Promise((resolve, reject) => { this.pending = { resolve, reject, deletion: sql.startsWith("DO $parent_delete$") }; });
     }
     return [];
   }
@@ -71,7 +75,8 @@ describe("SIMULATED parent admission contention protocol; no native acceptance",
     expect(report, JSON.stringify(report.cases)).toMatchObject({ authenticationAccepted: false, passed: true, sessionsClosed: true, backendPids: [101, 102, 103] });
     expect(report.cases.map(item => item.name)).toEqual(PARENT_CONTENTION_CASES);
     for (const item of report.cases) expect(item).toMatchObject({ status: "passed", parentProbeSucceeded: true,
-      edge: { waiterPid: 102, blockerPid: 101 }, observedSqlstate: "42501", beforeDigest: "a".repeat(32), afterDigest: "a".repeat(32) });
+      edge: { waiterPid: 102, blockerPid: 101 }, observedSqlstate: item.name === "owner-delete" ? "00000" : "42501", beforeDigest: "a".repeat(32), afterDigest: "a".repeat(32) });
+    expect(report.cases.find(item => item.name === "owner-delete")).toMatchObject({ expectedSqlstate: "00000", affectedRows: 0 });
     expect(model.closeCalls.sort()).toEqual(["blocker", "checker", "observer"]);
     expect(model.statements.filter(item => item.sql.includes("FOR UPDATE NOWAIT"))).toHaveLength(8);
     // Reuse the existing real transport's strict framing rather than crediting
@@ -105,6 +110,14 @@ describe("SIMULATED parent admission contention protocol; no native acceptance",
     const report = await runBuilderParentAdmissionContention(model.sessions, fixture, { pollMs: 1 });
     expect(report.cases.every(item => item.status === "passed")).toBe(true);
     expect(report.sessionsClosed).toBe(false); expect(report.passed).toBe(false);
+  });
+  it.each(["delete-positive-count", "delete-wrong-refusal"] as const)("rejects %s instead of crediting the RLS no-row branch", async fault => {
+    const model = new ScriptedModel(fault);
+    const report = await runBuilderParentAdmissionContention(model.sessions, fixture, { pollMs: 1 });
+    expect(report.passed).toBe(false);
+    expect(report.cases.at(-1)).toMatchObject({ name: "owner-delete", status: "failed", expectedSqlstate: "00000",
+      reason: fault === "delete-positive-count" ? "Authenticated DELETE affected-row proof unavailable" : "Unexpected post-guard mutation outcome" });
+    expect(model.closeCalls).toHaveLength(3);
   });
   it("refuses a malformed fixture before beginning any guard/parent transaction", async () => {
     const model = new ScriptedModel("invalid-fixture");

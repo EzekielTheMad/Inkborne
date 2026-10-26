@@ -10,7 +10,7 @@ CREATE TEMP TABLE parent_case_input_v1 ON COMMIT DROP AS SELECT :'character_id':
 CREATE TEMP TABLE parent_case_results_v1(role_name text,case_name text,outcome text,sqlstate text) ON COMMIT DROP;
 DO $cases$
 DECLARE target uuid; actor uuid; parent public.characters%ROWTYPE; role_name text; item record;
-  next_state jsonb; next_scores jsonb; feature_slug text; ability text; statement text; actual_code text;
+  next_state jsonb; next_scores jsonb; feature_slug text; ability text; statement text; actual_code text; affected bigint;
   before_value jsonb; after_value jsonb; saved public.characters%ROWTYPE;
 BEGIN
   IF CURRENT_USER<>'postgres' OR NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='postgres' AND NOT rolsuper AND rolbypassrls) THEN
@@ -66,19 +66,32 @@ BEGIN
       ('asi_rpc',format('SELECT * FROM public.set_character_asi_choice(%L::uuid,%L,''asi'',%L::jsonb,NULL,NULL)',target,feature_slug,
         jsonb_build_array(jsonb_build_object('ability',ability,'amount',2))))
     ) vectors(name,sql) LOOP
-      actual_code:=NULL;
+      actual_code:=NULL; affected:=NULL;
       BEGIN
         EXECUTE format('SET LOCAL ROLE %I',role_name);
         PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',actor,'role',role_name)::text,true);
         PERFORM set_config('request.jwt.claim.sub',actor::text,true);
         EXECUTE item.sql;
-        RAISE EXCEPTION 'parent_cases_unexpected_mutation_success' USING ERRCODE='ZP001';
+        GET DIAGNOSTICS affected=ROW_COUNT;
+        -- The maintained catalog has no authenticated DELETE policy. Its
+        -- statement guard still runs, but RLS hides every candidate row.
+        IF role_name='authenticated' AND item.name='delete' AND affected=0 THEN
+          actual_code:='00000';
+        ELSE
+          RAISE EXCEPTION 'parent_cases_unexpected_mutation_success' USING ERRCODE='ZP001';
+        END IF;
       EXCEPTION WHEN OTHERS THEN
         GET STACKED DIAGNOSTICS actual_code=RETURNED_SQLSTATE;
       END;
       EXECUTE 'SET LOCAL ROLE postgres';
-      IF actual_code IS DISTINCT FROM '42501' THEN RAISE EXCEPTION 'parent_cases_unexpected_sqlstate: % % %',role_name,item.name,actual_code; END IF;
-      INSERT INTO pg_temp.parent_case_results_v1 VALUES(role_name,item.name,'refused_unchanged',actual_code);
+      IF role_name='authenticated' AND item.name='delete' THEN
+        IF actual_code IS DISTINCT FROM '00000' OR affected IS DISTINCT FROM 0 THEN
+          RAISE EXCEPTION 'parent_cases_authenticated_delete_outcome_changed'; END IF;
+        INSERT INTO pg_temp.parent_case_results_v1 VALUES(role_name,item.name,'rls_no_rows_unchanged',actual_code);
+      ELSE
+        IF actual_code IS DISTINCT FROM '42501' THEN RAISE EXCEPTION 'parent_cases_unexpected_sqlstate: % % %',role_name,item.name,actual_code; END IF;
+        INSERT INTO pg_temp.parent_case_results_v1 VALUES(role_name,item.name,'refused_unchanged',actual_code);
+      END IF;
     END LOOP;
     BEGIN
       EXECUTE format('SET LOCAL ROLE %I',role_name);
@@ -105,6 +118,7 @@ BEGIN
     OR EXISTS(SELECT 1 FROM private.character_builder_capabilities_v1) THEN RAISE EXCEPTION 'parent_cases_retained_state_changed'; END IF;
 END $cases$;
 SELECT jsonb_build_object('kind','builder-parent-admission-native-sql-negatives-v1','authenticationAccepted',false,
- 'caseCount',count(*),'cases',jsonb_agg(jsonb_build_object('role',role_name,'case',case_name,'outcome',outcome,'sqlstate',sqlstate) ORDER BY role_name,case_name))
+ 'caseCount',count(*),'cases',jsonb_agg(jsonb_build_object('role',role_name,'case',case_name,'outcome',outcome,'sqlstate',sqlstate)
+   ||CASE WHEN outcome='rls_no_rows_unchanged' THEN jsonb_build_object('affectedRows',0) ELSE '{}'::jsonb END ORDER BY role_name,case_name))
  FROM pg_temp.parent_case_results_v1;
 ROLLBACK;
