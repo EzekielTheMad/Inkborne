@@ -25,6 +25,8 @@ interface ClassLevelPaneProps {
   styleOptions: ContentEntry[];
   localChoices: CharacterChoices;
   feats?: UsableFeatOption[];
+  asiAbilityScores?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  earnedFavoredEnemyChoices?: Readonly<Record<string, FavoredEnemyChoice>>;
   onFeatSearch?: UsableFeatSearch;
   currentSubclass: string | undefined;
   classChoices: ChoiceEffect[];
@@ -57,6 +59,8 @@ export function ClassLevelPane({
   styleOptions,
   localChoices,
   feats = [],
+  asiAbilityScores,
+  earnedFavoredEnemyChoices,
   onFeatSearch,
   currentSubclass,
   classChoices,
@@ -127,6 +131,7 @@ export function ClassLevelPane({
                 return choice.favoredEnemyOptions && onFavoredEnemySelect ? <ChoiceCardFavoredEnemy
                   key={choice.featureSlug} featureSlug={choice.featureSlug} label={choice.label} options={choice.favoredEnemyOptions}
                   value={localChoices.favored_enemies?.[choice.featureSlug]} availableLanguages={availableLanguages}
+                  otherChoices={Object.entries(earnedFavoredEnemyChoices ?? {}).filter(([slug]) => slug !== choice.featureSlug).map(([, value]) => value)}
                   onSelect={value => onFavoredEnemySelect(choice.featureSlug!, value)} />
                   : <p key={choice.featureSlug} role="status">This favored enemy choice could not be loaded. Reload before editing.</p>;
               }
@@ -136,6 +141,7 @@ export function ClassLevelPane({
                     key={choice.featureSlug ?? `${choice.type}-${idx}`}
                     featureSlug={choice.featureSlug!}
                     currentChoice={localChoices.asi_choices?.[choice.featureSlug!]}
+                    abilityScores={asiAbilityScores?.[choice.featureSlug!]}
                     feats={feats}
                     onSearch={onFeatSearch}
                     onSelect={(c) => onAsiSelect(choice.featureSlug!, c)}

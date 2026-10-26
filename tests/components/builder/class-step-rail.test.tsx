@@ -73,17 +73,19 @@ describe("FeatureCard", () => {
 
 import { ChoiceCardASI } from "@/components/builder/class-step-rail/choice-card-asi";
 
+const asiScores = { strength: 15, dexterity: 14, constitution: 13, intelligence: 12, wisdom: 10, charisma: 8 };
+
 describe("ChoiceCardASI", () => {
   it("shows 'Choose' badge when no choice is made", () => {
     render(
-      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={vi.fn()} />,
+      <ChoiceCardASI abilityScores={asiScores} featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={vi.fn()} />,
     );
     expect(screen.getByText("Choose")).toBeInTheDocument();
   });
 
   it("shows 'Chosen' badge when a choice exists", () => {
     render(
-      <ChoiceCardASI
+      <ChoiceCardASI abilityScores={asiScores}
         featureSlug="paladin-asi-4"
         currentChoice={{ mode: "asi", allocations: [{ ability: "strength", amount: 2 }] }}
         feats={[]}
@@ -96,10 +98,10 @@ describe("ChoiceCardASI", () => {
   it("calls onSelect with a +2 allocation when the user picks +2 to strength", () => {
     const onSelect = vi.fn();
     render(
-      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
+      <ChoiceCardASI abilityScores={asiScores} featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
     );
-    // Toggle to "Increase one ability by 2" mode (default in this test) and click STR.
-    fireEvent.click(screen.getByRole("button", { name: /^STR \+2$/ }));
+    // The default amount is +2; choosing an ability saves the complete allocation.
+    fireEvent.change(screen.getByRole("combobox", { name: "Ability to increase by 2" }), { target: { value: "strength" } });
     expect(onSelect).toHaveBeenCalledWith({
       mode: "asi",
       allocations: [{ ability: "strength", amount: 2 }],
@@ -109,11 +111,11 @@ describe("ChoiceCardASI", () => {
   it("calls onSelect with two +1 allocations in two-stat mode", () => {
     const onSelect = vi.fn();
     render(
-      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
+      <ChoiceCardASI abilityScores={asiScores} featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /two abilities by \+1/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^STR \+1$/ }));
-    fireEvent.click(screen.getByRole("button", { name: /^DEX \+1$/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Ability increase" }), { target: { value: "split" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Ability 1 to increase by 1" }), { target: { value: "strength" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Ability 2 to increase by 1" }), { target: { value: "dexterity" } });
     // The last call carries the final state: STR+1 + DEX+1.
     const lastCall = onSelect.mock.calls.at(-1)?.[0];
     expect(lastCall).toEqual({
@@ -128,10 +130,10 @@ describe("ChoiceCardASI", () => {
   it("keeps a partial split local until both abilities are chosen", () => {
     const onSelect = vi.fn();
     render(
-      <ChoiceCardASI featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
+      <ChoiceCardASI abilityScores={asiScores} featureSlug="paladin-asi-4" currentChoice={undefined} feats={[]} onSelect={onSelect} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /two abilities by \+1/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^STR \+1$/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Ability increase" }), { target: { value: "split" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Ability 1 to increase by 1" }), { target: { value: "strength" } });
 
     expect(onSelect).not.toHaveBeenCalled();
     expect(screen.getByText(/choose one more ability/i)).toBeInTheDocument();
@@ -140,7 +142,7 @@ describe("ChoiceCardASI", () => {
   it("selects an eligible exact feat version", () => {
     const onSelect = vi.fn();
     render(
-      <ChoiceCardASI
+      <ChoiceCardASI abilityScores={asiScores}
         featureSlug="paladin-asi-4"
         currentChoice={undefined}
         feats={[{
@@ -157,8 +159,8 @@ describe("ChoiceCardASI", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
-    fireEvent.click(screen.getByRole("button", { name: /Ember Sentinel/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Improvement type" }), { target: { value: "feat" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Available feat" }), { target: { value: "11111111-1111-4111-8111-111111111111:3" } });
 
     expect(onSelect).toHaveBeenCalledWith({
       mode: "feat",
@@ -168,10 +170,10 @@ describe("ChoiceCardASI", () => {
     });
   });
 
-  it("shows but does not select a feat with an unmet prerequisite", () => {
+  it("omits feats with unmet prerequisites from available options", () => {
     const onSelect = vi.fn();
     render(
-      <ChoiceCardASI
+      <ChoiceCardASI abilityScores={asiScores}
         featureSlug="paladin-asi-4"
         currentChoice={undefined}
         feats={[{
@@ -188,11 +190,9 @@ describe("ChoiceCardASI", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
-    const featButton = screen.getByRole("button", { name: /Titan Grip/ });
-    expect(featButton).toBeDisabled();
-    expect(screen.getByText(/currently 12/)).toBeInTheDocument();
-    fireEvent.click(featButton);
+    fireEvent.change(screen.getByRole("combobox", { name: "Improvement type" }), { target: { value: "feat" } });
+    expect(screen.queryByRole("option", { name: /Titan Grip/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Feat" })).not.toBeInTheDocument();
     expect(onSelect).not.toHaveBeenCalled();
   });
 
@@ -212,7 +212,7 @@ describe("ChoiceCardASI", () => {
         : [],
     );
     render(
-      <ChoiceCardASI
+      <ChoiceCardASI abilityScores={asiScores}
         featureSlug="fighter-asi-4"
         currentChoice={undefined}
         feats={[]}
@@ -221,13 +221,13 @@ describe("ChoiceCardASI", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Improvement type" }), { target: { value: "feat" } });
     fireEvent.change(screen.getByPlaceholderText("Search available feats"), {
       target: { value: "late" },
     });
 
     await waitFor(() => expect(onSearch).toHaveBeenCalledWith("fighter-asi-4", "late"));
-    expect(await screen.findByRole("button", { name: /Late Alphabet Feat/ })).toBeVisible();
+    expect(await screen.findByRole("option", { name: /Late Alphabet Feat/ })).toBeVisible();
   });
 
   it("ignores a stale feat-search response", async () => {
@@ -250,7 +250,7 @@ describe("ChoiceCardASI", () => {
         : []);
     });
     render(
-      <ChoiceCardASI
+      <ChoiceCardASI abilityScores={asiScores}
         featureSlug="fighter-asi-4"
         currentChoice={undefined}
         feats={[]}
@@ -259,16 +259,16 @@ describe("ChoiceCardASI", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Feat" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Improvement type" }), { target: { value: "feat" } });
     const input = screen.getByPlaceholderText("Search available feats");
     fireEvent.change(input, { target: { value: "ember" } });
     await waitFor(() => expect(onSearch).toHaveBeenCalledWith("fighter-asi-4", "ember"));
     fireEvent.change(input, { target: { value: "titan" } });
     await waitFor(() => expect(onSearch).toHaveBeenCalledWith("fighter-asi-4", "titan"));
-    expect(await screen.findByRole("button", { name: /Titan Guard/ })).toBeVisible();
+    expect(await screen.findByRole("option", { name: /Titan Guard/ })).toBeVisible();
 
     resolveEmber([]);
-    await waitFor(() => expect(screen.getByRole("button", { name: /Titan Guard/ })).toBeVisible());
+    await waitFor(() => expect(screen.getByRole("option", { name: /Titan Guard/ })).toBeVisible());
   });
 });
 
@@ -329,7 +329,7 @@ describe("ChoiceCardSubclass", () => {
         onSelect={onSelect}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Oath of Devotion/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Subclass" }), { target: { value: "devotion" } });
     expect(onSelect).toHaveBeenCalledWith("devotion");
   });
 });
@@ -391,7 +391,7 @@ describe("ChoiceCardFightingStyle", () => {
         onSelect={onSelect}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Archery/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Fighting style" }), { target: { value: "fs-archery" } });
     expect(onSelect).toHaveBeenCalledWith("fighter-fighting-style", "fighter", "fs-archery");
   });
 });
@@ -1304,29 +1304,29 @@ describe("HpPicker", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders all three method buttons under free_choice", () => {
+  it("renders all three method options under free_choice", () => {
     render(<HpPicker {...defaults()} />);
-    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /Manual/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Roll d10/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Manual/i })).toBeInTheDocument();
   });
 
-  it("Average button shows displayed value avg + conMod (d10 + CON 2 → +8)", () => {
+  it("Average option shows displayed value avg + conMod (d10 + CON 2 → +8)", () => {
     render(<HpPicker {...defaults()} />);
-    expect(screen.getByRole("radio", { name: /Average.*\+8/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Average.*\+8/i })).toBeInTheDocument();
   });
 
   it("clicking Average calls onChange with raw die contribution (no conMod)", () => {
     const onChange = vi.fn();
     render(<HpPicker {...defaults({ onChange })} />);
-    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Hit point method" }), { target: { value: "average" } });
     expect(onChange).toHaveBeenCalledWith({ method: "average", value: 6 });
   });
 
   it("clicking Roll d{die} writes a roll in [1, die]", () => {
     const onChange = vi.fn();
     render(<HpPicker {...defaults({ onChange })} />);
-    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Hit point method" }), { target: { value: "rolled" } });
     expect(onChange).toHaveBeenCalledTimes(1);
     const record = onChange.mock.calls[0][0] as HpRollRecord;
     expect(record.method).toBe("rolled");
@@ -1334,18 +1334,19 @@ describe("HpPicker", () => {
     expect(record.value).toBeLessThanOrEqual(10);
   });
 
-  it("re-clicking Roll re-rolls (overwrites stored value)", () => {
+  it("retains a stored roll without generating a new roll on rerender", () => {
     const onChange = vi.fn();
-    render(<HpPicker {...defaults({ onChange })} />);
-    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
-    fireEvent.click(screen.getByRole("radio", { name: /Roll d10/i }));
-    expect(onChange).toHaveBeenCalledTimes(2);
+    const props = defaults({ onChange, storedRoll: { method: "rolled", value: 8 } });
+    const view = render(<HpPicker {...props} />);
+    view.rerender(<HpPicker {...props} conMod={3} />);
+    expect(screen.getByRole("combobox", { name: "Hit point method" })).toHaveValue("rolled");
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("clicking Manual reveals a numeric input and onChange fires on Enter", () => {
     const onChange = vi.fn();
     render(<HpPicker {...defaults({ onChange })} />);
-    fireEvent.click(screen.getByRole("radio", { name: /Manual/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Hit point method" }), { target: { value: "manual" } });
     const input = screen.getByLabelText("Manual HP value");
     fireEvent.change(input, { target: { value: "7" } });
     fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
@@ -1355,23 +1356,23 @@ describe("HpPicker", () => {
   it("Manual input out-of-range (0 or > die) does not fire onChange", () => {
     const onChange = vi.fn();
     render(<HpPicker {...defaults({ onChange })} />);
-    fireEvent.click(screen.getByRole("radio", { name: /Manual/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Hit point method" }), { target: { value: "manual" } });
     const input = screen.getByLabelText("Manual HP value");
     fireEvent.change(input, { target: { value: "11" } });
     fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("rendered method shows aria-checked on the right radio when storedRoll is present", () => {
+  it("selects the stored HP method", () => {
     render(<HpPicker {...defaults({ storedRoll: { method: "rolled", value: 8 } })} />);
-    const rollBtn = screen.getByRole("radio", { name: /Roll d10/i });
-    expect(rollBtn).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("combobox", { name: "Hit point method" })).toHaveValue("rolled");
   });
 
   it.each(["manual", "rolled"] as const)("shows minimum +1 for a low %s HP gain without rewriting the record", (method) => {
     const onChange=vi.fn();
     render(<HpPicker {...defaults({conMod:-4,storedRoll:{method,value:1},onChange})}/>);
-    expect(screen.getByRole("radio",{name:method==="manual"?/^Manual\s*\(\+1\)$/:/^Roll d10\s*\(\+1\)$/})).toHaveAttribute("aria-checked","true");
+    expect(screen.getByRole("option",{name:method==="manual"?/^Manual\s*\(\+1\)$/:/^Roll d10\s*\(\+1\)$/})).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Hit point method" })).toHaveValue(method);
     expect(screen.getByText(/Total HP gain this level:/)).toHaveTextContent("+1");
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -1381,11 +1382,11 @@ describe("HpPicker", () => {
     expect(screen.getByText("+1",{exact:true})).toBeVisible();
   });
 
-  it("rolled_only rule renders only the Roll button + read-only display when no roll yet", () => {
+  it("rolled_only rule renders only the Roll option when no roll yet", () => {
     render(<HpPicker {...defaults({ hpRule: "rolled_only" })} />);
-    expect(screen.queryByRole("radio", { name: /Average/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("radio", { name: /Manual/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Average/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Manual/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Roll d10/i })).toBeInTheDocument();
   });
 
   it("hides an open Manual draft when the campaign becomes rolled-only without writing it", () => {
@@ -1399,31 +1400,31 @@ describe("HpPicker", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("average_only rule renders read-only display, no interactive radios", () => {
+  it("average_only rule renders read-only display, no method dropdown", () => {
     const { container } = render(<HpPicker {...defaults({ hpRule: "average_only" })} />);
-    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.queryAllByRole("combobox", { name: "Hit point method" })).toHaveLength(0);
     expect(screen.getByText(/Campaign rule: Average/i)).toBeInTheDocument();
     expect(container.textContent).toContain("+8");
   });
 
   it("max_for_all rule renders read-only display showing max + conMod", () => {
     const { container } = render(<HpPicker {...defaults({ hpRule: "max_for_all" })} />);
-    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.queryAllByRole("combobox", { name: "Hit point method" })).toHaveLength(0);
     expect(screen.getByText(/Campaign rule: Max/i)).toBeInTheDocument();
     expect(container.textContent).toContain("+12");
   });
 
   it("max_first_level_each_class at level 1 of any class renders read-only display", () => {
     render(<HpPicker {...defaults({ hpRule: "max_first_level_each_class", level: 1 })} />);
-    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.queryAllByRole("combobox", { name: "Hit point method" })).toHaveLength(0);
     expect(screen.getByText(/First level of class.*Max/i)).toBeInTheDocument();
   });
 
   it("max_first_level_each_class at level > 1 renders the full free_choice picker", () => {
     render(<HpPicker {...defaults({ hpRule: "max_first_level_each_class", level: 5 })} />);
-    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /Roll d10/i })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /Manual/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Roll d10/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Manual/i })).toBeInTheDocument();
   });
 });
 
@@ -1572,12 +1573,12 @@ describe("LevelUpPane", () => {
 
   it("renders the HP picker for non-Lv1-primary draft levels", () => {
     render(<LevelUpPane {...defaults()} />);
-    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Average/i })).toBeInTheDocument();
   });
 
   it("does NOT render the HP picker when draft is Lv1 of primary class", () => {
     render(<LevelUpPane {...defaults({ draftLevel: 1, isPrimaryClass: true })} />);
-    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Hit point method" })).not.toBeInTheDocument();
   });
 
   it("Confirm is disabled when there is an unmade required choice", () => {
@@ -1613,7 +1614,7 @@ describe("LevelUpPane", () => {
   it("clicking HP picker Average fires onHpRollChange with the right key", () => {
     const onHpRollChange = vi.fn();
     render(<LevelUpPane {...defaults({ onHpRollChange })} />);
-    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Hit point method" }), { target: { value: "average" } });
     expect(onHpRollChange).toHaveBeenCalledWith("paladin-7", { method: "average", value: 6 });
   });
 
@@ -1672,23 +1673,23 @@ describe("ClassLevelPane — HP picker retrofit", () => {
 
   it("renders the HP picker for non-Lv1-primary levels", () => {
     render(<ClassLevelPane {...defaults({ row: { level: 5, features: [], choices: [] } })} />);
-    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Average/i })).toBeInTheDocument();
   });
 
   it("does NOT render the HP picker for Lv1 of primary class", () => {
     render(<ClassLevelPane {...defaults({ row: { level: 1, features: [], choices: [] }, isPrimaryClass: true })} />);
-    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Hit point method" })).not.toBeInTheDocument();
   });
 
   it("renders HP picker for Lv1 of non-primary class (multiclass first level)", () => {
     render(<ClassLevelPane {...defaults({ row: { level: 1, features: [], choices: [] }, isPrimaryClass: false })} />);
-    expect(screen.getByRole("radio", { name: /Average/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /Average/i })).toBeInTheDocument();
   });
 
   it("clicking the HP picker fires onHpRollChange with the right key", () => {
     const onHpRollChange = vi.fn();
     render(<ClassLevelPane {...defaults({ row: { level: 5, features: [], choices: [] }, onHpRollChange })} />);
-    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Hit point method" }), { target: { value: "average" } });
     expect(onHpRollChange).toHaveBeenCalledWith("paladin-5", { method: "average", value: 6 });
   });
 });
@@ -1883,7 +1884,7 @@ describe("ClassStepRail — level-up flow", () => {
     const { onConfirmLevelUp, onHpRollChange, props, rerender } = setupForLevelUp();
     fireEvent.click(screen.getByRole("button", { name: /Level up Paladin to level 7/i }));
     // Pick HP first (no choices at Paladin Lv 7 — passive level)
-    fireEvent.click(screen.getByRole("radio", { name: /Average/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Hit point method" }), { target: { value: "average" } });
     expect(onHpRollChange).toHaveBeenCalledWith("paladin-7", { method: "average", value: 6 });
     // Dispatch alone is not confirmation. The parent owns saved/optimistic HP.
     expect(screen.getByRole("button", { name: /Confirm level 7/i })).toBeDisabled();
@@ -2761,7 +2762,7 @@ describe("ClassStepRail — direct set-level surfaces skipped required choices (
 
     // The main pane must surface the skipped required choice — not sit on level 1.
     expect(screen.getByRole("heading", { level: 2, name: "Arcane Tradition" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /School of Evocation/i })).toBeInTheDocument();
   });
 
   it("keeps a visible 'Choose your Arcane Tradition' affordance on the rail while the choice is pending", () => {
@@ -2791,21 +2792,21 @@ describe("ClassStepRail — mobile level detail sheet (UAT A3/A4)", () => {
     render(<ClassStepRail {...props} />);
     fireEvent.click(screen.getByRole("button", { name: /^Level 2/i }));
     expect(screen.getByRole("heading", { level: 2, name: "Arcane Tradition" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /School of Evocation/i })).toBeInTheDocument();
   });
 
   it("tapping the pending-choice callout opens the detail sheet at the pending level", () => {
     const { props } = wizardProps({ selectedClasses: [{ slug: "wizard", level: 3 }] });
     render(<ClassStepRail {...props} />);
     fireEvent.click(screen.getByRole("button", { name: /Choose your Arcane Tradition/i }));
-    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /School of Evocation/i })).toBeInTheDocument();
   });
 
   it("picking the subclass inside the sheet forwards onSubclassSelect (same selector as level-up)", () => {
     const { props, handlers } = wizardProps({ selectedClasses: [{ slug: "wizard", level: 3 }] });
     render(<ClassStepRail {...props} />);
     fireEvent.click(screen.getByRole("button", { name: /Choose your Arcane Tradition/i }));
-    fireEvent.click(screen.getByRole("button", { name: /School of Evocation/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Arcane Tradition" }), { target: { value: "evocation" } });
     expect(handlers.onSubclassSelect).toHaveBeenCalledWith("wizard", 0, "evocation");
   });
 
@@ -2816,7 +2817,7 @@ describe("ClassStepRail — mobile level detail sheet (UAT A3/A4)", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "Set level for Wizard" }), { target: { value: "3" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     expect(handlers.onLevelChange).toHaveBeenCalledWith(0, 3);
-    expect(screen.getByRole("button", { name: /School of Evocation/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /School of Evocation/i })).toBeInTheDocument();
   });
 
   it("does not open the detail sheet after a set-level change with nothing pending", () => {
@@ -2828,7 +2829,7 @@ describe("ClassStepRail — mobile level detail sheet (UAT A3/A4)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Set level" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Set level for Wizard" }), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
-    expect(screen.queryByRole("button", { name: /School of Evocation/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /School of Evocation/i })).not.toBeInTheDocument();
   });
 });
 

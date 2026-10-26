@@ -19,7 +19,7 @@ import type { ContentEntry } from "@/components/builder/content-browser";
 import type { CharacterChoices, AsiChoice, HpRollRecord, UsableFeatOption, UsableFeatSearch } from "@/lib/types/character";
 import type { ChoiceEffect } from "@/lib/types/effects";
 import type { HpRule } from "@/lib/builder/level-up-rules";
-import type { FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
+import { isFavoredEnemyComplete, type FavoredEnemyChoice } from "@/lib/builder/favored-enemy";
 
 export interface ClassStepRailProps {
   saveLevelImmediately?: boolean;
@@ -34,6 +34,8 @@ export interface ClassStepRailProps {
   subclasses: ContentEntry[];
   features: ContentEntry[];
   feats?: UsableFeatOption[];
+  /** Per-feature scores with that feature's own improvement excluded. */
+  asiAbilityScores?: Readonly<Record<string, Readonly<Record<string, number>>>>;
   onFeatSearch?: UsableFeatSearch;
   selectedClasses: Array<{
     slug: string;
@@ -98,6 +100,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     subclasses,
     features,
     feats = [],
+    asiAbilityScores,
     onFeatSearch,
     selectedClasses,
     localChoices,
@@ -186,13 +189,30 @@ export function ClassStepRail(props: ClassStepRailProps) {
 
   const conMod = Math.floor(((resolvedStats.constitution ?? 10) - 10) / 2);
 
+  // Only actual earned feature definitions can reserve an enemy choice. Stale
+  // saved keys, future tiers, and foreign subclasses must not hide valid options.
+  const earnedFavoredEnemyChoices: Record<string, FavoredEnemyChoice> = {};
+  selectedClasses.forEach((cls, classIndex) => {
+    const classContent = classes.find(content => content.slug === cls.slug);
+    if (!classContent) return;
+    const subclassContent = subclasses.find(content => content.slug === cls.subclass && content.data.parent_class === cls.slug) ?? null;
+    const earnedRows = classFeaturesPerLevel({ classContent, features, subclassContent,
+      characterChoices: localChoices, classIndex, availableLanguages }).filter(row => row.level <= cls.level);
+    for (const choice of earnedRows.flatMap(row => row.choices)) {
+      if (choice.type !== "favored-enemy" || !choice.featureSlug || !choice.favoredEnemyOptions) continue;
+      const saved = localChoices.favored_enemies?.[choice.featureSlug];
+      const definition = { data: { feature_type: "favored_enemy", favored_enemy: choice.favoredEnemyOptions } };
+      if (isFavoredEnemyComplete(definition, saved, availableLanguages)) earnedFavoredEnemyChoices[choice.featureSlug] = saved;
+    }
+  });
+
   // ---------------------------------------------------------------------------
   // Shared: per-class computed values builder.
   // ---------------------------------------------------------------------------
   function buildRailProps(cls: typeof selectedClasses[number], idx: number) {
     const classContent = classes.find((c) => c.slug === cls.slug);
     if (!classContent) return null;
-    const subclassContent = cls.subclass ? subclasses.find((sc) => sc.slug === cls.subclass) ?? null : null;
+    const subclassContent = cls.subclass ? subclasses.find((sc) => sc.slug === cls.subclass && sc.data.parent_class === cls.slug) ?? null : null;
     const perLevel = classFeaturesPerLevel({
       classContent,
       features,
@@ -322,7 +342,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       const draft = levelUpDraft!;
       const cls = selectedClasses[draft.classIndex];
       const classContent = classes.find((c) => c.slug === cls?.slug);
-      const subclassContent = cls?.subclass ? subclasses.find((sc) => sc.slug === cls.subclass) ?? null : null;
+      const subclassContent = cls?.subclass ? subclasses.find((sc) => sc.slug === cls.subclass && sc.data.parent_class === cls.slug) ?? null : null;
 
       if (classContent && cls) {
         const perLevel = classFeaturesPerLevel({
@@ -365,6 +385,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
             styleOptions={styleOptions}
             localChoices={localChoices}
             feats={feats}
+            asiAbilityScores={asiAbilityScores}
+            earnedFavoredEnemyChoices={earnedFavoredEnemyChoices}
             onFeatSearch={onFeatSearch}
             currentSubclass={cls.subclass}
             classChoices={classChoices}
@@ -399,7 +421,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
       const classContent = classes.find((c) => c.slug === cls?.slug);
       if (classContent && cls) {
         const subclassContent = cls.subclass
-          ? subclasses.find((sc) => sc.slug === cls.subclass) ?? null
+          ? subclasses.find((sc) => sc.slug === cls.subclass && sc.data.parent_class === cls.slug) ?? null
           : null;
         const perLevel = classFeaturesPerLevel({
           classContent,
@@ -435,6 +457,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
             styleOptions={styleOptions}
             localChoices={localChoices}
             feats={feats}
+            asiAbilityScores={asiAbilityScores}
+            earnedFavoredEnemyChoices={earnedFavoredEnemyChoices}
             onFeatSearch={onFeatSearch}
             currentSubclass={cls.subclass}
             classChoices={classChoices}
@@ -550,7 +574,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     const draft = levelUpDraft!;
     const cls = selectedClasses[draft.classIndex];
     const classContent = classes.find((c) => c.slug === cls?.slug);
-    const subclassContent = cls?.subclass ? subclasses.find((sc) => sc.slug === cls.subclass) ?? null : null;
+    const subclassContent = cls?.subclass ? subclasses.find((sc) => sc.slug === cls.subclass && sc.data.parent_class === cls.slug) ?? null : null;
 
     if (classContent && cls) {
       const perLevel = classFeaturesPerLevel({
@@ -584,6 +608,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
           styleOptions={styleOptions}
           localChoices={localChoices}
           feats={feats}
+          asiAbilityScores={asiAbilityScores}
+          earnedFavoredEnemyChoices={earnedFavoredEnemyChoices}
           onFeatSearch={onFeatSearch}
           currentSubclass={cls.subclass}
           classChoices={classChoices}
@@ -623,7 +649,7 @@ export function ClassStepRail(props: ClassStepRailProps) {
     const activeClass = selectedClasses[selected.classIndex];
     const activeClassContent = activeClass ? classes.find((c) => c.slug === activeClass.slug) : undefined;
     const activeSubclassContent = activeClass?.subclass
-      ? subclasses.find((sc) => sc.slug === activeClass.subclass) ?? null
+      ? subclasses.find((sc) => sc.slug === activeClass.subclass && sc.data.parent_class === activeClass.slug) ?? null
       : null;
 
     if (activeClassContent && activeClass) {
@@ -654,6 +680,8 @@ export function ClassStepRail(props: ClassStepRailProps) {
           styleOptions={styleOptionsForActive}
           localChoices={localChoices}
           feats={feats}
+          asiAbilityScores={asiAbilityScores}
+          earnedFavoredEnemyChoices={earnedFavoredEnemyChoices}
           onFeatSearch={onFeatSearch}
           currentSubclass={activeClass.subclass}
           classChoices={activeClassChoices}

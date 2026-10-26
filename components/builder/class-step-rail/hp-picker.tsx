@@ -111,10 +111,6 @@ function HpPickerInteractive(props: InteractiveProps) {
     storedRoll?.method === "manual" ? String(storedRoll.value) : "",
   );
 
-  function isChecked(method: HpRollRecord["method"]): boolean {
-    return storedRoll?.method === method;
-  }
-
   function handleAverage() {
     setShowManualInput(false);
     onChange({ method: "average", value: avg });
@@ -142,60 +138,28 @@ function HpPickerInteractive(props: InteractiveProps) {
   }
 
   const displayValue = storedRoll ? hpGain(storedRoll.value, conMod) : null;
+  const methodId = `${labelId}-method`;
+  const method = showManualInput && !onlyRoll ? "manual" : onlyRoll && storedRoll?.method !== "rolled" ? "" : storedRoll?.method ?? "";
 
   return (
     <div className="rounded-md border border-border bg-card/40 p-4">
       <p id={labelId} className="text-xs font-medium uppercase text-muted-foreground tracking-wider">
         Hit points
       </p>
-      <div role="radiogroup" aria-labelledby={labelId} className="mt-3 flex flex-wrap items-center gap-2">
-        {!onlyRoll && (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={isChecked("average") ? "true" : "false"}
-            onClick={handleAverage}
-            className={cn(
-              "rounded-md border px-3 py-1.5 text-sm transition-colors",
-              isChecked("average") ? "border-accent bg-accent/10 text-accent-foreground" : "border-border hover:bg-accent/5",
-            )}
-          >
-            Average (+{hpGain(avg, conMod)})
-          </button>
-        )}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={isChecked("rolled") ? "true" : "false"}
-          onClick={handleRoll}
-          className={cn(
-            "rounded-md border px-3 py-1.5 text-sm transition-colors",
-            isChecked("rolled") ? "border-accent bg-accent/10 text-accent-foreground" : "border-border hover:bg-accent/5",
-          )}
-        >
-          Roll d{hitDie}
-          {isChecked("rolled") && storedRoll && (
-            <span className="ml-1 text-muted-foreground">(+{hpGain(storedRoll.value, conMod)})</span>
-          )}
-        </button>
-        {!onlyRoll && (
-          <button
-            type="button"
-            role="radio"
-            aria-checked={isChecked("manual") ? "true" : "false"}
-            onClick={handleManualToggle}
-            className={cn(
-              "rounded-md border px-3 py-1.5 text-sm transition-colors",
-              isChecked("manual") ? "border-accent bg-accent/10 text-accent-foreground" : "border-border hover:bg-accent/5",
-            )}
-          >
-            Manual
-            {isChecked("manual") && storedRoll && (
-              <span className="ml-1 text-muted-foreground">(+{hpGain(storedRoll.value, conMod)})</span>
-            )}
-          </button>
-        )}
-      </div>
+      <label className="mt-3 block text-sm" htmlFor={methodId}>Hit point method</label>
+      <select id={methodId} value={method} onChange={event => {
+        if (event.target.value === "average" && !onlyRoll) handleAverage();
+        if (event.target.value === "rolled") handleRoll();
+        if (event.target.value === "manual" && !onlyRoll) handleManualToggle();
+      }} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <option value="">Choose a hit point method</option>
+        {!onlyRoll && <option value="average">Average (+{hpGain(avg, conMod)})</option>}
+        <option value="rolled">Roll d{hitDie}{storedRoll?.method === "rolled" ? ` (+${hpGain(storedRoll.value, conMod)})` : ""}</option>
+        {!onlyRoll && <option value="manual">Manual{storedRoll?.method === "manual" ? ` (+${hpGain(storedRoll.value, conMod)})` : ""}</option>}
+      </select>
+      {onlyRoll && storedRoll && storedRoll.method !== "rolled" && <p role="alert" className="mt-2 text-sm text-destructive">
+        The saved {storedRoll.method} HP choice is unavailable under this campaign rule. It remains saved until you choose a roll.
+      </p>}
       {showManualInput && !onlyRoll && (
         <div className="mt-3">
           <input
@@ -215,7 +179,7 @@ function HpPickerInteractive(props: InteractiveProps) {
               const next = event.relatedTarget;
               // Selecting a different method supersedes this unsaved manual draft.
               // Its blur must not dispatch a competing manual save first.
-              if (next instanceof Element && next.closest('[role="radiogroup"]')?.getAttribute("aria-labelledby") === labelId) return;
+              if (next instanceof Element && next.id === methodId) return;
               commitManual();
             }}
             className="w-24 rounded-md border border-border bg-background px-2 py-1 text-sm"

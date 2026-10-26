@@ -22,7 +22,9 @@ export function ChoiceCardSubclass({
   const matching = subclasses.filter(
     (sc) => (sc.data as Record<string, unknown>).parent_class === classSlug,
   );
-  const isMade = !!currentSelection;
+  const selected = matching.find(subclass => subclass.slug === currentSelection);
+  const isMade = !!selected;
+  const description = typeof selected?.data.description === "string" ? selected.data.description : null;
 
   return (
     <article className="rounded-md border border-border bg-card/40 p-4">
@@ -42,34 +44,21 @@ export function ChoiceCardSubclass({
       {matching.length === 0 ? (
         <p className="text-sm text-muted-foreground">No subclasses available for this class.</p>
       ) : (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {matching.map((sc) => {
-            const data = sc.data as Record<string, unknown>;
-            const description = typeof data.description === "string" ? data.description : null;
-            const selected = currentSelection === sc.slug;
-            return (
-              <button
-                key={sc.id}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => { if (!selected) onSelect(sc.slug); }}
-                className={cn(
-                  "text-left rounded-md border bg-card/30 px-3 py-3 transition-colors",
-                  "border-border hover:border-accent/50",
-                  selected && "border-accent bg-accent/10",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                )}
-              >
-                <p className="text-sm font-medium">{sc.name}</p>
-                {description && (
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-3">{description}</p>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <label className="block text-sm">{label}
+          <select value={selected?.slug ?? ""}
+            onChange={event => { const next = matching.find(item => item.slug === event.target.value);
+              if (next && next.slug !== currentSelection) onSelect(next.slug); }}
+            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <option value="">Choose a subclass</option>
+            {matching.map(subclass => <option key={subclass.id} value={subclass.slug}>{subclass.name}</option>)}
+          </select>
+        </label>
       )}
-      {isMade && <div className="mt-3 space-y-1">
+      {description && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{description}</p>}
+      {currentSelection && !selected && <p role="alert" className="mt-3 text-sm text-destructive">
+        Saved subclass “{currentSelection}” is unavailable for this class. It remains saved until you choose a replacement or clear it.
+      </p>}
+      {currentSelection && <div className="mt-3 space-y-1">
         <button type="button" onClick={() => onSelect(undefined)}
           className="rounded-md px-2 py-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           Clear subclass

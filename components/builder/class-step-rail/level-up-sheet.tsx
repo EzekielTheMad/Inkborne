@@ -31,6 +31,8 @@ interface LevelUpSheetProps {
   styleOptions: ContentEntry[];
   localChoices: CharacterChoices;
   feats?: UsableFeatOption[];
+  asiAbilityScores?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  earnedFavoredEnemyChoices?: Readonly<Record<string, FavoredEnemyChoice>>;
   onFeatSearch?: UsableFeatSearch;
   currentSubclass: string | undefined;
   classChoices: ChoiceEffect[];
@@ -52,7 +54,7 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
   const {
     open, onOpenChange, savePending = false, saveError,
     classContent, classIndex, isPrimaryClass, draftLevel, totalLevelAfterConfirm,
-    perLevelRow, subclasses, styleOptions, localChoices, feats = [], onFeatSearch, currentSubclass, classChoices,
+    perLevelRow, subclasses, styleOptions, localChoices, feats = [], asiAbilityScores, earnedFavoredEnemyChoices, onFeatSearch, currentSubclass, classChoices,
     hpRule, conMod, hpRolls,
     onAsiSelect, onSubclassSelect, onFightingStyleSelect, onChoiceSelect, onHpRollChange,
     availableLanguages, onFavoredEnemySelect,
@@ -86,6 +88,8 @@ export function LevelUpSheet(props: LevelUpSheetProps) {
               styleOptions={styleOptions}
               localChoices={localChoices}
               feats={feats}
+              asiAbilityScores={asiAbilityScores}
+              earnedFavoredEnemyChoices={earnedFavoredEnemyChoices}
               onFeatSearch={onFeatSearch}
               currentSubclass={currentSubclass}
               classChoices={classChoices}

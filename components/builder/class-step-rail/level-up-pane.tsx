@@ -29,6 +29,8 @@ interface LevelUpPaneProps {
   styleOptions: ContentEntry[];
   localChoices: CharacterChoices;
   feats?: UsableFeatOption[];
+  asiAbilityScores?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  earnedFavoredEnemyChoices?: Readonly<Record<string, FavoredEnemyChoice>>;
   onFeatSearch?: UsableFeatSearch;
   currentSubclass: string | undefined;
   classChoices: ChoiceEffect[];
@@ -59,7 +61,7 @@ function getFeatureDescription(features: ContentEntry[]): string | null {
 export function LevelUpPane(props: LevelUpPaneProps) {
   const {
     classContent, classIndex, isPrimaryClass, draftLevel, totalLevelAfterConfirm,
-    perLevelRow, subclasses, styleOptions, localChoices, feats = [], onFeatSearch, currentSubclass, classChoices,
+    perLevelRow, subclasses, styleOptions, localChoices, feats = [], asiAbilityScores, earnedFavoredEnemyChoices, onFeatSearch, currentSubclass, classChoices,
     hpRule, conMod, hpRolls,
     onAsiSelect, onSubclassSelect, onFightingStyleSelect, onChoiceSelect, onHpRollChange,
     availableLanguages = [], onFavoredEnemySelect,
@@ -139,6 +141,7 @@ export function LevelUpPane(props: LevelUpPaneProps) {
                 return choice.favoredEnemyOptions && onFavoredEnemySelect ? <ChoiceCardFavoredEnemy
                   key={choice.featureSlug} featureSlug={choice.featureSlug} label={choice.label} options={choice.favoredEnemyOptions}
                   value={localChoices.favored_enemies?.[choice.featureSlug]} availableLanguages={availableLanguages}
+                  otherChoices={Object.entries(earnedFavoredEnemyChoices ?? {}).filter(([slug]) => slug !== choice.featureSlug).map(([, value]) => value)}
                   onSelect={value => onFavoredEnemySelect(choice.featureSlug!, value)} />
                   : <p key={choice.featureSlug} role="status">This favored enemy choice could not be loaded. Reload before editing.</p>;
               }
@@ -160,6 +163,7 @@ export function LevelUpPane(props: LevelUpPaneProps) {
                     key={choice.featureSlug}
                     featureSlug={choice.featureSlug}
                     currentChoice={localChoices.asi_choices?.[choice.featureSlug]}
+                    abilityScores={asiAbilityScores?.[choice.featureSlug]}
                     feats={feats}
                     onSearch={onFeatSearch}
                     onSelect={(c) => onAsiSelect(choice.featureSlug!, c)}
