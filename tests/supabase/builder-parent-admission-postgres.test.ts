@@ -150,7 +150,7 @@ const schema = `CREATE SCHEMA private; CREATE SCHEMA auth;
       UPDATE private.character_builder_capabilities_v1 SET correction_revision_consumed=true WHERE transaction_id=pg_current_xact_id() AND character_id=(before_row->>'id')::uuid; RETURN true; END IF; RETURN false; END $$;
   REVOKE ALL ON SCHEMA private FROM PUBLIC,anon,authenticated,service_role;`;
 
-async function install(connection: PGlite, serviceExec = true) {
+async function install(connection: PGlite, serviceExec = true, authenticatedPrivateUsage = false) {
   let phase = "separate bootstrap and native identities";
   try {
   // PostgreSQL protects reserved bootstrap OID10 from demotion. Match the
@@ -212,6 +212,8 @@ async function install(connection: PGlite, serviceExec = true) {
     GRANT EXECUTE ON FUNCTION public.save_character_abilities(uuid,text,jsonb,text,jsonb),public.patch_character_state_if_current(uuid,jsonb,jsonb),
       public.set_character_background(uuid,uuid,integer),public.set_character_asi_choice(uuid,text,text,jsonb,uuid,integer) TO authenticated;`);
   if (serviceExec) await connection.exec("GRANT EXECUTE ON FUNCTION public.patch_character_state_if_current(uuid,jsonb,jsonb) TO service_role");
+  if (authenticatedPrivateUsage) await connection.exec("GRANT USAGE ON SCHEMA private TO authenticated");
+  const schemaBefore = (await connection.query<{ profile: Json }>("SELECT to_jsonb(n) AS profile FROM pg_namespace n WHERE nspname='private'")).rows[0].profile;
   // Model the actual native role profile rather than PGlite's superuser
   // bootstrap identity. The installer session remains independently privileged.
   phase = "native postgres role posture";
@@ -219,6 +221,7 @@ async function install(connection: PGlite, serviceExec = true) {
   phase = "complete real parent companion";
   await connection.exec(stage);
   await connection.exec("SET ROLE postgres");
+  return { schemaBefore };
   } catch (error) {
     const selected = error as { code?: string; message?: string; where?: string; position?: string; internalPosition?: string; internalQuery?: string };
     throw new Error(`Parent fixture ${phase}: ${selected.code ?? "unknown"} ${selected.message ?? "failed"}; ${selected.where ?? "no context"}; position ${selected.position ?? selected.internalPosition ?? "none"}; ${selected.internalQuery?.slice(-300) ?? ""}`);
@@ -451,6 +454,23 @@ describe("finite enrolled parent admission", () => {
     try {
       await install(isolated, false);
       expect((await isolated.query<{ allowed: boolean }>("SELECT has_function_privilege('service_role','public.lock_character_parent_write_guard_v1()','EXECUTE') AS allowed")).rows[0].allowed).toBe(false);
+    } finally { await isolated.close(); }
+  });
+  it("preserves migration 00041 authenticated schema usage without granting private admission", async () => {
+    const isolated = new PGlite();
+    try {
+      const { schemaBefore } = await install(isolated, true, true);
+      const schemaAfter = (await isolated.query<{ profile: Json }>("SELECT to_jsonb(n) AS profile FROM pg_namespace n WHERE nspname='private'")).rows[0].profile;
+      expect(schemaAfter).toEqual(schemaBefore);
+      for (const role of ["anon", "authenticated", "service_role"]) {
+        const profile = (await isolated.query<{ usage: boolean; create: boolean; bridge: boolean; enrollment: boolean; seal: boolean; guard: boolean }>(`
+          SELECT has_schema_privilege($1,'private','USAGE') AS usage,has_schema_privilege($1,'private','CREATE') AS create,
+            has_function_privilege($1,'public.lock_character_parent_write_guard_v1()','EXECUTE') AS bridge,
+            has_function_privilege($1,'private.enrolled_character_parent_v1(uuid)','EXECUTE') AS enrollment,
+            has_function_privilege($1,'private.seal_builder_parent_admission_v1(uuid,jsonb)','EXECUTE') AS seal,
+            has_function_privilege($1,'private.lock_enrolled_parent_guard_v1()','EXECUTE') AS guard`, [role])).rows[0];
+        expect(profile).toEqual({ usage: role === "authenticated", create: false, bridge: role !== "anon", enrollment: false, seal: false, guard: false });
+      }
     } finally { await isolated.close(); }
   });
 });

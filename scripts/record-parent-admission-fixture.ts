@@ -100,7 +100,7 @@ async function main() {
   const db = state.containers.filter(item => item.name === `/${state.project}-db`); assert.equal(db.length, 1);
   const installFile = file(path.join(runtime, "install-parent-admission-readback.json"), runtime);
   const install = z.object({ installed: z.literal(true), engineId: z.literal(state.engineId), databaseId: z.literal(db[0].id),
-    file: z.literal("supabase/staged/character-builder-parent-admission.sql"), sourceSha256: z.literal("0b19cc210223575fa194e8b1f46b1cf50e18683788bdea9d8b77be1851887202") }).passthrough().parse(installFile.data);
+    file: z.literal("supabase/staged/character-builder-parent-admission.sql"), sourceSha256: z.literal("43988b054442805577b8e97be14b82c365c4d5b580d32e6abcc9bfcbab331e19") }).passthrough().parse(installFile.data);
   assert.equal(hash(fs.readFileSync(path.join(root, install.file))), install.sourceSha256);
   const output = path.join(runtime, `parent-admission-fixture-${story.runId}.json`); assert(!fs.existsSync(output), "preserve existing fixture evidence");
   const tag = `ib-pf-${randomUUID()}`, observer = `${tag}-c`, processes: unknown[] = [], captured: unknown[] = [];

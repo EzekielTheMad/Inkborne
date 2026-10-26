@@ -31,7 +31,7 @@ test("genuine unawarded Fighter4 and Acolyte prepare the parent-admission native
   if (initialState.project !== "inkborne-app-flow-20261022" || initialState.catalogMode !== "real-srd" || initialState.ready !== true || initialState.stoppedUtc
     || !initialDb || installation.installed !== true || installation.engineId !== initialState.engineId || installation.databaseId !== initialDb.id
     || installation.file !== "supabase/staged/character-builder-parent-admission.sql"
-    || installation.sourceSha256 !== "0b19cc210223575fa194e8b1f46b1cf50e18683788bdea9d8b77be1851887202"
+    || installation.sourceSha256 !== "43988b054442805577b8e97be14b82c365c4d5b580d32e6abcc9bfcbab331e19"
     || createHash("sha256").update(await readFile(resolve(process.cwd(), installation.file))).digest("hex") !== installation.sourceSha256)
     throw Error("The exact reviewed parent fence must be installed before app preparation");
   const allowed = new Set([config.appOrigin, config.supabaseOrigin]), blockedOrigins: string[] = [], pageErrors: string[] = [];

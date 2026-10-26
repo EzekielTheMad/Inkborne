@@ -8,6 +8,7 @@ BEGIN
     OR pg_catalog.to_regprocedure('private.describe_builder_subclass_update_v1(uuid,uuid,integer)') IS NULL
     OR NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('private.builder_multiclass_max_hp_v1(uuid,jsonb,jsonb)')
       AND pg_catalog.md5(pg_catalog.replace(prosrc,E'\r\n',E'\n'))='6f4e810b99cfd755babcc0fc058c2431')
+    OR pg_catalog.has_schema_privilege('anon','private','USAGE')
     OR pg_catalog.has_schema_privilege('service_role','private','USAGE')
     OR EXISTS(SELECT 1 FROM private.character_builder_capabilities_v1)
     OR (SELECT count(*) FROM private.character_writer_readiness_v1)<>13
@@ -30,6 +31,16 @@ BEGIN
       AND proconfig=ARRAY['search_path=""']::text[] AND pg_catalog.md5(pg_catalog.replace(prosrc,E'\r\n',E'\n'))='f7efb029110ebb9e486b1a3b9b8f8779') THEN
     RAISE EXCEPTION 'parent_admission_installation_unavailable' USING ERRCODE='42501'; END IF;
 END $preflight$;
+
+-- Migration 00041 deliberately grants authenticated USAGE for campaign policy
+-- helpers. Preserve that admitted schema profile; do not revoke it or grant
+-- schema access as a side effect of installing the guard-only public bridge.
+CREATE TEMP TABLE pg_temp.parent_private_schema_v1 ON COMMIT DROP AS
+  SELECT pg_catalog.to_jsonb(n) AS profile FROM pg_catalog.pg_namespace n WHERE n.nspname='private';
+CREATE TEMP TABLE pg_temp.parent_private_schema_roles_v1 ON COMMIT DROP AS
+  SELECT role_name,pg_catalog.has_schema_privilege(role_name,'private','USAGE') AS usage_allowed,
+    pg_catalog.has_schema_privilege(role_name,'private','CREATE') AS create_allowed
+  FROM pg_catalog.unnest(ARRAY['anon','authenticated','service_role']) role_name;
 
 -- Capture the seven original trigger wires and callback definitions for exact
 -- post-install preservation. The install admits no extra pre-existing trigger.
@@ -505,9 +516,15 @@ BEGIN
   FOR entry IN SELECT role_name FROM pg_catalog.unnest(ARRAY['anon','authenticated','service_role']) role_name LOOP
     IF pg_catalog.has_function_privilege(entry.role_name,'public.lock_character_parent_write_guard_v1()','EXECUTE')
       IS DISTINCT FROM EXISTS(SELECT 1 FROM pg_temp.parent_bridge_roles_v1 captured WHERE captured.role_name=entry.role_name)
-      OR pg_catalog.has_schema_privilege(entry.role_name,'private','USAGE') THEN
+      OR (entry.role_name IN ('anon','service_role') AND pg_catalog.has_schema_privilege(entry.role_name,'private','USAGE')) THEN
       RAISE EXCEPTION 'parent_admission_bridge_acl_changed' USING ERRCODE='42501'; END IF;
   END LOOP;
+  IF (SELECT pg_catalog.to_jsonb(n) FROM pg_catalog.pg_namespace n WHERE n.nspname='private')
+      IS DISTINCT FROM (SELECT profile FROM pg_temp.parent_private_schema_v1)
+    OR EXISTS(SELECT 1 FROM pg_temp.parent_private_schema_roles_v1 captured
+      WHERE pg_catalog.has_schema_privilege(captured.role_name,'private','USAGE') IS DISTINCT FROM captured.usage_allowed
+        OR pg_catalog.has_schema_privilege(captured.role_name,'private','CREATE') IS DISTINCT FROM captured.create_allowed) THEN
+    RAISE EXCEPTION 'parent_admission_private_schema_changed' USING ERRCODE='42501'; END IF;
   IF EXISTS(SELECT 1 FROM pg_catalog.aclexplode((SELECT proacl FROM pg_catalog.pg_proc WHERE oid='public.lock_character_parent_write_guard_v1()'::pg_catalog.regprocedure)) a
     WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable OR a.grantee NOT IN ('postgres'::pg_catalog.regrole,'inkborne_hit_die_authority_owner'::pg_catalog.regrole)
       AND NOT EXISTS(SELECT 1 FROM pg_temp.parent_bridge_roles_v1 captured WHERE captured.role_name::pg_catalog.regrole=a.grantee))
