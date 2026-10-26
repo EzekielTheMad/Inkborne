@@ -1,6 +1,6 @@
 # Inkborne brand guide
 
-Version 2.10 · 24 October 2026
+Version 2.11 · 26 October 2026
 
 Inkborne brings playable character sheets and character stories together. Its visual identity is a player's fantasy notebook: useful at the table, personal between sessions, and full of the atmosphere of a living campaign. Evolve the current site's ink-purple, warm-gold manuscript character rather than replacing it with a neutral productivity app.
 
@@ -136,7 +136,7 @@ Resolve both character accent maps from the saved source value before paint. Car
 
 The revised sheet study restores the original's broad character-color banner, circular portrait, compact bounded stat tiles, gold panel labels, purple brand contrast, and distinct reference/play panels. Keep the exact chosen color at the banner's leading edge; choose opaque black or white identity text by contrast and move the far stop away from that ink in sRGB. White and black character choices may produce monochrome banners. Body text and controls still use separately derived theme-aware roles. The user approved this second composition for the dev release. The [matched original/revision views](design-briefs/character-sheet-baseline/README.md) record its visual reference.
 
-The [local dashboard and character-shelf candidate](design-briefs/overview-notebook-local/README.md) continues the original greeting, gold italic name, folios, star rules, portrait-led feature, compact rows and warm card grid. Each entry owns its accent; the surrounding page and navigation remain branded. Preserve the original successful-empty states and distinguish read failures. This candidate has matched before/after references and local verification, but still awaits user review and separate deployment approval.
+The [dashboard and character-shelf refresh](design-briefs/overview-notebook-local/README.md) continues the original greeting, gold italic name, folios, star rules, portrait-led feature, compact rows and warm card grid. Each entry owns its accent; the surrounding page and navigation remain branded. Preserve the original successful-empty states and distinguish read failures. Assigned characters show their campaign with no placeholder for unassigned characters. The user approved this composition and its bounded dev deployment on 26 October 2026; the [release record](handoffs/2026-10-26-overview-dev-release.md) governs publication and verification.
 
 Use supported homebrew types; an example must not imply an unimplemented custom-class authoring workflow. Keep previews independent of authenticated data and actions. Do not invent statistics, customer feedback, or product behavior to fill the layout.
 
@@ -179,6 +179,7 @@ Older HTML/JSX bundles and screenshots under `docs/design-briefs/` preserve earl
 
 | Date | Decision |
 | --- | --- |
+| 2026-10-26 | Version 2.11: approve the dashboard and character list for dev, including campaign metadata only for assigned characters. Preserve behavior, existing scoped themes, per-entry accents and global branding. Publication remains dev-only; confirm the deployed commit and hosted limits in its receipt. |
 | 2026-10-24 | Version 2.10: continue locally with Dashboard and Characters, using their actual pre-change renders as the reference. Polish the existing composition, add scoped themes and per-entry character accents, and retain data/auth/navigation contracts. This is a review candidate, not a new approved template for every page. |
 | 2026-10-23 | Version 2.9: approve the second sheet composition for dev; transplant presentation only into the current dev baseline and preserve gameplay, theme preference, custom colors, auth, dependencies and hosted configuration. |
 | 2026-10-23 | Version 2.8: revise the local sheet using the actual original as inspiration. Restore the broad personalized banner, bounded stat tiles, panel depth and compact labels while retaining theme-aware custom colors. The second composition was subsequently approved for the bounded dev release. |
