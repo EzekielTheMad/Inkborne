@@ -4,6 +4,11 @@ Inkborne is a character and campaign manager for tabletop roleplaying games.
 
 ## Continue the project
 
+For a new development thread, ask it to **read and execute
+[docs/CONTINUE-INKBORNE.md](docs/CONTINUE-INKBORNE.md)**. That reusable kickoff
+refreshes current state and applies focused testing/delegation rules; it does
+not freeze a commit or define another roadmap.
+
 1. Start with [the current execution entrypoint](docs/CODEX-ORCHESTRATOR.md).
 2. Follow [the single current execution path](docs/LAUNCH-ACCEPTANCE.md#current-execution-path)
    and [milestone matrix](docs/LAUNCH-ACCEPTANCE.md#milestone-matrix). The acceptance

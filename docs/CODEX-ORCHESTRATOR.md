@@ -6,6 +6,11 @@ is the **single current plan, milestone map, backlog and acceptance gate**.
 ROADMAP is navigation, GAME-PLAN is working conventions, and the PRD is the
 feature baseline. None is an alternative roadmap.
 
+For a fresh development thread, read and execute the
+[reusable continuation prompt](CONTINUE-INKBORNE.md). It defines pickup,
+proportional verification and delegation rules; this ledger/handoff chain
+continues to select the actual work.
+
 ## Resume and ownership
 
 Continue the **R06 builder workstream** (roadmap M3), in the dependency order in
