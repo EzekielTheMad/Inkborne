@@ -23,16 +23,31 @@ The authoritative continuation checkout is
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, branch
 `codex/launch-integration-20261011`. Preserve `C:\Projects\Inkborne` as the old
 backup and preserve every inherited worktree. Refresh Git status/HEAD before
-editing; the last product/source checkpoint before this documentation
-reconciliation was `5f99574`.
+editing; the latest product/source checkpoint is `c705d5f`.
 
-Actual correction/caster acceptance remains pending after the preserved
-memory-blocked attempts. Source/unit checks are not actual-flow acceptance.
-The strict A4 ancestry-HP acceptance recorder is now source-reviewed in
-`bcfa8a6`: 12 focused checks, typecheck and zero-warning lint pass. It binds the
-full eleven-checkpoint story to its exact wrapper/source, fresh native profiles
-and catalog, and verified tagged-backend cleanup. No actual A4/native execution
-or acceptance is added. The latest handoff records its invocation and evidence.
+Fiend historical correction/recovery and Draconic HP/AC now pass actual local
+app acceptance at `7c31afb`, eleven native checkpoints each. The parent safeguard
+installs with existing schema grants preserved (`8610d6a`); genuine Fighter4
+app preparation passes (`c6d98fb`). Its 34 exact native outcomes and eight actual
+three-session contention scenarios pass at `c705d5f`, with unchanged fixture,
+catalog, profiles and closed sessions. This SQL-role proof is not JWT or full
+parent acceptance. Forty-three focused checks, typecheck/lint and independent
+exact-source review pass. Earlier failed runs remain failed and preserved.
+
+Next implement full parent story/aggregation, including the admitted background
+two-write vector, ordinary saves/ASI, native award, Fiend replay and actual access
+checks. The F3 actual installer remains missing source. The reviewed A4 recorder
+(`bcfa8a6`) is ready source, but ancestry installation/A4 waits for full parent
+acceptance. Then retain the caster/martial/A5/A6 queue. Consult the
+[latest handoff](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-2103-utc)
+for exact source/receipts, limitations and the next finite delivery.
+
+All five owned containers, two networks, two volumes, proxy and private
+credentials are absent; task ports are closed at 21:01:23 UTC. Public checkpoint
+evidence is hash-archived. Shared Docker/cache and inherited worktrees remain.
+Complete missing source before starting another disposable runtime; preserve
+accepted Fiend/Draconic results, while satisfying a fresh same-database chain
+when a later installer requires it.
 Before runtime work, consult the handoff and exact external process/runtime
 receipts; serialize heavy checks and retain its guard of at least **14 GiB
 commit-free and 8 GiB physical-free** before a fresh actual run. Last recorded

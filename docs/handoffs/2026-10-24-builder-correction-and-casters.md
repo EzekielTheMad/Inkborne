@@ -51,6 +51,128 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
+### Latest continuation — 2026-10-26 21:03 UTC
+
+**Fiend historical update and Draconic HP/AC are now accepted in the actual
+local app.** The parent safeguard is installed and its native negative and
+contention checks pass; its full positive acceptance remains open. Source
+checkpoint `c705d5f` is on the authoritative continuation branch. No hosted
+action, push, deployment or global activation occurred.
+
+The final disposable cycle used engine
+`3e3feb6b-78ae-4782-ac34-addaac1709c8`, database container
+`b4470ab7e25520ae952f855fced8f6b80e8fa3c0ff61ce2aff7da52c6a606df2`,
+83 baseline migrations, 17 staged sources, official Auth/Storage migrations and
+the genuine 1,535-definition SRD catalog. All six characters were app-created.
+The final closure has 1,537 immutable snapshots, zero capabilities/seals,
+13 readiness rows with zero ready, and class/hit-die gates false. Native SQL
+role checks explicitly retain `authenticationAccepted:false`.
+
+Accepted actual stories, frozen at `7c31afb`:
+
+- **Fiend:** `local-subclass-update-app-20261026T202821Z`, exit 0,
+  11 native snapshots and four wire outcomes; all 76 observed identities exited.
+  Stale review refuses without a write; a fresh correction applies once;
+  lost-response recovery finds the accepted receipt before later stale checks.
+  Ordinary spell budget, pins, inventory, HP and award identities are retained.
+  Owner/foreign access and RPC refusals pass. Receipt:
+  `../equipment-runtime/app-flow-runtime/subclass-content-update-actual-readback.json`.
+  Target `bef89642-0cd5-4165-8c39-e12da1f3acda`, control
+  `440bddd1-7853-4649-b637-057e52feada9`, operation
+  `3bff625c-7139-46dd-a1e8-7d4627b8d80e`.
+- **Draconic:** `local-draconic-app-20261026T203048Z`, exit 0,
+  11 native snapshots; all 99 observed identities exited. Immutable old v1
+  retains HP20; new v2 Sorcerer has HP23. One real d6 survives average selection,
+  reselection, reload and level down/up; original Fighter1/secondary Sorcerer1
+  has HP21. Native awarded Leather switches AC15 -> 13 -> 15; foreign 404 and
+  five order bijections pass. Receipt:
+  `../equipment-runtime/app-flow-runtime/draconic-resilience-actual-readback.json`,
+  run `d8605930-a058-4a1c-bb81-7df349f9f23c`; old control
+  `8d28a903-4891-4a25-bfcf-00a27a3cb103`, new Sorcerer
+  `2f540e02-8ad8-43c4-954b-c35e90a70471`, armor control
+  `58ffb111-13c6-4855-8604-f10c1a1f7e4b`.
+
+The first two Draconic attempts remain failed. Their readback oracles wrongly
+required an accepted original occurrence (B3 retains it as provisional), then
+catalog IDs for named Acolyte items. `777c12d` binds the canonical original
+role/source tuple without loosening secondary acquisition proof. `7c31afb`
+binds every inventory row positionally to its exact accepted native award plan
+(ID/version/name/type/quantity); null-ID items require null version and the
+exact accepted named tuple. Catalog provenance checks remain. Read-only actual
+fixture probes passed all twelve checks and five altered-projection negatives,
+with no fixture DML. Failures/public receipts are hash-preserved in
+`app-flow-runtime/history/draconic-oracle-failure-20261026T200755Z` and
+`draconic-award-oracle-failure-20261026T202537Z`.
+
+Parent delivery and evidence:
+
+- `8610d6a` fixes the installer to preserve the complete existing private-schema
+  ACL/effective grants. Migration 00041 intentionally gives authenticated USAGE
+  for granted campaign helpers. No live grant was changed to force installation;
+  anon/service USAGE and new-helper execution remain closed. Reviewed stage
+  SHA256 `43988b054442805577b8e97be14b82c365c4d5b580d32e6abcc9bfcbab331e19`.
+  Actual installation passed with all fifteen table fingerprints, old snapshots,
+  functions, roles and existing policies preserved; receipt
+  `install-parent-admission-readback.json`.
+- Genuine Fighter4 preparation is implemented in `1f77901`/`c6d98fb`:
+  `parent-admission-preparation.spec.ts`, pure `parent-admission-fixture.ts` and
+  its strict recorder. Actual UI run
+  `local-parent-preparation-app-20261026T204838Z` passed, all 40 identities exited;
+  run `80b62099-a70b-45e3-8bd3-da2e9d03b0bb`, character
+  `385f9bb1-0655-429f-8790-e3ce8d145c3e`. Genuine sign-in/B3, Human/Fighter4,
+  standard array, earned STR+2 ASI, Acolyte, details and equipment choices pass.
+  Equipment stays unawarded and current HP absent. A physical eligible award is
+  only produced inside native confirmation; none was fabricated. Descriptor:
+  `parent-admission-fixture-80b62099-a70b-45e3-8bd3-da2e9d03b0bb.json`.
+- `c705d5f` corrects the native delete oracle: maintained authenticated RLS has
+  no DELETE policy, so it affects exactly zero rows. It is explicitly labeled
+  RLS retention, not row-fence execution. The fixed DO block captures real
+  ROW_COUNT and the contention runner reads it before rollback. Service/BYPASS
+  DELETE still requires `42501`; no policy/transport/production guard changed.
+  The failed native report `parent-admission-native-017913e7-*.json` is retained.
+- Native verification **passes 34 exact outcomes** (31 refusals, one filtered
+  zero-row DELETE, two rolled-back metadata successes) and **eight actual
+  three-session scenarios** with observed guard waits, third-session parent
+  NOWAIT probes, unchanged fixture/catalog/profile and closed sessions/backends.
+  Report `parent-admission-native-3f5853f8-11d9-4dd7-9a57-78e4f917c78b.json`,
+  source `c705d5f`. This is native SQL-role proof, not JWT or full parent acceptance.
+- The final focused two-file PGlite/simulated pack passes **43/43** in
+  `local-parent-admission-native-20261026T205721Z`; ten identities exited.
+  Typecheck and zero-warning lint pass in
+  `local-creation-browser-check-20261026T205754Z`; ten identities exited.
+  No broad suite or production build was repeated under the focused scope.
+  Independent read-only `review_a4_acceptance` reviewed each consequential fix,
+  including the exact `c6d98fb` -> `c705d5f` source hashes, with no remaining
+  concrete blocker. Final profiles/source/review hashes are in
+  `builder-checkpoint-before-teardown-20261026.json`.
+
+Cleanup is complete at 21:01:23 UTC. Twenty-eight public checkpoint files were
+copied and hash-verified in
+`app-flow-runtime/history/accepted-builder-parent-native-20261026T2101Z/manifest.json`.
+All five exact containers, two networks, two volumes, the proxy and three private
+credential files are absent; ports 3001/9997/9998/9999 are closed. Shared Docker,
+cached images, old backup and inherited worktrees remain. Exact target plan and
+independent absence/resource readback are
+`../equipment-runtime/builder-final-teardown-{plan,readback}-20261026.json`.
+Fresh headroom initially was 16.56 GiB physical/42.12 GiB commit; final physical
+free is 13.56 GiB and system commit 42%. No operational resource stop tripped.
+Docker's stale socket-parent repair followed the already documented targeted
+procedure; timestamped parents remain, no image/volume/settings cleanup occurred.
+
+**Next:** implement the full parent acceptance story/strict aggregation before
+another runtime. It must combine admitted ordinary saves, ASI, background
+zero/one/two physical writes, native equipment award, Fiend correction/replay and
+real owner/service access observations with these native proofs. The actual
+preparation is not full builder completion. Acolyte is the sole prepared SRD
+background; ordinary UI cannot clear its pin, so the two-write Expertise vector
+needs an explicitly admitted native fixture or separately reviewed genuine
+authoring. Do not invent a UI clear path or count a simulation as actual.
+The F3 actual installer also remains missing source. Ancestry installation/A4
+stays blocked by the full parent aggregate; A5/A6, eight caster and three martial
+walkthroughs remain queued. Preserve accepted Fiend/Draconic results: a future
+fresh runtime may need a new same-database prerequisite chain, but these slices
+are no longer missing implementation or historical local acceptance.
+
 ### Latest continuation — 2026-10-26 16:50 UTC
 
 Source `bcfa8a6` completes the previously missing strict **A4 acceptance
