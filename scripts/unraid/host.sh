@@ -17,6 +17,7 @@ image=$(jq -r .image host.json); head=$(jq -r .sourceHead host.json)
 mem_available(){ awk '/MemAvailable:/{print $2}' /proc/meminfo; }
 (( $(mem_available) >= 16777216 )) || { echo 'Unraid needs 16 GiB available before this test'; exit 1; }
 (( $(df -Pk "$run_dir" | awk 'NR==2{print $4}') >= 15728640 )) || { echo 'Unraid SSD needs 15 GiB free'; exit 1; }
+(( $(df -Pk /var/lib/docker | awk 'NR==2{print $4}') >= 15728640 )) || { echo 'Unraid Docker image disk needs 15 GiB free'; exit 1; }
 [[ -z $(docker ps -aq --filter label=org.inkborne.test.run) ]] || { echo 'Another Inkborne test project exists; inspect before starting'; exit 1; }
 docker ps -a --format '{{json .}}' | jq -s 'map({id:.ID,name:.Names,state:.State})|sort_by(.id)' > output/services-before.json
 printf '{"availableKiB":%s,"load":"%s","startedUtc":"%s"}\n' "$(mem_available)" "$(cat /proc/loadavg)" "$(date -u +%FT%TZ)" > output/host-before.json
@@ -45,7 +46,10 @@ cleanup(){
  docker ps -a --format '{{json .}}' | jq -s 'map({id:.ID,name:.Names,state:.State})|sort_by(.id)' > output/services-after.json
  local unchanged=false; cmp -s output/services-before.json output/services-after.json && unchanged=true
  # Export only redacted, bounded diagnostics; delete credentials and raw logs.
- if [[ $result != passed ]] && docker image inspect "$image" >/dev/null 2>&1; then
+ if [[ $result != passed && $phase == image-build ]]; then
+  # No credentials exist yet; this contains only public package/image build output.
+  tail -c 24000 private/build.log | tail -n 100 > output/diagnostic.txt
+ elif [[ $result != passed ]] && docker image inspect "$image" >/dev/null 2>&1; then
   docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges:true --memory 128m --cpus 0.5 -v "$run_dir/private:/run/inkborne:ro" -v "$run_dir/output:/output" "$image" node scripts/unraid/diagnostics.mjs >/dev/null 2>&1
  fi
  if [[ $clean == true && $(realpath private) == "$run_dir/private" && ! -L private ]]; then

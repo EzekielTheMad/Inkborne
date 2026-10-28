@@ -27,7 +27,10 @@ upgrade/full-parent/A4/F3 acceptance remains separately recorded and open.
 Runtime is capped at 10 GiB/3 CPU for the app/browser, 1 GiB/1 CPU for PostgreSQL,
 plus small Auth/REST jobs. Image builds are capped at 4 GiB/3 CPU using the
 server's supported legacy builder; its deprecation is a future compatibility
-limitation. Startup requires 16 GiB available host RAM and 15 GiB SSD space.
+limitation. Startup requires 16 GiB available host RAM, 15 GiB SSD space, and
+15 GiB free inside Docker's image disk (`/var/lib/docker`). Free SSD capacity
+alone does not mean the Docker image disk has space. The first attempt found
+the server's 70 GiB Docker image disk 98% full; actual verification awaits storage.
 Verification stops at 20 minutes or below 4 GiB available host RAM. Initial
 image/dependency download has its own 20-minute bound. Tests run serially.
 
