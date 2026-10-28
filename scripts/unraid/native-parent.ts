@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { spawn } from "node:child_process";
 import { z } from "zod";
-import { CharacterPsqlSession, type SessionProcess } from "../character-command-psql";
+import { CharacterPsqlSession, type SessionProcess } from "../character-psql-session";
 import { runBuilderParentAdmissionContention, PARENT_CONTENTION_CASES } from "../builder-parent-admission-concurrency";
 import { assertNativeIdentity, nativeJson, psqlArguments, psqlEnvironment, testRuntime } from "./native";
 

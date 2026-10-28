@@ -28,7 +28,8 @@ try{
  report();console.log(JSON.stringify({phase}));
  await run(['run','typecheck','--','--tsBuildInfoFile','/tmp/inkborne.tsbuildinfo'],'typecheck');
  await run(['run','lint'],'lint');
- await run(['test','--','tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx','--maxWorkers=1'],'focused');
+ await run(['test','--','tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx',
+  'tests/scripts/character-command-psql.test.ts','tests/scripts/builder-parent-admission-concurrency.test.ts','--maxWorkers=1'],'focused');
  if(mode==='workflow'){
   phase='backend-bootstrap';report();console.log(JSON.stringify({phase}));proxy=await startProxy();
   await waitFor('http://127.0.0.1:9999/auth/v1/health');
