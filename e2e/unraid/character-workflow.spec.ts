@@ -183,7 +183,10 @@ test("genuine Fighter completes the builder, receives its original award and rel
   await page.goto(base + "/class"); const level = page.getByRole("combobox", { name: "Set level for Fighter", exact: true });
   await save(page, () => level.selectOption("4")); await expect(level).toHaveValue("4"); await expect(level).toBeEnabled();
   await openLevel(page, 3); await expect(choiceOption(page, /Evocation/)).toHaveCount(0); await choose(page, choiceOption(page, /^Champion(?:\s|$)/));
-  for (const value of [2, 3, 4]) { await openLevel(page, value); await choose(page, hpOption(page, "average")); }
+  for (const value of [2, 3, 4]) {
+    await openLevel(page, value); const average = hpOption(page, "average");
+    await save(page, () => pickOption(average)); await expect(average).toHaveJSProperty("selected", true); await expect(average).toBeEnabled();
+  }
   await choose(page, asiOption(page, "strength")); await page.reload(); await openLevel(page, 4); await expect(asiOption(page, "strength")).toHaveJSProperty("selected", true);
   await page.goto(base + "/details"); await page.getByRole("textbox", { name: "Character name", exact: true }).fill(name);
   await page.getByRole("combobox", { name: "Alignment", exact: true }).selectOption("Neutral Good");
