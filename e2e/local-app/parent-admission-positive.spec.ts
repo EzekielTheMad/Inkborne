@@ -33,7 +33,13 @@ async function prepareRogue(page: Page, input: Inputs, evidence: ReturnType<type
   await page.goto(base + "/abilities");
   const scores = { Strength: "10", Dexterity: "15", Constitution: "14", Intelligence: "12", Wisdom: "13", Charisma: "8" };
   for (const [ability, score] of Object.entries(scores)) {
-    await save(page, () => page.getByRole("combobox", { name: `${ability} score`, exact: true }).selectOption(score));
+    const control = page.getByRole("combobox", { name: `${ability} score`, exact: true });
+    if (await control.inputValue() === score) continue;
+    for (const other of Object.keys(scores)) if (other !== ability) {
+      const occupied = page.getByRole("combobox", { name: `${other} score`, exact: true });
+      if (await occupied.inputValue() === score) await save(page, () => occupied.selectOption(""));
+    }
+    await save(page, () => control.selectOption(score));
     await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
   }
   await page.goto(base + "/background"); await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
