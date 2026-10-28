@@ -83,13 +83,20 @@ export async function bootstrap() {
     const client = createClient("http://127.0.0.1:9999", api.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const account = async (label: string) => {
       const email = `${label}-${runtime.runId.slice(0, 8)}@inkborne.invalid`, password = randomBytes(24).toString("hex");
-      const result = await client.auth.admin.createUser({ email, password, email_confirm: true });
-      assert(!result.error && result.data.user?.id, "disposable local Auth provisioning failed; values withheld"); return { id: result.data.user.id, email, password };
+      const result = await client.auth.admin.createUser({ email, password, email_confirm: true, role: "authenticated" });
+      assert(!result.error && result.data.user?.id && result.data.user.role === "authenticated", "disposable local Auth provisioning failed; values withheld"); return { id: result.data.user.id, email, password };
     };
     const owner = await account("owner"), other = await account("other");
     fs.writeFileSync("/run/inkborne/test-config.json", JSON.stringify({ appOrigin: "http://127.0.0.1:3001", supabaseOrigin: "http://127.0.0.1:9999", owner, other, ...api }) + "\n", { mode: 0o600, flag: "wx" });
+    phase = "authenticated-catalog-read"; save();
+    const ownerClient = createClient("http://127.0.0.1:9999", api.anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    const login = await ownerClient.auth.signInWithPassword({ email: owner.email, password: owner.password });
+    assert(!login.error && login.data.user?.id === owner.id, "scratch owner login failed");
+    const visibleSystems = await ownerClient.from("game_systems").select("id,name,slug").eq("status", "published").order("name");
+    if (visibleSystems.error) fs.writeFileSync("/run/inkborne/readiness.log", JSON.stringify({ status: visibleSystems.status, error: visibleSystems.error }) + "\n", { mode: 0o600 });
+    assert(!visibleSystems.error && visibleSystems.data?.length === 1 && visibleSystems.data[0].slug === "dnd-5e-2014", "authenticated catalog read failed; details kept private");
     phase = "ready"; save({ passed: true, catalog, cachedResponses: 1572, freshVersionOneCatalog: true, importProcess,
-      currentProfile: after, historicalUpgradeAcceptance: false });
+      currentProfile: after, historicalUpgradeAcceptance: false, authenticatedCatalogRead: true });
     console.log(JSON.stringify({ phase, definitions: 1535, snapshots: 1535, accounts: 2 }));
   } catch { save({ passed: false }); throw Error(`scratch bootstrap refused at ${phase}; preserve bootstrap report`); }
 }
