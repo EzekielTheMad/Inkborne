@@ -195,7 +195,7 @@ test("genuine Fighter completes the builder, receives its original award and rel
   for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
     const sword = page.getByRole("option", { name: "Longsword", exact: true });
-    await save(page, () => pickOption(await sword.count() ? sword : page.getByRole("option").first())); await expect(slot).toBeEnabled();
+    await save(page, async () => pickOption(await sword.count() ? sword : page.getByRole("option").first())); await expect(slot).toBeEnabled();
   }
   const confirm = page.getByRole("button", { name: "Confirm Equipment", exact: true }); await expect(confirm).toBeEnabled();
   const unawarded = await readback(characterId, config.owner.id);
