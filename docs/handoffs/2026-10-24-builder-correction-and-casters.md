@@ -8,6 +8,60 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
+## Latest continuation — 2026-10-28 Unraid and proportional testing
+
+The user explicitly chose simpler testing and Unraid. Source `e9ef24c` supplies
+one genuine Fighter workflow; `71b1a4a` adds the portable isolated runner;
+`61053db` preserves canonical LF export bytes on Windows; `2218940` adds the
+separate Docker-image storage guard and bounded build diagnostics.
+Use [the runner procedure](../../scripts/unraid/README.md), with
+`npm run verify:unraid -- plan` before `workflow` once capacity is available.
+No push/deployment or production credentials/data are involved.
+
+The default is typecheck/lint once, three affected dropdown test files, and
+one actual Auth/builder/equipment/reload/foreign-account flow, including the
+existing 34 native parent cases and eight contention scenarios. Direct fresh
+current-state SQL bootstrap and real cached-SRD import replace the historical
+browser receipt chain as routine setup. Earlier accepted stories stay accepted;
+full-parent/A4/F3 historical upgrades, wider class walkthroughs and release
+acceptance remain open. Do not relabel the focused workflow as those gates.
+
+Independent read-only review cleared `71b1a4a` after the TS-loader and explicit
+example-file export fixes, then cleared `61053db`'s canonical-byte correction.
+The final three-file storage-guard diff `ca3f5a64d43eff9cd09f9f6717afe3c95ff3be06`
+was cleared; its nonblocking diagnostic byte-bound suggestion is included in
+`2218940`. Node syntax checks, remote `bash -n`, plan mode and an expected
+no-mutation storage refusal passed. **New typecheck/lint, focused tests,
+database/bootstrap and actual browser workflow have not run.**
+
+Attempt `a1e4981b-884b-403d-af6f-5a60b7000314` aborted on Windows Git archive
+CRLF before containers/credentials; the canonical-byte export fix is committed.
+Attempt `7aa25701-bc0c-458f-bcd9-3476a73f688e` ended during image build, before
+backend creation. Exact builder error was not retained because the image was
+unavailable to the original diagnostic exporter; this failure path is fixed.
+The live capacity finding is independently verified, not a recovered build log.
+Reports under `../equipment-runtime/unraid/<attempt>/output` show owned resources
+removed, private credentials/logs absent, and existing service IDs/states equal.
+Source bundles/public evidence are retained; no shared cache prune was performed.
+
+Live Unraid: i5-11400, approximately 64 GiB RAM / 30 GiB available, SSD about
+201 GiB free. Its separate Docker image is 70 GiB, 98% full / 1.9 GiB free.
+The runner now requires 15 GiB free there before export/pulls, in addition to
+16 GiB available RAM and 15 GiB SSD headroom. App/browser cap is 10 GiB/3 CPU;
+build cap 4 GiB/3 CPU; no published ports/socket/host network. Exact per-run
+container/network/volume identities and teardown are required.
+
+The 70→100 GiB expansion/rollback proposal is **not approved or applied**.
+The user's latest instruction is to review current containers first. Hold new
+test runs and preserve all existing containers, images and settings. The full
+45-container affected list is in
+`../equipment-runtime/unraid/docker-storage-change-proposal.json` (external to
+the checkout). Read-only Docker totals report 21.57 GB reclaimable images and
+6.818 GB build cache; these are engine classifications, not an approved deletion
+list. Resume only after the user resolves capacity or authorizes a specific
+operation; refresh live storage then. Do not revive the Windows resource-hold
+workflow or infer permission to prune/resize/restart shared Docker.
+
 ## Integrated source and focused evidence
 
 The historical correction is deliberately Fiend-only. Its immutable v1 grants

@@ -57,7 +57,10 @@ No new actual app/native acceptance follows from those source checks.
 The user subsequently selected **simpler testing on Unraid**. The current
 development entrypoint is `npm run verify:unraid -- workflow`: one disposable
 current-state database, focused checks and a genuine Fighter workflow, followed
-by exact project cleanup. The first run is pending. See the
+by exact project cleanup. Source is through `2218940`; actual verification is
+held because the shared 70 GiB Docker image disk has only 1.9 GiB free. The
+user will review current containers before deciding how to free capacity. Do
+not resize/restart/remove/prune anything pending their instruction. See the
 [current ledger decision](LAUNCH-ACCEPTANCE.md#user-decision-simplify-development-testing-and-use-unraid)
 and [runner procedure](../scripts/unraid/README.md). This supersedes the Windows
 resource hold and repeated historical-story bootstrap for routine development;

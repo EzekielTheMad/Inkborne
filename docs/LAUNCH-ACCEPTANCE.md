@@ -72,7 +72,13 @@ database and browser runner. `npm run verify:unraid -- workflow` replaces the
 Windows resource hold and historical recorder chain as the default development
 check. Source is committed/frozen, scratch credentials are server-generated,
 ports are private, resources capped, and all task containers/volumes cleaned.
-The first actual run is pending; implementation alone is not acceptance.
+Source is saved through `2218940`; actual workflow verification is held for
+Docker storage. The first build attempt ended before backend creation; all
+temporary resources/credentials are absent and existing services unchanged.
+Live Docker storage has only 1.9 GiB free in its 70 GiB image disk, despite
+201 GiB free on the SSD. The runner now refuses before pulls below 15 GiB free
+inside that image disk. The user will review existing containers first; do not
+resize, restart, remove or prune anything without their subsequent instruction.
 [Runner procedure and limits](../scripts/unraid/README.md).
 
 Fresh current-state bootstrap installs reviewed SQL directly and imports the
@@ -81,6 +87,7 @@ Draconic stories solely to install already-reviewed stages. The focused actual
 Fighter workflow retains native ownership/transaction guards. Historical
 full-parent, ancestry/A4, F3 upgrade and broader caster/martial acceptance remain
 open and separately tracked. Vercel hosting and release gates are unchanged.
+[Exact source, attempts and storage hold](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-unraid-and-proportional-testing).
 
 ### Parent positive acceptance and F3 installer — source ready, actual run held
 
