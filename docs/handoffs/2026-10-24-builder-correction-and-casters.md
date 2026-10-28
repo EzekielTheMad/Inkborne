@@ -51,6 +51,88 @@ never-applied UUID.
 
 ## Actual app evidence still in progress
 
+### Latest continuation — 2026-10-28 parent acceptance source
+
+Full parent positive acceptance and the F3 actual installer are **source ready**
+at `b1a096a0a6e565010f397567b2f83aae7f3d3ede` (October27 Phoenix).
+Actual parent aggregation, ancestry/A4 and F3 installation remain unexecuted.
+No new runtime, SQL, browser, credential, catalog publication or hosted action
+was performed. The accepted Fiend/Draconic and parent34-negative/eight-contention
+results below retain their historical scope.
+
+Delivery:
+
+- `8415011` integrates the real positive parent story/helpers; `b1a096a` adds
+  strict evidence validation, recorder, native vector and spec registration.
+  Eleven ordered Fighter checkpoints exercise explicit race clear/reselection,
+  ability edit, ASI, background language/narrative, details, equipment selection,
+  native award and reload/access retention. Twenty-one pre-award owner/foreign/
+  service HTTP probes require unchanged full native readback. Preserved RLS
+  zero-row, void204 and CAS-missing outcomes are distinguished from42501 refusals.
+  Four Fiend correction/replay checkpoints plus two unchanged v2 control and one
+  genuine original Rogue1 checkpoint make eighteen bound standalone artifacts.
+- `builder-parent-background-vector.sql` uses that separate unawarded Rogue,
+  real earned Insight/thieves-tools Expertise, two new private background roots,
+  the genuine snapshot trigger and real builder RPC/normalizer. An outer
+  rollback removes all fixture roots, snapshots and commands. Native per-backend
+  transaction counters and revisions must observe1/0/2 updates; forced deferred
+  closure, independent whole-profile/fixture equality and root absence are
+  mandatory. Existing Auth rows are only read; synthetic SQL claims explicitly
+  retain `authenticationAccepted:false`. No origin/capability/seal/materializer
+  or SRD snapshot is manufactured or changed directly. This vector has not run.
+- `bd0b2a1`/`01fecf9` integrate the F3 installer, read-only profile and pure
+  validators. It requires genuine accepted parent/A4 artifacts and frozen source,
+  exact native preimages, unchanged fifteen-table/catalog/snapshot state and
+  schema/policy/relation-ACL baseline, exact two owner-only helper postimages and
+  targeted tag/PID/birth cleanup. Installation supplies no A6 or hosted acceptance.
+  Its public function-profile shape matches the existing publisher. F3 source
+  raw LF/CRLF variants are admitted by their complete hashes; only reviewed LF
+  bytes execute. The external ancestry publisher received the same finite byte
+  check, preserving every other stage hash. Backup:
+  `ancestry-hit-points-control.mjs.before-f3-byte-admission-20261027.bak`.
+
+Verification:
+
+- `npm.cmd test -- tests/scripts/parent-admission-acceptance.test.ts tests/scripts/earned-racial-installation.test.ts --maxWorkers=1`
+  passes84/84 across two files in
+  `../equipment-runtime/evidence/local-parent-acceptance-focused-20261028T044714Z`;
+  all seven observed identities exited. These are synthetic evidence-validation
+  checks, not PostgreSQL or application acceptance. Earlier14/78 passes are
+  preserved at their narrower sources.
+- `npm.cmd run typecheck && npm.cmd run lint` passes in
+  `../equipment-runtime/evidence/local-creation-browser-check-20261028T044523Z`
+  (86.42seconds, eight identities exited). No full suite or build was run.
+- Independent review cleared the exact16 files in
+  `../equipment-runtime/parent-source-review-20261027.json`, manifest SHA256
+  `727bdb8c91802559edf47404737b36c1dc5a592058477d256ea68f769a71577d`.
+  Earlier stale-artifact/native-source binding and F3 security-baseline findings
+  were fixed and re-reviewed. No remaining concrete blocker was found. Review
+  covers source only; both staged/native operations still need real execution.
+
+At04:46UTC, read-only Docker inspection confirms the unchanged shared engine,
+no owned app-flow containers, `state.ready=false`/previous stopped time and no
+listeners on3001/9997/9998/9999. No task process is left running. The two previously
+retained worker dependency junctions remain; no rejected cleanup was retried.
+At04:52UTC, measured headroom was8.33GiB physical and21.43GiB commit; measure again
+before any approved runtime operation. The8/14GiB startup guard and1GiB/92%
+abort limits remain unchanged.
+
+**Next:** the finite proposal is
+`../equipment-runtime/parent-positive-runtime-proposal-20261027.json`.
+It is a dry run only: five exact task containers, two networks/two volumes,
+two disposable Auth accounts and three protected private files, loopback ports,
+the112-file no-overwrite public-evidence parking list and targeted cleanup.
+The controller separately preserves its prior state/final-readback files. No
+archive or runtime mutation has occurred. New credentials require explicit user
+approval under `CONTINUE-INKBORNE.md`; the continuation kickoff alone excludes
+that authority. After approval and fresh headroom, execute the same-database
+Fiend/Draconic prerequisite chain, parent installation/preparation/native proof,
+`-Gate parent-positive-app` with its three hash-bound public input paths,
+`record-parent-background-vector.ts`, then `record-parent-admission-acceptance.ts`.
+Only a full accepted parent receipt admits ancestry/A4; only accepted A4 admits
+F3 installation. Retain the existing caster/martial/A5/A6 queue afterward.
+Global gates remain closed, Vercel unchanged, M7/creature imports paused.
+
 ### Latest continuation — 2026-10-26 dropdown refinement
 
 The user added an explicit creation UX requirement: **finite character-creation

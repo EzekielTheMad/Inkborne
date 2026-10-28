@@ -62,7 +62,36 @@ scope or continuation-order conflict. Receipt:
 `5f99574`. This docs-only checkpoint ran no app tests, services or deployments
 and changes no implementation/native/browser acceptance result.
 
-## Active continuation — 2026-10-26 UTC
+## Active continuation — 2026-10-28 UTC
+
+### Parent positive acceptance and F3 installer — source ready, actual run held
+
+Source `b1a096a` supplies the missing full parent UI story, strict aggregate,
+genuine Rogue preparation and explicitly scoped rollback-only private background
+vector. Eighteen standalone checkpoints bind source/run/engine/database and
+reader identities. The six-step saves/ASI, native award, retained Fiend control,
+strict correction replay and21 HTTP probes retain exact receipts and rows.
+Native SQL claims remain explicitly unauthenticated; the background vector must
+observe1/0/2 physical writes and revision increments and prove full rollback.
+
+The guarded F3 installer is integrated as `bd0b2a1`/`01fecf9`. It requires full
+parent/A4 acceptance, exact stage/profile bytes, preserved schema/table-policy
+and ACL baselines, two owner-only helpers and independent cleanup. The external
+publisher now admits only the exact reviewed LF/CRLF F3 source variants.
+
+All **84 focused evidence-validator checks**, typecheck and zero-warning lint
+pass. Independent review clears the exact16-file manifest at `b1a096a` after
+recording/source-binding and security-baseline fixes. These are source checks:
+**full parent, A4 and F3 actual installation/app acceptance remain open**.
+No runtime/SQL/browser/credentials or hosted changes were performed this turn.
+
+The prior runtime is removed; a concrete fresh-cycle proposal includes five
+containers, two networks/volumes each, two disposable Auth accounts, three
+restricted credential files, exact public-evidence archive list and targeted
+cleanup. It remains unexecuted pending new-credential approval under the
+continuation boundary. Keep the8/14GiB startup guard and existing dependency
+order; do not repeat accepted historical slices as missing implementation.
+[Exact sources, checks, limitations and proposal](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-parent-acceptance-source).
 
 ### Character creation dropdowns — local UI complete
 
@@ -83,9 +112,10 @@ but were not rerun. Owned UI processes/ports are closed; two isolated dependency
 junctions remain after an automatic cleanup rejection. Exact evidence and
 limitations: [latest handoff](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-dropdown-refinement).
 
-The next dependency remains full parent positive acceptance/aggregation and
-the missing F3 actual installer, then ancestry/A4 and the existing walkthrough
-queue. Vercel unchanged; global gates closed, M7/creature imports paused.
+The next dependency remains full parent actual acceptance, then ancestry/A4 and
+the existing walkthrough queue. Its positive aggregation and F3 installer source
+are now ready as recorded above. Vercel unchanged; global gates closed,
+M7/creature imports paused.
 
 ### Fiend and Draconic accepted locally; full parent acceptance next
 
@@ -119,10 +149,10 @@ public checkpoint files are hash-archived. The final closure is 6 app-created
 characters, 1,535 definitions/1,537 snapshots, zero capabilities/seals and all
 readiness/class/hit-die gates closed. No hosted acceptance or deployment occurred.
 
-**Next is full parent story/aggregation source**, including its admitted
-background two-write vector, ordinary writes/ASI, award, Fiend replay and genuine
-access checks. Prepare the missing F3 actual installer. Ancestry installation/A4
-must wait for full parent acceptance, then the existing caster/martial/A5/A6 queue.
+The next actual dependency is full parent acceptance; its positive story,
+background vector and strict aggregator source are now ready through `b1a096a`,
+alongside the F3 installer. Ancestry installation/A4 must wait for full parent
+acceptance, then the existing caster/martial/A5/A6 queue.
 Preserve Fiend/Draconic acceptance; a new disposable runtime may require a fresh
 same-database prerequisite chain. R06 stays in progress, Vercel unchanged and
 M7/creature imports paused. Older sections below retain their then-current status.
@@ -2078,7 +2108,7 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R03 M1/P0 safety | Reviewed dependencies, error/privacy boundaries, release/recovery compatibility. [Dependency evidence](handoffs/2026-10-12-r03-devtools-remediation-plan.md), [release checklist](RELEASE-READINESS.md). I=P/T=local/G=yes patches/D=- candidate/A=open. | Production audit zero; eight unpatched development-chain highs remain unaccepted. Final combined source/renderer gates, restore/migration replay and old-client compatibility remain required; audit counts do not prove exploit absence. |
 | R04 M1/M8 | Feedback capture/admin triage and alpha checkpoint A-D evidence. [Contract](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [alpha records](alpha). I=yes/T=local+H/G=yes/D=H/A=admin/current open. | Exact originating context/mobile feedback and permitted admin triage; record feedback rounds, disposition/blockers and Victor acceptance, not invented users or elapsed-time substitutes. |
 | R05 M2/PRD §11 | Established visual identity, responsive web, mobile/tablet workflows. [Journey](design-briefs/design_handoff_journey_alpha/README.md), [UI](../components), [offline configs](../e2e). I=yes/T=offline+H/G=yes/D=H/A=current open. | Real current routes at desktop/mobile/tablet; reachable controls, no clipping, keyboard/focus/labels/errors/contrast/zoom and screen-reader checks. Preserve shipped #67; no redesign. |
-| R06 M3; PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md), [Fiend/removal actual app acceptance](handoffs/2026-10-23-fiend-and-class-removal.md), [ordinary save recovery](handoffs/2026-10-23-builder-save-recovery.md), [correction/Draconic/parent evidence](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-2103-utc). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. Fiend expanded candidates and secondary removal/re-addition also pass actual save/reload; the original class stays fixed. Ordinary save-response/reload recovery passes three actual local stories and 14 native snapshots, including absent retry and a retained HP draw. Fiend historical correction/recovery and Draconic immutable HP/AC/retained-die stories now pass actual local acceptance. Finite creation choices now use eligible dropdowns with visible retained unavailable picks; 392 focused and 27 simulated-persistence browser scenarios pass. Parent installation, genuine Fighter4 preparation, 34 native outcomes and eight actual contention scenarios pass; full parent positive aggregation remains open. R06 remains in progress: full parent acceptance, ancestry/A4, queued complete caster/martial/A5/A6 stories, broader combinations/writer closure and hosted/provider acceptance. Legacy race dual arithmetic stays visibly preserved. |
+| R06 M3; PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md), [Fiend/removal actual app acceptance](handoffs/2026-10-23-fiend-and-class-removal.md), [ordinary save recovery](handoffs/2026-10-23-builder-save-recovery.md), [correction/Draconic/parent evidence](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-2103-utc). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. Fiend expanded candidates and secondary removal/re-addition also pass actual save/reload; the original class stays fixed. Ordinary save-response/reload recovery passes three actual local stories and 14 native snapshots, including absent retry and a retained HP draw. Fiend historical correction/recovery and Draconic immutable HP/AC/retained-die stories now pass actual local acceptance. Finite creation choices now use eligible dropdowns with visible retained unavailable picks; 392 focused and 27 simulated-persistence browser scenarios pass. Parent installation, genuine Fighter4 preparation, 34 native outcomes and eight actual contention scenarios pass. Full parent positive story/aggregation and the guarded F3 installer are source-ready at b1a096a with 84 focused evidence checks and exact independent review; their actual execution remains open. R06 remains in progress: full parent acceptance, ancestry/A4, queued complete caster/martial/A5/A6 stories, broader combinations/writer closure and hosted/provider acceptance. Legacy race dual arithmetic stays visibly preserved. |
 | R07 PRD §5; M3 | Equipment/custom inventory/equip/currency, atomic starting awards/copy. [Inventory](../lib/supabase/inventory.ts), [staged SQL/readme](../supabase/staged/README.md), [45-case executable test](../tests/supabase/starting-equipment-postgres.test.ts). I=staged/P/T=model+offline/G=yes, gate off/D=-/A=open. | Full migration/grants/triggers, per-write rollback, concurrent same/different intent, ownership/pin/copy races, replay after consumption and lost responses. No fabricated legacy eligibility/receipts. E1 runtime + approved legacy policy; rollout after actual acceptance. |
 | R08 PRD §3/§4/§9; M3 | HP/temp HP, death saves, conditions, dice/logs, cast/slots/resources, effects/concentration, rests/hit dice. [Provider](../lib/character/character-context.tsx), [sheet](../components/sheet), [core checks](handoffs/2026-10-11-orchestrator-local-queue.md). I=yes/P/T=offline+H/G=yes/D=H/A=current open. | Real multi-class play/rest/roll/calculation scenarios, pending/failure/conflict/reload/offline/expiration paths, no silent duplicate or lost spend. Do not confuse a simulated router/provider with hosted success. |
 | R09 M3 safety/D1 | Durable rolled action + revision/dependency/old-writer participation. [Contract and executable gaps](specs/2026-10-11-durable-roll-state-contract.md), [current gap tests](../tests/supabase/durable-action-current-gaps.test.ts). I=proposal/T=characterization/G=proposal/D=-/A=open. | Implement one hit-die command locally with operation identity/receipt and revision/dependency checks; prove rollback/lost-response replay/ABA/legacy-writer behavior, then reviewed death-save/concentration adapters. Local SQL-file edits/tests are ordinary work; actual DB/security execution uses G2/G3. |

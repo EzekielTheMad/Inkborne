@@ -5,6 +5,16 @@ browser, provider and hosted execution remain unaccepted. R06 remains in
 progress, M1–M6 retain priority, Vercel stays unchanged and M7 stays paused.
 All13 writer readiness/class/hit-die gates remain closed.
 
+The previously missing actual installer source is ready as
+`scripts/install-earned-racial-spells.ts` through `bd0b2a1`/`01fecf9`.
+It requires the exact owned engine/database IDs, full parent and actual A4
+acceptance, frozen candidate source, exact stage/function profiles and preserved
+parent security baseline. It reads no credentials and starts no runtime.
+The LF/CRLF stage variants are admitted by their complete reviewed hashes;
+only LF bytes execute. Independent source review,84 combined evidence checks
+and typecheck/lint pass at `b1a096a`; installation and A6 acceptance remain open.
+[Current evidence and continuation](../handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-parent-acceptance-source).
+
 ## Admitted declaration and source
 
 Only the meaningful immutable SRD/platform/null-owner Tiefling race root may

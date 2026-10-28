@@ -1,5 +1,16 @@
 # Finite enrolled parent admission
 
+Current positive acceptance source is ready through `b1a096a`, without new
+runtime acceptance. See the [current handoff](../handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-parent-acceptance-source)
+for the18-point actual-app story, strict recorder and explicitly scoped
+rollback-only background fixture. Its physical-write measurement uses
+`pg_stat_get_xact_tuples_updated`, the underlying counter for PostgreSQL's
+`pg_stat_xact_all_tables.n_tup_upd`; transaction counters update continuously.
+[PostgreSQL transaction statistics](https://www.postgresql.org/docs/17/monitoring-stats.html#MONITORING-STATS-VIEWS),
+[native view definition](https://github.com/postgres/postgres/blob/REL_17_STABLE/src/backend/catalog/system_views.sql).
+Source/unit checks do not replace executing the vector against the full native
+compiler, real graph, Auth rows and original callbacks.
+
 This staged companion is a bounded continuation of
 `2026-10-22-enrolled-character-writer-fences.md`. It installs after the explicit
 Fiend correction and immutable subclass HP companions. It closes unaccepted

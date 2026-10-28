@@ -1,6 +1,6 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-26 (America/Phoenix). This is the operational entrypoint.
+Updated 2026-10-27 (America/Phoenix). This is the operational entrypoint.
 [LAUNCH-ACCEPTANCE.md — current execution path](LAUNCH-ACCEPTANCE.md#current-execution-path)
 is the **single current plan, milestone map, backlog and acceptance gate**.
 ROADMAP is navigation, GAME-PLAN is working conventions, and the PRD is the
@@ -23,7 +23,8 @@ The authoritative continuation checkout is
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, branch
 `codex/launch-integration-20261011`. Preserve `C:\Projects\Inkborne` as the old
 backup and preserve every inherited worktree. Refresh Git status/HEAD before
-editing; the latest product/source checkpoint is `7311ca2`.
+editing; the latest acceptance-source checkpoint is `b1a096a`; the creation
+dropdown product checkpoint remains `7311ca2`.
 
 The user-requested creation dropdown refinement is implemented locally:
 finite picks use dropdowns offering currently valid options, retaining visible
@@ -44,20 +45,30 @@ catalog, profiles and closed sessions. This SQL-role proof is not JWT or full
 parent acceptance. Forty-three focused checks, typecheck/lint and independent
 exact-source review pass. Earlier failed runs remain failed and preserved.
 
-Next implement full parent story/aggregation, including the admitted background
-two-write vector, ordinary saves/ASI, native award, Fiend replay and actual access
-checks. The F3 actual installer remains missing source. The reviewed A4 recorder
-(`bcfa8a6`) is ready source, but ancestry installation/A4 waits for full parent
-acceptance. Then retain the caster/martial/A5/A6 queue. Consult the
-[latest handoff](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-2103-utc)
-for exact source/receipts, limitations and the next finite delivery.
+Full parent positive story/strict aggregation and the F3 actual installer are
+now **source complete** through `b1a096a`. The parent story records eighteen
+bound native checkpoints, six builder steps/ASI, native award, twenty-one real
+HTTP probes, Fiend correction/replay and a genuine Rogue for the separately
+labeled rollback-only background 1/0/2-write vector. F3 requires accepted parent
+and A4, exact installed profiles and preserved security surfaces. All84 focused
+evidence checks, typecheck/lint and independent exact-source review pass.
+No new actual app/native acceptance follows from those source checks.
+
+Next is the proposed fresh disposable cycle: same-database prerequisite chain,
+full parent acceptance, then ancestry/A4 and F3 installation, followed by the
+existing caster/martial/A5/A6 queue. Runtime/credential creation remains held
+for explicit user approval; the kickoff excludes inferred new-credential
+permission. The concrete resource/archive/cleanup proposal and exact source
+receipts are in the
+[latest handoff](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-parent-acceptance-source).
 
 All five owned containers, two networks, two volumes, proxy and private
 credentials are absent; task ports are closed at 21:01:23 UTC. Public checkpoint
 evidence is hash-archived. Shared Docker/cache and inherited worktrees remain.
-Complete missing source before starting another disposable runtime; preserve
-accepted Fiend/Draconic results, while satisfying a fresh same-database chain
-when a later installer requires it.
+Live read-only inspection on October28 confirms the prior runtime is stopped,
+no owned containers remain and ports3001/9997/9998/9999 are closed. Shared engine
+identity is unchanged. Preserve accepted Fiend/Draconic results, while satisfying
+a fresh same-database chain when a later installer requires it.
 Before runtime work, consult the handoff and exact external process/runtime
 receipts; serialize heavy checks and retain its guard of at least **14 GiB
 commit-free and 8 GiB physical-free** before a fresh actual run. Last recorded
