@@ -29,7 +29,22 @@ services:
     mem_limit: 256m
     pids_limit: 128
     command: [auth, migrate]
-    environment: &auth-env
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${LOCAL_PG_PASSWORD}@db:5432/postgres
+      GOTRUE_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      API_EXTERNAL_URL: http://127.0.0.1:9999/auth/v1
+      GOTRUE_SITE_URL: http://127.0.0.1:3001
+  auth:
+    <<: *common
+    image: supabase/gotrue@sha256:c0c25187a6b835e65a6f6e6c6b39d090e832d40e6de5186f2c038e0411944232
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
+    command: [auth, serve, --config, /local/empty.env]
+    volumes:
+      - ${INKBORNE_TEST_SOURCE:?required}/scripts/unraid/init/auth.env:/local/empty.env:ro
+    environment:
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${LOCAL_PG_PASSWORD}@db:5432/postgres
       GOTRUE_JWT_SECRET: ${LOCAL_JWT_SECRET}
@@ -49,6 +64,8 @@ services:
       GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL: '10'
       GOTRUE_DB_CLEANUP_ENABLED: 'false'
       GOTRUE_LOG_LEVEL: error
+      GOTRUE_API_HOST: 0.0.0.0
+      PORT: '9999'
   storage-migrate:
     <<: *common
     image: supabase/storage-api@sha256:f1546fac6d1c7e345428ac904bfaa7be7cecd50a1f549fe1cf38c628a7b15c85
@@ -63,17 +80,6 @@ services:
       FILE_STORAGE_BACKEND_PATH: /tmp/app-flow-storage
       DB_ALLOW_MIGRATION_REFRESH: 'false'
       S3_PROTOCOL_ENABLED: 'false'
-  auth:
-    <<: *common
-    image: supabase/gotrue@sha256:c0c25187a6b835e65a6f6e6c6b39d090e832d40e6de5186f2c038e0411944232
-    cpus: 0.5
-    mem_limit: 256m
-    pids_limit: 128
-    command: [auth, serve]
-    environment:
-      <<: *auth-env
-      GOTRUE_API_HOST: 0.0.0.0
-      PORT: '9999'
   rest:
     <<: *common
     image: postgrest/postgrest@sha256:c847127074bd26e1b8d3f7c0e6e01e5346f4b85dd34f5d699fd230af960827c0

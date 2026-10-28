@@ -8,7 +8,7 @@ assert(host.runDirectory==='/mnt/cache/appdata/inkborne-test-runner/runs/'+host.
 const password=randomBytes(32).toString('hex'), secret=randomBytes(48).toString('hex');
 const jwt=role=>{
  const now=Math.floor(Date.now()/1000), head=Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url');
- const body=Buffer.from(JSON.stringify({role,iss:'supabase-local-test',iat:now,exp:now+7200})).toString('base64url');
+ const body=Buffer.from(JSON.stringify({role,iss:'http://127.0.0.1:9999/auth/v1',aud:'authenticated',iat:now,exp:now+7200})).toString('base64url');
  return head+'.'+body+'.'+createHmac('sha256',secret).update(head+'.'+body).digest('base64url');
 };
 const anonKey=jwt('anon'), serviceRoleKey=jwt('service_role');

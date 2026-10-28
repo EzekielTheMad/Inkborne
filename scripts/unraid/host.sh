@@ -75,12 +75,13 @@ jq -e --arg run "$run_id" 'length==6 and all(.[];.run==$run and .memory>0 and .n
 "${compose[@]}" start db >> private/lifecycle.log 2>&1
 db=$("${compose[@]}" ps -q db)
 phase=database-ready
-for ((i=0;i<120;i++)); do docker exec "$db" pg_isready -h /var/run/postgresql -U postgres -d postgres >/dev/null 2>&1 && break; sleep 1; done
-docker exec "$db" pg_isready -h /var/run/postgresql -U postgres -d postgres >/dev/null
+for ((i=0;i<120;i++)); do docker exec "$db" pg_isready -h 127.0.0.1 -U postgres -d postgres >/dev/null 2>&1 && break; sleep 1; done
+docker exec "$db" pg_isready -h 127.0.0.1 -U postgres -d postgres >/dev/null
 for service in auth-migrate storage-migrate; do
- phase=$service; "${compose[@]}" start "$service" >> private/lifecycle.log 2>&1
+ phase=$service
  job=$("${compose[@]}" ps -aq "$service")
- [[ $(timeout 120 docker wait "$job") == 0 ]]
+ timeout 120 docker start --attach "$job" > "private/$service.log" 2>&1
+ [[ $(docker inspect -f '{{.State.ExitCode}}' "$job") == 0 ]]
 done
 pg_id=$(docker exec "$db" psql -h /var/run/postgresql -U supabase_admin -d postgres -XqAtc 'SELECT system_identifier::text FROM pg_control_system()')
 jq -n --arg run "$run_id" --arg head "$head" --arg engine "$expected_engine" --arg db "$db" --arg pg "$pg_id" '{kind:"inkborne-unraid-test-runtime-v1",runId:$run,sourceHead:$head,engineId:$engine,databaseId:$db,pgSystemId:$pg}' > private/runtime.json
