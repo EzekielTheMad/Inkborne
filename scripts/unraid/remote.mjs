@@ -45,7 +45,9 @@ assert.equal(source.migrations.length,83);assert.equal(source.stages.length,34);
 const local=path.resolve(root,'../equipment-runtime/unraid',runId);fs.mkdirSync(local,{recursive:true});
 fs.writeFileSync(path.join(local,'host.json'),JSON.stringify(host));fs.writeFileSync(path.join(local,'source.json'),JSON.stringify(source));
 fs.writeFileSync(path.join(local,'catalog-files.txt'),['source-manifest.json',...inputs.map(item=>item.file)].join('\n')+'\n');
-invoke('git',['archive','--format=tar','--output='+path.join(local,'source.tar'),head]);
+// Git for Windows otherwise converts archive entries using core.autocrlf.
+// Freeze canonical repository bytes for Linux shell execution and SQL hashes.
+invoke('git',['-c','core.autocrlf=false','archive','--format=tar','--output='+path.join(local,'source.tar'),head]);
 invoke('tar',['-cf',path.join(local,'catalog.tar'),'-C',cache,'-T',path.join(local,'catalog-files.txt')]);
 // All interpolated remote paths/identities above are generated finite values.
 ssh(`set -eu; umask 077; for p in /mnt/cache /mnt/cache/appdata /mnt/cache/appdata/inkborne-test-runner /mnt/cache/appdata/inkborne-test-runner/runs; do test ! -L "$p"; done; test ! -e ${runDirectory}; mkdir -p ${runDirectory}; chmod 700 ${runDirectory}`);
