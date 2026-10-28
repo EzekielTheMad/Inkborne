@@ -141,8 +141,14 @@ function validateProfile(input: unknown) {
   return value;
 }
 
-export function validateEarnedRacialPreimage(input: unknown, acceptedA4Profile: unknown, parentProfiles: readonly ParentFunctionProfile[]) {
+export function validateEarnedRacialPreimage(input: unknown, acceptedA4Profile: unknown, parentProfiles: readonly ParentFunctionProfile[], acceptedParentProfile: unknown) {
   const before = validateProfile(input);
+  // A4's profile omits these security surfaces. Both readers use identical
+  // native fields and OID ordering, so compare their accepted parent bytes
+  // directly rather than adopting a newly observed baseline after A4.
+  const parentSecurity = earnedRacialProfileSchema.pick({ schemas: true, policies: true, relationPrivileges: true }).parse(acceptedParentProfile);
+  for (const key of ["schemas", "policies", "relationPrivileges"] as const)
+    assert.deepEqual(before[key], parentSecurity[key], `fresh ${key} differs from accepted parent`);
   const a4 = { catalog: { definitions: before.catalog.count, versions: before.snapshots.count, chainRoots: before.chainRoots },
     snapshotsFingerprint: before.snapshots.fingerprint,
     functions: before.functions.map(({ oid, signature, bodyMd5, profile, owner, execute }) => ({ oid, signature, bodyMd5, profile, owner, execute })),

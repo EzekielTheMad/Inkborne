@@ -168,12 +168,12 @@ export async function installEarnedRacialSpells(args: string[]) {
   let source: ReturnType<typeof captureSource> | undefined;
   try {
     source = captureSource(); assert.deepEqual(story.source, source);
-    validateEarnedRacialPrerequisites({ parent: parentFile.data, parentNative: parentNative.data, parentApp: parentApp.data,
+    const accepted = validateEarnedRacialPrerequisites({ parent: parentFile.data, parentNative: parentNative.data, parentApp: parentApp.data,
       parentBackground: parentBackground.data, parentInstallation: parentInstall.data, ancestry: a4File.data, ancestryInstallation: ancestryInstall.data },
     { engineId: expectedEngine, databaseId: expectedDatabase }, source);
     verifyRuntime(); runtimeVerified = true;
     phase = "preimage"; journal();
-    before = validateEarnedRacialPreimage(sql(profileSql), a4.nativeProfile, stage.parentProfiles); freshA4();
+    before = validateEarnedRacialPreimage(sql(profileSql), a4.nativeProfile, stage.parentProfiles, accepted.parent.after); freshA4();
     assert.deepEqual(captureSource(), source); verifyRuntime();
     phase = "install"; installationMayHaveCommitted = true; journal();
     sql(stage.sql, { role: "supabase_admin", install: true });

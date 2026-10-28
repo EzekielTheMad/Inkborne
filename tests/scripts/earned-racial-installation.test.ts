@@ -35,7 +35,8 @@ function fixture() {
   const after = structuredClone(before);
   after.functions.find(entry => entry.signature === EARNED_RACIAL_STAGE.normalizer)!.bodyMd5 = EARNED_RACIAL_STAGE.after;
   after.functions.push(...Object.entries(EARNED_RACIAL_STAGE.helpers).map(([signature, body], index) => fn(signature, body, 300 + index)));
-  return { before, after, a4 };
+  const parent = structuredClone({ schemas: before.schemas, policies: before.policies, relationPrivileges: before.relationPrivileges });
+  return { before, after, a4, parent };
 }
 function prerequisites() {
   const identity = { engineId: "local-owned-engine", databaseId: "a".repeat(64) };
@@ -91,8 +92,8 @@ describe("SOURCE ONLY finite F3 installation validation", () => {
     expect(() => validateEarnedRacialStage(Buffer.from(lf + "-- changed\n"))).toThrow();
   });
   it("accepts exactly one normalizer change and two owner-only helpers", () => {
-    const { before, after, a4 } = fixture();
-    expect(validateEarnedRacialPreimage(before, a4, stage.parentProfiles)).toEqual(before);
+    const { before, after, a4, parent } = fixture();
+    expect(validateEarnedRacialPreimage(before, a4, stage.parentProfiles, parent)).toEqual(before);
     expect(validateEarnedRacialPostimage(before, after)).toEqual(after);
   });
   it.each(["rows", "firstClassProofs", "catalog", "snapshots", "chainRoots", "wires", "roles", "memberships", "schemas", "policies", "relationPrivileges"] as const)("refuses changed %s", key => {
@@ -114,10 +115,18 @@ describe("SOURCE ONLY finite F3 installation validation", () => {
     expect(() => validateEarnedRacialPostimage(before, after)).toThrow();
   });
   it("refuses already-installed F3 or a profile that differs from accepted A4", () => {
-    const { before, after, a4 } = fixture();
-    expect(() => validateEarnedRacialPreimage(after, a4, stage.parentProfiles)).toThrow();
+    const { before, after, a4, parent } = fixture();
+    expect(() => validateEarnedRacialPreimage(after, a4, stage.parentProfiles, parent)).toThrow();
     before.snapshots.fingerprint = "b".repeat(32);
-    expect(() => validateEarnedRacialPreimage(before, a4, stage.parentProfiles)).toThrow();
+    expect(() => validateEarnedRacialPreimage(before, a4, stage.parentProfiles, parent)).toThrow();
+  });
+  it.each(["schemas", "policies", "relationPrivileges"] as const)("refuses pre-install %s drift from accepted parent even when A4 still matches", key => {
+    const { before, a4, parent } = fixture(); before[key].push({ unreviewed: true });
+    expect(() => validateEarnedRacialPreimage(before, a4, stage.parentProfiles, parent)).toThrow(`fresh ${key} differs from accepted parent`);
+  });
+  it.each(["schemas", "policies", "relationPrivileges"] as const)("requires accepted parent %s baseline", key => {
+    const { before, a4, parent } = fixture(), incomplete: Record<string, unknown> = { ...parent }; delete incomplete[key];
+    expect(() => validateEarnedRacialPreimage(before, a4, stage.parentProfiles, incomplete)).toThrow();
   });
   it("refuses SQL-only or incomplete prerequisites before installation", () => {
     const identity = { engineId: "local-owned-engine", databaseId: "a".repeat(64) };
