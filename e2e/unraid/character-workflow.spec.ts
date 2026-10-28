@@ -189,8 +189,8 @@ test("genuine Fighter completes the builder, receives its original award and rel
   await page.getByRole("combobox", { name: "Alignment", exact: true }).selectOption("Neutral Good");
   await save(page, () => page.getByRole("button", { name: "Save details", exact: true }).click()); await expect(page.getByText("Character details saved.", { exact: true })).toBeVisible();
   await page.goto(base + "/equipment");
-  const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') }); await expect(groups.first()).toBeVisible();
-  for (let index = 0; index < await groups.count(); index++) await choose(page, groups.nth(index).locator('select option[value="a"]'));
+  const equipmentChoices = page.locator("select").filter({ has: page.locator('option[value="a"]') }); await expect(equipmentChoices.first()).toBeVisible();
+  for (let index = 0; index < await equipmentChoices.count(); index++) await choose(page, equipmentChoices.nth(index).locator('option[value="a"]'));
   const slots = page.locator('button[data-slot="select-trigger"]');
   for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
