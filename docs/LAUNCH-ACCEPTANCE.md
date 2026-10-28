@@ -72,16 +72,23 @@ database and browser runner. `npm run verify:unraid -- workflow` replaces the
 Windows resource hold and historical recorder chain as the default development
 check. Source is committed/frozen, scratch credentials are server-generated,
 ports are private, resources capped, and all task containers/volumes cleaned.
-Source is saved through `2218940`; actual workflow verification is pending.
-The first build attempt ended before backend creation; all
-temporary resources/credentials are absent and existing services unchanged.
-The user's subsequent explicit cache/unused-image cleanup removed 83 images
-unreferenced by any container and cleared the default-builder cache to zero.
-Docker free space is now 23.3 GiB in the same 70 GiB disk (65% used), above the
-15 GiB runner threshold; read-only plan mode passes. All 56 containers (45
-running, same PIDs/start times/mounts/status) and 95 volumes are unchanged.
-No resize, restart or actual app test occurred. This one-off cleanup does not
-authorize automatic shared cache/image pruning in future test runs.
+**Focused actual verification passes at `6226bca`**. The fresh database accepts
+83 migrations plus 34 stages and imports 1,535 current SRD definitions/snapshots,
+with no staging leftovers and unchanged security/gate profiles. Typecheck,
+zero-warning lint and five focused dropdown/protocol test files pass. The real
+Fighter4 flow saves the six builder areas, explicit HP/ASI choices, original
+equipment award, reload and foreign-account404. All 34 native guard cases,
+eight real contention scenarios and owner/service/foreign HTTP probes pass.
+Native sessions exit and full fixture/catalog retention checks pass.
+
+The user-requested final cleanup removed every task container/network/volume,
+private credentials/logs, 14 newly introduced images and 55 temporary source/
+archive paths. Reports remain. All 56 original containers (45 running with the
+same PIDs/start times/restart counts), 95 volumes and 53 original image IDs are
+preserved. Docker has23.3 GiB free in the unchanged70 GiB disk, build cache zero;
+minimum available RAM during the passing workflow was25.5 GiB. No existing
+service restart, disk resize or hosted change occurred. Shared automatic prune
+is still outside the runner's scope.
 [Runner procedure and limits](../scripts/unraid/README.md).
 
 Fresh current-state bootstrap installs reviewed SQL directly and imports the
@@ -90,7 +97,7 @@ Draconic stories solely to install already-reviewed stages. The focused actual
 Fighter workflow retains native ownership/transaction guards. Historical
 full-parent, ancestry/A4, F3 upgrade and broader caster/martial acceptance remain
 open and separately tracked. Vercel hosting and release gates are unchanged.
-[Exact source, attempts and storage hold](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-unraid-and-proportional-testing).
+[Exact source, passing evidence, earlier failures and cleanup](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-unraid-and-proportional-testing).
 
 ### Parent positive acceptance and F3 installer — source ready, actual run held
 

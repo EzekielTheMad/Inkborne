@@ -10,6 +10,80 @@ all global readiness/class/hit-die gates closed.
 
 ## Latest continuation — 2026-10-28 Unraid and proportional testing
 
+### Focused actual run accepted; cleanup complete
+
+Passing source: `6226bcab616a138b21145081edcbd417e29f2a31`, run
+`a80d6d3b-7a1c-42a4-8525-89e19438727f`, completed October28 at12:13
+America/Phoenix. Evidence is in `../equipment-runtime/unraid/<run UUID>/output`
+and the corresponding Unraid run's `output` directory. All12 result files have
+a SHA256 manifest in `../equipment-runtime/unraid/final-cleanup-20261028/`.
+
+- Typecheck, zero-warning lint, three dropdown files and two existing affected
+  psql-protocol/contention files pass. No full suite or production build ran.
+- All83 migrations plus34 reviewed stages install. Current transformers import
+  all1,535 definitions/snapshots through the normal atomic service path, with
+  zero staging/batches, preserved security/gate profiles and ordinary-owner
+  authenticated catalog access. All13 readiness rows and global gates stay off.
+- Actual Auth/UI creates a Human Fighter4/Champion, saves the six builder
+  areas, explicit average HP and Strength ASI, completes original equipment
+  award, reloads the sheet and returns404 for a second account. All data writes
+  are UI actions; native readers verify exact family/pins/provenance/receipts,
+  one award, inventory ordering and currency15gp, preserving absent current HP.
+- The unawarded fixture passes all34 exact native guard cases and eight actual
+  contention scenarios, then owner/service/foreign HTTP probes. Catalog and
+  fixture remain unchanged across those probes; all captured backends/clients
+  exit. Native SQL proof remains explicitly unauthenticated; HTTP proof is
+  separately exercised. Browser reports no page errors or blocked origins.
+
+Runtime wiring fixes are local, with no product SQL or deployed permission
+change: `675d7de` waits for final TCP startup and aligns scratch Auth/JWT config;
+`59e4210` makes the importer asynchronous so its parent gateway can serve HTTP;
+`2e56c0d` extracts the exact portable framed-session core from the Windows
+adapter; `19c6dd3` supplies ordinary authenticated account roles and a real
+owner catalog-read probe. `8d73e9d`, `16f7b20`, `f2e5c43` and `6226bca` repair
+test async syntax, equipment selector scope and explicit HP-save interactions.
+The original native assertions were preserved throughout. The Windows factory
+and portable protocol match their former implementations after LF/EOF trim;
+historical raw facade-hash pins need a new freeze if that old workflow resumes.
+
+Independent read-only review cleared each consequential fix and the final
+browser interaction deltas. Exact reviewed snapshots include auth/setup diff
+`311c26f6fd4f08a2487ec6488956cb0ef9934423`, async-import SHA256
+`47cd4e20990f81143ca99e2509b9bc92561c54f4649274a40ed53da8cb1f787a`,
+portable extraction diff `6285fba6987074de363871a057070666f2994a6f`, account
+fixture SHA256 `b1256232f91198d31a9f0ee3675dabf3d8edc9a74ef3130a0cfc7794ff2d935d`,
+browser SHA256 `c27ab65fc994d9d534b8ebb7a6394177d6546211ec5bc0c72b9b971d0bda673b`
+plus the final HP-save delta at`6226bca`. No SQL/oracle weakening was found.
+Final independent bundle review confirms all12 evidence hashes, 117 SQL steps,
+the real award's12 inventory rows and identical reload, 34/8 native outcomes,
+and cleanup metadata agree. No new tests or live actions were run by review.
+
+The preceding failed attempts remain failed with their original
+reports: Auth setup, async test syntax, gateway deadlock, Windows import in
+Playwright, account role, equipment selector scopes and skipped HP receipt.
+They were corrected at the broken boundary; every attempt's exact task stack
+was torn down. None of those failures is relabeled as a passing app run.
+
+Final cleanup, separately required by the user, is verified in
+`../equipment-runtime/unraid/final-cleanup-20261028/`: no task containers,
+network, volumes, credentials or raw logs remain; 14 introduced images and55
+input/source/archive paths are removed. Public reports and local evidence
+manifests remain. All56 original containers—including45 running—retain their
+original IDs/images/states/PIDs/start times/restart counts; all95 original
+volumes and53 original image IDs remain. No global prune or service restart
+was used for this final cleanup. Docker is back to65% used /23.3 GiB free in
+the unchanged70 GiB image, build cache0; passing-run minimum RAM available was
+25.5 GiB. The next run will need image downloads/build again.
+
+This accepts the focused fresh-state Fighter flow and reusable Unraid testing
+path. It does **not** accept the full historical-parent/background1/0/2 vector,
+ancestry/A4 or F3 upgrade stories, wider class combinations, visual typography
+(Google fonts fell back in the isolated network), hosted/provider or release
+gates. Continue the existing R06 queue with focused Unraid checks; retain
+accepted historical results, Vercel unchanged and M7/creature imports paused.
+
+### Earlier setup and storage history
+
 The user explicitly chose simpler testing and Unraid. Source `e9ef24c` supplies
 one genuine Fighter workflow; `71b1a4a` adds the portable isolated runner;
 `61053db` preserves canonical LF export bytes on Windows; `2218940` adds the
@@ -31,8 +105,9 @@ example-file export fixes, then cleared `61053db`'s canonical-byte correction.
 The final three-file storage-guard diff `ca3f5a64d43eff9cd09f9f6717afe3c95ff3be06`
 was cleared; its nonblocking diagnostic byte-bound suggestion is included in
 `2218940`. Node syntax checks, remote `bash -n`, plan mode and an expected
-no-mutation storage refusal passed. **New typecheck/lint, focused tests,
-database/bootstrap and actual browser workflow have not run.**
+no-mutation storage refusal passed. At that earlier source-only checkpoint,
+typecheck/lint, focused tests and actual workflow had not run; the passing
+actual result above supersedes that status.
 
 Attempt `a1e4981b-884b-403d-af6f-5a60b7000314` aborted on Windows Git archive
 CRLF before containers/credentials; the canonical-byte export fix is committed.
@@ -80,7 +155,7 @@ prune outputs, strict comparisons, `result.json`, and `final-space-check.json`.
 The matching server maintenance directory retains the operation evidence.
 Read-only `npm run verify:unraid -- plan` now reports storage ready. Capacity
 is resolved; refresh live guards before the next authorized workflow run.
-The actual app/bootstrap/source checks above remain unrun. Do not infer future
+At that maintenance boundary the actual workflow was still unrun. Do not infer future
 shared prune/resize/restart permission from this one-off maintenance or revive
 the historical Windows resource-hold workflow.
 

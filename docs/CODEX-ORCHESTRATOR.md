@@ -57,13 +57,16 @@ No new actual app/native acceptance follows from those source checks.
 The user subsequently selected **simpler testing on Unraid**. The current
 development entrypoint is `npm run verify:unraid -- workflow`: one disposable
 current-state database, focused checks and a genuine Fighter workflow, followed
-by exact project cleanup. Source is through `2218940`; actual verification is
-pending. The user's explicitly authorized cache/unused-image cleanup on
-October28 removed 83 unreferenced images and all default-builder cache.
-Docker now has 23.3 GiB free in its unchanged 70 GiB disk; plan mode passes.
-All 56 containers (45 running) and 95 volumes are unchanged, including running
-PIDs/start times. No resize or restart occurred; no actual app test followed
-this maintenance. Refresh plan mode before the next workflow run. See the
+by exact project cleanup. **Focused actual Unraid verification passes at
+`6226bca`**: typecheck/lint, five focused files, real Fighter4 creation through
+original equipment award/reload/foreign404, 34 native guard cases and eight
+contention scenarios. The current 1,535-entry SRD import and 117 SQL steps pass.
+All task containers/network/volumes/credentials are gone; final user-requested
+cleanup also removed 14 newly introduced images and 55 input/source paths.
+All 56 original containers (45 running, same PIDs/start times/restart counts),
+95 volumes and 53 original image IDs remain. Docker is back to 23.3 GiB free;
+no disk resize or existing-service restart occurred. Reports are retained.
+Refresh plan mode before the next workflow run. See the
 [current ledger decision](LAUNCH-ACCEPTANCE.md#user-decision-simplify-development-testing-and-use-unraid)
 and [runner procedure](../scripts/unraid/README.md). This supersedes the Windows
 resource hold and repeated historical-story bootstrap for routine development;
