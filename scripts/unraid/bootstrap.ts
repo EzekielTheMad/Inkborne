@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 import { systemSchemaDefinitionSchema } from "../../lib/schemas/system";
 import { nativeJson, nativeSql, testRuntime } from "./native";
@@ -14,7 +14,8 @@ export async function bootstrap() {
   assert.equal(source.sourceHead, runtime.sourceHead); assert.equal(source.migrations.length, 83); assert.equal(source.stages.length, 34);
   const sha = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
   const steps: Array<{ file: string; sha256: string; role: string }> = []; let phase = "official-bootstrap-preflight";
-  const save = (extra = {}) => fs.writeFileSync("/output/bootstrap.json", JSON.stringify({ sourceHead: runtime.sourceHead, phase, steps, ...extra }, null, 2) + "\n");
+  let importProcess: Record<string, unknown> | undefined;
+  const save = (extra = {}) => fs.writeFileSync("/output/bootstrap.json", JSON.stringify({ sourceHead: runtime.sourceHead, phase, steps, importProcess, ...extra }, null, 2) + "\n");
   try {
     await nativeSql(fs.readFileSync("scripts/equipment-runtime/bootstrap-preflight.sql", "utf8"));
     for (const step of [...source.migrations, ...source.stages]) {
@@ -46,9 +47,30 @@ export async function bootstrap() {
       assert.equal(sha(fs.readFileSync(cache + "/" + item.file)), item.sha256);
     }
     const server = JSON.parse(fs.readFileSync("/run/inkborne/server-env.json", "utf8")) as Record<string, string>;
-    const imported = spawnSync("npm", ["run", "import:srd"], { encoding: "utf8", env: { ...process.env, ...server }, timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
-    fs.writeFileSync("/run/inkborne/import.log", imported.stdout + imported.stderr, { mode: 0o600 });
-    assert.equal(imported.status, 0, "cached SRD import failed; raw output kept private");
+    // The loopback API gateway shares this event loop. A synchronous child wait
+    // would prevent the importer's own HTTP requests from ever being served.
+    const importStartedUtc = new Date().toISOString();
+    const imported = spawn("npm", ["run", "import:srd"], { env: { ...process.env, ...server },
+      stdio: ["ignore", "pipe", "pipe"], detached: true });
+    fs.writeFileSync("/run/inkborne/import.log", "", { mode: 0o600 });
+    importProcess = { pid: imported.pid, parentPid: process.pid, cwd: process.cwd(), args: ["npm", "run", "import:srd"], startedUtc: importStartedUtc }; save();
+    let importBytes = 0, importLimit: "timeout" | "output-limit" | undefined;
+    const terminateImport = (reason: "timeout" | "output-limit") => {
+      importLimit ??= reason;
+      if (imported.pid) try { process.kill(-imported.pid, "SIGKILL"); } catch {}
+    };
+    const recordImport = (bytes: Buffer) => {
+      importBytes += bytes.length;
+      if (importBytes > 4 * 1024 * 1024) { terminateImport("output-limit"); return; }
+      fs.appendFileSync("/run/inkborne/import.log", bytes);
+    };
+    imported.stdout.on("data", recordImport); imported.stderr.on("data", recordImport);
+    const importTimeout = setTimeout(() => terminateImport("timeout"), 180000);
+    const importExitCode = await new Promise<number | null>((resolve, reject) => { imported.once("error", reject); imported.once("close", resolve); })
+      .finally(() => clearTimeout(importTimeout));
+    importProcess = { ...importProcess, finishedUtc: new Date().toISOString(), exitCode: importExitCode, limit: importLimit ?? null }; save();
+    assert.equal(importLimit, undefined, "cached SRD import exceeded its bound");
+    assert.equal(importExitCode, 0, "cached SRD import failed; raw output kept private");
     const catalog = await nativeJson(`SELECT jsonb_build_object('definitions',(SELECT count(*) FROM public.content_definitions),
       'versions',(SELECT count(*) FROM public.content_versions),'active',(SELECT count(*) FROM public.content_definitions WHERE NOT is_retired),
       'batches',(SELECT count(*) FROM public.srd_import_batches),'staging',(SELECT count(*) FROM public.srd_import_staging))`) as Record<string, number>;
@@ -66,7 +88,7 @@ export async function bootstrap() {
     };
     const owner = await account("owner"), other = await account("other");
     fs.writeFileSync("/run/inkborne/test-config.json", JSON.stringify({ appOrigin: "http://127.0.0.1:3001", supabaseOrigin: "http://127.0.0.1:9999", owner, other, ...api }) + "\n", { mode: 0o600, flag: "wx" });
-    phase = "ready"; save({ passed: true, catalog, cachedResponses: 1572, freshVersionOneCatalog: true,
+    phase = "ready"; save({ passed: true, catalog, cachedResponses: 1572, freshVersionOneCatalog: true, importProcess,
       currentProfile: after, historicalUpgradeAcceptance: false });
     console.log(JSON.stringify({ phase, definitions: 1535, snapshots: 1535, accounts: 2 }));
   } catch { save({ passed: false }); throw Error(`scratch bootstrap refused at ${phase}; preserve bootstrap report`); }
