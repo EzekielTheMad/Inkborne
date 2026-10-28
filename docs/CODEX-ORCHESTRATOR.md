@@ -58,9 +58,12 @@ The user subsequently selected **simpler testing on Unraid**. The current
 development entrypoint is `npm run verify:unraid -- workflow`: one disposable
 current-state database, focused checks and a genuine Fighter workflow, followed
 by exact project cleanup. Source is through `2218940`; actual verification is
-held because the shared 70 GiB Docker image disk has only 1.9 GiB free. The
-user will review current containers before deciding how to free capacity. Do
-not resize/restart/remove/prune anything pending their instruction. See the
+pending. The user's explicitly authorized cache/unused-image cleanup on
+October28 removed 83 unreferenced images and all default-builder cache.
+Docker now has 23.3 GiB free in its unchanged 70 GiB disk; plan mode passes.
+All 56 containers (45 running) and 95 volumes are unchanged, including running
+PIDs/start times. No resize or restart occurred; no actual app test followed
+this maintenance. Refresh plan mode before the next workflow run. See the
 [current ledger decision](LAUNCH-ACCEPTANCE.md#user-decision-simplify-development-testing-and-use-unraid)
 and [runner procedure](../scripts/unraid/README.md). This supersedes the Windows
 resource hold and repeated historical-story bootstrap for routine development;

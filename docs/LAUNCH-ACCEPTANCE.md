@@ -72,13 +72,16 @@ database and browser runner. `npm run verify:unraid -- workflow` replaces the
 Windows resource hold and historical recorder chain as the default development
 check. Source is committed/frozen, scratch credentials are server-generated,
 ports are private, resources capped, and all task containers/volumes cleaned.
-Source is saved through `2218940`; actual workflow verification is held for
-Docker storage. The first build attempt ended before backend creation; all
+Source is saved through `2218940`; actual workflow verification is pending.
+The first build attempt ended before backend creation; all
 temporary resources/credentials are absent and existing services unchanged.
-Live Docker storage has only 1.9 GiB free in its 70 GiB image disk, despite
-201 GiB free on the SSD. The runner now refuses before pulls below 15 GiB free
-inside that image disk. The user will review existing containers first; do not
-resize, restart, remove or prune anything without their subsequent instruction.
+The user's subsequent explicit cache/unused-image cleanup removed 83 images
+unreferenced by any container and cleared the default-builder cache to zero.
+Docker free space is now 23.3 GiB in the same 70 GiB disk (65% used), above the
+15 GiB runner threshold; read-only plan mode passes. All 56 containers (45
+running, same PIDs/start times/mounts/status) and 95 volumes are unchanged.
+No resize, restart or actual app test occurred. This one-off cleanup does not
+authorize automatic shared cache/image pruning in future test runs.
 [Runner procedure and limits](../scripts/unraid/README.md).
 
 Fresh current-state bootstrap installs reviewed SQL directly and imports the

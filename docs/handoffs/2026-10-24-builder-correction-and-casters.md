@@ -42,25 +42,47 @@ unavailable to the original diagnostic exporter; this failure path is fixed.
 The live capacity finding is independently verified, not a recovered build log.
 Reports under `../equipment-runtime/unraid/<attempt>/output` show owned resources
 removed, private credentials/logs absent, and existing service IDs/states equal.
-Source bundles/public evidence are retained; no shared cache prune was performed.
+Source bundles/public evidence are retained. These attempts did not prune shared
+cache; the later user-authorized maintenance below is a separate operation.
 
-Live Unraid: i5-11400, approximately 64 GiB RAM / 30 GiB available, SSD about
-201 GiB free. Its separate Docker image is 70 GiB, 98% full / 1.9 GiB free.
+Before cleanup, Unraid had approximately 64 GiB RAM / 30 GiB available and SSD
+about 201 GiB free. Its separate Docker image was 70 GiB, 98% full / 1.9 GiB free.
 The runner now requires 15 GiB free there before export/pulls, in addition to
 16 GiB available RAM and 15 GiB SSD headroom. App/browser cap is 10 GiB/3 CPU;
 build cap 4 GiB/3 CPU; no published ports/socket/host network. Exact per-run
 container/network/volume identities and teardown are required.
 
 The 70→100 GiB expansion/rollback proposal is **not approved or applied**.
-The user's latest instruction is to review current containers first. Hold new
-test runs and preserve all existing containers, images and settings. The full
-45-container affected list is in
+The earlier proposed restart's full 45-container affected list is in
 `../equipment-runtime/unraid/docker-storage-change-proposal.json` (external to
-the checkout). Read-only Docker totals report 21.57 GB reclaimable images and
-6.818 GB build cache; these are engine classifications, not an approved deletion
-list. Resume only after the user resolves capacity or authorizes a specific
-operation; refresh live storage then. Do not revive the Windows resource-hold
-workflow or infer permission to prune/resize/restart shared Docker.
+the checkout). This proposal remains unapplied; the user instead explicitly
+authorized build-cache and unused-image cleanup while preserving containers
+and volumes. Native `docker buildx prune --builder default --all --force` and
+`docker image prune --all --force` ran against the verified engine after the
+complete 83-image candidate list and builder-cache list were presented.
+Container image references include stopped containers. No container/network/
+volume prune, force image removal, resize, service restart or actual app test
+was performed.
+
+The maintenance removed **83 image IDs (136→53)** and left **zero build cache**.
+All 56 containers, including the 45 running, have identical IDs/image refs,
+states, health, PIDs, start times, restart counts and canonical mount sets.
+All 95 volume identities/creation metadata are identical. Mount ordering in
+Docker inspection was normalized before comparison; no actual mount changed.
+Final live check at 10:50 America/Phoenix: Docker free **24,415,796 KiB / 23.3
+GiB**, used **65%**, unchanged total 70 GiB; SSD free about201 GiB, available
+RAM about30.5 GiB. This is roughly21.4 GiB more Docker free space. Do not add
+the cache and image prune estimates: their shared layers overlap.
+
+Evidence: `../equipment-runtime/unraid/maintenance-20261028-cache-cleanup-01/`
+contains complete dry-run candidates, selected before/after metadata, native
+prune outputs, strict comparisons, `result.json`, and `final-space-check.json`.
+The matching server maintenance directory retains the operation evidence.
+Read-only `npm run verify:unraid -- plan` now reports storage ready. Capacity
+is resolved; refresh live guards before the next authorized workflow run.
+The actual app/bootstrap/source checks above remain unrun. Do not infer future
+shared prune/resize/restart permission from this one-off maintenance or revive
+the historical Windows resource-hold workflow.
 
 ## Integrated source and focused evidence
 
