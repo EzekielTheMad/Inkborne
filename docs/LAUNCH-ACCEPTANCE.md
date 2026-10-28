@@ -88,8 +88,10 @@ No runtime/SQL/browser/credentials or hosted changes were performed this turn.
 The prior runtime is removed; a concrete fresh-cycle proposal includes five
 containers, two networks/volumes each, two disposable Auth accounts, three
 restricted credential files, exact public-evidence archive list and targeted
-cleanup. It remains unexecuted pending new-credential approval under the
-continuation boundary. Keep the8/14GiB startup guard and existing dependency
+cleanup. The user approved this exact cycle on October28 ("Yeah"); no repeated
+credential/runtime approval is needed within that scope. Execution is held for
+resources: at15:09UTC only2.09GiB physical/8.74GiB commit headroom were free.
+No archive/runtime/credential mutation has begun. Keep the8/14GiB guard and dependency
 order; do not repeat accepted historical slices as missing implementation.
 [Exact sources, checks, limitations and proposal](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-parent-acceptance-source).
 

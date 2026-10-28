@@ -56,9 +56,11 @@ No new actual app/native acceptance follows from those source checks.
 
 Next is the proposed fresh disposable cycle: same-database prerequisite chain,
 full parent acceptance, then ancestry/A4 and F3 installation, followed by the
-existing caster/martial/A5/A6 queue. Runtime/credential creation remains held
-for explicit user approval; the kickoff excludes inferred new-credential
-permission. The concrete resource/archive/cleanup proposal and exact source
+existing caster/martial/A5/A6 queue. The user explicitly approved the proposed
+disposable runtime/credential cycle on October28 ("Yeah"). That approval persists;
+do not ask again for this scope. Startup is held for resources: at15:09UTC only
+2.09GiB physical/8.74GiB commit were free, below the unchanged8/14GiB guard.
+No archive, runtime or credential mutation has begun. The concrete proposal and source
 receipts are in the
 [latest handoff](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-28-parent-acceptance-source).
 

@@ -123,9 +123,18 @@ It is a dry run only: five exact task containers, two networks/two volumes,
 two disposable Auth accounts and three protected private files, loopback ports,
 the112-file no-overwrite public-evidence parking list and targeted cleanup.
 The controller separately preserves its prior state/final-readback files. No
-archive or runtime mutation has occurred. New credentials require explicit user
-approval under `CONTINUE-INKBORNE.md`; the continuation kickoff alone excludes
-that authority. After approval and fresh headroom, execute the same-database
+archive or runtime mutation has occurred. The user approved this exact proposal
+on October28 with "Yeah". Approval receipt:
+`../equipment-runtime/parent-positive-runtime-approval-20261028.json`, binding the
+proposal hash, reviewed source and complete archive-item preflight. Do not ask
+again for the approved credentials/runtime scope. At15:05UTC headroom was only
+1.08GiB physical/10.31GiB commit; at15:09UTC it was2.09/8.74GiB. Both fail the8/14GiB
+startup guard. Overwatch was observed using about9GiB working memory; no unrelated
+process was closed. The user was asked to close it when convenient and reply
+"ready". No test, service, credential, archive move or database operation started.
+The16 reviewed source hashes,112 planned artifact hashes and prior runtime-state
+hash still match. Resume after a fresh passing resource check; this is a resource
+hold, not an approval hold. Then execute the same-database
 Fiend/Draconic prerequisite chain, parent installation/preparation/native proof,
 `-Gate parent-positive-app` with its three hash-bound public input paths,
 `record-parent-background-vector.ts`, then `record-parent-admission-acceptance.ts`.
