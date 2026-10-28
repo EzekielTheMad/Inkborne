@@ -64,6 +64,24 @@ and changes no implementation/native/browser acceptance result.
 
 ## Active continuation — 2026-10-28 UTC
 
+### User decision: simplify development testing and use Unraid
+
+The user explicitly selected both on October28. Recurring heavy verification
+now targets the existing Unraid server, with an isolated SSD-backed disposable
+database and browser runner. `npm run verify:unraid -- workflow` replaces the
+Windows resource hold and historical recorder chain as the default development
+check. Source is committed/frozen, scratch credentials are server-generated,
+ports are private, resources capped, and all task containers/volumes cleaned.
+The first actual run is pending; implementation alone is not acceptance.
+[Runner procedure and limits](../scripts/unraid/README.md).
+
+Fresh current-state bootstrap installs reviewed SQL directly and imports the
+real cached SRD through current transformers. It does not rerun accepted Fiend/
+Draconic stories solely to install already-reviewed stages. The focused actual
+Fighter workflow retains native ownership/transaction guards. Historical
+full-parent, ancestry/A4, F3 upgrade and broader caster/martial acceptance remain
+open and separately tracked. Vercel hosting and release gates are unchanged.
+
 ### Parent positive acceptance and F3 installer — source ready, actual run held
 
 Source `b1a096a` supplies the missing full parent UI story, strict aggregate,

@@ -54,7 +54,16 @@ and A4, exact installed profiles and preserved security surfaces. All84 focused
 evidence checks, typecheck/lint and independent exact-source review pass.
 No new actual app/native acceptance follows from those source checks.
 
-Next is the proposed fresh disposable cycle: same-database prerequisite chain,
+The user subsequently selected **simpler testing on Unraid**. The current
+development entrypoint is `npm run verify:unraid -- workflow`: one disposable
+current-state database, focused checks and a genuine Fighter workflow, followed
+by exact project cleanup. The first run is pending. See the
+[current ledger decision](LAUNCH-ACCEPTANCE.md#user-decision-simplify-development-testing-and-use-unraid)
+and [runner procedure](../scripts/unraid/README.md). This supersedes the Windows
+resource hold and repeated historical-story bootstrap for routine development;
+historical upgrade/full-parent/A4/F3 acceptance stays separately open.
+
+Earlier proposed Windows cycle (historical): same-database prerequisite chain,
 full parent acceptance, then ancestry/A4 and F3 installation, followed by the
 existing caster/martial/A5/A6 queue. The user explicitly approved the proposed
 disposable runtime/credential cycle on October28 ("Yeah"). That approval persists;
@@ -71,7 +80,7 @@ Live read-only inspection on October28 confirms the prior runtime is stopped,
 no owned containers remain and ports3001/9997/9998/9999 are closed. Shared engine
 identity is unchanged. Preserve accepted Fiend/Draconic results, while satisfying
 a fresh same-database chain when a later installer requires it.
-Before runtime work, consult the handoff and exact external process/runtime
+For any historical Windows run, consult the handoff and exact external process/runtime
 receipts; serialize heavy checks and retain its guard of at least **14 GiB
 commit-free and 8 GiB physical-free** before a fresh actual run. Last recorded
 cleanup is evidence, not a substitute for inspecting live state before operations.

@@ -1,0 +1,122 @@
+x-common: &common
+  restart: 'no'
+  logging: {driver: none}
+  networks: [test]
+  labels:
+    org.inkborne.test.run: ${INKBORNE_TEST_RUN:?required}
+  security_opt: [no-new-privileges:true]
+services:
+  db:
+    <<: *common
+    image: supabase/postgres@sha256:06ddc7962e11ab0f4f0334fd05671e97c30ea202f6e6a7113800bd3d6e416108
+    cpus: 1.0
+    mem_limit: 1g
+    pids_limit: 256
+    environment:
+      POSTGRES_PASSWORD: ${LOCAL_PG_PASSWORD:?required}
+      JWT_SECRET: ${LOCAL_JWT_SECRET:?required}
+      POSTGRES_DB: postgres
+    command: [postgres, -c, config_file=/etc/postgresql/postgresql.conf, -c, log_statement=none, -c, log_min_error_statement=panic]
+    volumes:
+      - data:/var/lib/postgresql/data
+      - config:/etc/postgresql-custom
+      - ${INKBORNE_TEST_SOURCE:?required}/scripts/unraid/init/98-webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:ro
+      - ${INKBORNE_TEST_SOURCE:?required}/scripts/unraid/init/99-roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:ro
+  auth-migrate:
+    <<: *common
+    image: supabase/gotrue@sha256:c0c25187a6b835e65a6f6e6c6b39d090e832d40e6de5186f2c038e0411944232
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
+    command: [auth, migrate]
+    environment: &auth-env
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${LOCAL_PG_PASSWORD}@db:5432/postgres
+      GOTRUE_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      API_EXTERNAL_URL: http://127.0.0.1:9999/auth/v1
+      GOTRUE_JWT_ISSUER: http://127.0.0.1:9999/auth/v1
+      GOTRUE_SITE_URL: http://127.0.0.1:3001
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_EXP: '3600'
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: 'true'
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: 'false'
+      GOTRUE_DISABLE_SIGNUP: 'true'
+      GOTRUE_MAILER_AUTOCONFIRM: 'true'
+      GOTRUE_SESSIONS_SINGLE_PER_USER: 'false'
+      GOTRUE_SECURITY_REFRESH_TOKEN_ALGORITHM_VERSION: '2'
+      GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: 'true'
+      GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL: '10'
+      GOTRUE_DB_CLEANUP_ENABLED: 'false'
+      GOTRUE_LOG_LEVEL: error
+  storage-migrate:
+    <<: *common
+    image: supabase/storage-api@sha256:f1546fac6d1c7e345428ac904bfaa7be7cecd50a1f549fe1cf38c628a7b15c85
+    cpus: 0.5
+    mem_limit: 512m
+    pids_limit: 128
+    command: [node, dist/scripts/migrate-call.js]
+    environment:
+      DATABASE_URL: postgres://supabase_storage_admin:${LOCAL_PG_PASSWORD}@db:5432/postgres
+      AUTH_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /tmp/app-flow-storage
+      DB_ALLOW_MIGRATION_REFRESH: 'false'
+      S3_PROTOCOL_ENABLED: 'false'
+  auth:
+    <<: *common
+    image: supabase/gotrue@sha256:c0c25187a6b835e65a6f6e6c6b39d090e832d40e6de5186f2c038e0411944232
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 128
+    command: [auth, serve]
+    environment:
+      <<: *auth-env
+      GOTRUE_API_HOST: 0.0.0.0
+      PORT: '9999'
+  rest:
+    <<: *common
+    image: postgrest/postgrest@sha256:c847127074bd26e1b8d3f7c0e6e01e5346f4b85dd34f5d699fd230af960827c0
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 128
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${LOCAL_PG_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${LOCAL_JWT_SECRET}
+      PGRST_JWT_AUD: authenticated
+      PGRST_DB_POOL: '5'
+      PGRST_DB_MAX_ROWS: '2000'
+      PGRST_LOG_LEVEL: crit
+  runner:
+    <<: *common
+    image: ${INKBORNE_TEST_IMAGE:?required}
+    init: true
+    cap_drop: [ALL]
+    cpus: 3.0
+    mem_limit: 10g
+    pids_limit: 768
+    shm_size: 1g
+    environment:
+      INKBORNE_TEST_CONFIG: /run/inkborne/test-config.json
+      INKBORNE_TEST_RUNTIME: /run/inkborne/runtime.json
+      INKBORNE_TEST_MODE: ${INKBORNE_TEST_MODE:-workflow}
+      INKBORNE_SRD_CACHE_DIR: /workspace/.test-catalog
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=3072
+    volumes:
+      - ${INKBORNE_TEST_PRIVATE:?required}:/run/inkborne
+      - ${INKBORNE_TEST_OUTPUT:?required}:/output
+networks:
+  test:
+    internal: true
+    labels:
+      org.inkborne.test.run: ${INKBORNE_TEST_RUN:?required}
+volumes:
+  data:
+    labels:
+      org.inkborne.test.run: ${INKBORNE_TEST_RUN:?required}
+  config:
+    labels:
+      org.inkborne.test.run: ${INKBORNE_TEST_RUN:?required}
