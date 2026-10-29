@@ -304,6 +304,29 @@ Character Flow is dispatched to retry the existing approved workflow after this
 docs/index release, with refreshed guards and unchanged fixture/access limits.
 No new user decision, product/native/Journal change or local acceptance.
 
+**CSJ equipped-inventory weapon connection — 2026-10-29T22:38:56.958Z:** failed run
+`20f99479-7134-4307-90c1-517f2f9263ee` passed normal Fighter creation,
+exact equipped starting-grant retention and Strength roll201, then found no
+Longsword attack. Actions read weapon content refs while normal starting awards
+populate inventory. This is an implementation gap within approved CSJ-2.
+Character Flow implements the existing Actions consumer at
+`301c5a652e10f8c10bbfaea395374c930de39a40` (base`74d505a`), three-file
+diff SHA256`bbc1d79ce6716c0d4823d1e22d58434a4e04a67ea6c003005cfbf6ae76ecfb1d`.
+Exact current-character/system/contentID/version, equipped and positive quantity
+are required; existing item-data/attack calculations and mechanics snapshot
+apply. Legacy refs, custom/renamed instances and other pins remain; only plain
+same-pin duplicates are suppressed. No award/autoequip/calculator/SQL/access/
+E2E/Journal change. Causal regression red-before/green-after;31 focused cases,
+typecheck/lint/diff pass. Same reviewer CLEAR exact source and recorded cleanup;
+six runner/native and10 Journal blobs unchanged. Eight linked/14 output hashes
+match.13 introduced images/six source-archive paths/helper/transport/runtime/
+private inputs removed; original56containers/95volumes/27networks/53imageIDs
+and existing services retained. Second run remains failed, not full acceptance.
+[Source/failure/cleanup manifest](handoffs/2026-10-29-csj-inventory-attacks-fix.json).
+Flow is dispatched to the corrected actual story after this docs/index closure,
+with refreshed guards and all existing budgets/oracles/external restrictions.
+No user decision is needed. Accept only actual CSJ-1..6 plus final cleanup.
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final

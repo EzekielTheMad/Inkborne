@@ -9,17 +9,17 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T22:14:21.752Z",
+  "updatedAt": "2026-10-29T22:38:56.958Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "First CSJ actual attempt failed on hidden/visible inventory selector after Fighter reached sheet; no acceptance. Minimal visible-row correction3d70442 and exact failed-run cleanup cleared by same reviewer. Corrected approved actual retry dispatched after serialized docs release.",
-  "nextAction": "Character Flow refreshes guards and reruns the reviewed same-ID CSJ workflow. Coordinator inspects real remaining native/sheet/Journal evidence and final cleanup; continue scoped concrete fixes until CSJ local acceptance or a true external blocker.",
+  "currentWork": "Second actual CSJ attempt found starting-inventory weapons absent Actions after successful creation/equip/Strength-roll prefix. Three-file consumer correction301c5a6 and exact cleanup independently reviewed CLEAR; corrected actual story dispatched, CSJ acceptance open.",
+  "nextAction": "Character Flow runs the corrected same-ID CSJ story with refreshed guards; coordinator inspects full actual native/HP/campaign/Journal and final cleanup evidence, continuing bounded concrete fixes without repeating accepted creation matrix.",
   "blockers": [
-    "Remaining actual same-ID HP/second-character/Journal and recovery/role criteria pending corrected retry. Failed attempt and exact cleanup retained; no implementation, review or permission blocker."
+    "Corrected actual equipped-weapon/HP/campaign/Journal story pending. Both failed attempts and exact cleanup retained; consumer/native/runner source reviewed, no user permission gap."
   ],
   "decisions": [],
   "dependencies": [
@@ -337,7 +337,7 @@
       "area": "Integrated character journey",
       "milestone": "M3/M5.5",
       "requirement": "R06/R08/R20; CSJ-v1 criteria CSJ-1..6",
-      "outcome": "Complete reviewed source retained; first actual attempt exposed a runner selector defect, now corrected and reviewed. Bootstrap/native closure and exact failed-run cleanup have actual evidence; full selected journey remains unaccepted.",
+      "outcome": "Native and assembled runner source retained. Missing starting-inventory weapon Actions consumer corrected and reviewed with31 focused checks/typecheck/lint; failed prefixes and cleanup recorded. Corrected full same-ID journey is pending actual acceptance.",
       "implementation": "implemented",
       "verification": "source",
       "integration": "unknown",
@@ -353,7 +353,8 @@
         "docs/LAUNCH-ACCEPTANCE.md#csj-v1-resumed--native-prerequisite-implementation —2026-10-29 explicit resume, adopted finite contracts and dispatched owners",
         "Finite native/consumer afe56e5 / metadata c9abaef —19 manifest files match;62 focused source cases/typecheck/lint pass; central source review pending, nativeSQL/browser unrun",
         "28b9333 / metadata a6a88c0 —six-file runner/native correction manifest independently verified; same central review CLEAR.16 prior native paths and10 Journal blobs unchanged; actual execution dispatched, not accepted.",
-        "3d70442 / metadata3f1a6e8 —one visible inventory locator correction, same reviewer CLEAR. Failed bcc589d0 evidence/cleanup retained; no full CSJ acceptance; corrected retry dispatched."
+        "3d70442 / metadata3f1a6e8 —one visible inventory locator correction, same reviewer CLEAR. Failed bcc589d0 evidence/cleanup retained; no full CSJ acceptance; corrected retry dispatched.",
+        "301c5a6 / metadata c9b1301 —three-file inventory-to-Actions correction, same reviewer CLEAR;31 focused/typecheck/lint pass; eight evidence hashes and exact failed20f99479 cleanup verified; corrected actual story dispatched."
       ]
     }
   ]
