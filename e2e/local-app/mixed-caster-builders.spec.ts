@@ -4,6 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
+import { nativeJson, testRuntime } from "../../scripts/unraid/native";
 
 type Account = { id: string; email: string; password: string };
 type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account };
@@ -23,7 +24,13 @@ type Native = {
   checks: Record<string, boolean>;
 };
 type Story = { config: Settings; id: string; blockedOrigins: string[]; pageErrors: string[]; checkpoints: string[];
-  snapshots: Array<{ label: string; path: string; data: Native }> };
+  snapshots: Array<{ label: string; path: string; data: Native; runtime?: ReturnType<typeof runtimeBinding> }> };
+const freshCurrent = !!process.env.INKBORNE_TEST_RUNTIME;
+function runtimeBinding() {
+  if (!freshCurrent) return undefined;
+  const { kind, runId, sourceHead, engineId, databaseId, pgSystemId } = testRuntime();
+  return { kind, runId, sourceHead, engineId, databaseId, pgSystemId };
+}
 const scores = { Strength: "13", Dexterity: "10", Constitution: "14", Intelligence: "8", Wisdom: "12", Charisma: "15" };
 const effective = { strength: 15, dexterity: 10, constitution: 14, intelligence: 8, wisdom: 12, charisma: 16 };
 const plans: Record<Owner, { cantrips: string[]; spells: string[] }> = {
@@ -38,8 +45,9 @@ const nativeChecks = ["oneExpectedCharacter", "exactOriginalAndSecondaryRoles", 
   "inventoryFromAcceptedAward", "detailsConfirmed", "noAutomaticOrBonusSpells", "ownedReceiptsAndHistory", "fiveOrderBijections", "currentParentAndRoleOrder", "boundariesClosed"];
 
 async function configuration(): Promise<Settings> {
-  const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
+  const file = freshCurrent ? process.env.INKBORNE_TEST_CONFIG : process.env.INKBORNE_LOCAL_FLOW_CONFIG;
   if (!file) throw Error("Provide the isolated local browser configuration file");
+  if (freshCurrent) { testRuntime(); expect(file).toBe("/run/inkborne/test-config.json"); }
   const config = JSON.parse(await readFile(file, "utf8")) as Settings;
   for (const origin of [config.appOrigin, config.supabaseOrigin]) {
     const url = new URL(origin);
@@ -161,7 +169,7 @@ async function createAndComplete(page: Page, story: Story) {
   await expect(groups.first()).toBeVisible(); for (let index = 0; index < await groups.count(); index++) await choose(page, groups.nth(index).locator('select option[value="a"]'));
   const slots = page.locator('button[data-slot="select-trigger"]'); for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
-    const sword = page.getByRole("option", { name: "Longsword", exact: true }); const option = await sword.count() ? sword : page.getByRole("option").first();
+    const menu = page.getByRole("listbox"), sword = menu.getByRole("option", { name: "Longsword", exact: true }); const option = await sword.count() ? sword : menu.getByRole("option").first();
     await save(page, () => pickOption(option)); await expect(slot).toBeEnabled();
   }
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled(); await page.getByRole("button", { name: "Confirm Equipment", exact: true }).click();
@@ -203,11 +211,19 @@ async function inspectSheet(page: Page, story: Story, paladinLevel: 1 | 2, phase
   await expect(dialog.getByRole("radio", { name: /^Pact 2nd/ })).toBeVisible(); await expect(dialog.getByRole("radio")).toHaveCount(1); await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
 }
 async function readback(info: TestInfo, story: Story, label: string, paladinLevel: 1 | 2 = 2, phase: Phase = "baseline"): Promise<Native> {
-  const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG; if (!file || !uuid.test(story.id)) throw Error("Local native evidence configuration required");
+  if (!uuid.test(story.id)) throw Error("Local native evidence configuration required");
+  const processes: unknown[] = [], reports: Record<string, Record<string, unknown>> = {}, runtime = runtimeBinding();
+  if (freshCurrent) {
+    for (const reader of ["mixed-caster-builders-readback.sql", "builder-class-choices-readback.sql", "builder-bonus-spells-readback.sql"]) {
+      const sql = await readFile(resolve(process.cwd(), "supabase/verification", reader), "utf8");
+      reports[reader] = await nativeJson(sql, { character_id: story.id, paladin_level: String(paladinLevel), spell_phase: phase, corrected_version: "1" }, "supabase_admin") as Record<string, unknown>;
+    }
+  } else {
+  const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG; if (!file) throw Error("Local native evidence configuration required");
   const state = JSON.parse(await readFile(resolve(dirname(file), "../state.json"), "utf8"));
   if (state.project !== "inkborne-app-flow-20261022" || state.ready !== true || state.stoppedUtc) throw Error("Wrong disposable runtime");
   const db = state.containers.find((item: { name: string }) => item.name === `/${state.project}-db`); if (!db || !/^[a-f0-9]{64}$/.test(db.id)) throw Error("Missing owned database identity");
-  const processes: unknown[] = []; const run = (args: string[], input?: string) => {
+  const run = (args: string[], input?: string) => {
     const startedUtc = new Date().toISOString(); const result = spawnSync("C:/Users/kaios/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe", ["--context", "desktop-linux", ...args],
       { cwd: process.cwd(), input, encoding: "utf8", windowsHide: true, timeout: 30000, maxBuffer: 3 * 1024 * 1024 });
     processes.push({ pid: result.pid, parentPid: process.pid, cwd: process.cwd(), args, startedUtc, finishedUtc: new Date().toISOString(), exitCode: result.status });
@@ -215,14 +231,14 @@ async function readback(info: TestInfo, story: Story, label: string, paladinLeve
   };
   expect(run(["info", "--format", "{{.ID}}"])).toBe(state.engineId); const identity = JSON.parse(run(["inspect", "--format", '{"id":{{json .Id}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}}}', db.id]));
   expect(identity.id).toBe(db.id); expect(identity.labels["com.docker.compose.project"]).toBe(state.project); expect(identity.status).toBe("running");
-  const reports: Record<string, Record<string, unknown>> = {};
   for (const reader of ["mixed-caster-builders-readback.sql", "builder-class-choices-readback.sql", "builder-bonus-spells-readback.sql"]) {
     const sql = await readFile(resolve(process.cwd(), "supabase/verification", reader), "utf8");
     reports[reader] = JSON.parse(run(["exec", "-i", db.id, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "supabase_admin", "--dbname", "postgres", "--quiet", "--tuples-only", "--no-align",
       "--set", "ON_ERROR_STOP=1", "--set", `character_id=${story.id}`, "--set", `paladin_level=${paladinLevel}`, "--set", `spell_phase=${phase}`, "--file", "-"], sql));
   }
+  }
   const data = reports["mixed-caster-builders-readback.sql"] as unknown as Native, path = info.outputPath(`mixed-caster-native-${story.snapshots.length + 1}-${label}.json`);
-  await writeFile(path, JSON.stringify({ observedUtc: new Date().toISOString(), label, processes, reports }, null, 2)); story.snapshots.push({ label, path, data });
+  await writeFile(path, JSON.stringify({ observedUtc: new Date().toISOString(), label, runtime, processes, reports }, null, 2)); story.snapshots.push({ label, path, data, ...(runtime ? { runtime } : {}) });
   expect(data.evidenceKind).toBe("read_only_after_actual_A5_mixed_caster_app_actions"); expect(data.characterId).toBe(story.id); expect(data.actorId).toBe(story.config.owner.id);
   expect(data.level).toBe(paladinLevel + 4); expect(data.maximumHp).toBe(paladinLevel === 2 ? 48 : 40); expect(data.hasStoredCurrentHp).toBe(false);
   expect(data.baseScores).toEqual(Object.fromEntries(Object.entries(scores).map(([key, value]) => [key.toLowerCase(), Number(value)]))); expect(data.effectiveScores).toEqual(effective);
@@ -299,6 +315,7 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
     await foreign404(browser, story); const foreign = await readback(info, story, "foreign404-current-source-unchanged", 2, "concurrent"); expect(foreign).toEqual(after);
     expect(story.blockedOrigins).toEqual([]); expect(story.pageErrors).toEqual([]); await checkpoint(info, story, "two real opposite-controller operations both accepted at +2 revisions; both sources retained after two-page and sheet reload; foreign404");
     const path = info.outputPath("mixed-caster-workflow.json"); await writeFile(path, JSON.stringify({ actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true, caseId: "A5", characterId: story.id,
+      runtime: runtimeBinding(), catalogMode: freshCurrent ? "fresh-current-v1" : "historical-corrected-v2",
       allSixBuilderStepsSaved: true, completedSheetReloadPassed: true, foreignAccountRefused: true, independent2014Expectations: { hp: 48, paladinOneHp: 40, ac: 13, regularL1: 3, paladinOneRegularL1: 2, pactCount: 2, pactLevel: 2, dc: 14, attack: 6 },
       concurrency: { baselineRevision: before.actionRevision, resultingRevision: after.actionRevision, actualReceiptOrder: accepted, schedulerOrderAssumed: false },
       stateScope: "stored current_hp remains absent; no Heal, cast, spend, state producer or present-state clamp acceptance", snapshots: story.snapshots, checkpoints: story.checkpoints, blockedOrigins: story.blockedOrigins, pageErrors: story.pageErrors }, null, 2));

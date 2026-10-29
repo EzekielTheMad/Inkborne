@@ -1,12 +1,17 @@
 -- A6 read-only proof after actual builder actions. No fixture/state writes.
 -- psql -v character_id=<UUID> -v control_id=<old UUID> -v stage=complete|trimmed-five|wizard-one|below-three|restored-four
 --       -v spell_phase=baseline|concurrent -v root_version=1|2 -f this-file.sql
+-- current_catalog=1 is only for a fresh current-v1 control and target; default 0 preserves historical publication checks.
+\if :{?current_catalog}
+\else
+\set current_catalog 0
+\endif
 BEGIN READ ONLY;
 WITH stage_oracles(stage,bard_level,wizard_level,total_level,max_hp,bard_known,book_count,prepared_count) AS (
  VALUES ('complete',3,2,5,31,6,8,4),('trimmed-five',3,2,5,31,6,6,3),('wizard-one',3,1,4,26,6,6,3),
    ('below-three',1,1,2,14,4,6,3),('restored-four',3,1,4,26,6,6,3)
 ), expected AS (
- SELECT s.*,:'spell_phase'::text AS phase,:'root_version'::integer AS root_version,
+ SELECT s.*,:'spell_phase'::text AS phase,:'root_version'::integer AS root_version,:'current_catalog'::integer AS current_catalog,
   '{"version":1,"source_trait":"infernal-legacy","spellcasting_ability":"charisma","grants":[{"character_level":3,"spell":"hellish-rebuke","spell_level":1,"cast_level":2},{"character_level":5,"spell":"darkness","spell_level":2,"cast_level":2}]}'::jsonb AS declaration
  FROM stage_oracles s WHERE stage=:'stage'
 ), target AS (SELECT * FROM public.characters WHERE id=:'character_id'::uuid), proof AS (
@@ -19,7 +24,7 @@ WITH stage_oracles(stage,bard_level,wizard_level,total_level,max_hp,bard_known,b
  FROM public.character_content_refs r JOIN target t ON t.id=r.character_id LEFT JOIN public.content_versions v ON v.content_id=r.content_id AND v.version=r.content_version
 ), classes AS (
  SELECT c.value AS choice,c.value->>'slug' AS slug,(c.value->>'level')::integer AS own_level,o.*,root.content_id AS pinned_content_id,
-  root.content_version AS pinned_version,root.data AS data,sub.id AS subclass_pin_id,sub.slug AS subclass_slug,sub.data AS subclass_data,
+  root.content_version AS pinned_version,root.data AS data,to_jsonb(o) AS occurrence,sub.id AS subclass_pin_id,sub.slug AS subclass_slug,sub.data AS subclass_data,
   sub.context AS subclass_context,sub.choice_source AS subclass_choice_source
  FROM target t CROSS JOIN LATERAL jsonb_array_elements(t.choices->'classes') c(value)
  JOIN private.character_class_occurrences_v1 o ON o.character_id=t.id AND o.id=(c.value->>'occurrence_id')::uuid
@@ -62,7 +67,7 @@ WITH stage_oracles(stage,bard_level,wizard_level,total_level,max_hp,bard_known,b
    jsonb_build_object('builder_earned_racial_spell',jsonb_build_object('contract_version',1,'grant_key','infernal-legacy:'||d.character_level||':'||d.slug,
      'character_level',d.character_level,'spell_level',d.spell_level,'cast_level',2)) ELSE '{}'::jsonb END AS metadata
  FROM dependencies d CROSS JOIN ancestry a CROSS JOIN expected e WHERE d.kind='spell'
-   AND (d.character_level=0 OR e.root_version=2 AND d.character_level<=e.total_level)
+   AND (d.character_level=0 OR (e.current_catalog=1 OR e.root_version=2) AND d.character_level<=e.total_level)
 ), inventory AS (
  SELECT i.*,v.slug_snapshot AS slug,v.content_type_snapshot AS kind,v.system_id_snapshot AS system_id,v.source_snapshot AS source,
   v.scope_snapshot AS scope,v.owner_id_snapshot AS owner_id,v.content_id IS NOT NULL AS exact_version,md5(to_jsonb(v)::text) AS snapshot_fingerprint
@@ -78,7 +83,7 @@ WITH stage_oracles(stage,bard_level,wizard_level,total_level,max_hp,bard_known,b
   AND cardinality(d.ids)=(SELECT count(DISTINCT value) FROM jsonb_array_elements_text(to_jsonb(o)->d.domain)) AS bijection
  FROM domains d CROSS JOIN target t JOIN private.character_projection_order_v1 o ON o.character_id=t.id
 ), old_control AS (
- SELECT c.id,c.user_id,r.content_version AS root_version,private.builder_multiclass_max_hp_v1(c.id,c.choices,private.builder_protected_graph_v1(c.id)) AS maximum_hp,
+ SELECT c.id,c.user_id,r.content_version AS root_version,v.data_snapshot AS root_data,private.builder_multiclass_max_hp_v1(c.id,c.choices,private.builder_protected_graph_v1(c.id)) AS maximum_hp,
   ARRAY(SELECT v.slug_snapshot FROM public.character_spells s JOIN public.content_versions v ON v.content_id=s.content_id AND v.version=s.content_version WHERE s.character_id=c.id AND s.source='racial_trait' ORDER BY v.slug_snapshot) AS racial_slugs,
   md5(jsonb_build_array(to_jsonb(c),private.builder_progression_full_graph_v1(c.id),(SELECT to_jsonb(o) FROM private.character_projection_order_v1 o WHERE o.character_id=c.id),
     (SELECT jsonb_agg(to_jsonb(a) ORDER BY a.id) FROM public.character_starting_grants a WHERE a.character_id=c.id),
@@ -103,18 +108,23 @@ SELECT jsonb_build_object(
  'spells',(SELECT jsonb_agg(jsonb_build_object('id',id,'slug',slug,'classSlug',class_slug,'contentId',content_id,'version',content_version,'level',spell_level,'source',source,'known',is_known,'prepared',is_prepared,'alwaysPrepared',always_prepared,'book',in_spellbook,'grantId',spell_grant_id,'custom',custom_data,'createdAt',created_at,'snapshotFingerprint',snapshot_fingerprint) ORDER BY class_slug,slug,id) FROM spells),
  'receipts',(SELECT jsonb_agg(jsonb_build_object('operationId',operation_id,'actorId',actor_id,'characterId',character_id,'command',request->>'command','actionRevision',receipt->>'action_revision','fields',request->'fields','request',request,'receipt',receipt) ORDER BY (receipt->>'action_revision')::bigint,operation_id) FROM private.character_builder_receipts_v1 WHERE character_id=t.id),
  'historyCount',(SELECT count(*) FROM private.character_builder_progression_history_v1 WHERE character_id=t.id),'completeFingerprint',o.fingerprint,
- 'oldControl',(SELECT jsonb_build_object('characterId',id,'actorId',user_id,'rootVersion',root_version,'maximumHp',maximum_hp,'racialSlugs',racial_slugs,'fingerprint',fingerprint) FROM old_control),
+ 'oldControl',(SELECT jsonb_build_object('characterId',id,'actorId',user_id,'rootVersion',root_version,'rootDeclaration',root_data->'earned_racial_spells','maximumHp',maximum_hp,'racialSlugs',racial_slugs,'fingerprint',fingerprint) FROM old_control),
  'catalog',jsonb_build_object('definitions',(SELECT count(*) FROM public.content_definitions),'versions',(SELECT count(*) FROM public.content_versions),
   'tiefling',(SELECT jsonb_build_object('contentId',id,'version',version) FROM public.content_definitions WHERE content_type='race' AND slug='tiefling'),
   'rootSnapshots',(SELECT jsonb_agg(jsonb_build_object('version',version,'fingerprint',md5(to_jsonb(v)::text),'declaration',data_snapshot->'earned_racial_spells') ORDER BY version) FROM public.content_versions v WHERE content_type_snapshot='race' AND slug_snapshot='tiefling'),
   'traitSnapshots',(SELECT jsonb_agg(jsonb_build_object('version',version,'fingerprint',md5(to_jsonb(v)::text)) ORDER BY version) FROM public.content_versions v WHERE content_type_snapshot='trait' AND slug_snapshot='infernal-legacy')),
  'checks',jsonb_build_object(
   'oneExpectedCharacterAndOldControl',(SELECT count(*)=1 FROM target) AND (SELECT count(*)=1 FROM expected) AND e.phase IN ('baseline','concurrent') AND e.root_version IN (1,2) AND t.level=e.total_level
-    AND (SELECT count(*)=1 AND bool_and(user_id=t.user_id AND root_version=1 AND maximum_hp=31 AND racial_slugs=ARRAY['thaumaturgy']) FROM old_control),
+    AND e.current_catalog IN (0,1) AND (e.current_catalog=0 OR (e.root_version=1 AND (SELECT count(*)=1535 FROM public.content_definitions) AND (SELECT count(*)=1535 FROM public.content_versions)))
+    AND (SELECT count(*)=1 AND bool_and(user_id=t.user_id AND root_version=1 AND maximum_hp=31
+      AND racial_slugs=CASE WHEN e.current_catalog=1 THEN ARRAY['darkness','hellish-rebuke','thaumaturgy'] ELSE ARRAY['thaumaturgy'] END
+      AND CASE WHEN e.current_catalog=1 THEN root_data->'earned_racial_spells'=e.declaration ELSE NOT(root_data?'earned_racial_spells') END) FROM old_control),
   'exactOriginalAndSecondaryRoles',(SELECT count(*)=2 FROM classes) AND jsonb_array_length(t.choices->'classes')=2 AND (SELECT count(*)=1 FROM private.character_class_commands_v1 WHERE character_id=t.id)
     AND (SELECT count(*)=1 FROM private.character_builder_class_acquisitions_v1 WHERE character_id=t.id) AND p.roles->>'status'='available' AND p.roles->>'character_id'=t.id::text AND p.roles->>'original_occurrence_id'=p.original->>'id'
     AND EXISTS(SELECT 1 FROM classes WHERE slug='bard' AND id=(p.original->>'id')::uuid AND controller_ref_id=(p.original->>'controller_ref_id')::uuid)
-    AND jsonb_array_length(p.roles->'class_sources')=2 AND NOT EXISTS(SELECT 1 FROM classes c WHERE c.lifecycle<>'accepted' OR c.content_id<>c.pinned_content_id OR c.content_version<>c.pinned_version OR NOT EXISTS(
+    AND jsonb_array_length(p.roles->'class_sources')=2 AND NOT EXISTS(SELECT 1 FROM classes c WHERE c.lifecycle<>CASE WHEN c.id=(p.original->>'id')::uuid THEN 'provisional' ELSE 'accepted' END
+      OR (c.id=(p.original->>'id')::uuid AND c.occurrence IS DISTINCT FROM p.original)
+      OR c.content_id<>c.pinned_content_id OR c.content_version<>c.pinned_version OR NOT EXISTS(
       SELECT 1 FROM jsonb_array_elements(p.roles->'class_sources') role(value) WHERE role.value->>'occurrence_id'=c.id::text AND role.value->>'controller_ref_id'=c.controller_ref_id::text AND role.value->>'content_id'=c.content_id::text AND role.value->>'content_version'=c.content_version::text
       AND role.value->>'role'=CASE WHEN c.slug='bard' THEN 'original' ELSE 'secondary' END AND CASE WHEN c.slug='bard' THEN ARRAY(SELECT value FROM jsonb_array_elements_text(role.value#>'{evaluation_data,saving_throws}') ORDER BY value)=ARRAY['charisma','dexterity']
         ELSE role.value#>'{evaluation_data,saving_throws}'='[]'::jsonb AND role.value#>'{evaluation_data,equipment}'='""'::jsonb END)),
@@ -137,7 +147,10 @@ SELECT jsonb_build_object(
     AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(a.trait_effects) effect(value) WHERE effect.value->>'type'='grant' AND effect.value->>'stat' IN ('spell','spellcasting_ability')
       AND (SELECT array_agg(key ORDER BY key) FROM jsonb_object_keys(effect.value) keys(key)) IS DISTINCT FROM ARRAY['stat','type','value'])
     AND EXISTS(SELECT 1 FROM dependencies WHERE kind='trait' AND content_id=a.trait_content_id AND version=a.trait_version AND owner_id IS NULL)
-    AND CASE WHEN e.root_version=1 THEN NOT(a.root_data?'earned_racial_spells') ELSE a.root_data->'earned_racial_spells'=e.declaration END,
+    AND CASE WHEN e.current_catalog=0 AND e.root_version=1 THEN NOT(a.root_data?'earned_racial_spells') ELSE a.root_data->'earned_racial_spells'=e.declaration END
+    AND (e.current_catalog=0 OR EXISTS(SELECT 1 FROM public.content_definitions d WHERE d.id=a.root_content_id AND d.version=1 AND NOT d.is_retired
+      AND d.system_id=t.system_id AND d.content_type='race' AND d.slug='tiefling' AND d.data=a.root_data
+      AND d.data->'earned_racial_spells'=e.declaration)),
   'standardArrayAndScores',t.choices->>'ability_method'='standard_array' AND t.base_stats='{"strength":8,"dexterity":13,"constitution":12,"intelligence":14,"wisdom":10,"charisma":15}'::jsonb
     AND p.scores='{"strength":8,"dexterity":13,"constitution":12,"intelligence":15,"wisdom":10,"charisma":17}'::jsonb,
   'finiteClassChoicesAndFeatures',t.choices->>'background'='acolyte' AND (SELECT count(*)=1 FROM refs WHERE kind='background' AND slug='acolyte')

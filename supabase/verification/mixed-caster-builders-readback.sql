@@ -1,9 +1,14 @@
 -- A5 fixed 2014 full/half/Pact expectations after genuine UI writes.
 -- Read-only evidence; no Auth substitute, fixture DML or ordering waiver.
--- psql -v character_id=<UUID> -v paladin_level=1|2 -v spell_phase=baseline|concurrent -f this-file.sql
+-- corrected_version=2 is historical; explicit 1 requires the fresh current catalog.
+-- psql -v character_id=<UUID> -v paladin_level=1|2 -v spell_phase=baseline|concurrent [-v corrected_version=1|2] -f this-file.sql
+\if :{?corrected_version}
+\else
+\set corrected_version 2
+\endif
 BEGIN READ ONLY;
 WITH expected AS (
- SELECT :'paladin_level'::integer AS paladin_level,:'spell_phase'::text AS phase
+ SELECT :'paladin_level'::integer AS paladin_level,:'spell_phase'::text AS phase,:'corrected_version'::integer AS corrected_version
 ), target AS (
  SELECT * FROM public.characters WHERE id=:'character_id'::uuid
 ), proof AS (
@@ -16,7 +21,7 @@ WITH expected AS (
  FROM public.character_content_refs r JOIN target t ON t.id=r.character_id
  LEFT JOIN public.content_versions v ON v.content_id=r.content_id AND v.version=r.content_version
 ), classes AS (
- SELECT c.value AS choice,c.value->>'slug' AS slug,(c.value->>'level')::integer AS own_level,o.*,
+ SELECT c.value AS choice,c.value->>'slug' AS slug,(c.value->>'level')::integer AS own_level,o.*,to_jsonb(o) AS occurrence,
    root.content_id AS pinned_content_id,root.content_version AS pinned_version,root.data AS class_data,
    sub.id AS subclass_pin_id,sub.slug AS subclass_slug,sub.content_version AS subclass_version,sub.data AS subclass_data,
    sub.effects AS subclass_effects,sub.context AS subclass_context,sub.choice_source AS subclass_choice_source
@@ -97,14 +102,17 @@ SELECT jsonb_build_object(
  'independentExpectations',jsonb_build_object('hp',CASE WHEN e.paladin_level=2 THEN 48 ELSE 40 END,
    'regularSlots',jsonb_build_object('1',CASE WHEN e.paladin_level=2 THEN 3 ELSE 2 END),'pactSlots',2,'pactLevel',2,'dc',14,'attack',6),
  'checks',jsonb_build_object(
-  'oneExpectedCharacter',(SELECT count(*)=1 FROM target) AND e.paladin_level IN (1,2) AND e.phase IN ('baseline','concurrent') AND t.level=e.paladin_level+4,
+  'oneExpectedCharacter',(SELECT count(*)=1 FROM target) AND e.paladin_level IN (1,2) AND e.phase IN ('baseline','concurrent') AND t.level=e.paladin_level+4
+    AND e.corrected_version IN (1,2) AND (e.corrected_version=2 OR ((SELECT count(*)=1535 FROM public.content_definitions) AND (SELECT count(*)=1535 FROM public.content_versions))),
   'exactOriginalAndSecondaryRoles',(SELECT count(*)=3 FROM classes) AND jsonb_array_length(t.choices->'classes')=3
     AND (SELECT count(*)=1 FROM private.character_class_commands_v1 WHERE character_id=t.id)
     AND (SELECT count(*)=2 FROM private.character_builder_class_acquisitions_v1 WHERE character_id=t.id)
     AND EXISTS(SELECT 1 FROM classes c WHERE c.slug='paladin' AND c.id=(p.original->>'id')::uuid AND c.controller_ref_id=(p.original->>'controller_ref_id')::uuid)
     AND p.roles->>'status'='available' AND p.roles->>'character_id'=t.id::text AND p.roles->>'original_occurrence_id'=p.original->>'id'
     AND jsonb_array_length(p.roles->'class_sources')=3
-    AND NOT EXISTS(SELECT 1 FROM classes c WHERE c.lifecycle<>'accepted' OR c.content_id<>c.pinned_content_id OR c.content_version<>c.pinned_version OR NOT EXISTS(
+    AND NOT EXISTS(SELECT 1 FROM classes c WHERE c.lifecycle<>CASE WHEN c.id=(p.original->>'id')::uuid THEN 'provisional' ELSE 'accepted' END
+      OR (c.id=(p.original->>'id')::uuid AND c.occurrence IS DISTINCT FROM p.original)
+      OR c.content_id<>c.pinned_content_id OR c.content_version<>c.pinned_version OR NOT EXISTS(
       SELECT 1 FROM jsonb_array_elements(p.roles->'class_sources') r(value) WHERE r.value->>'occurrence_id'=c.id::text AND r.value->>'controller_ref_id'=c.controller_ref_id::text
       AND r.value->>'content_id'=c.content_id::text AND r.value->>'content_version'=c.content_version::text AND r.value->>'role'=CASE WHEN c.slug='paladin' THEN 'original' ELSE 'secondary' END
       AND CASE WHEN c.slug='paladin' THEN ARRAY(SELECT value FROM jsonb_array_elements_text(r.value#>'{evaluation_data,saving_throws}') ORDER BY value)=ARRAY['charisma','wisdom']
@@ -115,9 +123,14 @@ SELECT jsonb_build_object(
     AND NOT EXISTS(SELECT 1 FROM classes c WHERE c.slug IN ('sorcerer','warlock') AND (c.subclass_slug IS DISTINCT FROM CASE WHEN c.slug='sorcerer' THEN 'draconic' ELSE 'fiend' END
       OR c.subclass_data->>'parent_class' IS DISTINCT FROM c.slug OR c.subclass_context IS DISTINCT FROM jsonb_build_object('source','subclass','class',c.slug)
       OR c.subclass_choice_source IS DISTINCT FROM 'builder:subclass:'||c.id::text))
-    AND EXISTS(SELECT 1 FROM classes c WHERE c.slug='sorcerer' AND c.subclass_version=2 AND c.subclass_data->'hit_points_bonus_per_class_level'='1'::jsonb
+    AND EXISTS(SELECT 1 FROM classes c WHERE c.slug='sorcerer' AND c.subclass_version=e.corrected_version AND c.subclass_data->'hit_points_bonus_per_class_level'='1'::jsonb
       AND c.subclass_effects @> '[{"type":"mechanical","stat":"armor_class","op":"formula","expr":"13 + mod(dexterity)","tag":"ac_formula","condition":{"field":"equipped_armor","op":"eq","value":"none"}}]'::jsonb)
-    AND EXISTS(SELECT 1 FROM classes c WHERE c.slug='warlock' AND c.subclass_version=2 AND c.subclass_data?'spellcastingExpanded' AND NOT(c.subclass_data?'spellcastingExtra')),
+    AND EXISTS(SELECT 1 FROM classes c WHERE c.slug='warlock' AND c.subclass_version=e.corrected_version
+      AND c.subclass_data->'spellcastingExpanded'='[{"level":1,"spells":["burning-hands","command"]},{"level":3,"spells":["blindness-deafness","scorching-ray"]},{"level":5,"spells":["fireball","stinking-cloud"]},{"level":7,"spells":["fire-shield","wall-of-fire"]},{"level":9,"spells":["flame-strike","hallow"]}]'::jsonb
+      AND NOT(c.subclass_data?'spellcastingExtra'))
+    AND (e.corrected_version=2 OR (SELECT count(*)=2 FROM refs r JOIN public.content_definitions d ON d.id=r.content_id
+      WHERE r.kind='subclass' AND r.slug IN ('draconic','fiend') AND r.content_version=1 AND d.version=1 AND NOT d.is_retired
+        AND d.system_id=t.system_id AND d.content_type='subclass' AND d.slug=r.slug AND d.data=r.data AND d.effects=r.effects)),
   'allFrozenSrdPinsExact',(SELECT COALESCE(bool_and(exact_version AND system_id=t.system_id AND source='srd' AND scope='platform' AND owner_id IS NULL),false) FROM refs),
   'exactGoldAncestryClosure',t.choices->>'race'='dragonborn' AND NOT(t.choices?'subrace') AND (SELECT count(*)=1 FROM refs WHERE kind='race') AND NOT EXISTS(SELECT 1 FROM refs WHERE kind='subrace')
     AND EXISTS(SELECT 1 FROM refs root WHERE root.kind='race' AND root.slug='dragonborn' AND root.context='{"source":"race"}'::jsonb AND root.feature_grant_id IS NULL AND root.choice_source IS NULL
