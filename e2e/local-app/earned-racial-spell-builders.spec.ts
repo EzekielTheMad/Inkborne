@@ -4,7 +4,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
-import { nativeJson, testRuntime } from "../../scripts/unraid/native";
+import { assertNativeIdentity, nativeJson, testRuntime } from "../../scripts/unraid/native";
+import { builderStepStorageKey, readPendingBuilderStep } from "../../lib/builder/pending-builder-step-storage";
 
 type Account = { id: string; email: string; password: string };
 type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account };
@@ -49,6 +50,87 @@ const nativeChecks = ["oneExpectedCharacterAndOldControl", "exactOriginalAndSeco
   "exactTieflingInfernalSource", "standardArrayAndScores", "finiteClassChoicesAndFeatures", "ordinaryBudgetsAndRowsExact", "ordinaryRowsHaveExactController",
   "earnedRacialRowsExact", "exactCantripAndNoOtherGrants", "independentOwnCastingInputs", "explicitAverageHpAndMaximum", "oneOriginalNativeAward", "inventoryFromAcceptedAward",
   "detailsConfirmed", "ownedReceiptsAndHistory", "fiveOrderBijections", "currentParentAndRoleOrder", "boundariesClosed"];
+
+function failureCapture(context: BrowserContext, story: Story, info: TestInfo) {
+  const expectedRuntime = runtimeBinding();
+  const events: Array<{ at: string; page: number; kind: string; pathname: string; status?: number; errorText?: string }> = [];
+  const watched = new Set<Page>();
+  const pathname = (url: string) => { try { const value = new URL(url); return value.origin === story.config.appOrigin
+    ? value.pathname.slice(0, 256) : null; } catch { return null; } };
+  const watch = (page: Page) => {
+    if (!freshCurrent || watched.has(page)) return;
+    watched.add(page); const index = watched.size;
+    const record = (event: Omit<typeof events[number], "at" | "page">) => {
+      events.push({ at: new Date().toISOString(), page: index, ...event });
+      if (events.length > 32) events.shift();
+    };
+    page.on("framenavigated", frame => { const path = pathname(frame.url());
+      if (frame === page.mainFrame() && path) record({ kind: "main-frame-navigation", pathname: path }); });
+    page.on("response", response => { const path = pathname(response.url());
+      if (response.request().method() === "POST" && path && /^\/characters\/[0-9a-f-]+\/builder\/class$/.test(path))
+        record({ kind: "class-post-response", pathname: path, status: response.status() }); });
+    page.on("requestfailed", request => { const path = pathname(request.url());
+      if (!path) return;
+      const error = request.failure()?.errorText ?? "unknown";
+      record({ kind: "request-failed", pathname: path,
+        errorText: /^[A-Za-z0-9_: .;()-]{1,160}$/.test(error) ? error : "nonstandard error withheld" }); });
+  };
+  for (const page of context.pages()) watch(page);
+  context.on("page", watch);
+  let captured = false;
+  return async () => {
+    if (!freshCurrent || captured) return;
+    captured = true;
+    const browser: unknown[] = [], characterIds = new Set<string>();
+    for (const [index, page] of [...watched].slice(0, 2).entries()) {
+      const path = pathname(page.url()), id = path?.match(/^\/characters\/([0-9a-f-]{36})(?:\/|$)/)?.[1];
+      if (!id || !uuid.test(id) || ![story.id, story.controlId].includes(id)) continue;
+      characterIds.add(id);
+      try {
+        const key = builderStepStorageKey(story.config.owner.id, id);
+        const stored = await page.evaluate(key => {
+          const raw = window.sessionStorage.getItem(key);
+          return raw === null ? { status: "absent" as const } : new TextEncoder().encode(raw).byteLength > 262144
+            ? { status: "oversize" as const } : { status: "read" as const, raw };
+        }, key);
+        if (stored.status !== "read") { browser.push({ page: index + 1, characterId: id, status: stored.status }); continue; }
+        // Reuse the production bounded record + strict intent validators on a
+        // single-key read-only adapter; never export raw storage or auth data.
+        const pending = readPendingBuilderStep(story.config.owner.id, id, { getItem: (requested: string) => {
+          if (requested !== key) throw Error("Unexpected diagnostic storage key"); return stored.raw;
+        } } as Storage);
+        browser.push({ page: index + 1, status: pending ? "valid-pending" : "absent", ...(pending ? {
+          accountId: pending.account_id, characterId: pending.intent.character_id, operationId: pending.intent.operation_id,
+          command: pending.intent.command, fields: pending.intent.fields } : { characterId: id }) });
+      } catch { browser.push({ page: index + 1, characterId: id, status: "unavailable-or-invalid" }); }
+    }
+    const native: unknown[] = [];
+    const runtime = runtimeBinding();
+    if (JSON.stringify(runtime) === JSON.stringify(expectedRuntime)) {
+      try {
+        assertNativeIdentity();
+        for (const id of [...characterIds].slice(0, 2)) {
+          try { native.push({ characterId: id, status: "read", data: await nativeJson(`BEGIN READ ONLY;
+            SELECT jsonb_build_object('character',(SELECT jsonb_build_object('id',id,'user_id',user_id,'level',level,
+              'action_revision',action_revision::text,'choices',choices) FROM public.characters
+              WHERE id=:'character_id'::uuid AND user_id=:'actor_id'::uuid),
+              'receipts',COALESCE((SELECT jsonb_agg(to_jsonb(r) ORDER BY created_at,operation_id) FROM
+                (SELECT actor_id,operation_id,character_id,request,receipt,created_at FROM private.character_builder_receipts_v1
+                 WHERE actor_id=:'actor_id'::uuid AND character_id=:'character_id'::uuid
+                 ORDER BY created_at DESC,operation_id DESC LIMIT 32) r),'[]'::jsonb)); ROLLBACK;`,
+            { actor_id: story.config.owner.id, character_id: id }, "postgres") });
+          } catch { native.push({ characterId: id, status: "read-unavailable" }); }
+        }
+      } catch { native.push({ status: "identity-unavailable" }); }
+    } else native.push({ status: "runtime-changed-read-refused" });
+    const path = info.outputPath("earned-racial-failure-diagnostic.json");
+    await writeFile(path, JSON.stringify({ kind: "inkborne-a6-failure-diagnostic-v1", diagnosticOnly: true,
+      authenticationAccepted: false, capturedUtc: new Date().toISOString(), runtime, expectedRuntime,
+      browser, native, events, receiptLimitPerCharacter: 32,
+      scope: "read-only owned character and retained builder intent; no recovery action or acceptance claim" }, null, 2));
+    await info.attach("earned-racial-failure-diagnostic", { path, contentType: "application/json" });
+  };
+}
 
 async function configuration(): Promise<Settings> {
   const file = freshCurrent ? process.env.INKBORNE_TEST_CONFIG : process.env.INKBORNE_LOCAL_FLOW_CONFIG; if (!file) throw Error("Provide the isolated local browser configuration file");
@@ -194,6 +276,8 @@ async function foreign404(browser: Browser, story: Story) { const context = awai
 
 test("A6 owns Tiefling tiers and preserves its control, class budgets and concurrent saves", async ({ page, context, browser }, info) => {
   test.setTimeout(900000); const story: Story = { config: await configuration(), id: "", controlId: "", blockedOrigins: [], gameplayStateRequests: [], pageErrors: [], checkpoints: [], snapshots: [] }; await restrictOrigins(context, story); page.on("pageerror", () => story.pageErrors.push("owner browser error")); console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startedUtc: new Date().toISOString(), story: "A6 earned racial spells" }));
+  const captureFailure = failureCapture(context, story, info);
+  try {
   await login(page, story.config, story.config.owner); expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true); await createComplete(page, story, freshCurrent ? "current v1 control" : "old v1"); story.controlId = story.id; await inspectSheet(page, story, "complete", 1); await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByRole("button", { name: "Inventory", exact: true })).toBeEnabled(); const old = await readback(info, story, freshCurrent ? "current-v1-control-full-builder" : "old-v1-full-builder", "complete", "baseline", 1);
   story.controlBaseline = old.oldControl;
   expect(old.catalog.tiefling.version).toBe(1); expect(old.catalog.rootSnapshots).toHaveLength(1);
@@ -230,5 +314,13 @@ test("A6 owns Tiefling tiers and preserves its control, class budgets and concur
       allSixBuilderStepsSaved: true, completedSheetReloadPassed: true, foreignAccountRefused: true,
       independent2014Expectations: { finalHp: 31, level4Hp: 26, level2Hp: 14, slots: [4, 3, 2], bardKnown: 6, wizardBook: 8, wizardPrepared: 4, bardDc: 14, bardAttack: 6, wizardDc: 13, wizardAttack: 5, racialAbility: "charisma", hellishCharacterLevel: 3, darknessCharacterLevel: 5, fixedCastLevel: 2 },
       concurrency: { baselineRevision: before.actionRevision, resultingRevision: after.actionRevision, actualReceiptOrder: accepted, schedulerOrderAssumed: false }, stateScope: "no gameplay state writes; native starting-award currency unchanged after full builder; storedcurrentHPabsent; earnedfixedcast/free-useinformationdescriptiveonly; no cast/spend/recovery/M6 acceptance", gameplayStateRequests: story.gameplayStateRequests, snapshots: story.snapshots, checkpoints: story.checkpoints, blockedOrigins: story.blockedOrigins, pageErrors: story.pageErrors }, null, 2)); expect(story.gameplayStateRequests).toEqual([]); await info.attach("earned-racial-spell-workflow", { path, contentType: "application/json" });
+  } catch (error) {
+    // Capture both owner tabs while their retained intent is still readable.
+    await captureFailure().catch(() => {}); throw error;
   } finally { await second.close(); }
+  } catch (error) {
+    // The browser fixture and scratch database are still alive here. A failed
+    // diagnostic must never replace the original story failure or clear intent.
+    await captureFailure().catch(() => {}); throw error;
+  }
 });
