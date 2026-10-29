@@ -26,6 +26,14 @@ Only fixture preparation is browser/JWT proof; that native vector explicitly
 retains `authenticationAccepted:false`. `focused` runs only the source checks.
 Neither mode runs the full unit/E2E suite or a production build.
 
+Both stories pass at `1de39d9`, run `bd7f3ef4-88e7-4305-b39d-78264d453551`.
+The 1/0/2 vector and all21 HTTP outcomes are verified, with original inventory
+and full global profile retention. All task runtime, six introduced images,
+five server source/input paths and three local archives are removed;15 public
+result files remain. The56 original containers,95 volumes and53 original image
+IDs match the baseline, Docker23.2 GiB free/cache0. Historical full-parent,
+ancestry/A4 and F3 upgrade acceptance remains open; see the canonical handoff.
+
 The fresh database installs current reviewed migrations/stages directly, then
 imports the genuine cached SRD through current transformers. Previous browser
 stories and their recorder chains are not bootstrap prerequisites. Historical

@@ -66,6 +66,19 @@ and changes no implementation/native/browser acceptance result.
 
 ### User decision: simplify development testing and use Unraid
 
+The next focused parent slice passes at`1de39d9`: actual Rogue preparation,
+unchanged native background1/0/2-write/revision vector with Expertise retention/
+pruning and complete rollback/profile equality, plus all21 actual HTTP access
+cases during the Fighter story, followed by award/reload. Typecheck/lint, six focused files,
+34 guard cases and eight contention cases pass. Source review is clear. All
+task runtime, six introduced images and temporary inputs are removed;56 original
+containers/95 volumes/53 images are retained, Docker23.2 GiB free/cache0.
+This closes those fresh-state slices; full historical parent aggregation,
+ancestry/A4 and F3 upgrade gates remain open. Next is the remaining parent
+positive edit/reload story, reusing unchanged passing evidence. Exact run,
+scope and cleanup receipts are in the
+[current handoff](handoffs/2026-10-24-builder-correction-and-casters.md#focused-parent-background-and-access-slice-accepted).
+
 The user explicitly selected both on October28. Recurring heavy verification
 now targets the existing Unraid server, with an isolated SSD-backed disposable
 database and browser runner. `npm run verify:unraid -- workflow` replaces the

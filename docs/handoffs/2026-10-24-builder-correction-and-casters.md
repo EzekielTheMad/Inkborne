@@ -10,6 +10,56 @@ all global readiness/class/hit-die gates closed.
 
 ## Latest continuation — 2026-10-28 Unraid and proportional testing
 
+### Focused parent background and access slice accepted
+
+Source `1de39d9e35c7037a4c6c8f89396b6f70b155903f`, run
+`bd7f3ef4-88e7-4305-b39d-78264d453551`, passes at20:38 America/Phoenix
+on October28. Typecheck, zero-warning lint, six focused test files and two
+serial actual browser stories pass on the same disposable current-state stack.
+No product code, SQL, permission or historical validator changed.
+
+- A genuine Rogue1/Human/Acolyte earns Insight and thieves' tools Expertise
+  through the ordinary UI. The unchanged native background vector and pure
+  validator observe exactly1/0/2 physical parent writes and matching revision
+  increments: changed background, unchanged reselection, then loss of Insight
+  proficiency with its Expertise pruned. Deferred constraints are forced.
+- Independent before/after native/detail/family and whole installed-profile
+  reads are identical after rollback, including both app-created characters,
+  fifteen global row families, original proofs, catalog1535/snapshots1535,
+  functions, triggers, ACLs, policies, roles and closed gates. Both temporary
+  private roots/snapshots and all one-shot native sessions are absent afterward.
+  Fixture preparation is browser/JWT proof; the rollback-only vector retains
+  `authenticationAccepted:false`.
+- Fighter4 saves a genuine background Bond, completes the original award
+  (12 inventory rows), reloads unchanged and gives the other account404.
+  All21 owner/foreign/service HTTP probes preserve full native/detail state:
+  16 refusals, three zero-row results, one void204 and one CAS-missing result.
+  Existing34 guard cases and eight contention scenarios also pass with clean
+  backend/client closure. Both browser stories report no errors/blocked origins.
+
+Evidence: `../equipment-runtime/unraid/<run UUID>/output` locally and the
+matching Unraid run's `output`. All15 files are hash-bound in the cleanup plan
+under `../equipment-runtime/unraid/parent-save-integrity-20261029T033223Z/`.
+The source-only independent review clears base`76c8b5b` → exact head`1de39d9`;
+no blocker or weakened historical gate was found. Final independent bundle
+review confirms all15 evidence hashes, the exact vector/HTTP outcomes and
+complete cleanup against the original resource baseline; no blocker remains.
+
+Cleanup is complete: all six scratch containers, network, two volumes and
+credentials/raw logs are gone. The finite reviewed list also removed six newly
+introduced images, five server source/input paths and three local transfer
+files; reports remain. All56 original containers (45 running, identical IDs,
+images, PIDs, start times, restart counts and mounts),95 volumes and53 image IDs
+match the pre-run baseline. Build cache is0; final20:40 check has23.2 GiB Docker
+free. Minimum available RAM during the run was24.5 GiB. No existing service
+restart, global prune, disk resize or hosted action occurred.
+
+This closes the previously unrun focused background/write-budget and expanded
+HTTP-access slices. Historical full-parent positive aggregation/Fiend replay,
+ancestry/A4 and F3 upgrade acceptance remain open in the existing order. Next
+is the remaining parent positive edit/reload story; reuse these passing native
+results for unchanged source rather than rebuilding historical prerequisites.
+
 ### Focused actual run accepted; cleanup complete
 
 Passing source: `6226bcab616a138b21145081edcbd417e29f2a31`, run
