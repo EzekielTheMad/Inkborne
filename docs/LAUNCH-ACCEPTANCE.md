@@ -286,6 +286,24 @@ are mandatory. Coordinator accepts CSJ-1..6 only after inspecting that actual
 evidence. All14 accepted creation journeys and exclusions remain retained.
 No user decision or new permission is needed at this source-clear checkpoint.
 
+**CSJ selector correction and retry — 2026-10-29T22:14:21.752Z:** actual run
+`bcc589d0-9cf6-42e2-9e42-e9828f9ad79a` remains failed. Its first normal
+Fighter reached the checked sheet; a selector counted visible desktop plus
+hidden mobile inventory. Bootstrap1535 and ten native closure checks passed,
+but full HP/second-character/Journal acceptance was not established. The sole
+source change at `3d70442ad2687d5445c91263845de8aa0d32edf3` selects the visible row while retaining
+exact count1/item/grant/native assertions. Same reviewer CLEAR exact one-file
+diff SHA256`823de6ea93829209b7c3b00a560a0f585ed8838f02fed6804acd9830fd4578d7`.
+Discovery/diff pass; unchanged source evidence reused. All eight linked evidence
+hashes and14 retained output hashes match. Recorded cleanup removes runtime/
+private inputs,13 planned images and six source/archive paths; original56
+containers/95volumes/27networks/53images remain unchanged. Remote removal is
+supported by captured host/cleanup comparisons, not a new independent live probe.
+[Source/failure/cleanup manifest](handoffs/2026-10-29-csj-visible-inventory-fix.json).
+Character Flow is dispatched to retry the existing approved workflow after this
+docs/index release, with refreshed guards and unchanged fixture/access limits.
+No new user decision, product/native/Journal change or local acceptance.
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final

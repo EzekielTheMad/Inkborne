@@ -9,17 +9,17 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T21:56:35.153Z",
+  "updatedAt": "2026-10-29T22:14:21.752Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Native HP/campaign and complete same-ID CSJ runner at28b9333 have clear exact-source review. Focused checks pass; actual approved Unraid execution is dispatched to Character Flow after serialized docs release. Existing accepted creations and frozen Journal source retained; CSJ local acceptance remains open.",
-  "nextAction": "Character Flow runs the guarded four-role/two-character/one-campaign/max-three-entry workflow; inspect actual native/browser/Journal evidence and final cleanup, resolve bounded failures, then coordinator accepts only CSJ-1..6 or records a true external blocker.",
+  "currentWork": "First CSJ actual attempt failed on hidden/visible inventory selector after Fighter reached sheet; no acceptance. Minimal visible-row correction3d70442 and exact failed-run cleanup cleared by same reviewer. Corrected approved actual retry dispatched after serialized docs release.",
+  "nextAction": "Character Flow refreshes guards and reruns the reviewed same-ID CSJ workflow. Coordinator inspects real remaining native/sheet/Journal evidence and final cleanup; continue scoped concrete fixes until CSJ local acceptance or a true external blocker.",
   "blockers": [
-    "Actual native owner/refusal/rollback/concurrency/response-loss/retention/revision/order evidence and same-ID browser/Journal criteria are pending the dispatched run. Source implementation/review are complete; no missing user permission."
+    "Remaining actual same-ID HP/second-character/Journal and recovery/role criteria pending corrected retry. Failed attempt and exact cleanup retained; no implementation, review or permission blocker."
   ],
   "decisions": [],
   "dependencies": [
@@ -337,7 +337,7 @@
       "area": "Integrated character journey",
       "milestone": "M3/M5.5",
       "requirement": "R06/R08/R20; CSJ-v1 criteria CSJ-1..6",
-      "outcome": "Finite native HP/campaign producers, paired consumers and complete CSJ runner are implemented and independently source-reviewed. Actual selected creation/basic-sheet/Journal workflow and cleanup remain pending; no local acceptance yet.",
+      "outcome": "Complete reviewed source retained; first actual attempt exposed a runner selector defect, now corrected and reviewed. Bootstrap/native closure and exact failed-run cleanup have actual evidence; full selected journey remains unaccepted.",
       "implementation": "implemented",
       "verification": "source",
       "integration": "unknown",
@@ -352,7 +352,8 @@
         "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-final-blocked-checkpoint —CSJ-1..6 status and next proposed native packages",
         "docs/LAUNCH-ACCEPTANCE.md#csj-v1-resumed--native-prerequisite-implementation —2026-10-29 explicit resume, adopted finite contracts and dispatched owners",
         "Finite native/consumer afe56e5 / metadata c9abaef —19 manifest files match;62 focused source cases/typecheck/lint pass; central source review pending, nativeSQL/browser unrun",
-        "28b9333 / metadata a6a88c0 —six-file runner/native correction manifest independently verified; same central review CLEAR.16 prior native paths and10 Journal blobs unchanged; actual execution dispatched, not accepted."
+        "28b9333 / metadata a6a88c0 —six-file runner/native correction manifest independently verified; same central review CLEAR.16 prior native paths and10 Journal blobs unchanged; actual execution dispatched, not accepted.",
+        "3d70442 / metadata3f1a6e8 —one visible inventory locator correction, same reviewer CLEAR. Failed bcc589d0 evidence/cleanup retained; no full CSJ acceptance; corrected retry dispatched."
       ]
     }
   ]
