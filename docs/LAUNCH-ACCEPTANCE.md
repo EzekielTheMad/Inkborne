@@ -370,6 +370,38 @@ this docs/index closure to the existing corrected actual CSJ workflow, fresh
 guards and unchanged budgets/oracles. No user decision is needed. Full corrected
 actual execution and Journal acceptance remain pending.
 
+**CSJ native prerequisites resolved; Journal correction assembled — 2026-10-29T23:47:43.897Z:**
+Run`616da4d4-ff78-4f22-a629-2108e34e5ba0` at`c217553` has genuine
+Flow process exit0 after finally, run/head-bound producer and complete cleanup
+receipts,22 proof objects and the same two normal-created IDs at1280/390.
+Coordinator independently verifies all18 linked evidence hashes and exact
+cleanup. CSJ-NATIVE-HP and CSJ-NATIVE-CAMPAIGN are resolved for their finite
+local scope: actual valid owner/rollback,42 guarded outcomes across two IDs,
+normal campaign assignment, coherent revision/order/retention, committed-response
+loss, two observed blocked native backends/one winner, live draft refresh and
+selected basic sheet work pass. This does not accept wider R06/R08/R20 or hosted
+behavior. [Exact local Flow evidence and limits](handoffs/2026-10-29-csj-flow-local-result.json).
+
+The combined run remains **failed**: Journal exits1 before its first save because
+exact short-caption label lookup includes nested option text. Journal owner
+corrects only the active-editor audience selector with uniqueness/exact-value
+assertions at`8468f261`; same reviewer CLEAR. Exact one-file canonical
+assembly`ba09cf208526496b25713fcba3b2ef4a3989997b` has blob`c425c4580881e041fbc5b9958f577287e72c71b1`,
+SHA256`76ae247574db920160bc992656e4f2576483f1f782024091a4947abd6e3bb6ab`,
+29654bytes; every other canonical source path remains equal to successful Flow
+runtimec217. Explicit binary/full-index diff1522bytes SHA256
+`fa68b06fb41ddfa028d05f4db2138e83d942f1c4cecaee80c5868e815f435c57`.
+No product/Journal action/native/oracle/fixture change or repeat product suite.
+
+All fifth-run runtime/private inputs,13 introducedimages/six source-archive paths/
+helper/transport are removed; original56containers/95volumes/27networks/all53
+imageIDs and existing services preserved. Character Flow is dispatched after
+this docs/index closure to the existing corrected same-run CSJ workflow with
+fresh guards. New two normal-created IDs must feed Journal in that same run;
+do not mix receipts or substitute seeded/reused-deleted IDs. Both test exits0,
+Journal CSJ-3..5, final native counts and host teardown are required before
+coordinator accepts CSJ-1..6. No user decision or permission gap.
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final

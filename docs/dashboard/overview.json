@@ -9,17 +9,17 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T23:22:26.585Z",
+  "updatedAt": "2026-10-29T23:47:43.897Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Fourth run completed native/sheet prefix then exposed valid fresh-role revision rejection during live HP + Journal draft. Narrow provider correctiona50d6d3 independently CLEAR with30 focused/typecheck/lint and exact cleanup. Corrected actual attempt dispatched; full CSJ/Journal acceptance open.",
-  "nextAction": "Character Flow executes existing corrected same-ID CSJ workflow with fresh guards; coordinator verifies full actual Flow and Journal receipts, both exits/final native counts and host cleanup, then accepts CSJ-1..6 only or resolves concrete authorized findings.",
+  "currentWork": "Native HP/campaign prerequisites and full selected Character Flow pass locally atc217553: process exit0,22 proofs,1280/390 and exact cleanup independently verified. Combined fifth run failed Journal audience lookup before save. Journal-owned reviewed selector assembledba09cf2; corrected combined run dispatched.",
+  "nextAction": "Character Flow runs the existing corrected same-run two-character CSJ package; Journal consumer uses those same new IDs. Coordinator verifies Journal save/audience/recovery/isolation plus both successful exits/final DB counts/host cleanup, then accepts only CSJ-v1 and stops.",
   "blockers": [
-    "Corrected actual live HP/draft refresh and frozen Journal workflow/final cleanup remain pending the dispatched run. Native/sheet completed prefix is explicit inference from failed control flow, not final acceptance. No user permission/source-review blocker."
+    "Full Journal CSJ-3..5 and assembled final CSJ-6 remain pending corrected actual run; Journal test selector is reviewed/assembled. Native HP/campaign and Character Flow local success retained; no user decision or permission gap."
   ],
   "decisions": [],
   "dependencies": [
@@ -337,9 +337,9 @@
       "area": "Integrated character journey",
       "milestone": "M3/M5.5",
       "requirement": "R06/R08/R20; CSJ-v1 criteria CSJ-1..6",
-      "outcome": "Native commands, normal builds, sheet use and guards have a recorded completed fourth-run prefix. Valid fresh native role revision handling corrected and reviewed; actual full same-ID Journal integration and cleanup acceptance remain pending.",
+      "outcome": "Finite native HP/campaign and full selected creation/basic-sheet/mobile/draft-refresh workflow pass locally with exact evidence and cleanup. Reviewed one-file Journal selector correction assembled. Combined same-ID Journal and final integration acceptance remain open.",
       "implementation": "implemented",
-      "verification": "source",
+      "verification": "local",
       "integration": "unknown",
       "acceptance": "open",
       "disposition": "included",
@@ -356,7 +356,9 @@
         "3d70442 / metadata3f1a6e8 —one visible inventory locator correction, same reviewer CLEAR. Failed bcc589d0 evidence/cleanup retained; no full CSJ acceptance; corrected retry dispatched.",
         "301c5a6 / metadata c9b1301 —three-file inventory-to-Actions correction, same reviewer CLEAR;31 focused/typecheck/lint pass; eight evidence hashes and exact failed20f99479 cleanup verified; corrected actual story dispatched.",
         "6b39538 / metadataf8b24a4 —one runner popup-transition barrier, same reviewer CLEAR; failed59205f2e and eight linked/14 retained output hashes/cleanup verified. Prior product/native/Journal sources unchanged; corrected actual attempt dispatched.",
-        "a50d6d3 / metadata25b4e47 —two-file native-role refresh correction, same reviewer CLEAR;30 focused/typecheck/lint pass. Eight evidence/14 output hashes and exact fourth-run cleanup verified. Failed prefix remains unaccepted as full workflow; corrected actual run dispatched."
+        "a50d6d3 / metadata25b4e47 —two-file native-role refresh correction, same reviewer CLEAR;30 focused/typecheck/lint pass. Eight evidence/14 output hashes and exact fourth-run cleanup verified. Failed prefix remains unaccepted as full workflow; corrected actual run dispatched.",
+        "616da4d4 runtimec217553 —Flow exit0 afterfinally,22 proof objects, same two IDs1280/390, native42 guarded outcomes and full finite HP/campaign/rollback/concurrency/recovery;18 linked hashes+exact cleanup verified. Overallfailed because Journal exit1 before firstsave.",
+        "Journal8468f26 / canonicalba09cf2 / metadata4dacf8b —onefile selector review CLEAR and exact canonical bytes; all other source unchanged; corrected existing combined run dispatched, no receipt mixing or final acceptance."
       ]
     }
   ]
