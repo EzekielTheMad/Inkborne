@@ -17,6 +17,9 @@ and unrelated changes. Do not reset or recreate a checkout from an old SHA.
 
 1. Read applicable `AGENTS.md` instructions; confirm working directory, branch,
    Git HEAD and uncommitted changes before editing.
+   Read [SHARED-DOMAIN-CONTRACT.md](SHARED-DOMAIN-CONTRACT.md) at every continuation,
+   including after context compaction. Retain the user's assigned lane and its
+   compact handoff; record the contract version and current deliverable there.
 2. Use [LAUNCH-ACCEPTANCE.md — current execution path](LAUNCH-ACCEPTANCE.md#current-execution-path)
    as the single guiding plan. Read its current continuation and relevant
    requirement rows, then the orchestrator's current pickup section and latest
@@ -25,7 +28,8 @@ and unrelated changes. Do not reset or recreate a checkout from an old SHA.
    Preserve implemented and accepted slices; do not mistake implementation for
    acceptance, or rerun completed work because an older note lists it as missing.
    Resolve material discrepancies from evidence and update the canonical record.
-4. Select the next unfinished, ready dependency in that queue. Briefly state
+4. Select the next unfinished, ready dependency in the explicitly assigned lane,
+   or in the canonical queue when no lane is assigned. Briefly state
    where we are, the next useful delivery and its minimum verification, then
    proceed. Do not stop at a plan or require repeated checkpoint permissions.
 
@@ -54,6 +58,36 @@ required security, data-integrity and release acceptance gates.
   that resolves it. Do not replace an unavailable actual-flow check with
   repeated simulations and call it accepted. Continue useful independent work
   when a resource/access dependency blocks one lane.
+
+### Verification stopping rules
+
+- Before implementing a coherent slice, name its user-visible finish line and
+  minimum verification. Do not turn a small fix into a new acceptance framework.
+- Stop verification when those checks pass and no concrete material risk remains.
+  Continue delivery or the next ready slice; do not add checks simply because
+  more tests could be written. Reuse unchanged evidence within its actual scope.
+- Broaden only for a relevant failure, a changed shared contract, a specific
+  unresolved security/data-integrity risk, or an applicable release requirement.
+  State the trigger, the next bounded check and its stopping condition first.
+- After two consecutive verification-only cycles with no product improvement,
+  perform a brief drift check. A cycle means a planned check batch plus its
+  analysis, not each individual test. Identify the exact unresolved failure or
+  required gate. Fix the concrete cause, continue another ready in-scope product
+  action, or report the real blocker. Do not launch a third exploratory test or
+  evidence-harness expansion without that justification. Necessary safety work
+  continues; this is a scope check, not permission to ignore failing checks.
+- Keep current feature development separate from historical upgrade and release
+  acceptance. Do not rebuild old evidence chains unless the changed behavior or
+  selected acceptance target actually depends on them.
+- Documentation-only changes need link/diff/consistency checks, not app suites.
+  Small reversible presentation changes need relevant inspection. Saved-data
+  behavior needs save/reopen and meaningful failure checks; permissions need
+  authorized/denied cases; transactions/recovery need the relevant real database
+  guarantees. Use existing scripts and harnesses before creating new machinery.
+- End each slice with: what the user can now do; checks and their scope; remaining
+  limitation; next product action. If no product behavior changed, say so and
+  explain the specific blocker resolved. Test counts are supporting evidence,
+  never the finish line. Do not promise a fixed test-count or time ratio.
 
 ## Delegate selectively
 
@@ -105,7 +139,8 @@ required security, data-integrity and release acceptance gates.
 
 ## Preserve boundaries and leave a usable handoff
 
-- Follow the ledger's current milestone order, pauses, deferrals and hosting
+- Follow the explicitly assigned lane, or the ledger's current milestone order
+  when no lane is assigned. Preserve the ledger's pauses, deferrals and hosting
   decisions. This kickoff does not change Vercel hosting, resume paused work or
   invent a new beta scope/date. New explicit user decisions take precedence.
 - Continue authorized local work without repeated permission requests. Reuse

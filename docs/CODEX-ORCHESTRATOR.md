@@ -9,7 +9,11 @@ feature baseline. None is an alternative roadmap.
 For a fresh development thread, read and execute the
 [reusable continuation prompt](CONTINUE-INKBORNE.md). It defines pickup,
 proportional verification and delegation rules; this ledger/handoff chain
-continues to select the actual work.
+continues to select the actual work. Read the
+[shared domain contract](SHARED-DOMAIN-CONTRACT.md) at every continuation. An
+explicitly assigned lane retains its bounded scope instead of picking up the
+global builder queue. New lane assignments do not change milestone acceptance,
+paused features or external-action authority.
 
 ## Resume and ownership
 
