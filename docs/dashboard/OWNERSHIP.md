@@ -11,7 +11,7 @@ lane reports describe their own evidence and do not confer project acceptance.
 
 | Lane ID | Reporting role | Current writer / thread | Authoritative checkout | Report | Handoff |
 | --- | --- | --- | --- | --- | --- |
-| `overview` | `integration` | Inkborne Project Coordinator — pickup pending; thread ID pending | `C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification` | [overview.json](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/dashboard/overview.json) | [Coordinator handoff](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-29-project-coordinator.md) |
+| `overview` | `integration` | Inkborne Project Coordinator — `01a1890b-d3ee-7231-94de-6eb24a755f70` | `C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification` | [overview.json](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/dashboard/overview.json) | [Coordinator handoff](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-29-project-coordinator.md) |
 | `character-flow` | `lane` | Character Flow — `01a1790d-be90-73d1-91f6-84e48a557ee1` | `C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification` | [character-flow.json](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/dashboard/character-flow.json) | [Character Flow handoff](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md) |
 | `library` | `lane` | Library / Encyclopedia — `01a1888d-9110-7e90-8ee0-516640d33539` | `C:/Users/kaios/Documents/Codex/2026-10-11/task-2/library-encyclopedia` | [library.json](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/library-encyclopedia/docs/dashboard/library.json) | [Library handoff](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/library-encyclopedia/docs/handoffs/2026-10-29-library-encyclopedia.md) |
 | `journal` | `lane` | Character Journal — `01a1888e-2454-7633-b5f5-57c36e522a82` | `C:/Users/kaios/Documents/Codex/2026-10-11/task-2/character-journal` | [journal.json](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/character-journal/docs/dashboard/journal.json) | [Journal handoff](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/character-journal/docs/handoffs/2026-10-29-character-journal.md) |
@@ -38,3 +38,24 @@ Effective 2026-10-29, 11:55:04 America/Phoenix (2026-10-29T18:55:04.496Z). The u
 - The former integration writer stops overview/global-queue writes and new project-wide acceptance decisions after this validated checkpoint. Later continuations may resume only retained Character Flow work and must recheck this record.
 - Release basis, exact boundaries and pickup: [Project Coordinator handoff](C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-29-project-coordinator.md). Evidence requirements and approval limits remain; the transfer grants no new external, deployment, hosted/security, credential, scope or messaging permission.
 - Overview and Character Flow remain in one authoritative checkout. Serialize source/document/index/commit write windows; agree exact file ownership before shared changes. No concurrent writers, new checkout or report relink is authorized by this transfer.
+
+## Coordinator pickup and first checkpoint — 2026-10-29
+
+Effective 2026-10-29T19:07:31.748Z: **Inkborne Project Coordinator**, thread
+`01a1890b-d3ee-7231-94de-6eb24a755f70`, adopts only `inkborne/overview`,
+project-wide integration queue/cross-lane coordination and the existing scoped
+integration/acceptance responsibility. The user authorized this pickup.
+
+Release basis: saved partial release and handoff in `3eb396b`; the former
+writer's 2026-10-29 checkpoint reply explicitly confirms release, no transferred
+writes in flight, a clean shared worktree and no new blocker/file conflict.
+This is completed ownership transfer and the first coordinator reconciliation
+checkpoint, distinct from the earlier prepared release. Character Flow, Library
+and Journal retain all feature/report assignments in the table above.
+
+The coordinator owns the [canonical dependency queue](../LAUNCH-ACCEPTANCE.md#cross-lane-integration-queue--2026-10-29),
+not another roadmap. Only coordinator documents/overview were written in the
+released checkout window; lane reports/product files were preserved. This window
+ends after the scoped reporting commit and collector readback. Later shared
+source/document/index/commit windows must be agreed before writing; no feature
+work or runtime is started by this pickup.

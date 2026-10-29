@@ -53,6 +53,47 @@ or overrides this queue. Historical completion counts are not current acceptance
    asking for layouts now. Daggerheart and public publishing remain deferred
    from first beta under S2/S3, with their project backlog retained.
 
+### Cross-lane integration queue — 2026-10-29
+
+This queue assigns dependencies within the existing R08/R15/R20 scope. It does
+not change the milestone order, reopen acceptance or authorize implementation,
+fixtures, credentials, runtime starts or hosted changes.
+[Ownership and report sources](dashboard/OWNERSHIP.md) remain canonical for writers.
+
+| Shared issue | Responsible owner and consumer | Next useful action and integration order | Current boundary |
+| --- | --- | --- | --- |
+| Journal update acknowledgement/conflicts (R20) | Coordinator: shared `app/(app)/characters/[id]/story-actions.ts`; Journal: `components/narrative/timeline-section.tsx` consumer and its tests | First review the unapplied update-ack proposal against current source for compile validity, conditional owner/event/character/expected-time matching, strictly advancing timestamps, returned-row acknowledgement and old-client reopen behavior. Agree the exact action/UI write window before any implementation; then check stale, removed, foreign and genuine two-tab outcomes together. | Proposal only; source/applicability evidence is not an applied or accepted safeguard. Narrative writes must preserve all mechanics and native character data. |
+| Journal uncertain-create recovery (R20) | Coordinator: shared persistence/recovery contract; Journal: draft/retry presentation | Resolve structured pre-write-rejected, unknown and conflict outcomes plus stable operation identity/owner-scoped readback after the update review and before claiming recovery acceptance. Reuse existing contracts and record compatibility; response loss must preserve the draft and pause replay. | Unresolved. No title/body identity matching or blind automatic replay; no new global save framework. |
+| Journal fixture and runner package (R20) | Coordinator: authorization, fixture producer, private runtime config and `scripts/unraid/` lifecycle; Journal: `e2e/local-journal/real.config.ts` and `real-journal.spec.ts` | After persistence dispositions, confirm applicable scratch authorization and explicit producer/runner file ownership for four distinct roles, two owner characters, one campaign and at most three journal entries. Only an authorized later task refreshes live guards, prepares the package and runs the single real story with exact cleanup. | Runtime occupancy is released, not blocked. Journal confirms no verified approval covers the full fixture/account package; Victor must authorize it before execution. Real save/reopen, audience/denial, conflict and recovery acceptance remain open. |
+| Library related definitions (R15) | Coordinator: `lib/supabase/content-definitions.ts` and `lib/supabase/compendium-server.ts`; Library: `app/(app)/library/[id]/page.tsx`, `components/compendium/compendium-detail.tsx`, `components/compendium/class-profile.tsx` consumers | Review relation identity/version/access for class-feature, trait and subrace references as the next independent shared-contract review after Journal persistence disposition. Establish current-authorized versus unavailable/ambiguous behavior; never let historical-pin fallback broaden discovery. Agree reader/consumer writes, then bound real allow/deny checks before acceptance. | No relation policy/reader change adopted. Slugs are not exact version pins. Display improvements stay isolated with simulated evidence. |
+| Shared checkout serialization | Coordinator schedules each write window; Character Flow retains character product files/report | This coordinator checkpoint uses only overview, ownership, ledger, orchestrator pointer and coordinator handoff. Release that window after its commit; agree later producer/consumer/index windows before shared edits. | One writer per worktree. No concurrent shared edits, lane report takeover or registration relink. |
+
+Character Flow's next action remains **R08 Bardic Inspiration capacity** (prepared
+1 versus expected 3 at CHA 16/17), with its existing resource authority. It is
+unblocked by these coordination dependencies. Library's **declared armor
+Dexterity-cap presentation** is independently ready in
+`lib/compendium/presentation.ts`; the relation proposal does not block it.
+Journal retains its feature/report ownership and prepared story; its real
+acceptance is blocked on coordinator persistence and fixture dispositions above.
+No lane is instructed to start additional feature work in this first run.
+
+Preserve the fourteen locally accepted creation journeys and their separate
+source/catalog bindings. Library's four display slices remain simulated and
+isolated; Journal UI remains simulated and its real story source-reviewed/unrun.
+Neither reported implementation nor a prepared test is integration acceptance.
+No scope choice blocks this reporting checkpoint. The concrete user decision
+before Journal execution is whether to authorize its bounded disposable setup:
+four test identities, two owner characters, one DM-owned campaign and at most
+three journal entries in the isolated scratch lifecycle. This creates temporary
+credentials/test data, starts a disposable app/database/browser runner, requires
+no production restart and must leave existing services/data unchanged. Rollback
+is exact fixture and task-runtime/private-file teardown; verification is the
+single owner/DM/member/outsider save/reopen/denial story plus native mechanics
+retention and cleanup checks. Coordinator must finish persistence review and
+freeze producer/runner ownership before seeking executable approval. No setup is
+performed or approved by this coordination run. Existing S5/P1-P3 decisions retain their
+place in the [decision register](#prd-p1-p3-crosswalk-decision-register-not-silent-exclusions).
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final

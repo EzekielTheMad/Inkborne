@@ -214,3 +214,60 @@ report bytes are unchanged. All overview deliverables, evidence, product states,
 source bindings and dependency IDs are preserved; all 26 deliverable IDs remain
 unique. The 66 checked Markdown targets resolve and diff checks pass. No product
 tests, services, runtime operations, foreign edits or cross-chat messages ran.
+
+## Coordinator pickup — first reconciliation checkpoint
+
+2026-10-29T19:07:31.748Z, **Inkborne Project Coordinator**, verified thread
+`01a1890b-d3ee-7231-94de-6eb24a755f70`. The historical prepared release above is
+preserved. Actual pickup baseline: `3eb396b`, branch
+`codex/launch-integration-20261011`, clean authoritative checkout. The former
+owner explicitly confirmed release and no transferred operation in flight at
+this coordination checkpoint. No process/runtime transfers.
+
+Adopted only `inkborne/overview`, global coordination/queue and existing
+integration/acceptance responsibility. The ownership record and active overview
+now identify this coordinator; other lane reports, IDs, owners, source bindings,
+product states and accepted evidence remain intact. The current contract is v1.
+
+The current reports and all three lane handoffs were read. Character Flow
+confirmed retained R08 responsibility and no new blocker/conflict. Library
+confirmed armor-cap presentation is ready, plus the exact related-definition
+reader/consumer boundary and the handoff's omitted trait/subrace detail. Journal
+confirmed the same blocking sequence and retained consumer/report ownership;
+no verified authorization covers the complete fixture package. The coordinator
+owns technical dispositions; Victor owns the bounded fixture authorization before
+execution. All three checkpoint replies report no file changes or product work.
+Journal read the ownership map before pickup was written; its observed pending
+state is historical and is resolved by this completed transfer.
+
+The [canonical ledger dependency queue](../LAUNCH-ACCEPTANCE.md#cross-lane-integration-queue--2026-10-29)
+holds current responsible owners, next actions, file boundaries and integration
+order; it supersedes the pending-owner references in the historical queue above.
+Do not maintain a second priority list here. Next coordinator action in a later
+authorized work session is the bounded Journal update/conflict proposal and
+uncertain-create contract review, then fixture authority/runner disposition;
+Library relation/access/version review remains independently queued.
+
+No product implementation, tests, fixtures, accounts, runtimes, new threads,
+merge/deploy or hosted changes occurred. Coordination messages requested only
+one read-only checkpoint from the existing three lane threads. No sustained
+polling or automatic continuation is established. Fourteen accepted creation
+journeys remain accepted; Library/Journal evidence is not promoted. This first
+run stops after reporting validation/readback and the scoped local commit.
+
+Bounded continuation snippet (SOP v1): Work only in the assigned lane. Read its
+canonical ledger, ownership, handoff and registered report before proceeding.
+Keep IDs and scope stable; report delivered behavior and exact evidence limits
+at the next meaningful checkpoint. Shared-contract proposals go to the
+coordinator. Reporting alone starts no feature work or tests.
+
+Pickup verification: all four registered reports validate, all 26 deliverable
+IDs are unique and every dependency resolves. Collector reads the active
+coordinator owner with zero warnings/conflicts and unchanged registration paths.
+All 18 overview deliverables (including acceptance/evidence/source binding) and
+all three lane-report byte hashes are unchanged. The ledger outside the inserted
+coordination queue and the historical release handoff are preserved. Active
+lane instructions cover ownership/reporting; 62 Markdown targets and exact
+Library reader/consumer paths resolve. Diff checks pass. No product test,
+server, runtime or background process was started. The first coordinator
+checkpoint is complete; sustained reporting requires later meaningful updates.

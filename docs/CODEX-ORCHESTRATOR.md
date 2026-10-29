@@ -18,8 +18,9 @@ paused features or external-action authority.
 ## Resume and ownership
 
 Project-wide coordination and the existing `inkborne/overview` integration report
-are released for the [Inkborne Project Coordinator handoff](handoffs/2026-10-29-project-coordinator.md).
-Successor pickup/thread ID is pending. Character Flow retains its report and
+are owned by the adopted Inkborne Project Coordinator; see the
+[coordinator checkpoint](handoffs/2026-10-29-project-coordinator.md#coordinator-pickup--first-reconciliation-checkpoint) and
+[canonical integration queue](LAUNCH-ACCEPTANCE.md#cross-lane-integration-queue--2026-10-29). Character Flow retains its report and
 character product work; Library and Journal are unchanged. Consult the
 [canonical ownership record](dashboard/OWNERSHIP.md) before any write and serialize
 shared-checkout write windows. This assignment change reopens no accepted work.

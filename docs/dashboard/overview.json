@@ -4,25 +4,42 @@
   "laneId": "overview",
   "name": "Project integration",
   "role": "integration",
-  "reporting": "awaiting_adoption",
+  "reporting": "active",
   "owner": {
-    "name": "Inkborne Project Coordinator (pickup pending)"
+    "name": "Inkborne Project Coordinator",
+    "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T18:55:04.496Z",
+  "updatedAt": "2026-10-29T19:08:17.377Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Partial coordinator handoff prepared and Character Flow integration ownership released. The fourteen-journey creation acceptance and all existing product evidence remain intact; Character Flow retains its report and R08 product work. Successor pickup and first coordinator checkpoint are pending.",
-  "nextAction": "Adopt only inkborne/overview and the released integration/acceptance responsibilities from C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-29-project-coordinator.md. Refresh current ownership and serialize shared-checkout writes, then resolve the queued Journal persistence/create-recovery/fixture and Library related-definition/access/version/ambiguous-slug proposals. Character Flow keeps the existing R08 Bardic Inspiration capacity fix; preserve accepted creation work.",
-  "blockers": [],
-  "decisions": [],
+  "currentWork": "Coordinator ownership adopted after explicit prior-owner release at 3eb396b and confirmation of no transferred writes in flight. First reconciliation assigns existing Journal persistence/fixture and Library relation dependencies in the canonical ledger; lane feature/report ownership and all product evidence are preserved.",
+  "nextAction": "At the next authorized coordinator session, review Journal update/conflict and uncertain-create contracts, then resolve fixture authorization/runner ownership before actual acceptance; coordinate Library related-definition access/version review separately. Character Flow keeps R08 Bardic Inspiration and Library keeps independent armor-cap presentation. See LAUNCH-ACCEPTANCE.md#cross-lane-integration-queue--2026-10-29. This first run stops after reporting reconciliation.",
+  "blockers": [
+    "Journal real acceptance: coordinator must resolve unapplied update acknowledgement/conflict and uncertain-create contracts, plus authorized fixture/runner package. Runtime occupancy is released.",
+    "Library related-definition descriptions: coordinator must settle shared identity/access/version/ambiguous-slug behavior; independent armor-cap presentation is unblocked."
+  ],
+  "decisions": [
+    {
+      "question": "Before Journal real-data execution, authorize the bounded isolated scratch package: four disposable test identities, two owner characters, one campaign and at most three journal entries, with exact cleanup. Coordinator must first resolve persistence contracts and fixture/runner ownership; no setup is authorized by this coordination checkpoint.",
+      "owner": "Victor"
+    }
+  ],
   "dependencies": [
     {
+      "laneId": "character-flow",
+      "reason": "Retains R08 character work and its report in the shared checkout; coordinator and lane must serialize exact file/index write windows. Accepted creation evidence is retained."
+    },
+    {
       "laneId": "journal",
-      "reason": "Reviewed isolated Journal UI source awaits separate shared save/create-recovery and actual fixture integration disposition. Runtime slot was released after Character Flow cleanup; no Journal DB acceptance is claimed."
+      "reason": "Journal retains its UI/real-story consumer and report; coordinator owns shared persistence and fixture/runner dispositions before real save/reopen/role acceptance."
+    },
+    {
+      "laneId": "library",
+      "reason": "Library retains presentation/report work; coordinator owns related-definition reader/access/version disposition. Current display proof stays simulated/isolated."
     }
   ],
   "deliverables": [
