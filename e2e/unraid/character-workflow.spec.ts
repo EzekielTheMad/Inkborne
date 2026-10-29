@@ -285,9 +285,11 @@ test("genuine Fighter completes the builder, receives its original award and rel
   expect(narrativeSaved.native.choices).not.toEqual(backgroundSaved.native.choices);
   const acceptedName = `Parent accepted ${runId.slice(0, 8)}`;
   await page.goto(base + "/details"); await page.getByRole("textbox", { name: "Character name", exact: true }).fill(acceptedName);
+  await page.getByRole("combobox", { name: "Alignment", exact: true }).selectOption("Chaotic Good");
   await save(page, () => page.getByRole("button", { name: "Save details", exact: true }).click());
   const detailsSaved = await parentSnapshot("details-saved"); requireParentSave(narrativeSaved, detailsSaved, ["save_details"]);
   expect(detailsSaved.native.name).toBe(acceptedName); expect(detailsSaved.native.name).not.toBe(narrativeSaved.native.name);
+  expect(detailsSaved.native.choices.alignment).toBe("Chaotic Good"); expect(detailsSaved.native.choices.alignment).not.toBe(narrativeSaved.native.choices.alignment);
   await page.goto(base + "/equipment");
   const armor = page.locator("select").filter({ has: page.locator("option").filter({ hasText: /chain mail/i }) }).filter({ has: page.locator('option[value="b"]') }).first();
   await expect(armor).toHaveValue("a"); await save(page, () => armor.selectOption("b")); await expect(confirm).toBeEnabled();
@@ -418,6 +420,19 @@ test("parent Fiend correction applies once and exact JWT replay retains the upda
     await page.reload(); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, 1);
     await choose(page, choiceOption(page, /^Fiend(?:\s|$)/));
     for (const skill of ["Arcana", "Intimidation"]) await choose(page, choiceOption(choiceGroup(page, "Choose 2 proficiency"), skill));
+    await page.goto(`${config.appOrigin}/characters/${id}/builder/abilities`);
+    const assigned = { Strength: "10", Dexterity: "13", Constitution: "14", Intelligence: "12", Wisdom: "8", Charisma: "15" };
+    for (const [ability, value] of Object.entries(assigned)) {
+      const control = page.getByRole("combobox", { name: `${ability} score`, exact: true });
+      if (await control.inputValue() === value) continue;
+      for (const other of Object.keys(assigned)) if (other !== ability) {
+        const occupied = page.getByRole("combobox", { name: `${other} score`, exact: true });
+        if (await occupied.inputValue() === value) await save(page, () => occupied.selectOption(""));
+      }
+      await save(page, () => control.selectOption(value));
+    }
+    for (const [ability, value] of Object.entries(assigned)) await expect(page.getByRole("combobox", { name: `${ability} score`, exact: true })).toHaveValue(value);
+    await page.goto(`${config.appOrigin}/characters/${id}/builder/class`); await openLevel(page, 1);
     const panel = page.getByRole("form", { name: "Warlock spell choices", exact: true });
     for (const name of ["Eldritch Blast", "Mage Hand", "Comprehend Languages", "Charm Person"]) await setSpell(panel, name);
     await save(page, () => panel.getByRole("button", { name: "Save spells", exact: true }).click());
