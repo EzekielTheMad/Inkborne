@@ -8,7 +8,48 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ roll-popup timing correction — 2026-10-29T22:51:57.975Z
+## Current CSJ native-role refresh correction — 2026-10-29T23:19:53.711Z
+
+Source **a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2**, base **72b0cf5d3b1948e955e2548a20788086d979127a**.
+[Exact two-file source, causal proof, failed prefix and cleanup](2026-10-29-csj-role-refresh-fix.json).
+
+Fourth actual run **2ff28c36-d9f5-4b76-b97c-362b3fb789bc** failed overall at live HP refresh + unsaved
+Journal draft, after the awaited two-build/weapon/HP/denial/rollback/campaign/
+lost-response/separate-backend concurrency prefix. That prefix follows from
+source-bound failure position349, not a final success receipt. Journal remained
+unrun. All previous runs remain failed; no complete CSJ acceptance is inferred.
+
+Provider compared whole refs, including the legitimately advanced native class-
+role revision. Server attachBuilderClassRoles freshly binds that metadata to the
+new observed parent; the equality guard falsely required reload. The same
+reviewer independently confirmed this P2 and found no second ordering defect.
+
+The minimal fix validates OLD and FRESH raw role schemas/pins/occurrences against
+their OWN exact parent revisions. Only that validated stamp is excluded from a
+temporary comparison; every other RAW field/order/data/effect remains exact.
+No loaded evidence is mutated or restamped, no parsed output silently drops
+fields. Complete content/parent/state/schema/base/inventory/maxHP checks, pending/
+unknown guards and provider/Shell/Narrative/editor identity remain unchanged.
+
+A realistic actual-attachment fixture reproduces the same reload alert before
+the fix.30 focused cases pass afterward, including11 provider cases: two successive
+11→12→13 reads on the same editor/attempt UUID, exact >2^53 revision, pending/
+unknown draft retention, stale/missing/pin/effect/extra-field refusal plus state/
+schema mismatch. Typecheck/zero-warning lint/diff pass. These are isolated/source
+checks; fixed actual browser/database execution awaits exact central review.
+
+**Cleanup complete:**13 images/3 server inputs/3 local archives removed;14 public
+evidence files retain hashes; original56 containers/95 volumes/all53 exact image
+IDs preserved. Private/runtime/helper/transport243540 gone; service IDs/states
+unchanged. No operational cleanup remains. SQL producers, E2E and Journal source are unchanged.
+
+**Next:** release shared source/docs/index after own metadata validation/commit.
+Same reviewer checks the exact paired-consumer delta and cleanup, then coordinator
+closes docs/dispatches the existing approved bounded actual CSJ story. No new
+user decision, scenario, fixture, matrix or framework; accepted14 retained.
+Coordinator alone owns global queue/acceptance; Flow retains product/report.
+
+## Prior CSJ roll-popup timing correction — 2026-10-29T22:51:57.975Z
 
 Source **6b395388d60648c3f3d36a25a7b35f5f03504cf4**, base **e56a695fa532f983871cac0ef4ffe6157af74d2e**.
 [Exact E2E delta, third-run evidence and completed cleanup](2026-10-29-csj-roll-popup-fix.json).

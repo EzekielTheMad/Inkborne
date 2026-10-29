@@ -9,21 +9,21 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T22:51:57.975Z",
+  "updatedAt": "2026-10-29T23:19:53.711Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "6b395388d60648c3f3d36a25a7b35f5f03504cf4",
+    "commit": "a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Actual equipped weapon now appears/opens after301c5a6. Third CSJ run failed on the prior popup closing during the next Roll action; a minimal shared-loop wait is frozen at6b39538. Exact cleanup complete; full selected CSJ acceptance remains open.",
-  "nextAction": "Same reviewer checks the exact popup-transition test correction and completed failed-run cleanup. After coordinator clearance/window closure, execute the unchanged approved two-character CSJ criteria and exact final teardown.",
+  "currentWork": "Fourth actual CSJ completed its two-build/native/sheet prefix then failed draft-preserving HP refresh: class-role read revision was compared as immutable content. Minimal paired-consumer fixa50d6d3 validates both own revisions and raw invariant payloads;30 focused/typecheck/lint pass. Exact cleanup complete; actual fixed acceptance pending.",
+  "nextAction": "Same central reviewer checks exact two-file role-refresh correction and fourth-run cleanup. After coordinator clearance/window closure, run existing approved CSJ workflow with unchanged actual native/Journal/exit/cleanup gates.",
   "blockers": [],
   "decisions": [],
   "dependencies": [
     {
       "laneId": "overview",
-      "reason": "Coordinator owns central correction review, next actual dispatch and integration acceptance; Flow releases source/docs/index at this checkpoint."
+      "reason": "Coordinator owns final delta review, next actual run dispatch and integration acceptance. Flow releases source/docs/index after own checkpoint."
     }
   ],
   "deliverables": [
@@ -83,7 +83,7 @@
       "name": "Finite native HP and campaign assignment",
       "area": "Character flow",
       "requirement": "CSJ-NATIVE-HP; CSJ-NATIVE-CAMPAIGN (R08/R20)",
-      "outcome": "Finite native overlay installs with closed boundaries. Actual selected workflow reached first-character rollback/equip/ability prefix but stopped at missing weapon Actions, now corrected in source; full native/Journal acceptance remains pending.",
+      "outcome": "Actual native/sheet prefix reaches both normal characters, HP/campaign/role/rollback/recovery/concurrency. Live refresh incorrectly rejected new native role revision; paired consumer now validates own stamps/invariants. Whole CSJ remains open pending fixed actual draft/Journal flow.",
       "implementation": "implemented",
       "verification": "source",
       "integration": "isolated",
@@ -93,7 +93,8 @@
         "28b9333308840b66c1a383c47a22787138586b12 runner/native correction; docs/handoffs/2026-10-29-csj-runner-source.json exact six-file manifest; actual SQL/browser/Auth/database unrun.",
         "Typecheck/zero-warning lint/syntax/diff/discovery pass. In-memory original22P02/grouped allowed=true/forbidden=false; no actual native acceptance.",
         "afe56e5 unchanged16 manifest files and62 consumer cases reused. Clearance superseded for SQL/bootstrap/remote changed paths; all10 Journal a3842f4 blobs match.",
-        "docs/handoffs/2026-10-29-csj-visible-inventory-fix.json exact 3d70442ad2687d5445c91263845de8aa0d32edf3 selector correction and actual run bcc589d0-9cf6-42e2-9e42-e9828f9ad79a failed, with completed13-image/input cleanup and original56container/95volume/53image preservation."
+        "docs/handoffs/2026-10-29-csj-visible-inventory-fix.json exact 3d70442ad2687d5445c91263845de8aa0d32edf3 selector correction and actual run bcc589d0-9cf6-42e2-9e42-e9828f9ad79a failed, with completed13-image/input cleanup and original56container/95volume/53image preservation.",
+        "docs/handoffs/2026-10-29-csj-role-refresh-fix.json exact a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2 correction; realistic causal failure and30 passing source cases; fourth run remains failed with complete cleanup."
       ]
     },
     {

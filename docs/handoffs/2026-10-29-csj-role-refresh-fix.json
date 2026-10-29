@@ -1,0 +1,170 @@
+{
+  "kind": "inkborne-csj-native-role-refresh-correction-v1",
+  "recordedAt": "2026-10-29T23:19:53.711Z",
+  "contractVersion": 1,
+  "assignments": [
+    "CSJ-NATIVE-HP paired consumer",
+    "CSJ-FLOW-2"
+  ],
+  "sourceBase": "72b0cf5d3b1948e955e2548a20788086d979127a",
+  "sourceHead": "a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2",
+  "branch": "codex/launch-integration-20261011",
+  "worktree": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification",
+  "diffCommand": [
+    "git",
+    "diff",
+    "--binary",
+    "--full-index",
+    "72b0cf5d3b1948e955e2548a20788086d979127a",
+    "a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2",
+    "--",
+    "lib/character/character-context.tsx",
+    "tests/components/character/basic-sheet-draft-retention.test.tsx"
+  ],
+  "diffSha256": "a2dbb6830f077a5c2504c658d5c0c4743720da1d766e41652c954250fd572770",
+  "files": [
+    {
+      "path": "lib/character/character-context.tsx",
+      "gitBlob": "10c3b4b9d126340480be76f58e6c37066de4f95f",
+      "sha256": "4617e6cc5210c6f1019e289b6e549a150669c8fde62ffd8246b4c9232b017677",
+      "bytes": 55297
+    },
+    {
+      "path": "tests/components/character/basic-sheet-draft-retention.test.tsx",
+      "gitBlob": "22fd5ea3b9628d679e71a54428af8af4002d5064",
+      "sha256": "39a9c5d02eda70f41f8e27932e0790940e51ea21a9fcd2cb2034fc800011193f",
+      "bytes": 15554
+    }
+  ],
+  "supportingUnchangedSource": [
+    {
+      "path": "lib/supabase/content-refs.ts",
+      "gitBlob": "e10d30d63bd9bf1aa69bd8a0964b6648d7ce08ab",
+      "sha256": "f306a2008a6ff005f5dba8620523e07c1413d32de565a7b150b1c778586950c6",
+      "bytes": 10339
+    },
+    {
+      "path": "lib/character/builder-class-roles.ts",
+      "gitBlob": "131d60e80b532893fe87dfd91273d03cf305097e",
+      "sha256": "69d832cbb5bf4ea4d86e1a282e7682f7f8345b3a559b72a316a53be7c3997a0a",
+      "bytes": 7410
+    },
+    {
+      "path": "lib/character/state-writer.ts",
+      "gitBlob": "3ae867679b8661a631049db599c2f24c687d9e6b",
+      "sha256": "360ebf6e642eac91fb27f7e4fd0e0e7e3f4570d563999ab63d7cf301022c2ee8",
+      "bytes": 4645
+    }
+  ],
+  "cause": "Whole contentRefs comparison includes native class_role.action_revision. Actual server re-reads role projection and attachBuilderClassRoles binds the freshly validated role to the new parent revision; legitimate HP refresh therefore failed equality. Existing fixture omitted occurrence/role metadata. Central reviewer independently confirmed P2; no second ordering defect found.",
+  "correction": "Validate old and fresh raw roles separately with existing builderClassRoleSchema/classRoleForRef against each observed exact parent revision. Require roles for native occurrence classes. Only already-validated revision is omitted from temporary comparison; every other raw ref/role/data/effect field and array order remains exact. Never mutate supplied provenance or use parsed schema output to drop/normalize fields.",
+  "preserved": [
+    "Exact expected parent/state/revision, complete content, schema/base/inventory/maxHP gates.",
+    "Pending writer early return/settlement and unknown/reload guards unchanged.",
+    "CharacterProvider/Shell/Narrative key and instance identity unchanged; no restamping old role metadata or replacing read authority with local ack.",
+    "No SQL/native producer, builder-role reader/schema, calculator, Journal, E2E oracle or fixture-budget change."
+  ],
+  "causalRegression": {
+    "beforeCommand": "npm test -- tests/components/character/basic-sheet-draft-retention.test.tsx --maxWorkers=1 -t retains unknown",
+    "beforeExitCode": 1,
+    "beforeObservation": "Actual attachBuilderClassRoles fixture reproduces same refreshed-mechanics reload alert/disabled HP control.",
+    "after": "30 cases in three affected files pass. Provider fixture now carries valid native occurrence/pin IDs and real attachment adapter."
+  },
+  "focusedChecks": {
+    "commands": [
+      "npm test -- tests/components/character/basic-sheet-draft-retention.test.tsx tests/lib/character/state-writer.test.ts tests/lib/character/asi-provider.test.tsx --maxWorkers=1",
+      "npm run typecheck",
+      "npm run lint",
+      "git diff --check"
+    ],
+    "allExitCodes": 0,
+    "tests": 30,
+    "files": 3,
+    "providerCases": 11,
+    "coverage": [
+      "Pending/unknown Journal draft and stable create attempt UUID across fresh role read.",
+      "Two successive11→12→13 acknowledgements and genuine fresh attached roles on same provider/editor; expected parent advances11→12.",
+      "Exact bigint revision9007199254740993 and its next string revision.",
+      "Stale/missing role, changed pin, changed evaluation effects, unknown role field and state/schema mismatches refuse while preserving draft/attempt."
+    ],
+    "scope": "Isolated real consumer/adapter/writer/provider source proof. Fixed actual browser/database flow remains unrun."
+  },
+  "failedActualRun": {
+    "runId": "2ff28c36-d9f5-4b76-b97c-362b3fb789bc",
+    "runtimeHead": "72b0cf5d3b1948e955e2548a20788086d979127a",
+    "status": "failed",
+    "failureAt": "e2e/unraid/csj-flow.spec.ts:349 Reload character expected0 received1 after saved HP refresh with unsaved draft",
+    "completedPrefix": "Awaited assertions preceding349 completed both normal creations, weapon/equip/roll logs, each HP damage/heal/temp flow, genuine role/invalid/stale/legacy denials, admitted exact rollback, campaign assignment, committed HP response-loss refusal and observed separate-backend concurrent HTTP winner/conflict. This is a prefix inferred from exact failure/control flow, not a final success receipt.",
+    "journal": "Unrun; full CSJ acceptance open.",
+    "sourceGates": "Actual Unraid typecheck/lint/62 focused cases, catalog bootstrap and native closure checks passed.",
+    "unexpectedProtectedSuccessObserved": false
+  },
+  "cleanup": {
+    "passed": true,
+    "imagesRemoved": 13,
+    "remoteInputsRemoved": [
+      "/mnt/cache/appdata/inkborne-test-runner/runs/2ff28c36-d9f5-4b76-b97c-362b3fb789bc/source",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/2ff28c36-d9f5-4b76-b97c-362b3fb789bc/source.tar",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/2ff28c36-d9f5-4b76-b97c-362b3fb789bc/catalog.tar"
+    ],
+    "localArchivesRemoved": [
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\source.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\catalog.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\catalog-files.txt"
+    ],
+    "publicEvidenceFilesRetained": 14,
+    "originalContainers": 56,
+    "originalVolumes": 95,
+    "all53OriginalImageIdsVerified": true,
+    "runtimePrivateAndHelperRemoved": true,
+    "transport243540Absent": true,
+    "existingServicesUnchanged": true
+  },
+  "evidence": [
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\output\\summary.json",
+      "sha256": "af01b087e6af13b0ddd263ed23c851d29f0ef89cbe4097440aecfd4d80d14257",
+      "bytes": 2222
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\output\\diagnostic.txt",
+      "sha256": "67de9393ed94c1f538c1bf5b98c1dc72cbea0906da628840d6f4d46c3944d7f8",
+      "bytes": 67383
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\output\\bootstrap.json",
+      "sha256": "5f45ec47308e0015738beb4b43e17606ffd67fb20f43ae1ce1d1c0a15bbdfe76",
+      "bytes": 1115387
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\output\\basic-sheet-profile.json",
+      "sha256": "0c1babc41b6fee58f033d0671885adff94de6c3d4098eda1cb7ae603bd4c54e7",
+      "bytes": 1114
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\output\\host-result.json",
+      "sha256": "91540a30f3a4078eb8bf489a4eed021a21d3568e2adb591edbfc5dadc4815380",
+      "bytes": 196
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\output\\csj-flow-cleanup.json",
+      "sha256": "0320eace0964d8e3b14994790ec4a7857f5ecae6729bf97a22fa281900e8c75e",
+      "bytes": 82
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\cleanup-plan.json",
+      "sha256": "62b9b0be4fed4bbae92c002628c8bd5b92e503fdf46bdd1dba47055f38bd9af5",
+      "bytes": 24564
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\2ff28c36-d9f5-4b76-b97c-362b3fb789bc\\cleanup-result.json",
+      "sha256": "4aba429154126cd5eee547d9ab8152b5ce8bfa42f592d487be34a7ce8a787043",
+      "bytes": 20196
+    }
+  ],
+  "review": {
+    "status": "same-central-exact-delta-review-pending",
+    "priorClearance": "Superseded for changed Provider and its draft test only; all unchanged source/reviews retained."
+  },
+  "nextAction": "Own metadata checkpoint and clean source/index release; same reviewer checks exact two-file paired consumer fix and cleanup. After coordinator closure/dispatch run the existing approved two-character CSJ story and final teardown."
+}
