@@ -1,0 +1,218 @@
+{
+  "kind": "inkborne-csj-runner-source-v1",
+  "recordedAt": "2026-10-29T21:51:15.440Z",
+  "assignments": [
+    "CSJ-FLOW-2",
+    "CSJ-NATIVE-VERIFY"
+  ],
+  "contractVersion": 1,
+  "sourceBase": "a7ff40d51ec582101626dd3224d77a6685988c2c",
+  "sourceHead": "28b9333308840b66c1a383c47a22787138586b12",
+  "branch": "codex/launch-integration-20261011",
+  "worktree": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification",
+  "status": "complete-source-awaiting-central-runner-and-native-delta-review",
+  "byteSource": "Canonical Git objects used by committed runtime export",
+  "diffCommand": [
+    "git",
+    "diff",
+    "--binary",
+    "--full-index",
+    "a7ff40d51ec582101626dd3224d77a6685988c2c",
+    "28b9333308840b66c1a383c47a22787138586b12",
+    "--",
+    "e2e/unraid/csj-flow.spec.ts",
+    "scripts/unraid/bootstrap.ts",
+    "scripts/unraid/native-basic-sheet.ts",
+    "scripts/unraid/remote.mjs",
+    "scripts/unraid/run.mjs",
+    "supabase/staged/character-basic-sheet-commands.sql"
+  ],
+  "diffSha256": "508321f1cd98c36c8ae066cdd03c4b6c1e4f16e3053256e636c7edc0c788f622",
+  "files": [
+    {
+      "path": "e2e/unraid/csj-flow.spec.ts",
+      "gitBlob": "01c87a75d769c4dfa59195bb2debb1d14684c027",
+      "sha256": "15ca083436a3a141a8ff56afcf8707121390dd2a230f2b687d36346fe7ad67a5",
+      "bytes": 31660
+    },
+    {
+      "path": "scripts/unraid/bootstrap.ts",
+      "gitBlob": "b446bfa94b3a23f9ebbf1405974710c0fd901e3d",
+      "sha256": "56524bc6ba42495d0c3048a897f18ee772239a41ecb25721e82588896c504173",
+      "bytes": 13301
+    },
+    {
+      "path": "scripts/unraid/native-basic-sheet.ts",
+      "gitBlob": "d88c5b3860a34bbd697390816c6e787ffaabde01",
+      "sha256": "bb66a292d10689f4795c2a82a7300d18be147749845a8a4410bb7406972de4e5",
+      "bytes": 16524
+    },
+    {
+      "path": "scripts/unraid/remote.mjs",
+      "gitBlob": "81d1cde40da7125c39983785967bb29ce744b996",
+      "sha256": "9bd2861125f392b8cc67fec9e92cfa7d04ced41dd91bf8134eb85be8b909b303",
+      "bytes": 7947
+    },
+    {
+      "path": "scripts/unraid/run.mjs",
+      "gitBlob": "922f5d9ffb931c994ea1b1373ae00aabd2270663",
+      "sha256": "fa4a7171477284584b1c95a35b6e2cfc37b7c8e3a134771f15905d302aba3097",
+      "bytes": 10900
+    },
+    {
+      "path": "supabase/staged/character-basic-sheet-commands.sql",
+      "gitBlob": "d48842670444804bf8c81aca797ce223079871ab",
+      "sha256": "f858ef039494b7227012c2c538913f32945ca9cfd2b14c6565042e88cf920f10",
+      "bytes": 20885
+    }
+  ],
+  "nativeReview": {
+    "previousBase": "20ddd3be41eb19f95809890e5eb38a9100d8c423",
+    "previousHead": "afe56e534cf13be2f3956a45a0ed0a6bd0026c6c",
+    "previousVerdict": "CLEAR at original nineteen-file source; unchanged scope only",
+    "unchangedFiles": 16,
+    "changedPriorPaths": [
+      "scripts/unraid/bootstrap.ts",
+      "scripts/unraid/remote.mjs",
+      "supabase/staged/character-basic-sheet-commands.sql"
+    ],
+    "changedPathClearance": "Superseded for changed SQL and two runner paths; renewed central review pending.",
+    "defect": "JSONB patch subtraction bound before extraction. One-line explicit grouping corrects the finite native allowlist.",
+    "expressionProbe": {
+      "environment": "In-memory PGlite, expression semantics only; no native/Auth/RLS acceptance",
+      "originalSqlstate": "22P02",
+      "groupedHpOnlyAllowed": true,
+      "groupedForbiddenFieldAllowed": false,
+      "closed": true
+    }
+  },
+  "journalSource": {
+    "base": "f300b7a5c150c5e8b353368cc3e13843175d6113",
+    "head": "a3842f497f9570aaa08f20d26209bf29128aa57e",
+    "selectedDiffSha256": "8e237a153d4814237d5c61550083a4fda44e6bc53aa8dd7c7b5e9a5fd7d8750f",
+    "files": [
+      {
+        "path": "app/(app)/characters/[id]/story-actions.ts",
+        "gitBlob": "b229077733e7205e813f7d0c74e8a9deedbb3b17",
+        "sha256": "c02fc6aeec5e06fb1a569724b80c109fc1d675ec98135b6af716508809737b0a",
+        "bytes": 12179
+      },
+      {
+        "path": "components/narrative/timeline-section.tsx",
+        "gitBlob": "9c1bc26caebc54b8ded975caacef1641081cbe40",
+        "sha256": "d221796a97a7274ff58f67933dc0fd35186aa724c877cc7191519cd1a11795c0",
+        "bytes": 16183
+      },
+      {
+        "path": "components/narrative/relationships-section.tsx",
+        "gitBlob": "c1b032398a4e02d25e20c60c4e4d63803145730d",
+        "sha256": "e43667d2060044eba7cab1bc8099ab1bd6d4acf7741b5000ded0e6370969a476",
+        "bytes": 8263
+      },
+      {
+        "path": "tests/app/character-story-actions.test.ts",
+        "gitBlob": "92d7b3c2fd680cd437e72d7d45f24b4a2f682e50",
+        "sha256": "dbe13660fc365a2e2bc0ddcdee9ea09ce04a8c4233ed95375378f1d473725e47",
+        "bytes": 9991
+      },
+      {
+        "path": "tests/components/narrative/journal.test.tsx",
+        "gitBlob": "41b84da76f09a2451e32aadea25b57425671a649",
+        "sha256": "71ebcb52f65fc631a087a98ee24ad0e469a71a927b2606b5fc39e381a4ad93d2",
+        "bytes": 14365
+      },
+      {
+        "path": "tests/components/narrative/story-sections.test.tsx",
+        "gitBlob": "ae76a861be0c66710507c4a620840cfbcdc33be2",
+        "sha256": "b513ab852f083f3f389a56f66d8dccd92eae7cc1792efcc90cb6d4cd1f4d6190",
+        "bytes": 2968
+      },
+      {
+        "path": "e2e/local-journal/playwright.config.ts",
+        "gitBlob": "34824649bae47075750245400d60f760ebd2d29e",
+        "sha256": "05d2a5dd64378250d0b8964f3723c5551d2b753c843bb5850e2d02fe14ab6f10",
+        "bytes": 325
+      },
+      {
+        "path": "e2e/local-journal/journal.spec.ts",
+        "gitBlob": "6ca970ac5e969689399c31a80c2e274c42f2b03d",
+        "sha256": "2a8fd4d03dc6a772529615496a03c93ea5b0d346c9cb3ef32a211f1d50b778de",
+        "bytes": 9867
+      },
+      {
+        "path": "e2e/local-journal/real.config.ts",
+        "gitBlob": "d26f4d6122edb78098fb634aaa9e1cc27f63edbe",
+        "sha256": "974e478e110ebb6c538bfac8cf88444583d77099f70b420d84cd7bc9755e0121",
+        "bytes": 640
+      },
+      {
+        "path": "e2e/local-journal/real-journal.spec.ts",
+        "gitBlob": "f7e97f96e22c56099cec150c1111c35b52770c52",
+        "sha256": "fe02b834da83dd4bad83fd10a44cde3770266e72d8aca3b3c26980e4facb12c8",
+        "bytes": 29300
+      }
+    ],
+    "assembly": "All ten canonical blobs remain exact at current head; no foreign docs/report/AGENTS/scripts imported."
+  },
+  "preparedActualChecks": [
+    "Two normal UI creations: Half-Elf Fighter4/Acolyte standalone; Human Lore Bard3/Acolyte campaign; same IDs desktop1280/mobile390 and Journal.",
+    "Independent scores/maxHP, exact grants/pins/choices/order, Bard3 capacity3@CHA16, spell/slot display, normal starting-grant inventory equip, real ability/weapon rolls and saved log.",
+    "Native admitted write/read then exact ROLLBACK; actual owner HTTP manual HP/tempHP and normal campaign-form assignment; explicitly labeled fixture-only owner visibility setup.",
+    "Genuine anonymous/service/DM/member/outsider denials; owner stale, six invalid/forbidden/nonlethal patches, legacy CAS/direct PATCH refusal; full native snapshots unchanged.",
+    "Existing tracked blocker plus two genuine owner HTTP connections observed lock-waiting before release; exactly one applied and one conflict; one revision/order advance; exact blocker closes.",
+    "Committed HP-response loss with no replay until explicit reload; real unsaved Journal editor survives tab switch and native HP refresh without another row.",
+    "Unchanged Journal real consumer: save/reopen, genuine audiences, uncertain create/edit, stale/removed drafts, narrative/mechanics isolation and exact three-row cleanup.",
+    "Both actual test processes exit0 after finally cleanup, run/head-bound final receipts and fresh exact fixture/cap/seal totals; supported host teardown still required."
+  ],
+  "verification": {
+    "typecheck": {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "lint": {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    "discovery": {
+      "command": "npm run test:e2e -- --config e2e/unraid/csj.config.ts --list",
+      "exitCode": 0,
+      "tests": 1,
+      "files": 1,
+      "browserStarted": false
+    },
+    "syntax": {
+      "commands": [
+        "node --check scripts/unraid/run.mjs",
+        "node --check scripts/unraid/remote.mjs"
+      ],
+      "exitCode": 0
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    "reusedSourceEvidence": [
+      "Unchanged62 focused native consumer/writer/provider/campaign cases at afe56e5.",
+      "Capacity ce7330f and Journal a3842f4 central clearances retained only for unchanged source."
+    ],
+    "actualNativeSql": "unrun",
+    "actualBrowserAuthDatabase": "unrun",
+    "actualIntegrationAcceptance": "open",
+    "fullSuiteOrBuild": "Not run under explicit focused-validation policy."
+  },
+  "runtime": {
+    "heavyExecutionHeld": true,
+    "until": "Same central reviewer clears this six-file runner/native delta; coordinator dispatches actual scratch execution.",
+    "budget": "4 genuine roles,2 same normal-UI-created characters,1 DM-owned campaign,max3 Journal entries; existing loopback-only private config.",
+    "guards": "Unchanged existing lifecycle/one slot/16GiB physical and15GiB Docker startup free/4GiB physical stop/20m deadline/10GiB3CPU runner/6144MiB Next heap/1GiB database.",
+    "noRuntimeStarted": true,
+    "noOwnedPersistentResources": true,
+    "cleanup": "After actual run, supported exact owned runtime/image/source/private-input teardown and preservation comparison on success or failure."
+  },
+  "preservation": [
+    "14 accepted creations retained; no scope reopening.",
+    "Coordinator retains overview/queue/integration acceptance; Flow retains character work/report; Library/Journal untouched.",
+    "No push/merge/deploy/hosted change/live restart/new credentials/broader gameplay or copy policy."
+  ],
+  "nextAction": "Clean own metadata checkpoint and release main source/index to same central reviewer; after clearance execute approved actual scratch workflow and cleanup."
+}

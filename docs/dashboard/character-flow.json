@@ -9,21 +9,21 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T21:01:19.399Z",
+  "updatedAt": "2026-10-29T21:51:15.440Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "afe56e534cf13be2f3956a45a0ed0a6bd0026c6c",
+    "commit": "28b9333308840b66c1a383c47a22787138586b12",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "CSJ-NATIVE-HP/CAMPAIGN source implemented at afe56e5 with finite owner/native admission, exact preimage/revision and paired app adapters. Coherent settled reads and mounted Narrative panel preserve drafts. 62 focused source cases/typecheck/lint pass; native SQL and real CSJ execution remain unrun.",
-  "nextAction": "Coordinator routes exact frozen native/source to the same central reviewer. Flow then completes the existing partial CSJ same-ID normal-UI producer and runner exit/cleanup gates, obtains assembled review, and proceeds to the approved actual Unraid workflow and teardown.",
+  "currentWork": "Complete-source normal two-character UI producer, basic-sheet/native oracles and exit/final-cleanup gates frozen at 28b9333. Confirmed HP SQL expression corrected; changed source requires central review. Actual application/database acceptance remains unrun.",
+  "nextAction": "Coordinator reuses the single central reviewer for the six-file runner/native correction. After clearance, Flow runs the approved same-ID Unraid workflow, fixes concrete failures within scope, verifies exact cleanup and returns actual evidence for coordinator acceptance.",
   "blockers": [],
   "decisions": [],
   "dependencies": [
     {
       "laneId": "overview",
-      "reason": "Coordinator owns central review/contract decisions and actual integration acceptance. Flow releases main write/index window at this source checkpoint; no new user permission needed for assigned native/runner continuation."
+      "reason": "Coordinator owns final source review, shared queue and integration acceptance. Flow releases shared source/index after own metadata checkpoint; actual runtime held until clearance."
     }
   ],
   "deliverables": [
@@ -83,16 +83,16 @@
       "name": "Finite native HP and campaign assignment",
       "area": "Character flow",
       "requirement": "CSJ-NATIVE-HP; CSJ-NATIVE-CAMPAIGN (R08/R20)",
-      "outcome": "Source supports nonlethal owner HP/tempHP and owned unassigned-to-campaign commands under existing native guards; app adapters/draft retention are source-checked. Actual saved-data and assembled CSJ acceptance remain pending.",
+      "outcome": "Finite HP/campaign source and same-ID actual workflow runner implemented. HP JSONB grouping corrected after focused parser failure; central changed-source review and actual save/reopen/authorization/rollback/concurrency/recovery remain pending.",
       "implementation": "implemented",
       "verification": "source",
       "integration": "isolated",
       "acceptance": "open",
       "disposition": "included",
       "evidence": [
-        "afe56e534cf13be2f3956a45a0ed0a6bd0026c6c exact source; no actual native installation/execution.",
-        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-29-csj-native-source.json",
-        "62 focused source cases in five files; typecheck and zero-warning lint pass. Journal/source capacity reviews reused only for unchanged code; final native/runner independent review pending."
+        "28b9333308840b66c1a383c47a22787138586b12 runner/native correction; docs/handoffs/2026-10-29-csj-runner-source.json exact six-file manifest; actual SQL/browser/Auth/database unrun.",
+        "Typecheck/zero-warning lint/syntax/diff/discovery pass. In-memory original22P02/grouped allowed=true/forbidden=false; no actual native acceptance.",
+        "afe56e5 unchanged16 manifest files and62 consumer cases reused. Clearance superseded for SQL/bootstrap/remote changed paths; all10 Journal a3842f4 blobs match."
       ]
     }
   ]

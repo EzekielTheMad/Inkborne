@@ -8,7 +8,45 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ native prerequisites — 2026-10-29 source checkpoint
+## Current CSJ runner and native correction — 2026-10-29T21:51:15.440Z
+
+Character Flow retains CSJ-FLOW-2 + CSJ-NATIVE-VERIFY under contract v1.
+Source **28b9333308840b66c1a383c47a22787138586b12**, base **a7ff40d51ec582101626dd3224d77a6685988c2c**.
+[Exact six-file blobs, hashes, checks and remaining actual proof](2026-10-29-csj-runner-source.json).
+
+The same-ID normal UI producer completes the selected Fighter4 and Lore Bard3,
+basic sheet use, actual native oracles and unchanged Journal handoff. Actual
+draft retention crosses Narrative/Sheet and an HP refresh without a new row.
+Runner success requires both test processes to exit zero after finally cleanup,
+exact receipts and fresh native fixture totals; a pre-cleanup receipt cannot pass.
+
+The focused parser probe found the HP allowlist expression raises22P02 because
+subtraction binds before extraction. The one-line grouping fix accepts HP-only
+and rejects an extra death-save field in that in-memory expression probe. This
+is source/expression proof only. The afe56e5 central CLEAR is superseded for the
+changed SQL path and two changed runner paths (bootstrap/remote);16 original
+manifest files and all10 frozen Journal blobs are unchanged. Direct owner invalid
+patch/nonlethal cases are prepared for the actual native route.
+
+Typecheck, zero-warning lint, runner syntax, diff checks and discovery of the one
+CSJ flow test pass. Prior62 consumer source cases and capacity/Journal reviews
+are reused for unchanged code. No actual SQL installation, browser/Auth/RLS/native
+concurrency or scratch workflow ran here; integration acceptance remains open.
+No full suite/build or additional reviewer/harness is introduced.
+
+**Next:** after own metadata validation/commit, release the clean main source/index
+window to coordinator for the same central six-file review. After clearance,
+execute the already-approved bounded Unraid workflow and verify all owned cleanup
+with refreshed resource/slot guards. Existing4roles/2chars/1campaign/max3entries,
+external approval limits,14 accepted creations and lane owners are retained.
+Coordinator alone writes overview/global queue/acceptance. No renewed user
+permission is required for this assigned local work.
+
+Source-check sessions and in-memory parser are closed; no task-owned runtime,
+listener, fixture or credential started and no operational cleanup is owed.
+Library/Journal worktrees and reports were not edited.
+
+## Prior CSJ native prerequisites — 2026-10-29 source checkpoint
 
 Victor's verified explicit resume and coordinator's compatible contract dispatch
 assign CSJ-NATIVE-HP and CSJ-NATIVE-CAMPAIGN to Character Flow. Current contract
