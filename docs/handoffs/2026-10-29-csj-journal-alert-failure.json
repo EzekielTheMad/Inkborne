@@ -1,0 +1,187 @@
+{
+  "kind": "inkborne-csj-journal-alert-failure-v1",
+  "recordedAt": "2026-10-29T23:58:53.819Z",
+  "contractVersion": 1,
+  "runId": "d25494c9-a8f1-48da-8e20-3e2ee9780cc1",
+  "sourceHead": "d218977d1ffa57ebd046548e62c146535ade3ae5",
+  "overallStatus": "failed",
+  "flow": {
+    "exitCode": 0,
+    "producer": {
+      "kind": "inkborne-csj-flow-v1",
+      "runId": "d25494c9-a8f1-48da-8e20-3e2ee9780cc1",
+      "sourceHead": "d218977d1ffa57ebd046548e62c146535ade3ae5",
+      "normalUiCreation": true,
+      "basicSheetPassed": true,
+      "standaloneCharacterId": "b12ac520-e0db-42c4-8630-f349bd72642f",
+      "campaignCharacterId": "9ec1278e-f351-4409-97a8-58b08bc72272"
+    },
+    "completeFinallyCleanup": {
+      "runId": "d25494c9-a8f1-48da-8e20-3e2ee9780cc1",
+      "sourceHead": "d218977d1ffa57ebd046548e62c146535ade3ae5",
+      "browserContextClosed": true,
+      "complete": true,
+      "fixtureBudgetConfirmed": true,
+      "runtimeTeardownStillRequired": true
+    },
+    "proofObjects": 22,
+    "sameIdsAcrossDesktopMobile": true,
+    "allTenProfileChecksPass": true,
+    "scope": "Same approved two builds, sheet/native roles/rollback/response loss/concurrency/draft continuity; prior local acceptance retained"
+  },
+  "journal": {
+    "exitCode": 1,
+    "failedAt": "e2e/local-journal/real-journal.spec.ts:87 in loseNextAction called at166",
+    "cause": "Global getByRole(alert) matched expected visible Save status unknown status AND empty Next route announcer",
+    "audienceCorrectionWorked": true,
+    "expectedProductStatusPresent": true,
+    "remainingRecoveryOraclesExecuted": false,
+    "contextsClosed": true,
+    "recordedEntries": 0,
+    "recordedEntriesIsNotDatabaseCount": true,
+    "note": "First lost-response create may have committed. No final Journal result, recovery, audience or fresh DB acceptance inferred; scratch database removed by host finally."
+  },
+  "verification": {
+    "typecheckExit": 0,
+    "lintExit": 0,
+    "focusedExit": 0,
+    "focusedCases": 69,
+    "actualSession": 81927,
+    "actualProcessExit": 1,
+    "nextMemoryRestarts": 0
+  },
+  "driftCheck": {
+    "trigger": "Two consecutive verification-only failures in Journal test locator scoping",
+    "concreteRemainingGate": "Approved actual same-run Journal consumer and both exits/final native counts/cleanup; Flow local outcome already accepted separately",
+    "action": "Coordinator dispatched existing Journal owner bounded TEST-only unique expected-status scoping plus directly related locator audit, then SAME reviewer. No new scenarios/framework/oracles or product changes.",
+    "nextRunJustification": "Only after exact reviewed correction and Coordinator dispatch; same-run normal producer IDs required, prior deleted runtime receipts cannot be substituted"
+  },
+  "cleanup": {
+    "complete": true,
+    "hostResult": {
+      "result": "failed",
+      "phase": "verification",
+      "ephemeralResourcesRemoved": true,
+      "credentialsRemoved": true,
+      "existingServicesUnchanged": true,
+      "availableKiB": 31096784,
+      "finishedUtc": "2026-10-29T23:56:02Z"
+    },
+    "resultPath": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\d25494c9-a8f1-48da-8e20-3e2ee9780cc1\\cleanup-result.json",
+    "resultSha256": "afb5e7f61d6b6d092be7cd997a31d5c86384431a2c2d872fcdedce5afdff6dfd",
+    "planPath": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\d25494c9-a8f1-48da-8e20-3e2ee9780cc1\\cleanup-plan.json",
+    "planSha256": "8148dbcb16e72a2a9907d30f5a3173428dee472abaa2676032fdecb0d74c08e9",
+    "removedImages": 13,
+    "remoteInputsRemoved": 3,
+    "localInputsRemoved": 3,
+    "publicEvidenceFilesRetained": 18,
+    "originalContainers": 56,
+    "originalVolumes": 95,
+    "allOriginalImages": 53,
+    "originalContainersVolumesNetworksAndOtherImagesPreserved": true,
+    "all53OriginalImageIdsVerified": true,
+    "noTaskRuntimeOrPrivateInputs": true,
+    "helperRemoved": true,
+    "helperSha256": "02e6d00024c9681b7e440519c2333d67ae01866777f01b7225a07d245f332a77",
+    "transportPid": 246980,
+    "transportAbsent": true
+  },
+  "evidence": [
+    {
+      "path": "output/basic-sheet-profile.json",
+      "sha256": "0c1babc41b6fee58f033d0671885adff94de6c3d4098eda1cb7ae603bd4c54e7",
+      "bytes": 1114
+    },
+    {
+      "path": "output/bootstrap.json",
+      "sha256": "72442a663b60df9f73b2bee2652c9372878461f6b95f7eb3b9b869fa47d9d28d",
+      "bytes": 1115387
+    },
+    {
+      "path": "output/csj-browser/.last-run.json",
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
+      "bytes": 45
+    },
+    {
+      "path": "output/csj-flow-cleanup.json",
+      "sha256": "8721237ea855a978d75421afb72ec8c66674ce0f8d203b87187cf7f16935b19f",
+      "bytes": 214
+    },
+    {
+      "path": "output/csj-flow-evidence.json",
+      "sha256": "a9562ea9b19edeffb3c7bb0b100443c7475df0ca644778fe6368c4b7d2458b83",
+      "bytes": 14944
+    },
+    {
+      "path": "output/csj-flow.json",
+      "sha256": "67706a4d51419ee90490ecceb1956dbc614be51409baaa484c7e7003b414d657",
+      "bytes": 306
+    },
+    {
+      "path": "output/diagnostic.txt",
+      "sha256": "4fc5764e6a1f5375d00e7d9bb5d5d4b8772b0edd2489575fa99ccca32ead4c9e",
+      "bytes": 67945
+    },
+    {
+      "path": "output/failure.json",
+      "sha256": "5d182197f360ab70acc860f51e2c123af31bd5b8adbb2f294e27f5921f37045f",
+      "bytes": 100
+    },
+    {
+      "path": "output/host-before.json",
+      "sha256": "bfab2e2654c8a582b1b5c6c9e22e86d12c224f0981877d5b6b5406c74d47dbf9",
+      "bytes": 101
+    },
+    {
+      "path": "output/host-during.json",
+      "sha256": "ead0c2b9b5ba5144251b9d1297f103511c1d9d1c8acca315430bc569b103bcb6",
+      "bytes": 33
+    },
+    {
+      "path": "output/host-result.json",
+      "sha256": "f3ecc1c1c88065a63ac6afec6fc0fae6a68eb5f90c2273802aa4ad831aa2d6b1",
+      "bytes": 196
+    },
+    {
+      "path": "output/journal/.last-run.json",
+      "sha256": "a60a4d9d99b8e54b061b99f6b18971df348cb6fc71234b86aa2b5033749ff82a",
+      "bytes": 96
+    },
+    {
+      "path": "output/journal/real-journal-actual-journa-a17c1--roles-enforce-its-audience/error-context.md",
+      "sha256": "1d68079e260dc07d13848e48df531d538144d293c24fa39827563306a2ab52a2",
+      "bytes": 16312
+    },
+    {
+      "path": "output/journal/real-journal-actual-journa-a17c1--roles-enforce-its-audience/journal-cleanup.json",
+      "sha256": "c5a272a1018b3d8fd71001aa6c995c4444e7ae425671ece0286d04e18d8959ca",
+      "bytes": 92
+    },
+    {
+      "path": "output/resources.json",
+      "sha256": "1af79eb3b91a5d1cda8f2d4a83c07b428e506619c8323af132c7d76db54f9eeb",
+      "bytes": 4213
+    },
+    {
+      "path": "output/services-after.json",
+      "sha256": "acf258f42a26c1db1471bc99b920eb083576fbb81a03d820f9fb5ac215e3762a",
+      "bytes": 5001
+    },
+    {
+      "path": "output/services-before.json",
+      "sha256": "acf258f42a26c1db1471bc99b920eb083576fbb81a03d820f9fb5ac215e3762a",
+      "bytes": 5001
+    },
+    {
+      "path": "output/summary.json",
+      "sha256": "51047c4b4f4803b76cc1fc16c81ba502e343bccafee7768401a77192b0812fea",
+      "bytes": 2526
+    }
+  ],
+  "preserved": [
+    "Fifth616da4d4 local Flow acceptance and all fourteen accepted creation journeys",
+    "Every failed overall run remains failed; no mixed receipts",
+    "Character Flow retains character product/report; Journal retains consumer/report; Coordinator owns combined acceptance; Library untouched"
+  ],
+  "nextAction": "Clean release to Coordinator after owned metadata checkpoint; await reviewed exact Journal assembly assignment/closure before any further actual run."
+}

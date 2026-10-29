@@ -8,7 +8,19 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ Flow local pass and Journal selector assembly — 2026-10-29T23:46:10.570Z
+## Current CSJ Journal alert locator failure — 2026-10-29T23:58:53.819Z
+
+Sixth actual **d25494c9-a8f1-48da-8e20-3e2ee9780cc1**, source **d218977d1ffa57ebd046548e62c146535ade3ae5**: **Flow exits0 with complete run/head-bound receipts and22 proofs again; overall FAILED** at Journal lost-response status lookup. [Exact result, drift check and completed cleanup](2026-10-29-csj-journal-alert-failure.json). Both same normal IDs are reused at1280/390. Prior fifth-run local Flow/native acceptance and accepted14 remain intact.
+
+The reviewed audience correction worked. loseNextAction87 then matched BOTH the visible expected Save status unknown message and empty Next route announcer. Journal exits1 before its remaining recovery assertions. Contexts closed, recordedEntries0; this counter is **not DB0**, because the first response-lost create may have committed. No final Journal/audience/recovery/native-count acceptance is inferred.
+
+Cleanup complete:13 task images/3 server inputs/3 local archives removed;18 public evidence hashes retained. Original56 containers/95 volumes/all53 imageIDs and service states unchanged; private/runtime/helper/transport246980 absent.
+
+**Drift check:** two consecutive Journal test-locator failures, no new product defect. The concrete remaining gate is the already-approved same-run consumer acceptance. Coordinator dispatched Journal owner bounded TEST-only unique expected-status scope and directly related locator audit; SAME review before another actual run. No new scenarios/framework/matrix or weaker assertions. New run must normal-create its own2IDs; cannot mix prior receipts from deleted scratch.
+
+**Next:** release shared window after own metadata commit. Await Coordinator's exact reviewed Journal assembly assignment, docs closure and existing-run dispatch. Flow does not edit foreign consumer source unassigned. Ownership unchanged; shared contractv1 read. Goal stops at Coordinator local CSJ acceptance.
+
+## Prior CSJ Flow local pass and Journal selector assembly — 2026-10-29T23:46:10.570Z
 
 Actual run **616da4d4-ff78-4f22-a629-2108e34e5ba0** at **c21755321095158668958e1e7c989692319773e7**: **Flow exits0 after finally; whole CSJ remains FAILED** because Journal exits1 at its first audience lookup before any save. [Exact run/source/cleanup/assembly manifest](2026-10-29-csj-flow-local-result.json) hashes all18 public evidence files. Previous failed runs remain failed.
 

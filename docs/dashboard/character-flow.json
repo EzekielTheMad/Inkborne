@@ -9,15 +9,15 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T23:46:10.570Z",
+  "updatedAt": "2026-10-29T23:58:53.819Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "ba09cf208526496b25713fcba3b2ef4a3989997b",
+    "commit": "d218977d1ffa57ebd046548e62c146535ade3ae5",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Two normal characters now pass actual local creation, equipped weapon rolls/logs, Bard3/3, finite native HP/campaign/roles/rollback/concurrency/recovery and same-ID desktop/mobile draft continuity. Flow exits0 with complete receipts. Whole CSJ failed at Journal first audience lookup; exact reviewed test-only selector assembled and all cleanup complete.",
-  "nextAction": "Release clean shared window to Coordinator for docs closure/dispatch of existing actual same-run CSJ with reviewed Journal selector. Require both process exits0 after finally, full Journal audience/recovery/native isolation, fresh DB counts and exact cleanup; preserve accepted14 and finite scope.",
+  "currentWork": "Sixth actual run again passes both normal character creations and complete sheet/native/mobile/draft flow with exit0. Journal audience selector works; global status-alert test lookup matches expected recovery message plus Next route announcer, so combined run failed. Exact cleanup complete; prior finite local acceptance retained.",
+  "nextAction": "Coordinator/Journal owner resolve bounded TEST-only expected status scoping and directly related locator audit, SAME review, exact assembly and docs closure before next existing same-run CSJ. Both exits/final DB/cleanup required; no new product scope or repeated matrix.",
   "blockers": [],
   "decisions": [],
   "dependencies": [
@@ -100,7 +100,8 @@
         "Historical source checkpoint: afe56e5 unchanged16 manifest files and62 consumer cases reused. Clearance superseded for SQL/bootstrap/remote changed paths; all10 Journal a3842f4 blobs match.",
         "Historical source checkpoint: docs/handoffs/2026-10-29-csj-visible-inventory-fix.json exact 3d70442ad2687d5445c91263845de8aa0d32edf3 selector correction and actual run bcc589d0-9cf6-42e2-9e42-e9828f9ad79a failed, with completed13-image/input cleanup and original56container/95volume/53image preservation.",
         "Historical source checkpoint: docs/handoffs/2026-10-29-csj-role-refresh-fix.json exact a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2 correction; realistic causal failure and30 passing source cases; fourth run remains failed with complete cleanup.",
-        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\handoffs\\2026-10-29-csj-flow-local-result.json — run616da4d4 Flow exit0/complete receipts/22proofs/18 evidence hashes; overall failed at Journal selector and cleanup complete."
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\handoffs\\2026-10-29-csj-flow-local-result.json — run616da4d4 Flow exit0/complete receipts/22proofs/18 evidence hashes; overall failed at Journal selector and cleanup complete.",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\handoffs\\2026-10-29-csj-journal-alert-failure.json — sixth full Flow exit0 and complete cleanup; Journal test strict2 failure, recordedEntries0 is not DB0."
       ]
     },
     {
