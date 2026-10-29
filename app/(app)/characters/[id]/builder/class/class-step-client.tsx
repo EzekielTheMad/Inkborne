@@ -130,6 +130,8 @@ function pinnedEntries(
 }
 
 const subscribeToHydration = () => () => {};
+// saveNative alone adopts confirmed documents; preserve the panel callback contract.
+const handleBonusSaved = () => {};
 
 export function ClassStepClient({
   equipmentPreview,
@@ -890,7 +892,7 @@ export function ClassStepClient({
               .flatMap(other => localChoices.bonus_spells?.[other.choice.choice_id] ?? []).map(spell => spell.content_id),
           ])}
           saveAction={saveAction} disabled={saving || refreshing || !mechanicsAvailable}
-          onDirtyChange={handleSpellDraftChange} />)}
+          onSaved={handleBonusSaved} onDirtyChange={handleSpellDraftChange} />)}
 
         {/* Bottom navigation */}
         {unsavedSpells && <p role="status" className="text-sm text-muted-foreground">Save your spell choices before continuing.</p>}
