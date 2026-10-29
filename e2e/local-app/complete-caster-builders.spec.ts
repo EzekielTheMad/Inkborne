@@ -98,7 +98,7 @@ async function restrictOrigins(context: BrowserContext, config: Settings, blocke
 }
 async function login(page: Page, config: Settings, account: Account) {
   try {
-    await page.goto(config.appOrigin + "/login");
+    await page.goto(config.appOrigin + "/login", { waitUntil: "domcontentloaded" });
     await page.getByLabel("Email", { exact: true }).fill(account.email);
     await page.getByLabel("Password", { exact: true }).fill(account.password);
     await page.getByRole("button", { name: /sign in/i }).click();
@@ -141,7 +141,7 @@ async function chooseRootClassOptions(page: Page, story: Story) {
   }
 }
 async function chooseHumanAbilitiesAndBackground(page: Page, base: string, story: Story) {
-  await page.goto(base + "/race");
+  await page.goto(base + "/race", { waitUntil: "domcontentloaded" });
   await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Human" });
   await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
@@ -175,7 +175,7 @@ async function chooseHumanAbilitiesAndBackground(page: Page, base: string, story
   for (const name of ["Celestial", "Elvish"]) await expect(choiceOption(choices, name)).toHaveJSProperty("selected", true);
 }
 async function chooseLevelThreeOptions(page: Page, base: string, story: Story) {
-  await page.goto(base + "/class");
+  await page.goto(base + "/class", { waitUntil: "domcontentloaded" });
   const level = page.getByRole("combobox", { name: `Set level for ${story.name}`, exact: true });
   await save(page, () => level.selectOption("3")); await expect(level).toHaveValue("3"); await expect(level).toBeEnabled();
   if (story.subclassLevel > 1) {
@@ -244,7 +244,7 @@ async function chooseSpells(page: Page, story: Story) {
   await expect(page.getByRole("navigation", { name: "Character builder", exact: true }).locator('a[href$="/builder/class"]')).toContainText("Saved");
 }
 async function chooseEquipmentAndDetails(page: Page, base: string, name: string) {
-  await page.goto(base + "/equipment");
+  await page.goto(base + "/equipment", { waitUntil: "domcontentloaded" });
   const groups = page.locator("select").filter({ has: page.locator('option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
@@ -363,7 +363,7 @@ async function rejectOtherAccount(browser: Browser, config: Settings, sheetUrl: 
   const other = await browser.newContext();
   try {
     await restrictOrigins(other, config, blocked); const page = await other.newPage(); page.on("pageerror", () => errors.push("other-account browser error"));
-    await login(page, config, config.other); const response = await page.goto(sheetUrl);
+    await login(page, config, config.other); const response = await page.goto(sheetUrl, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(404); await expect(page.getByText("This page could not be found.", { exact: true })).toBeVisible();
   } finally { await other.close(); }
 }
@@ -398,10 +398,10 @@ for (const story of stories) test(`complete SRD ${story.name} level-three caster
   if (story.slug === "sorcerer") {
     // Starting awards create unequipped items. The known no-equipped-gear
     // class sidebar must agree with the independently expected sheet scales.
-    await page.goto(base + "/class");
+    await page.goto(base + "/class", { waitUntil: "domcontentloaded" });
     const stats = page.getByRole("heading", { name: "Stats", exact: true }).locator("..");
     await expect(stats.getByText("Armor Class", { exact: true }).locator("..").locator("span").last()).toHaveText("15");
-    await page.goto(base + "/details");
+    await page.goto(base + "/details", { waitUntil: "domcontentloaded" });
   }
   await checkpoint("all six builder steps display Saved");
   const before = await nativeReadback(info, characterId, config.owner.id, "builder-complete");

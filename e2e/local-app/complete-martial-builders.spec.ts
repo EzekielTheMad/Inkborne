@@ -83,7 +83,7 @@ async function restrictOrigins(context: BrowserContext, config: Settings, blocke
 }
 async function login(page: Page, config: Settings, account: Account) {
   try {
-    await page.goto(config.appOrigin + "/login");
+    await page.goto(config.appOrigin + "/login", { waitUntil: "domcontentloaded" });
     await page.getByLabel("Email", { exact: true }).fill(account.email);
     await page.getByLabel("Password", { exact: true }).fill(account.password);
     await page.getByRole("button", { name: /sign in/i }).click();
@@ -109,7 +109,7 @@ async function openLevel(page: Page, level: number, className?: string) {
   await expect(page.locator('section[aria-labelledby="class-level-title"]').getByRole("navigation", { name: "Breadcrumb", exact: true })).toContainText(`Level ${level}`);
 }
 async function ancestryAbilitiesBackground(page: Page, base: string, story: Story) {
-  await page.goto(base + "/race");
+  await page.goto(base + "/race", { waitUntil: "domcontentloaded" });
   await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: story.race });
   await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
   await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
@@ -145,7 +145,7 @@ async function ancestryAbilitiesBackground(page: Page, base: string, story: Stor
   for (const name of ["Celestial", "Elvish"]) await expect(choiceOption(languages, name)).toHaveJSProperty("selected", true);
 }
 async function awardEquipment(page: Page, base: string) {
-  await page.goto(base + "/equipment");
+  await page.goto(base + "/equipment", { waitUntil: "domcontentloaded" });
   const groups = page.locator("select").filter({ has: page.locator('option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
@@ -168,7 +168,7 @@ async function awardEquipment(page: Page, base: string) {
   await expect(page.getByRole("listitem").filter({ hasText: /^15 gp$/ })).toBeVisible();
 }
 async function completeClass(page: Page, base: string, story: Story) {
-  await page.goto(base + "/class");
+  await page.goto(base + "/class", { waitUntil: "domcontentloaded" });
   if (story.id === "A3") {
     await page.getByRole("button", { name: /^Add a class/ }).click();
     await page.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: "Rogue" });
@@ -193,7 +193,7 @@ async function completeClass(page: Page, base: string, story: Story) {
   await expect(page.getByRole("navigation", { name: "Character builder", exact: true }).locator('a[href$="/builder/class"]')).toContainText("Saved");
 }
 async function details(page: Page, base: string, name: string) {
-  await page.goto(base + "/details");
+  await page.goto(base + "/details", { waitUntil: "domcontentloaded" });
   await page.getByRole("textbox", { name: "Character name", exact: true }).fill(name);
   await page.getByRole("combobox", { name: "Alignment", exact: true }).selectOption("Neutral Good");
   await save(page, () => page.getByRole("button", { name: "Save details", exact: true }).click());
@@ -293,7 +293,7 @@ async function rejectOtherAccount(browser: Browser, config: Settings, sheet: str
   const context = await browser.newContext();
   try {
     await restrictOrigins(context, config, blocked); const page = await context.newPage(); page.on("pageerror", () => errors.push("other-account browser error"));
-    await login(page, config, config.other); const response = await page.goto(sheet);
+    await login(page, config, config.other); const response = await page.goto(sheet, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(404); await expect(page.getByText("This page could not be found.", { exact: true })).toBeVisible();
   } finally { await context.close(); }
 }
@@ -304,7 +304,7 @@ for (const story of stories) test(`complete martial ${story.id} ${story.race} ${
   await restrictOrigins(context, config, blocked); page.on("pageerror", () => errors.push("owner browser error"));
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startedUtc: new Date().toISOString(), story: story.id }));
   await login(page, config, config.owner); expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
-  await page.goto(config.appOrigin + "/characters/new");
+  await page.goto(config.appOrigin + "/characters/new", { waitUntil: "domcontentloaded" });
   const name = `Complete martial ${story.id} ${randomUUID().slice(0, 8)}`;
   await page.getByRole("textbox", { name: "What will they be called?" }).fill(name);
   await page.getByRole("button", { name: "Open the notebook", exact: true }).click();
@@ -332,7 +332,7 @@ for (const story of stories) test(`complete martial ${story.id} ${story.race} ${
   await completeClass(page, base, story); await checkpoint("level three subclass, eligible Expertise and explicit average HP saved");
   if (story.id !== "A3") await awardEquipment(page, base);
   else {
-    await page.goto(base + "/equipment"); await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
+    await page.goto(base + "/equipment", { waitUntil: "domcontentloaded" }); await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toHaveCount(0);
   }
   await details(page, base, name); await checkpoint("all six builder steps display Saved");

@@ -65,7 +65,7 @@ async function restrictOrigins(context: BrowserContext, story: Story) {
 }
 async function login(page: Page, config: Settings, account: Account) {
   try {
-    await page.goto(config.appOrigin + "/login"); await page.getByLabel("Email", { exact: true }).fill(account.email);
+    await page.goto(config.appOrigin + "/login", { waitUntil: "domcontentloaded" }); await page.getByLabel("Email", { exact: true }).fill(account.email);
     await page.getByLabel("Password", { exact: true }).fill(account.password); await page.getByRole("button", { name: /sign in/i }).click();
     await page.waitForURL(config.appOrigin + "/dashboard", { timeout: 60000 });
   } catch { await page.close(); throw Error("Actual local sign-in failed; credentials withheld"); }
@@ -90,7 +90,7 @@ async function openLevel(page: Page, owner: Owner, level: number) {
   await expect(page.locator('section[aria-labelledby="class-level-title"]').getByRole("navigation", { name: "Breadcrumb", exact: true })).toContainText(`Level ${level}`);
 }
 async function setLevel(page: Page, story: Story, owner: Owner, level: number) {
-  await page.goto(builder(story) + "/class"); const control = page.getByRole("combobox", { name: `Set level for ${owner}`, exact: true });
+  await page.goto(builder(story) + "/class", { waitUntil: "domcontentloaded" }); const control = page.getByRole("combobox", { name: `Set level for ${owner}`, exact: true });
   await save(page, () => control.selectOption(String(level))); await expect(control).toHaveValue(String(level)); await expect(control).toBeEnabled();
 }
 async function average(page: Page, owner: Owner, level: number) {
@@ -98,7 +98,7 @@ async function average(page: Page, owner: Owner, level: number) {
   await save(page, () => pickOption(radio)); await expect(radio).toHaveJSProperty("selected", true); await expect(radio).toBeEnabled();
 }
 async function addClass(page: Page, story: Story, owner: "Sorcerer" | "Warlock") {
-  await page.goto(builder(story) + "/class"); await page.getByRole("button", { name: /^Add a class/ }).click();
+  await page.goto(builder(story) + "/class", { waitUntil: "domcontentloaded" }); await page.getByRole("button", { name: /^Add a class/ }).click();
   await page.getByRole("combobox", { name: "Choose an additional class", exact: true }).selectOption({ label: owner });
   await save(page, () => page.getByRole("button", { name: "Pick this class", exact: true }).click());
   await expect(page.getByRole("combobox", { name: `Set level for ${owner}`, exact: true })).toHaveValue("1");
@@ -124,7 +124,7 @@ async function selectSpells(page: Page, owner: Owner) {
     await setSpell(form(page, owner), name, true);
     if (owner === "Paladin") await setPrepared(form(page, owner), name, true);
   }
-  await assertBudget(page, owner); await saveSpells(page, owner); await page.reload();
+  await assertBudget(page, owner); await saveSpells(page, owner); await page.reload({ waitUntil: "domcontentloaded" });
   for (const name of [...plans[owner].cantrips, ...plans[owner].spells]) await expect(await spellOption(page, owner, name, plans[owner].cantrips.includes(name))).toHaveCount(1);
 }
 async function assertBudget(page: Page, owner: Owner) {
@@ -134,17 +134,17 @@ async function assertBudget(page: Page, owner: Owner) {
   else await expect(area.getByText(`Spells known: ${owner === "Sorcerer" ? 2 : 4} / ${owner === "Sorcerer" ? 2 : 4}`, { exact: true })).toBeVisible();
 }
 async function createAndComplete(page: Page, story: Story) {
-  await page.goto(story.config.appOrigin + "/characters/new"); const name = `Mixed A5 ${randomUUID().slice(0, 8)}`;
+  await page.goto(story.config.appOrigin + "/characters/new", { waitUntil: "domcontentloaded" }); const name = `Mixed A5 ${randomUUID().slice(0, 8)}`;
   await page.getByRole("textbox", { name: "What will they be called?" }).fill(name); await page.getByRole("button", { name: "Open the notebook", exact: true }).click();
   await page.waitForURL(/\/characters\/[0-9a-f-]+\/builder\/first-class$/); story.id = new URL(page.url()).pathname.split("/")[2]; expect(story.id).toMatch(uuid);
   await page.getByRole("combobox", { name: "First class", exact: true }).selectOption({ label: "Paladin" });
   await page.getByRole("button", { name: "Save first class", exact: true }).click(); await expect(page.getByText("Paladin · Level 1", { exact: true })).toBeVisible();
-  await page.reload(); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, "Paladin", 1);
+  await page.reload({ waitUntil: "domcontentloaded" }); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, "Paladin", 1);
   for (const skill of ["Athletics", "Persuasion"]) await choose(page, choiceOption(group(page, "Choose 2 proficiency", "Athletics"), skill));
-  await page.goto(builder(story) + "/race"); await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Dragonborn" });
+  await page.goto(builder(story) + "/race", { waitUntil: "domcontentloaded" }); await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Dragonborn" });
   await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click()); await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
   const ancestry = choiceGroup(page, "Draconic Ancestry: Choose 1");
-  await choose(page, choiceOption(ancestry, "Draconic Ancestry Gold")); await page.reload();
+  await choose(page, choiceOption(ancestry, "Draconic Ancestry Gold")); await page.reload({ waitUntil: "domcontentloaded" });
   await expect(choiceOption(ancestry, "Draconic Ancestry Gold").first()).toHaveJSProperty("selected", true);
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
   for (const [ability, score] of Object.entries(scores)) {
@@ -155,7 +155,7 @@ async function createAndComplete(page: Page, story: Story) {
     }
     await save(page, () => control.selectOption(score)); await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
   }
-  await page.reload(); for (const [ability, score] of Object.entries(scores)) await expect(page.getByRole("combobox", { name: `${ability} score`, exact: true })).toHaveValue(score);
+  await page.reload({ waitUntil: "domcontentloaded" }); for (const [ability, score] of Object.entries(scores)) await expect(page.getByRole("combobox", { name: `${ability} score`, exact: true })).toHaveValue(score);
   await page.getByRole("button", { name: "Next: Background", exact: true }).click(); await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
   await save(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
   const languages = choiceGroup(page, "Choose 2 language");
@@ -165,7 +165,7 @@ async function createAndComplete(page: Page, story: Story) {
   await choose(page, choiceOption(page, /^Dueling(?:\s|$)/)); await selectSpells(page, "Paladin");
   // The one real starting award belongs to the original class before adding
   // secondary casters. No sheet inventory insertion or second award is used.
-  await page.goto(builder(story) + "/equipment"); const groups = page.locator("select").filter({ has: page.locator('option[value="a"]') });
+  await page.goto(builder(story) + "/equipment", { waitUntil: "domcontentloaded" }); const groups = page.locator("select").filter({ has: page.locator('option[value="a"]') });
   await expect(groups.first()).toBeVisible(); for (let index = 0; index < await groups.count(); index++) await choose(page, groups.nth(index).locator('option[value="a"]'));
   const slots = page.locator('button[data-slot="select-trigger"]'); for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
@@ -173,20 +173,20 @@ async function createAndComplete(page: Page, story: Story) {
     await save(page, () => pickOption(option)); await expect(slot).toBeEnabled();
   }
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled(); await page.getByRole("button", { name: "Confirm Equipment", exact: true }).click();
-  await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible(); await page.reload(); await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
+  await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible(); await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
   await addClass(page, story, "Sorcerer"); await selectSpells(page, "Sorcerer"); await addClass(page, story, "Warlock");
   await setLevel(page, story, "Warlock", 3); await openLevel(page, "Warlock", 3); await choose(page, choiceOption(group(page, "Choose 1 feature"), "Pact Of The Blade"));
   await average(page, "Warlock", 2); await average(page, "Warlock", 3); await selectSpells(page, "Warlock"); await openLevel(page, "Warlock", 2);
   for (const name of ["Eldritch Invocation Agonizing Blast", "Eldritch Invocation Repelling Blast"]) await choose(page, choiceOption(group(page, "Choose 2 invocation"), name));
-  await page.goto(builder(story) + "/details"); await page.getByRole("textbox", { name: "Character name", exact: true }).fill(name);
+  await page.goto(builder(story) + "/details", { waitUntil: "domcontentloaded" }); await page.getByRole("textbox", { name: "Character name", exact: true }).fill(name);
   await page.getByRole("combobox", { name: "Alignment", exact: true }).selectOption("Neutral Good"); await save(page, () => page.getByRole("button", { name: "Save details", exact: true }).click());
-  await expect(page.getByText("Character details saved.", { exact: true })).toBeVisible(); await page.reload();
+  await expect(page.getByText("Character details saved.", { exact: true })).toBeVisible(); await page.reload({ waitUntil: "domcontentloaded" });
   const nav = page.getByRole("navigation", { name: "Character builder", exact: true }); for (const step of ["class", "race", "abilities", "background", "equipment", "details"]) await expect(nav.locator(`a[href$="/builder/${step}"]`)).toContainText("Saved");
   await page.getByRole("button", { name: "Review & Finish", exact: true }).click(); await page.getByRole("button", { name: "Finish & View Character", exact: true }).click();
   await expect(page).toHaveURL(`${story.config.appOrigin}/characters/${story.id}`); await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
 }
 async function inspectSheet(page: Page, story: Story, paladinLevel: 1 | 2, phase: Phase) {
-  await page.goto(`${story.config.appOrigin}/characters/${story.id}`);
+  await page.goto(`${story.config.appOrigin}/characters/${story.id}`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("button", { name: "HP tracker — click to heal or damage", exact: true })).toContainText(paladinLevel === 2 ? "/48" : "/40");
   await expect(page.getByText("AC", { exact: true }).filter({ visible: true }).first().locator("..").locator("p").last()).toHaveText("13");
   for (const [ability, value] of Object.entries(effective)) await expect(page.getByRole("button", { name: `Roll ${ability[0].toUpperCase() + ability.slice(1)} check`, exact: true }).locator("p").last()).toHaveText(String(value));
@@ -261,7 +261,7 @@ function sameOwnerSources(before: Native, after: Native, owner: string) {
 async function foreign404(browser: Browser, story: Story) {
   const context = await browser.newContext(); await restrictOrigins(context, story);
   try { const page = await context.newPage(); page.on("pageerror", () => story.pageErrors.push("other-account browser error")); await login(page, story.config, story.config.other);
-    expect((await page.goto(`${story.config.appOrigin}/characters/${story.id}`))?.status()).toBe(404);
+    expect((await page.goto(`${story.config.appOrigin}/characters/${story.id}`, { waitUntil: "domcontentloaded" }))?.status()).toBe(404);
   } finally { await context.close(); }
 }
 
@@ -270,7 +270,7 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
   await restrictOrigins(context, story); page.on("pageerror", () => story.pageErrors.push("owner browser error"));
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startedUtc: new Date().toISOString(), story: "A5 mixed casters" }));
   await login(page, story.config, story.config.owner); expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
-  await createAndComplete(page, story); await inspectSheet(page, story, 2, "baseline"); await page.reload();
+  await createAndComplete(page, story); await inspectSheet(page, story, 2, "baseline"); await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByRole("button", { name: "Inventory", exact: true })).toBeEnabled();
   const initial = await readback(info, story, "all-six-saved-finished-reloaded"); await checkpoint(info, story, "full Gold Dragonborn Paladin2 Sorcerer1 Warlock3 HP48 AC13 regular3L1 Pact2L2 fire-resistance");
   await setLevel(page, story, "Paladin", 1);
   // The genuine frozen Paladin1 row explicitly has zero slots, so the generic
@@ -284,7 +284,7 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
   expect(restored.originalOccurrenceId).toBe(initial.originalOccurrenceId); expect(restored.inventory).toEqual(initial.inventory); await checkpoint(info, story, "half-caster down/up changes only own preparation and regular contribution; secondary identities retained");
   const second = await context.newPage(); second.on("pageerror", () => story.pageErrors.push("second owner page error"));
   try {
-    await page.goto(builder(story) + "/class"); await second.goto(builder(story) + "/class");
+    await page.goto(builder(story) + "/class", { waitUntil: "domcontentloaded" }); await second.goto(builder(story) + "/class", { waitUntil: "domcontentloaded" });
     for (const owner of ["Paladin", "Sorcerer", "Warlock"] as const) { await assertBudget(page, owner); await assertBudget(second, owner); }
     const before = await readback(info, story, "two-pages-same-baseline"); expect(before.completeFingerprint).toBe(restored.completeFingerprint);
     await setSpell(form(page, "Sorcerer"), "Shield", false); await setSpell(form(page, "Sorcerer"), "Sleep", true);
@@ -306,12 +306,12 @@ test("A5 full half-pact caster keeps independent budgets and both concurrent own
     expect(unrelated(after.choices)).toEqual(unrelated(before.choices)); expect(after.state).toEqual(before.state); expect(after.maximumHp).toBe(before.maximumHp); expect(after.inventory).toEqual(before.inventory); expect(after.pins).toEqual(before.pins); expect(after.classRoots).toEqual(before.classRoots); sameOwnerSources(before, after, "paladin");
     for (const owner of ["sorcerer", "warlock"]) { const removed = owner === "sorcerer" ? "shield" : "charm-person", added = owner === "sorcerer" ? "sleep" : "shatter";
       expect(ownerSpells(after, owner).filter(spell => spell.slug !== added)).toEqual(ownerSpells(before, owner).filter(spell => spell.slug !== removed)); }
-    await page.reload(); await second.reload(); for (const tab of [page, second]) {
+    await page.reload({ waitUntil: "domcontentloaded" }); await second.reload({ waitUntil: "domcontentloaded" }); for (const tab of [page, second]) {
       await expect(await spellOption(tab, "Sorcerer", "Sleep", false)).toHaveCount(1); await expect(await spellOption(tab, "Sorcerer", "Shield", false)).toHaveCount(0);
       await expect(await spellOption(tab, "Warlock", "Shatter", false)).toHaveCount(1); await expect(await spellOption(tab, "Warlock", "Charm Person", false)).toHaveCount(0);
       for (const owner of ["Paladin", "Sorcerer", "Warlock"] as const) await assertBudget(tab, owner);
     }
-    await inspectSheet(page, story, 2, "concurrent"); await page.reload(); const reloaded = await readback(info, story, "both-pages-and-sheet-reloaded", 2, "concurrent"); expect(reloaded).toEqual(after);
+    await inspectSheet(page, story, 2, "concurrent"); await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByRole("button", { name: "Inventory", exact: true })).toBeEnabled(); const reloaded = await readback(info, story, "both-pages-and-sheet-reloaded", 2, "concurrent"); expect(reloaded).toEqual(after);
     await foreign404(browser, story); const foreign = await readback(info, story, "foreign404-current-source-unchanged", 2, "concurrent"); expect(foreign).toEqual(after);
     expect(story.blockedOrigins).toEqual([]); expect(story.pageErrors).toEqual([]); await checkpoint(info, story, "two real opposite-controller operations both accepted at +2 revisions; both sources retained after two-page and sheet reload; foreign404");
     const path = info.outputPath("mixed-caster-workflow.json"); await writeFile(path, JSON.stringify({ actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true, caseId: "A5", characterId: story.id,
