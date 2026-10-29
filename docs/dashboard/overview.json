@@ -9,7 +9,7 @@
     "name": "Character Flow · integration owner",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T17:36:08.180Z",
+  "updatedAt": "2026-10-29T17:39:46.044Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
@@ -22,7 +22,7 @@
   "decisions": [],
   "dependencies": [
     {
-      "laneId": "character-journal",
+      "laneId": "journal",
       "reason": "Reviewed isolated Journal UI source awaits separate shared save/create-recovery and actual fixture integration disposition. Runtime slot was released after Character Flow cleanup; no Journal DB acceptance is claimed."
     }
   ],
