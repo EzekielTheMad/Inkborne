@@ -54,10 +54,15 @@ writer/lifecycle, historical parent/A4/F3 installation, gameplay spending/rest,
 hosted/provider and release gates remain separately open.
 
 Project Dashboard reporting is adopted under its version1
-`C:/Users/kaios/Documents/ChatGPT/Project Dashboard/docs/REPORTING-SOP.md`.
-This chat owns `docs/dashboard/character-flow.json` and `docs/dashboard/overview.json`;
-maintain them at meaningful checkpoints from this handoff and the canonical
-ledger. Report validation alone adds no app-test or runtime requirement.
+`C:/Projects/Project Dashboard/docs/REPORTING-SOP.md`.
+Character Flow retains `docs/dashboard/character-flow.json` and character product
+work, including the existing R08 next action. The overview, project integration
+queue/cross-lane coordination and project acceptance responsibility are released
+for the [Project Coordinator pickup](2026-10-29-project-coordinator.md). Check the
+[canonical ownership record](../dashboard/OWNERSHIP.md) on every continuation;
+maintain only the assigned report and this lane handoff. Record proposed global
+ledger/integration changes for the coordinator. Report validation adds no app
+tests or runtime requirement.
 
 ### Lane and contract checkpoint
 

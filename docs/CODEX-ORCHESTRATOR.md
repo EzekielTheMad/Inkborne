@@ -17,6 +17,13 @@ paused features or external-action authority.
 
 ## Resume and ownership
 
+Project-wide coordination and the existing `inkborne/overview` integration report
+are released for the [Inkborne Project Coordinator handoff](handoffs/2026-10-29-project-coordinator.md).
+Successor pickup/thread ID is pending. Character Flow retains its report and
+character product work; Library and Journal are unchanged. Consult the
+[canonical ownership record](dashboard/OWNERSHIP.md) before any write and serialize
+shared-checkout write windows. This assignment change reopens no accepted work.
+
 **Current Character Flow pickup:** shared contract v1 is adopted (`4261f27` →
 `f300b7a`). All fourteen existing full creation journeys pass with separately
 bound evidence: A6 at`1f15a44`, eight stories at`10e77c7` and five unchanged

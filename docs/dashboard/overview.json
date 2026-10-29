@@ -4,20 +4,19 @@
   "laneId": "overview",
   "name": "Project integration",
   "role": "integration",
-  "reporting": "active",
+  "reporting": "awaiting_adoption",
   "owner": {
-    "name": "Character Flow · integration owner",
-    "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
+    "name": "Inkborne Project Coordinator (pickup pending)"
   },
-  "updatedAt": "2026-10-29T18:40:07.387Z",
+  "updatedAt": "2026-10-29T18:55:04.496Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Character Flow has completed the finite fourteen-journey creation queue with local integration acceptance. Library and Journal remain separate lanes; this summary preserves the canonical whole-project scope and open acceptance gates.",
-  "nextAction": "Character Flow next addresses the existing R08 Bardic Inspiration capacity defect. Keep Library's related-definition/access/version/ambiguous-slug proposal alongside the separate Journal persistence/create-recovery and fixture proposals queued for integration review; do not rerun accepted creation stories.",
+  "currentWork": "Partial coordinator handoff prepared and Character Flow integration ownership released. The fourteen-journey creation acceptance and all existing product evidence remain intact; Character Flow retains its report and R08 product work. Successor pickup and first coordinator checkpoint are pending.",
+  "nextAction": "Adopt only inkborne/overview and the released integration/acceptance responsibilities from C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-29-project-coordinator.md. Refresh current ownership and serialize shared-checkout writes, then resolve the queued Journal persistence/create-recovery/fixture and Library related-definition/access/version/ambiguous-slug proposals. Character Flow keeps the existing R08 Bardic Inspiration capacity fix; preserve accepted creation work.",
   "blockers": [],
   "decisions": [],
   "dependencies": [

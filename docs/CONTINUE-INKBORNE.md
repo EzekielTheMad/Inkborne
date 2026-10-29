@@ -151,7 +151,9 @@ required security, data-integrity and release acceptance gates.
   enforce the current handoff's resource guards. Record task-owned identities;
   stop and verify cleanup of only task-owned services and resources afterward,
   unless explicitly asked to leave them running. Preserve shared services.
-- Before finishing, update the canonical ledger and current handoff concisely:
+- Before finishing, update the assigned lane handoff concisely; the assigned
+  integration owner maintains canonical ledger and project acceptance status.
+  Record proposed cross-lane changes for that owner within the current handoff:
   delivered behavior, exact source/verification evidence, remaining gaps,
   blockers and the next action. Do not create another roadmap or copy logs into
   planning files. Commit scoped local checkpoints and preserve unrelated edits.
