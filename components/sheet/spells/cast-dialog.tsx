@@ -224,7 +224,10 @@ function CastDialogSession({ spell, castability, open, onClose }: CastDialogProp
     <div className="space-y-4 text-sm">
       {slotResolution?.status !== "available" && <p role="status" className="text-sm text-muted-foreground">Spell slots are unavailable. Reload the character or restore its saved class content before casting.</p>}
       {!isOwner && <p role="status" className="text-muted-foreground">This character is read-only. Only its owner can cast spells.</p>}
-      {sourceResolution.status !== "available" ? <p role="status" className="text-muted-foreground">{sourceResolution.reason}</p> : <p className="text-muted-foreground">Cast as {profile!.classSlug.startsWith("race:") ? `${capitalize(profile!.classSlug.slice(5).replace(/-/g, " "))} trait` : capitalize(profile!.classSlug.replace(/-/g, " "))} ({capitalize(profile!.ability)}).</p>}
+      {sourceResolution.status !== "available" ? <p role="status" className="text-muted-foreground">{sourceResolution.reason}</p> : <>
+        <p className="text-muted-foreground">Cast as {profile!.classSlug.startsWith("race:") ? `${capitalize(profile!.classSlug.slice(5).replace(/-/g, " "))} trait` : capitalize(profile!.classSlug.replace(/-/g, " "))} ({capitalize(profile!.ability)}).</p>
+        <p className="text-xs text-muted-foreground">Spell save DC {profile!.spellDc} · spell attack {profile!.spellAttackBonus >= 0 ? "+" : ""}{profile!.spellAttackBonus}.</p>
+      </>}
       {castError && <p role="alert" className="text-destructive">{castError}</p>}
       <p className="text-xs text-muted-foreground">{metaLine}</p>
 

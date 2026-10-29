@@ -26,6 +26,7 @@ let mockSlotState: SpellSlotsUsed = {};
 let mockPactSlotLevel: number | null = null;
 let mockConcentration: ConcentrationState | null = null;
 let mockCasterInfo: CasterInfo;
+let mockCastingProfile: { classSlug: string; ability: string; abilityModifier: number; spellDc: number; spellAttackBonus: number } | undefined;
 
 const viewport = vi.hoisted(() => ({ mobile: false }));
 vi.mock("@/lib/builder/use-is-mobile", () => ({ useIsMobile: () => viewport.mobile }));
@@ -40,7 +41,7 @@ vi.mock("@/lib/character/character-context", () => ({
     casterInfo: mockCasterInfo,
     concentration: mockConcentration,
     castSpell,
-    getCastingAbility: (spell: CharacterSpell) => ({ status: "available", spell, profile: { classSlug: spell.class_slug || "wizard", ability: "intelligence", abilityModifier: 3, spellDc: mockCasterInfo.spellDc, spellAttackBonus: mockCasterInfo.spellAttackBonus } }),
+    getCastingAbility: (spell: CharacterSpell) => ({ status: "available", spell, profile: mockCastingProfile ?? { classSlug: spell.class_slug || "wizard", ability: "intelligence", abilityModifier: 3, spellDc: mockCasterInfo.spellDc, spellAttackBonus: mockCasterInfo.spellAttackBonus } }),
   }),
   // This component fixture injects confirmed mechanics; real admission is tested
   // by asi-casting-guards and the canonical provider/browser fixtures.
@@ -158,6 +159,7 @@ beforeEach(() => {
   mockPactSlotLevel = null;
   mockConcentration = null;
   mockCasterInfo = mkCasterInfo();
+  mockCastingProfile = undefined;
   castSpell.mockResolvedValue(mkOutcome());
   roll.mockReturnValue(mkRollResult());
 });
@@ -167,6 +169,17 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("CastDialog - configure pane", () => {
+  it.each([
+    { classSlug: "wizard", ability: "intelligence", abilityModifier: 2, spellDc: 12, spellAttackBonus: 4 },
+    { classSlug: "warlock", ability: "charisma", abilityModifier: 3, spellDc: 14, spellAttackBonus: 6 },
+  ])("shows $classSlug casting math without attack metadata or the highest-class fallback", (profile) => {
+    mockCastingProfile = profile;
+    mockCasterInfo = { ...mockCasterInfo, spellDc: 19, spellAttackBonus: 11 };
+    renderDialog(mkSpell({ attack_type: null, dc: null, damage: null }));
+    expect(screen.getByText(`Spell save DC ${profile.spellDc} · spell attack +${profile.spellAttackBonus}.`)).toBeInTheDocument();
+    expect(screen.queryByText(/Ranged spell attack/)).not.toBeInTheDocument();
+    expect(castSpell).not.toHaveBeenCalled();
+  });
   it("shows a canonical large slot pool numerically without allocating readonly dots", async () => {
     const data = classDataSchema.parse({ hit_die: 6, spellcasting: { type: "full", ability: "intelligence" },
       multiclass: { prerequisites: [], proficiencies_gained: [] }, saving_throws: [], starting_proficiencies: [],

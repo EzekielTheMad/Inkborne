@@ -207,7 +207,7 @@ async function inspectSheet(page: Page, story: Story, paladinLevel: 1 | 2, phase
   // Read-only configuration preview proves Pact's actual level independently
   // from the two dots. No cast, slot spend, resource or state write is made.
   await page.getByRole("button", { name: "Cast Scorching Ray", exact: true }).click(); const dialog = page.getByRole("dialog", { name: "Cast: Scorching Ray", exact: true });
-  await expect(dialog).toContainText("Cast as Warlock (Charisma)."); await expect(dialog).toContainText("Ranged spell attack +6");
+  await expect(dialog).toContainText("Cast as Warlock (Charisma)."); await expect(dialog).toContainText("Spell save DC 14 · spell attack +6.");
   await expect(dialog.getByRole("radio", { name: /^Pact 2nd/ })).toBeVisible(); await expect(dialog.getByRole("radio")).toHaveCount(1); await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
 }
 async function readback(info: TestInfo, story: Story, label: string, paladinLevel: 1 | 2 = 2, phase: Phase = "baseline"): Promise<Native> {
