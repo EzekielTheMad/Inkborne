@@ -204,7 +204,7 @@ async function details(page: Page, base: string, name: string) {
 }
 async function equipAwardedLeather(page: Page, config: Settings) {
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
-  const section = page.getByRole("heading", { name: "Armor & Shields", exact: true }).locator("..");
+  const section = page.getByRole("button", { name: /^Armor & Shields \(\d+\)$/ }).locator("..");
   const row = section.getByText("Leather Armor", { exact: true }).locator("..").locator("..").locator("..");
   await expect(row.getByTitle("Equip", { exact: true })).toBeVisible();
   const [response] = await Promise.all([page.waitForResponse(item => item.request().method() === "PATCH"
