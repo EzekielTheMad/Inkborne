@@ -68,13 +68,11 @@ export async function setSpell(scope: Scope, name: string, selected = true): Pro
   if (await saved.count()) { await expect(saved).toHaveCount(1); return; }
   const searches = scope.getByRole("textbox", { name: /^Search / });
   for (let index = 0; index < await searches.count(); index++) await searches.nth(index).fill(name);
-  const control = scope.getByRole("combobox", { name: /^Add / }).filter({ has: scope.locator("option").filter({
+  const option = scope.getByRole("combobox", { name: /^Add / }).locator("option").filter({
     hasText: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?: —|$)`),
-  }) });
-  await expect(control).toHaveCount(1);
-  const option = control.locator("option").filter({ hasText: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?: —|$)`) });
+  });
   await expect(option).toHaveCount(1);
-  await control.selectOption(await option.getAttribute("value") ?? "");
+  await option.locator("..").selectOption(await option.getAttribute("value") ?? "");
   await expect(selectedSpell(scope, name)).toHaveCount(1);
 }
 
