@@ -4,9 +4,10 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
+import { nativeJson, testRuntime } from "../../scripts/unraid/native";
 
 type Account = { id: string; email: string; password: string };
-type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account; systemId: string };
+type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account };
 type Story = {
   slug: string; name: string; subclass: string; subclassLevel: number; ability: string;
   scores: Record<string, string>; skills: string[]; cantrips: string[]; spells: string[];
@@ -70,15 +71,21 @@ const stories: Story[] = [
 ];
 
 async function settings(): Promise<Settings> {
-  const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
+  const runtime = process.env.INKBORNE_TEST_RUNTIME ? testRuntime() : undefined;
+  const file = runtime ? process.env.INKBORNE_TEST_CONFIG : process.env.INKBORNE_LOCAL_FLOW_CONFIG;
   if (!file) throw Error("Provide the isolated local browser configuration file");
-  const config = JSON.parse(await readFile(file, "utf8")) as Settings;
+  let config: Settings;
+  try { config = JSON.parse(await readFile(file, "utf8")) as Settings; }
+  catch { throw Error("Restricted browser configuration unavailable; contents withheld"); }
+  if (runtime && (file !== "/run/inkborne/test-config.json" || config.appOrigin !== "http://127.0.0.1:3001"
+    || config.supabaseOrigin !== "http://127.0.0.1:9999")) throw Error("Dedicated scratch-test origins and configuration required");
   for (const origin of [config.appOrigin, config.supabaseOrigin]) {
     const url = new URL(origin);
     if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.origin !== origin) throw Error("Complete caster stories require explicit loopback origins");
   }
-  if (!config.owner?.email || !config.owner.password || !config.other?.email || !config.other.password
-    || config.owner.id === config.other.id) throw Error("Two distinct isolated accounts are required");
+  for (const account of [config.owner, config.other]) if (!account?.email || !account.password
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(account.id)) throw Error("Disposable verification accounts required");
+  if (config.owner.id === config.other.id) throw Error("Two distinct isolated accounts are required");
   return config;
 }
 async function restrictOrigins(context: BrowserContext, config: Settings, blocked: string[]) {
@@ -108,12 +115,12 @@ async function save(page: Page, change: () => Promise<unknown>) {
   expect(response.status(), "An actual app save must succeed before the next edit").toBe(200);
 }
 async function choose(page: Page, option: Locator) {
-  await save(page, () => pickOption(option));
+  if (!await optionPicked(option)) await save(page, () => pickOption(option));
   await expect(option).toHaveJSProperty("selected", true); await expect(option).toBeEnabled();
 }
 function group(page: Page, label: string, option?: string) {
   const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: label, exact: true, level: 4 }) });
-  return option ? article.filter({ has: choiceOption(page, option) }) : article;
+  return option ? article.filter({ has: page.locator("option").filter({ hasText: new RegExp(`^${option.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }) }) : article;
 }
 async function openLevel(page: Page, level: number) {
   await page.getByRole("button", { name: new RegExp(`^Level ${level}:`) }).click();
@@ -143,7 +150,16 @@ async function chooseHumanAbilitiesAndBackground(page: Page, base: string, story
   await page.reload(); await expect(choiceOption(languages, "Dwarvish").first()).toHaveJSProperty("selected", true);
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
   for (const [ability, score] of Object.entries(story.scores)) {
-    await save(page, () => page.getByRole("combobox", { name: `${ability} score`, exact: true }).selectOption(score));
+    const control = page.getByRole("combobox", { name: `${ability} score`, exact: true });
+    if (await control.inputValue() === score) continue;
+    for (const other of Object.keys(story.scores)) if (other !== ability) {
+      const occupied = page.getByRole("combobox", { name: `${other} score`, exact: true });
+      if (await occupied.inputValue() === score) {
+        await save(page, () => occupied.selectOption(""));
+        await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
+      }
+    }
+    await save(page, () => control.selectOption(score));
     await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
   }
   await page.reload();
@@ -228,17 +244,17 @@ async function chooseSpells(page: Page, story: Story) {
 }
 async function chooseEquipmentAndDetails(page: Page, base: string, name: string) {
   await page.goto(base + "/equipment");
-  const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
+  const groups = page.locator("select").filter({ has: page.locator('option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
-    const option = groups.nth(index).locator('select option[value="a"]');
+    const option = groups.nth(index).locator('option[value="a"]');
     if (!await optionPicked(option)) await choose(page, option);
   }
   const slots = page.locator('button[data-slot="select-trigger"]');
   for (let index = 0; index < await slots.count(); index++) {
-    const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
-    const longsword = page.getByRole("option", { name: "Longsword", exact: true });
-    const option = await longsword.count() ? longsword : page.getByRole("option").first();
+    const slot = slots.nth(index); await slot.click(); const menu = page.getByRole("listbox"); await expect(menu).toBeVisible();
+    const longsword = menu.getByRole("option", { name: "Longsword", exact: true });
+    const option = await longsword.count() ? longsword : menu.getByRole("option").first();
     await save(page, () => pickOption(option));
     await expect(slot).toBeEnabled();
   }
@@ -286,35 +302,46 @@ async function inspectSheet(page: Page, story: Story, name: string) {
     await expect(page.getByRole("button", { name: "Mark 2nd slot used", exact: true }).filter({ visible: true })).toHaveCount(story.slots[1]);
   }
 }
-async function nativeReadback(info: TestInfo, characterId: string, phase: string) {
-  const configFile = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
-  if (!configFile || !/^[0-9a-f-]{36}$/.test(characterId)) throw Error("Local native evidence configuration required");
-  const state = JSON.parse(await readFile(resolve(dirname(configFile), "../state.json"), "utf8"));
-  if (state.project !== "inkborne-app-flow-20261022" || state.ready !== true || state.stoppedUtc) throw Error("Wrong disposable runtime");
-  const db = state.containers.find((item: { name: string }) => item.name === `/${state.project}-db`);
-  if (!db || !/^[a-f0-9]{64}$/.test(db.id)) throw Error("Missing owned database identity");
-  const processes: unknown[] = [];
-  const run = (args: string[], input?: string) => {
-    const startedUtc = new Date().toISOString();
-    const result = spawnSync("C:/Users/kaios/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe", ["--context", "desktop-linux", ...args],
-      { input, encoding: "utf8", windowsHide: true, timeout: 30000, maxBuffer: 2 * 1024 * 1024 });
-    processes.push({ pid: result.pid, parentPid: process.pid, cwd: process.cwd(), args, startedUtc, exitCode: result.status });
-    if (result.status !== 0) throw Error(`Local read-only caster evidence failed: ${result.stderr.slice(0, 1200)}`);
-    return result.stdout.trim();
-  };
-  expect(run(["info", "--format", "{{.ID}}"])).toBe(state.engineId);
-  const inspected = JSON.parse(run(["inspect", "--format", '{"id":{{json .Id}},"labels":{{json .Config.Labels}}}', db.id]));
-  expect(inspected.id).toBe(db.id); expect(inspected.labels["com.docker.compose.project"]).toBe(state.project);
+async function nativeReadback(info: TestInfo, characterId: string, actorId: string, phase: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(characterId)) throw Error("Native character identity required");
+  const runtime = process.env.INKBORNE_TEST_RUNTIME ? testRuntime() : undefined;
+  const readers = ["complete-caster-builders-readback.sql", "builder-class-choices-readback.sql", "builder-bonus-spells-readback.sql"];
   const reports: Record<string, Record<string, unknown>> = {};
-  for (const file of ["complete-caster-builders-readback.sql", "builder-class-choices-readback.sql", "builder-bonus-spells-readback.sql"]) {
-    const sql = await readFile(resolve(process.cwd(), "supabase/verification", file), "utf8");
-    reports[file] = JSON.parse(run(["exec", "-i", db.id, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "supabase_admin",
-      "--dbname", "postgres", "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", `character_id=${characterId}`, "--file", "-"], sql));
+  const processes: unknown[] = [];
+  if (runtime) {
+    for (const file of readers) {
+      const sql = await readFile(resolve(process.cwd(), "supabase/verification", file), "utf8");
+      reports[file] = await nativeJson(sql, { character_id: characterId }) as Record<string, unknown>;
+    }
+  } else {
+    const configFile = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
+    if (!configFile) throw Error("Local native evidence configuration required");
+    const state = JSON.parse(await readFile(resolve(dirname(configFile), "../state.json"), "utf8"));
+    if (state.project !== "inkborne-app-flow-20261022" || state.ready !== true || state.stoppedUtc) throw Error("Wrong disposable runtime");
+    const db = state.containers.find((item: { name: string }) => item.name === `/${state.project}-db`);
+    if (!db || !/^[a-f0-9]{64}$/.test(db.id)) throw Error("Missing owned database identity");
+    const run = (args: string[], input?: string) => {
+      const startedUtc = new Date().toISOString();
+      const result = spawnSync("C:/Users/kaios/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe", ["--context", "desktop-linux", ...args],
+        { input, encoding: "utf8", windowsHide: true, timeout: 30000, maxBuffer: 2 * 1024 * 1024 });
+      processes.push({ pid: result.pid, parentPid: process.pid, cwd: process.cwd(), args, startedUtc, exitCode: result.status });
+      if (result.status !== 0) throw Error(`Local read-only caster evidence failed: ${result.stderr.slice(0, 1200)}`);
+      return result.stdout.trim();
+    };
+    expect(run(["info", "--format", "{{.ID}}"])).toBe(state.engineId);
+    const inspected = JSON.parse(run(["inspect", "--format", '{"id":{{json .Id}},"labels":{{json .Config.Labels}}}', db.id]));
+    expect(inspected.id).toBe(db.id); expect(inspected.labels["com.docker.compose.project"]).toBe(state.project);
+    for (const file of readers) {
+      const sql = await readFile(resolve(process.cwd(), "supabase/verification", file), "utf8");
+      reports[file] = JSON.parse(run(["exec", "-i", db.id, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "supabase_admin",
+        "--dbname", "postgres", "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", `character_id=${characterId}`, "--file", "-"], sql));
+    }
   }
   const report = reports["complete-caster-builders-readback.sql"];
   const path = info.outputPath(`complete-caster-native-${phase}.json`);
-  await writeFile(path, JSON.stringify({ observedUtc: new Date().toISOString(), characterId, processes, reports }, null, 2));
+  await writeFile(path, JSON.stringify({ observedUtc: new Date().toISOString(), characterId, runtime, processes, reports }, null, 2));
   await info.attach(`native-${phase}`, { path, contentType: "application/json" });
+  expect(report.characterId).toBe(characterId); expect(report.actorId).toBe(actorId);
   for (const [label, passed] of Object.entries(report.checks as Record<string, unknown>)) expect(passed, label).toBe(true);
   const family = reports["builder-class-choices-readback.sql"];
   for (const key of ["all_pinned_versions_exact", "feature_grants_exact", "physical_feature_grant_links_exact", "active_feature_projections_exact", "spell_grants_exact",
@@ -341,7 +368,7 @@ async function rejectOtherAccount(browser: Browser, config: Settings, sheetUrl: 
 }
 
 for (const story of stories) test(`complete SRD ${story.name} level-three caster finishes and reloads all six builder steps`, async ({ page, context, browser }, info) => {
-  const config = await settings(), blocked: string[] = [], errors: string[] = [];
+  const config = await settings(), runtime = process.env.INKBORNE_TEST_RUNTIME ? testRuntime() : undefined, blocked: string[] = [], errors: string[] = [];
   await restrictOrigins(context, config, blocked); page.on("pageerror", () => errors.push("owner browser error"));
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startedUtc: new Date().toISOString(), story: `complete-${story.slug}` }));
   await login(page, config, config.owner); expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
@@ -355,7 +382,7 @@ for (const story of stories) test(`complete SRD ${story.name} level-three caster
   const checkpoint = async (phase: string) => {
     checkpoints.push(phase);
     await writeFile(info.outputPath("complete-caster-progress.json"), JSON.stringify({ classSlug: story.slug, characterId, name,
-      observedUtc: new Date().toISOString(), actualApp: true, checkpoints, blockedOrigins: blocked, pageErrors: errors }, null, 2));
+      observedUtc: new Date().toISOString(), runtime, actualApp: true, checkpoints, blockedOrigins: blocked, pageErrors: errors }, null, 2));
   };
   await checkpoint("created through authenticated app");
   await page.getByRole("combobox", { name: "First class", exact: true }).selectOption({ label: story.name });
@@ -376,17 +403,17 @@ for (const story of stories) test(`complete SRD ${story.name} level-three caster
     await page.goto(base + "/details");
   }
   await checkpoint("all six builder steps display Saved");
-  const before = await nativeReadback(info, characterId, "builder-complete");
+  const before = await nativeReadback(info, characterId, config.owner.id, "builder-complete");
   await page.getByRole("button", { name: "Review & Finish", exact: true }).click();
   await page.getByRole("button", { name: "Finish & View Character", exact: true }).click();
   await expect(page).toHaveURL(sheetUrl); await inspectSheet(page, story, name); await page.reload(); await inspectSheet(page, story, name);
-  const after = await nativeReadback(info, characterId, "sheet-reloaded");
+  const after = await nativeReadback(info, characterId, config.owner.id, "sheet-reloaded");
   expect(after.graphFingerprint, "Reading/reloading a completed sheet must not mutate its source graph").toBe(before.graphFingerprint);
   await rejectOtherAccount(browser, config, sheetUrl, blocked, errors); expect(blocked).toEqual([]); expect(errors).toEqual([]);
   await checkpoint("finished sheet reload and foreign-account refusal passed");
   await page.screenshot({ path: info.outputPath("complete-caster-sheet.png"), fullPage: true });
   const path = info.outputPath("complete-caster-workflow.json");
-  await writeFile(path, JSON.stringify({ actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true,
+  await writeFile(path, JSON.stringify({ runtime, actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true,
     classSlug: story.slug, subclass: story.subclass, classLevel: 3, characterId, name, race: "Human", background: "Acolyte", standardArray: story.scores,
     allSixBuilderStepsSaved: true, completedSheetReloadPassed: true, foreignAccountRefused: true,
     independent2014Expectations: { cantrips: story.cantrips, ordinarySpells: story.spells, ordinaryKnown: story.known,

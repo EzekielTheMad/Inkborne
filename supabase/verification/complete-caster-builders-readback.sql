@@ -18,7 +18,7 @@ WITH target AS (
  LEFT JOIN public.content_versions v ON v.content_id=r.content_id AND v.version=r.content_version
 ), selected_class AS (
  SELECT c.value AS choice,c.value->>'slug' AS slug,(c.value->>'level')::integer AS class_level,
-   o.*,root.content_id AS pinned_class_id,root.content_version AS pinned_class_version,
+   o.*,to_jsonb(o) AS occurrence,root.content_id AS pinned_class_id,root.content_version AS pinned_class_version,
    sub.slug AS subclass_slug
  FROM target t CROSS JOIN LATERAL jsonb_array_elements(t.choices->'classes') c(value)
  JOIN private.character_class_occurrences_v1 o ON o.character_id=t.id AND o.id=(c.value->>'occurrence_id')::uuid
@@ -88,6 +88,12 @@ WITH target AS (
  LEFT JOIN public.content_versions v ON v.content_id=s.content_id AND v.version=s.content_version
 ), awards AS (
  SELECT g.* FROM public.character_starting_grants g JOIN target t ON t.id=g.character_id WHERE g.grant_kind='starting_equipment'
+), inventory AS (
+ SELECT i.*,v.content_type_snapshot AS kind,v.system_id_snapshot AS system_id,
+   v.source_snapshot AS source,v.scope_snapshot AS scope,v.owner_id_snapshot AS owner_id,
+   v.content_id IS NOT NULL AS exact_version
+ FROM public.character_inventory i JOIN target t ON t.id=i.character_id
+ LEFT JOIN public.content_versions v ON v.content_id=i.content_id AND v.version=i.content_version
 ), domains AS (
  SELECT 'pins' AS domain,COALESCE(array_agg(r.id ORDER BY r.id),'{}'::uuid[]) AS ids FROM refs r
  UNION ALL SELECT 'inventory',COALESCE(array_agg(i.id ORDER BY i.id),'{}'::uuid[]) FROM public.character_inventory i JOIN target t ON t.id=i.character_id
@@ -121,10 +127,24 @@ SELECT jsonb_build_object(
    'known',is_known,'prepared',is_prepared,'alwaysPrepared',always_prepared,'book',in_spellbook,'custom',custom_data) ORDER BY source,slug) FROM spells),'[]'),
  'checks',jsonb_build_object(
    'oneExpectedCharacterAndClass',(SELECT count(*)=1 FROM target) AND (SELECT count(*)=1 FROM selected_class)
-     AND (SELECT count(*)=1 FROM expected) AND t.level=3 AND o.class_level=3 AND o.lifecycle='accepted',
+     AND (SELECT count(*)=1 FROM expected) AND t.level=3 AND o.class_level=3 AND o.lifecycle='provisional',
+   -- B3's genuine original allocation remains provisional. Compare the whole
+   -- canonical tuple recovered from its consumed acquisition, not a cache role.
    'exactOriginalProvenance',o.id=(o.original->>'id')::uuid AND o.controller_ref_id=(o.original->>'controller_ref_id')::uuid
+     AND o.occurrence=o.original
      AND o.content_id=o.pinned_class_id AND o.content_version=o.pinned_class_version
-     AND (SELECT count(*)=1 FROM private.character_class_commands_v1 WHERE character_id=t.id),
+     AND (SELECT count(*)=1 FROM private.character_class_commands_v1 WHERE character_id=t.id)
+     AND (SELECT count(*)=0 FROM private.character_builder_class_acquisitions_v1 WHERE character_id=t.id)
+     AND (SELECT count(*)=1 AND bool_and(phase='observed' AND verified_actor_id=t.user_id
+       AND before_action_revision=0 AND after_action_revision=1)
+       FROM private.class_first_acquisition_proofs_v1 WHERE target_character_id=t.id)
+     AND o.roles->>'status'='available' AND o.roles->'contract_version'='1'::jsonb
+     AND o.roles->>'character_id'=t.id::text AND o.roles->>'system_id'=t.system_id::text
+     AND o.roles->>'original_occurrence_id'=o.original->>'id' AND jsonb_array_length(o.roles->'class_sources')=1
+     AND EXISTS(SELECT 1 FROM jsonb_array_elements(o.roles->'class_sources') r(value)
+       WHERE r.value->>'occurrence_id'=o.id::text AND r.value->>'controller_ref_id'=o.controller_ref_id::text
+         AND r.value->>'content_id'=o.content_id::text AND r.value->>'content_version'=o.content_version::text
+         AND r.value->>'role'='original'),
    'expectedSubclass',o.subclass_slug=(SELECT subclass_slug FROM expected) AND (SELECT count(*)=1 FROM refs WHERE kind='subclass'),
    'allPinnedVersionsExact',(SELECT COALESCE(bool_and(exact_version AND system_id=t.system_id AND source='srd' AND scope='platform' AND owner_id IS NULL),false) FROM refs),
    'humanAcolyteStandardArray',t.choices->>'race'='human' AND NOT (t.choices ? 'subrace') AND t.choices->>'background'='acolyte'
@@ -160,15 +180,34 @@ SELECT jsonb_build_object(
    'rangerFavoredEnemyExact',o.slug<>'ranger' OR t.choices#>'{favored_enemies,favored-enemy-1-type}'=
      '{"selection":{"mode":"type","enemy_type":"beasts"},"language":null}'::jsonb,
    'oneEquipmentAward',(SELECT count(*)=1 FROM awards) AND t.choices#>'{starting_equipment,confirmed}'='true'::jsonb
-     AND t.state#>'{currency,gp}'='15'::jsonb,
-   'inventoryAwardProvenance',(SELECT count(*)>0 FROM public.character_inventory WHERE character_id=t.id)
-     AND NOT EXISTS(SELECT 1 FROM public.character_inventory i WHERE i.character_id=t.id AND NOT EXISTS(SELECT 1 FROM awards a
-       WHERE a.id=i.starting_grant_id AND a.receipt->'inventory_ids' @> jsonb_build_array(i.id))),
+     AND t.state#>'{currency,gp}'='15'::jsonb
+     AND (SELECT count(*)=1 FROM private.character_builder_receipts_v1 WHERE character_id=t.id AND request->>'command'='award_equipment')
+     AND NOT EXISTS(SELECT 1 FROM awards a WHERE a.canonical_intent#>>'{sources,class,id}' IS DISTINCT FROM o.content_id::text
+       OR a.canonical_intent#>>'{sources,class,version}' IS DISTINCT FROM o.content_version::text
+       OR NOT EXISTS(SELECT 1 FROM refs b WHERE b.kind='background' AND b.slug='acolyte'
+         AND a.canonical_intent#>>'{sources,background,id}'=b.content_id::text
+         AND a.canonical_intent#>>'{sources,background,version}'=b.content_version::text)),
+   'inventoryAwardProvenance',(SELECT count(*)>0 FROM inventory) AND NOT EXISTS(SELECT 1 FROM inventory i WHERE i.quantity<=0
+     OR (CASE WHEN i.content_id IS NULL THEN i.content_version IS NULL
+       ELSE i.exact_version AND i.kind IN ('item','weapon','armor') AND i.kind=i.content_type
+         AND i.system_id=t.system_id AND i.source='srd' AND i.scope='platform' AND i.owner_id IS NULL END) IS DISTINCT FROM true
+     OR NOT EXISTS(SELECT 1 FROM awards a WHERE a.id=i.starting_grant_id
+       AND a.status='awarded' AND a.completed_at IS NOT NULL
+       AND a.receipt->>'grant_id'=a.id::text AND a.receipt->'plan'=a.canonical_intent->'plan'
+       AND jsonb_array_length(a.receipt->'inventory_ids')=(SELECT count(*) FROM inventory)
+       AND jsonb_array_length(a.receipt#>'{plan,items}')=(SELECT count(*) FROM inventory)
+       AND (SELECT count(DISTINCT value) FROM jsonb_array_elements_text(a.receipt->'inventory_ids'))=(SELECT count(*) FROM inventory)
+       AND EXISTS(SELECT 1 FROM jsonb_array_elements_text(a.receipt->'inventory_ids') WITH ORDINALITY line(id,position)
+         WHERE line.id=i.id::text AND a.receipt#>ARRAY['plan','items',(line.position-1)::text]=jsonb_build_object(
+           'content_id',i.content_id,'content_version',i.content_version,'name',i.name,'content_type',i.content_type,'quantity',i.quantity))
+       AND EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND r.actor_id=t.user_id
+         AND r.request->>'command'='award_equipment' AND r.request->'canonical_intent'=a.canonical_intent AND r.receipt=a.receipt))),
    'detailsConfirmed',t.choices->'details_confirmed'='true'::jsonb AND t.choices->>'alignment'='Neutral Good' AND t.name LIKE 'Complete SRD %',
    'ownedOrdinaryReceipts',(SELECT count(*)>0 FROM private.character_builder_receipts_v1 WHERE character_id=t.id)
      AND NOT EXISTS(SELECT 1 FROM private.character_builder_receipts_v1 r WHERE r.character_id=t.id AND
-       (r.actor_id<>t.user_id OR r.receipt->>'actor_id'<>t.user_id::text OR r.receipt->>'character_id'<>t.id::text
-         OR r.receipt->>'operation_id'<>r.operation_id::text OR r.receipt->>'command'<>r.request->>'command')),
+       (r.actor_id IS DISTINCT FROM t.user_id OR (r.request->>'command'<>'award_equipment' AND
+         (r.receipt->>'actor_id' IS DISTINCT FROM t.user_id::text OR r.receipt->>'character_id' IS DISTINCT FROM t.id::text
+           OR r.receipt->>'operation_id' IS DISTINCT FROM r.operation_id::text OR r.receipt->>'command' IS DISTINCT FROM r.request->>'command')))),
    'fiveOrderBijections',(SELECT count(*)=5 AND bool_and(bijection) FROM order_checks),
    'currentParentAndRoleOrder',(SELECT producer_revision=t.action_revision FROM private.character_projection_order_v1 WHERE character_id=t.id)
      AND o.roles->>'action_revision'=t.action_revision::text AND o.roles->'source_order'=(SELECT to_jsonb(p)->'pins' FROM private.character_projection_order_v1 p WHERE p.character_id=t.id),

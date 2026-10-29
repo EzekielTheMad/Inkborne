@@ -20,7 +20,7 @@ WITH target AS (
  LEFT JOIN public.content_versions v ON v.content_id=r.content_id AND v.version=r.content_version
 ), selected_class AS (
  SELECT c.value AS choice,c.value->>'slug' AS slug,(c.value->>'level')::integer AS class_level,
-   o.*,root.content_id AS pinned_class_id,root.content_version AS pinned_class_version,sub.slug AS subclass_slug,
+   o.*,to_jsonb(o) AS occurrence,root.content_id AS pinned_class_id,root.content_version AS pinned_class_version,sub.slug AS subclass_slug,
    root.data AS class_data,sub.data AS subclass_data
  FROM target t CROSS JOIN LATERAL jsonb_array_elements(t.choices->'classes') c(value)
  JOIN private.character_class_occurrences_v1 o ON o.character_id=t.id AND o.id=(c.value->>'occurrence_id')::uuid
@@ -98,12 +98,20 @@ SELECT jsonb_build_object(
  'checks',jsonb_build_object(
   'oneExpectedCharacter',(SELECT count(*)=1 FROM target) AND (SELECT count(*)=1 FROM expected) AND t.level=o.total_level,
   'exactOriginalAndSecondaryProvenance',o.roles->>'status'='available' AND o.roles->>'character_id'=t.id::text
+    AND o.roles->'contract_version'='1'::jsonb AND o.roles->>'system_id'=t.system_id::text
     AND o.roles->>'original_occurrence_id'=o.original->>'id'
+    AND jsonb_array_length(o.roles->'class_sources')=(SELECT count(*) FROM selected_class)
     AND (SELECT count(*)=1 FROM private.character_class_commands_v1 WHERE character_id=t.id)
     AND (SELECT count(*)=1 FROM selected_class WHERE id=(o.original->>'id')::uuid AND slug=o.original_class
-      AND controller_ref_id=(o.original->>'controller_ref_id')::uuid)
+      AND controller_ref_id=(o.original->>'controller_ref_id')::uuid AND occurrence=o.original)
+    AND (SELECT count(*)=1 AND bool_and(phase='observed' AND verified_actor_id=t.user_id
+      AND before_action_revision=0 AND after_action_revision=1)
+      FROM private.class_first_acquisition_proofs_v1 WHERE target_character_id=t.id)
     AND (SELECT count(*) FROM private.character_builder_class_acquisitions_v1 WHERE character_id=t.id)=CASE WHEN o.case_id='A3' THEN 1 ELSE 0 END
-    AND NOT EXISTS(SELECT 1 FROM selected_class c WHERE c.lifecycle<>'accepted' OR c.content_id<>c.pinned_class_id OR c.content_version<>c.pinned_class_version
+    -- The immutable original is provisional; only acquired secondaries become accepted.
+    AND NOT EXISTS(SELECT 1 FROM selected_class c WHERE c.lifecycle<>CASE WHEN c.id=(o.original->>'id')::uuid THEN 'provisional' ELSE 'accepted' END
+      OR (c.id=(o.original->>'id')::uuid AND c.occurrence IS DISTINCT FROM o.original)
+      OR c.content_id<>c.pinned_class_id OR c.content_version<>c.pinned_class_version
       OR NOT EXISTS(SELECT 1 FROM jsonb_array_elements(o.roles->'class_sources') r(value) WHERE r.value->>'occurrence_id'=c.id::text
         AND r.value->>'controller_ref_id'=c.controller_ref_id::text AND r.value->>'content_id'=c.content_id::text
         AND r.value->>'content_version'=c.content_version::text

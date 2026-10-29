@@ -4,6 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
+import { nativeJson, testRuntime } from "../../scripts/unraid/native";
 
 type Account = { id: string; email: string; password: string };
 type Settings = { appOrigin: string; supabaseOrigin: string; owner: Account; other: Account };
@@ -56,9 +57,14 @@ const nativeChecks = ["oneExpectedCharacter", "exactOriginalAndSecondaryProvenan
   "inventoryFromAcceptedStartingAward", "detailsConfirmed", "ownedOrdinaryReceipts", "ownedProgressionHistory", "fiveOrderBijections", "currentParentAndRoleOrder", "boundariesClosed"];
 
 async function settings(): Promise<Settings> {
-  const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
+  const runtime = process.env.INKBORNE_TEST_RUNTIME ? testRuntime() : undefined;
+  const file = runtime ? process.env.INKBORNE_TEST_CONFIG : process.env.INKBORNE_LOCAL_FLOW_CONFIG;
   if (!file) throw Error("Provide the isolated local browser configuration file");
-  const config = JSON.parse(await readFile(file, "utf8")) as Settings;
+  let config: Settings;
+  try { config = JSON.parse(await readFile(file, "utf8")) as Settings; }
+  catch { throw Error("Restricted browser configuration unavailable; contents withheld"); }
+  if (runtime && (file !== "/run/inkborne/test-config.json" || config.appOrigin !== "http://127.0.0.1:3001"
+    || config.supabaseOrigin !== "http://127.0.0.1:9999")) throw Error("Dedicated scratch-test origins and configuration required");
   for (const origin of [config.appOrigin, config.supabaseOrigin]) {
     const url = new URL(origin);
     if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.origin !== origin) throw Error("Explicit loopback origins required");
@@ -95,7 +101,7 @@ async function choose(page: Page, option: Locator) {
 }
 function group(page: Page, label: string, option?: string) {
   const article = page.getByRole("article").filter({ has: page.getByRole("heading", { name: label, exact: true, level: 4 }) });
-  return option ? article.filter({ has: choiceOption(page, option) }) : article;
+  return option ? article.filter({ has: page.locator("option").filter({ hasText: new RegExp(`^${option.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }) }) : article;
 }
 async function openLevel(page: Page, level: number, className?: string) {
   const rail = className ? page.getByRole("combobox", { name: `Set level for ${className}`, exact: true }).locator("..").locator("..").locator("..") : page;
@@ -140,17 +146,17 @@ async function ancestryAbilitiesBackground(page: Page, base: string, story: Stor
 }
 async function awardEquipment(page: Page, base: string) {
   await page.goto(base + "/equipment");
-  const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
+  const groups = page.locator("select").filter({ has: page.locator('option[value="a"]') });
   await expect(groups.first()).toBeVisible();
   for (let index = 0; index < await groups.count(); index++) {
-    const leather = choiceOption(groups.nth(index), /leather/i);
-    await choose(page, await leather.count() ? leather : groups.nth(index).locator('select option[value="a"]'));
+    const leather = groups.nth(index).locator("option").filter({ hasText: /leather/i });
+    await choose(page, await leather.count() ? leather : groups.nth(index).locator('option[value="a"]'));
   }
   const slots = page.locator('button[data-slot="select-trigger"]');
   for (let index = 0; index < await slots.count(); index++) {
-    const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
-    const sword = page.getByRole("option", { name: "Longsword", exact: true });
-    const option = await sword.count() ? sword : page.getByRole("option").first();
+    const slot = slots.nth(index); await slot.click(); const menu = page.getByRole("listbox"); await expect(menu).toBeVisible();
+    const sword = menu.getByRole("option", { name: "Longsword", exact: true });
+    const option = await sword.count() ? sword : menu.getByRole("option").first();
     await save(page, () => pickOption(option));
     await expect(slot).toBeEnabled();
   }
@@ -231,33 +237,43 @@ async function inspectSheet(page: Page, story: Story, name: string) {
   for (const feature of [...story.features, "Shelter of the Faithful"]) await expect(page.getByText(feature, { exact: true }).filter({ visible: true }).first()).toBeVisible();
 }
 async function readback(info: TestInfo, config: Settings, story: Story, id: string, label: string): Promise<Native> {
-  const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
-  if (!file || !uuid.test(id)) throw Error("Local native evidence configuration required");
-  const state = JSON.parse(await readFile(resolve(dirname(file), "../state.json"), "utf8"));
-  if (state.project !== "inkborne-app-flow-20261022" || state.ready !== true || state.stoppedUtc) throw Error("Wrong disposable runtime");
-  const db = state.containers.find((item: { name: string }) => item.name === `/${state.project}-db`);
-  if (!db || !/^[a-f0-9]{64}$/.test(db.id)) throw Error("Missing owned database identity");
-  const processes: unknown[] = [];
-  const run = (args: string[], input?: string) => {
-    const startedUtc = new Date().toISOString();
-    const result = spawnSync("C:/Users/kaios/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe", ["--context", "desktop-linux", ...args],
-      { cwd: process.cwd(), input, encoding: "utf8", windowsHide: true, timeout: 30000, maxBuffer: 2 * 1024 * 1024 });
-    processes.push({ pid: result.pid, parentPid: process.pid, cwd: process.cwd(), args, startedUtc, finishedUtc: new Date().toISOString(), exitCode: result.status });
-    if (result.status !== 0) throw Error("Owned read-only martial evidence failed; raw output withheld");
-    return result.stdout.trim();
-  };
-  expect(run(["info", "--format", "{{.ID}}"])).toBe(state.engineId);
-  const identity = JSON.parse(run(["inspect", "--format", '{"id":{{json .Id}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}}}', db.id]));
-  expect(identity.id).toBe(db.id); expect(identity.labels["com.docker.compose.project"]).toBe(state.project); expect(identity.status).toBe("running");
+  if (!uuid.test(id)) throw Error("Native character identity required");
+  const runtime = process.env.INKBORNE_TEST_RUNTIME ? testRuntime() : undefined;
+  const readers = ["complete-martial-builders-readback.sql", "builder-class-choices-readback.sql"];
   const reports: Record<string, Record<string, unknown>> = {};
-  for (const reader of ["complete-martial-builders-readback.sql", "builder-class-choices-readback.sql"]) {
-    const sql = await readFile(resolve(process.cwd(), "supabase/verification", reader), "utf8");
-    reports[reader] = JSON.parse(run(["exec", "-i", db.id, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "supabase_admin",
-      "--dbname", "postgres", "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", `character_id=${id}`, "--set", `case_id=${story.id}`, "--file", "-"], sql));
+  const processes: unknown[] = [];
+  if (runtime) {
+    for (const reader of readers) {
+      const sql = await readFile(resolve(process.cwd(), "supabase/verification", reader), "utf8");
+      reports[reader] = await nativeJson(sql, { character_id: id, case_id: story.id }) as Record<string, unknown>;
+    }
+  } else {
+    const file = process.env.INKBORNE_LOCAL_FLOW_CONFIG;
+    if (!file) throw Error("Local native evidence configuration required");
+    const state = JSON.parse(await readFile(resolve(dirname(file), "../state.json"), "utf8"));
+    if (state.project !== "inkborne-app-flow-20261022" || state.ready !== true || state.stoppedUtc) throw Error("Wrong disposable runtime");
+    const db = state.containers.find((item: { name: string }) => item.name === `/${state.project}-db`);
+    if (!db || !/^[a-f0-9]{64}$/.test(db.id)) throw Error("Missing owned database identity");
+    const run = (args: string[], input?: string) => {
+      const startedUtc = new Date().toISOString();
+      const result = spawnSync("C:/Users/kaios/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe", ["--context", "desktop-linux", ...args],
+        { cwd: process.cwd(), input, encoding: "utf8", windowsHide: true, timeout: 30000, maxBuffer: 2 * 1024 * 1024 });
+      processes.push({ pid: result.pid, parentPid: process.pid, cwd: process.cwd(), args, startedUtc, finishedUtc: new Date().toISOString(), exitCode: result.status });
+      if (result.status !== 0) throw Error("Owned read-only martial evidence failed; raw output withheld");
+      return result.stdout.trim();
+    };
+    expect(run(["info", "--format", "{{.ID}}"])).toBe(state.engineId);
+    const identity = JSON.parse(run(["inspect", "--format", '{"id":{{json .Id}},"labels":{{json .Config.Labels}},"status":{{json .State.Status}}}', db.id]));
+    expect(identity.id).toBe(db.id); expect(identity.labels["com.docker.compose.project"]).toBe(state.project); expect(identity.status).toBe("running");
+    for (const reader of readers) {
+      const sql = await readFile(resolve(process.cwd(), "supabase/verification", reader), "utf8");
+      reports[reader] = JSON.parse(run(["exec", "-i", db.id, "psql", "-X", "--no-password", "--host", "/var/run/postgresql", "--username", "supabase_admin",
+        "--dbname", "postgres", "--quiet", "--tuples-only", "--no-align", "--set", "ON_ERROR_STOP=1", "--set", `character_id=${id}`, "--set", `case_id=${story.id}`, "--file", "-"], sql));
+    }
   }
   const report = reports["complete-martial-builders-readback.sql"] as unknown as Native;
   const path = info.outputPath(`complete-martial-native-${label}.json`);
-  await writeFile(path, JSON.stringify({ observedUtc: new Date().toISOString(), label, processes, reports }, null, 2));
+  await writeFile(path, JSON.stringify({ observedUtc: new Date().toISOString(), label, runtime, processes, reports }, null, 2));
   await info.attach(`native-${label}`, { path, contentType: "application/json" });
   expect(report.evidenceKind).toBe("read_only_after_complete_actual_app_martial_builder"); expect(report.caseId).toBe(story.id);
   expect(report.characterId).toBe(id); expect(report.actorId).toBe(config.owner.id); expect(report.level).toBe(story.id === "A3" ? 4 : 3);
@@ -283,7 +299,7 @@ async function rejectOtherAccount(browser: Browser, config: Settings, sheet: str
 
 for (const story of stories) test(`complete martial ${story.id} ${story.race} ${story.first} finishes all six steps and reloads`, async ({ page, context, browser }, info) => {
   test.setTimeout(480000);
-  const config = await settings(), blocked: string[] = [], errors: string[] = [], checkpoints: string[] = [];
+  const config = await settings(), runtime = process.env.INKBORNE_TEST_RUNTIME ? testRuntime() : undefined, blocked: string[] = [], errors: string[] = [], checkpoints: string[] = [];
   await restrictOrigins(context, config, blocked); page.on("pageerror", () => errors.push("owner browser error"));
   console.log(JSON.stringify({ workerPid: process.pid, parentPid: process.ppid, cwd: process.cwd(), startedUtc: new Date().toISOString(), story: story.id }));
   await login(page, config, config.owner); expect((await context.cookies()).some(cookie => cookie.name.startsWith("sb-"))).toBe(true);
@@ -296,7 +312,7 @@ for (const story of stories) test(`complete martial ${story.id} ${story.race} ${
   const sheet = `${config.appOrigin}/characters/${id}`, base = sheet + "/builder";
   const checkpoint = async (label: string) => {
     checkpoints.push(label);
-    await writeFile(info.outputPath("complete-martial-progress.json"), JSON.stringify({ observedUtc: new Date().toISOString(), actualApp: true,
+    await writeFile(info.outputPath("complete-martial-progress.json"), JSON.stringify({ observedUtc: new Date().toISOString(), runtime, actualApp: true,
       caseId: story.id, characterId: id, name, checkpoints, blockedOrigins: blocked, pageErrors: errors }, null, 2));
   };
   await page.getByRole("combobox", { name: "First class", exact: true }).selectOption({ label: story.first });
@@ -336,7 +352,7 @@ for (const story of stories) test(`complete martial ${story.id} ${story.race} ${
   expect(blocked).toEqual([]); expect(errors).toEqual([]); await checkpoint("finished sheet reload and actual foreign-account 404 passed");
   await page.screenshot({ path: info.outputPath("complete-martial-sheet.png"), fullPage: true });
   const path = info.outputPath("complete-martial-workflow.json");
-  await writeFile(path, JSON.stringify({ actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true,
+  await writeFile(path, JSON.stringify({ runtime, actualApp: true, actualAuthCookies: true, actualPostgrest: true, uiWritesOnly: true,
     caseId: story.id, characterId: id, name, firstClass: story.first, secondaryRogue: story.id === "A3", race: story.race, subrace: story.subrace ?? null,
     background: "Acolyte", allSixBuilderStepsSaved: true, completedSheetReloadPassed: true, foreignAccountRefused: true,
     independent2014Expectations: { baseScores: story.scores, effectiveScores: story.effective, maximumHp: story.hp, armorClass: story.ac,
