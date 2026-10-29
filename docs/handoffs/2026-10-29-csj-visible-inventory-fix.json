@@ -1,0 +1,164 @@
+{
+  "kind": "inkborne-csj-visible-inventory-correction-v1",
+  "recordedAt": "2026-10-29T22:12:14.330Z",
+  "contractVersion": 1,
+  "assignment": "CSJ-FLOW-2",
+  "sourceBase": "849d9132b7c228bdda881f52a46986e5d8b6e436",
+  "sourceHead": "3d70442ad2687d5445c91263845de8aa0d32edf3",
+  "diffCommand": [
+    "git",
+    "diff",
+    "--binary",
+    "--full-index",
+    "849d9132b7c228bdda881f52a46986e5d8b6e436",
+    "3d70442ad2687d5445c91263845de8aa0d32edf3",
+    "--",
+    "e2e/unraid/csj-flow.spec.ts"
+  ],
+  "diffSha256": "823de6ea93829209b7c3b00a560a0f585ed8838f02fed6804acd9830fd4578d7",
+  "files": [
+    {
+      "path": "e2e/unraid/csj-flow.spec.ts",
+      "gitBlob": "7498808ea51ea9b763b44afca7194a459e7e8a16",
+      "sha256": "b97c0624748b0be6e4eaa207c700177edab9e17f23485ccc136970dc2ffc78cd",
+      "bytes": 31686
+    }
+  ],
+  "previousRunnerManifest": "docs/handoffs/2026-10-29-csj-runner-source.json",
+  "review": {
+    "previousFrozenProduct": "28b9333308840b66c1a383c47a22787138586b12",
+    "previousVerdict": "CLEAR",
+    "changedPath": "One visible:true locator filter only; renewed same-reviewer check pending.",
+    "allOtherSourceUnchanged": true,
+    "exactlyOneRowAndNativeOraclesRetained": true
+  },
+  "failedActualRun": {
+    "runId": "bcc589d0-9cf6-42e2-9e42-e9828f9ad79a",
+    "runtimeHead": "849d9132b7c228bdda881f52a46986e5d8b6e436",
+    "status": "failed",
+    "failure": "Inventory locator counted2 rather than1: hidden MobileSheet has its own Inventory ContentTabs. No actual product/native failure or unauthorized success observed.",
+    "location": "e2e/unraid/csj-flow.spec.ts:208",
+    "causeReferences": [
+      "components/sheet/mobile-sheet.tsx:119",
+      "components/sheet/mobile-sheet.tsx:260",
+      "components/sheet/tabs/inventory-tab.tsx:177"
+    ],
+    "scopeReached": "Normal first Fighter creation reached its independently checked sheet and rollback prefix before equip. No full selected journey/HP/role/Journal acceptance inferred.",
+    "sourceSteps": [
+      {
+        "name": "typecheck",
+        "exitCode": 0
+      },
+      {
+        "name": "lint",
+        "exitCode": 0
+      },
+      {
+        "name": "focused",
+        "exitCode": 0
+      },
+      {
+        "name": "csj-flow",
+        "exitCode": 1
+      }
+    ],
+    "bootstrap": {
+      "passed": true,
+      "definitions": 1535,
+      "authenticatedCatalogRead": true
+    },
+    "nativeOverlayClosureChecks": {
+      "classGateClosed": true,
+      "readinessClosed": true,
+      "hitDieGateClosed": true,
+      "genericCasUnchanged": true,
+      "noPendingAdmissions": true,
+      "privateHelpersClosed": true,
+      "servicePrivateClosed": true,
+      "noBuilderCapabilities": true,
+      "oldProducerRolesClosed": true,
+      "twoFiniteAuthenticatedEntries": true
+    },
+    "flowContextClosed": true,
+    "fullCsjAcceptance": "open"
+  },
+  "cleanup": {
+    "passed": true,
+    "privateAndRuntimeRemoved": true,
+    "removedImages": 13,
+    "remoteInputPaths": [
+      "/mnt/cache/appdata/inkborne-test-runner/runs/bcc589d0-9cf6-42e2-9e42-e9828f9ad79a/source",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/bcc589d0-9cf6-42e2-9e42-e9828f9ad79a/source.tar",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/bcc589d0-9cf6-42e2-9e42-e9828f9ad79a/catalog.tar"
+    ],
+    "localArchivePaths": [
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\source.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\catalog.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\catalog-files.txt"
+    ],
+    "helperRemoved": true,
+    "transportProcessAbsent": true,
+    "publicEvidenceFilesRetained": 14,
+    "originalContainers": 56,
+    "originalVolumes": 95,
+    "originalImages": 53,
+    "allOriginalImageIdsVerified": true,
+    "existingServicesUnchanged": true
+  },
+  "evidence": [
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\output\\diagnostic.txt",
+      "sha256": "e79b41dcd3d4031ece4ea1dfbf7539c335a3b353b2c310788989c4df4f226620",
+      "bytes": 67378
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\output\\summary.json",
+      "sha256": "52c507a2a57b6638a86b395fbd148e8aca201c97d19333f88810c249eba06779",
+      "bytes": 2222
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\output\\bootstrap.json",
+      "sha256": "1068573ab7e1a1789a2847029606286045bc5266fa7ddacefceef89ad9c3b28f",
+      "bytes": 1115387
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\output\\basic-sheet-profile.json",
+      "sha256": "0c1babc41b6fee58f033d0671885adff94de6c3d4098eda1cb7ae603bd4c54e7",
+      "bytes": 1114
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\output\\host-result.json",
+      "sha256": "7bed8e706db0d054a02983e01efb37575463b3ea25425f3ba7fe3282c6e68d7b",
+      "bytes": 196
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\output\\csj-flow-cleanup.json",
+      "sha256": "0320eace0964d8e3b14994790ec4a7857f5ecae6729bf97a22fa281900e8c75e",
+      "bytes": 82
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\cleanup-plan.json",
+      "sha256": "96900bf2988ea22ba6068b0d5c94f927d5890ca0bacc68ad18c8da38fa058191",
+      "bytes": 24663
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\bcc589d0-9cf6-42e2-9e42-e9828f9ad79a\\cleanup-result.json",
+      "sha256": "036ad4e56a80efc02fe219b36b6e7448a13e7581a83b4c067da7af4736f0fef6",
+      "bytes": 20119
+    }
+  ],
+  "focusedChecks": {
+    "discovery": {
+      "command": "npm run test:e2e -- --config e2e/unraid/csj.config.ts --list",
+      "exitCode": 0,
+      "tests": 1,
+      "files": 1
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    "reuse": "Actual Unraid typecheck/lint/focused suite passed on base; one supported visibility filter only changed. No repeated broad suite or native/source changes."
+  },
+  "nextAction": "Same central reviewer checks exact selector delta and failed-run cleanup, then coordinator returns clean window/dispatch for corrected approved bounded scratch run. No new user decision."
+}

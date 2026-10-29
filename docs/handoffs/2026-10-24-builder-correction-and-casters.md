@@ -8,7 +8,41 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ runner and native correction — 2026-10-29T21:51:15.440Z
+## Current CSJ actual failure and visible-inventory correction — 2026-10-29T22:12:14.330Z
+
+Source **3d70442ad2687d5445c91263845de8aa0d32edf3**, base **849d9132b7c228bdda881f52a46986e5d8b6e436**.
+[Exact one-file correction, failed-run evidence hashes and cleanup](2026-10-29-csj-visible-inventory-fix.json).
+
+Approved actual run **bcc589d0-9cf6-42e2-9e42-e9828f9ad79a** failed overall. Unraid typecheck/lint/focused
+suite, authenticated1535-definition bootstrap and10 finite native closure checks
+pass. First normal Fighter creation reached its independently checked sheet.
+Inventory equip then failed because the test counted the CSS-hidden MobileSheet
+Inventory copy with the desktop row (expected1,received2). This is a selector
+defect; no complete CSJ, broader native behavior or Journal acceptance is inferred.
+
+The only source change adds the supported visible:true filter to that item-row
+locator. Exactly-one visible row, actual PATCH and native item-ID/starting-grant/
+full parent-child retention assertions are unchanged. Discovery and diff checks
+pass; unchanged actual typecheck/lint/source-suite proof is reused. Native, app,
+Journal and all accepted creation source are unchanged. Same reviewer must clear
+this exact correction before another heavy attempt.
+
+**Cleanup complete:** context and transport closed; exact runtime/private
+credentials gone;13 test/dependency images,3 server inputs and3 local archives
+removed. All14 public evidence files retain hashes. Original56 containers,
+95volumes and all53 exact image IDs remain; existing service IDs/states unchanged.
+The temporary cleanup helper was removed with its hash retained. Full plan/result
+are beside the failed run's output; no operational cleanup remains.
+
+**Next:** release clean main source/docs/index after this own metadata checkpoint.
+Coordinator reuses the same central reviewer for the single-line correction and
+cleanup; after clearance, rerun the existing approved4role/2char/1campaign/max3entry
+CSJ workflow. Keep same-ID1280/390, all native/Journal/process-exit/final cleanup
+oracles and external boundaries. No new user decision or14-story rerun.
+Coordinator retains overview/queue/acceptance; Flow retains character work/report.
+Library/Journal worktrees and reports remain untouched.
+
+## Prior CSJ runner and native correction — 2026-10-29T21:51:15.440Z
 
 Character Flow retains CSJ-FLOW-2 + CSJ-NATIVE-VERIFY under contract v1.
 Source **28b9333308840b66c1a383c47a22787138586b12**, base **a7ff40d51ec582101626dd3224d77a6685988c2c**.

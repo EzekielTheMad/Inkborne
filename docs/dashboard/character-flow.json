@@ -9,21 +9,21 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T21:51:15.440Z",
+  "updatedAt": "2026-10-29T22:12:14.330Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "28b9333308840b66c1a383c47a22787138586b12",
+    "commit": "3d70442ad2687d5445c91263845de8aa0d32edf3",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Complete-source normal two-character UI producer, basic-sheet/native oracles and exit/final-cleanup gates frozen at 28b9333. Confirmed HP SQL expression corrected; changed source requires central review. Actual application/database acceptance remains unrun.",
-  "nextAction": "Coordinator reuses the single central reviewer for the six-file runner/native correction. After clearance, Flow runs the approved same-ID Unraid workflow, fixes concrete failures within scope, verifies exact cleanup and returns actual evidence for coordinator acceptance.",
+  "currentWork": "First actual CSJ run failed on hidden mobile inventory counted with the desktop row; database/native installation and first Fighter creation prefix passed. One-line visible-row correction frozen at 3d70442. Exact failed-run cleanup complete; selected CSJ acceptance stays open.",
+  "nextAction": "Same central reviewer checks one-file locator correction and failed-run cleanup; after coordinator clearance, run the existing approved same-ID Unraid workflow and retain exact native/Journal/exit/cleanup criteria. No repeated14-story matrix.",
   "blockers": [],
   "decisions": [],
   "dependencies": [
     {
       "laneId": "overview",
-      "reason": "Coordinator owns final source review, shared queue and integration acceptance. Flow releases shared source/index after own metadata checkpoint; actual runtime held until clearance."
+      "reason": "Coordinator owns same-reviewer correction clearance, next run dispatch and project acceptance. Flow releases shared main source/docs/index at this metadata checkpoint."
     }
   ],
   "deliverables": [
@@ -83,7 +83,7 @@
       "name": "Finite native HP and campaign assignment",
       "area": "Character flow",
       "requirement": "CSJ-NATIVE-HP; CSJ-NATIVE-CAMPAIGN (R08/R20)",
-      "outcome": "Finite HP/campaign source and same-ID actual workflow runner implemented. HP JSONB grouping corrected after focused parser failure; central changed-source review and actual save/reopen/authorization/rollback/concurrency/recovery remain pending.",
+      "outcome": "Finite native overlay installed with all closure checks in scratch. Selected workflow failed before equip on a hidden inventory-copy selector; minimal test correction awaits review. Full actual HP/campaign/Journal acceptance remains open.",
       "implementation": "implemented",
       "verification": "source",
       "integration": "isolated",
@@ -92,7 +92,8 @@
       "evidence": [
         "28b9333308840b66c1a383c47a22787138586b12 runner/native correction; docs/handoffs/2026-10-29-csj-runner-source.json exact six-file manifest; actual SQL/browser/Auth/database unrun.",
         "Typecheck/zero-warning lint/syntax/diff/discovery pass. In-memory original22P02/grouped allowed=true/forbidden=false; no actual native acceptance.",
-        "afe56e5 unchanged16 manifest files and62 consumer cases reused. Clearance superseded for SQL/bootstrap/remote changed paths; all10 Journal a3842f4 blobs match."
+        "afe56e5 unchanged16 manifest files and62 consumer cases reused. Clearance superseded for SQL/bootstrap/remote changed paths; all10 Journal a3842f4 blobs match.",
+        "docs/handoffs/2026-10-29-csj-visible-inventory-fix.json exact 3d70442ad2687d5445c91263845de8aa0d32edf3 selector correction and actual run bcc589d0-9cf6-42e2-9e42-e9828f9ad79a failed, with completed13-image/input cleanup and original56container/95volume/53image preservation."
       ]
     }
   ]
