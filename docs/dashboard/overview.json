@@ -9,7 +9,7 @@
     "name": "Character Flow · integration owner",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T17:39:46.044Z",
+  "updatedAt": "2026-10-29T18:40:07.387Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
@@ -17,7 +17,7 @@
     "branch": "codex/launch-integration-20261011"
   },
   "currentWork": "Character Flow has completed the finite fourteen-journey creation queue with local integration acceptance. Library and Journal remain separate lanes; this summary preserves the canonical whole-project scope and open acceptance gates.",
-  "nextAction": "Character Flow next addresses the existing R08 Bardic Inspiration capacity defect. Keep the separate Journal persistence/create-recovery and fixture proposals queued for integration review; do not rerun accepted creation stories.",
+  "nextAction": "Character Flow next addresses the existing R08 Bardic Inspiration capacity defect. Keep Library's related-definition/access/version/ambiguous-slug proposal alongside the separate Journal persistence/create-recovery and fixture proposals queued for integration review; do not rerun accepted creation stories.",
   "blockers": [],
   "decisions": [],
   "dependencies": [
@@ -291,14 +291,15 @@
       "area": "Delivery",
       "milestone": "M8",
       "requirement": "R25/R27",
-      "outcome": "Current performance/accessibility/onboarding and approved deployment/auth/restore gates remain open. No app launch is claimed.",
+      "outcome": "Current performance/accessibility/onboarding and approved deployment/auth/restore gates remain open. No app launch is claimed. S5/P1-P3 scope dispositions remain open; total documented project completion is not implied.",
       "implementation": "partial",
       "verification": "unverified",
       "integration": "unknown",
       "acceptance": "open",
       "disposition": "included",
       "evidence": [
-        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R25/R27; current-candidate acceptance remains open unless explicitly recorded."
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R25/R27; current-candidate acceptance remains open unless explicitly recorded.",
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md#prd-p1-p3-crosswalk-decision-register-not-silent-exclusions — canonical S5/P1-P3 scope-disposition register; no scope decision is made here"
       ]
     },
     {

@@ -16,7 +16,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Follow the continuation prompt's focused-validation and verification stopping
   rules. Report usable behavior delivered, not test counts as progress. Preserve
   mandatory security, data-integrity and release checks.
-- This chat owns `docs/dashboard/character-flow.json` and `docs/dashboard/overview.json`.
-  Maintain them at meaningful checkpoints under Project Dashboard's version1
-  `C:/Users/kaios/Documents/ChatGPT/Project Dashboard/docs/REPORTING-SOP.md`.
+- Check the [canonical reporting ownership record](docs/dashboard/OWNERSHIP.md)
+  at every continuation and edit only assigned reports. Maintain them at meaningful
+  checkpoints under [Project Dashboard SOP v1](<C:/Projects/Project Dashboard/docs/REPORTING-SOP.md>).
   Reports summarize the canonical ledger; reporting alone adds no app checks.
