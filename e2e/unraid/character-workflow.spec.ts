@@ -500,6 +500,10 @@ test("parent Fiend correction applies once and exact JWT replay retains the upda
     const value = JSON.parse(line.slice(line.indexOf(":") + 1)); if (value?.status === "applied" && value.receipt) applied = value;
   } catch { /* Ignore Flight metadata; never record the response body. */ }
   assert(applied); assert(originalRequest); const exactRequest = originalRequest;
+  await expect(review).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: "Set level for Warlock", exact: true })).toBeEnabled();
+  await expect.poll(() => page.evaluate(({ owner, target }) => sessionStorage.getItem(`inkborne:pending-builder-step:v1:${owner}:${target}`),
+    { owner: config.owner.id, target: characterId })).toBeNull();
   const after = await observeParent(characterId, config.owner.id, 1537); retainParentOrigins(before, after);
   expect(BigInt(after.native.actionRevision) - BigInt(before.native.actionRevision)).toBe(BigInt(1));
   for (const key of ["choices", "scores", "state", "level", "startingAwards"] as const) expect(after.native[key]).toEqual(before.native[key]);
