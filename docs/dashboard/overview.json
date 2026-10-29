@@ -9,17 +9,19 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T19:52:22.083Z",
+  "updatedAt": "2026-10-29T20:13:03.529Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "CSJ-FLOW-1 capacity source is reported at ce7330f with focused helper/provider/widget checks, typecheck and lint passing. Journal save safeguards pass focused action/UI checks with final source/consumer pending. One central exact-source review is underway; runner adaptation is assigned, actual CSJ acceptance remains open.",
-  "nextAction": "Collect committed Journal source/manifest and paired runner/consumer source; resolve central review findings, assemble the exact selected candidate, then run the bounded two-character/four-role CSJ workflow with cleanup.",
+  "currentWork": "CSJ-v1 stops at a precise source-confirmed native prerequisite. Capacity ce7330f and Journal a3842f4 have clear exact-source review and focused checks; Journal is source-assembled at31222a1. Current guards intentionally refuse enrolled owner HP state changes and campaign assignment, so the actual two-character workflow was not run.",
+  "nextAction": "Define the bounded owner-only manual-HP and campaign-assignment native producer/consumer admissions, preserving generic/foreign/old-writer denials and exact revision/retention/rollback semantics. After the next agreed implementation boundary, complete/review the partial runner and resume unchanged CSJ-v1 actual acceptance. Existing fixture approval remains valid.",
   "blockers": [
-    "CSJ-v1 integration awaits selected sheet/capacity and acknowledged conflict/recovery source checkpoints plus coordinated runner/fixtures. The disposable package is user-approved; current implementation/evidence is not yet accepted."
+    "CSJ-NATIVE-HP: current conditional state RPC locks but supplies no enrolled-parent admission; selected HP/tempHP persistence remains blocked. Coordinator owns contract disposition; Character Flow is proposed implementation owner.",
+    "CSJ-NATIVE-CAMPAIGN: existing assignment directly changes protected campaign_id without admission; same-ID campaign/audience setup remains blocked. Coordinator owns contract disposition; Character Flow is proposed implementation owner.",
+    "CSJ runner is partial and fails closed because normal-creation producer is absent; final runner source review, successful Flow/Journal exits and final cleanup verification remain pending. No actual CSJ run occurred."
   ],
   "decisions": [],
   "dependencies": [
@@ -337,7 +339,7 @@
       "area": "Integrated character journey",
       "milestone": "M3/M5.5",
       "requirement": "R06/R08/R20; CSJ-v1 criteria CSJ-1..6",
-      "outcome": "Half-Elf Fighter4 standalone and Human Lore Bard3 campaign progress from normal creation through selected sheet actions and same-ID Journal save/reopen/privacy/recovery in the disposable local environment.",
+      "outcome": "Reviewed capacity and narrative save/recovery source is prepared and Journal source assembled. Two selected creation/sheet/Journal journeys remain blocked on finite native HP and campaign-assignment producer admissions; actual local acceptance is open.",
       "implementation": "partial",
       "verification": "source",
       "integration": "unknown",
@@ -346,7 +348,10 @@
       "evidence": [
         "docs/LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal — explicit 2026-10-29 approval and bounded criteria",
         "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-coordination-checkpoint — dispatched assignments; integrated actual acceptance pending",
-        "Character Flow product ce7330f / docs b1e15dc — capacity source/provider proof only; Journal final source and CSJ actual workflow pending"
+        "Character Flow product ce7330f / docs b1e15dc — capacity source/provider proof only; Journal final source and CSJ actual workflow pending",
+        "Journal a3842f4 / metadata068e6d3 —42 focused checks/typecheck/lint/discovery; exact ten-file source review clear; actual workflow unrun",
+        "Assembled31222a1 / Flow docse5ec4da —canonical Journal blobs match; four-file runner partial, source-confirmed native blockers independently reviewed; no runtime",
+        "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-final-blocked-checkpoint —CSJ-1..6 status and next proposed native packages"
       ]
     }
   ]

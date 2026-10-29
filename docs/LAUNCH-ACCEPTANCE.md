@@ -150,6 +150,50 @@ The cycle ends at CSJ-v1 local acceptance or a precise blocked checkpoint; it
 does not auto-start the next milestone. Live assignment/evidence state is in
 the [single coordinator checkpoint](handoffs/2026-10-29-project-coordinator.md#csj-v1-coordination-checkpoint).
 
+**Current CSJ-v1 checkpoint — source blocked, 2026-10-29T20:13:03.529Z.**
+
+The capacity correction `ce7330f` and Journal `a3842f4` have clear central
+exact-source review and their recorded focused checks. All ten reviewed Journal
+product/test blobs are assembled in `31222a1`; four partial runner files are
+saved, but the normal-creation producer is deliberately absent and CSJ preflight
+refuses execution. This is source preparation, not assembled workflow acceptance.
+
+Two committed-source prerequisites block CSJ-2/CSJ-4 and the same-ID connection:
+
+- **CSJ-NATIVE-HP:** the existing owner state CAS acquires the singleton guard but
+  creates no enrolled-parent admission. Changed `state` is protected; the existing
+  workflow intentionally expects owner generic CAS refusal403/42501. Next bounded
+  contract: an owner-only manual currentHP/tempHP producer and sheet consumer,
+  exact preimage/revision/mechanical-input binding, unrelated-field retention and
+  coherent native projection/order. Keep generic state patches denied; no rolled
+  spending, rest or global writer admission.
+- **CSJ-NATIVE-CAMPAIGN:** existing assignment directly patches protected
+  `campaign_id` without an admission. Next bounded contract: existing action/UI
+  paired with an exact owner producer, prior-assignment check and destination
+  membership/system/content validation; change only authorized assignment plus
+  required revision/order bookkeeping. Keep direct generic PATCH, foreign/DM
+  mutation and unrelated lifecycle operations denied.
+
+Coordinator owns these shared-contract dispositions; Character Flow is the
+proposed native/consumer implementation owner after an exact boundary is agreed.
+These next packages are identified, not dispatched or implemented in this run.
+Both require exact-source review and real scratch checks for valid owner success,
+stale/conflicting inputs, foreign/service/old-writer denial, rollback, response
+loss, unrelated parent/child retention and revision/order advancement. Do not
+un-enroll, fabricate builder proofs, substitute prebuilt characters or use
+privileged fixture repair. Existing builder seals cannot admit campaign changes;
+origin creation also rejects preassigned campaign IDs.
+
+The same central independent reviewer confirmed this native prerequisite from
+committed source, not a new runtime reproduction. No CSJ runtime, new credentials
+or fixtures were created; no native/schema/security changes or guard relaxation
+occurred. The approved disposable setup remains authorized, so this is a
+technical blocker rather than a repeat user-approval request. All fourteen
+accepted creation journeys and prior source clearances remain intact. Stop this
+cycle at the approved precise-blocked boundary; resume only the next agreed
+native package, then complete/review the runner and return to unchanged CSJ-v1
+criteria. [Exact checkpoint and source references](handoffs/2026-10-29-project-coordinator.md#csj-v1-final-blocked-checkpoint).
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final

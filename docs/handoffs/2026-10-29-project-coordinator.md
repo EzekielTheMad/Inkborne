@@ -300,10 +300,10 @@ review is reserved for the assembled exact source. No acceptance is inferred.
 
 | Assignment | Recipient / owned boundary | Evidence and dependency | State |
 | --- | --- | --- | --- |
-| CSJ-FLOW-1 | Character Flow `01a1790d-be90-73d1-91f6-84e48a557ee1`; selected character/sheet sources and bounded runner support; own report/handoff | R08 capacity source `ce7330f` reports72 focused checks/typecheck/lint passing; actual selected sheet actions await CSJ run. Main source/index window released at `b1e15dc`. | reported 2026-10-29T19:37:38.525Z |
-| CSJ-JOURNAL-1 | Character Journal `01a1888e-2454-7633-b5f5-57c36e522a82`; `app/(app)/characters/[id]/story-actions.ts`, TimelineSection, narrative tests and real-story consumer in its own worktree | Conditional acknowledged update, structured outcomes, stable uncertain-create identity/readback; compatible scope may proceed, semantic changes return for contract decision. Source then fixture interface checkpoint; no heavy run yet. | dispatched 2026-10-29T19:37:38.525Z |
-| CSJ-FLOW-2 | Character Flow; shared runner/bootstrap + normal-creation fixture producer | Assemble exact Journal source after contract/source checkpoint; pass same two UI-created IDs to real story, four roles/one campaign/max3entries, serialized desktop/mobile real workflow and cleanup. | dispatched; source/runner adaptation ready after this docs window |
-| CSJ-REVIEW | One independent read-only subagent, central allocation only | Frozen combined source and supporting evidence; security, owner/audience isolation, stale/unknown/duplicate behavior and native-field retention. | dispatched to `/root/csj_review`; Flow exact source stage underway |
+| CSJ-FLOW-1 | Character Flow `01a1790d-be90-73d1-91f6-84e48a557ee1`; selected character/sheet sources and bounded runner support; own report/handoff | R08 capacity source `ce7330f` clear independent review,72 focused checks/typecheck/lint; actual selected sheet actions blocked on native admissions. | reviewed-source 2026-10-29T19:37:38.525Z |
+| CSJ-JOURNAL-1 | Character Journal `01a1888e-2454-7633-b5f5-57c36e522a82`; `app/(app)/characters/[id]/story-actions.ts`, TimelineSection, narrative tests and real-story consumer in its own worktree | Conditional acknowledged update, structured outcomes, stable uncertain-create identity/readback; compatible scope may proceed, semantic changes return for contract decision. Exact `a3842f4` ten-file manifest and digest clear independent review;42 focused checks/typecheck/lint/discovery. Assembled in `31222a1`; real run blocked. | reviewed-source 2026-10-29T19:37:38.525Z |
+| CSJ-FLOW-2 | Character Flow; shared runner/bootstrap + normal-creation fixture producer | Assemble exact Journal source after contract/source checkpoint; pass same two UI-created IDs to real story, four roles/one campaign/max3entries, serialized desktop/mobile real workflow and cleanup. | blocked at `31222a1` / docs `e5ec4da`; native prerequisites confirmed, runner partial |
+| CSJ-REVIEW | One independent read-only subagent, central allocation only | Frozen combined source and supporting evidence; security, owner/audience isolation, stale/unknown/duplicate behavior and native-field retention. | reviewed-source: Flow/Journal clear; native blocker independently confirmed; runner/runtime not accepted |
 | CSJ-ACCEPT | Coordinator's overview/ledger/checkpoint | Compare exact real results to CSJ-1..6, retain accepted evidence, record exclusions and cleanup. | blocked on above evidence |
 
 Library `01a1888d-9110-7e90-8ee0-516640d33539` is verified and
@@ -352,3 +352,71 @@ Read-only PC measurement:4.63GiB available physical,56.86/59.94GiB commit;
 lanes informed to serialize remaining source checks. No process was stopped;
 the coordinator's measurement session exited. Heavy execution remains on the
 existing guarded Unraid scratch lifecycle after assembled-source agreement.
+
+## CSJ-v1 final blocked checkpoint
+
+2026-10-29T20:13:03.529Z. Approved cycle ends at **precise technical blocker**, not local
+acceptance. Scope/criteria/exclusions remain unchanged in the canonical ledger.
+Character Flow released all main source/document/index writes at clean
+`e5ec4daf21b17a72ec7a23588c843a1644b59619`; no operation is in flight.
+Journal product remains `a3842f497f9570aaa08f20d26209bf29128aa57e`;
+its metadata checkpoint `068e6d3` records the technical blocker and preserves
+the unrelated pre-existing one-line SOP-path edit unstaged. No foreign edits.
+
+### Delivered source and evidence limits
+
+- Flow capacity product `ce7330f`:72 focused helper/provider/widget/conditional
+  resource checks, typecheck and zero-warning lint pass; exact source review clear.
+- Journal product `a3842f4`:42 focused action/editor/story cases, typecheck,
+  zero-warning lint and real-story discovery pass; ten canonical blobs and
+  selected diff digest `8e237a153d4814237d5c61550083a4fda44e6bc53aa8dd7c7b5e9a5fd7d8750f`
+  match. Exact source review clear. Neither clearance proves actual CSJ.
+- Assembled source `31222a1fe026f7459050a2340d041d720c611d18` imports only
+  those ten Journal product/test blobs, verified identical. Source delta digest
+  `1b6abe2aff03746502c153dd26f5575e305e601539d5ef37fcf4003ca5ac5d16`.
+  Partial bootstrap/remote/run/csj.config source is preserved with digest
+  `9092b6eeed41b2f09d16c4b137492d1a7cc69568e3405a4578bd13f7e8005533`.
+  `csj-flow.spec.ts` is absent intentionally; preflight refuses CSJ export/run.
+  Runner is incomplete/unreviewed; no new check suite qualifies that baseline.
+- Source manifest: [Flow checkpoint](2026-10-29-csj-flow-source-checkpoint.json).
+  All73 linked retained creation evidence files matched their recorded hashes.
+  All14 accepted creation journeys and all existing states/owners remain intact.
+
+| Criterion | Current result |
+| --- | --- |
+| CSJ-1 two normal creations / same IDs | Prior creation evidence retained; selected assembled connection unrun |
+| CSJ-2 sheet / capacity / HP | Capacity source clear; actual HP writes blocked by native admission |
+| CSJ-3 Journal continuity | Action/editor/real-story source clear; actual persistence unrun |
+| CSJ-4 genuine audiences | Campaign assignment blocked by native admission; actual role checks unrun |
+| CSJ-5 conflict/recovery/isolation | Source checks and real-story coverage prepared; real checks unrun |
+| CSJ-6 assembled runtime/review/cleanup | No runtime started; no owned cleanup outstanding; runner incomplete |
+
+### Independently confirmed prerequisite and next owners
+
+The one central reviewer `/root/csj_review` cleared Flow and Journal exact
+source, then confirmed no already-admitted native route at committed
+`dbf2489`. Relevant references:
+
+- `supabase/staged/character-builder-parent-admission.sql:119-127,241-263`
+  protects state/campaign_id and admits only builder/first_class; changed
+  protected tuples without a seal raise42501. Lines393-395 add locking only.
+- `lib/sheet/update-state.ts:30-32` uses legacy CAS; its migration
+  `20261003223252_conditional_character_state_owner_cas.sql:40-43` updates state.
+  `e2e/unraid/character-workflow.spec.ts:140,149,166` explicitly tests generic
+  owner/service/foreign refusal. Do not weaken that oracle to obtain green.
+- `app/(app)/campaigns/actions.ts:224-238` changes campaign_id without an
+  admission. Builder seals preserve campaign identity at parent-admission184-185;
+  origin form90-91 forces null and native creation249 rejects a campaign, so
+  preassignment is not a compatible alternate.
+
+Coordinator owns decisions for proposed **CSJ-NATIVE-HP** and
+**CSJ-NATIVE-CAMPAIGN**, with Character Flow the proposed implementation owner.
+Boundaries and minimum real checks are recorded in the canonical queue above.
+No native implementation assignment is dispatched here. Journal holds its frozen
+consumer; Library has no goal blocker or new assignment. No message to Feedback.
+No new user decision is needed for the already-approved fixture package.
+
+No heavy runtime, fixture/account/credential creation, native/security change,
+privileged bypass, deployment or production restart occurred. No background
+monitor or later automatic continuation is established. Resume from this exact
+checkpoint and current ownership; do not repeat onboarding or accepted tests.
