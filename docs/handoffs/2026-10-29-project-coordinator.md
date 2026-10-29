@@ -486,3 +486,33 @@ Coordinator finishes only assigned docs/overview here and releases main window
 for continued Flow source. Native implementation absence has been resolved as
 assigned work; remaining implementation/verification gaps will be dispatched and
 fixed within authority rather than treated as a final external blocker.
+
+## CSJ-v1 runner clear and actual execution dispatched
+
+2026-10-29T21:56:35.153Z: Flow releases main source/docs/index clean at metadata
+`a6a88c01ee0ff2fbfd18ebb0860caa9ba3080726`; product source
+`28b9333308840b66c1a383c47a22787138586b12`, base `a7ff40d`.
+[Exact six-file runner/native manifest](2026-10-29-csj-runner-source.json),
+diff SHA256 `508321f1cd98c36c8ae066cdd03c4b6c1e4f16e3053256e636c7edc0c788f622`.
+Root independently verifies six hashes/sizes/diff and ten frozen Journal blobs.
+Same central reviewer CLEAR exact delta;16 other native paths unchanged. The
+one-line native HP JSONB grouping correction replaces the affected prior source
+clearance; no generic writer/access relaxation. Typecheck/zero-warning lint/
+syntax/discovery pass; no actual runtime acceptance yet.
+
+| Assignment | State | Owner and next action |
+| --- | --- | --- |
+| CSJ-NATIVE-HP / CSJ-NATIVE-CAMPAIGN | implemented, source-reviewed | Character Flow executes actual authorized owner/refusal/rollback/concurrency/response-loss/retention/revision/order checks in approved scratch |
+| CSJ-FLOW-2 / CSJ-NATIVE-VERIFY | complete reviewed source; actual execution dispatched after this window closes | Character Flow uses existing lifecycle, refreshed resource/slot guards, same two normal-created IDs, unchanged Journal consumer; fixes concrete failures within scope |
+| CSJ-JOURNAL-1 | unchanged frozen a3842f4 consumer assembled | Same approved three-entry real consumer run, genuine role refusals, cleanup and native isolation proof |
+| CSJ-ACCEPT | open, no permission blocker | Coordinator inspects CSJ-1..6 actual evidence, successful Flow/Journal exits and final cleanup records/fresh DB checks plus host teardown; reuse same reviewer as needed |
+
+Flow read-only preflight reports30.5GiB available physical memory/23.3GiB Docker
+free/no competing Inkborne runtime. No mutation/fixture/credentials/runtime yet.
+These are measured preparation, not assurance that later resource guards pass.
+All14 accepted creation receipts, lane reports/owners, current priorities and
+external-action restrictions remain. No new threads, broader suites, hosted
+changes or user decision. Main docs/index window closes at this scoped commit;
+Flow next owns any necessary bounded source/index and task-owned runtime work.
+If actual evidence exposes a routine defect, assign/fix/review the exact delta
+and continue; do not stop merely at missing implementation.

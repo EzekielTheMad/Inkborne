@@ -260,6 +260,32 @@ runner successful-exit checks with final cleanup records. Review the frozen
 runner/native verification source before guarded actual scratch execution, then
 resolve concrete failures and continue CSJ-1..6.
 
+**Runner/native delta review and actual dispatch — 2026-10-29T21:56:35.153Z:**
+Character Flow freezes complete source at `28b9333308840b66c1a383c47a22787138586b12` (base
+`a7ff40d`), metadata `a6a88c0`. Six manifest files and selected diff
+SHA256 `508321f1cd98c36c8ae066cdd03c4b6c1e4f16e3053256e636c7edc0c788f622`
+match independently. Typecheck, lint, syntax and one-test discovery pass. The
+same authorized read-only reviewer is CLEAR for these exact six files, with no
+actionable P1/P2 findings. A focused parser probe found22P02 in the original HP
+JSONB allowlist expression; explicit extraction grouping fixes that expression
+and preserves the finite allowlist. Original native clearance is superseded for
+the changed SQL/bootstrap/remote paths;16 other native paths and all10 frozen
+Journal blobs remain identical. Expression/source checks do not prove native
+installation or real access behavior.
+
+CSJ-FLOW-2 / CSJ-NATIVE-VERIFY now advance to the already-approved actual
+disposable Unraid run, assigned to Character Flow after this docs/index release.
+Current read-only preflight reports about30.5GiB available physical memory,
+23.3GiB Docker free and no competing Inkborne runtime; recheck before mutation.
+Keep4roles/2normal-UI-created characters/1DMcampaign/max3Journal entries, exact
+source/content/runtime binding, one heavy run and all existing access guards.
+The same two IDs must pass native owner/refusal/rollback/concurrency/recovery,
+basic sheet and unchanged Journal consumer checks at1280/390. Both test process
+exits, final cleanup records/fresh native counts and supported host teardown
+are mandatory. Coordinator accepts CSJ-1..6 only after inspecting that actual
+evidence. All14 accepted creation journeys and exclusions remain retained.
+No user decision or new permission is needed at this source-clear checkpoint.
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final
