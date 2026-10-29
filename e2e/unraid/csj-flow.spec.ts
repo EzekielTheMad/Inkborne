@@ -204,7 +204,7 @@ async function inspectSheet(page: Page, config: Config, id: string, story: Story
 async function equipAndRoll(page: Page, config: Config, id: string, story: Story) {
   const before = await basicSnapshot(id, config.accounts.owner.id);
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
-  const row = page.locator("div.group").filter({ has: page.getByText(story.weapon, { exact: true }) }).filter({ has: page.getByTitle("Equip", { exact: true }) });
+  const row = page.locator("div.group").filter({ has: page.getByText(story.weapon, { exact: true }) }).filter({ has: page.getByTitle("Equip", { exact: true }) }).filter({ visible: true });
   await expect(row).toHaveCount(1);
   const [equipped] = await Promise.all([page.waitForResponse(value => value.request().method() === "PATCH" && new URL(value.url()).pathname === "/rest/v1/character_inventory"),
     row.getByTitle("Equip", { exact: true }).click()]);
