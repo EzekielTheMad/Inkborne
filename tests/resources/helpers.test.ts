@@ -76,6 +76,52 @@ describe("computeResources", () => {
   const feat = (slug: string, data: Record<string, unknown>) => makeRef(slug, data, "feat");
   const trait = (slug: string, data: Record<string, unknown>) => makeRef(slug, data, "trait");
 
+  const bardContext = { systemId: "srd-system", systemSlug: "dnd-5e-2014", charismaModifier: 3 };
+  function bardic(slug = "bardic-inspiration-d6", level = 1) {
+    const ref = feature(slug, { class: "bard", subclass: null, level, usages: 1, recovery: "long rest",
+      description: "You can use this feature a number of times equal to your Charisma modifier (a minimum of once)." });
+    ref.content_definitions = { ...ref.content_definitions, system_id: bardContext.systemId, scope: "platform", owner_id: null };
+    return ref;
+  }
+
+  it("derives the identified SRD Bardic capacity from confirmed Charisma without changing the pin", () => {
+    const ref = bardic(), before = structuredClone(ref);
+    expect(computeResources([ref], [{ slug: "bard", level: 3 }], bardContext)[0]).toMatchObject({
+      slug: "bardic-inspiration-d6", max: 3, recovery: "long", sourceLabel: "Bard 1",
+    });
+    expect(ref).toEqual(before);
+  });
+
+  it.each([-3, 0, 1, 4])("retains the Bardic minimum of one at modifier %s", charismaModifier => {
+    expect(computeResources([bardic()], [{ slug: "bard", level: 3 }], { ...bardContext, charismaModifier })[0].max)
+      .toBe(Math.max(1, charismaModifier));
+  });
+
+  it.each([null, undefined, Number.NaN, Number.POSITIVE_INFINITY, 2.5])("does not fabricate a Bardic count for unavailable modifier %s", charismaModifier => {
+    expect(computeResources([bardic()], [{ slug: "bard", level: 3 }], { ...bardContext, charismaModifier })).toEqual([]);
+  });
+
+  it.each([["bardic-inspiration-d6", 1], ["bardic-inspiration-d8", 5], ["bardic-inspiration-d10", 10], ["bardic-inspiration-d12", 15]] as const)
+    ("keeps the identified %s capacity tied to its own class and gain level", (slug, level) => {
+      expect(computeResources([bardic(slug, level)], [{ slug: "bard", level }], bardContext)[0].max).toBe(3);
+      expect(computeResources([bardic(slug, level)], [{ slug: "bard", level: level - 1 }], bardContext)).toEqual([]);
+      expect(computeResources([bardic(slug, level)], [{ slug: "fighter", level: 20 }], bardContext)).toEqual([]);
+    });
+
+  it("preserves authored counts for homebrew, other systems and unrecognized source data", () => {
+    const homebrew = bardic(); homebrew.content_definitions.source = "homebrew";
+    const privateRef = bardic(); privateRef.content_definitions.scope = "personal";
+    const wrongSystem = bardic(); wrongSystem.content_definitions.system_id = "another-system";
+    const changedText = bardic(); changedText.content_definitions.data.description = "A different authored resource.";
+    const changedCount = bardic(); changedCount.content_definitions.data.usages = 5;
+    const wrongPin = bardic(); wrongPin.content_version = 2;
+    for (const ref of [homebrew, privateRef, wrongSystem, changedText, wrongPin]) {
+      expect(computeResources([ref], [{ slug: "bard", level: 3 }], bardContext)[0].max).toBe(1);
+    }
+    expect(computeResources([changedCount], [{ slug: "bard", level: 3 }], bardContext)[0].max).toBe(5);
+    expect(computeResources([bardic()], [{ slug: "bard", level: 3 }], { ...bardContext, systemSlug: "dnd-5e-2024" })[0].max).toBe(1);
+  });
+
   it("returns empty array when no features", () => {
     expect(computeResources([], [])).toEqual([]);
   });

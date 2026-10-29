@@ -39,6 +39,18 @@ function slugifyExtra(name: string): string {
 /** Content types that can contribute feature resources. */
 const RESOURCE_CONTENT_TYPES = new Set(["feature", "feat", "trait"]);
 
+export interface ResourceCalculationContext {
+  systemId: string;
+  systemSlug: string;
+  /** Supplied by the existing confirmed ability authority, never recomputed here. */
+  charismaModifier?: number | null;
+}
+
+const BARDIC_INSPIRATION_LEVELS = new Map([
+  ["bardic-inspiration-d6", 1], ["bardic-inspiration-d8", 5],
+  ["bardic-inspiration-d10", 10], ["bardic-inspiration-d12", 15],
+]);
+
 /**
  * Compute the full list of active feature resources for the character.
  *
@@ -52,6 +64,7 @@ const RESOURCE_CONTENT_TYPES = new Set(["feature", "feat", "trait"]);
 export function computeResources(
   contentRefs: ContentRefWithContent[],
   classes: Array<{ slug: string; level: number }>,
+  context?: ResourceCalculationContext,
 ): FeatureResource[] {
   const out: FeatureResource[] = [];
   const resourceSlugs = new Set<string>();
@@ -101,7 +114,21 @@ export function computeResources(
 
     // Primary resource from usages + recovery
     if (recovery != null) {
-      const max = getMaxUses(usages, levelForMax);
+      let max = getMaxUses(usages, levelForMax);
+      const bardicGainLevel = BARDIC_INSPIRATION_LEVELS.get(def.slug);
+      // The identified 2014 SRD pins declare CHA/minimum one in their prose,
+      // while the imported numeric field is one. Project that finite rule;
+      // preserve authored homebrew/other-system counts and immutable snapshots.
+      if (context?.systemSlug === "dnd-5e-2014" && def.system_id === context.systemId
+        && def.content_type === "feature" && def.source === "srd" && def.scope === "platform" && def.owner_id === null
+        && ref.content_id === def.id && ref.content_version === def.version
+        && bardicGainLevel !== undefined && data.class === "bard" && data.subclass === null && data.level === bardicGainLevel
+        && usages === 1 && typeof data.description === "string"
+        && /You can use this feature a number of times equal to your Charisma modifier \(a minimum of once\)\./i.test(data.description)) {
+        const modifier = context.charismaModifier;
+        max = levelForMax >= bardicGainLevel && typeof modifier === "number" && Number.isInteger(modifier)
+          ? Math.max(1, modifier) : 0;
+      }
       if (max > 0) {
         addResource({
           slug: def.slug,

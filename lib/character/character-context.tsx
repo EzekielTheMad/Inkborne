@@ -742,8 +742,12 @@ export function CharacterProvider({
       slug: c.slug,
       level: c.level,
     }));
-    return computeResources(contentRefs, classChoices);
-  }, [contentRefs, character.choices?.classes]);
+    return computeResources(contentRefs, classChoices, {
+      systemId: character.system_id,
+      systemSlug: character.game_systems?.slug ?? "",
+      charismaModifier: mechanics.status === "available" ? getConfirmedAbilityModifier(evalResult, schema, "charisma") : null,
+    });
+  }, [contentRefs, character.choices?.classes, character.system_id, character.game_systems?.slug, mechanics, evalResult, schema]);
 
   // --- Hit dice ---
   // Pools are fully derived: max = class level, die = class content hit_die,
