@@ -9,21 +9,21 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T22:36:16.480Z",
+  "updatedAt": "2026-10-29T22:51:57.975Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "301c5a652e10f8c10bbfaea395374c930de39a40",
+    "commit": "6b395388d60648c3f3d36a25a7b35f5f03504cf4",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Actual CSJ retry exposed missing equipped inventory weapon attacks. Minimal consumer correction301c5a6 reuses pinned inventory and existing math; causal regression plus31 focused cases/typecheck/lint pass. Failed-run cleanup complete; fixed actual CSJ acceptance remains pending.",
-  "nextAction": "Same central reviewer checks the three-file product/test correction and completed failed-run cleanup. After clearance, run the approved existing two-character Unraid story with unchanged HP/role/Journal/native/exit/cleanup gates.",
+  "currentWork": "Actual equipped weapon now appears/opens after301c5a6. Third CSJ run failed on the prior popup closing during the next Roll action; a minimal shared-loop wait is frozen at6b39538. Exact cleanup complete; full selected CSJ acceptance remains open.",
+  "nextAction": "Same reviewer checks the exact popup-transition test correction and completed failed-run cleanup. After coordinator clearance/window closure, execute the unchanged approved two-character CSJ criteria and exact final teardown.",
   "blockers": [],
   "decisions": [],
   "dependencies": [
     {
       "laneId": "overview",
-      "reason": "Coordinator owns shared review, next actual-run dispatch and integration acceptance. Flow releases shared source/docs/index at this own metadata checkpoint."
+      "reason": "Coordinator owns central correction review, next actual dispatch and integration acceptance; Flow releases source/docs/index at this checkpoint."
     }
   ],
   "deliverables": [
@@ -110,7 +110,8 @@
       "disposition": "included",
       "evidence": [
         "301c5a652e10f8c10bbfaea395374c930de39a40 exact three-file consumer/test correction;31 focused cases/typecheck/lint pass; causal case fails before fix.",
-        "docs/handoffs/2026-10-29-csj-inventory-attacks-fix.json source/evidence/cleanup hashes; actual run20f99479 remains failed and no integration acceptance is inferred."
+        "docs/handoffs/2026-10-29-csj-inventory-attacks-fix.json source/evidence/cleanup hashes; actual run20f99479 remains failed and no integration acceptance is inferred.",
+        "docs/handoffs/2026-10-29-csj-roll-popup-fix.json source 6b395388d60648c3f3d36a25a7b35f5f03504cf4; actual59205f2e confirms attack presence/opening but overall failed before weapon Roll201 on popup transition, with full cleanup."
       ]
     }
   ]

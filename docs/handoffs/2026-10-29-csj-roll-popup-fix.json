@@ -1,0 +1,120 @@
+{
+  "kind": "inkborne-csj-roll-popup-transition-v1",
+  "recordedAt": "2026-10-29T22:51:57.975Z",
+  "contractVersion": 1,
+  "assignment": "CSJ-FLOW-2",
+  "sourceBase": "e56a695fa532f983871cac0ef4ffe6157af74d2e",
+  "sourceHead": "6b395388d60648c3f3d36a25a7b35f5f03504cf4",
+  "diffCommand": [
+    "git",
+    "diff",
+    "--binary",
+    "--full-index",
+    "e56a695fa532f983871cac0ef4ffe6157af74d2e",
+    "6b395388d60648c3f3d36a25a7b35f5f03504cf4",
+    "--",
+    "e2e/unraid/csj-flow.spec.ts"
+  ],
+  "diffSha256": "eeef3c162f3be2598f19dfd60594232240c94a61be4ac2a820a1cdf9f66976ef",
+  "files": [
+    {
+      "path": "e2e/unraid/csj-flow.spec.ts",
+      "gitBlob": "6734f7663723f9da80c94a794316bc8981a8201b",
+      "sha256": "fa259e9c7b450358e5f8a8ac9a0d72b31b68d5fc984c4396c39d1c696a9fce21",
+      "bytes": 31856
+    }
+  ],
+  "cause": "Actual roll201 acknowledgement arrived before Base UI closed-popup exit-animation DOM removal. Next roll trigger opened its popup while the prior tabindex=-1 Roll control was still present, causing strict2-match failure.",
+  "correction": "After each actual roll201 acknowledgement, await exact Roll-button count0 before opening the next popup. One shared loop barrier covers both ability and weapon rolls. No Escape, first-match selection, animation change or weakened state oracle.",
+  "failedRun": {
+    "runId": "59205f2e-3deb-41a2-9004-69ab8181fb63",
+    "runtimeHead": "e56a695fa532f983871cac0ef4ffe6157af74d2e",
+    "status": "failed",
+    "location": "e2e/unraid/csj-flow.spec.ts:223",
+    "observed": "Actual normal Fighter/equip/ability prefix retained. Inventory product301c5a6 now exposes/opens Longsword attack; next Roll submission stopped on old-closing/new-active controls. Complete weapon roll/log, HP/campaign/roles/Journal and CSJ acceptance remain open.",
+    "unexpectedProtectedSuccessObserved": false
+  },
+  "reviewReuse": {
+    "unchangedProduct": "301c5a652e10f8c10bbfaea395374c930de39a40 CLEAR;31 focused cases/typecheck/lint retained. Actual host typecheck/lint/62 native consumer cases pass.",
+    "newReview": "Same central reviewer for this exact two-line E2E delta and third-run cleanup.",
+    "unchangedNativeJournal": "All native/runner source except this E2E path and all10 Journal blobs unchanged."
+  },
+  "focusedChecks": {
+    "discovery": {
+      "command": "npm run test:e2e -- --config e2e/unraid/csj.config.ts --list",
+      "exitCode": 0,
+      "tests": 1,
+      "files": 1
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    "actualCorrectedWorkflow": "unrun",
+    "adjoiningTransitions": "Same two-iteration roll loop uses the barrier for each control. hpEdit already waits for Amount control removal; no new scenario/harness or product transition change."
+  },
+  "cleanup": {
+    "passed": true,
+    "imagesRemoved": 13,
+    "remoteInputsRemoved": [
+      "/mnt/cache/appdata/inkborne-test-runner/runs/59205f2e-3deb-41a2-9004-69ab8181fb63/source",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/59205f2e-3deb-41a2-9004-69ab8181fb63/source.tar",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/59205f2e-3deb-41a2-9004-69ab8181fb63/catalog.tar"
+    ],
+    "localArchivesRemoved": [
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\source.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\catalog.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\catalog-files.txt"
+    ],
+    "publicEvidenceFilesRetained": 14,
+    "originalContainers": 56,
+    "originalVolumes": 95,
+    "all53OriginalImageIdsVerified": true,
+    "runtimePrivateAndHelperRemoved": true,
+    "transport138712Absent": true,
+    "existingServicesUnchanged": true
+  },
+  "evidence": [
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\output\\summary.json",
+      "sha256": "3fe549870ffb06ced23ceaa31232dd2cb37870087fb27aab29067068cb8ccd83",
+      "bytes": 2222
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\output\\diagnostic.txt",
+      "sha256": "750c7897a8087db63db8306cc0cd942a2ae5b3b58ba19949340a474b8af7dc74",
+      "bytes": 68380
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\output\\bootstrap.json",
+      "sha256": "46383356c1c5e4926e1fbd1bd091ffa5d43a51a6278e81b5e32e663a441c61ec",
+      "bytes": 1115387
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\output\\basic-sheet-profile.json",
+      "sha256": "0c1babc41b6fee58f033d0671885adff94de6c3d4098eda1cb7ae603bd4c54e7",
+      "bytes": 1114
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\output\\host-result.json",
+      "sha256": "c68a60fc36113837d25b74e5277095f8d65356efbf8b8e3c54b14fdff6ff1a8d",
+      "bytes": 196
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\output\\csj-flow-cleanup.json",
+      "sha256": "0320eace0964d8e3b14994790ec4a7857f5ecae6729bf97a22fa281900e8c75e",
+      "bytes": 82
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\cleanup-plan.json",
+      "sha256": "d3a241870335f1fb0980b8db64240353b22c2edd474d5b5c6671ef594f1c188b",
+      "bytes": 24564
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\59205f2e-3deb-41a2-9004-69ab8181fb63\\cleanup-result.json",
+      "sha256": "9e4652b89aad8ed89021c7093c81a97fa8925f4a17afeaefa5a9478994b71cf2",
+      "bytes": 20196
+    }
+  ],
+  "nextAction": "Clean metadata/report checkpoint then release source/index for same reviewer and coordinator dispatch of the existing approved bounded actual CSJ workflow. No new user decision."
+}

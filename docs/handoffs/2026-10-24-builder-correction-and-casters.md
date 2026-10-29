@@ -8,7 +8,37 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ equipped-weapon product correction — 2026-10-29T22:36:16.480Z
+## Current CSJ roll-popup timing correction — 2026-10-29T22:51:57.975Z
+
+Source **6b395388d60648c3f3d36a25a7b35f5f03504cf4**, base **e56a695fa532f983871cac0ef4ffe6157af74d2e**.
+[Exact E2E delta, third-run evidence and completed cleanup](2026-10-29-csj-roll-popup-fix.json).
+
+Actual run **59205f2e-3deb-41a2-9004-69ab8181fb63** remains failed. The301c5a6 product correction now
+exposes/opens the actual equipped Longsword attack. The next Roll submission
+encountered two controls: the old popup was closing (tabindex -1) while the new
+popup was active. RollPopover already closes itself; response201 can precede
+its exit-animation unmount. No complete weapon/HP/campaign/role/Journal or CSJ
+acceptance is inferred from this prefix.
+
+A shared loop barrier now awaits Roll control count0 after each real201 before
+opening the next popover. This applies to both selected rolls. Exactly2 native
+rolls, log/provenance and full retention assertions remain unchanged. No Escape,
+first-match selector, product animation or other scenario/oracle is changed.
+Adjoining hpEdit already waits for Amount control removal. Discovery/diff pass;
+unchanged31 product cases and host typecheck/lint/62 native cases are reused.
+
+**Cleanup complete:**13 test images,3 server inputs and3 local archives removed;
+14 evidence files retain hashes,56 original containers/95 volumes/all53 original
+image IDs preserved. Runtime/private credentials, helper and transport138712 are
+gone; existing service IDs/states unchanged. No operational cleanup remains.
+
+**Next:** release clean source/docs/index after own metadata checkpoint for the
+same central review, then coordinator clearance/closure and the existing approved
+actual two-character Unraid story. No added fixture, matrix, framework or user
+decision. All accepted14 creations, product301c5a6 and lane boundaries remain;
+Coordinator owns global queue/acceptance, Flow retains product/report.
+
+## Prior CSJ equipped-weapon product correction — 2026-10-29T22:36:16.480Z
 
 Source **301c5a652e10f8c10bbfaea395374c930de39a40**, base **74d505a5ce2f2f562f4a6f29fd445fd6a9e400d2**.
 [Exact three-file source, causal regression, failed-run evidence and cleanup](2026-10-29-csj-inventory-attacks-fix.json).
