@@ -24,21 +24,20 @@ or overrides this queue. Historical completion counts are not current acceptance
 
 ### Continue the existing queue
 
-1. **Finish the current R06 builder acceptance work**, in the existing dependency
-   order: actual Fiend historical-update acceptance → Draconic HP/AC acceptance →
-   native parent safeguard → ancestry companions/acceptance → queued complete
-   caster and martial walkthroughs. Preserve the exact prerequisites and remaining
-   source/aggregation tasks in the
+1. **Preserve the completed current-state R06 creation slice.** Its Fiend,
+   Draconic, native parent, ancestry and complete caster/martial checkpoints
+   retain their exact evidence in the
    [current handoff](handoffs/2026-10-24-builder-correction-and-casters.md) and
    [finite remaining matrix](specs/2026-10-24-builder-remaining-matrix.md).
    Fiend and Draconic pass actual local acceptance. Current-state parent
    acceptance now passes at`13dde07c`, including genuine edits/reload, native
    guards/background writes, actual HTTP access and Fiend correction/replay.
-   Current ancestry/A4 and thirteen of the fourteen queued full journeys now
-   pass compositionally. In the assigned Character Flow lane, the sole remaining
-   story is A6: a captured committed save lost its response during a test-server
-   memory restart. Run only the bounded A6 check with the reviewed Next heap fix in the current
-   handoff; preserve the thirteen accepted stories and the contract's stopping rules.
+   Current ancestry/A4 and all fourteen queued full creation journeys now pass
+   compositionally, covering all twelve classes. A6 passes at `1f15a44` with
+   zero memory restarts; stop this finite verification slice and preserve every
+   accepted story. The next Character Flow product action is the existing R08
+   Bardic Inspiration capacity finding, using focused verification and the
+   contract's stopping rules.
    Historical parent/A4/F3 upgrade aggregators and old installer prerequisites
    remain separately open; retain their exact gates, resource and cleanup rules.
 2. **Continue remaining M1–M6 work, including M5.5**, from open requirement rows
@@ -70,27 +69,30 @@ and changes no implementation/native/browser acceptance result.
 
 ## Active continuation — 2026-10-29 UTC
 
-### Character Flow: thirteen creation journeys accepted, A6 remains
+### Character Flow: fourteen creation journeys accepted
 
 Shared domain contract **v1** and the updated continuation are adopted through
 documentation commit`4261f27` (integration`f300b7a`). The assigned lane remains
-Character Flow / R06. Source`10e77c7` passes typecheck/lint, six focused files and
-eight actual workflows; five unaffected named passes are retained from`b4a13cb`.
-Together they accept thirteen existing creation journeys, with their source and
+Character Flow / R06. Source`1f15a44` passes typecheck/lint, six focused files and
+actual A6, retaining eight named workflows from`10e77c7` and five from`b4a13cb`.
+Together they accept fourteen existing creation journeys, with their source and
 catalog identities separately bound. Druidic, Rogue tool proficiency, sheet
 readiness, source-specific casting math and confirmed class-state synchronization
 now have actual consumer coverage. A5 retains both genuine concurrent saves at
 revision42→44, down/up allowances, reload and foreign-account refusal.
 
-A6 alone is open. Scoped capture now proves a second-build ability save has one
-owned native receipt while its response stream breaks during Next's3 GiB heap
-restart; the first full control passed. The earlier Flute outcome stays unknown.
-The reviewed fix gives Next alone6 GiB within the unchanged10 GiB runner cap.
-The drift check permits A6 only, preserving the original intent and every oracle.
-Stop on the existing full workflow pass with zero memory restarts or report
-the captured blocker; do not restart accepted
-stories or build another verification framework. All completed attempt runtimes
-and private files are removed; final introduced-image/source cleanup is pending.
+A6 run`ca6fab2e-6ede-4539-8d37-e4c32bacc690` passes eleven native snapshots,
+tier/HP down-up restoration, exact owned racial/class budgets, both genuine
+Bard/Wizard saves at revision51→53, reload and foreign404. There are zero memory
+restarts. Independent final source/evidence review is clear; the finite creation
+queue is accepted and its verification stops. Earlier failed batches retain
+their failed status; each reused story keeps its own source/catalog binding.
+All task runtimes/private files,14 introduced images,45 server inputs,27 local
+bundles and one helper are removed;311 evidence hashes remain unchanged.
+Original56 containers/95 volumes/53 images are retained, Docker23.3 GiB free,
+build cache0. Next is the existing **R08 Bardic Inspiration capacity** product
+finding. Historical upgrades/installers, wider R06 writer/lifecycle closure and
+gameplay/hosted/release acceptance remain separate and open.
 [Exact scope, sources, checks and stopping point](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).
 
 ### User decision: simplify development testing and use Unraid
@@ -2199,7 +2201,7 @@ Rows are finite bundles of existing requirements, not a feature wishlist. Split 
 | R03 M1/P0 safety | Reviewed dependencies, error/privacy boundaries, release/recovery compatibility. [Dependency evidence](handoffs/2026-10-12-r03-devtools-remediation-plan.md), [release checklist](RELEASE-READINESS.md). I=P/T=local/G=yes patches/D=- candidate/A=open. | Production audit zero; eight unpatched development-chain highs remain unaccepted. Final combined source/renderer gates, restore/migration replay and old-client compatibility remain required; audit counts do not prove exploit absence. |
 | R04 M1/M8 | Feedback capture/admin triage and alpha checkpoint A-D evidence. [Contract](specs/2026-07-22-closed-alpha-feedback-and-compendium-contract.md), [alpha records](alpha). I=yes/T=local+H/G=yes/D=H/A=admin/current open. | Exact originating context/mobile feedback and permitted admin triage; record feedback rounds, disposition/blockers and Victor acceptance, not invented users or elapsed-time substitutes. |
 | R05 M2/PRD §11 | Established visual identity, responsive web, mobile/tablet workflows. [Journey](design-briefs/design_handoff_journey_alpha/README.md), [UI](../components), [offline configs](../e2e). I=yes/T=offline+H/G=yes/D=H/A=current open. | Real current routes at desktop/mobile/tablet; reachable controls, no clipping, keyboard/focus/labels/errors/contrast/zoom and screen-reader checks. Preserve shipped #67; no redesign. |
-| R06 M3; PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md), [Fiend/removal actual app acceptance](handoffs/2026-10-23-fiend-and-class-removal.md), [ordinary save recovery](handoffs/2026-10-23-builder-save-recovery.md), [correction/Draconic/parent evidence](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-2103-utc). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. Fiend expanded candidates and secondary removal/re-addition also pass actual save/reload; the original class stays fixed. Ordinary save-response/reload recovery passes three actual local stories and 14 native snapshots, including absent retry and a retained HP draw. Fiend historical correction/recovery and Draconic immutable HP/AC/retained-die stories now pass actual local acceptance. Finite creation choices now use eligible dropdowns with visible retained unavailable picks; 392 focused and 27 simulated-persistence browser scenarios pass. Parent installation, genuine Fighter4 preparation, 34 native outcomes and eight actual contention scenarios pass. Full parent positive story/aggregation and the guarded F3 installer are source-ready at b1a096a with 84 focused evidence checks and exact independent review; their actual execution remains open. R06 remains in progress: full parent acceptance, ancestry/A4, queued complete caster/martial/A5/A6 stories, broader combinations/writer closure and hosted/provider acceptance. Legacy race dual arithmetic stays visibly preserved. |
+| R06 M3; PRD §2/§3 | D&D 5e 2014 builder/calculations/races/classes/background/level-up. [A1](handoffs/2026-10-11-a1-ability-integration.md), [race representation](handoffs/2026-10-11-r06-race-representation-local.md), [native multiclass/class-choice acceptance](handoffs/2026-10-23-multiclass-and-class-choices.md), [bonus/Lore actual app acceptance](handoffs/2026-10-23-bonus-spells-and-lore.md), [Fiend/removal actual app acceptance](handoffs/2026-10-23-fiend-and-class-removal.md), [ordinary save recovery](handoffs/2026-10-23-builder-save-recovery.md), [correction/Draconic/parent evidence](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-26-2103-utc). I=P/T=focused+actual local app+native/G=yes bounded patches/H/A=hosted open. | Fighter/Cleric complete builders, Rogue/Bard Expertise, native Fighter → Cleric acquisition/progression, five class-choice families and all 14 special bonus-spell groups/Lore skills save/reload with exact pins, roles, budgets, pruning, receipts and ordering. Fiend expanded candidates and secondary removal/re-addition also pass actual save/reload; the original class stays fixed. Ordinary save-response/reload recovery passes three actual local stories and 14 native snapshots, including absent retry and a retained HP draw. Fiend historical correction/recovery and Draconic immutable HP/AC/retained-die stories now pass actual local acceptance. Finite creation choices now use eligible dropdowns with visible retained unavailable picks; 392 focused and 27 simulated-persistence browser scenarios pass. Parent installation, genuine Fighter4 preparation, 34 native outcomes and eight actual contention scenarios pass. Current-state parent acceptance passes at13dde07c, including positive edit/reload, native guards/contention/HTTP and Fiend correction/replay. All fourteen current creation journeys (all twelve classes, including ancestry/A4 and A5/A6 concurrent saves) are accepted compositionally at the exact sources in the current handoff; the finite creation verification slice is complete. Historical parent/A4/F3 upgrade/installer chains, broader combinations/writer/lifecycle closure and hosted/provider acceptance remain open. Next Character Flow product action is the existing R08 Bardic Inspiration capacity finding. Legacy race dual arithmetic stays visibly preserved. |
 | R07 PRD §5; M3 | Equipment/custom inventory/equip/currency, atomic starting awards/copy. [Inventory](../lib/supabase/inventory.ts), [staged SQL/readme](../supabase/staged/README.md), [45-case executable test](../tests/supabase/starting-equipment-postgres.test.ts). I=staged/P/T=model+offline/G=yes, gate off/D=-/A=open. | Full migration/grants/triggers, per-write rollback, concurrent same/different intent, ownership/pin/copy races, replay after consumption and lost responses. No fabricated legacy eligibility/receipts. E1 runtime + approved legacy policy; rollout after actual acceptance. |
 | R08 PRD §3/§4/§9; M3 | HP/temp HP, death saves, conditions, dice/logs, cast/slots/resources, effects/concentration, rests/hit dice. [Provider](../lib/character/character-context.tsx), [sheet](../components/sheet), [core checks](handoffs/2026-10-11-orchestrator-local-queue.md). I=yes/P/T=offline+H/G=yes/D=H/A=current open. | Real multi-class play/rest/roll/calculation scenarios, pending/failure/conflict/reload/offline/expiration paths, no silent duplicate or lost spend. Do not confuse a simulated router/provider with hosted success. |
 | R09 M3 safety/D1 | Durable rolled action + revision/dependency/old-writer participation. [Contract and executable gaps](specs/2026-10-11-durable-roll-state-contract.md), [current gap tests](../tests/supabase/durable-action-current-gaps.test.ts). I=proposal/T=characterization/G=proposal/D=-/A=open. | Implement one hit-die command locally with operation identity/receipt and revision/dependency checks; prove rollback/lost-response replay/ABA/legacy-writer behavior, then reviewed death-save/concentration adapters. Local SQL-file edits/tests are ordinary work; actual DB/security execution uses G2/G3. |

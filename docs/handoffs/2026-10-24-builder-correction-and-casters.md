@@ -10,6 +10,55 @@ all global readiness/class/hit-die gates closed.
 
 ## Latest continuation — 2026-10-29 complete creation journeys
 
+### Finite creation queue accepted
+
+All **fourteen planned current-state creation journeys**, covering all twelve
+classes, now have actual local acceptance. The composition retains five named
+passes from `b4a13cb` / `c0663caa-a92a-46f3-b39d-a575a59c87b4`, eight from
+`10e77c7` / `7145dc5d-046b-44f4-9096-5b75626386db`, and A6 from
+`1f15a44f1c964c51d953188be288b4c0dfb0f910` /
+`ca6fab2e-6ede-4539-8d37-e4c32bacc690`. The first two batches remain failed
+overall; this acceptance preserves each named story's source and catalog identity.
+It is neither one green fourteen-story batch nor one shared-catalog claim.
+
+A6 passes typecheck, zero-warning lint, six focused files and its actual browser
+workflow, with **zero Next memory restarts**. Eleven native snapshots prove
+total levels 5→4→2→4→5, HP31→26→14→26→31, exact owned Infernal Legacy tiers,
+class budgets and retained/pruned rows. Two genuine Bard/Wizard saves advance
+revision 51→53 with two exact receipts/history entries; both changes survive
+two-page and sheet reload. State, inventory, pins, class roots, racial rows and
+the complete control remain unchanged; foreign-account requests return404.
+No page errors, blocked origins or gameplay-state writes occur.
+
+Independent review reuses the prior thirteen-story/source findings, clears
+the exact `e9c82e1`→`1f15a44` fixture correction and the final A6/cleanup evidence.
+All 21 A6 native checks and required family checks pass; 75 linked composition
+hashes match. The scoped receipt is
+`../../../equipment-runtime/unraid/usable-builders-20261029T145530Z/current-builder-acceptance.json`.
+
+All nine attempt runtimes/private files and fourteen introduced images are
+removed, along with 45 server source inputs, 27 local bundles and one helper.
+All 311 public evidence files retain their hashes. The original 56 containers
+(45 running, unchanged PID/start/restarts/mounts), 95 volumes and 53 images are
+preserved. Settled Docker free space is 24,417,800 KiB (23.3 GiB), build cache 0;
+task labels and recorded local transport processes are absent. Cleanup plan,
+result and settled measurement are beside the scoped receipt. Character Journal
+has been told that the shared runtime slot is free; its persistence/fixture
+proposals remain pending separate integration disposition.
+
+**Stop this verification slice. Next product action:** fix the existing R08
+Bardic Inspiration capacity finding (prepared1 versus expected3 at CHA16/17),
+using the existing resource authority and focused consumer verification. Do not
+restart these creation stories or historical upgrade aggregators. Broader R06
+writer/lifecycle, historical parent/A4/F3 installation, gameplay spending/rest,
+hosted/provider and release gates remain separately open.
+
+Project Dashboard reporting is adopted under its version1
+`C:/Users/kaios/Documents/ChatGPT/Project Dashboard/docs/REPORTING-SOP.md`.
+This chat owns `docs/dashboard/character-flow.json` and `docs/dashboard/overview.json`;
+maintain them at meaningful checkpoints from this handoff and the canonical
+ledger. Report validation alone adds no app-test or runtime requirement.
+
 ### Lane and contract checkpoint
 
 **Character Flow / R06**, authoritative continuation worktree and
@@ -23,27 +72,26 @@ The shared owned character,2014 system/version, immutable pins, native role
 projection and operation/recovery contracts remain authoritative; no shared
 domain meaning or parallel calculation model is introduced.
 
-**Drift check:** thirteen existing journeys have scoped passing evidence. A6
-alone remains open. Run `6eb11c4c-537f-4667-ad40-73e4f5abea37` at `e9c82e1`
+**Resolved drift check:** thirteen existing journeys retained scoped passing
+evidence while A6 was open. Run `6eb11c4c-537f-4667-ad40-73e4f5abea37` at `e9c82e1`
 has zero memory restarts and passes both complete current-v1 builds plus tier
 down/up restoration. It then requests Faerie Fire for Bard; this cached source
 lists that spell only for Druid. Replace that fixture candidate with the cached
 level-one Bard spell Animal Friendship in the UI action and exact native oracle.
-No catalog, product or acceptance condition changes. The earlier Flute outcome
-stays unknown. The next bounded check is **A6 only**, retaining the Next-child
-6 GiB heap inside the unchanged10 GiB container cap. Stop when its existing full
-workflow passes with zero observed memory restarts, or report the captured blocker.
-Do not add exploratory check batches or another evidence framework without a
-new concrete justification. Unchanged accepted stories stay accepted.
-Shared Unraid queue: Character Flow retains the next bounded A6 slot;
-Character Journal has requested the following slot after cleanup. That queue
-record starts no runtime and authorizes no schema or permission change.
+No catalog, product or acceptance condition changed. The earlier Flute outcome
+stays unknown. The **A6-only** check at `1f15a44` now satisfies the existing
+full-workflow/zero-restart stopping condition, with the Next-child6 GiB heap
+inside the unchanged10 GiB container cap. No further batch is needed for this
+slice. Unchanged accepted stories stay accepted. Shared Unraid slot release
+starts no runtime and authorizes no schema, fixture or permission change.
 
 The user's priority is usable product progress. Finish the existing fourteen
 creation stories, covering all twelve classes; milestone terminology does not
 restart this queue. Use the approved disposable Unraid runtime and retain passing
 evidence for unchanged behavior. Historical upgrade/installer and hosted release
 gates remain separate.
+
+### Earlier attempts and retained product fixes
 
 Source `10e77c7cad294ae71095222d8c68f6f71e484a8c` is independently reviewed.
 Run`7145dc5d-046b-44f4-9096-5b75626386db` finishes **8/9**, with typecheck/lint
@@ -52,8 +100,8 @@ Wizard), martial A1/A3 and mixed-caster A5 now pass their complete actual
 workflows and native readbacks. A5 proves both real opposite-controller saves,
 revision42→44, two retained receipts/history entries, HP48→40→48 and unchanged
 state/inventory/source roots through two-page/sheet reload and foreign404.
-Independent evidence review clears those eight. A6 alone remains unaccepted:
-its retained Bard-instrument save outcome is unknown. The one-file failure-only
+Independent evidence review clears those eight. In that run A6 remained unaccepted:
+its retained Bard-instrument save outcome was unknown. The one-file failure-only
 capture at`e68ce6b` leaves every existing oracle and recovery intent unchanged.
 The targeted run`a392f110-8aaf-44b0-8d1c-88b3789ac165` completes a full current-v1
 Tiefling/Bard/Wizard control and its native readback. During the second build,
@@ -110,10 +158,11 @@ expectations were corrected while exact grants, budgets, ownership, native
 readback and both opposite-controller saves remain required. Direct navigation
 waits for DOM/interactive controls; timeouts/retries and resource limits are unchanged.
 
-All completed/stopped attempt runtimes/private files are removed. Final image/source/
-archive cleanup is pending completion of the A6-only check. The complete baseline,
-targeted cleanup script and eventual receipts are under
-`../equipment-runtime/unraid/usable-builders-20261029T145530Z/`.
+At that checkpoint completed/stopped attempt runtimes/private files were removed;
+final image/source/archive cleanup was pending A6. The final closeout above now
+supersedes that pending state. The complete baseline, targeted cleanup plan and
+finished receipts are under
+`../../../equipment-runtime/unraid/usable-builders-20261029T145530Z/`.
 
 ## Latest continuation — 2026-10-28 Unraid and proportional testing
 

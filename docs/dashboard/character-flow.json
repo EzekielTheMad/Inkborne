@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "projectId": "inkborne",
+  "laneId": "character-flow",
+  "name": "Character Flow",
+  "role": "lane",
+  "reporting": "active",
+  "owner": {
+    "name": "Character Flow",
+    "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
+  },
+  "updatedAt": "2026-10-29T17:36:08.180Z",
+  "source": {
+    "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
+    "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
+    "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
+    "branch": "codex/launch-integration-20261011"
+  },
+  "currentWork": "The fourteen planned creation journeys covering all twelve classes have passed actual local workflows; this finite verification slice is complete. The latest A6 passes eleven native snapshots and both concurrent saves with zero server restarts.",
+  "nextAction": "Fix the existing R08 Bardic Inspiration capacity finding (prepared1 versus expected3 at CHA16/17) using existing resource authority and focused consumer checks. Preserve accepted creation work.",
+  "blockers": [],
+  "decisions": [],
+  "dependencies": [],
+  "deliverables": [
+    {
+      "id": "flow-thirteen-journeys",
+      "name": "Thirteen retained creation journeys",
+      "area": "Character creation",
+      "milestone": "M3",
+      "requirement": "R06",
+      "outcome": "Five named passes from b4a13cb and eight from10e77c7 retain their actual local workflow evidence and separate source/catalog bindings. Their parent batches retain failed overall status; no accepted journey is restarted.",
+      "implementation": "implemented",
+      "verification": "local",
+      "integration": "isolated",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\handoffs\\2026-10-24-builder-correction-and-casters.md — finite creation queue; prior13 independent review retained",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\current-builder-acceptance.json — per-story source/run and evidence hashes; integration owner records scoped acceptance"
+      ]
+    },
+    {
+      "id": "flow-a6",
+      "name": "Tiefling Bard/Wizard creation",
+      "area": "Character creation",
+      "milestone": "M3",
+      "requirement": "R06",
+      "outcome": "Both complete builds, earned racial tiers, level-down/up restoration, class budgets, genuine two-page saves51→53, reload and foreign404 pass. No memory restarts or gameplay-state writes.",
+      "implementation": "implemented",
+      "verification": "local",
+      "integration": "isolated",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "1f15a44 / ca6fab2e-6ede-4539-8d37-e4c32bacc690: typecheck/lint/six focused files/actual A6 pass; eleven native snapshots and two exact receipts; independent review clear",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\current-builder-acceptance.json — scoped local acceptance recorded by integration owner"
+      ]
+    }
+  ]
+}

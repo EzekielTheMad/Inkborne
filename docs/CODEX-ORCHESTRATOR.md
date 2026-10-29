@@ -18,13 +18,14 @@ paused features or external-action authority.
 ## Resume and ownership
 
 **Current Character Flow pickup:** shared contract v1 is adopted (`4261f27` →
-`f300b7a`). Thirteen of the existing fourteen full creation journeys pass with
-separately bound evidence: eight current actual stories at`10e77c7` and five
-unchanged retained passes at`b4a13cb`. Preserve their acceptance. Only A6 remains:
-scoped capture identifies a committed ability save interrupted by a Next heap
-restart. Use the reviewed6 GiB Next-only heap within the existing10 GiB cap and
-the current handoff's A6-only full-flow/zero-restart stopping
-rules; do not restart the global queue or historical upgrade chains.
+`f300b7a`). All fourteen existing full creation journeys pass with separately
+bound evidence: A6 at`1f15a44`, eight stories at`10e77c7` and five unchanged
+passes at`b4a13cb`. A6 proves both genuine saves at revision51→53, eleven native
+snapshots, reload/foreign404 and zero memory restarts. Independent review and
+full task-resource cleanup are clear; original services/volumes/images remain.
+Stop this finite verification slice. Next is the existing R08 Bardic Inspiration
+capacity finding, using the existing resource authority and focused checks.
+Preserve accepted creation work; do not restart historical upgrade chains.
 [Lane record and exact evidence](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).
 
 Continue the **R06 builder workstream** (roadmap M3), in the dependency order in

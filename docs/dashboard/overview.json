@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 1,
+  "projectId": "inkborne",
+  "laneId": "overview",
+  "name": "Project integration",
+  "role": "integration",
+  "reporting": "active",
+  "owner": {
+    "name": "Character Flow · integration owner",
+    "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
+  },
+  "updatedAt": "2026-10-29T17:36:08.180Z",
+  "source": {
+    "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
+    "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
+    "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
+    "branch": "codex/launch-integration-20261011"
+  },
+  "currentWork": "Character Flow has completed the finite fourteen-journey creation queue with local integration acceptance. Library and Journal remain separate lanes; this summary preserves the canonical whole-project scope and open acceptance gates.",
+  "nextAction": "Character Flow next addresses the existing R08 Bardic Inspiration capacity defect. Keep the separate Journal persistence/create-recovery and fixture proposals queued for integration review; do not rerun accepted creation stories.",
+  "blockers": [],
+  "decisions": [],
+  "dependencies": [
+    {
+      "laneId": "character-journal",
+      "reason": "Reviewed isolated Journal UI source awaits separate shared save/create-recovery and actual fixture integration disposition. Runtime slot was released after Character Flow cleanup; no Journal DB acceptance is claimed."
+    }
+  ],
+  "deliverables": [
+    {
+      "id": "accounts-operations",
+      "name": "Accounts & operations",
+      "area": "Foundation",
+      "milestone": "M1",
+      "requirement": "R01–R04",
+      "outcome": "Authentication, profiles, feedback and backup foundations exist. Current provider, restore and operational acceptance remain open.",
+      "implementation": "partial",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R01–R04; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "visual-experience",
+      "name": "Responsive app experience",
+      "area": "Experience",
+      "milestone": "M2",
+      "requirement": "R05",
+      "outcome": "Established design implemented. Current mobile/tablet/accessibility acceptance after gameplay changes remains open.",
+      "implementation": "implemented",
+      "verification": "simulated",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R05; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "builder-progress",
+      "name": "Character creation & progression",
+      "area": "Characters",
+      "milestone": "M3",
+      "requirement": "R06",
+      "outcome": "Fourteen planned current-state creation journeys covering all twelve classes are accepted locally with separate source/catalog evidence. Current parent safeguard, correction and recovery slices are retained. R06 remains partial overall: historical upgrade/installer chains, wider writer/lifecycle closure and hosted/provider acceptance stay open.",
+      "implementation": "partial",
+      "verification": "local",
+      "integration": "integrated",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\LAUNCH-ACCEPTANCE.md — active continuation and R06",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\current-builder-acceptance.json — fourteen finite creation journeys; no whole-R06 or hosted verdict"
+      ]
+    },
+    {
+      "id": "gameplay-sheet",
+      "name": "Playable sheet & equipment",
+      "area": "Characters",
+      "milestone": "M3",
+      "requirement": "R07–R09",
+      "outcome": "Sheet play and equipment foundations exist. Durable spending, recovery and broader transaction acceptance remain distinct open work.",
+      "implementation": "partial",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R07–R09; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "library-catalog",
+      "name": "Library / Encyclopedia",
+      "area": "Content",
+      "milestone": "M4",
+      "requirement": "R15",
+      "outcome": "Search, filtering and supported content detail views exist; the active Library lane improves readable content. Current entitlement acceptance is separate.",
+      "implementation": "implemented",
+      "verification": "simulated",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R15; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "homebrew-authoring",
+      "name": "Homebrew authoring",
+      "area": "Content",
+      "milestone": "M4",
+      "requirement": "R10–R13",
+      "outcome": "Multiple private authoring forms implemented. Class/subclass, advanced relationships and real owner/version race acceptance remain.",
+      "implementation": "partial",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R10–R13; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "mpmb-import",
+      "name": "Content importing",
+      "area": "Content",
+      "milestone": "M4",
+      "requirement": "R14",
+      "outcome": "MPMB review/validation pipeline exists for supported cases. Supported-type coverage and current real calculation parity remain partial.",
+      "implementation": "partial",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R14; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "creature-library",
+      "name": "Monsters & narrative NPCs",
+      "area": "Creatures",
+      "milestone": "M5",
+      "requirement": "R16–R17",
+      "outcome": "Private authoring and catalog/stat-block foundations exist. Campaign monster instances are staged/default-off; real authority acceptance remains. Monster/NPC importing remains separately paused by the user; this does not pause all creature work.",
+      "implementation": "partial",
+      "verification": "simulated",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R16–R17; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "companions-sidekicks",
+      "name": "Companions & sidekicks",
+      "area": "Creatures",
+      "milestone": "M5",
+      "requirement": "R18–R19",
+      "outcome": "Read-only companion templates exist. Lifecycle, playable control, transformations, summons and sidekick progression remain.",
+      "implementation": "partial",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R18–R19; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "campaign-world",
+      "name": "Campaigns & worldbuilding",
+      "area": "Narrative",
+      "milestone": "M5.5",
+      "requirement": "R20",
+      "outcome": "Membership, invitations, wiki, mentions and backlinks have foundations and historical UAT. Current acceptance and sessions/quests/maps remain separate.",
+      "implementation": "partial",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R20; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "character-story",
+      "name": "Character story & journal",
+      "area": "Narrative",
+      "milestone": "M5.5",
+      "requirement": "R20",
+      "outcome": "Backstory, timeline and relationships exist. Journal lane improves editing and organization; real workflow and shared save dependencies remain.",
+      "implementation": "partial",
+      "verification": "simulated",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R20; current-candidate acceptance remains open unless explicitly recorded.",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\character-journal\\docs\\handoffs\\2026-10-29-character-journal.md — isolated source/simulated UI evidence; actual role/save fixture and shared persistence proposals remain unaccepted"
+      ]
+    },
+    {
+      "id": "advanced-spells",
+      "name": "Advanced spellcasting",
+      "area": "Gameplay",
+      "milestone": "M6",
+      "requirement": "R21",
+      "outcome": "Advanced spell acquisition choices save/reload locally. Durable advanced payment, usage and recovery remain open.",
+      "implementation": "partial",
+      "verification": "local",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R21; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "pdf-import",
+      "name": "PDF content import",
+      "area": "Imports",
+      "milestone": "M7",
+      "requirement": "R22",
+      "outcome": "Paused by user. This is distinct from printing a character.",
+      "implementation": "not_started",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "paused",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R22; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "print-export",
+      "name": "Character print & export",
+      "area": "Delivery",
+      "milestone": "M8",
+      "requirement": "R23",
+      "outcome": "Owner print/PDF snapshot has inspected fixture output. Real-data/device acceptance remains; JSON/fillable/campaign exports are separate.",
+      "implementation": "partial",
+      "verification": "simulated",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R23; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "second-system",
+      "name": "Additional game systems",
+      "area": "Future",
+      "milestone": "M8",
+      "requirement": "R24",
+      "outcome": "Daggerheart deferred from first beta; generic schema is not a second playable system.",
+      "implementation": "not_started",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "deferred",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R24; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "public-publishing",
+      "name": "Public content publishing",
+      "area": "Future",
+      "milestone": "M8",
+      "requirement": "R26",
+      "outcome": "Public publishing deferred from first beta. Campaign sharing does not imply public distribution.",
+      "implementation": "not_started",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "deferred",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R26; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "release-readiness",
+      "name": "Polish & release readiness",
+      "area": "Delivery",
+      "milestone": "M8",
+      "requirement": "R25/R27",
+      "outcome": "Current performance/accessibility/onboarding and approved deployment/auth/restore gates remain open. No app launch is claimed.",
+      "implementation": "partial",
+      "verification": "unverified",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md — milestone matrix and requirement R25/R27; current-candidate acceptance remains open unless explicitly recorded."
+      ]
+    },
+    {
+      "id": "creation-journey-acceptance",
+      "name": "Fourteen complete creation journeys",
+      "area": "Characters",
+      "milestone": "M3",
+      "requirement": "R06 finite current-state creation slice",
+      "outcome": "All fourteen planned creation journeys across all twelve classes complete and reopen in the actual disposable app with native ownership and foreign refusal. A5/A6 retain both genuine concurrent source saves. Evidence is compositional across three distinct source/run bindings.",
+      "implementation": "implemented",
+      "verification": "local",
+      "integration": "integrated",
+      "acceptance": "accepted",
+      "acceptedBy": "Character Flow integration owner; independent source and evidence review clear",
+      "disposition": "included",
+      "evidence": [
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\handoffs\\2026-10-24-builder-correction-and-casters.md — exact acceptance and boundaries",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\current-builder-acceptance.json — five named passes at b4a13cb/c0663caa, eight at10e77c7/7145dc5d, A6 at1f15a44/ca6fab2e; no single green14 batch or common-catalog claim",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\result.json — exact cleanup plan;311 evidence hashes retained, original56 containers/95volumes/53images preserved"
+      ]
+    }
+  ]
+}

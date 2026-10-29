@@ -159,3 +159,8 @@ required security, data-integrity and release acceptance gates.
   limitations and the next step. A plan, audit or green test count alone is not
   a delivered product result. Clearly distinguish source-only, simulated,
   actual local, hosted and release acceptance.
+- At meaningful checkpoints, maintain this chat's registered
+  `docs/dashboard/character-flow.json` and `docs/dashboard/overview.json` under
+  `C:/Users/kaios/Documents/ChatGPT/Project Dashboard/docs/REPORTING-SOP.md`
+  version1. Validate reports with its CLI; preserve stable IDs and the ledger's
+  acceptance authority. Reporting does not trigger additional app testing.

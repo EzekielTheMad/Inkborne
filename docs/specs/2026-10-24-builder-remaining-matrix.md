@@ -1,9 +1,12 @@
 # Finite remaining local builder matrix
 
-**Current status — 2026-10-29:** thirteen of the fourteen planned creation
-journeys have actual scoped passing evidence. Only A6 remains unaccepted, after
-an unresolved Bard-instrument save. Retain the accepted stories; continue the
-bounded A6-only check in the [current handoff](../handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).
+**Current status — 2026-10-29:** all fourteen planned creation journeys have
+actual scoped acceptance, covering all twelve classes. A6 passes at`1f15a44`
+with eleven native snapshots, both genuine saves at51→53, reload/foreign404
+and zero memory restarts. Retain the separate source/catalog bindings in the
+[current handoff](../handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).
+This finite verification slice is complete. Next is the separate existing R08
+Bardic Inspiration capacity finding, not another creation-matrix batch.
 The initial source findings below are historical; they do not restart completed work.
 
 Selected for the current **R06 builder workstream** on 2026-10-24
@@ -66,7 +69,7 @@ closed gates/empty capabilities and an authenticated other-account 404.
 | 3 / A3 | Half-Orc original Fighter 1 → secondary Rogue 3 / Thief; `15/14/13/8/12/10` | STR 17, CON 14; HP 33; equipped Leather AC 13. Original Fighter STR/CON saves remain; secondary Rogue gets one skill and thieves' tools, then earned Expertise. Select an original-class skill plus thieves' tools for Expertise. Menacing and Relentless Endurance remain owned racial sources. One original starting award, no secondary award. | Current-state accepted at `10e77c7`; original Fighter and secondary Rogue scopes retained. |
 | 4 / A4 | Hill Dwarf Barbarian 3 / Berserker; `15/13/14/8/12/10` | CON 16, WIS 13; HP **38**; unarmored AC 14; speed 25; Rage capacity 3. Save the dwarf artisan-tool choice and Berserker features. HP is `12+7+7+3×3+3`, including Toughness once per character level. | Current-state accepted at `b4a13cb`, HP38. Historical old35/new38 publication remains separate. |
 | 5 / A5 | Gold Dragonborn original Paladin 2 → Sorcerer 1 / Draconic → Warlock 3 / Fiend; `13/10/14/8/12/15` | STR 15, CHA 16; HP **48** using new Draconic root's own-Sorcerer-level bonus **1**; unarmored AC 13. Regular slots **3×L1**; separate Pact slots **2×L2**. Gold ancestry must show fire resistance. | Current-state accepted at `10e77c7`, including down/up and both concurrent saves. |
-| 6 / A6 | Tiefling original Bard 3 / Lore → Wizard 2 / Evocation; `8/13/12/14/10/15` | INT 15, CHA 17; HP **31**. Regular slots **4/3/2** at spell levels 1/2/3. Earn Thaumaturgy, Hellish Rebuke at fixed cast level 2 from character level 3, and Darkness from character level 5, with racial CHA/source ownership separate from both classes. | Unaccepted: retained Bard-instrument save outcome unknown. Next is the bounded A6-only check; shared L3 slots still do not authorize L3 learned spells. |
+| 6 / A6 | Tiefling original Bard 3 / Lore → Wizard 2 / Evocation; `8/13/12/14/10/15` | INT 15, CHA 17; HP **31**. Regular slots **4/3/2** at spell levels 1/2/3. Earn Thaumaturgy, Hellish Rebuke at fixed cast level 2 from character level 3, and Darkness from character level 5, with racial CHA/source ownership separate from both classes. | Current-state accepted at`1f15a44` / run`ca6fab2e`; down/up, exact owned tiers/budgets, concurrent51→53, reload and foreign404 pass. Shared L3 slots still do not authorize L3 learned spells. |
 
 A5 has effective regular caster level `1+floor(2/2)=2`; Warlock contributes zero.
 Its Paladin 2 prepares four level-one ordinary spells; Sorcerer 1 knows two
@@ -97,8 +100,9 @@ corrections in `55640b1`; its staged native companion through `5baf432` passes
 48 focused checks. Final F3 source through `40a6f84` passes all 221 focused
 tests, with the final absent-subrace boundary passing the 60-test reader rerun.
 A6 source is registered in `1066b52`; final typecheck and lint pass. The
-current-state A4/A5 workflows now pass. A6 remains open on a retained-save outcome
-before the racial-spell path; the source checkpoints alone do not accept it.
+current-state A4/A5/A6 workflows now pass with separately bound actual evidence.
+The source checkpoints alone did not accept them; the initial findings below
+are preserved as historical rationale for the delivered repairs.
 
 1. **F1 — Dwarven Toughness HP:** the genuine cached
    `responses/traits/dwarven-toughness.json` says maximum HP increases by one
@@ -162,8 +166,8 @@ provider/RI or writer-fence verdict.
   higher-level scaling are not accepted by A2; neither are automatic Martial
   Arts/Sneak Attack/Savage Attacks resolution or every narrative combat feature.
 - Current Fiend correction, Draconic mechanics, the eight complete casters and
-  A1–A5 retain their accepted scoped receipts. A6 alone must finish before this
-  finite matrix is complete; do not weaken its native or two-source save checks.
+  A1–A6 retain their accepted scoped receipts. This finite creation matrix is
+  complete; preserve its native/two-source save checks and stop rerunning it.
 - Update the existing ledger/handoff with exact source, full stories/native
   checks, preserved failures, runtime budget and owned-resource cleanup. R06
   remains **in progress** until its selected local acceptance work is accepted.
