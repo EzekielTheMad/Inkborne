@@ -6,7 +6,7 @@ import {execFileSync, spawn} from 'node:child_process';
 import {createHash, randomUUID} from 'node:crypto';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'../..'), mode=process.argv[2]??'workflow';
-assert(['plan','workflow','focused'].includes(mode),'Use plan, workflow, or focused');
+assert(['plan','workflow','focused','builders'].includes(mode),'Use plan, workflow, focused, or builders');
 const invoke=(program,args,options={})=>execFileSync(program,args,{cwd:root,encoding:'utf8',maxBuffer:32*1024*1024,...options});
 const git=(...args)=>invoke('git',args).trim();
 const head=git('rev-parse','HEAD'), sha=bytes=>createHash('sha256').update(bytes).digest('hex');

@@ -19,7 +19,10 @@ export const psqlEnvironment = (tag: string) => {
 export function psqlArguments(role: "postgres" | "supabase_admin", variables: Record<string, string> = {}, fatal = true) {
   const args = ["-X", "--no-password", "--username", role, "--quiet", "--tuples-only", "--no-align", "--set", `ON_ERROR_STOP=${fatal ? "1" : "off"}`];
   for (const [key, value] of Object.entries(variables)) {
-    assert(["character_id", "actor_id", "control_id"].includes(key) && z.uuid().safeParse(value).success, "finite UUID query input required");
+    const finite: Record<string, string[]> = { case_id: ["A1", "A2", "A3"], paladin_level: ["1", "2"], spell_phase: ["baseline", "concurrent"],
+      corrected_version: ["1", "2"], root_version: ["1", "2"], current_catalog: ["0", "1"],
+      stage: ["complete", "trimmed-five", "wizard-one", "below-three", "restored-four"] };
+    assert(["character_id", "actor_id", "control_id"].includes(key) ? z.uuid().safeParse(value).success : finite[key]?.includes(value), "finite native query input required");
     args.push("--set", `${key}=${value}`);
   }
   return [...args, "--file", "-"];

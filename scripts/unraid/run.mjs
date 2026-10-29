@@ -3,7 +3,7 @@ import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {startProxy} from './proxy.mjs';
 const privateDir='/run/inkborne', output='/output', mode=process.env.INKBORNE_TEST_MODE;
-assert(['workflow','focused'].includes(mode));
+assert(['workflow','focused','builders'].includes(mode));
 const runtime=JSON.parse(fs.readFileSync(privateDir+'/runtime.json','utf8'));
 const steps=[], children=new Set(); let proxy, status='running', phase='static-checks';
 const report=()=>fs.writeFileSync(output+'/summary.json',JSON.stringify({kind:'inkborne-unraid-verification-v1',sourceHead:runtime.sourceHead,
@@ -28,10 +28,12 @@ try{
  report();console.log(JSON.stringify({phase}));
  await run(['run','typecheck','--','--tsBuildInfoFile','/tmp/inkborne.tsbuildinfo'],'typecheck');
  await run(['run','lint'],'lint');
- await run(['test','--','tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx',
+ const focused = mode==='builders' ? ['tests/lib/character/ancestry-hit-points.test.ts','tests/lib/character/ancestry-defenses.test.ts',
+  'tests/lib/character/earned-racial-spells.test.ts','tests/lib/builder/choice-options.test.ts'] : ['tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx',
   'tests/scripts/character-command-psql.test.ts','tests/scripts/builder-parent-admission-concurrency.test.ts',
-  'tests/scripts/parent-admission-acceptance.test.ts','--maxWorkers=1'],'focused');
- if(mode==='workflow'){
+  'tests/scripts/parent-admission-acceptance.test.ts'];
+ await run(['test','--',...focused,'--maxWorkers=1'],'focused');
+ if(mode!=='focused'){
   phase='backend-bootstrap';report();console.log(JSON.stringify({phase}));proxy=await startProxy();
   await waitFor('http://127.0.0.1:9999/auth/v1/health');
   const {bootstrap}=await import('./bootstrap.ts');await bootstrap();
@@ -39,7 +41,7 @@ try{
   phase='actual-character-workflow';report();console.log(JSON.stringify({phase}));
   child('npm',['run','dev','--','--webpack','--hostname','127.0.0.1','--port','3001'],{...server,ADMIN_USER_IDS:''},'next');
   await waitFor('http://127.0.0.1:3001/login',180);
-  await run(['run','test:e2e','--','--config','e2e/unraid/playwright.config.ts'],'browser');
+  await run(['run','test:e2e','--','--config',mode==='builders'?'e2e/unraid/builders.config.ts':'e2e/unraid/playwright.config.ts'],'browser');
  }
  status='passed';
 }catch(error){status='failed';fs.writeFileSync(output+'/failure.json',JSON.stringify({phase,message:error instanceof Error?error.message:'verification failed'})+'\n');}
