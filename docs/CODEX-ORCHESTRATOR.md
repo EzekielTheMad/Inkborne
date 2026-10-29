@@ -23,7 +23,7 @@ The authoritative continuation checkout is
 `C:\Users\kaios\Documents\Codex\2026-10-11\task-2\equipment-verification`, branch
 `codex/launch-integration-20261011`. Preserve `C:\Projects\Inkborne` as the old
 backup and preserve every inherited worktree. Refresh Git status/HEAD before
-editing; the latest focused acceptance-source checkpoint is `1de39d9`; the creation
+editing; the latest focused acceptance-source checkpoint is `13dde07c`; the creation
 dropdown product checkpoint remains `7311ca2`.
 
 The user-requested creation dropdown refinement is implemented locally:
@@ -57,15 +57,27 @@ No new actual app/native acceptance follows from those source checks.
 The user subsequently selected **simpler testing on Unraid**. The current
 development entrypoint is `npm run verify:unraid -- workflow`: one disposable
 current-state database, focused checks and a genuine Fighter workflow, followed
-by exact project cleanup. The next parent slice also passes at`1de39d9`: a
+by exact project cleanup. **Current-state parent acceptance passes at`13dde07c`**:
+eleven real Fighter edit/award/reload/access checkpoints, Rogue1/0/2 rollback,
+Fiend2→3 correction/exact JWT replay/current-control retention,34 guard cases,
+eight contention cases and21 HTTP outcomes. Typecheck/lint, six focused files
+and all three serial browser stories pass; source and final evidence review are
+clear. All task runtime, ten introduced images and temporary inputs are removed;
+56 original containers/95 volumes/53 images retained, Docker23.2 GiB free/cache0.
+Next is current-state ancestry builder acceptance on the already installed
+reviewed stages. Historical parent1→2/A4/F3 upgrade/installer gates stay open;
+the new compositional receipt does not satisfy those old tools.
+[Exact evidence and next action](handoffs/2026-10-24-builder-correction-and-casters.md#remaining-current-state-parent-checks-accepted).
+
+The earlier parent slice also passes at`1de39d9`: a
 genuine Rogue's background1/0/2-write/revision and Expertise-pruning vector
 rolls back with the whole fixture/catalog/profile retained; all21 real HTTP
 access probes pass. Typecheck/lint, six focused files and both serial browser
 stories pass. Cleanup retains56 original containers/95 volumes/53 images;
 all task runtime, six introduced images and temporary inputs are removed,
 Docker23.2 GiB free/cache0. Historical parent/A4/F3 gates remain separate;
-continue the remaining parent positive edit/reload story, reusing unchanged
-evidence. [Exact result and scope](handoffs/2026-10-24-builder-correction-and-casters.md#focused-parent-background-and-access-slice-accepted).
+its then-next parent edit/reload work is accepted above.
+[Exact earlier result and scope](handoffs/2026-10-24-builder-correction-and-casters.md#focused-parent-background-and-access-slice-accepted).
 **Earlier focused actual Unraid verification passes at
 `6226bca`**: typecheck/lint, five focused files, real Fighter4 creation through
 original equipment award/reload/foreign404, 34 native guard cases and eight

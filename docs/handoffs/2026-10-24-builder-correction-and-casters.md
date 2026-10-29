@@ -10,6 +10,72 @@ all global readiness/class/hit-die gates closed.
 
 ## Latest continuation — 2026-10-28 Unraid and proportional testing
 
+### Remaining current-state parent checks accepted
+
+Source `13dde07cabbfa594f6bac6d73e0356953755e269`, run
+`0e81c06a-6ac4-431d-a0e8-49e25ae58a09`, passes at21:24 America/Phoenix
+on October28. Typecheck, zero-warning lint, six focused files and all three
+serial actual browser stories pass on one disposable Unraid stack. No product
+code, SQL, permission, historical validator or release gate changed.
+
+- Fighter4 passes all eleven native checkpoints: prepared, race clear/reselect
+  with its Human language restored, changed manual scores, Dexterity ASI,
+  background language, changed Bond, changed name/alignment, equipment branch,
+  original award, identical sheet reload and foreign404. Each genuine edit
+  requires its exact new command receipts, revision advance, valid projections,
+  retained original-class proof, prior receipts and HP draws. Other-character
+  rows are compared around the sequence, including its pre-award boundary.
+  The award produces14 inventory rows. All34 guard cases, eight actual
+  contention scenarios and21 owner/service/foreign HTTP outcomes pass.
+- Genuine Rogue preparation and the unchanged rollback-only background vector
+  again prove physical writes/revisions1/0/2, correct Insight Expertise pruning,
+  exact whole-profile rollback, private-root absence and closed native clients.
+  This SQL-role vector still has `authenticationAccepted:false`.
+- The exact reviewed legacy Fiend entry is published asv2 after current-v1
+  bootstrap, then corrected current data asv3, through the normal full1535-entry
+  atomic importer. Prior snapshots, all unrelated catalog entries, character
+  rows and security profiles are unchanged; staging/batches finish empty.
+  The genuine UI-created Warlock3 target retains six learned spell rows,
+  13 awarded inventory rows and one real d8 draw through the reviewed update.
+  Its exact retained UI request expects2→3, applies once, and returns the same
+  receipt on actual JWT replay. Replay and reload are native-identical to the
+  applied state. The exact current-v3 control and fifteen other-character row
+  families remain unchanged. The UI must remove the offer, re-enable controls
+  and clear its real pending intent before the explicit reload.
+
+All31 passing files remain in `../equipment-runtime/unraid/<run UUID>/output`
+and the matching Unraid run's `output`. The separately named, hash-linked
+`current-parent-acceptance.json` is under
+`../equipment-runtime/unraid/parent-positive-20261029T035402Z/`, alongside
+the complete130-file evidence manifest and cleanup receipts for all five
+attempts. Independent review clears base`752f49f` → final source`13dde07c`,
+including the exact legacy archive entry, current-v3 control proof and final
+settlement wait. Final bundle review independently verifies all130 hashes,
+native outcomes, replay/retention and resource preservation; no blocker remains.
+
+Earlier runs remain failed with their original evidence: TypeScript target/
+closure errors (`eca6b80`), metadata-only details and unsaved Warlock abilities
+(`a227ed1`), a nested spell-option locator (`7c2299a`), then overlapping app and
+manual reloads (`4e29b9c`). Fixes preserve the oracles: a real alignment change,
+six genuine standard-array scores, exactly-one owned spell option, and explicit
+UI settlement. The shared spell test helper is corrected for form-scoped calls;
+no product behavior or timeout/retry policy was changed.
+
+Cleanup is complete for every attempt: task containers/network/volumes,
+credentials and raw logs are gone; ten introduced images,25 server source/input
+paths and15 local transfer files are removed. All56 original containers
+(45 running, identical IDs/images/PIDs/start times/restart counts/mounts),
+95 volumes and53 original image IDs match the baseline. Cache is0; the final
+21:27 check reports23.2 GiB Docker free. Passing-run minimum available RAM was
+24.2 GiB. No shared prune, existing-service restart, disk resize or hosted change.
+
+**Current-state parent acceptance is complete. Next is current-state ancestry
+builder acceptance**, starting with Hill Dwarf HP38 on the already installed
+reviewed stages. Keep historical parent1→2 aggregation, ancestry/A4 and F3
+upgrade/installer acceptance open and separate: this new receipt must not be
+fed to or relabeled as those old tools. Hosted/provider/release gates remain
+open, Vercel unchanged, M7/creature imports paused and all global gates closed.
+
 ### Focused parent background and access slice accepted
 
 Source `1de39d9e35c7037a4c6c8f89396b6f70b155903f`, run

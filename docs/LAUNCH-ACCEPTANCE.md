@@ -31,10 +31,13 @@ or overrides this queue. Historical completion counts are not current acceptance
    source/aggregation tasks in the
    [current handoff](handoffs/2026-10-24-builder-correction-and-casters.md) and
    [finite remaining matrix](specs/2026-10-24-builder-remaining-matrix.md).
-   Fiend and Draconic now pass actual local acceptance; the parent safeguard is
-   installed with passing native negatives/contention and genuine app fixture
-   preparation. Full parent aggregation remains the next dependency. Retain the
-   resource guard and cleanup rules; source/unit passes do not close later gates.
+   Fiend and Draconic pass actual local acceptance. Current-state parent
+   acceptance now passes at`13dde07c`, including genuine edits/reload, native
+   guards/background writes, actual HTTP access and Fiend correction/replay.
+   Next is current-state ancestry builder acceptance on the reviewed stages
+   already installed by fresh bootstrap, then the queued walkthroughs.
+   Historical parent/A4/F3 upgrade aggregators and old installer prerequisites
+   remain separately open; retain their exact gates, resource and cleanup rules.
 2. **Continue remaining M1–M6 work, including M5.5**, from open requirement rows
    after the builder work. Preserve accepted saving/recovery, Fiend eligibility,
    class acquisition/removal and other accepted slices; do not queue them again
@@ -66,7 +69,19 @@ and changes no implementation/native/browser acceptance result.
 
 ### User decision: simplify development testing and use Unraid
 
-The next focused parent slice passes at`1de39d9`: actual Rogue preparation,
+**Current-state parent acceptance passes at`13dde07c`.** One disposable Unraid
+run passes typecheck/lint, six focused files and three actual browser stories:
+eleven Fighter edit/award/reload/access checkpoints,34 native guards/eight
+contention cases/21 HTTP outcomes, Rogue1/0/2-write rollback and genuine Fiend
+v2→v3 correction with exact JWT replay, retained spells/inventory/draw and an
+unchanged current-v3 control. Final evidence review is clear. All task runtime,
+ten introduced images,25 server inputs and15 local archives are removed;
+56 original containers/95 volumes/53 images are retained, Docker23.2 GiB
+free/cache0. Next is current-state ancestry acceptance. Historical parent1→2,
+A4/F3 upgrade/installer and hosted/release gates stay separate and open.
+[Exact evidence and compositional receipt](handoffs/2026-10-24-builder-correction-and-casters.md#remaining-current-state-parent-checks-accepted).
+
+The earlier focused parent slice passes at`1de39d9`: actual Rogue preparation,
 unchanged native background1/0/2-write/revision vector with Expertise retention/
 pruning and complete rollback/profile equality, plus all21 actual HTTP access
 cases during the Fighter story, followed by award/reload. Typecheck/lint, six focused files,
@@ -74,8 +89,8 @@ cases during the Fighter story, followed by award/reload. Typecheck/lint, six fo
 task runtime, six introduced images and temporary inputs are removed;56 original
 containers/95 volumes/53 images are retained, Docker23.2 GiB free/cache0.
 This closes those fresh-state slices; full historical parent aggregation,
-ancestry/A4 and F3 upgrade gates remain open. Next is the remaining parent
-positive edit/reload story, reusing unchanged passing evidence. Exact run,
+ancestry/A4 and F3 upgrade gates remain open. The then-next parent
+positive edit/reload work is accepted above. Exact earlier run,
 scope and cleanup receipts are in the
 [current handoff](handoffs/2026-10-24-builder-correction-and-casters.md#focused-parent-background-and-access-slice-accepted).
 

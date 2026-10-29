@@ -14,7 +14,7 @@ project. No production environment, credentials or database is used. The app
 and browser run inside the test container; no server ports are published.
 
 The default runs typecheck/lint once, three focused dropdown files plus the
-affected psql-protocol, contention and parent-evidence validator files. Two
+affected psql-protocol, contention and parent-evidence validator files. Three
 serial browser stories exercise genuine Auth → Fighter builder → original
 equipment award → reload → foreign-account refusal, then a genuine Rogue's
 background/Expertise fixture. The Fighter includes all 21 owner/foreign/service
@@ -26,7 +26,7 @@ Only fixture preparation is browser/JWT proof; that native vector explicitly
 retains `authenticationAccepted:false`. `focused` runs only the source checks.
 Neither mode runs the full unit/E2E suite or a production build.
 
-The next parent candidate adds eleven native edit/award/reload/access
+The parent workflow includes eleven native edit/award/reload/access
 checkpoints to the Fighter story and a third, serial Fiend update/replay story.
 It uses an exact reviewed legacy entry from the October23 archive, published
 as version2 after the ordinary current-v1 bootstrap, then publishes current
@@ -39,7 +39,16 @@ The new current-v3 control and all other characters must stay unchanged. This
 is separately labeled fresh-state parent evidence; historical1→2 aggregator
 and ancestry/F3 upgrade gates are unchanged.
 
-Both stories pass at `1de39d9`, run `bd7f3ef4-88e7-4305-b39d-78264d453551`.
+All three stories pass at `13dde07c`, run
+`0e81c06a-6ac4-431d-a0e8-49e25ae58a09`. Final source/evidence review is clear.
+The separately labeled current-state parent acceptance receipt is in
+`../equipment-runtime/unraid/parent-positive-20261029T035402Z/`. Ten introduced
+images,25 server inputs and15 local archives across five attempts are removed;
+all task runtime/credentials are gone and130 evidence files are retained.
+All56 original containers,95 volumes and53 original image IDs match baseline,
+Docker23.2 GiB free/cache0. Historical parent1→2/A4/F3 upgrade gates stay open.
+
+The earlier two stories pass at `1de39d9`, run `bd7f3ef4-88e7-4305-b39d-78264d453551`.
 The 1/0/2 vector and all21 HTTP outcomes are verified, with original inventory
 and full global profile retention. All task runtime, six introduced images,
 five server source/input paths and three local archives are removed;15 public
