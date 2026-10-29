@@ -462,7 +462,7 @@ test("parent Fiend correction applies once and exact JWT replay retains the upda
   const publication = JSON.parse(await readFile("/output/fiend-publication-corrected.json", "utf8"));
   expect(publication).toMatchObject({ passed: true, mode: "corrected", after: { fiend: { version: 3 } } });
   expect(publication.after.fiend.data.spellcastingExpanded).toHaveLength(5); expect(publication.after.fiend.data).not.toHaveProperty("spellcastingExtra");
-  const controlPins = control.detail.pins.filter(pin => pin.content_id === publication.after.fiend.id && pin.content_type === "subclass");
+  const controlPins = control.detail.pins.filter(pin => pin.content_id === publication.after.fiend.id);
   expect(controlPins).toHaveLength(1); expect(controlPins[0]).toMatchObject({ content_version: 3, feature_grant_id: null, context: { source: "subclass", class: "warlock" } });
   expect(control.family.exact_frozen_pins).toEqual(expect.arrayContaining([expect.objectContaining({ kind: "subclass", slug: "fiend", content_id: publication.after.fiend.id, content_version: 3 })]));
   const before = await observeParent(characterId, config.owner.id, 1537), otherRows = await otherParentRows(characterId);
