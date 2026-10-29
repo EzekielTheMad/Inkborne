@@ -592,3 +592,35 @@ HP/campaign/Journal acceptance remains pending. No new user decision/scope.
 
 Coordinator closes main docs/index at this scoped checkpoint; Flow owns the
 next actual attempt. All accepted work, lane ownership and external limits retained.
+
+## CSJ-v1 native role refresh clear and corrected actual dispatched
+
+**CSJ native role refresh correction — 2026-10-29T23:22:26.585Z:** fourth run
+`2ff28c36-d9f5-4b76-b97c-362b3fb789bc` remains failed at live HP refresh
+with an unsaved Journal draft. Its sequential failure/control-flow supports a
+completed prefix of both builds/weapon logs/HP flows/native guard, rollback,
+campaign, committed-loss and genuine concurrency checks; no final success
+receipt or Journal acceptance is inferred. Full contentRefs equality rejected
+the freshly read class-role revision after successful HP persistence.
+
+Coordinator adopts compatible validation of old and fresh raw native role
+evidence against each own exact confirmed parent revision, then comparison of
+every other raw ref/pin/role/source/order/data/effect field. Only the separately
+validated revision stamp may differ; no evidence restamping, remount, unknown/
+pending guard relaxation or local-ack substitution. Character Flow source
+`a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2`, two-file diff SHA256
+`a2dbb6830f077a5c2504c658d5c0c4743720da1d766e41652c954250fd572770`,
+is CLEAR by the same reviewer.30 focused/typecheck/lint pass, including genuine
+role attachment, two successive refreshes, exact bigint, draft/attempt UUID and
+invalid evidence refusals. Runner/native/Actions/Journal remain unchanged.
+[Exact source/failure/cleanup manifest](2026-10-29-csj-role-refresh-fix.json).
+Eight linked/14 output hashes and exact cleanup verified;13 introducedimages/
+six inputs/runtime/private/helper/transport removed, original56containers/
+95volumes/27networks/all53imageIDs/services preserved. Flow is dispatched after
+this docs/index closure to the existing corrected actual CSJ workflow, fresh
+guards and unchanged budgets/oracles. No user decision is needed. Full corrected
+actual execution and Journal acceptance remain pending.
+
+Root closes main docs/index at this scoped checkpoint. Flow owns next actual
+attempt and bounded fixes; same reviewer retained. All18 other overview outcomes,
+accepted14 creations, ownership and external-action limits remain unchanged.
