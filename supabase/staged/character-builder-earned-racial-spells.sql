@@ -236,7 +236,8 @@ DECLARE cap private.character_builder_capabilities_v1%ROWTYPE; parent public.cha
   prior_refs jsonb; pending_refs jsonb; prior_source jsonb; pending_source jsonb; source jsonb; roots jsonb;
   current_choices jsonb; current_graph jsonb; picked jsonb; occurrence jsonb; pin jsonb; definition public.content_versions%ROWTYPE;
   prior_level integer; pending_level integer; selected_level integer; total integer; count_classes integer; matches integer;
-  side integer; kind text; root jsonb; old_root jsonb; original uuid; tier jsonb; dependency jsonb; metadata jsonb; expected jsonb;
+  side integer; kind text; root jsonb; old_root jsonb; original uuid; original_record jsonb; subclass_pin jsonb;
+  subclass_definition public.content_versions%ROWTYPE; subclass_gate integer; tier jsonb; dependency jsonb; metadata jsonb; expected jsonb;
   existing jsonb; claims jsonb:='[]'; retained jsonb:='[]'; spells jsonb; entry jsonb; physical public.character_spells%ROWTYPE;
   grant_key text; expected_keys text[]:='{}';
 BEGIN
@@ -277,7 +278,7 @@ BEGIN
   END LOOP;
   -- Saved and pending totals use their accepted immutable occurrence/controller
   -- tuples. Acquisition can add a trusted pending occurrence before its insert.
-  original:=(private.builder_original_occurrence_v1(target)->>'id')::uuid;
+  original_record:=private.builder_original_occurrence_v1(target); original:=(original_record->>'id')::uuid;
   FOR side IN 0..1 LOOP
     current_choices:=CASE WHEN side=0 THEN cap.before_parent->'choices' ELSE pending_choices END;
     current_graph:=CASE WHEN side=0 THEN cap.protected_graph ELSE graph END;
@@ -296,7 +297,10 @@ BEGIN
       selected_level:=(picked->>'level')::integer; total:=total+selected_level;
       SELECT count(*),pg_catalog.jsonb_agg(value)->0 INTO matches,occurrence FROM pg_catalog.jsonb_array_elements(current_graph->'occurrences')
         WHERE value->>'id'=picked->>'occurrence_id';
-      IF matches<>1 OR occurrence->>'lifecycle' IS DISTINCT FROM 'accepted' OR occurrence->>'character_id' IS DISTINCT FROM target::text
+      IF matches<>1 OR occurrence->>'lifecycle' IS DISTINCT FROM (CASE WHEN picked->>'occurrence_id'=original::text THEN 'provisional' ELSE 'accepted' END)
+        OR (picked->>'occurrence_id'=original::text AND ((side=0 AND occurrence IS DISTINCT FROM original_record)
+          OR (side=1 AND occurrence-'subclass_ref_id' IS DISTINCT FROM original_record-'subclass_ref_id')))
+        OR occurrence->>'character_id' IS DISTINCT FROM target::text
         OR occurrence->>'system_id' IS DISTINCT FROM parent.system_id::text OR occurrence->>'class_slug' IS DISTINCT FROM picked->>'slug' THEN
         RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
       SELECT count(*),pg_catalog.jsonb_agg(value)->0 INTO matches,pin FROM pg_catalog.jsonb_array_elements(current_graph->'refs')
@@ -308,6 +312,40 @@ BEGIN
       IF NOT FOUND OR definition.content_type_snapshot IS DISTINCT FROM 'class' OR definition.system_id_snapshot IS DISTINCT FROM parent.system_id
         OR definition.slug_snapshot IS DISTINCT FROM picked->>'slug' OR NOT EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(definition.data_snapshot->'levels') WHERE value->'level'=pg_catalog.to_jsonb(selected_level)) THEN
         RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
+      -- The B3 original remains the exact provisional tuple. Only the existing
+      -- sealed subclass compilers may change its pending subclass link; their
+      -- physical transition guards and final source/version checks still apply.
+      IF side=1 AND picked->>'occurrence_id'=original::text AND occurrence->'subclass_ref_id' IS DISTINCT FROM original_record->'subclass_ref_id' THEN
+        IF cap.command IS NULL OR cap.command NOT IN ('select_subclass','set_class_level','update_subclass_version') THEN
+          RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
+        IF occurrence->'subclass_ref_id'='null'::jsonb THEN
+          IF cap.command NOT IN ('select_subclass','set_class_level') OR picked ? 'subclass'
+            OR EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(current_graph->'refs') r(value)
+              WHERE r.value#>>'{context,source}'='subclass' AND r.value#>>'{context,class}'=picked->>'slug') THEN
+            RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
+          IF cap.command='set_class_level' THEN
+            SELECT min((value->>'level')::integer) INTO subclass_gate FROM pg_catalog.jsonb_array_elements(definition.data_snapshot->'levels')
+              WHERE value->'subclass_level'='true'::jsonb;
+            IF selected_level>=COALESCE(subclass_gate,20) THEN RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
+          END IF;
+        ELSE
+          IF cap.command='set_class_level' OR NOT private.builder_uuid_v1(occurrence->>'subclass_ref_id')
+            OR pg_catalog.jsonb_typeof(picked->'subclass') IS DISTINCT FROM 'string' THEN
+            RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
+          SELECT count(*),pg_catalog.jsonb_agg(value)->0 INTO matches,subclass_pin FROM pg_catalog.jsonb_array_elements(current_graph->'refs')
+            WHERE value->'id'=occurrence->'subclass_ref_id';
+          IF matches<>1 OR subclass_pin->>'character_id' IS DISTINCT FROM target::text OR subclass_pin->'feature_grant_id' IS DISTINCT FROM 'null'::jsonb
+            OR subclass_pin->'context' IS DISTINCT FROM pg_catalog.jsonb_build_object('source','subclass','class',picked->>'slug')
+            OR subclass_pin->>'choice_source' IS DISTINCT FROM 'builder:subclass:'||original::text THEN
+            RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
+          SELECT * INTO subclass_definition FROM public.content_versions WHERE content_id=(subclass_pin->>'content_id')::uuid AND version=(subclass_pin->>'content_version')::integer;
+          IF NOT FOUND OR subclass_definition.content_type_snapshot IS DISTINCT FROM 'subclass' OR subclass_definition.system_id_snapshot IS DISTINCT FROM parent.system_id
+            OR subclass_definition.slug_snapshot IS DISTINCT FROM picked->>'subclass' OR subclass_definition.data_snapshot->>'parent_class' IS DISTINCT FROM picked->>'slug'
+            OR subclass_definition.source_snapshot IS DISTINCT FROM 'srd' OR subclass_definition.scope_snapshot IS DISTINCT FROM 'platform'
+            OR subclass_definition.owner_id_snapshot IS NOT NULL THEN
+            RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
+        END IF;
+      END IF;
     END LOOP;
     IF total NOT BETWEEN 1 AND 20 OR (side=0 AND total<>(cap.before_parent->>'level')::integer) THEN
       RAISE EXCEPTION 'builder_earned_racial_classes_unavailable' USING ERRCODE='23514'; END IF;
@@ -417,7 +455,7 @@ BEGIN
       OR proc.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
       OR pg_catalog.md5(pg_catalog.replace(proc.prosrc,E'\r\n',E'\n'))<>(CASE signature
         WHEN 'private.builder_earned_racial_source_v1(uuid,jsonb,jsonb,uuid)' THEN '13b480ff386a5c565e205370ce08fbe0'
-        ELSE '05989bdb6d1683d31d781e67b302a04d' END)
+        ELSE '40ad377512a1f97821e3763109ce64b4' END)
       OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(COALESCE(proc.proacl,pg_catalog.acldefault('f',proc.proowner))) a
         WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable OR a.grantee<>proc.proowner) THEN
       RAISE EXCEPTION 'builder_earned_racial_helper_profile_changed' USING ERRCODE='42501'; END IF;

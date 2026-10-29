@@ -127,7 +127,8 @@ const schema = `CREATE SCHEMA private; CREATE SCHEMA auth;
   CREATE FUNCTION private.require_character_creation_context_v1(jsonb) RETURNS void LANGUAGE sql AS 'SELECT';
   CREATE FUNCTION private.builder_protected_graph_v1(uuid) RETURNS jsonb LANGUAGE sql AS 'SELECT ''{"retained":true}''::jsonb';
   CREATE FUNCTION private.assert_builder_catalog_graph_v1(uuid,boolean) RETURNS void LANGUAGE sql AS 'SELECT';
-  CREATE FUNCTION private.builder_original_occurrence_v1(uuid) RETURNS jsonb LANGUAGE sql AS $$ SELECT jsonb_build_object('id',current_setting('test.original',true)) $$;
+  CREATE FUNCTION private.builder_original_occurrence_v1(uuid) RETURNS jsonb LANGUAGE sql AS $$
+    SELECT CASE WHEN nullif(current_setting('test.original',true),'') IS NOT NULL THEN current_setting('test.original_record')::jsonb ELSE NULL END $$;
   CREATE FUNCTION private.builder_progression_scores_v1(uuid,jsonb) RETURNS jsonb LANGUAGE sql AS $$ SELECT jsonb_build_object('constitution',COALESCE(NULLIF(current_setting('test.constitution',true),''),'14')::integer) $$;
   CREATE FUNCTION private.can_use_content_version(uuid,uuid,integer) RETURNS boolean LANGUAGE sql AS 'SELECT true';
   CREATE FUNCTION private.character_can_access_content_version(uuid,uuid,integer) RETURNS boolean LANGUAGE sql AS 'SELECT true';
@@ -256,7 +257,7 @@ const traitPin = () => pin(traitRoot, traitContent, { source: "racial_trait", ro
 const classPin = () => pin(classRoot, classContent, { source: "class", level: 1 });
 const occurrence = (which = original, root = classRoot, content = classContent, slug = "warlock") => ({
   id: which, character_id: target, system_id: system, content_id: content, content_version: 1, class_slug: slug,
-  lifecycle: "accepted", controller_ref_id: root, subclass_ref_id: null,
+  lifecycle: which === original ? "provisional" : "accepted", controller_ref_id: root, subclass_ref_id: null,
 });
 const choices = (level = 2, race = true) => ({ classes: [{ slug: "warlock", level, occurrence_id: original }], resolved_choices: {}, ...(race ? { race: "tiefling" } : {}) });
 const spell = (n: number, source = "racial_trait", group = "race:tiefling", content = id(60), custom_data: Json | null = {
@@ -294,13 +295,19 @@ async function installBaseline(connection: PGlite, ancestry = true) {
 async function profile(connection = db) {
   return (await connection.query<{ oid: number; row: Json }>("SELECT p.oid::integer AS oid,to_jsonb(p) AS row FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname IN ('public','private') ORDER BY p.oid")).rows;
 }
-async function seed(level = 2, spells: Json[] = [spell(70)], version = 2, racial = true, classes?: Json[]) {
+async function seed(level = 2, spells: Json[] = [spell(70)], version = 2, racial = true, classes?: Json[], originalSubclass?: ReturnType<typeof pin>) {
   nativeRace = undefined;
   await db.exec(`TRUNCATE public.characters,public.content_versions,public.character_content_refs,public.character_spells,
     private.character_class_origin_v1,private.character_projection_order_v1,private.character_builder_capabilities_v1,private.character_parent_admissions_v1;
     SELECT set_config('test.original','${original}',false),set_config('test.prune_expertise','off',false);`);
   await db.query("SELECT set_config('test.actor',$1,false),set_config('test.context',$2,false)", [actor, JSON.stringify(context)]);
   savedChoices = { ...choices(level, racial), ...(classes ? { classes } : {}) }; savedGraph = graph(spells, racial);
+  if (originalSubclass) {
+    (savedChoices.classes as Json[])[0].subclass = "fiend";
+    (savedGraph.occurrences as Json[])[0].subclass_ref_id = originalSubclass.id;
+    (savedGraph.refs as Json[]).push(originalSubclass);
+  }
+  await db.query("SELECT set_config('test.original_record',$1,false)", [JSON.stringify((savedGraph.occurrences as Json[])[0])]);
   if (classes?.some(row => row.occurrence_id === secondary)) {
     (savedGraph.refs as Json[]).push(pin(secondaryRoot, secondaryContent, { source: "class", level: 1 }, `builder:class-acquisition:${id(90)}`));
     (savedGraph.occurrences as Json[]).push(occurrence(secondary, secondaryRoot, secondaryContent, "fighter"));
@@ -342,6 +349,20 @@ async function initialFive() {
   await seed();
   return (await compile(choices(5))).graph.spells as Json[];
 }
+const subclassPin = (ref = id(22), version = 1) => pin(ref, id(32), { source: "subclass", class: "warlock" }, `builder:subclass:${original}`, version);
+async function subclassFixture() {
+  // A level-three subclass gate models the original-class prune/restore path;
+  // the trusted catalog planner and full B3 journal remain explicit doubles.
+  await db.query("UPDATE public.content_versions SET data_snapshot=jsonb_set(data_snapshot,'{levels,2,subclass_level}','true') WHERE content_id=$1", [classContent]);
+  for (const version of [1, 2]) await db.query("INSERT INTO public.content_versions(content_id,version,content_type_snapshot,slug_snapshot,name_snapshot,system_id_snapshot,data_snapshot,effects_snapshot,created_at) VALUES($1,$2,'subclass','fiend','Fiend',$3,'{\"parent_class\":\"warlock\",\"levels\":[]}','[]',$4)", [id(32), version, system, snapshotTime]);
+}
+function subclassProjection(selected: ReturnType<typeof pin> | null, level = 3) {
+  const projected = structuredClone(savedGraph), next: Json = choices(level);
+  (projected.occurrences as Json[])[0].subclass_ref_id = selected?.id ?? null;
+  projected.refs = (projected.refs as Json[]).filter(row => row.context && (row.context as Json).source !== "subclass");
+  if (selected) { (projected.refs as Json[]).push(selected); (next.classes as Json[])[0].subclass = "fiend"; }
+  return { projected, next };
+}
 beforeAll(async () => {
   await installBaseline(db);
   beforeFunctions = await profile();
@@ -353,6 +374,71 @@ afterAll(async () => { await db.close(); await baseline.close(); });
 beforeEach(async () => { await seed(); });
 
 describe("finite earned racial spell compiler and real installer", () => {
+  it("reproduces accepted-only Add Race rejection, then accepts the exact canonical provisional B3 original", async () => {
+    await seed(3, [], 2, false); const canonical = structuredClone((savedGraph.occurrences as Json[])[0]);
+    expect(canonical.lifecycle).toBe("provisional");
+    const fixed = definition("supabase/staged/character-builder-earned-racial-spells.sql", "private.prepare_builder_earned_racial_spells_v1").sql.replace("CREATE FUNCTION", "CREATE OR REPLACE FUNCTION");
+    // Reintroduce only the former lifecycle predicate on the actual helper,
+    // exercising the same Add Race normalizer path before restoring the fix.
+    const acceptedOnly = replaceOnce(fixed, "occurrence->>'lifecycle' IS DISTINCT FROM (CASE WHEN picked->>'occurrence_id'=original::text THEN 'provisional' ELSE 'accepted' END)", "occurrence->>'lifecycle' IS DISTINCT FROM 'accepted'");
+    await db.exec(acceptedOnly);
+    try { await expect(compile(choices(3), graph([spell(70)]), [racePin()], "select_race")).rejects.toThrow("builder_earned_racial_classes_unavailable"); }
+    finally { await db.exec(fixed); }
+    const output = await compile(choices(3), graph([spell(70)]), [racePin()], "select_race");
+    expect(output.graph.occurrences).toEqual([canonical]); expect(earned(output.graph)).toHaveLength(1);
+  });
+  it.each(["lifecycle", "character_id", "system_id", "content_id", "content_version", "class_slug", "controller_ref_id", "extra"])("rejects a forged pending original %s", async field => {
+    const projected = structuredClone(savedGraph), row = (projected.occurrences as Json[])[0];
+    row[field] = field === "lifecycle" ? "accepted" : field === "content_version" ? 9 : field === "extra" ? true : id(999);
+    await expect(compile(choices(3), projected)).rejects.toThrow(/builder_earned_racial_classes_unavailable/);
+  });
+  it("requires the complete saved canonical original, including its subclass link", async () => {
+    (savedGraph.occurrences as Json[])[0].subclass_ref_id = id(999);
+    await expect(compile()).rejects.toThrow("builder_earned_racial_classes_unavailable");
+  });
+  it("rejects provisional secondary occurrences while allowing accepted acquisition", async () => {
+    const projected = structuredClone(savedGraph);
+    (projected.refs as Json[]).push(pin(secondaryRoot, secondaryContent, { source: "class", level: 1 }, `builder:class-acquisition:${id(90)}`));
+    (projected.occurrences as Json[]).push(occurrence(secondary, secondaryRoot, secondaryContent, "fighter"));
+    const next = { ...choices(2), classes: [...choices(2).classes, { slug: "fighter", level: 1, occurrence_id: secondary }] };
+    expect(earned((await compile(next, projected, [actualRacePin()], "add_class")).graph)).toHaveLength(1);
+    (projected.occurrences as Json[])[1].lifecycle = "provisional";
+    await expect(compile(next, projected, [actualRacePin()], "add_class")).rejects.toThrow("builder_earned_racial_classes_unavailable");
+  });
+  it("permits original subclass selection, explicit clearing and restoration with every other field exact", async () => {
+    const rows = (await compile(choices(3))).graph.spells as Json[];
+    await seed(3, rows); await subclassFixture();
+    const selected = subclassProjection(subclassPin()); expect((await compile(selected.next, selected.projected, [actualRacePin()], "select_subclass")).graph.occurrences).toEqual(selected.projected.occurrences);
+    await seed(3, rows, 2, true, undefined, subclassPin()); await subclassFixture();
+    const cleared = subclassProjection(null); expect((await compile(cleared.next, cleared.projected, [actualRacePin()], "select_subclass")).graph.occurrences).toEqual(cleared.projected.occurrences);
+    await seed(3, rows); await subclassFixture();
+    const restored = subclassProjection(subclassPin(id(23))); expect((await compile(restored.next, restored.projected, [actualRacePin()], "select_subclass")).graph.occurrences).toEqual(restored.projected.occurrences);
+  });
+  it("permits only below-gate downlevel pruning, then restores the earned tier and subclass", async () => {
+    const rows = (await compile(choices(3))).graph.spells as Json[];
+    await seed(3, rows, 2, true, undefined, subclassPin()); await subclassFixture();
+    const down = subclassProjection(null, 2), output = await compile(down.next, down.projected, [actualRacePin()], "set_class_level"); expect(earned(output.graph)).toEqual([]);
+    const stillEarned = subclassProjection(null, 3); await expect(compile(stillEarned.next, stillEarned.projected, [actualRacePin()], "set_class_level")).rejects.toThrow("builder_earned_racial_classes_unavailable");
+    await seed(2, output.graph.spells as Json[]); const up = await compile(choices(3)); expect(earned(up.graph)).toHaveLength(1);
+    await seed(3, up.graph.spells as Json[]); await subclassFixture();
+    const restored = subclassProjection(subclassPin(id(23))); expect(earned((await compile(restored.next, restored.projected, [actualRacePin()], "select_subclass")).graph)).toEqual(earned(up.graph));
+  });
+  it("retains the finite immutable subclass-version update lane", async () => {
+    const rows = (await compile(choices(3))).graph.spells as Json[];
+    await seed(3, rows, 2, true, undefined, subclassPin()); await subclassFixture();
+    const updated = subclassProjection(subclassPin(id(23), 2)); expect((await compile(updated.next, updated.projected, [actualRacePin()], "update_subclass_version")).graph.occurrences).toEqual(updated.projected.occurrences);
+  });
+  it.each(["unrelated-command", "level-replacement", "missing-pin", "foreign-pin", "wrong-context", "wrong-source", "wrong-parent", "wrong-system"])("refuses an unproved pending subclass transition: %s", async fault => {
+    const rows = (await compile(choices(3))).graph.spells as Json[]; await seed(3, rows); await subclassFixture();
+    const selected = subclassProjection(subclassPin()), row = (selected.projected.refs as Json[]).find(entry => entry.id === id(22))!;
+    if (fault === "missing-pin") selected.projected.refs = (selected.projected.refs as Json[]).filter(entry => entry.id !== id(22));
+    if (fault === "foreign-pin") row.character_id = id(999);
+    if (fault === "wrong-context") row.context = { source: "subclass", class: "fighter" };
+    if (fault === "wrong-source") row.choice_source = `builder:subclass:${secondary}`;
+    if (fault === "wrong-parent") await db.query("UPDATE public.content_versions SET data_snapshot='{\"parent_class\":\"fighter\"}' WHERE content_id=$1", [id(32)]);
+    if (fault === "wrong-system") await db.query("UPDATE public.content_versions SET system_id_snapshot=$1 WHERE content_id=$2", [id(999), id(32)]);
+    await expect(compile(selected.next, selected.projected, [actualRacePin()], fault === "unrelated-command" ? "race_choice" : fault === "level-replacement" ? "set_class_level" : "select_subclass")).rejects.toThrow(/builder_(earned_racial_classes_unavailable|feature_choice_sources_unavailable)/);
+  });
   it("freezes every preexisting pg_proc attribute/body except the one final-return hook, all wires and closed gates", async () => {
     const after = await profile();
     for (const before of beforeFunctions) {
@@ -453,7 +539,7 @@ describe("finite earned racial spell compiler and real installer", () => {
     if (fault === "ability") await db.query("UPDATE public.content_versions SET effects_snapshot='[{\"type\":\"grant\",\"stat\":\"spell\",\"value\":\"thaumaturgy\"},{\"type\":\"grant\",\"stat\":\"spellcasting_ability\",\"value\":\"wisdom\"}]' WHERE content_id=$1", [traitContent]);
     if (fault === "trait-scope") await db.query("UPDATE public.content_versions SET data_snapshot='{\"races\":[\"human\"],\"subraces\":[]}' WHERE content_id=$1", [traitContent]);
     if (fault === "duplicate-root") (projected.refs as Json[]).push({ ...root, id: id(99) });
-    if (fault === "pending-occurrence") (projected.occurrences as Json[])[0].lifecycle = "provisional";
+    if (fault === "pending-occurrence") (projected.occurrences as Json[])[0].lifecycle = "accepted";
     const next: Json = choices(3); if (fault === "pending-level") (next.classes as Json[])[0].level = "3";
     await expect(compile(next, projected, [root])).rejects.toThrow(/builder_(earned_racial_|feature_choice_sources_unavailable)/);
   });

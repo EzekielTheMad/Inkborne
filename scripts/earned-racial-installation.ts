@@ -5,13 +5,13 @@ import { PARENT_ACCEPTANCE_CHECKS, validateParentBackgroundVector } from "./pare
 
 export const EARNED_RACIAL_STAGE = {
   file: "supabase/staged/character-builder-earned-racial-spells.sql",
-  sha256: "15ba6f048db128488d57b67616d8ea8dbbc3dfa9024abbff1e7339c6f738eb86",
-  crlfSha256: "7aa22602539160df72db56e75498b072e6a2e566d5b7af44c424f6fc9afb861d",
+  sha256: "80a425c3a008190abc78e2efdf4857641bf19d6dd18891ee50c6e630c34178fb",
+  crlfSha256: "e5602e382f14852a05422d922887983a9c0fe7f7d9a8cd37cf8aad076ca5fc2a",
   normalizer: "private.prepare_builder_class_feature_choices_v1(uuid,jsonb,jsonb,text,jsonb)",
   before: "ac38f1a56f22097481aa51ea3472d592", after: "ecd93787a191f3074ae6b458b763e932",
   helpers: {
     "private.builder_earned_racial_source_v1(uuid,jsonb,jsonb,uuid)": "13b480ff386a5c565e205370ce08fbe0",
-    "private.prepare_builder_earned_racial_spells_v1(uuid,jsonb,jsonb,jsonb)": "05989bdb6d1683d31d781e67b302a04d",
+    "private.prepare_builder_earned_racial_spells_v1(uuid,jsonb,jsonb,jsonb)": "40ad377512a1f97821e3763109ce64b4",
   },
 } as const;
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
