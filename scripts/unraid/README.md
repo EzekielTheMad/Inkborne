@@ -29,7 +29,7 @@ Neither mode runs the full unit/E2E suite or a production build.
 
 `builders` uses the same private runtime and cleanup controls for the existing
 fourteen complete creation stories: eight single-class casters, three martial
-builds, Hill Dwarf Barbarian, and the two mixed-caster builds. It runs four
+builds, Hill Dwarf Barbarian, and the two mixed-caster builds. It runs six
 focused source files, typecheck/lint once, and the serial actual-app stories.
 The fresh current catalog remains at1,535 definitions/snapshots; this mode
 does not publish historical catalog versions or rerun the accepted parent bundle.

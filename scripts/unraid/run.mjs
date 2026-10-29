@@ -34,7 +34,8 @@ try{
  await run(['run','typecheck','--','--tsBuildInfoFile','/tmp/inkborne.tsbuildinfo'],'typecheck');
  await run(['run','lint'],'lint');
  const focused = mode==='builders' ? ['tests/lib/character/ancestry-hit-points.test.ts','tests/lib/character/ancestry-defenses.test.ts',
-  'tests/lib/character/earned-racial-spells.test.ts','tests/lib/builder/choice-options.test.ts'] : ['tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx',
+  'tests/lib/character/earned-racial-spells.test.ts','tests/lib/builder/choice-options.test.ts',
+  'tests/components/sheet/content-tabs.test.tsx','tests/app/class-step-client-feat-regressions.test.tsx'] : ['tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx',
   'tests/scripts/character-command-psql.test.ts','tests/scripts/builder-parent-admission-concurrency.test.ts',
   'tests/scripts/parent-admission-acceptance.test.ts'];
  await run(['test','--',...focused,'--maxWorkers=1'],'focused');
