@@ -117,7 +117,7 @@ async function ancestryAbilitiesBackground(page: Page, base: string, story: Stor
     await save(page, () => page.getByRole("combobox", { name: "Subrace", exact: true }).selectOption({ label: story.subrace }));
     await expect(page.getByRole("button", { name: "Change Subrace", exact: true })).toBeVisible();
   }
-  await page.reload(); await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
+  await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByRole("button", { name: "Change Race", exact: true })).toBeVisible();
   if (story.subrace) await expect(page.getByRole("button", { name: "Change Subrace", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Next: Abilities", exact: true }).click();
   for (const [ability, score] of Object.entries(story.scores)) {
@@ -133,7 +133,7 @@ async function ancestryAbilitiesBackground(page: Page, base: string, story: Stor
     await save(page, () => control.selectOption(score));
     await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
   }
-  await page.reload();
+  await page.reload({ waitUntil: "domcontentloaded" });
   for (const [ability, score] of Object.entries(story.scores)) await expect(page.getByRole("combobox", { name: `${ability} score`, exact: true })).toHaveValue(score);
   await page.getByRole("button", { name: "Next: Background", exact: true }).click();
   await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
@@ -141,7 +141,7 @@ async function ancestryAbilitiesBackground(page: Page, base: string, story: Stor
   const languages = choiceGroup(page, "Choose 2 language");
   for (const name of ["Celestial", "Elvish"]) await choose(page, choiceOption(languages, name));
   await save(page, () => pickOption(choiceOption(page, "Nothing can shake my optimistic attitude.")));
-  await page.reload();
+  await page.reload({ waitUntil: "domcontentloaded" });
   for (const name of ["Celestial", "Elvish"]) await expect(choiceOption(languages, name)).toHaveJSProperty("selected", true);
 }
 async function awardEquipment(page: Page, base: string) {
@@ -163,7 +163,7 @@ async function awardEquipment(page: Page, base: string) {
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Confirm Equipment", exact: true }).click();
   await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
-  await page.reload(); await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
+  await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByText("Starting equipment award recorded", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Confirm Equipment", exact: true })).toHaveCount(0);
   await expect(page.getByRole("listitem").filter({ hasText: /^15 gp$/ })).toBeVisible();
 }
@@ -188,7 +188,8 @@ async function completeClass(page: Page, base: string, story: Story) {
     const average = hpOption(page, "average");
     await save(page, () => pickOption(average)); await expect(average).toHaveJSProperty("selected", true); await expect(average).toBeEnabled();
   }
-  await page.reload();
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(level).toHaveValue("3"); await expect(level).toBeEnabled();
   await expect(page.getByRole("navigation", { name: "Character builder", exact: true }).locator('a[href$="/builder/class"]')).toContainText("Saved");
 }
 async function details(page: Page, base: string, name: string) {
@@ -197,7 +198,7 @@ async function details(page: Page, base: string, name: string) {
   await page.getByRole("combobox", { name: "Alignment", exact: true }).selectOption("Neutral Good");
   await save(page, () => page.getByRole("button", { name: "Save details", exact: true }).click());
   await expect(page.getByText("Character details saved.", { exact: true })).toBeVisible();
-  await page.reload(); await expect(page.getByRole("textbox", { name: "Character name", exact: true })).toHaveValue(name);
+  await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByRole("textbox", { name: "Character name", exact: true })).toHaveValue(name);
   const nav = page.getByRole("navigation", { name: "Character builder", exact: true });
   for (const step of ["class", "race", "abilities", "background", "equipment", "details"]) await expect(nav.locator(`a[href$="/builder/${step}"]`)).toContainText("Saved");
 }
@@ -318,7 +319,7 @@ for (const story of stories) test(`complete martial ${story.id} ${story.race} ${
   await page.getByRole("combobox", { name: "First class", exact: true }).selectOption({ label: story.first });
   await page.getByRole("button", { name: "Save first class", exact: true }).click();
   await expect(page.getByText(`${story.first} · Level 1`, { exact: true })).toBeVisible();
-  await page.reload(); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, 1);
+  await page.reload({ waitUntil: "domcontentloaded" }); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, 1);
   for (const skill of story.initialSkills) await choose(page, choiceOption(group(page, `Choose ${story.initialSkills.length} proficiency`, story.initialSkills[0]), skill));
   if (story.id === "A1") for (const skill of story.expertise) await choose(page, choiceOption(group(page, "Choose 2 expertise"), skill));
   if (story.id === "A2") await choose(page, choiceOption(group(page, "Choose 1 proficiency", "Smiths Tools"), "Smiths Tools"));
@@ -345,7 +346,7 @@ for (const story of stories) test(`complete martial ${story.id} ${story.race} ${
   expect(equipped.pins).toEqual(before.pins);
   const worn = equipped.inventory.filter(item => item.equipped);
   if (story.id === "A2") expect(worn).toEqual([]); else { expect(worn).toHaveLength(1); expect(worn[0].slug).toBe("leather-armor"); }
-  await page.reload(); await inspectSheet(page, story, name);
+  await page.reload({ waitUntil: "domcontentloaded" }); await inspectSheet(page, story, name);
   const after = await readback(info, config, story, id, "sheet-reloaded"); expect(after).toEqual(equipped);
   await rejectOtherAccount(browser, config, sheet, blocked, errors);
   const foreign = await readback(info, config, story, id, "foreign-refused"); expect(foreign).toEqual(after);
