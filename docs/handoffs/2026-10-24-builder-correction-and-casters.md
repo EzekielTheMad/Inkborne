@@ -8,7 +8,61 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ-FLOW-1 — 2026-10-29 capacity source checkpoint
+## Current CSJ-FLOW-2 — 2026-10-29 blocked source checkpoint
+
+Recorded 2026-10-29T20:09:57.829Z; contract v1 and current continuation/ownership read.
+Source **`31222a1fe026f7459050a2340d041d720c611d18`**, base `dbf2489`, retains the partial runner
+preparation and product-only Journal assembly. Exact files/Git blobs/SHA-256,
+missing work, native dependencies and minimum proposed checks are in the
+[bounded source manifest](2026-10-29-csj-flow-source-checkpoint.json).
+
+The ten Journal product/test blobs from frozen `a3842f4` (base `f300b7a`)
+match their reviewed manifest. No Journal docs/report/AGENTS/scripts or foreign
+worktree was changed. The four partial Flow files are bootstrap.ts, remote.mjs,
+run.mjs under scripts/unraid and e2e/unraid/csj.config.ts. They prepare the
+restricted four-role/one-campaign fixture and sequential mode; no character
+fixture is inserted. **The normal-UI producer csj-flow.spec.ts is absent, runner
+is incomplete, and existing CSJ preflights refuse its export/run.** Final runner
+exit/cleanup-record integration remains pending. No success receipt was made.
+
+Two source-confirmed prerequisites prevent the selected actual workflow:
+
+1. HPTracker uses the owner conditional state RPC via the current state writer.
+   Its only enrolled-parent adaptation acquires the singleton guard. State is
+   inside private.character_parent_mechanics_v1, and enrolled_parent_before_v1
+   permits changed tuples only with native builder/first_class admissions. The
+   existing directParentProbes intentionally expects owner state CAS refusal.
+   This also blocks Journal's later same-ID HP/narrative retention check.
+2. Existing assignCharacterToCampaign directly owner-filters an UPDATE of
+   campaign_id, also inside the protected tuple, without native admission. Thus
+   assigning the normally UI-created Bard through the current campaign UI is
+   blocked. Visibility alone is outside this tuple; the previously approved
+   owner-authenticated visibility-only scratch setup does not repair assignment.
+
+Coordinator owns shared-contract disposition and explicitly requested this
+precise blocked checkpoint before more acceptance-source expansion. No native
+admission/schema/security change was implemented. Generic CAS/direct-write
+denials, enrollment, gates, revision and projection order remain intact. No
+admin/prebuilt/unenrollment alternative is used. Proposal only: decide separately
+bounded owner HP and campaign-assignment producers with exact admission and
+revision/order guarantees; source/native reference files and minimum real checks
+are listed in the manifest. Producer file names/contract are not yet agreed.
+
+**Evidence limits:** assembly hashes and diff checks pass. Reuse the central
+CLEAR source reviews for capacity ce7330f and exact Journal a3842f4 only. No new
+product tests, typecheck/lint, browser or Unraid run qualifies this blocked
+preparation; none ran. No actual CSJ acceptance, guard change, account/credential,
+fixture or persistent process was created, so no runtime cleanup is outstanding.
+Fourteen accepted creations remain accepted. Library and Journal keep their
+reports/product work; coordinator alone updates overview/ledger/acceptance.
+
+The main source/document/index write window ends at the scoped checkpoint commit
+and validated own-report readback; no transferred write remains in flight. Next:
+coordinator records the blockers/owners and resolves the native contract. Resume
+Flow source only within the next agreed boundary; heavy execution stays held
+for assembled-source review and actual success plus verified cleanup.
+
+## Prior CSJ-FLOW-1 — 2026-10-29 capacity source checkpoint
 
 Victor's approved **CSJ-v1**, criteria CSJ-1/CSJ-2 and assignment CSJ-FLOW-1,
 now select the existing R08 fix plus two normal UI-created characters and basic

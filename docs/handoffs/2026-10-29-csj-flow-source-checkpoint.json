@@ -1,0 +1,185 @@
+{
+  "kind": "inkborne-csj-flow-blocked-checkpoint-v1",
+  "assignment": "CSJ-FLOW-2",
+  "recordedAt": "2026-10-29T20:09:57.829Z",
+  "sourceBase": "dbf248905d98462f3997808ea752dc50d2f8acad",
+  "sourceHead": "31222a1fe026f7459050a2340d041d720c611d18",
+  "branch": "codex/launch-integration-20261011",
+  "worktree": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification",
+  "contractVersion": 1,
+  "status": "partial-source-blocked",
+  "runnerComplete": false,
+  "heavyExecutionHeld": true,
+  "normalCreationProducerPresent": false,
+  "journalSource": {
+    "base": "f300b7a5c150c5e8b353368cc3e13843175d6113",
+    "head": "a3842f497f9570aaa08f20d26209bf29128aa57e",
+    "selectedDiffSha256": "8e237a153d4814237d5c61550083a4fda44e6bc53aa8dd7c7b5e9a5fd7d8750f",
+    "files": [
+      {
+        "path": "app/(app)/characters/[id]/story-actions.ts",
+        "gitBlob": "b229077733e7205e813f7d0c74e8a9deedbb3b17",
+        "sha256": "c02fc6aeec5e06fb1a569724b80c109fc1d675ec98135b6af716508809737b0a",
+        "bytes": 12179
+      },
+      {
+        "path": "components/narrative/timeline-section.tsx",
+        "gitBlob": "9c1bc26caebc54b8ded975caacef1641081cbe40",
+        "sha256": "d221796a97a7274ff58f67933dc0fd35186aa724c877cc7191519cd1a11795c0",
+        "bytes": 16183
+      },
+      {
+        "path": "components/narrative/relationships-section.tsx",
+        "gitBlob": "c1b032398a4e02d25e20c60c4e4d63803145730d",
+        "sha256": "e43667d2060044eba7cab1bc8099ab1bd6d4acf7741b5000ded0e6370969a476",
+        "bytes": 8263
+      },
+      {
+        "path": "tests/app/character-story-actions.test.ts",
+        "gitBlob": "92d7b3c2fd680cd437e72d7d45f24b4a2f682e50",
+        "sha256": "dbe13660fc365a2e2bc0ddcdee9ea09ce04a8c4233ed95375378f1d473725e47",
+        "bytes": 9991
+      },
+      {
+        "path": "tests/components/narrative/journal.test.tsx",
+        "gitBlob": "41b84da76f09a2451e32aadea25b57425671a649",
+        "sha256": "71ebcb52f65fc631a087a98ee24ad0e469a71a927b2606b5fc39e381a4ad93d2",
+        "bytes": 14365
+      },
+      {
+        "path": "tests/components/narrative/story-sections.test.tsx",
+        "gitBlob": "ae76a861be0c66710507c4a620840cfbcdc33be2",
+        "sha256": "b513ab852f083f3f389a56f66d8dccd92eae7cc1792efcc90cb6d4cd1f4d6190",
+        "bytes": 2968
+      },
+      {
+        "path": "e2e/local-journal/playwright.config.ts",
+        "gitBlob": "34824649bae47075750245400d60f760ebd2d29e",
+        "sha256": "05d2a5dd64378250d0b8964f3723c5551d2b753c843bb5850e2d02fe14ab6f10",
+        "bytes": 325
+      },
+      {
+        "path": "e2e/local-journal/journal.spec.ts",
+        "gitBlob": "6ca970ac5e969689399c31a80c2e274c42f2b03d",
+        "sha256": "2a8fd4d03dc6a772529615496a03c93ea5b0d346c9cb3ef32a211f1d50b778de",
+        "bytes": 9867
+      },
+      {
+        "path": "e2e/local-journal/real.config.ts",
+        "gitBlob": "d26f4d6122edb78098fb634aaa9e1cc27f63edbe",
+        "sha256": "974e478e110ebb6c538bfac8cf88444583d77099f70b420d84cd7bc9755e0121",
+        "bytes": 640
+      },
+      {
+        "path": "e2e/local-journal/real-journal.spec.ts",
+        "gitBlob": "f7e97f96e22c56099cec150c1111c35b52770c52",
+        "sha256": "fe02b834da83dd4bad83fd10a44cde3770266e72d8aca3b3c26980e4facb12c8",
+        "bytes": 29300
+      }
+    ],
+    "assembly": "All ten canonical Git blobs verified against frozen manifest before assembly; no Journal docs/reports/AGENTS/scripts imported."
+  },
+  "partialRunnerFiles": [
+    {
+      "path": "scripts/unraid/bootstrap.ts",
+      "gitBlob": "fedd2ac7b701dcbe64fcf6728fca970207905359",
+      "sha256": "39e8a80329f637c6763ee7c1e2567b9a279db33db0bcf87198f9ff4b304466cf",
+      "bytes": 11820
+    },
+    {
+      "path": "scripts/unraid/remote.mjs",
+      "gitBlob": "fb14b8dbf227974addbf51f0e6d6c23b1c4c035b",
+      "sha256": "afb23a1ca5b03c457c0635d39e8d55ec90b01e9ba81d7534ab4a871118382de4",
+      "bytes": 7677
+    },
+    {
+      "path": "scripts/unraid/run.mjs",
+      "gitBlob": "b983f335c3cd6817c0e75b5c27fb5581f6827102",
+      "sha256": "7b6e566d42d70c1b5bffdb2759ae4d2b80551680fd928d7c4bddc4342af8a1ad",
+      "bytes": 6968
+    },
+    {
+      "path": "e2e/unraid/csj.config.ts",
+      "gitBlob": "7281614c3b464ba01fdbc50061fdfb31a5001011",
+      "sha256": "720604f3fd3b360a506aa5141b1ad1d6f7fe9e2d4c5e96a3bce92e1b00e611da",
+      "bytes": 679
+    }
+  ],
+  "uncommittedSourceFiles": [],
+  "missingWork": [
+    "e2e/unraid/csj-flow.spec.ts normal-UI creation/basic-sheet producer is intentionally not written after concrete native prerequisite discovery.",
+    "Current CSJ entry preflight requires that missing committed producer, so CSJ runtime export/run is unavailable and fails closed.",
+    "Final runner source/review and successful-exit plus final cleanup-record validation are pending; receipt presence alone must never accept a partial run."
+  ],
+  "blockers": [
+    {
+      "id": "csj-enrolled-hp-state",
+      "owner": "Inkborne Project Coordinator",
+      "producer": "lib/sheet/update-state.ts: updateCharacterState -> public.patch_character_state_if_current(uuid,jsonb,jsonb)",
+      "consumer": "lib/character/character-context.tsx state writer / useCharacterState.patchActionState; components/sheet/hp-tracker.tsx; later reverse-isolation edit in e2e/local-journal/real-journal.spec.ts",
+      "nativeBoundary": "supabase/staged/character-builder-parent-admission.sql: character_parent_mechanics_v1 includes state; enrolled_parent_before_v1 requires builder/first_class proof for a changed mechanics tuple. The state RPC receives singleton locking only, no admission.",
+      "existingEvidence": "e2e/unraid/character-workflow.spec.ts directParentProbes explicitly requires owner state_cas/state_patch refusal 403/42501 on enrolled parents.",
+      "status": "source-confirmed dependency; actual CSJ mutation unrun"
+    },
+    {
+      "id": "csj-enrolled-campaign-assignment",
+      "owner": "Inkborne Project Coordinator",
+      "producer": "app/(app)/campaigns/actions.ts: assignCharacterToCampaign owner-filtered characters UPDATE campaign_id",
+      "consumer": "app/(app)/campaigns/[id]/page.tsx existing Character to add/Add character form; Journal campaign identity/audience fixture prerequisite",
+      "nativeBoundary": "The same enrolled parent mechanics tuple includes campaign_id; ordinary campaign assignment supplies no builder/first_class admission.",
+      "status": "source-confirmed dependency; actual CSJ assignment unrun"
+    }
+  ],
+  "proposedMinimumBoundary": {
+    "status": "proposal only; no native/shared schema/security implementation authorized or performed by Flow",
+    "sourceFiles": [
+      "lib/sheet/update-state.ts",
+      "lib/character/character-context.tsx",
+      "app/(app)/campaigns/actions.ts"
+    ],
+    "nativeReferences": [
+      "supabase/staged/character-builder-parent-admission.sql",
+      "supabase/migrations/20261003223252_conditional_character_state_owner_cas.sql"
+    ],
+    "decision": "Coordinator must decide a separately bounded native owner HP-only and campaign-assignment producer/admission contract, including exact revision/projection-order behavior and the new native producer file names. Do not relax generic CAS/direct UPDATE denials or fabricate builder proofs.",
+    "minimumVerification": [
+      "Normal enrolled same-ID owner HP edits and existing campaign UI assignment succeed through the selected actual producer; exact acknowledged native before/after, revision/order and closed-boundary checks match the agreed contract.",
+      "Generic CAS/direct parent writes remain denied; relevant foreign owner/member/outsider, stale and incompatible-system/campaign cases remain refused with no unrelated mutation.",
+      "HP changes preserve all narrative/choices/pins/equipment/spells; campaign assignment preserves all unrelated native fields. Visibility-only scratch setup must prove only visibility changes, through real owner auth.",
+      "Only after source/runner review: approved CSJ same two normal-created characters/four roles/one campaign/max3 Journal rows, desktop/mobile reuse, successful Flow and Journal process exits AND final cleanup checks/record; then full owned-runtime teardown."
+    ]
+  },
+  "verification": {
+    "newProductTestsRun": false,
+    "newTypecheckOrLintRun": false,
+    "reason": "Coordinator directed stop at precise known-blocked source checkpoint; no extra tests to qualify baseline.",
+    "assemblyHashesVerified": true,
+    "gitDiffCheckPassed": true,
+    "capacitySource": {
+      "head": "ce7330f68d9981737dc8bc27c1fae334da86c709",
+      "reportedFocusedCases": 72,
+      "typecheck": true,
+      "lint": true,
+      "centralReview": "CLEAR; exact source only"
+    },
+    "journalCentralReview": "CLEAR f300b7a -> a3842f4 per coordinator; exact imported source only, not assembled runner or runtime.",
+    "actualCSJRun": false
+  },
+  "runtime": {
+    "started": false,
+    "taskOwnedPersistentProcesses": [],
+    "cleanupRequired": false,
+    "note": "No browser/dev server/container/private runtime fixture or new credential was created. No live unrelated service was touched."
+  },
+  "preservation": {
+    "acceptedCreationJourneys": 14,
+    "acceptanceReopened": false,
+    "libraryWorktreeEdited": false,
+    "journalWorktreeEdited": false,
+    "overviewEdited": false,
+    "canonicalLedgerEdited": false
+  },
+  "nextAction": "Coordinator resolves the two shared native prerequisites and records owner/goal blocker; Flow resumes only a separately agreed compatible source boundary and keeps runtime held.",
+  "sourceDiffSha256": "1b6abe2aff03746502c153dd26f5575e305e601539d5ef37fcf4003ca5ac5d16",
+  "partialRunnerDiffSha256": "9092b6eeed41b2f09d16c4b137492d1a7cc69568e3405a4578bd13f7e8005533"
+}

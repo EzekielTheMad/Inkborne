@@ -9,21 +9,25 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T19:49:39.873Z",
+  "updatedAt": "2026-10-29T20:09:57.829Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "ce7330f68d9981737dc8bc27c1fae334da86c709",
+    "commit": "31222a1fe026f7459050a2340d041d720c611d18",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "CSJ-FLOW-1 capacity source checkpoint: the existing resource helper/provider uses confirmed Charisma for identified 2014 SRD Bardic Inspiration, with minimum one and no saved-content rewrite. Focused provider/widget and regression checks pass; selected actual basic-sheet/Journal integration remains unrun.",
-  "nextAction": "Prepare CSJ-FLOW-2 bounded runner and selected two-character normal-creation/basic-sheet source, emitting the agreed private Journal config and public success receipt only after genuine success. Reuse the same IDs for Journal and mobile checks; hold heavy execution for assembled-source/consumer agreement and central review.",
-  "blockers": [],
+  "currentWork": "CSJ-FLOW-2 partial source checkpoint at 31222a1: exact reviewed ten-file Journal assembly plus four incomplete runner files are saved. Normal-UI producer is absent and CSJ preflight refuses execution. Existing native enrolled-parent guards refuse ordinary HP state changes and campaign assignment; no acceptance or guard relaxation.",
+  "nextAction": "Coordinator resolves the bounded native HP/campaign producer-admission contracts and records the precise goal blocker. Retain source reviews/accepted creations; resume Flow only within the next agreed implementation window. Hold actual Unraid execution until complete assembled runner review and cleanup requirements are met.",
+  "blockers": [
+    "Existing conditional HP state RPC has singleton locking but no enrolled-parent admission; current guards and direct-parent tests require owner refusal.",
+    "Existing campaign assignment updates protected campaign_id without admission. Both block the approved same-ID workflow; coordinator owns shared-contract disposition.",
+    "Runner preparation is incomplete: csj-flow.spec.ts is absent; final exit plus cleanup-record validation/review and actual CSJ run remain pending."
+  ],
   "decisions": [],
   "dependencies": [
     {
       "laneId": "overview",
-      "reason": "Coordinator owns assembled candidate/consumer agreement and the single central independent source review before heavy CSJ execution. Journal narrative implementation stays in its isolated lane; no actual CSJ acceptance is claimed yet."
+      "reason": "Coordinator owns the two shared native producer/admission decisions and precise blocked goal checkpoint. Main write/index window is released after this source/docs checkpoint; actual CSJ remains held. Journal/Library retain ownership."
     }
   ],
   "deliverables": [
