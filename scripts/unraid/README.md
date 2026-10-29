@@ -13,11 +13,17 @@ builds a reusable image on the SSD, and starts a unique disposable Compose
 project. No production environment, credentials or database is used. The app
 and browser run inside the test container; no server ports are published.
 
-The default runs typecheck/lint once, three focused dropdown files plus the two
-affected psql-protocol/contention test files, and
-one genuine Auth → Fighter builder → original equipment award → reload →
-foreign-account refusal flow. It reuses the existing 34 native parent cases
-and eight contention scenarios. `focused` runs only those source checks.
+The default runs typecheck/lint once, three focused dropdown files plus the
+affected psql-protocol, contention and parent-evidence validator files. Two
+serial browser stories exercise genuine Auth → Fighter builder → original
+equipment award → reload → foreign-account refusal, then a genuine Rogue's
+background/Expertise fixture. The Fighter includes all 21 owner/foreign/service
+HTTP probes and the existing 34 native parent cases/eight contention scenarios.
+The Rogue uses the unchanged rollback-only background vector to require exactly
+1/0/2 physical parent writes and matching revisions, then verifies the full
+fixture/catalog/installed profile is retained and both private roots are absent.
+Only fixture preparation is browser/JWT proof; that native vector explicitly
+retains `authenticationAccepted:false`. `focused` runs only the source checks.
 Neither mode runs the full unit/E2E suite or a production build.
 
 The fresh database installs current reviewed migrations/stages directly, then

@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { test, expect, type BrowserContext, type Locator, type Page } from "@playwright/test";
-import { nativeJson } from "../../scripts/unraid/native";
+import { nativeJson, testRuntime } from "../../scripts/unraid/native";
+import { verifyNativeBackground } from "../../scripts/unraid/native-background";
 import { verifyNativeParentFixture } from "../../scripts/unraid/native-parent";
 import { asiOption, choiceGroup, choiceOption, hpOption, optionPicked, pickOption } from "../local-app/dropdown-helpers";
 
@@ -103,7 +104,7 @@ async function readback(characterId: string, actorId: string): Promise<Readback>
   expect(native.capsRemaining).toBe(0); expect(native.sealsRemaining).toBe(0); expect(native.readinessCount).toBe(13); expect(native.readyCount).toBe(0);
   expect(native.classGate).toBe(false); expect(native.hitDieGate).toBe(false); expect(native.servicePrivateUsage).toBe(false);
   for (const check of familyChecks) expect(family[check], check).toBe(true);
-  for (const command of ["select_race", "save_abilities", "select_background", "background_choice", "fighting_style", "select_subclass", "set_class_level", "save_hp_roll", "select_asi", "save_details", "select_equipment"]) {
+  for (const command of ["select_race", "save_abilities", "select_background", "background_choice", "background_narrative", "fighting_style", "select_subclass", "set_class_level", "save_hp_roll", "select_asi", "save_details", "select_equipment"]) {
     expect(native.receipts.some(receipt => receipt.command === command), `genuine ${command} receipt`).toBe(true);
   }
   return { native, family };
@@ -125,20 +126,47 @@ async function directParentProbes(config: Config, before: Readback) {
     return data.access_token as string;
   };
   const owner = await token(config.owner), foreign = await token(config.other), attempts = [];
+  const featureSlug = Object.keys(before.native.choices.asi_choices)[0]; assert(featureSlug);
+  const characterId = before.native.characterId, scores = before.native.scores;
+  const detailSql = await readFile("supabase/verification/builder-parent-positive-detail.sql", "utf8");
+  const detailVariables = { character_id: characterId, actor_id: before.native.actorId };
+  const detail = await nativeJson(detailSql, detailVariables);
+  const probes = [
+    { name: "state_patch", path: "/rest/v1/rpc/patch_character_state", method: "POST", body: { character_id: characterId, state_patch: { current_hp: 1 } } },
+    { name: "state_cas", path: "/rest/v1/rpc/patch_character_state_if_current", method: "POST", body: { character_id: characterId, expected_state: before.native.state, state_patch: { current_hp: 1 } } },
+    { name: "ability_rpc", path: "/rest/v1/rpc/save_character_abilities", method: "POST", body: { target_character_id: characterId, ability_method: "manual",
+      ability_scores: { ...scores, constitution: scores.constitution === 11 ? 12 : 11 }, expected_method: before.native.choices.ability_method, expected_scores: scores } },
+    { name: "background_rpc", path: "/rest/v1/rpc/set_character_background", method: "POST", body: { target_character_id: characterId, target_content_id: null, target_content_version: null } },
+    { name: "asi_rpc", path: "/rest/v1/rpc/set_character_asi_choice", method: "POST", body: { target_character_id: characterId, target_feature_slug: featureSlug,
+      choice_mode: "asi", ability_allocations: [{ ability: "constitution", amount: 2 }], target_feat_id: null, target_feat_version: null } },
+    { name: "direct_update", path: `/rest/v1/characters?id=eq.${characterId}`, method: "PATCH", body: { state: { ...before.native.state, smoke_parent_bypass_probe: true } } },
+    { name: "direct_delete", path: `/rest/v1/characters?id=eq.${characterId}`, method: "DELETE", body: undefined },
+  ];
   for (const [actor, bearer] of [["owner", owner], ["service", config.serviceRoleKey], ["foreign", foreign]] as const) {
-    const response = await fetch(config.supabaseOrigin + `/rest/v1/characters?id=eq.${before.native.characterId}`, { method: "PATCH",
-      headers: { apikey: config.anonKey, Authorization: "Bearer " + bearer, "Content-Type": "application/json", Prefer: "return=representation" },
-      body: JSON.stringify({ state: { ...before.native.state, smoke_parent_bypass_probe: true } }), signal: AbortSignal.timeout(15000) });
-    const body = await response.json();
-    if (actor === "foreign") { expect(response.status).toBe(200); expect(body).toEqual([]); }
-    else {
-      if (response.ok) throw Error(`Protected ${actor} mechanical PATCH unexpectedly succeeded; stop verification`);
-      expect(response.status).toBe(403); expect(body.code).toBe("42501");
+    for (const probe of probes) {
+      const response = await fetch(config.supabaseOrigin + probe.path, { method: probe.method,
+        headers: { apikey: config.anonKey, Authorization: "Bearer " + bearer, "Content-Type": "application/json", Prefer: "return=representation" },
+        body: probe.body === undefined ? undefined : JSON.stringify(probe.body), signal: AbortSignal.timeout(15000) });
+      const text = await response.text(), body = text ? JSON.parse(text) : null;
+      const code = body && !Array.isArray(body) && typeof body === "object" && "code" in body ? String(body.code) : null;
+      let outcome = "refused", affectedRows: number | null = null;
+      const filtered = actor !== "service" && probe.name === "direct_delete" || actor === "foreign" && probe.name === "direct_update";
+      if (filtered) {
+        expect(response.ok).toBe(true); expect(body).toEqual([]); expect(code).toBeNull(); outcome = "zero_rows"; affectedRows = 0;
+      } else if (actor === "foreign" && probe.name === "state_patch") {
+        expect(response.status).toBe(204); expect(body).toBeNull(); expect(code).toBeNull(); outcome = "void_unchanged";
+      } else if (actor === "foreign" && probe.name === "state_cas") {
+        expect(response.status).toBe(200); expect(body).toEqual([{ status: "missing", resulting_state: null }]); expect(code).toBeNull(); outcome = "missing";
+      } else {
+        if (response.ok) throw Error(`Protected ${actor}/${probe.name} unexpectedly succeeded; stop verification`);
+        expect(response.status).toBe(403); expect(code).toBe("42501");
+      }
+      expect(await readback(characterId, before.native.actorId)).toEqual(before);
+      expect(await nativeJson(detailSql, detailVariables)).toEqual(detail);
+      attempts.push({ actor, name: probe.name, http: response.status, code, affectedRows, outcome, retainedFingerprint: before.native.fixtureFingerprint });
     }
-    expect(await readback(before.native.characterId, before.native.actorId)).toEqual(before);
-    attempts.push({ actor, http: response.status, code: actor === "foreign" ? null : "42501", affectedRows: actor === "foreign" ? 0 : null,
-      retainedFingerprint: before.native.fixtureFingerprint });
   }
+  expect(attempts).toHaveLength(21);
   return attempts;
 }
 
@@ -180,6 +208,9 @@ test("genuine Fighter completes the builder, receives its original award and rel
   if (humanLanguageOffered) await expect(choiceOption(languages, "Dwarvish")).toHaveCount(0);
   for (const language of ["Celestial", "Elvish"]) await choose(page, choiceOption(languages, language));
   await choose(page, choiceOption(page, "Nothing can shake my optimistic attitude."));
+  const bonds = page.getByRole("combobox", { name: "Bonds", exact: true });
+  const bond = await bonds.locator('option:not([value=""])').first().getAttribute("value"); assert(bond);
+  await save(page, () => bonds.selectOption(bond));
   await page.goto(base + "/class"); const level = page.getByRole("combobox", { name: "Set level for Fighter", exact: true });
   await save(page, () => level.selectOption("4")); await expect(level).toHaveValue("4"); await expect(level).toBeEnabled();
   await openLevel(page, 3); await expect(choiceOption(page, /Evocation/)).toHaveCount(0); await choose(page, choiceOption(page, /^Champion(?:\s|$)/));
@@ -207,7 +238,7 @@ test("genuine Fighter completes the builder, receives its original award and rel
   expect(unawarded.family.order_domains).toMatchObject({ inventory: { physical_count: 0 } });
   const output = info.outputPath("character-workflow.json");
   const evidence: Record<string, unknown> = { kind: "unraid-character-workflow-v1", runId, characterId, actorId: config.owner.id,
-    actualApp: true, actualAuthCookies: true, uiWritesOnly: true, passed: false, phase: "unawarded", unawarded, blockedOrigins, pageErrors,
+    runtime: testRuntime(), actualApp: true, actualAuthCookies: true, uiWritesOnly: true, passed: false, phase: "unawarded", unawarded, blockedOrigins, pageErrors,
     scope: "One focused scratch-runtime Fighter workflow; historical full-parent, A4 and F3 acceptance remain separate." };
   const checkpoint = async (phase: string) => { evidence.phase = phase; await writeFile(output, JSON.stringify(evidence, null, 2)); };
   await checkpoint("unawarded");
@@ -241,4 +272,68 @@ test("genuine Fighter completes the builder, receives its original award and rel
   } finally { await foreign.close(); }
   expect(await readback(characterId, config.owner.id)).toEqual(awarded); expect(blockedOrigins).toEqual([]); expect(pageErrors).toEqual([]);
   evidence.passed = true; await checkpoint("complete"); await info.attach("character-workflow", { path: output, contentType: "application/json" });
+});
+
+test("genuine Rogue background changes retain or prune Expertise with exact native writes and full rollback", async ({ page, context }, info) => {
+  test.setTimeout(360000);
+  const config = await settings(), runtime = testRuntime(), blockedOrigins: string[] = [], pageErrors: string[] = [];
+  await restrict(context, config, blockedOrigins); page.on("pageerror", () => pageErrors.push("Rogue browser error"));
+  await login(page, config, config.owner); await page.goto(config.appOrigin + "/characters/new");
+  await page.getByRole("textbox", { name: "What will they be called?" }).fill(`Unraid Rogue ${runtime.runId.slice(0, 8)}`);
+  await page.getByRole("button", { name: "Open the notebook", exact: true }).click();
+  await page.waitForURL(/\/characters\/[a-f0-9-]+\/builder\/first-class$/);
+  const characterId = new URL(page.url()).pathname.split("/")[2], base = `${config.appOrigin}/characters/${characterId}/builder`;
+  expect(characterId).toMatch(uuid);
+  await page.getByRole("combobox", { name: "First class", exact: true }).selectOption({ label: "Rogue" });
+  await page.getByRole("button", { name: "Save first class", exact: true }).click();
+  await expect(page.getByText("Rogue · Level 1", { exact: true })).toBeVisible();
+  await page.reload(); await page.getByRole("link", { name: "Complete class choices", exact: true }).click(); await openLevel(page, 1);
+  const skills = choiceGroup(page, "Choose 4 proficiency");
+  for (const skill of ["Acrobatics", "Perception", "Sleight Of Hand", "Stealth"]) await choose(page, choiceOption(skills, new RegExp(`^${skill}$`, "i")));
+  await page.goto(base + "/race"); await page.getByRole("combobox", { name: "Choose Race", exact: true }).selectOption({ label: "Human" });
+  await save(page, () => page.getByRole("button", { name: "Add Race", exact: true }).click());
+  await page.goto(base + "/abilities");
+  const rogueScores = { Strength: "10", Dexterity: "15", Constitution: "14", Intelligence: "12", Wisdom: "13", Charisma: "8" };
+  for (const [ability, value] of Object.entries(rogueScores)) {
+    const control = page.getByRole("combobox", { name: `${ability} score`, exact: true });
+    if (await control.inputValue() === value) continue;
+    for (const other of Object.keys(rogueScores)) if (other !== ability) {
+      const occupied = page.getByRole("combobox", { name: `${other} score`, exact: true });
+      if (await occupied.inputValue() === value) await save(page, () => occupied.selectOption(""));
+    }
+    await save(page, () => control.selectOption(value)); await expect(page.getByText("Changes save automatically.", { exact: true })).toBeVisible();
+  }
+  await page.goto(base + "/background"); await page.getByRole("combobox", { name: "Choose Background", exact: true }).selectOption({ label: "Acolyte" });
+  await save(page, () => page.getByRole("button", { name: "Add Background", exact: true }).click());
+  for (const language of ["Celestial", "Elvish"]) await choose(page, choiceOption(choiceGroup(page, "Choose 2 language"), language));
+  await page.goto(base + "/class"); await openLevel(page, 1);
+  const expertise = choiceGroup(page, "Choose 2 expertise");
+  await choose(page, choiceOption(expertise, "Insight")); await choose(page, choiceOption(expertise, /^Thieves[’']? Tools$/i));
+  await page.reload(); await openLevel(page, 1);
+  await expect(choiceOption(expertise, "Insight")).toHaveJSProperty("selected", true);
+  await expect(choiceOption(expertise, /^Thieves[’']? Tools$/i)).toHaveJSProperty("selected", true);
+  const result = await verifyNativeBackground(characterId, config.owner.id);
+  const native = result.before.native as Native;
+  expect(native).toMatchObject({ characterId, actorId: config.owner.id, level: 1, enrolled: true,
+    choices: { background: "acolyte", race: "human", classes: [{ slug: "rogue", level: 1, occurrence_id: native.originalOccurrenceId }],
+      resolved_choices: { "rogue-proficiency-choice-0": ["skill-acrobatics", "skill-perception", "skill-sleight-of-hand", "skill-stealth"],
+        "rogue-expertise-1": ["skill-insight", "thieves-tools"] } },
+    capsRemaining: 0, sealsRemaining: 0, readinessCount: 13, readyCount: 0, classGate: false, hitDieGate: false,
+    servicePrivateUsage: false, parentOrderRevisionEqual: true });
+  expect(Object.keys(native.orderBijections).sort()).toEqual(["feature_grants", "inventory", "pins", "spell_grants", "spells"]);
+  expect(Object.values(native.orderBijections).every(Boolean)).toBe(true); expect(native.originalOccurrenceId).toMatch(uuid);
+  expect(native.classRoles).toMatchObject({ status: "available", character_id: characterId, action_revision: native.actionRevision,
+    original_occurrence_id: native.originalOccurrenceId, class_sources: [{ role: "original", occurrence_id: native.originalOccurrenceId }] });
+  expect(native.firstClassProofs).toHaveLength(1); expect(native.firstClassProofs[0]).toMatchObject({ phase: "observed", actorId: config.owner.id });
+  expect(native.startingAwards.every(row => row.status === "eligible")).toBe(true);
+  expect(native.receipts.some(row => row.command === "award_equipment")).toBe(false); expect(native.state).not.toHaveProperty("current_hp");
+  expect(result.before.detail).toMatchObject({ inventory: [], inventoryFromAcceptedAward: true, catalog: { count: 1535 }, snapshots: { count: 1535 } });
+  for (const check of familyChecks) expect((result.before.family as Record<string, unknown>)[check], check).toBe(true);
+  expect(blockedOrigins).toEqual([]); expect(pageErrors).toEqual([]);
+  const output = info.outputPath("parent-background-workflow.json");
+  await writeFile(output, JSON.stringify({ kind: "unraid-parent-background-app-v1", passed: true, runtime, characterId, actorId: config.owner.id,
+    actualApp: true, actualAuthCookies: true, uiFixtureWritesOnly: true, nativeVectorAuthenticationAccepted: false,
+    backgroundVectorReport: "/output/native-background.json", blockedOrigins, pageErrors,
+    scope: "Genuine Rogue preparation and rollback-only native background vector; historical full-parent/A4/F3 gate unchanged." }, null, 2));
+  await info.attach("parent-background-workflow", { path: output, contentType: "application/json" });
 });
