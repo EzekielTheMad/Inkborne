@@ -155,7 +155,13 @@ test("actual journal saves and reopens without a campaign; real roles enforce it
       await page.getByLabel("Entry title", { exact: true }).fill(title);
       await page.getByLabel("When", { exact: true }).fill("After the river crossing");
       await page.locator('.tiptap[contenteditable="true"]').fill("We found the way home.");
-      await page.getByLabel(index === 0 ? "Audience if assigned to a campaign" : "Audience", { exact: true }).selectOption(visibility);
+      // The wrapping label also contains native option text; an exact label
+      // lookup cannot match its short caption. Keep the control unique to this editor.
+      const audience = page.getByRole("group", { name: "New journal entry", exact: true })
+        .getByLabel(index === 0 ? /^Audience if assigned to a campaign/ : /^Audience/);
+      await expect(audience).toHaveCount(1);
+      await audience.selectOption(visibility);
+      await expect(audience).toHaveValue(visibility);
       if (index === 0) {
         await loseNextAction(page, config, characterId, () => page.getByRole("button", { name: "Save entry", exact: true }).click());
         await expect(page.getByLabel("Entry title", { exact: true })).toHaveValue(title);
