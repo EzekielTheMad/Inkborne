@@ -9,18 +9,17 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T19:12:57.331Z",
+  "updatedAt": "2026-10-29T19:37:38.525Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "Victor approved the bounded Journal disposable fixture package on 2026-10-29. The approval decision is resolved; coordinator-owned shared persistence/recovery and fixture/runner integration remain technical dependencies. Lane ownership, scope and all acceptance evidence are preserved.",
-  "nextAction": "Resolve the Journal update/conflict and uncertain-create contracts and agree exact producer/consumer ownership; prepare and execute the approved bounded fixture package only through the coordinated scratch lifecycle and existing safeguards. Coordinate Library relation/access/version review separately. No additional lane is launched by the advisory workstream review.",
+  "currentWork": "CSJ-v1 approved and dispatched to existing Character Flow and Journal owners. Coordinator maintains shared contracts and acceptance; selected normal creation through basic sheet use and same-ID Journal integration is now the bounded active outcome.",
+  "nextAction": "Collect CSJ-FLOW-1 sheet/capacity and CSJ-JOURNAL-1 narrative save/recovery source checkpoints, agree exact fixture interface, then sequence one assembled local acceptance run and central independent review. Preserve all accepted creation evidence and stop at CSJ-v1 acceptance or a precise blocked checkpoint.",
   "blockers": [
-    "Journal real acceptance: coordinator must resolve unapplied update acknowledgement/conflict and uncertain-create contracts, then integrate the fixture/runner package. Victor approved the bounded setup; runtime occupancy is released.",
-    "Library related-definition descriptions: coordinator must settle shared identity/access/version/ambiguous-slug behavior; independent armor-cap presentation is unblocked."
+    "CSJ-v1 integration awaits selected sheet/capacity and acknowledged conflict/recovery source checkpoints plus coordinated runner/fixtures. The disposable package is user-approved; current implementation/evidence is not yet accepted."
   ],
   "decisions": [],
   "dependencies": [
@@ -330,6 +329,23 @@
         "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\handoffs\\2026-10-24-builder-correction-and-casters.md — exact acceptance and boundaries",
         "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\current-builder-acceptance.json — five named passes at b4a13cb/c0663caa, eight at10e77c7/7145dc5d, A6 at1f15a44/ca6fab2e; no single green14 batch or common-catalog claim",
         "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\result.json — exact cleanup plan;311 evidence hashes retained, original56 containers/95volumes/53images preserved"
+      ]
+    },
+    {
+      "id": "csj-v1-integrated-journeys",
+      "name": "Creation through basic sheet and Journal",
+      "area": "Integrated character journey",
+      "milestone": "M3/M5.5",
+      "requirement": "R06/R08/R20; CSJ-v1 criteria CSJ-1..6",
+      "outcome": "Half-Elf Fighter4 standalone and Human Lore Bard3 campaign progress from normal creation through selected sheet actions and same-ID Journal save/reopen/privacy/recovery in the disposable local environment.",
+      "implementation": "partial",
+      "verification": "source",
+      "integration": "unknown",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "docs/LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal — explicit 2026-10-29 approval and bounded criteria",
+        "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-coordination-checkpoint — dispatched assignments; integrated actual acceptance pending"
       ]
     }
   ]

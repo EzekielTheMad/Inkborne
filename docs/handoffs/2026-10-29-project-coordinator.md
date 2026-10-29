@@ -288,3 +288,27 @@ retains its consumer and report. A bounded continuation message communicates the
 approval without transferring shared-file ownership or bypassing technical gates.
 The request for other independent workstreams is advisory: no fourth lane, new
 registration, product implementation or product tests are started here.
+
+## CSJ-v1 coordination checkpoint
+
+Approved by Victor's direct Coordinate-mode instruction on 2026-10-29; kickoff
+2026-10-29T19:37:38.525Z, source baseline `d40f7b3`, main checkout clean. Scope,
+criteria CSJ-1 through CSJ-6, exclusions and exact messaging authority live in
+[the canonical ledger](../LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal).
+Acceptance owner is Inkborne Coordinator; one central independent read-only
+review is reserved for the assembled exact source. No acceptance is inferred.
+
+| Assignment | Recipient / owned boundary | Evidence and dependency | State |
+| --- | --- | --- | --- |
+| CSJ-FLOW-1 | Character Flow `01a1790d-be90-73d1-91f6-84e48a557ee1`; selected character/sheet sources and bounded runner support; own report/handoff | R08 capacity and basic-sheet source/consumer checkpoint; preserve accepted creation work. Coordinator's kickoff docs/index window must close before main-checkout writes. | dispatched 2026-10-29T19:37:38.525Z |
+| CSJ-JOURNAL-1 | Character Journal `01a1888e-2454-7633-b5f5-57c36e522a82`; `app/(app)/characters/[id]/story-actions.ts`, TimelineSection, narrative tests and real-story consumer in its own worktree | Conditional acknowledged update, structured outcomes, stable uncertain-create identity/readback; compatible scope may proceed, semantic changes return for contract decision. Source then fixture interface checkpoint; no heavy run yet. | dispatched 2026-10-29T19:37:38.525Z |
+| CSJ-FLOW-2 | Character Flow; shared runner/bootstrap + normal-creation fixture producer | Assemble exact Journal source after contract/source checkpoint; pass same two UI-created IDs to real story, four roles/one campaign/max3entries, serialized desktop/mobile real workflow and cleanup. | ready after source/contract checkpoint; not dispatched |
+| CSJ-REVIEW | One independent read-only subagent, central allocation only | Frozen combined source and supporting evidence; security, owner/audience isolation, stale/unknown/duplicate behavior and native-field retention. | reserved; not dispatched |
+| CSJ-ACCEPT | Coordinator's overview/ledger/checkpoint | Compare exact real results to CSJ-1..6, retain accepted evidence, record exclusions and cleanup. | blocked on above evidence |
+
+Library `01a1888d-9110-7e90-8ee0-516640d33539` is verified and
+authorized for existing-content compatibility clarification only if needed; no
+assignment/message yet. No fourth-lane messages, new threads or scope expansion.
+Report setup/history alone adds no product tests. Pending next event: Flow
+file/window confirmation and Journal source-contract result; continue independent
+ready work and use meaningful returned checkpoints rather than repeated polls.

@@ -99,6 +99,57 @@ integration acceptance. No repeat user approval is needed for this same bounded
 package; material expansion requires a new decision. Existing S5/P1-P3 decisions retain their
 place in the [decision register](#prd-p1-p3-crosswalk-decision-register-not-silent-exclusions).
 
+### Approved CSJ-v1 — creation, basic sheet use and Journal
+
+Victor explicitly approved CSJ-v1 and dispatch in Inkborne Coordinator on
+2026-10-29. This bounded outcome sits within R06/R08/R20 and preserves the
+existing milestone priorities, accepted creation receipts, paused/deferred work
+and external-action gates. The preceding queue's pending ownership references
+are superseded only by these explicit implementation assignments.
+
+| Criterion | Required observable result | Implementation owner |
+| --- | --- | --- |
+| CSJ-1 creation continuity | Normal UI creation of Half-Elf Fighter4/Acolyte standalone and Human Lore Bard3/Acolyte campaign; saved builder steps, completed sheet, reopen and exact identity/pin/choice retention. Those same two IDs feed Journal acceptance. | Character Flow |
+| CSJ-2 basic sheet | Ability check and equipped weapon attack appear in the successful roll log; nonlethal damage, healing and temporary HP persist on reopen. Narrative remains unchanged. Bard CHA16 has Inspiration capacity3, maxHP24, spellDC13, attack+5, slots4/2 using the accepted fixture. | Character Flow |
+| CSJ-3 narrative continuity | At most three entries: standalone, campaign Owner & DM, campaign-visible. Create/edit/save/reopen preserves title/date/rich body/audience/order, the same character IDs, mechanics/choices/pins/equipment/spells/resources. | Journal |
+| CSJ-4 audience | Owner edits; DM reads allowed entries without mutation; campaign member sees campaign entries only; outsider/anonymous denied. Genuine identities and real database behavior required. | Journal; Character Flow fixture producer |
+| CSJ-5 conflict/recovery | Stale/removed UPDATE cannot falsely succeed; known rejection and uncertain results retain drafts. Lost committed edit is read back by exact identity; uncertain CREATE uses stable operation identity and owner-scoped readback with no blind retry/title-body matching/duplicate insertion. | Journal action/UI pair |
+| CSJ-6 assembled acceptance | Desktop1280/mobile390 selected workflow, exact candidate/lane/content/runtime binding, focused security/data-integrity checks, one independent read-only review and exact fixture/runtime/private-file cleanup. | Coordinator accepts; lane owners implement/run |
+
+Environment remains the approved disposable local Unraid lifecycle: exactly four
+roles, two owner characters, one DM-owned campaign and at most three Journal
+rows. Use normal UI creation rather than prebuilt replacements for the connection
+criterion. Refresh live resource/identity guards and serialize heavy runs.
+
+Explicit exclusions: durable resource/slot spending, rests/hit dice, death-save/
+concentration transactions, new equipment award/copy/purchase policies, new
+multiclass coverage, broader all-class play, advanced Homebrew, new Library
+relation discovery, campaign-management features, publishing/imports and hosted/
+release acceptance. No push, PR merge, deployment, hosted data/security change,
+production restart, new threads or interruption of active work.
+
+Character Flow owns selected source and bounded runner/fixture adaptation.
+Journal is explicitly assigned the bounded shared narrative save-action plus
+consumer implementation, subject to coordinator-approved shared contracts.
+Coordinator keeps contract decisions, overview/queue/checkpoint and acceptance;
+lanes keep their reports and source. Library provides existing-content
+compatibility clarification only if needed. Feedback is independent of this goal.
+
+Messaging/replies are authorized only with Character Flow
+`01a1790d-be90-73d1-91f6-84e48a557ee1`, Character Journal
+`01a1888e-2454-7633-b5f5-57c36e522a82`, Library / Encyclopedia
+`01a1888d-9110-7e90-8ee0-516640d33539`, and this coordinator
+`01a1890b-d3ee-7231-94de-6eb24a755f70` as the return destination.
+One central bounded independent read-only subagent review is authorized.
+No automatic new-thread creation, scheduling or model changes.
+
+Retain all fourteen accepted creation journeys and their separate source/catalog
+bindings; reuse unchanged evidence. New two-character integration evidence
+closes the missing connection, not the whole creation matrix or R06/R08/R20.
+The cycle ends at CSJ-v1 local acceptance or a precise blocked checkpoint; it
+does not auto-start the next milestone. Live assignment/evidence state is in
+the [single coordinator checkpoint](handoffs/2026-10-29-project-coordinator.md#csj-v1-coordination-checkpoint).
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final
