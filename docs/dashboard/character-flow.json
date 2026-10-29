@@ -9,21 +9,21 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T22:12:14.330Z",
+  "updatedAt": "2026-10-29T22:36:16.480Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "3d70442ad2687d5445c91263845de8aa0d32edf3",
+    "commit": "301c5a652e10f8c10bbfaea395374c930de39a40",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "First actual CSJ run failed on hidden mobile inventory counted with the desktop row; database/native installation and first Fighter creation prefix passed. One-line visible-row correction frozen at 3d70442. Exact failed-run cleanup complete; selected CSJ acceptance stays open.",
-  "nextAction": "Same central reviewer checks one-file locator correction and failed-run cleanup; after coordinator clearance, run the existing approved same-ID Unraid workflow and retain exact native/Journal/exit/cleanup criteria. No repeated14-story matrix.",
+  "currentWork": "Actual CSJ retry exposed missing equipped inventory weapon attacks. Minimal consumer correction301c5a6 reuses pinned inventory and existing math; causal regression plus31 focused cases/typecheck/lint pass. Failed-run cleanup complete; fixed actual CSJ acceptance remains pending.",
+  "nextAction": "Same central reviewer checks the three-file product/test correction and completed failed-run cleanup. After clearance, run the approved existing two-character Unraid story with unchanged HP/role/Journal/native/exit/cleanup gates.",
   "blockers": [],
   "decisions": [],
   "dependencies": [
     {
       "laneId": "overview",
-      "reason": "Coordinator owns same-reviewer correction clearance, next run dispatch and project acceptance. Flow releases shared main source/docs/index at this metadata checkpoint."
+      "reason": "Coordinator owns shared review, next actual-run dispatch and integration acceptance. Flow releases shared source/docs/index at this own metadata checkpoint."
     }
   ],
   "deliverables": [
@@ -83,7 +83,7 @@
       "name": "Finite native HP and campaign assignment",
       "area": "Character flow",
       "requirement": "CSJ-NATIVE-HP; CSJ-NATIVE-CAMPAIGN (R08/R20)",
-      "outcome": "Finite native overlay installed with all closure checks in scratch. Selected workflow failed before equip on a hidden inventory-copy selector; minimal test correction awaits review. Full actual HP/campaign/Journal acceptance remains open.",
+      "outcome": "Finite native overlay installs with closed boundaries. Actual selected workflow reached first-character rollback/equip/ability prefix but stopped at missing weapon Actions, now corrected in source; full native/Journal acceptance remains pending.",
       "implementation": "implemented",
       "verification": "source",
       "integration": "isolated",
@@ -94,6 +94,23 @@
         "Typecheck/zero-warning lint/syntax/diff/discovery pass. In-memory original22P02/grouped allowed=true/forbidden=false; no actual native acceptance.",
         "afe56e5 unchanged16 manifest files and62 consumer cases reused. Clearance superseded for SQL/bootstrap/remote changed paths; all10 Journal a3842f4 blobs match.",
         "docs/handoffs/2026-10-29-csj-visible-inventory-fix.json exact 3d70442ad2687d5445c91263845de8aa0d32edf3 selector correction and actual run bcc589d0-9cf6-42e2-9e42-e9828f9ad79a failed, with completed13-image/input cleanup and original56container/95volume/53image preservation."
+      ]
+    },
+    {
+      "id": "flow-starting-weapon-rolls",
+      "name": "Equipped starting weapon attacks",
+      "area": "Basic sheet use",
+      "milestone": "M3",
+      "requirement": "R08 / approved CSJ-2",
+      "outcome": "Actions source now consumes equipped exact pinned inventory weapons using existing mechanics and preserves legacy/reference/instance behavior. Actual fixed weapon roll/log proof is pending.",
+      "implementation": "implemented",
+      "verification": "source",
+      "integration": "isolated",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "301c5a652e10f8c10bbfaea395374c930de39a40 exact three-file consumer/test correction;31 focused cases/typecheck/lint pass; causal case fails before fix.",
+        "docs/handoffs/2026-10-29-csj-inventory-attacks-fix.json source/evidence/cleanup hashes; actual run20f99479 remains failed and no integration acceptance is inferred."
       ]
     }
   ]

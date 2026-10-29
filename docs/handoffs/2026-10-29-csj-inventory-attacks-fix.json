@@ -1,0 +1,174 @@
+{
+  "kind": "inkborne-csj-inventory-attacks-correction-v1",
+  "recordedAt": "2026-10-29T22:36:16.480Z",
+  "contractVersion": 1,
+  "assignment": "CSJ-FLOW-2 / R08 / CSJ-2",
+  "sourceBase": "74d505a5ce2f2f562f4a6f29fd445fd6a9e400d2",
+  "sourceHead": "301c5a652e10f8c10bbfaea395374c930de39a40",
+  "branch": "codex/launch-integration-20261011",
+  "worktree": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification",
+  "diffCommand": [
+    "git",
+    "diff",
+    "--binary",
+    "--full-index",
+    "74d505a5ce2f2f562f4a6f29fd445fd6a9e400d2",
+    "301c5a652e10f8c10bbfaea395374c930de39a40",
+    "--",
+    "components/sheet/tabs/actions-tab.tsx",
+    "tests/components/sheet/actions-tab-canonical-weapons.test.tsx",
+    "tests/components/sheet/actions-tab-rolls.test.tsx"
+  ],
+  "diffSha256": "bbc1d79ce6716c0d4823d1e22d58434a4e04a67ea6c003005cfbf6ae76ecfb1d",
+  "files": [
+    {
+      "path": "components/sheet/tabs/actions-tab.tsx",
+      "gitBlob": "bcfb849b2f1b38c895cd3438887b2ee400cc62ff",
+      "sha256": "16052027c905ca45bb61c337207ef33c403e2e3f17ae74793eae41ec51ff6696",
+      "bytes": 11627
+    },
+    {
+      "path": "tests/components/sheet/actions-tab-canonical-weapons.test.tsx",
+      "gitBlob": "3eb5ab72aee7af29c6277974fef54016da2a1b7d",
+      "sha256": "e5730c19799632e87e6b5f3a70e06c72ae1ad95980ee0c0549f3236f6fadd032",
+      "bytes": 7659
+    },
+    {
+      "path": "tests/components/sheet/actions-tab-rolls.test.tsx",
+      "gitBlob": "c88675bf18e33b6e2d1cfc0ec1c6ddfa4c667564",
+      "sha256": "1f1aa9063382d2702e25a1dc1f43a95f43d377844bc5316a3e078305fd808fbc",
+      "bytes": 6410
+    }
+  ],
+  "behavior": "Equipped positive-quantity inventory weapons belonging to this character/system and carrying exact loaded definition ID/version snapshots appear in Actions. Existing getItemData and getWeaponAttack provide instance data and mechanics. Legacy weapon refs remain; suppress only a plain exact same-pin duplicate, retaining renamed/custom instances and other pins.",
+  "exclusions": [
+    "No award, auto-equip, persistence, schema, access, registry or calculator changes.",
+    "No new custom weapon or magic-item inference from display names; existing supported definition-backed inventory overrides only.",
+    "Paper/print weapon discovery is unchanged and outside this selected interactive weapon-roll correction.",
+    "No E2E/native/Journal oracle changes or new fixture budget."
+  ],
+  "causalProof": {
+    "beforeCommand": "npm test -- tests/components/sheet/actions-tab-canonical-weapons.test.tsx --maxWorkers=1 -t offers and rolls a pinned equipped inventory weapon",
+    "beforeExitCode": 1,
+    "beforeObservation": "Actual ActionsTab shows No weapons equipped despite equipped pinned inventory; matching actual missing Longsword attack.",
+    "after": "All31 affected cases in four files pass, including the new causal consumer case."
+  },
+  "sourceChecks": {
+    "commands": [
+      "npm test -- tests/components/sheet/actions-tab-canonical-weapons.test.tsx tests/components/sheet/actions-tab-rolls.test.tsx tests/components/sheet/inventory-tab.test.tsx --maxWorkers=1",
+      "npm test -- tests/lib/character/asi-provider.test.tsx --maxWorkers=1",
+      "npm run typecheck",
+      "npm run lint",
+      "git diff --check"
+    ],
+    "allExitCodes": 0,
+    "tests": 31,
+    "files": 4,
+    "scope": "Isolated consumer/provider/source proof; no actual fixed browser/Auth/database workflow run yet. Existing math, crit, inventory and actual-provider stale mechanics expectations retained."
+  },
+  "failedActualRun": {
+    "runId": "20f99479-7134-4307-90c1-517f2f9263ee",
+    "runtimeHead": "74d505a5ce2f2f562f4a6f29fd445fd6a9e400d2",
+    "status": "failed",
+    "failure": "Roll Longsword attack absent after normal first Fighter, exact native inventory equip retention and Strength roll201 prefix. ActionsTab read only weapon contentRefs; starting awards populate inventory separately.",
+    "location": "e2e/unraid/csj-flow.spec.ts:221",
+    "references": [
+      "components/sheet/tabs/actions-tab.tsx original weaponRefs",
+      "supabase/staged/starting-equipment-transaction.sql:216",
+      "app/(app)/characters/[id]/page.tsx:80"
+    ],
+    "sourceSteps": [
+      {
+        "name": "typecheck",
+        "exitCode": 0
+      },
+      {
+        "name": "lint",
+        "exitCode": 0
+      },
+      {
+        "name": "focused",
+        "exitCode": 0
+      },
+      {
+        "name": "csj-flow",
+        "exitCode": 1
+      }
+    ],
+    "nativeOverlayClosure": "All ten checks passed; no inference of complete native HP/campaign/role/concurrency/Journal acceptance.",
+    "actualFullCsjAcceptance": "open",
+    "unexpectedProtectedSuccessObserved": false
+  },
+  "stoppingRuleDriftCheck": "Two actual failures identified a hidden-copy selector, then a real inventory-to-Actions product gap. Both have specific causes; this code corrects the latter. The next bounded run resolves the existing selected two-character weapon/HP/Journal acceptance, without new exploratory harness or fourteen-story matrix.",
+  "review": {
+    "status": "same-central-review-pending",
+    "previousClearSource": "3d70442ad2687d5445c91263845de8aa0d32edf3",
+    "unchangedRunnerNativeSource": true,
+    "unchangedJournalFiles": 10
+  },
+  "cleanup": {
+    "passed": true,
+    "privateRuntimeRemoved": true,
+    "imagesRemoved": 13,
+    "remoteInputsRemoved": [
+      "/mnt/cache/appdata/inkborne-test-runner/runs/20f99479-7134-4307-90c1-517f2f9263ee/source",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/20f99479-7134-4307-90c1-517f2f9263ee/source.tar",
+      "/mnt/cache/appdata/inkborne-test-runner/runs/20f99479-7134-4307-90c1-517f2f9263ee/catalog.tar"
+    ],
+    "localArchivesRemoved": [
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\source.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\catalog.tar",
+      "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\catalog-files.txt"
+    ],
+    "publicEvidenceFilesRetained": 14,
+    "originalContainers": 56,
+    "originalVolumes": 95,
+    "all53OriginalImageIdsVerified": true,
+    "helperRemoved": true,
+    "transportProcessAbsent": true,
+    "existingServicesUnchanged": true
+  },
+  "evidence": [
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\output\\summary.json",
+      "sha256": "3105a8546459e8e4b33c90af02dd8a71b1e60a6468ae59bdc5767c4cebf20d10",
+      "bytes": 2222
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\output\\diagnostic.txt",
+      "sha256": "789c6e030159032d8dacb9eedf6f9037fd550689f04cc13b4bd058691dc0136b",
+      "bytes": 67318
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\output\\bootstrap.json",
+      "sha256": "0b08c9cbb1f06251635a152d8637bdbb6e12681a3a3cc9c605aa55c0840beded",
+      "bytes": 1115387
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\output\\basic-sheet-profile.json",
+      "sha256": "0c1babc41b6fee58f033d0671885adff94de6c3d4098eda1cb7ae603bd4c54e7",
+      "bytes": 1114
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\output\\host-result.json",
+      "sha256": "e93ab56b5a86616cb9d7f01fe319ec5ac88a630f75cd41227b65b400032a3af4",
+      "bytes": 196
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\output\\csj-flow-cleanup.json",
+      "sha256": "0320eace0964d8e3b14994790ec4a7857f5ecae6729bf97a22fa281900e8c75e",
+      "bytes": 82
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\cleanup-plan.json",
+      "sha256": "f8045e38379e74ee23241006dfcc274de9870448ff8880a756b7671a6fbc95ff",
+      "bytes": 24564
+    },
+    {
+      "path": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\20f99479-7134-4307-90c1-517f2f9263ee\\cleanup-result.json",
+      "sha256": "cb3d6480115dfd00a6ccfe83cc6e066599c41a4ddae85fdaeb9ad1c9e340bde9",
+      "bytes": 20194
+    }
+  ],
+  "nextAction": "Release clean shared source/docs/index after own metadata checkpoint. Same central reviewer checks three-file product/test correction and failed-run cleanup; coordinator closes docs/dispatches corrected existing actual Unraid story. No new user permission."
+}

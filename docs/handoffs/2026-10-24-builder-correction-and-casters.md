@@ -8,7 +8,50 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ actual failure and visible-inventory correction — 2026-10-29T22:12:14.330Z
+## Current CSJ equipped-weapon product correction — 2026-10-29T22:36:16.480Z
+
+Source **301c5a652e10f8c10bbfaea395374c930de39a40**, base **74d505a5ce2f2f562f4a6f29fd445fd6a9e400d2**.
+[Exact three-file source, causal regression, failed-run evidence and cleanup](2026-10-29-csj-inventory-attacks-fix.json).
+
+Actual retry **20f99479-7134-4307-90c1-517f2f9263ee** failed overall at missing Longsword attack. The prior
+visible-row correction worked: normal first Fighter creation, independently
+checked sheet, native rollback prefix, actual inventory equip/exact retention
+and Strength roll201 completed before failure. Actions used weapon refs only;
+normal starting awards populate separately pinned inventory. No complete selected
+journey, native/role/concurrency/Journal or integrated acceptance is inferred.
+
+The bounded product correction reads equipped positive-quantity, same-character/
+system, exact definition-backed weapon inventory through existing getItemData/
+getWeaponAttack. Legacy refs remain; only plain identical pins are deduplicated,
+while named/custom instances and other versions are retained. No award, auto-equip,
+calculator, schema/access/registry or Journal change. Paper discovery is unchanged.
+The real normal-UI/roll-log/native retention test is unchanged.
+
+The new actual ActionsTab consumer test fails before this fix with No weapons
+equipped and passes afterward.31 focused cases across four existing files,
+typecheck, zero-warning lint and diff checks pass. These are isolated/source
+checks; actual fixed-product execution remains pending the same central reviewer.
+New report coverage flow-starting-weapon-rolls records the already-approved CSJ-2
+outcome; all previous deliverable IDs/states and14 accepted creations are retained.
+
+**Stopping-rule drift check:** two actual failures had specific causes, a hidden
+copy selector and this product read-path gap. Both are corrected in source. The
+next existing two-character run resolves the approved weapon/HP/Journal criteria;
+no new framework, fixture package, wider matrix or user decision is introduced.
+
+**Cleanup complete:** exact runtime/private credentials gone;13 images,3 server
+inputs and3 local archives removed;14 public evidence files retain hashes.
+Original56 containers/95 volumes and all53 exact original image IDs remain;
+existing service IDs/states unchanged. Context, transport and helper are closed/
+removed with helper hash retained. No operational cleanup remains.
+
+**Next:** release main source/docs/index after own metadata validation/commit for
+the same central review. After coordinator clearance/window closure, execute the
+approved corrected Unraid workflow, preserve failures and verify final cleanup.
+Coordinator alone owns overview/queue/acceptance. Flow retains character work/
+report; Library and Journal reports/worktrees are untouched.
+
+## Prior CSJ actual failure and visible-inventory correction — 2026-10-29T22:12:14.330Z
 
 Source **3d70442ad2687d5445c91263845de8aa0d32edf3**, base **849d9132b7c228bdda881f52a46986e5d8b6e436**.
 [Exact one-file correction, failed-run evidence hashes and cleanup](2026-10-29-csj-visible-inventory-fix.json).
