@@ -3,6 +3,7 @@ import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {startProxy} from './proxy.mjs';
 const privateDir='/run/inkborne', output='/output', mode=process.env.INKBORNE_TEST_MODE;
+const nextHeapMiB=6144;
 assert(['workflow','focused','builders'].includes(mode));
 const runtime=JSON.parse(fs.readFileSync(privateDir+'/runtime.json','utf8'));
 const builderStories=JSON.parse(fs.readFileSync(privateDir+'/host.json','utf8')).builderStories??[];
@@ -12,7 +13,10 @@ assert(Array.isArray(builderStories)&&new Set(builderStories).size===builderStor
 assert(mode==='builders'||builderStories.length===0);
 const steps=[], children=new Set(); let proxy, status='running', phase='static-checks';
 const report=()=>fs.writeFileSync(output+'/summary.json',JSON.stringify({kind:'inkborne-unraid-verification-v1',sourceHead:runtime.sourceHead,
- runId:runtime.runId,engineId:runtime.engineId,databaseId:runtime.databaseId,mode,builderStories,status,phase,steps,historicalParentA4F3Acceptance:false},null,2)+'\n');
+ runId:runtime.runId,engineId:runtime.engineId,databaseId:runtime.databaseId,mode,builderStories,status,phase,steps,
+ configuredNextHeapMiB:nextHeapMiB,nextMemoryRestarts:fs.existsSync(privateDir+'/next.log')
+  ? (fs.readFileSync(privateDir+'/next.log','utf8').match(/Server is approaching the used memory threshold, restarting/g)??[]).length : null,
+ historicalParentA4F3Acceptance:false},null,2)+'\n');
 function child(command,args,env={},name=command){
  const startedUtc=new Date().toISOString(), processChild=spawn(command,args,{cwd:'/workspace',env:{...process.env,...env},stdio:['ignore','pipe','pipe'],detached:true});
  children.add(processChild); const file=fs.createWriteStream(privateDir+'/'+name+'.log',{mode:0o600});processChild.stdout.pipe(file,{end:false});processChild.stderr.pipe(file,{end:false});
@@ -45,7 +49,8 @@ try{
   const {bootstrap}=await import('./bootstrap.ts');await bootstrap();
   const server=JSON.parse(fs.readFileSync(privateDir+'/server-env.json','utf8'));
   phase='actual-character-workflow';report();console.log(JSON.stringify({phase}));
-  child('npm',['run','dev','--','--webpack','--hostname','127.0.0.1','--port','3001'],{...server,ADMIN_USER_IDS:''},'next');
+  child('npm',['run','dev','--','--webpack','--hostname','127.0.0.1','--port','3001'],
+   {...server,NODE_OPTIONS:`--max-old-space-size=${nextHeapMiB}`,ADMIN_USER_IDS:''},'next');
   await waitFor('http://127.0.0.1:3001/login',180);
   await run(['run','test:e2e','--','--config',mode==='builders'?'e2e/unraid/builders.config.ts':'e2e/unraid/playwright.config.ts',
    ...(builderStories.length?['--grep',builderStories.map(story=>storyPatterns[story]).join('|')]:[])],'browser');
