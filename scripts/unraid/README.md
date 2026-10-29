@@ -26,6 +26,19 @@ Only fixture preparation is browser/JWT proof; that native vector explicitly
 retains `authenticationAccepted:false`. `focused` runs only the source checks.
 Neither mode runs the full unit/E2E suite or a production build.
 
+The next parent candidate adds eleven native edit/award/reload/access
+checkpoints to the Fighter story and a third, serial Fiend update/replay story.
+It uses an exact reviewed legacy entry from the October23 archive, published
+as version2 after the ordinary current-v1 bootstrap, then publishes current
+version3 through the same full-catalog atomic importer. Existing immutable
+snapshots, unrelated catalog entries, character rows and security profiles must
+remain unchanged during publication. A real UI-created legacy target retains
+ordinary spells, awarded inventory and a rolled HP draw through correction;
+the exact UI request is replayed with a genuine JWT and must write nothing.
+The new current-v3 control and all other characters must stay unchanged. This
+is separately labeled fresh-state parent evidence; historical1→2 aggregator
+and ancestry/F3 upgrade gates are unchanged.
+
 Both stories pass at `1de39d9`, run `bd7f3ef4-88e7-4305-b39d-78264d453551`.
 The 1/0/2 vector and all21 HTTP outcomes are verified, with original inventory
 and full global profile retention. All task runtime, six introduced images,

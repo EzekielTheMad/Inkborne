@@ -1,0 +1,75 @@
+{
+  "content_type": "subclass",
+  "slug": "fiend",
+  "name": "Fiend",
+  "data": {
+    "parent_class": "warlock",
+    "flavor_label": "Otherworldly Patron",
+    "description": "You have made a pact with a fiend from the lower planes of existence, a being whose aims are evil, even if you strive against those aims. Such beings desire the corruption or destruction of all things, ultimately including you. Fiends powerful enough to forge a pact include demon lords such as Demogorgon, Orcus, Fraz'Urb-luu, and Baphomet; archdevils such as Asmodeus, Dispater, Mephistopheles, and Belial; pit fiends and balors that are especially mighty; and ultroloths and other lords of the yugoloths.",
+    "levels": [
+      {
+        "level": 1,
+        "features": [
+          "dark-ones-blessing"
+        ]
+      },
+      {
+        "level": 6,
+        "features": [
+          "dark-ones-own-luck"
+        ]
+      },
+      {
+        "level": 10,
+        "features": [
+          "fiendish-resilience"
+        ]
+      },
+      {
+        "level": 14,
+        "features": [
+          "hurl-through-hell"
+        ]
+      }
+    ],
+    "spells": [],
+    "spellcastingExtra": [
+      {
+        "level": 1,
+        "spells": [
+          "burning-hands",
+          "command"
+        ]
+      },
+      {
+        "level": 3,
+        "spells": [
+          "blindness-deafness",
+          "scorching-ray"
+        ]
+      },
+      {
+        "level": 5,
+        "spells": [
+          "fireball",
+          "stinking-cloud"
+        ]
+      },
+      {
+        "level": 7,
+        "spells": [
+          "fire-shield",
+          "wall-of-fire"
+        ]
+      },
+      {
+        "level": 9,
+        "spells": [
+          "flame-strike",
+          "hallow"
+        ]
+      }
+    ]
+  },
+  "effects": []
+}
