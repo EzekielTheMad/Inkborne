@@ -6,7 +6,7 @@ import {execFileSync, spawn} from 'node:child_process';
 import {createHash, randomUUID} from 'node:crypto';
 import assert from 'node:assert/strict';
 const root=path.resolve(import.meta.dirname,'../..'), mode=process.argv[2]??'workflow';
-assert(['plan','workflow','focused','builders'].includes(mode),'Use plan, workflow, focused, or builders');
+assert(['plan','workflow','focused','builders','csj'].includes(mode),'Use plan, workflow, focused, builders, or csj');
 const builderStories=process.argv[3]?.split(',')??[];
 assert(builderStories.length===0||mode==='builders','Story selection requires builders mode');
 assert(new Set(builderStories).size===builderStories.length&&builderStories.every(story=>['Bard','Cleric','Druid','Sorcerer','Warlock','Wizard','Paladin','Ranger','A1','A2','A3','A4','A5','A6'].includes(story)),'Use existing builder story names or A1-A6');
@@ -27,6 +27,10 @@ if(mode==='plan')process.exit(0);
 assert(dockerAvailableKiB>=15728640,'Unraid Docker image disk needs 15 GiB free; no image pull or runtime started');
 assert.equal(git('status','--porcelain','--untracked-files=normal'),'','Commit source before exporting a test candidate');
 const tracked=git('ls-files').split('\n');
+if(mode==='csj')for(const file of ['e2e/unraid/csj.config.ts','e2e/unraid/csj-flow.spec.ts',
+ 'e2e/local-journal/real.config.ts','e2e/local-journal/real-journal.spec.ts']){
+ assert(tracked.includes(file),'CSJ requires the committed assembled Flow/Journal consumer before export');
+}
 const templates=new Set(['.env.local.example','infra/backup/.env.example']);
 assert(!tracked.some(file=>!templates.has(file)&&/(^|\/)(\.env(?:\..*)?|id_rsa|id_ed25519)$/.test(file)),'Secret-like tracked file blocks export');
 const cache=path.resolve(root,'../equipment-runtime/catalog-data');

@@ -90,7 +90,7 @@ export function RelationshipsSection({
                   )}
                 </div>
                 <div className="flex items-center gap-1">
-                  <VisibilityBadge visibility={relationship.visibility} />
+                  <VisibilityBadge visibility={relationship.visibility} campaignId={campaignId} isOwner={isOwner} />
                   {isOwner && (
                     <>
                       <Button

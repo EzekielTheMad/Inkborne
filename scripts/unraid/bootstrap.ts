@@ -87,7 +87,35 @@ export async function bootstrap() {
       assert(!result.error && result.data.user?.id && result.data.user.role === "authenticated", "disposable local Auth provisioning failed; values withheld"); return { id: result.data.user.id, email, password };
     };
     const owner = await account("owner"), other = await account("other");
-    fs.writeFileSync("/run/inkborne/test-config.json", JSON.stringify({ appOrigin: "http://127.0.0.1:3001", supabaseOrigin: "http://127.0.0.1:9999", owner, other, ...api }) + "\n", { mode: 0o600, flag: "wx" });
+    let csjFixture: { runId: string; systemId: string; campaignId: string;
+      accounts: { owner: typeof owner; dm: typeof owner; member: typeof owner; outsider: typeof owner } } | undefined;
+    if (process.env.INKBORNE_TEST_MODE === "csj") {
+      phase = "bounded-csj-campaign-fixture"; save();
+      const empty = await nativeJson("BEGIN READ ONLY; SELECT jsonb_build_object('campaigns',(SELECT count(*) FROM public.campaigns),'characters',(SELECT count(*) FROM public.characters),'accounts',(SELECT count(*) FROM auth.users)); ROLLBACK;");
+      assert.deepEqual(empty, { campaigns: 0, characters: 0, accounts: 2 });
+      const dm = await account("dm"), member = await account("member");
+      assert.equal(new Set([owner.id, other.id, dm.id, member.id]).size, 4);
+      // Only the approved disposable campaign/membership fixture is privileged.
+      // Both characters must still be created and completed through the real UI.
+      const campaign = await client.from("campaigns").insert({ system_id: system.id, owner_id: dm.id,
+        name: `CSJ ${runtime.runId.slice(0, 8)}`, description: "Disposable CSJ-v1 fixture" }).select("id").single();
+      assert(!campaign.error && typeof campaign.data?.id === "string", "scratch campaign fixture failed; details withheld");
+      const campaignId = campaign.data.id;
+      const members = await client.from("campaign_members").insert([
+        { campaign_id: campaignId, user_id: owner.id, role: "player" },
+        { campaign_id: campaignId, user_id: member.id, role: "player" },
+      ]);
+      assert(!members.error, "scratch membership fixture failed; details withheld");
+      const roster = await client.from("campaign_members").select("user_id,role").eq("campaign_id", campaignId);
+      assert(!roster.error && Array.isArray(roster.data), "scratch roster read failed; details withheld");
+      assert.deepEqual(roster.data.sort((a, b) => a.user_id.localeCompare(b.user_id)),
+        [{ user_id: dm.id, role: "dm" }, { user_id: owner.id, role: "player" }, { user_id: member.id, role: "player" }]
+          .sort((a, b) => a.user_id.localeCompare(b.user_id)));
+      const counts = await nativeJson("BEGIN READ ONLY; SELECT jsonb_build_object('accounts',(SELECT count(*) FROM auth.users),'campaigns',(SELECT count(*) FROM public.campaigns),'characters',(SELECT count(*) FROM public.characters),'journal',(SELECT count(*) FROM public.character_timeline_events)); ROLLBACK;");
+      assert.deepEqual(counts, { accounts: 4, campaigns: 1, characters: 0, journal: 0 });
+      csjFixture = { runId: runtime.runId, systemId: system.id, campaignId, accounts: { owner, dm, member, outsider: other } };
+    }
+    fs.writeFileSync("/run/inkborne/test-config.json", JSON.stringify({ appOrigin: "http://127.0.0.1:3001", supabaseOrigin: "http://127.0.0.1:9999", owner, other, ...api, ...csjFixture }) + "\n", { mode: 0o600, flag: "wx" });
     phase = "authenticated-catalog-read"; save();
     const ownerClient = createClient("http://127.0.0.1:9999", api.anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const login = await ownerClient.auth.signInWithPassword({ email: owner.email, password: owner.password });
@@ -97,6 +125,7 @@ export async function bootstrap() {
     assert(!visibleSystems.error && visibleSystems.data?.length === 1 && visibleSystems.data[0].slug === "dnd-5e-2014", "authenticated catalog read failed; details kept private");
     phase = "ready"; save({ passed: true, catalog, cachedResponses: 1572, freshVersionOneCatalog: true, importProcess,
       currentProfile: after, historicalUpgradeAcceptance: false, authenticatedCatalogRead: true });
-    console.log(JSON.stringify({ phase, definitions: 1535, snapshots: 1535, accounts: 2 }));
+    console.log(JSON.stringify({ phase, definitions: 1535, snapshots: 1535, accounts: csjFixture ? 4 : 2,
+      ...(csjFixture ? { fixtureCampaigns: 1, fixtureCharacters: 0 } : {}) }));
   } catch { save({ passed: false }); throw Error(`scratch bootstrap refused at ${phase}; preserve bootstrap report`); }
 }

@@ -11,6 +11,7 @@ vi.mock("@/app/(app)/characters/[id]/story-actions", () => ({
   createTimelineEvent: vi.fn(),
   updateTimelineEvent: vi.fn(),
   deleteTimelineEvent: vi.fn(),
+  readTimelineEvent: vi.fn(),
   createRelationship: vi.fn(),
   updateRelationship: vi.fn(),
   deleteRelationship: vi.fn(),
@@ -53,13 +54,14 @@ describe("character story sections", () => {
     render(
       <TimelineSection
         characterId="character-1"
+        campaignId="campaign-1"
         events={[timelineEvent]}
         isOwner={false}
       />,
     );
     expect(screen.getByText("The Sundering")).toBeInTheDocument();
-    expect(screen.getByText("DM & me")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /add event/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Owner & DM")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /write entry/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /edit the sundering/i })).not.toBeInTheDocument();
   });
 
@@ -71,7 +73,7 @@ describe("character story sections", () => {
         isOwner
       />,
     );
-    expect(screen.getByRole("button", { name: /add event/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /write entry/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /edit the sundering/i })).toBeInTheDocument();
   });
 

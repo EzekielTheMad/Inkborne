@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {startProxy} from './proxy.mjs';
 const privateDir='/run/inkborne', output='/output', mode=process.env.INKBORNE_TEST_MODE;
 const nextHeapMiB=6144;
-assert(['workflow','focused','builders'].includes(mode));
+assert(['workflow','focused','builders','csj'].includes(mode));
 const runtime=JSON.parse(fs.readFileSync(privateDir+'/runtime.json','utf8'));
 const builderStories=JSON.parse(fs.readFileSync(privateDir+'/host.json','utf8')).builderStories??[];
 const storyPatterns=Object.fromEntries(['Bard','Cleric','Druid','Sorcerer','Warlock','Wizard','Paladin','Ranger'].map(name=>[name,`complete SRD ${name} `]));
@@ -34,10 +34,14 @@ async function stopChildren(){
 async function waitFor(url,seconds=120){for(let index=0;index<seconds;index++){try{const result=await fetch(url,{signal:AbortSignal.timeout(3000)});if(result.ok)return;}catch{}await new Promise(resolve=>setTimeout(resolve,1000));}throw Error('local service readiness timeout');}
 process.once('SIGTERM',()=>{void stopChildren().then(()=>process.exit(1));});
 try{
+ if(mode==='csj')for(const file of ['e2e/unraid/csj.config.ts','e2e/unraid/csj-flow.spec.ts',
+  'e2e/local-journal/real.config.ts','e2e/local-journal/real-journal.spec.ts'])assert(fs.existsSync(file),'assembled CSJ source is incomplete');
  report();console.log(JSON.stringify({phase}));
  await run(['run','typecheck','--','--tsBuildInfoFile','/tmp/inkborne.tsbuildinfo'],'typecheck');
  await run(['run','lint'],'lint');
- const focused = mode==='builders' ? ['tests/lib/character/ancestry-hit-points.test.ts','tests/lib/character/ancestry-defenses.test.ts',
+ const focused = mode==='csj' ? ['tests/resources/helpers.test.ts','tests/lib/character/bardic-inspiration-resources.test.tsx',
+  'tests/components/sheet/resources-widget.test.tsx','tests/lib/character/conditional-casting-resources.test.tsx']
+ : mode==='builders' ? ['tests/lib/character/ancestry-hit-points.test.ts','tests/lib/character/ancestry-defenses.test.ts',
   'tests/lib/character/earned-racial-spells.test.ts','tests/lib/builder/choice-options.test.ts',
   'tests/components/sheet/content-tabs.test.tsx','tests/app/class-step-client-feat-regressions.test.tsx'] : ['tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx',
   'tests/scripts/character-command-psql.test.ts','tests/scripts/builder-parent-admission-concurrency.test.ts',
@@ -52,7 +56,18 @@ try{
   child('npm',['run','dev','--','--webpack','--hostname','127.0.0.1','--port','3001'],
    {...server,NODE_OPTIONS:`--max-old-space-size=${nextHeapMiB}`,ADMIN_USER_IDS:''},'next');
   await waitFor('http://127.0.0.1:3001/login',180);
-  await run(['run','test:e2e','--','--config',mode==='builders'?'e2e/unraid/builders.config.ts':'e2e/unraid/playwright.config.ts',
+  if(mode==='csj'){
+   phase='actual-csj-creation-and-sheet';report();
+   await run(['run','test:e2e','--','--config','e2e/unraid/csj.config.ts'],'csj-flow');
+   const receipt=JSON.parse(fs.readFileSync(output+'/csj-flow.json','utf8'));
+   assert.equal(receipt.kind,'inkborne-csj-flow-v1');assert.equal(receipt.runId,runtime.runId);assert.equal(receipt.sourceHead,runtime.sourceHead);
+   assert.equal(receipt.normalUiCreation,true);assert.equal(receipt.basicSheetPassed,true);
+   const journal=JSON.parse(fs.readFileSync(privateDir+'/journal-config.json','utf8'));
+   assert.equal(journal.runId,runtime.runId);assert.equal(journal.standaloneCharacterId,receipt.standaloneCharacterId);
+   assert.equal(journal.campaignCharacterId,receipt.campaignCharacterId);assert.notEqual(receipt.standaloneCharacterId,receipt.campaignCharacterId);
+   phase='actual-csj-journal';report();
+   await run(['run','test:e2e','--','--config','e2e/local-journal/real.config.ts'],'csj-journal');
+  }else await run(['run','test:e2e','--','--config',mode==='builders'?'e2e/unraid/builders.config.ts':'e2e/unraid/playwright.config.ts',
    ...(builderStories.length?['--grep',builderStories.map(story=>storyPatterns[story]).join('|')]:[])],'browser');
  }
  status='passed';
