@@ -459,6 +459,12 @@ test("parent Fiend correction applies once and exact JWT replay retains the upda
   expect(published.native).toEqual(legacy.native);
   for (const key of ["pins", "inventory", "hpDraws", "featureGrants", "spellGrants", "spells", "updateReceipts"] as const) expect(published.detail[key]).toEqual(legacy.detail[key]);
   const controlId = await create("current"), control = await observeParent(controlId, config.owner.id, 1537);
+  const publication = JSON.parse(await readFile("/output/fiend-publication-corrected.json", "utf8"));
+  expect(publication).toMatchObject({ passed: true, mode: "corrected", after: { fiend: { version: 3 } } });
+  expect(publication.after.fiend.data.spellcastingExpanded).toHaveLength(5); expect(publication.after.fiend.data).not.toHaveProperty("spellcastingExtra");
+  const controlPins = control.detail.pins.filter(pin => pin.content_id === publication.after.fiend.id && pin.content_type === "subclass");
+  expect(controlPins).toHaveLength(1); expect(controlPins[0]).toMatchObject({ content_version: 3, feature_grant_id: null, context: { source: "subclass", class: "warlock" } });
+  expect(control.family.exact_frozen_pins).toEqual(expect.arrayContaining([expect.objectContaining({ kind: "subclass", slug: "fiend", content_id: publication.after.fiend.id, content_version: 3 })]));
   const before = await observeParent(characterId, config.owner.id, 1537), otherRows = await otherParentRows(characterId);
   const profileSql = await readFile("supabase/verification/earned-racial-installation-profile.sql", "utf8"), profileBefore = await nativeJson(profileSql) as Record<string, unknown>;
   await page.goto(base + "/class"); const review = page.getByRole("region", { name: "Fiend content update review", exact: true });
@@ -513,7 +519,7 @@ test("parent Fiend correction applies once and exact JWT replay retains the upda
   const output = info.outputPath("parent-fiend-replay.json");
   await writeFile(output, JSON.stringify({ kind: "unraid-parent-fiend-replay-v1", passed: true, runtime, characterId, actorId: config.owner.id, controlId,
     actualApp: true, actualAuthCookies: true, actualJwtReplay: true, originalRequest, applied, replayed, legacy, published, before, after, replayReadback, reloaded,
-    retainedCurrentControl: control, otherRowsBefore: otherRows, otherRowsAfter: await otherParentRows(characterId), publicationProcesses, blockedOrigins, pageErrors,
+    retainedCurrentControl: control, controlSource: { contentId: publication.after.fiend.id, version: 3 }, otherRowsBefore: otherRows, otherRowsAfter: await otherParentRows(characterId), publicationProcesses, blockedOrigins, pageErrors,
     scope: "Current-state parent acceptance with explicit Fiend legacy-v2 to current-v3; historical v1-to-v2 aggregator and ancestry/F3 upgrade gates unchanged." }, null, 2));
   await info.attach("parent-fiend-replay", { path: output, contentType: "application/json" });
 });
