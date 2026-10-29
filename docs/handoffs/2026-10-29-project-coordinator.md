@@ -300,10 +300,10 @@ review is reserved for the assembled exact source. No acceptance is inferred.
 
 | Assignment | Recipient / owned boundary | Evidence and dependency | State |
 | --- | --- | --- | --- |
-| CSJ-FLOW-1 | Character Flow `01a1790d-be90-73d1-91f6-84e48a557ee1`; selected character/sheet sources and bounded runner support; own report/handoff | R08 capacity and basic-sheet source/consumer checkpoint; preserve accepted creation work. Coordinator's kickoff docs/index window must close before main-checkout writes. | dispatched 2026-10-29T19:37:38.525Z |
+| CSJ-FLOW-1 | Character Flow `01a1790d-be90-73d1-91f6-84e48a557ee1`; selected character/sheet sources and bounded runner support; own report/handoff | R08 capacity source `ce7330f` reports72 focused checks/typecheck/lint passing; actual selected sheet actions await CSJ run. Main source/index window released at `b1e15dc`. | reported 2026-10-29T19:37:38.525Z |
 | CSJ-JOURNAL-1 | Character Journal `01a1888e-2454-7633-b5f5-57c36e522a82`; `app/(app)/characters/[id]/story-actions.ts`, TimelineSection, narrative tests and real-story consumer in its own worktree | Conditional acknowledged update, structured outcomes, stable uncertain-create identity/readback; compatible scope may proceed, semantic changes return for contract decision. Source then fixture interface checkpoint; no heavy run yet. | dispatched 2026-10-29T19:37:38.525Z |
-| CSJ-FLOW-2 | Character Flow; shared runner/bootstrap + normal-creation fixture producer | Assemble exact Journal source after contract/source checkpoint; pass same two UI-created IDs to real story, four roles/one campaign/max3entries, serialized desktop/mobile real workflow and cleanup. | ready after source/contract checkpoint; not dispatched |
-| CSJ-REVIEW | One independent read-only subagent, central allocation only | Frozen combined source and supporting evidence; security, owner/audience isolation, stale/unknown/duplicate behavior and native-field retention. | reserved; not dispatched |
+| CSJ-FLOW-2 | Character Flow; shared runner/bootstrap + normal-creation fixture producer | Assemble exact Journal source after contract/source checkpoint; pass same two UI-created IDs to real story, four roles/one campaign/max3entries, serialized desktop/mobile real workflow and cleanup. | dispatched; source/runner adaptation ready after this docs window |
+| CSJ-REVIEW | One independent read-only subagent, central allocation only | Frozen combined source and supporting evidence; security, owner/audience isolation, stale/unknown/duplicate behavior and native-field retention. | dispatched to `/root/csj_review`; Flow exact source stage underway |
 | CSJ-ACCEPT | Coordinator's overview/ledger/checkpoint | Compare exact real results to CSJ-1..6, retain accepted evidence, record exclusions and cleanup. | blocked on above evidence |
 
 Library `01a1888d-9110-7e90-8ee0-516640d33539` is verified and
@@ -312,3 +312,43 @@ assignment/message yet. No fourth-lane messages, new threads or scope expansion.
 Report setup/history alone adds no product tests. Pending next event: Flow
 file/window confirmation and Journal source-contract result; continue independent
 ready work and use meaningful returned checkpoints rather than repeated polls.
+
+### CSJ source and contract checkpoint
+
+Character Flow reports `ce7330f68d9981737dc8bc27c1fae334da86c709`
+(base `4c26b71`), source checks72/typecheck/lint passing; docs checkpoint
+`b1e15dc`, main worktree clean and write window released. This is source-only
+reported completion, not actual CSJ integration acceptance. One central reviewer
+`/root/csj_review` is checking that exact delta; reuse the same reviewer for
+Journal/runner and final evidence rather than creating another agent.
+
+Coordinator approved Journal's bounded contract: existing timeline PK UUID
+retained per editor attempt; INSERT only, no upsert; known prewrite rejection,
+conflict and unknown outcomes are structured; exact returned id/timestamp proves
+UPDATE acknowledgement; opened timestamp is a required precondition and advances
+strictly. Owner+character+creator+exact-ID readback must succeed before declaring
+absence; unknown/denied/malformed reads remain paused. Explicit retry after
+confirmed absence keeps the same UUID, so late commits cannot create a second
+row. No title/body matching or browser-crash/global draft durability claim.
+Journal reports24 action +17 component/story source checks; final manifest/head
+and real-story consumer are pending, so none is accepted yet.
+
+Agreed runner interface: Character Flow solely produces private
+`/run/inkborne/journal-config.json` with runId, loopback appOrigin/
+supabaseOrigin, accounts{owner,dm,member,outsider}, standaloneCharacterId,
+campaignCharacterId and campaignId. Public `/output/csj-flow.json` contains
+kind `inkborne-csj-flow-v1`, matching runId/sourceHead/two IDs and
+normalUiCreation/basicSheetPassed true, emitted only after actual success.
+Journal verifies current source/runtime/IDs and selected parent data before
+writes. Reuse the same two IDs for mobile; no extra prebuilt/viewpoint fixtures.
+Journal performs the later normal HP edit while entries still exist to prove
+reverse narrative retention, then exact-ID cleanup.
+
+All73 linked retained creation evidence files match their recorded hashes;
+receipt SHA256 `8765a1022ce5fed24d6cb7e0fbb5e0d36080e78b0a169da58f919e4839d83367`.
+No creation acceptance was reopened. Collector sees five existing registered
+reports without warnings/conflicts; Feedback stays outside CSJ dispatch/scope.
+Read-only PC measurement:4.63GiB available physical,56.86/59.94GiB commit;
+lanes informed to serialize remaining source checks. No process was stopped;
+the coordinator's measurement session exited. Heavy execution remains on the
+existing guarded Unraid scratch lifecycle after assembled-source agreement.

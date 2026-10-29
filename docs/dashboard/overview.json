@@ -9,15 +9,15 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T19:37:38.525Z",
+  "updatedAt": "2026-10-29T19:52:22.083Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "CSJ-v1 approved and dispatched to existing Character Flow and Journal owners. Coordinator maintains shared contracts and acceptance; selected normal creation through basic sheet use and same-ID Journal integration is now the bounded active outcome.",
-  "nextAction": "Collect CSJ-FLOW-1 sheet/capacity and CSJ-JOURNAL-1 narrative save/recovery source checkpoints, agree exact fixture interface, then sequence one assembled local acceptance run and central independent review. Preserve all accepted creation evidence and stop at CSJ-v1 acceptance or a precise blocked checkpoint.",
+  "currentWork": "CSJ-FLOW-1 capacity source is reported at ce7330f with focused helper/provider/widget checks, typecheck and lint passing. Journal save safeguards pass focused action/UI checks with final source/consumer pending. One central exact-source review is underway; runner adaptation is assigned, actual CSJ acceptance remains open.",
+  "nextAction": "Collect committed Journal source/manifest and paired runner/consumer source; resolve central review findings, assemble the exact selected candidate, then run the bounded two-character/four-role CSJ workflow with cleanup.",
   "blockers": [
     "CSJ-v1 integration awaits selected sheet/capacity and acknowledged conflict/recovery source checkpoints plus coordinated runner/fixtures. The disposable package is user-approved; current implementation/evidence is not yet accepted."
   ],
@@ -345,7 +345,8 @@
       "disposition": "included",
       "evidence": [
         "docs/LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal — explicit 2026-10-29 approval and bounded criteria",
-        "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-coordination-checkpoint — dispatched assignments; integrated actual acceptance pending"
+        "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-coordination-checkpoint — dispatched assignments; integrated actual acceptance pending",
+        "Character Flow product ce7330f / docs b1e15dc — capacity source/provider proof only; Journal final source and CSJ actual workflow pending"
       ]
     }
   ]

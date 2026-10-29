@@ -35,9 +35,9 @@ or overrides this queue. Historical completion counts are not current acceptance
    Current ancestry/A4 and all fourteen queued full creation journeys now pass
    compositionally, covering all twelve classes. A6 passes at `1f15a44` with
    zero memory restarts; stop this finite verification slice and preserve every
-   accepted story. The next Character Flow product action is the existing R08
-   Bardic Inspiration capacity finding, using focused verification and the
-   contract's stopping rules.
+   accepted story. The existing R08 Bardic Inspiration capacity source correction
+   now passes focused helper/provider/widget checks at `ce7330f`; actual selected
+   sheet use and Journal integration remain pending under approved CSJ-v1.
    Historical parent/A4/F3 upgrade aggregators and old installer prerequisites
    remain separately open; retain their exact gates, resource and cleanup rules.
 2. **Continue remaining M1–M6 work, including M5.5**, from open requirement rows
