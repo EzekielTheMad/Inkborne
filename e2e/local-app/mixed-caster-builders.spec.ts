@@ -165,8 +165,8 @@ async function createAndComplete(page: Page, story: Story) {
   await choose(page, choiceOption(page, /^Dueling(?:\s|$)/)); await selectSpells(page, "Paladin");
   // The one real starting award belongs to the original class before adding
   // secondary casters. No sheet inventory insertion or second award is used.
-  await page.goto(builder(story) + "/equipment"); const groups = page.getByRole("group").filter({ has: page.locator('select option[value="a"]') });
-  await expect(groups.first()).toBeVisible(); for (let index = 0; index < await groups.count(); index++) await choose(page, groups.nth(index).locator('select option[value="a"]'));
+  await page.goto(builder(story) + "/equipment"); const groups = page.locator("select").filter({ has: page.locator('option[value="a"]') });
+  await expect(groups.first()).toBeVisible(); for (let index = 0; index < await groups.count(); index++) await choose(page, groups.nth(index).locator('option[value="a"]'));
   const slots = page.locator('button[data-slot="select-trigger"]'); for (let index = 0; index < await slots.count(); index++) {
     const slot = slots.nth(index); await slot.click(); await expect(page.getByRole("listbox")).toBeVisible();
     const menu = page.getByRole("listbox"), sword = menu.getByRole("option", { name: "Longsword", exact: true }); const option = await sword.count() ? sword : menu.getByRole("option").first();
