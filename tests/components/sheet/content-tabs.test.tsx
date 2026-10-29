@@ -31,16 +31,16 @@ describe("ContentTabs hydration", () => {
       const buttons = ui.getAllByRole("button");
       expect(buttons).toHaveLength(5);
       for (const button of buttons) expect(button).toBeDisabled();
-      (ui.getByRole("button", { name: "Inventory", exact: true }) as HTMLButtonElement).click();
-      expect(ui.getByRole("heading", { name: "Actions panel", exact: true })).toBeVisible();
-      expect(ui.queryByRole("heading", { name: "Inventory panel", exact: true })).not.toBeInTheDocument();
+      (ui.getByRole("button", { name: "Inventory" }) as HTMLButtonElement).click();
+      expect(ui.getByRole("heading", { name: "Actions panel" })).toBeVisible();
+      expect(ui.queryByRole("heading", { name: "Inventory panel" })).not.toBeInTheDocument();
 
       await act(async () => { root = hydrateRoot(container, view, { onRecoverableError: recoverableError }); });
       for (const button of ui.getAllByRole("button")) expect(button).toBeEnabled();
       expect(recoverableError).not.toHaveBeenCalled();
       for (const name of ["Inventory", "Spells", "Features", "Notes", "Actions"]) {
-        fireEvent.click(ui.getByRole("button", { name, exact: true }));
-        expect(ui.getByRole("heading", { name: `${name} panel`, exact: true })).toBeVisible();
+        fireEvent.click(ui.getByRole("button", { name }));
+        expect(ui.getByRole("heading", { name: `${name} panel` })).toBeVisible();
         expect(ui.getAllByRole("heading")).toHaveLength(1);
       }
     } finally {

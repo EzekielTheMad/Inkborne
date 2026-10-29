@@ -8,6 +8,59 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
+## Latest continuation — 2026-10-29 complete creation journeys
+
+The user's priority is usable product progress. Finish the existing fourteen
+creation stories, covering all twelve classes; milestone terminology does not
+restart this queue. Use the approved disposable Unraid runtime and retain passing
+evidence for unchanged behavior. Historical upgrade/installer and hosted release
+gates remain separate.
+
+Source `671fb9e4f03700c1cec4f7cfb5692269b6eb9a7e` is independently reviewed.
+Its nine affected stories are **not yet accepted**. Attempt
+`e008029f-d81e-4858-9609-9d1ceeb32fa9` stopped before browser work on test-file
+typing errors (an optional effects array and Playwright-only query options in
+Testing Library). Those test typings are corrected; the next step is the same
+nine-story actual run.
+The five named passes retained from source`b4a13cb`, run
+`c0663caa-a92a-46f3-b39d-a575a59c87b4`, are Bard, Paladin, Ranger, Monk A2 and
+Hill Dwarf A4. They include six Saved steps, native ownership, reload and foreign
+refusal. A4 independently proves HP38/AC14/speed25 and exact ancestry bonus1.
+That fourteen-story batch remains failed; reuse does not relabel it as green.
+
+The actual runs exposed and led to these bounded product fixes:
+
+- Tiefling racial-spell planning recognizes the complete canonical provisional
+  original class; secondaries still require accepted lifecycles. Saved tuples
+  are exact, and only established pending subclass-link transitions are allowed.
+- The verified level-one Druidic feature now grants its language before immutable
+  import. Changed source evidence is rejected; existing snapshots are not edited.
+- Sheet proficiency effects include the existing finite authority's proven
+  skills/thieves-tools, using original refs, native class roles and deduplication.
+- Sheet tabs stay natively disabled until hydration attaches their handlers.
+- Casting configuration shows the resolved source's DC/attack even without
+  attack metadata. It does not infer attack type or change damage/casting rules.
+- Class state adopts newer same-scope confirmed revisions after structural saves
+  settle, rejects stale/equal-revision contradictions and preserves spell drafts
+  with explicit recovery. The required bonus-spell callback contract is retained.
+
+Focused source checks pass:138 earned-racial/installer checks,29 cast-dialog
+checks, the causal SSR/hydration tab regression,28 transformer checks,19
+proficiency/role checks and221 class/spell component checks. The final class
+client subset26 also passes. Independent review binds each integrated delta
+through`671fb9e`; actual sequential/concurrent behavior still requires the retry.
+
+Earlier attempts`82e6c865` (intentional pre-browser stop),`c0663caa` (5/14) and
+`6bd98dc5` (0/9) retain their original failed results. Stale equipment/category
+expectations were corrected while exact grants, budgets, ownership, native
+readback and both opposite-controller saves remain required. Direct navigation
+waits for DOM/interactive controls; timeouts/retries and resource limits are unchanged.
+
+All attempt runtimes/private files are removed. Final image/source/
+archive cleanup is pending completion of the affected-story retry. The complete baseline,
+targeted cleanup script and eventual receipts are under
+`../equipment-runtime/unraid/usable-builders-20261029T145530Z/`.
+
 ## Latest continuation — 2026-10-28 Unraid and proportional testing
 
 ### Remaining current-state parent checks accepted

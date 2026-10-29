@@ -183,7 +183,8 @@ function casterClientProps(revision: string, saveAction: ClientProps["saveAction
     const id = `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
     const contentId = `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
     return { ...fixture.classRef, id, content_id: contentId,
-      content_definitions: { ...fixture.classRef.content_definitions, id: contentId, slug: cls.slug, name: cls.slug },
+      content_definitions: { ...fixture.classRef.content_definitions, id: contentId, slug: cls.slug, name: cls.slug,
+        effects: fixture.classRef.content_definitions.effects ?? [] },
       class_role: { ...fixture.classRef.class_role!, occurrence_id: cls.occurrence_id!, controller_ref_id: id,
         content_id: contentId, action_revision: revision, role: index === 0 ? "original" as const : "secondary" as const } };
   });
