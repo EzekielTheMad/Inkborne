@@ -160,9 +160,16 @@ SELECT jsonb_build_object(
      =ARRAY(SELECT value FROM unnest(o.ordinary) value ORDER BY value),
    'ordinaryPreparationExact',ARRAY(SELECT slug FROM spells WHERE source='selection' AND spell_level>0 AND is_prepared ORDER BY slug)
      =ARRAY(SELECT value FROM unnest(o.prepared) value ORDER BY value),
-   'fixedGrantsExact',ARRAY(SELECT slug FROM spells WHERE source='feature' ORDER BY slug)=ARRAY(SELECT value FROM unnest(o.fixed) value ORDER BY value)
-     AND NOT EXISTS(SELECT 1 FROM spells WHERE source='feature' AND (NOT always_prepared OR NOT is_prepared)),
-   'bonusCantripsExact',ARRAY(SELECT slug FROM spells WHERE source='bonus' ORDER BY slug)=ARRAY(SELECT value FROM unnest(o.bonus) value ORDER BY value),
+   -- Terrain tiers are fixed bonus rows; chosen bonus cantrips remain separate.
+   -- The companion bonus oracle verifies each row's exact earned source owner.
+   'fixedGrantsExact',ARRAY(SELECT slug FROM spells WHERE source='feature'
+       OR (source='bonus' AND custom_data->>'builder_bonus_mode'='fixed') ORDER BY slug)
+     =ARRAY(SELECT value FROM unnest(o.fixed) value ORDER BY value)
+     AND NOT EXISTS(SELECT 1 FROM spells WHERE (source='feature'
+       OR (source='bonus' AND custom_data->>'builder_bonus_mode'='fixed')) AND (NOT always_prepared OR NOT is_prepared)),
+   'bonusCantripsExact',ARRAY(SELECT slug FROM spells WHERE source='bonus'
+       AND custom_data->>'builder_bonus_mode' IS DISTINCT FROM 'fixed' ORDER BY slug)
+     =ARRAY(SELECT value FROM unnest(o.bonus) value ORDER BY value),
    'noExtraSpellRows',(SELECT count(*) FROM spells)=cardinality(o.cantrips)+cardinality(o.ordinary)+cardinality(o.fixed)+cardinality(o.bonus),
    'ordinaryRowsOwned',NOT EXISTS(SELECT 1 FROM spells WHERE source='selection' AND (NOT exact_version OR NOT is_known OR always_prepared
      OR spell_grant_id IS NOT NULL OR class_slug<>o.slug OR custom_data->>'builder_class_controller_ref_id' IS DISTINCT FROM o.controller_ref_id::text)),
