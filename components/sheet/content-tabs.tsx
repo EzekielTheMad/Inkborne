@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { CharacterWithSystem, CharacterState } from "@/lib/types/character";
 import type { SystemSchemaDefinition } from "@/lib/types/system";
 import type { EvaluationResult } from "@/lib/engine/evaluator";
@@ -20,6 +20,10 @@ const TABS: Array<{ id: TabId; label: string }> = [
   { id: "features", label: "Features" },
   { id: "notes", label: "Notes" },
 ];
+
+const subscribeToClient = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 
 interface ContentTabsProps {
   character: CharacterWithSystem;
@@ -41,6 +45,8 @@ export function ContentTabs({
   initialTab = "actions",
 }: ContentTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  // Prerendered buttons must wait until their click handlers are attached.
+  const interactive = useSyncExternalStore(subscribeToClient, clientReady, serverReady);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -49,6 +55,7 @@ export function ContentTabs({
           <button
             key={tab.id}
             type="button"
+            disabled={!interactive}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
