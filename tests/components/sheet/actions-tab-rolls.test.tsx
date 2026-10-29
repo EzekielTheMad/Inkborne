@@ -13,6 +13,7 @@ const rollMock = vi.fn();
 vi.mock("@/lib/character/character-context", () => ({
   // Confirmed component input; these tests retain the exact request/crit oracle.
   useRolls: () => ({ rolls: [], roll: rollMock, assertMechanics: vi.fn(), mechanics: { status: "available" } }),
+  useInventory: () => ({ inventory: [] }),
   useActiveEffects: () => ({
     activeEffects: [],
     applyEffect: vi.fn(),

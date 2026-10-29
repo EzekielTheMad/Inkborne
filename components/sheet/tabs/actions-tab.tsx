@@ -7,9 +7,10 @@ import type { EvaluationResult } from "@/lib/engine/evaluator";
 import type { ContentRefWithContent } from "@/lib/supabase/content-refs";
 import type { RollResult } from "@/lib/dice/types";
 import { getWeaponAttack, getWeaponDisplay } from "@/lib/sheet/weapon-attack";
+import { getItemData } from "@/lib/inventory/helpers";
 import { RollPopover } from "@/components/sheet/rolls/roll-popover";
 import { SheetEmptyState } from "@/components/sheet/empty-state";
-import { useRolls } from "@/lib/character/character-context";
+import { useInventory, useRolls } from "@/lib/character/character-context";
 
 const SUB_FILTERS = [
   { id: "all", label: "All" },
@@ -30,25 +31,41 @@ interface ActionsTabProps {
 }
 
 export function ActionsTab({
+  character,
   schema,
   evalResult,
   contentRefs,
 }: ActionsTabProps) {
   const [activeFilter, setActiveFilter] = useState<FilterId>("all");
+  const { inventory } = useInventory();
 
-  // Build attack rows from weapon content refs
+  // Starting awards live in inventory, with their own exact version snapshots.
+  // Retain legacy weapon refs without showing a plain same-pin weapon twice.
   const attacks = useMemo(() => {
-    const weaponRefs = contentRefs.filter(
-      (ref) => ref.content_definitions?.content_type === "weapon",
-    );
-
-    return weaponRefs.map((ref) => {
+    const equippedWeapons = inventory.flatMap((item) => {
+      const definition = item.content_definitions;
+      if (!item.equipped || item.quantity <= 0 || item.character_id !== character.id
+        || item.content_type !== "weapon" || definition?.content_type !== "weapon"
+        || !item.content_id || item.content_id !== definition.id
+        || !Number.isInteger(item.content_version) || item.content_version !== definition.version || definition.version <= 0
+        || definition.system_id !== character.system_id) return [];
+      return [{ definition, name: item.name, data: getItemData(item),
+        plain: item.name === definition.name && Object.keys(item.custom_data ?? {}).length === 0 }];
+    });
+    const presentedPins = new Set(equippedWeapons.filter((weapon) => weapon.plain)
+      .map(({ definition }) => `${definition.id}:${definition.version}`));
+    const legacyWeapons = contentRefs.flatMap((ref) => {
       const definition = ref.content_definitions;
-      const data = definition?.data ?? {}, display = getWeaponDisplay(data);
-      return { ...getWeaponAttack(definition?.name ?? "Unknown Weapon", definition?.slug ?? "", data, evalResult, schema),
+      if (definition?.content_type !== "weapon" || presentedPins.has(`${definition.id}:${definition.version}`)) return [];
+      return [{ definition, name: definition.name, data: definition.data }];
+    });
+
+    return [...equippedWeapons, ...legacyWeapons].map(({ definition, name, data }) => {
+      const display = getWeaponDisplay(data);
+      return { ...getWeaponAttack(name, definition.slug, data, evalResult, schema),
         requiredAbilities: display.finesse ? ["strength", "dexterity"] : [display.ranged ? "dexterity" : "strength"] };
     });
-  }, [contentRefs, evalResult, schema]);
+  }, [inventory, character.id, character.system_id, contentRefs, evalResult, schema]);
 
   // Attack → damage crit chain (design §3.3/§3.4): a natural 20 on a row's
   // attack roll arms `crit: true` on that row's next damage roll; the damage
