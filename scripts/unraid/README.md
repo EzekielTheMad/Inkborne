@@ -5,6 +5,7 @@ Run from the authoritative checkout, after committing the candidate:
 ```powershell
 npm run verify:unraid -- plan
 npm run verify:unraid -- workflow
+npm run verify:unraid -- builders
 ```
 
 `plan` checks the existing SSH alias and server identity without writing. `workflow`
@@ -25,6 +26,14 @@ fixture/catalog/installed profile is retained and both private roots are absent.
 Only fixture preparation is browser/JWT proof; that native vector explicitly
 retains `authenticationAccepted:false`. `focused` runs only the source checks.
 Neither mode runs the full unit/E2E suite or a production build.
+
+`builders` uses the same private runtime and cleanup controls for the existing
+fourteen complete creation stories: eight single-class casters, three martial
+builds, Hill Dwarf Barbarian, and the two mixed-caster builds. It runs four
+focused source files, typecheck/lint once, and the serial actual-app stories.
+The fresh current catalog remains at1,535 definitions/snapshots; this mode
+does not publish historical catalog versions or rerun the accepted parent bundle.
+The same20-minute runtime and memory limits apply.
 
 The parent workflow includes eleven native edit/award/reload/access
 checkpoints to the Fighter story and a third, serial Fiend update/replay story.
