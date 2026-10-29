@@ -478,16 +478,16 @@ test("parent Fiend correction applies once and exact JWT replay retains the upda
   for (const line of (await response.text()).split("\n")) try {
     const value = JSON.parse(line.slice(line.indexOf(":") + 1)); if (value?.status === "applied" && value.receipt) applied = value;
   } catch { /* Ignore Flight metadata; never record the response body. */ }
-  assert(applied); assert(originalRequest);
+  assert(applied); assert(originalRequest); const exactRequest = originalRequest;
   const after = await observeParent(characterId, config.owner.id, 1537); retainParentOrigins(before, after);
-  expect(BigInt(after.native.actionRevision) - BigInt(before.native.actionRevision)).toBe(1n);
+  expect(BigInt(after.native.actionRevision) - BigInt(before.native.actionRevision)).toBe(BigInt(1));
   for (const key of ["choices", "scores", "state", "level", "startingAwards"] as const) expect(after.native[key]).toEqual(before.native[key]);
   expect(after.detail.inventory).toEqual(before.detail.inventory);
   const added = after.native.receipts.filter(row => !before.native.receipts.some(old => old.operationId === row.operationId));
   expect(added).toHaveLength(1); expect(added[0]).toMatchObject({ operationId: originalRequest.operation_id, command: "update_subclass_version" });
   expect(after.detail.updateReceipts).toHaveLength(before.detail.updateReceipts.length + 1);
-  expect(after.detail.updateReceipts.find(row => row.operationId === originalRequest.operation_id)).toMatchObject({ request: originalRequest, receipt: applied.receipt });
-  const oldPin = before.detail.pins.find(pin => pin.id === originalRequest.fields.subclass_ref_id); assert(oldPin); expect(oldPin.content_version).toBe(2);
+  expect(after.detail.updateReceipts.find(row => row.operationId === exactRequest.operation_id)).toMatchObject({ request: originalRequest, receipt: applied.receipt });
+  const oldPin = before.detail.pins.find(pin => pin.id === exactRequest.fields.subclass_ref_id); assert(oldPin); expect(oldPin.content_version).toBe(2);
   const newPins = after.detail.pins.filter(pin => pin.content_id === oldPin.content_id && pin.content_version === 3); expect(newPins).toHaveLength(1); expect(newPins[0].id).not.toBe(oldPin.id);
   const related = (value: ParentObservation, root: string) => value.detail.pins.filter(pin => pin.id === root || value.detail.featureGrants.some(grant => grant.controller_ref_id === root && grant.id === pin.feature_grant_id));
   expect(after.detail.pins.filter(pin => !related(after, newPins[0].id).includes(pin))).toEqual(before.detail.pins.filter(pin => !related(before, oldPin.id).includes(pin)));
