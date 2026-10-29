@@ -9,18 +9,23 @@
     "name": "Character Flow",
     "threadId": "01a1790d-be90-73d1-91f6-84e48a557ee1"
   },
-  "updatedAt": "2026-10-29T17:36:08.180Z",
+  "updatedAt": "2026-10-29T19:49:39.873Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/handoffs/2026-10-24-builder-correction-and-casters.md",
-    "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
+    "commit": "ce7330f68d9981737dc8bc27c1fae334da86c709",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "The fourteen planned creation journeys covering all twelve classes have passed actual local workflows; this finite verification slice is complete. The latest A6 passes eleven native snapshots and both concurrent saves with zero server restarts.",
-  "nextAction": "Fix the existing R08 Bardic Inspiration capacity finding (prepared1 versus expected3 at CHA16/17) using existing resource authority and focused consumer checks. Preserve accepted creation work.",
+  "currentWork": "CSJ-FLOW-1 capacity source checkpoint: the existing resource helper/provider uses confirmed Charisma for identified 2014 SRD Bardic Inspiration, with minimum one and no saved-content rewrite. Focused provider/widget and regression checks pass; selected actual basic-sheet/Journal integration remains unrun.",
+  "nextAction": "Prepare CSJ-FLOW-2 bounded runner and selected two-character normal-creation/basic-sheet source, emitting the agreed private Journal config and public success receipt only after genuine success. Reuse the same IDs for Journal and mobile checks; hold heavy execution for assembled-source/consumer agreement and central review.",
   "blockers": [],
   "decisions": [],
-  "dependencies": [],
+  "dependencies": [
+    {
+      "laneId": "overview",
+      "reason": "Coordinator owns assembled candidate/consumer agreement and the single central independent source review before heavy CSJ execution. Journal narrative implementation stays in its isolated lane; no actual CSJ acceptance is claimed yet."
+    }
+  ],
   "deliverables": [
     {
       "id": "flow-thirteen-journeys",
@@ -54,6 +59,23 @@
       "evidence": [
         "1f15a44 / ca6fab2e-6ede-4539-8d37-e4c32bacc690: typecheck/lint/six focused files/actual A6 pass; eleven native snapshots and two exact receipts; independent review clear",
         "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\usable-builders-20261029T145530Z\\current-builder-acceptance.json — scoped local acceptance recorded by integration owner"
+      ]
+    },
+    {
+      "id": "flow-bardic-capacity",
+      "name": "Bardic Inspiration capacity",
+      "area": "Basic sheet use",
+      "milestone": "M3",
+      "requirement": "R08 / CSJ-2",
+      "outcome": "Identified 2014 SRD Bardic counters use the existing confirmed Charisma modifier (minimum one). The actual provider/widget unit consumer shows 3/3 at CHA16 and responds to changed confirmed inputs; authored counts and immutable pins remain unchanged.",
+      "implementation": "implemented",
+      "verification": "source",
+      "integration": "isolated",
+      "acceptance": "open",
+      "disposition": "included",
+      "evidence": [
+        "ce7330f:72 focused checks across resource helper, new provider/widget regression, resource widget and conditional-resource provider; typecheck and zero-warning lint pass. Causal pre-fix tests fail; actual database/sheet/Journal acceptance is pending.",
+        "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification\\docs\\handoffs\\2026-10-24-builder-correction-and-casters.md — current CSJ-FLOW-1 source checkpoint; one central reviewer reserved by coordinator"
       ]
     }
   ]

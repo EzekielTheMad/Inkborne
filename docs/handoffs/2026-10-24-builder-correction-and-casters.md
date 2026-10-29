@@ -8,6 +8,71 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
+## Current CSJ-FLOW-1 — 2026-10-29 capacity source checkpoint
+
+Victor's approved **CSJ-v1**, criteria CSJ-1/CSJ-2 and assignment CSJ-FLOW-1,
+now select the existing R08 fix plus two normal UI-created characters and basic
+sheet use. Scope and exclusions remain in the coordinator-owned
+[canonical goal](../LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal).
+Shared domain contract v1 and continuation were read. Character Flow owns the
+selected character/sheet source and bounded runner support; narrative action/UI
+implementation stays with Journal. The coordinator owns assembled acceptance
+and the single centrally reserved independent review. No subagent was spawned.
+
+Source **`ce7330f68d9981737dc8bc27c1fae334da86c709`**, based on `4c26b71`,
+corrects the identified 2014 SRD Bardic Inspiration capacity through the existing
+resource helper and provider. Exact source/system/class/gain-level/prose/pin
+checks recognize the known imported numeric-one declarations. The existing
+confirmed Charisma modifier supplies the count, with minimum one; missing,
+nonfinite, fractional or ambiguous modifier authority does not fabricate a count.
+No parallel ability formula, new content field, schema change, repin or immutable
+snapshot rewrite is introduced. Homebrew/other-system/unrecognized authored
+counts, other fixed/level resources, usage state and recovery rules are preserved.
+The four identified SRD die variants share the verified capacity prose; only
+selected Bard3 actual-app acceptance is planned here, not higher-level play/rest.
+
+Owned source delta: `lib/resources/helpers.ts`,
+`lib/character/character-context.tsx`, `tests/resources/helpers.test.ts`, and
+`tests/lib/character/bardic-inspiration-resources.test.tsx`.
+The causal pre-fix run failed fourteen relevant assertions, including the actual
+provider/widget count of one. After the fix, **72 focused checks pass** across
+those two test files, the resource widget and conditional-resource provider
+regressions. `npm run typecheck` and zero-warning `npm run lint` pass. The real
+provider/widget renders 3/3 at CHA16, updates 4/4 at CHA18, respects the declared
+modifier authority and suppresses ambiguous authority. The fixture explicitly
+supplies its saved race/ability method, so mechanics readiness is genuinely
+available rather than bypassed. Source/unit persistence is simulated; this is
+not actual saved-data or CSJ acceptance. All check processes exited; no server,
+runtime, hosted operation or narrative source was started/changed.
+
+**Next ready assignment: CSJ-FLOW-2 source/runner support.** The current runner
+has only owner/other accounts and no CSJ selection. Its bounded adaptation must
+reuse them as owner/outsider, add DM/member, create exactly one DM campaign with
+owner/member (outsider absent), and normally UI-create exactly Half-Elf Fighter4/
+Acolyte standalone plus Human Lore Bard3/Acolyte campaign. Pass those same two
+IDs to Journal; no extra/prebuilt/control characters or full-matrix rerun.
+Preserve the existing host/compose/resource/security guards and cleanup lifecycle.
+
+The coordinator-approved interface is private
+`/run/inkborne/journal-config.json`: `runId`, `appOrigin`, `supabaseOrigin`,
+`accounts{owner,dm,member,outsider}`, `standaloneCharacterId`,
+`campaignCharacterId`, `campaignId`. Credentials never enter Git/public output.
+Only after both selected normal creations and basic-sheet checks pass, emit
+public `/output/csj-flow.json` with `kind=inkborne-csj-flow-v1`, `runId`,
+`sourceHead`, `normalUiCreation=true`, `basicSheetPassed=true` and the two IDs,
+all bound to the current runtime. Journal validates this and the actual saved
+parent race/class/level/background before narrative writes.
+
+Basic checks remain ability/weapon roll success/log, equipped awarded weapon,
+nonlethal damage/heal/tempHP persistence/reopen and unchanged narrative. The
+assembled consumer also needs narrative before/after retention around one later
+selected HP edit, before Journal cleanup. Reuse IDs/entries when checking mobile;
+viewport projects must not multiply the two-character/three-entry budget.
+Durable spending, rests/hit dice, death-save/concentration and new award/copy
+policies remain excluded. Hold heavy execution for assembled exact-source/
+consumer agreement and the central review; capacity source checks do not close it.
+All fourteen prior creation journeys and their separate evidence stay accepted.
+
 ## Latest continuation — 2026-10-29 complete creation journeys
 
 ### Finite creation queue accepted
