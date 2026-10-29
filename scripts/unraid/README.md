@@ -34,6 +34,9 @@ focused source files, typecheck/lint once, and the serial actual-app stories.
 The fresh current catalog remains at1,535 definitions/snapshots; this mode
 does not publish historical catalog versions or rerun the accepted parent bundle.
 The same20-minute runtime and memory limits apply.
+To rerun only affected stories, append their existing names/IDs as one comma-separated
+argument, for example `npm run verify:unraid -- builders Cleric,Druid,A6`.
+The exact selection is retained in the source-bound report; omitted selection runs all14.
 
 The parent workflow includes eleven native edit/award/reload/access
 checkpoints to the Fighter story and a third, serial Fiend update/replay story.

@@ -5,9 +5,14 @@ import {startProxy} from './proxy.mjs';
 const privateDir='/run/inkborne', output='/output', mode=process.env.INKBORNE_TEST_MODE;
 assert(['workflow','focused','builders'].includes(mode));
 const runtime=JSON.parse(fs.readFileSync(privateDir+'/runtime.json','utf8'));
+const builderStories=JSON.parse(fs.readFileSync(privateDir+'/host.json','utf8')).builderStories??[];
+const storyPatterns=Object.fromEntries(['Bard','Cleric','Druid','Sorcerer','Warlock','Wizard','Paladin','Ranger'].map(name=>[name,`complete SRD ${name} `]));
+Object.assign(storyPatterns,{A1:'complete martial A1 ',A2:'complete martial A2 ',A3:'complete martial A3 ',A4:'Hill Dwarf Barbarian completes',A5:'A5 full half-pact caster',A6:'A6 owns Tiefling tiers'});
+assert(Array.isArray(builderStories)&&new Set(builderStories).size===builderStories.length&&builderStories.every(story=>Object.hasOwn(storyPatterns,story)));
+assert(mode==='builders'||builderStories.length===0);
 const steps=[], children=new Set(); let proxy, status='running', phase='static-checks';
 const report=()=>fs.writeFileSync(output+'/summary.json',JSON.stringify({kind:'inkborne-unraid-verification-v1',sourceHead:runtime.sourceHead,
- runId:runtime.runId,engineId:runtime.engineId,databaseId:runtime.databaseId,mode,status,phase,steps,historicalParentA4F3Acceptance:false},null,2)+'\n');
+ runId:runtime.runId,engineId:runtime.engineId,databaseId:runtime.databaseId,mode,builderStories,status,phase,steps,historicalParentA4F3Acceptance:false},null,2)+'\n');
 function child(command,args,env={},name=command){
  const startedUtc=new Date().toISOString(), processChild=spawn(command,args,{cwd:'/workspace',env:{...process.env,...env},stdio:['ignore','pipe','pipe'],detached:true});
  children.add(processChild); const file=fs.createWriteStream(privateDir+'/'+name+'.log',{mode:0o600});processChild.stdout.pipe(file,{end:false});processChild.stderr.pipe(file,{end:false});
@@ -41,7 +46,8 @@ try{
   phase='actual-character-workflow';report();console.log(JSON.stringify({phase}));
   child('npm',['run','dev','--','--webpack','--hostname','127.0.0.1','--port','3001'],{...server,ADMIN_USER_IDS:''},'next');
   await waitFor('http://127.0.0.1:3001/login',180);
-  await run(['run','test:e2e','--','--config',mode==='builders'?'e2e/unraid/builders.config.ts':'e2e/unraid/playwright.config.ts'],'browser');
+  await run(['run','test:e2e','--','--config',mode==='builders'?'e2e/unraid/builders.config.ts':'e2e/unraid/playwright.config.ts',
+   ...(builderStories.length?['--grep',builderStories.map(story=>storyPatterns[story]).join('|')]:[])],'browser');
  }
  status='passed';
 }catch(error){status='failed';fs.writeFileSync(output+'/failure.json',JSON.stringify({phase,message:error instanceof Error?error.message:'verification failed'})+'\n');}
