@@ -451,3 +451,38 @@ prepare options/recommendation; otherwise resolve and continue. A final blocked
 handoff must name exact obstacle, responsible owner, next action, dispatch state
 and enabling event, saying whether Victor must decide/supply something or only
 resume. Do not stop at a proposed owner or absent implementation.
+
+## CSJ-v1 native source checkpoint and runner continuation
+
+2026-10-29T21:05:21.613Z: both finite commands/source consumers are reported implemented
+at `afe56e534cf13be2f3956a45a0ed0a6bd0026c6c`; metadata
+`c9abaef56ae13cad201699d82c3e26b9a88236f1` releases main source/docs/index
+window clean. [Native source manifest](2026-10-29-csj-native-source.json)
+contains19 exact files, all canonical bytes/hashes verified. Selected diff
+SHA256 `e7d04c8a88bf8d7df27bba43a61df11c35c99a364b700687ea8ffeb57f8c4290`.
+Reported focused source62 cases/typecheck/zero-warning lint pass; actual SQL,
+browser/database and CSJ acceptance remain unrun. Source check processes exited;
+no runtime/fixture/credentials or cleanup owed. Previous clear source is retained.
+
+| Assignment | Current state | Next event |
+| --- | --- | --- |
+| CSJ-NATIVE-HP | reported implemented source; exact review dispatched | Native/consumer review findings resolved, then actual owner/stale/foreign/rollback/recovery/retention/revision proof |
+| CSJ-NATIVE-CAMPAIGN | reported implemented source; exact review dispatched | Same bounded review and actual authorization/assignment/revision proof |
+| CSJ-FLOW-2 | dispatched runner/normal-creation source continuation | Finish same-ID producer, actual native oracles and exit+cleanup gates in existing lifecycle; freeze for review |
+| CSJ-NATIVE-VERIFY | dispatched to Character Flow, same file ownership/approved fixture budget | Actual oracle source in existing verification/Flow paths, followed by approved scratch execution after source review |
+| CSJ-REVIEW | same /root/csj_review reviewing20ddd3b->afe56e5 | Exact verdict, then same reviewer's runner/verification and actual evidence stages |
+| CSJ-ACCEPT | open | Verified actual CSJ-1..6 and cleanup; no source-only promotion |
+
+Routine compatibility resolution: keep CharacterProvider/Shell child identity;
+existing writer accepts explicit coherent settled state/parent/revision/pins/
+schema/base/inventory/maxHP only without pending writes and without clearing
+unknown/reload-required authority. Narrative panel remains mounted while hidden;
+real BaseUI/frozen TimelineSection/provider source regression retains pending/
+unknown draft and attempt UUID across tab changes and HP refresh. No Journal
+interface or persistence framework change. Native routes default off except CSJ
+private bootstrap after validated overlay installation.
+
+Coordinator finishes only assigned docs/overview here and releases main window
+for continued Flow source. Native implementation absence has been resolved as
+assigned work; remaining implementation/verification gaps will be dispatched and
+fixed within authority rather than treated as a final external blocker.

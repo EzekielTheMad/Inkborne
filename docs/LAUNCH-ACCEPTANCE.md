@@ -233,6 +233,33 @@ this resumed cycle; escalate only a real material tradeoff or missing authority.
 
 [Current assignment/result checkpoint](handoffs/2026-10-29-project-coordinator.md#csj-v1-native-resolution-resumed).
 
+**Native source checkpoint — 2026-10-29T21:05:21.613Z:** Character Flow reports both
+finite native/source paths implemented at `afe56e534cf13be2f3956a45a0ed0a6bd0026c6c`
+(base `20ddd3b`), metadata `c9abaef`. All19 canonical manifest file hashes
+and sizes match; focused source cases62/typecheck/lint pass. Exact new delta
+SHA256 `e7d04c8a88bf8d7df27bba43a61df11c35c99a364b700687ea8ffeb57f8c4290`.
+The same central reviewer is checking this frozen native/consumer delta. SQL
+installation, actual owner/denied/rollback/response-loss/retention/revision cases
+and CSJ browser acceptance are unrun; neither prerequisite is accepted yet.
+
+Selected native entries are `character_manual_hp_command_v1(jsonb,jsonb)` and
+`character_campaign_assignment_v1(jsonb,jsonb)` in the bounded staged overlay.
+Existing verified same-cookie context and locks, trusted existing native maxHP,
+exact bigint/preimage checks, original revision/order callbacks and default-off
+server-only `INKBORNE_BASIC_SHEET_COMMANDS` activation are required. CSJ
+bootstrap alone enables that flag privately after validated overlay installation.
+Historical native stages/hashes and other profiles/hosted configuration remain
+unchanged. Coherent settled writer refresh keeps child identity stable; Narrative
+uses supported keepMounted/hidden behavior, preserving open draft/attempt UUID.
+No Journal source change or global draft framework was needed.
+
+Character Flow is dispatched to finish the existing normal-creation/basic-sheet
+producer and thin actual native verification oracles using the same approved
+actors/characters/campaign; no extra fixture set or acceptance framework. Pair
+runner successful-exit checks with final cleanup records. Review the frozen
+runner/native verification source before guarded actual scratch execution, then
+resolve concrete failures and continue CSJ-1..6.
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final
