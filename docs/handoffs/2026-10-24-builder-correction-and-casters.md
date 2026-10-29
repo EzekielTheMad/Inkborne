@@ -8,7 +8,19 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ native-role refresh correction — 2026-10-29T23:19:53.711Z
+## Current CSJ Flow local pass and Journal selector assembly — 2026-10-29T23:46:10.570Z
+
+Actual run **616da4d4-ff78-4f22-a629-2108e34e5ba0** at **c21755321095158668958e1e7c989692319773e7**: **Flow exits0 after finally; whole CSJ remains FAILED** because Journal exits1 at its first audience lookup before any save. [Exact run/source/cleanup/assembly manifest](2026-10-29-csj-flow-local-result.json) hashes all18 public evidence files. Previous failed runs remain failed.
+
+Both normal builds (Half-Elf Fighter4/Acolyte; Human Lore Bard3/Acolyte), equipped Longsword/Rapier checks/attacks/logs, Bard3/3 atCHA16, manual HP/save/reopen, actual role refusals, three rollbacks, lost response, two real blocked HTTP backends and unsaved TipTap draft continuity pass. All22 proof objects and complete producer/Flow cleanup receipts bind the same run/head; identical two IDs recur at1280/390. This establishes the finite Flow local outcome, not whole R06/R08, Journal or release acceptance.
+
+Cleanup is verified complete:13 task images,3 server inputs and3 local archives removed;18 public evidence files retain hashes. Original56 containers/95 volumes/all53 exact imageIDs and service states preserved. Private/runtime/helper/transport153956 absent. No cleanup remains.
+
+Coordinator assigned exact reviewed Journal-owner test-only assembly: **ba09cf208526496b25713fcba3b2ef4a3989997b**, only e2e/local-journal/real-journal.spec.ts from8468f261; Gitblob c425c4580881e041fbc5b9958f577287e72c71b1, SHA256 76ae247574db920160bc992656e4f2576483f1f782024091a4947abd6e3bb6ab,29654 bytes. Exact full-index diff fa68b06fb41ddfa028d05f4db2138e83d942f1c4cecaee80c5868e815f435c57 matches SAME-reviewer CLEAR assignment. Unique active-editor audience selector and selected-value assertions preserve all prior oracles;9 other Journal paths and all other canonical source remain unchanged. Journal retains source/report ownership.
+
+**Next:** release this source/docs/index window after own report validation/commit. Actual corrected consumer remains unrun; Coordinator records docs closure and dispatches the existing bounded same-run story. Both actual processes must exit0 after finally, Journal criteria/fresh DB counts and exact cleanup must pass. New run creates its own normal two IDs; never mix run receipts or seed replacements. No new scope, scenarios, framework, user decision or test matrix. Accepted14 retained; Library untouched. Shared contract v1 read.
+
+## Prior CSJ native-role refresh correction — 2026-10-29T23:19:53.711Z
 
 Source **a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2**, base **72b0cf5d3b1948e955e2548a20788086d979127a**.
 [Exact two-file source, causal proof, failed prefix and cleanup](2026-10-29-csj-role-refresh-fix.json).

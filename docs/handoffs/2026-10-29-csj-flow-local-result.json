@@ -1,0 +1,278 @@
+{
+  "kind": "inkborne-csj-flow-local-result-v1",
+  "recordedAt": "2026-10-29T23:46:10.570Z",
+  "contractVersion": 1,
+  "assignment": "Approved CSJ-v1 only; Character Flow retains character product/report; Coordinator owns combined acceptance",
+  "runId": "616da4d4-ff78-4f22-a629-2108e34e5ba0",
+  "runtimeHead": "c21755321095158668958e1e7c989692319773e7",
+  "branch": "codex/launch-integration-20261011",
+  "worktree": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification",
+  "overallStatus": "failed",
+  "flow": {
+    "exitCode": 0,
+    "producerReceiptComplete": true,
+    "cleanupReceiptComplete": true,
+    "normalUiCreation": true,
+    "basicSheetPassed": true,
+    "standaloneCharacterId": "0685027d-e17d-4aff-88ed-2c56f4fe4942",
+    "campaignCharacterId": "ce6e9c69-7fc3-40bf-8fd0-91923b9c81c9",
+    "sameIdsAcrossDesktopMobile": true,
+    "widths": [
+      1280,
+      390
+    ],
+    "proofObjects": 22,
+    "selectedStories": [
+      "Half-Elf Fighter4/Acolyte standalone",
+      "Human Lore Bard3/Acolyte campaign"
+    ],
+    "checks": [
+      "Both normal six-step creations with independent abilities, HP, spells/slots/pins/grants/order; Bardic Inspiration3/3 at CHA16",
+      "Equipped starting Longsword/Rapier through actual inventory and existing Actions; one normal check plus attack each, saved roll logs",
+      "Nine manual HP transitions including live unsaved Journal draft refresh, exact parent/child/revision/order retention",
+      "Three native admit/read/rollback probes restore exact snapshots",
+      "Normal UI campaign assignment; explicit owner-authenticated visibility setup is fixture-only",
+      "Owner, DM, member, outsider, anonymous/service and invalid/stale/legacy/direct-write refusals preserve snapshots",
+      "Committed response loss pauses replay until explicit reload",
+      "Two actual simultaneous owner HTTP requests on observed separate blocked backends; one applied/one conflict and exactly one advance",
+      "Same actual unsaved TipTap draft survives tabs and native HP refresh; never submitted, zero extra Journal rows",
+      "Same two created character IDs reused at desktop/mobile; all ten finite native profile checks true"
+    ],
+    "nativeRefusals": [
+      {
+        "characterId": "0685027d-e17d-4aff-88ed-2c56f4fe4942",
+        "count": 21,
+        "outcomes": [
+          "refused_unchanged",
+          "invalid_unchanged",
+          "conflict_unchanged"
+        ]
+      },
+      {
+        "characterId": "ce6e9c69-7fc3-40bf-8fd0-91923b9c81c9",
+        "count": 21,
+        "outcomes": [
+          "refused_unchanged",
+          "invalid_unchanged",
+          "conflict_unchanged"
+        ]
+      }
+    ],
+    "concurrency": {
+      "separateBlockedBackends": [
+        723,
+        1064
+      ],
+      "actualOwnerRequests": 2,
+      "applied": 1,
+      "conflict": 1,
+      "process": {
+        "pid": 1372,
+        "parentPid": 448,
+        "cwd": "/workspace",
+        "executable": "psql",
+        "args": [
+          "-X",
+          "--no-password",
+          "--username",
+          "postgres",
+          "--quiet",
+          "--tuples-only",
+          "--no-align",
+          "--set",
+          "ON_ERROR_STOP=off",
+          "--file",
+          "-"
+        ],
+        "startedUtc": "2026-10-29T23:30:58.178Z",
+        "ports": [],
+        "stderrBytes": 0,
+        "finishedUtc": "2026-10-29T23:30:58.648Z",
+        "exitCode": 0
+      },
+      "blockerReleased": true,
+      "wholeSnapshots": "Referenced by csj-flow-evidence.json SHA256 in evidence list; one exact revision/order advance asserted"
+    },
+    "profileChecks": {
+      "classGateClosed": true,
+      "readinessClosed": true,
+      "hitDieGateClosed": true,
+      "genericCasUnchanged": true,
+      "noPendingAdmissions": true,
+      "privateHelpersClosed": true,
+      "servicePrivateClosed": true,
+      "noBuilderCapabilities": true,
+      "oldProducerRolesClosed": true,
+      "twoFiniteAuthenticatedEntries": true
+    }
+  },
+  "journal": {
+    "exitCode": 1,
+    "status": "failed before first audience selection/save",
+    "contextsClosed": true,
+    "recordedEntries": 0,
+    "reason": "Strict getByLabel short caption did not match wrapping label containing option text",
+    "nativeIsolationAndFullAudienceRecoveryAcceptance": "pending actual same-run consumer completion"
+  },
+  "fixtureBudget": {
+    "distinctRoles": 4,
+    "ownerCharacters": 2,
+    "dmOwnedCampaigns": 1,
+    "maximumJournalEntries": 3,
+    "entriesSavedThisAttempt": 0
+  },
+  "sourceBindings": {
+    "runner": "28b9333308840b66c1a383c47a22787138586b12",
+    "visibleInventory": "3d70442ad2687d5445c91263845de8aa0d32edf3",
+    "inventoryAttacks": "301c5a652e10f8c10bbfaea395374c930de39a40",
+    "rollPopup": "6b395388d60648c3f3d36a25a7b35f5f03504cf4",
+    "roleRefresh": "a50d6d3a88735b1b2d72d9c0a75d55f8c1a57ac2",
+    "frozenJournal": "a3842f497f9570aaa08f20d26209bf29128aa57e"
+  },
+  "journalAssembly": {
+    "sourceHead": "8468f261de94fa45e0a421d2bdeb244126242d53",
+    "sourceBase": "b4d027a71a36b51eacefddc5be52bd7c9fb211f2",
+    "canonicalBase": "c21755321095158668958e1e7c989692319773e7",
+    "canonicalHead": "ba09cf208526496b25713fcba3b2ef4a3989997b",
+    "onlyPath": "e2e/local-journal/real-journal.spec.ts",
+    "previousBlob": "f7e97f96e22c56099cec150c1111c35b52770c52",
+    "gitBlob": "c425c4580881e041fbc5b9958f577287e72c71b1",
+    "sha256": "76ae247574db920160bc992656e4f2576483f1f782024091a4947abd6e3bb6ab",
+    "bytes": 29654,
+    "diffSha256": "fa68b06fb41ddfa028d05f4db2138e83d942f1c4cecaee80c5868e815f435c57",
+    "diffBytes": 1522,
+    "review": "SAME central reviewer CLEAR confirmed by Coordinator exact one-file assembly assignment",
+    "nineOtherJournalPathsUnchanged": true,
+    "allOtherCanonicalPathsUnchanged": true,
+    "scope": "Test-only active new-entry group + anchored audience caption prefix + unique control/value assertions; every prior payload/role/native/recovery/row-budget oracle preserved",
+    "actualCorrectedRun": false
+  },
+  "verification": {
+    "typecheckExit": 0,
+    "lintExit": 0,
+    "focusedExit": 0,
+    "focusedCases": 69,
+    "sourceAssembly": "Exact frozen bytes, Git blob/SHA256/full-index diff and one-file-only checks pass; no repeated product suites"
+  },
+  "cleanup": {
+    "complete": true,
+    "resultPath": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\616da4d4-ff78-4f22-a629-2108e34e5ba0\\cleanup-result.json",
+    "resultSha256": "988271a00b7d8c7c2943c2002410d394922fd3674934df452cd2364f185057ba",
+    "planPath": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\616da4d4-ff78-4f22-a629-2108e34e5ba0\\cleanup-plan.json",
+    "planSha256": "3cb91398145340efbd616d3a6d71d3430abaf110ec880370668a987ee60255fe",
+    "removedImages": 13,
+    "remoteInputsRemoved": 3,
+    "localInputsRemoved": 3,
+    "publicEvidenceFilesRetained": 18,
+    "originalContainers": 56,
+    "originalVolumes": 95,
+    "allOriginalImageIds": 53,
+    "existingServicesUnchanged": true,
+    "noTaskRuntimeOrPrivateInputs": true,
+    "helperRemoved": true,
+    "helperSha256": "c1a0f58f62f496c90a9878ebb135af92e66c77c676db8c59526ddf1f9835ca87",
+    "transportPid": 153956,
+    "transportAbsent": true,
+    "processSession": 67430,
+    "processExit": 1
+  },
+  "evidence": [
+    {
+      "path": "output/basic-sheet-profile.json",
+      "sha256": "0c1babc41b6fee58f033d0671885adff94de6c3d4098eda1cb7ae603bd4c54e7",
+      "bytes": 1114
+    },
+    {
+      "path": "output/bootstrap.json",
+      "sha256": "7f33e738c5428e49a6ecd44fa52253f9efc87359d22bf536cb0761fab4745767",
+      "bytes": 1115387
+    },
+    {
+      "path": "output/csj-browser/.last-run.json",
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
+      "bytes": 45
+    },
+    {
+      "path": "output/csj-flow-cleanup.json",
+      "sha256": "95bd36c007033e012b84a6f2b5f9a51dee21cc8856be9932156c9cb5de2dbf8d",
+      "bytes": 214
+    },
+    {
+      "path": "output/csj-flow-evidence.json",
+      "sha256": "ecaf4928a097749417c9b370c0a636bdc100f44f90a45accf1e5b65f4521d4f3",
+      "bytes": 14947
+    },
+    {
+      "path": "output/csj-flow.json",
+      "sha256": "e586aa8aa0d54ecf36c5e47d949ddd1e64952999f4917ea92b83f5ef0fa73f5b",
+      "bytes": 306
+    },
+    {
+      "path": "output/diagnostic.txt",
+      "sha256": "2309a0d63c608a83c6eacd5c65eae95c372979ca67523baef98ffaf5b6188490",
+      "bytes": 67539
+    },
+    {
+      "path": "output/failure.json",
+      "sha256": "5d182197f360ab70acc860f51e2c123af31bd5b8adbb2f294e27f5921f37045f",
+      "bytes": 100
+    },
+    {
+      "path": "output/host-before.json",
+      "sha256": "520b52598301c59481e39a73ea4a0d3fef0dfac11a79be402dbcb69f69e02a4a",
+      "bytes": 101
+    },
+    {
+      "path": "output/host-during.json",
+      "sha256": "c5436de2257e81b8528b9523b5270a6b711d5de8b2e34ea5871510a47c7e7e2f",
+      "bytes": 33
+    },
+    {
+      "path": "output/host-result.json",
+      "sha256": "718aea23ff099f147d90160057913e721e72b0b500e55c5164825811bc540d0c",
+      "bytes": 196
+    },
+    {
+      "path": "output/journal/.last-run.json",
+      "sha256": "a60a4d9d99b8e54b061b99f6b18971df348cb6fc71234b86aa2b5033749ff82a",
+      "bytes": 96
+    },
+    {
+      "path": "output/journal/real-journal-actual-journa-a17c1--roles-enforce-its-audience/error-context.md",
+      "sha256": "93f40cfeac258b01795a4ec4cc7287ad6b5fe8e366a001b59bbea32e4e3a7183",
+      "bytes": 17658
+    },
+    {
+      "path": "output/journal/real-journal-actual-journa-a17c1--roles-enforce-its-audience/journal-cleanup.json",
+      "sha256": "c5a272a1018b3d8fd71001aa6c995c4444e7ae425671ece0286d04e18d8959ca",
+      "bytes": 92
+    },
+    {
+      "path": "output/resources.json",
+      "sha256": "5f4ebfc642589e74d8e7073323e3e076b5d2630750177768e0e6bdb36efb3a02",
+      "bytes": 4213
+    },
+    {
+      "path": "output/services-after.json",
+      "sha256": "acf258f42a26c1db1471bc99b920eb083576fbb81a03d820f9fb5ac215e3762a",
+      "bytes": 5001
+    },
+    {
+      "path": "output/services-before.json",
+      "sha256": "acf258f42a26c1db1471bc99b920eb083576fbb81a03d820f9fb5ac215e3762a",
+      "bytes": 5001
+    },
+    {
+      "path": "output/summary.json",
+      "sha256": "d272344c8cc2d027e5a6bb14d5ffbc17b9af862d354ccd5a0b253b13b5507904",
+      "bytes": 2526
+    }
+  ],
+  "preserved": [
+    "All previous failed runs remain failed",
+    "Fourteen accepted creation journeys retain their separate source/catalog evidence",
+    "No global acceptance, release, resource-spending/rest/death-save/concentration/copy or hosted claim",
+    "Library and Journal reports/worktrees/product ownership unchanged"
+  ],
+  "nextAction": "Release clean source/docs/index window to Coordinator. Actual run remains held until coordinator docs closure/dispatch. Next existing bounded same-run CSJ must create its own two normal IDs and obtain both process exits0 after finally, full Journal criteria, fresh final DB counts and exact host/input/image cleanup. No receipt mixing or seeded replacement IDs."
+}
