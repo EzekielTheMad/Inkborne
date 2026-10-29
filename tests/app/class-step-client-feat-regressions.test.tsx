@@ -285,6 +285,30 @@ describe("ClassStepClient confirmed native snapshots", () => {
     expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeEnabled();
   });
 
+  it("restores the confirmed document after an equal-revision HP no-op normalizes the optimistic record's key order", async () => {
+    // PostgreSQL jsonb emits the shorter 'value' key before 'method'; the HP
+    // picker creates { method, value }. A genuine no-op keeps the revision.
+    const confirmedChoices: CharacterChoices = { ...casterChoices,
+      hp_rolls: { "warlock-3": { value: 7, method: "average" } } };
+    const receipt = deferred<{ choices: CharacterChoices; scores: Record<string, number>; action_revision: string }>();
+    const save = vi.fn().mockReturnValue(receipt.promise);
+    const { rerender } = render(<ClassStepClient {...casterClientProps("43", save, confirmedChoices)} />);
+    expect(currentRail.mechanicsAvailable).toBe(true);
+    await act(async () => { currentRail.onHpRollChange("warlock-3", { method: "average", value: 7 }); });
+    expect(save).toHaveBeenCalledExactlyOnceWith("save_hp_roll", { class_slug: "warlock", level: 3, method: "average", value: 7 });
+    expect(currentRail.localChoices).toEqual(confirmedChoices);
+    expect(JSON.stringify(currentRail.localChoices)).not.toBe(JSON.stringify(confirmedChoices));
+    expect(currentRail.savePending).toBe(true);
+    await act(async () => { receipt.resolve({ choices: confirmedChoices, scores: {}, action_revision: "43" }); });
+    expect(currentRail.savePending).toBe(false);
+    expect(JSON.stringify(currentRail.localChoices)).toBe(JSON.stringify(confirmedChoices));
+    rerender(<ClassStepClient {...casterClientProps("43", save, confirmedChoices)} />);
+    expect(currentRail.mechanicsAvailable).toBe(true);
+    expect(casterPanel("Warlock").getByRole("combobox", { name: "Add warlock cantrips" })).toBeEnabled();
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeEnabled();
+    expect(casterPanel("Sorcerer").getByRole("button", { name: "Save spells" })).toBeEnabled();
+  });
+
   it("retains a dirty child draft and offers enabled explicit resolution when newer saved selections conflict", () => {
     const save = vi.fn();
     const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);

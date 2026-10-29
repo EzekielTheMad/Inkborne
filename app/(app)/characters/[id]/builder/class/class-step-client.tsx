@@ -201,7 +201,11 @@ export function ClassStepClient({
     setBuild(previous => {
       if (previous.scope !== scope || previous.revision !== null && BigInt(receiptRevision) < BigInt(previous.revision)) return previous;
       if (receiptRevision === previous.revision) return JSON.stringify(saved.choices) === JSON.stringify(previous.confirmedChoices)
-        ? previous : { ...previous, conflict: true };
+        // A native no-op can normalize an optimistic HP/choice record without
+        // advancing the revision. Restore that confirmed document too.
+        ? { ...previous, choices: saved.choices,
+          level: saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? previous.level }
+        : { ...previous, conflict: true };
       // Ordinary spellbook edits can prune Mastery/Signature picks too. Keep
       // the whole confirmed document, without rolling back a newer snapshot.
       return { ...previous, revision: receiptRevision, confirmedChoices: saved.choices, choices: saved.choices,
