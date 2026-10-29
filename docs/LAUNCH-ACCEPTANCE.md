@@ -327,6 +327,23 @@ Flow is dispatched to the corrected actual story after this docs/index closure,
 with refreshed guards and all existing budgets/oracles/external restrictions.
 No user decision is needed. Accept only actual CSJ-1..6 plus final cleanup.
 
+**CSJ popup transition retry — 2026-10-29T22:54:04.454Z:** run
+`59205f2e-3deb-41a2-9004-69ab8181fb63` remains failed. The corrected
+equipped-weapon popup appears, but the closing ability popup overlapped it after
+actual201 and caused a strict Roll-button ambiguity. Minimal runner source
+`6b395388d60648c3f3d36a25a7b35f5f03504cf4` waits for zero exact Roll
+controls after each201; both actual rolls/two-row log/native retention remain.
+Same reviewer CLEAR exact diff SHA256
+`eeef3c162f3be2598f19dfd60594232240c94a61be4ac2a820a1cdf9f66976ef`;
+discovery/diff pass, prior product/native/Journal evidence reused unchanged.
+Eight linked/14 output hashes and recorded cleanup verified:13 introducedimages,
+six source/archive paths, runtime/private/helper/transport removed; original
+containers/volumes/networks/all53images and services preserved.
+[Exact correction/failure/cleanup manifest](handoffs/2026-10-29-csj-roll-popup-fix.json).
+Flow is dispatched after this docs/index closure to the corrected existing CSJ
+workflow with fresh guards and all existing oracles/budgets. Full weapon-log,
+HP/campaign/Journal acceptance remains pending. No new user decision/scope.
+
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
 The [scope decisions](#finite-scope-and-decisions), requirement rows and final
