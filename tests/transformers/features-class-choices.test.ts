@@ -1,6 +1,35 @@
 import { describe, expect, it } from "vitest";
 import { transformFeatureEntry } from "@/scripts/transformers/features";
 
+// Genuine cached /api/2014/features/druidic response SHA256:
+// 6831a25b75f3f381c40192d3287778106fcc515e54a0255325bd56e14584fd77
+const druidicSource = { index: "druidic", name: "Druidic", class: { index: "druid", name: "Druid" }, level: 1, prerequisites: [],
+  desc: ["You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages. You and others who know this language automatically spot such a message. Others spot the message's presence with a successful DC 15 Wisdom (Perception) check but can't decipher it without magic."] };
+
+describe("source-owned Druidic language", () => {
+  it("publishes one fixed language grant from the earned level-one feature without changing its source", () => {
+    const source = structuredClone(druidicSource), before = structuredClone(source), feature = transformFeatureEntry(source);
+    expect(feature.data).toMatchObject({ class: "druid", subclass: null, level: 1, feature_type: "passive", description: source.desc[0] });
+    expect(feature.effects.filter(effect => effect.type === "grant")).toEqual([{ type: "grant", stat: "language", value: "druidic" }]);
+    expect(feature.effects).toContainEqual({ type: "narrative", tag: "Class Feature", text: source.desc[0] });
+    expect(source).toEqual(before);
+  });
+  it.each(["name", "class", "level", "subclass", "prose", "prerequisite", "mechanics"])("refuses changed Druidic %s evidence", fault => {
+    const source: Parameters<typeof transformFeatureEntry>[0] = structuredClone(druidicSource);
+    if (fault === "name") source.name = "Other language";
+    if (fault === "class") source.class.index = "wizard";
+    if (fault === "level") source.level = 2;
+    if (fault === "subclass") source.subclass = { index: "land", name: "Land" };
+    if (fault === "prose") source.desc[0] = "You know every language.";
+    if (fault === "prerequisite") source.prerequisites.push({ type: "level", level: 3 });
+    if (fault === "mechanics") source.feature_specific = {};
+    expect(() => transformFeatureEntry(source)).toThrow("Unsupported SRD Druidic source");
+  });
+  it("adds no language to another feature sharing the label or prose", () => {
+    expect(transformFeatureEntry({ ...druidicSource, index: "other-feature" }).effects.filter(effect => effect.type === "grant")).toEqual([]);
+  });
+});
+
 const terrains = ["arctic", "coast", "desert", "forest", "grassland", "mountain", "swamp"];
 const tiers = [["natural-explorer-1-terrain-type", 1], ["natural-explorer-2-terrain-types", 6],
   ["natural-explorer-3-terrain-types", 10]] as const;

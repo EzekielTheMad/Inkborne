@@ -1,4 +1,4 @@
-import { fetchFromApi, fetchAllFromApi, buildContentEntry, buildNarrativeEffect, buildChoiceEffect } from "./common";
+import { fetchFromApi, fetchAllFromApi, buildContentEntry, buildNarrativeEffect, buildChoiceEffect, buildGrantEffect } from "./common";
 import type { TransformedContent } from "./common";
 import { referenceOptions, type ApiChoice, type ApiReference } from "./api-options";
 import type { Effect } from "@/lib/types/effects";
@@ -228,6 +228,16 @@ export function transformFeatureEntry(feature: ApiFeature, landGrants?: readonly
     const effects: Effect[] = [];
     if (feature.desc.length > 0) {
       effects.push(buildNarrativeEffect(feature.desc.join("\n"), "Class Feature"));
+    }
+    if (feature.index === "druidic") {
+      // Genuine cached /api/2014/features/druidic: this earned feature owns the
+      // language, including on an empty import before immutable publication.
+      const description = ["You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages. You and others who know this language automatically spot such a message. Others spot the message's presence with a successful DC 15 Wisdom (Perception) check but can't decipher it without magic."];
+      if (feature.name !== "Druidic" || feature.class.index !== "druid" || feature.subclass || feature.level !== 1
+        || feature.prerequisites.length !== 0 || feature.feature_specific || JSON.stringify(feature.desc) !== JSON.stringify(description)) {
+        throw Error("Unsupported SRD Druidic source");
+      }
+      effects.push(buildGrantEffect("language", "druidic"));
     }
 
     // Only the actual twelve subclass gates are subclass selectors. Names
