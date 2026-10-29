@@ -5,7 +5,7 @@ import { resolveBuilderChoices } from "@/lib/builder/choice-options";
 import { resolveAbilityMechanics } from "@/lib/character/ability-mechanics";
 
 
-import { useCallback, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateCharacter,
@@ -163,21 +163,50 @@ export function ClassStepClient({
   const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const [refreshing, startTransition] = useTransition();
   const [previewContent, setPreviewContent] = useState<ContentEntry | null>(null);
-  const [localChoices, setLocalChoices] = useState<CharacterChoices>(
-    character.choices ?? {},
-  );
-  const [localLevel, setLocalLevel] = useState(character.level);
-  const [acceptedRevision, setAcceptedRevision] = useState<{ source: typeof character.action_revision; value: string } | null>(null);
-  const currentRevision = acceptedRevision && acceptedRevision.source === character.action_revision ? acceptedRevision.value : String(character.action_revision);
+  const scope = JSON.stringify([accountId ?? null, characterId, character.id, character.system_id ?? null]);
+  const currentScope = useRef(scope);
+  useLayoutEffect(() => { currentScope.current = scope; }, [scope]);
+  const parsedRevision = classRoleRevisionSchema.safeParse(String(character.action_revision));
+  const incomingRevision = parsedRevision.success ? parsedRevision.data : null;
+  const [build, setBuild] = useState(() => ({ scope, revision: incomingRevision,
+    confirmedChoices: character.choices ?? {}, choices: character.choices ?? {}, level: character.level, conflict: false }));
+  const scopeMatches = build.scope === scope && characterId === character.id;
+  const revisionConflict = build.conflict || !!serverSaveAction && incomingRevision === build.revision
+    && JSON.stringify(build.confirmedChoices) !== JSON.stringify(character.choices);
+  const currentRevision = build.revision ?? String(character.action_revision);
+  const localChoices = build.choices, localLevel = build.level;
+  const setLocalChoices = (choices: CharacterChoices) => setBuild(previous => currentScope.current === scope && previous.scope === scope
+    ? { ...previous, choices } : previous);
+  const setLocalLevel = (level: number) => setBuild(previous => currentScope.current === scope && previous.scope === scope
+    ? { ...previous, level } : previous);
+  const restoreLocalBuild = (choices: CharacterChoices, level = localLevel) => setBuild(previous =>
+    currentScope.current === scope && previous.scope === scope && previous.revision === build.revision
+      ? { ...previous, choices, level } : previous);
+
+  // A refresh can include a different tab's later save. Adopt that complete
+  // snapshot after structural edits settle; child spell drafts keep their own
+  // conflict/recovery state. An older refresh cannot undo an acknowledged save.
+  if (serverSaveAction && scopeMatches && !saving && !refreshing && incomingRevision !== null
+    && (build.revision === null || BigInt(incomingRevision) > BigInt(build.revision))) {
+    setBuild({ scope, revision: incomingRevision, confirmedChoices: character.choices,
+      choices: character.choices, level: character.level, conflict: false });
+  }
   const saveNative = useCallback<SaveBuilderStep>(async (command, fields) => {
-    if (!serverSaveAction) throw Error("This class save is unavailable.");
+    if (!serverSaveAction || !scopeMatches || currentScope.current !== scope) throw Error("This class save is unavailable.");
     const saved = await serverSaveAction(command, fields);
-    setAcceptedRevision({ source: character.action_revision, value: saved.action_revision });
-    // Ordinary spellbook edits can prune Mastery/Signature picks too. Adopt
-    // every confirmed choices document before the refreshed snapshot arrives.
-    setLocalChoices(saved.choices);
+    if (currentScope.current !== scope) throw Error("The signed-in account or character changed during this save.");
+    const receiptRevision = classRoleRevisionSchema.parse(saved.action_revision);
+    setBuild(previous => {
+      if (previous.scope !== scope || previous.revision !== null && BigInt(receiptRevision) < BigInt(previous.revision)) return previous;
+      if (receiptRevision === previous.revision) return JSON.stringify(saved.choices) === JSON.stringify(previous.confirmedChoices)
+        ? previous : { ...previous, conflict: true };
+      // Ordinary spellbook edits can prune Mastery/Signature picks too. Keep
+      // the whole confirmed document, without rolling back a newer snapshot.
+      return { ...previous, revision: receiptRevision, confirmedChoices: saved.choices, choices: saved.choices,
+        level: saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? previous.level, conflict: false };
+    });
     return saved;
-  }, [serverSaveAction, character.action_revision]);
+  }, [serverSaveAction, scope, scopeMatches]);
   const saveAction = serverSaveAction ? saveNative : undefined;
   const [spellDrafts, setSpellDrafts] = useState<Record<string, boolean>>({});
   const handleSpellDraftChange = useCallback((classSlug: string, dirty: boolean) => {
@@ -245,7 +274,6 @@ export function ClassStepClient({
   });
   const adjustedCastingSources = castingSources.map(source => ({ ...source, spellsKnown: source.spellsKnown === "all" ? "all" as const : ordinaryKnownSpellBudget(source.spellsKnown,
     bonusGroups.filter(group => group.source.classSlug === source.classSlug).map(group => group.choice)) }));
-  const handleBonusSaved = (saved: Awaited<ReturnType<SaveBuilderStep>>) => setLocalChoices(saved.choices);
 
   async function recoverFeatureRefs() {
     if (saveBusy.current || snapshotConflict) return;
@@ -277,7 +305,9 @@ export function ClassStepClient({
   const confirmedSources = buildCharacterStructuredSources(contentRefs, character.level, { character: { ...character, system_id: character.system_id ?? "" }, evidence: asiEvidence });
   const confirmedResult = schema ? evaluate({ ...character.base_stats, level: character.level }, allEffects, schema, confirmedSources, character.state) : null;
   const confirmedMechanics = schema && confirmedResult ? resolveAbilityMechanics(character.base_stats, confirmedResult, schema) : { status: "unavailable" as const, reason: "Saved mechanics are unavailable." };
-  const mechanicsAvailable = confirmedMechanics.status === "available" && localLevel === character.level && JSON.stringify(localChoices) === JSON.stringify(character.choices) && !saving && !refreshing;
+  const mechanicsAvailable = confirmedMechanics.status === "available" && (!serverSaveAction || scopeMatches && !revisionConflict
+    && incomingRevision !== null && build.revision === incomingRevision)
+    && localLevel === character.level && JSON.stringify(localChoices) === JSON.stringify(character.choices) && !saving && !refreshing;
   const resolvedStats = confirmedResult?.stats ?? {};
   const asiAbilityScores = mechanicsAvailable ? asiOptionScores({ ...character, system_id: character.system_id ?? "" }, asiEvidence, schema) : {};
   const ownedFeatureSlugs = new Set(asiEvidence?.status === "complete" && confirmedSources.asi?.status === "available"
@@ -287,6 +317,10 @@ export function ClassStepClient({
       .map(ref => ref.content_definitions.slug) : []);
 
   function beginSave() {
+    if (serverSaveAction && (!scopeMatches || revisionConflict)) {
+      setSaveError("Reload the current account and character's saved class choices before editing this build.");
+      return false;
+    }
     if (unsavedSpells) {
       setSaveError("Save your spell choices before changing this class build.");
       return false;
@@ -326,10 +360,8 @@ export function ClassStepClient({
     setSaveError(null);
     try {
       if (saveAction) {
-        const saved = await saveAction("add_class", { class_id: content.id, class_version: content.version,
+        await saveAction("add_class", { class_id: content.id, class_version: content.version,
           expected_action_revision: currentRevision });
-        setLocalChoices(saved.choices);
-        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
         // Subclass acquisition has its own finite transition after the new
         // controller reloads. Never combine a legacy pin write with Add.
         startTransition(() => router.refresh());
@@ -360,8 +392,7 @@ export function ClassStepClient({
       }
       startTransition(() => router.refresh());
     } catch (err) {
-      setLocalChoices(prev.choices);
-      setLocalLevel(prev.level);
+      restoreLocalBuild(prev.choices, prev.level);
       console.error("Failed to add class:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -387,9 +418,7 @@ export function ClassStepClient({
     setSaveError(null);
     try {
       if (saveAction) {
-        const saved = await saveAction("set_class_level", { class_slug: selectedClasses[classIndex].slug, level: newLevel });
-        setLocalChoices(saved.choices);
-        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
+        await saveAction("set_class_level", { class_slug: selectedClasses[classIndex].slug, level: newLevel });
         startTransition(() => router.refresh());
         return;
       }
@@ -401,8 +430,7 @@ export function ClassStepClient({
       setLocalLevel(persisted.level);
       startTransition(() => router.refresh());
     } catch (err) {
-      setLocalChoices(prev.choices);
-      setLocalLevel(prev.level);
+      restoreLocalBuild(prev.choices, prev.level);
       console.error("Failed to change class level:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -432,9 +460,7 @@ export function ClassStepClient({
     setSaveError(null);
     try {
       if (saveAction) {
-        const saved = await saveAction("set_class_level", { class_slug: selectedClasses[classIndex].slug, level: draftLevel });
-        setLocalChoices(saved.choices);
-        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
+        await saveAction("set_class_level", { class_slug: selectedClasses[classIndex].slug, level: draftLevel });
         startTransition(() => router.refresh());
         return;
       }
@@ -446,8 +472,7 @@ export function ClassStepClient({
       setLocalLevel(persisted.level);
       startTransition(() => router.refresh());
     } catch (err) {
-      setLocalChoices(prev.choices);
-      setLocalLevel(prev.level);
+      restoreLocalBuild(prev.choices, prev.level);
       console.error("Failed to confirm level up:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -473,13 +498,12 @@ export function ClassStepClient({
     try {
       if (saveAction) {
         const split = key.lastIndexOf("-");
-        const saved = await saveAction("save_hp_roll", { class_slug: key.slice(0, split), level: Number(key.slice(split + 1)),
+        await saveAction("save_hp_roll", { class_slug: key.slice(0, split), level: Number(key.slice(split + 1)),
           method: record.method, value: record.method === "rolled" ? null : record.value });
-        setLocalChoices(saved.choices);
         startTransition(() => router.refresh());
       } else await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
-      setLocalChoices(prev);
+      restoreLocalBuild(prev);
       console.error("Failed to save HP roll:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -512,10 +536,8 @@ export function ClassStepClient({
     setSaveError(null);
     try {
       if (saveAction) {
-        const saved = await saveAction("remove_class", { occurrence_id: removedClass.occurrence_id,
+        await saveAction("remove_class", { occurrence_id: removedClass.occurrence_id,
           expected_action_revision: currentRevision });
-        setLocalChoices(saved.choices);
-        setLocalLevel(saved.choices.classes?.reduce((sum, cls) => sum + cls.level, 0) ?? character.level);
         startTransition(() => router.refresh());
         return;
       }
@@ -535,8 +557,7 @@ export function ClassStepClient({
       }
       startTransition(() => router.refresh());
     } catch (err) {
-      setLocalChoices(prev.choices);
-      setLocalLevel(prev.level);
+      restoreLocalBuild(prev.choices, prev.level);
       console.error("Failed to remove class:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -559,12 +580,11 @@ export function ClassStepClient({
     setSaveError(null);
     try {
       if (saveAction) {
-        const saved = await saveAction("class_choice", { choice_id: choiceId, selections });
-        setLocalChoices(saved.choices);
+        await saveAction("class_choice", { choice_id: choiceId, selections });
         startTransition(() => router.refresh());
       } else await updateCharacter(characterId, { choices: newChoices });
     } catch (err) {
-      setLocalChoices(prev);
+      restoreLocalBuild(prev);
       console.error("Failed to save choice selection:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -578,8 +598,7 @@ export function ClassStepClient({
     if (!beginSave()) throw Error("The current class build is still saving.");
     setSaveError(null);
     try {
-      const saved = await saveAction("favored_enemy", { feature_slug: featureSlug, ...value });
-      setLocalChoices(saved.choices);
+      await saveAction("favored_enemy", { feature_slug: featureSlug, ...value });
       startTransition(() => router.refresh());
     } catch (error) {
       setSaveError("This class choice could not be confirmed. Reload its saved values before trying again.");
@@ -605,8 +624,7 @@ export function ClassStepClient({
     setSaveError(null);
     try {
       if (saveAction) {
-        const saved = await saveAction("fighting_style", { feature_slug: featureSlug, style_slug: styleSlug ?? null });
-        setLocalChoices(saved.choices);
+        await saveAction("fighting_style", { feature_slug: featureSlug, style_slug: styleSlug ?? null });
         startTransition(() => router.refresh());
         return;
       }
@@ -641,7 +659,7 @@ export function ClassStepClient({
 
       startTransition(() => router.refresh());
     } catch (err) {
-      setLocalChoices(prev);
+      restoreLocalBuild(prev);
       console.error("Failed to save fighting style:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -671,9 +689,8 @@ export function ClassStepClient({
       if (saveAction) {
         const selected = subclassSlug ? subclasses.find(entry => entry.slug === subclassSlug) : undefined;
         if (subclassSlug && !selected) throw Error("The selected subclass is unavailable. Reload before trying again.");
-        const saved = await saveAction("select_subclass", { class_slug: classSlug,
+        await saveAction("select_subclass", { class_slug: classSlug,
           content_id: selected?.id ?? null, content_version: selected?.version ?? null });
-        setLocalChoices(saved.choices);
         startTransition(() => router.refresh());
         return;
       }
@@ -705,7 +722,7 @@ export function ClassStepClient({
 
       startTransition(() => router.refresh());
     } catch (err) {
-      setLocalChoices(prev);
+      restoreLocalBuild(prev);
       console.error("Failed to save subclass:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
     } finally {
@@ -728,9 +745,8 @@ export function ClassStepClient({
     setSaveError(null);
     try {
       if (saveAction) {
-        const saved = await saveAction("select_asi", { feature_slug: featureSlug, choice: choice.mode === "feat"
+        await saveAction("select_asi", { feature_slug: featureSlug, choice: choice.mode === "feat"
           ? { mode: "feat", feat_id: choice.featId, feat_version: choice.featVersion } : choice });
-        setLocalChoices(saved.choices);
         startTransition(() => router.refresh());
         return;
       }
@@ -751,7 +767,7 @@ export function ClassStepClient({
       setLocalChoices(result.choices);
       startTransition(() => router.refresh());
     } catch (err) {
-      setLocalChoices(prev);
+      restoreLocalBuild(prev);
       console.error("Failed to save ASI selection:", err);
       setSaveError("This class change could not be confirmed. Some changes may have saved. Reload the character before trying again.");
       throw err;
@@ -775,11 +791,12 @@ export function ClassStepClient({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <fieldset disabled={!hydrated || saving || refreshing} aria-busy={!hydrated || saving || refreshing} className="space-y-6 min-w-0 border-0 p-0">
+      <fieldset disabled={!hydrated || saving || refreshing || !!serverSaveAction && (!scopeMatches || revisionConflict)} aria-busy={!hydrated || saving || refreshing} className="space-y-6 min-w-0 border-0 p-0">
         <RaceAbilityNotice contentRefs={contentRefs} />
         <h2 className="text-xl font-semibold">Class</h2>
         {saving && <p role="status" className="text-sm text-muted-foreground">Saving this class change. Please wait.</p>}
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+        {serverSaveAction && (!scopeMatches || revisionConflict) && <p role="alert" className="text-sm text-destructive">The saved class choices could not be matched to this account, character and revision. Reload the current saved build before editing.</p>}
 
         {conflictingPins.length > 0 && <p role="alert" className="text-sm text-destructive">Multiple saved snapshots match this class build. Reload the character and resolve its references before editing.</p>}
         {mismatchedSubclass && <p role="alert" className="text-sm text-destructive">The selected subclass is missing or does not belong to its class. Reload the character and check its references before editing.</p>}
@@ -873,7 +890,7 @@ export function ClassStepClient({
               .flatMap(other => localChoices.bonus_spells?.[other.choice.choice_id] ?? []).map(spell => spell.content_id),
           ])}
           saveAction={saveAction} disabled={saving || refreshing || !mechanicsAvailable}
-          onSaved={handleBonusSaved} onDirtyChange={handleSpellDraftChange} />)}
+          onDirtyChange={handleSpellDraftChange} />)}
 
         {/* Bottom navigation */}
         {unsavedSpells && <p role="status" className="text-sm text-muted-foreground">Save your spell choices before continuing.</p>}

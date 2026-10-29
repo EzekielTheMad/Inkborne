@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ClassStepRail } from "@/components/builder/class-step-rail";
@@ -163,6 +163,195 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+type ClientProps = ComponentProps<typeof ClassStepClient>;
+const casterChoices: CharacterChoices = { classes: [
+  { slug: "warlock", level: 3, occurrence_id: "30000000-0000-4000-8000-000000000001" },
+  { slug: "sorcerer", level: 3, occurrence_id: "30000000-0000-4000-8000-000000000002" },
+] };
+const ownSavedChoices = { ...casterChoices, resolved_choices: { "warlock-choice": ["own-pick"] } };
+const laterSavedChoices = { ...ownSavedChoices, resolved_choices: { ...ownSavedChoices.resolved_choices, "sorcerer-choice": ["other-pick"] } };
+const casterSpells: ContentEntry[] = ["Eldritch Blast", "Fire Bolt", "Chill Touch"].map((name, index) => ({
+  ...fighter, id: `40000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`, name,
+  slug: name.toLowerCase().replaceAll(" ", "-"), content_type: "spell",
+  data: { level: 0, classes: index === 0 ? ["warlock"] : index === 1 ? ["sorcerer"] : ["warlock", "sorcerer"] },
+}));
+const casterPin = (index: number, class_slug: string) => ({ content_id: casterSpells[index].id, content_version: 1, class_slug, is_prepared: false });
+function casterClientProps(revision: string, saveAction: ClientProps["saveAction"], choices = casterChoices,
+  selectedSpells: ClientProps["selectedSpells"] = []): ClientProps {
+  const fixture = ancestryHpFixture();
+  const refs = choices.classes!.map((cls, index) => {
+    const id = `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+    const contentId = `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`;
+    return { ...fixture.classRef, id, content_id: contentId,
+      content_definitions: { ...fixture.classRef.content_definitions, id: contentId, slug: cls.slug, name: cls.slug },
+      class_role: { ...fixture.classRef.class_role!, occurrence_id: cls.occurrence_id!, controller_ref_id: id,
+        content_id: contentId, action_revision: revision, role: index === 0 ? "original" as const : "secondary" as const } };
+  });
+  return { accountId: "50000000-0000-4000-8000-000000000001", characterId: fixture.character.id,
+    character: { ...fixture.character, name: "Concurrent casters", choices, action_revision: revision,
+      level: choices.classes!.reduce((sum, cls) => sum + cls.level, 0) },
+    classes: refs.map(ref => ref.content_definitions), subclasses: [], features: [], feats: [], spells: casterSpells,
+    contentRefs: refs, classRolesAvailable: true, saveAction, selectedSpells,
+    asiEvidence: { status: "complete", character_id: fixture.character.id, system_id: fixture.character.system_id,
+      refs: refs as ContentRefWithContent[], grants: [] },
+    schema: { ability_scores: ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
+      .map(slug => ({ slug, name: slug, abbr: slug.slice(0, 3) })),
+      proficiency_levels: [], derived_stats: [], skills: [], resources: [], content_types: [], currencies: [], creation_steps: [], sheet_sections: [] },
+    castingSources: choices.classes!.map((cls, index) => ({ classSlug: cls.slug, classLevel: cls.level, kind: "class",
+      parentPin: { contentId: refs[index].content_id, version: 2 }, active: true, config: { type: "full", ability: "charisma" },
+      cantripsKnown: 1, spellsKnown: 2, prepared: false, preparationRule: "parent", spellList: { class: cls.slug, level: [0, 9] },
+      directSlots: [2], maxLearnableLevel: 1 })),
+  };
+}
+const casterPanel = (className: string) => within(screen.getByRole("form", { name: `${className} spell choices` }));
+function pickWarlockSpell(index = 0) {
+  fireEvent.change(casterPanel("Warlock").getByRole("combobox", { name: "Add warlock cantrips" }),
+    { target: { value: `${casterSpells[index].id}:1` } });
+}
+
+describe("ClassStepClient confirmed native snapshots", () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it("adopts the other class's newer coherent refresh after acknowledging its own save, enabling both real panels", async () => {
+    const save = vi.fn().mockResolvedValue({ choices: ownSavedChoices, scores: {}, action_revision: "43" });
+    const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);
+    expect(currentRail.mechanicsAvailable).toBe(true);
+    pickWarlockSpell();
+    fireEvent.click(casterPanel("Warlock").getByRole("button", { name: "Save spells" }));
+    await casterPanel("Warlock").findByText("Spell choices saved.");
+    expect(save).toHaveBeenCalledExactlyOnceWith("select_class_spells", { class_slug: "warlock",
+      spells: [{ content_id: casterSpells[0].id, content_version: 1, prepared: false }] });
+    expect(currentRail.localChoices).toEqual(ownSavedChoices);
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeDisabled();
+    rerender(<ClassStepClient {...casterClientProps("44", save, laterSavedChoices, [casterPin(0, "warlock"), casterPin(1, "sorcerer")])} />);
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    expect(currentRail.mechanicsAvailable).toBe(true);
+    for (const name of ["Warlock", "Sorcerer"]) {
+      expect(casterPanel(name).getByRole("button", { name: "Save spells" })).toBeEnabled();
+      expect(casterPanel(name).getByRole("combobox", { name: `${name} cantrips 1` })).toBeEnabled();
+    }
+    expect(casterPanel("Sorcerer").getByRole("combobox", { name: "Sorcerer cantrips 1" })).toHaveValue(`${casterSpells[1].id}:1`);
+  });
+
+  it("keeps acknowledged choices and revision through an older incoming refresh", async () => {
+    const save = vi.fn().mockResolvedValue({ choices: ownSavedChoices, scores: {}, action_revision: "43" });
+    const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);
+    await act(async () => { await currentRail.onChoiceSelect("warlock-choice", ["own-pick"]); });
+    rerender(<ClassStepClient {...casterClientProps("41", save)} />);
+    expect(currentRail.localChoices).toEqual(ownSavedChoices);
+    expect(currentRail.mechanicsAvailable).toBe(false);
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeDisabled();
+    await act(async () => { currentRail.onAddClass({ ...fighter, slug: "cleric" }); });
+    await act(async () => { currentPreview.onPick({ classSlug: "cleric", subclassSlug: null }); });
+    expect(save).toHaveBeenLastCalledWith("add_class", expect.objectContaining({ expected_action_revision: "43" }));
+  });
+
+  it("does not roll a later refreshed snapshot back when an older spell receipt arrives late", async () => {
+    const receipt = deferred<{ choices: CharacterChoices; scores: Record<string, number>; action_revision: string }>();
+    const save = vi.fn().mockReturnValue(receipt.promise);
+    const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);
+    pickWarlockSpell();
+    fireEvent.click(casterPanel("Warlock").getByRole("button", { name: "Save spells" }));
+    rerender(<ClassStepClient {...casterClientProps("44", save, laterSavedChoices, [casterPin(0, "warlock"), casterPin(1, "sorcerer")])} />);
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    await act(async () => { receipt.resolve({ choices: ownSavedChoices, scores: {}, action_revision: "43" }); });
+    await casterPanel("Warlock").findByText("Spell choices saved.");
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    expect(currentRail.mechanicsAvailable).toBe(true);
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeEnabled();
+    expect(casterPanel("Sorcerer").getByRole("button", { name: "Save spells" })).toBeEnabled();
+  });
+
+  it("does not replace an active structural edit with incoming props and adopts the newer snapshot after it settles", async () => {
+    const receipt = deferred<{ choices: CharacterChoices; scores: Record<string, number>; action_revision: string }>();
+    const save = vi.fn().mockReturnValue(receipt.promise);
+    const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);
+    let pending: Promise<void> | void;
+    await act(async () => { pending = currentRail.onLevelChange(0, 2); });
+    expect(currentRail.selectedClasses[0].level).toBe(2);
+    rerender(<ClassStepClient {...casterClientProps("44", save, laterSavedChoices)} />);
+    expect(currentRail.selectedClasses[0].level).toBe(2);
+    expect(currentRail.savePending).toBe(true);
+    expect(casterPanel("Sorcerer").getByRole("button", { name: "Save spells" })).toBeDisabled();
+    await act(async () => {
+      receipt.resolve({ choices: { ...casterChoices, classes: casterChoices.classes!.map((cls, i) => i ? cls : { ...cls, level: 2 }) },
+        scores: {}, action_revision: "43" });
+      await pending;
+    });
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    expect(currentRail.savePending).toBe(false);
+    expect(currentRail.mechanicsAvailable).toBe(true);
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeEnabled();
+  });
+
+  it("retains a dirty child draft and offers enabled explicit resolution when newer saved selections conflict", () => {
+    const save = vi.fn();
+    const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);
+    pickWarlockSpell();
+    rerender(<ClassStepClient {...casterClientProps("44", save, laterSavedChoices, [casterPin(2, "warlock"), casterPin(1, "sorcerer")])} />);
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    expect(casterPanel("Warlock").getByRole("combobox", { name: "Warlock cantrips 1" })).toHaveValue(`${casterSpells[0].id}:1`);
+    expect(casterPanel("Warlock").getByText(/Your draft is kept/)).toBeInTheDocument();
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeDisabled();
+    expect(casterPanel("Warlock").getByRole("button", { name: "Use saved spells" })).toBeEnabled();
+    expect(casterPanel("Sorcerer").getByRole("button", { name: "Save spells" })).toBeEnabled();
+    fireEvent.click(casterPanel("Warlock").getByRole("button", { name: "Use saved spells" }));
+    expect(casterPanel("Warlock").getByRole("combobox", { name: "Warlock cantrips 1" })).toHaveValue(`${casterSpells[2].id}:1`);
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeEnabled();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("keeps equal-revision prop disagreement blocked instead of choosing either document", () => {
+    const save = vi.fn();
+    const { rerender } = render(<ClassStepClient {...casterClientProps("44", save, laterSavedChoices)} />);
+    rerender(<ClassStepClient {...casterClientProps("44", save, ownSavedChoices)} />);
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    expect(currentRail.mechanicsAvailable).toBe(false);
+    expect(screen.getByText(/could not be matched to this account, character and revision/)).toBeInTheDocument();
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeDisabled();
+  });
+
+  it("blocks a contradictory equal-revision receipt without replacing the newer confirmed document", async () => {
+    const receipt = deferred<{ choices: CharacterChoices; scores: Record<string, number>; action_revision: string }>();
+    const save = vi.fn().mockReturnValue(receipt.promise);
+    const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);
+    pickWarlockSpell();
+    fireEvent.click(casterPanel("Warlock").getByRole("button", { name: "Save spells" }));
+    rerender(<ClassStepClient {...casterClientProps("44", save, laterSavedChoices)} />);
+    await act(async () => { receipt.resolve({ choices: ownSavedChoices, scores: {}, action_revision: "44" }); });
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    expect(currentRail.mechanicsAvailable).toBe(false);
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeDisabled();
+  });
+
+  it.each(["account", "character"])("refuses to adopt a receipt or snapshot after the %s scope changes", async kind => {
+    const receipt = deferred<{ choices: CharacterChoices; scores: Record<string, number>; action_revision: string }>();
+    const save = vi.fn().mockReturnValue(receipt.promise);
+    const { rerender } = render(<ClassStepClient {...casterClientProps("42", save)} />);
+    pickWarlockSpell();
+    fireEvent.click(casterPanel("Warlock").getByRole("button", { name: "Save spells" }));
+    const other = casterClientProps("44", save, laterSavedChoices);
+    if (kind === "account") other.accountId = "50000000-0000-4000-8000-000000000002";
+    else { other.characterId = "50000000-0000-4000-8000-000000000003"; other.character.id = other.characterId; }
+    rerender(<ClassStepClient {...other} />);
+    await act(async () => { receipt.resolve({ choices: ownSavedChoices, scores: {}, action_revision: "43" }); });
+    expect(currentRail.localChoices).toEqual(casterChoices);
+    expect(currentRail.mechanicsAvailable).toBe(false);
+    expect(casterPanel("Warlock").getByRole("combobox", { name: "Warlock cantrips 1" })).toHaveValue(`${casterSpells[0].id}:1`);
+    expect(casterPanel("Warlock").getByRole("button", { name: "Save spells" })).toBeDisabled();
+    expect(casterPanel("Warlock").getByText(/These spell choices could not be confirmed/)).toBeInTheDocument();
+  });
+
+  it("orders native bigint revisions above Number's exact integer range", async () => {
+    const save = vi.fn().mockResolvedValue({ choices: ownSavedChoices, scores: {}, action_revision: "9007199254740993" });
+    const { rerender } = render(<ClassStepClient {...casterClientProps("9007199254740992", save)} />);
+    await act(async () => { await currentRail.onChoiceSelect("warlock-choice", ["own-pick"]); });
+    rerender(<ClassStepClient {...casterClientProps("9007199254740994", save, laterSavedChoices)} />);
+    expect(currentRail.localChoices).toEqual(laterSavedChoices);
+    expect(currentRail.mechanicsAvailable).toBe(true);
+  });
+});
+
 describe("ClassStepClient feat regressions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -309,7 +498,8 @@ describe("ClassStepClient feat regressions", () => {
   it("uses the accepted domain saver for class choices and style pins without a legacy write", async () => {
     const choices = { classes: [{ slug: "fighter", level: 1, occurrence_id: "native-occurrence" }] };
     const saved = { ...choices, race: "half-elf", resolved_choices: { skills: ["skill-athletics"] } };
-    const save = vi.fn().mockResolvedValue({ choices: saved, scores: {} });
+    const save = vi.fn().mockResolvedValueOnce({ choices: saved, scores: {}, action_revision: "9" })
+      .mockResolvedValueOnce({ choices: saved, scores: {}, action_revision: "10" });
     renderClient(choices, save);
     await act(async () => { await currentRail.onChoiceSelect("skills", ["skill-athletics"]); });
     expect(save).toHaveBeenLastCalledWith("class_choice", { choice_id: "skills", selections: ["skill-athletics"] });
