@@ -41,7 +41,7 @@ WITH stage_oracles(stage,bard_level,wizard_level,total_level,max_hp,bard_known,b
  FROM public.character_spells s JOIN target t ON t.id=s.character_id LEFT JOIN public.content_versions v ON v.content_id=s.content_id AND v.version=s.content_version
 ), ordinary_oracles AS (
  SELECT 'bard'::text AS slug,'["minor-illusion","vicious-mockery"]'::jsonb AS cantrips,
-  (CASE WHEN e.phase='concurrent' THEN '["faerie-fire","cure-wounds","detect-magic","healing-word"]'::jsonb ELSE '["charm-person","cure-wounds","detect-magic","healing-word"]'::jsonb END)
+  (CASE WHEN e.phase='concurrent' THEN '["animal-friendship","cure-wounds","detect-magic","healing-word"]'::jsonb ELSE '["charm-person","cure-wounds","detect-magic","healing-word"]'::jsonb END)
     ||CASE WHEN e.bard_level=3 THEN '["hold-person","shatter"]'::jsonb ELSE '[]'::jsonb END AS ordinary,'[]'::jsonb AS prepared
  FROM expected e UNION ALL
  SELECT 'wizard','["fire-bolt","light","mage-hand"]',

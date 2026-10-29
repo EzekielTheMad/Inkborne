@@ -24,12 +24,15 @@ projection and operation/recovery contracts remain authoritative; no shared
 domain meaning or parallel calculation model is introduced.
 
 **Drift check:** thirteen existing journeys have scoped passing evidence. A6
-alone remains open. Its bounded failure capture now identifies an applied
-ability save whose response broke during Next's3 GiB memory-threshold restart;
-the original operation remains retained. The earlier Flute outcome stays unknown.
-The next bounded check is **A6 only** after the Next-child-only6 GiB heap fix,
-inside the unchanged10 GiB container cap. Stop when its existing full workflow
-passes with zero observed memory restarts, or report the captured blocker.
+alone remains open. Run `6eb11c4c-537f-4667-ad40-73e4f5abea37` at `e9c82e1`
+has zero memory restarts and passes both complete current-v1 builds plus tier
+down/up restoration. It then requests Faerie Fire for Bard; this cached source
+lists that spell only for Druid. Replace that fixture candidate with the cached
+level-one Bard spell Animal Friendship in the UI action and exact native oracle.
+No catalog, product or acceptance condition changes. The earlier Flute outcome
+stays unknown. The next bounded check is **A6 only**, retaining the Next-child
+6 GiB heap inside the unchanged10 GiB container cap. Stop when its existing full
+workflow passes with zero observed memory restarts, or report the captured blocker.
 Do not add exploratory check batches or another evidence framework without a
 new concrete justification. Unchanged accepted stories stay accepted.
 Shared Unraid queue: Character Flow retains the next bounded A6 slot;
