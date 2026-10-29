@@ -32,6 +32,7 @@ import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { createStateWriter } from "@/lib/character/state-writer";
 import { updateCharacterState, updateManualHpState } from "@/lib/sheet/update-state";
 import { manualHpParent } from "@/lib/character/basic-sheet-command";
+import { builderClassRoleSchema, classRoleForRef } from "@/lib/character/builder-class-roles";
 import { canonicalHitDieJson } from "@/lib/character/durable-hit-die-canonical";
 import {
   addInventoryItem,
@@ -103,6 +104,23 @@ import {
   spendHitDiePatch,
   type HitDicePool,
 } from "@/lib/hit-dice/helpers";
+
+/** Compare raw read payloads only after validating each role's own parent
+ * revision. The stripped stamp exists only in this comparison value; loaded
+ * provenance is never rewritten or reused as evidence for another revision. */
+function nativeHpContentBinding(refs: ContentRefWithContent[], character: CharacterWithSystem, revision: string) {
+  const requiresRoles = character.choices.classes?.some(entry => entry.occurrence_id);
+  return refs.map(ref => {
+    if (ref.class_role === undefined) {
+      if (requiresRoles && ref.content_definitions.content_type === "class") throw new Error("Missing native class role");
+      return ref;
+    }
+    if (!builderClassRoleSchema.safeParse(ref.class_role).success) throw new Error("Invalid native class role");
+    const { action_revision, ...rawRole } = ref.class_role;
+    if (action_revision !== revision || !classRoleForRef(ref, character.choices)) throw new Error("Unbound native class role");
+    return { ...ref, class_role: rawRole };
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -347,7 +365,8 @@ export function CharacterProvider({
       const sameRevision = fresh.action_revision === old.action_revision;
       const expectedParent = expected ? { ...expected.parent, state: expected.state, action_revision: expected.revision } : old;
       if (!contentSnapshotsComplete || maxHp !== previous.maxHp
-        || canonicalHitDieJson(contentRefs) !== canonicalHitDieJson(previous.contentRefs)
+        || canonicalHitDieJson(nativeHpContentBinding(contentRefs, character, fresh.action_revision))
+          !== canonicalHitDieJson(nativeHpContentBinding(previous.contentRefs, previous.character, old.action_revision))
         || canonicalHitDieJson(schema) !== canonicalHitDieJson(previous.schema)
         || canonicalHitDieJson(baseStatsWithLevel) !== canonicalHitDieJson(previous.baseStatsWithLevel)
         || canonicalHitDieJson(initialInventory) !== canonicalHitDieJson(previous.initialInventory)
