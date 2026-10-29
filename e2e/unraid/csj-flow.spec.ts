@@ -222,6 +222,8 @@ async function equipAndRoll(page: Page, config: Config, id: string, story: Story
     const [response] = await Promise.all([page.waitForResponse(value => value.request().method() === "POST" && new URL(value.url()).pathname === "/rest/v1/character_rolls"),
       page.getByRole("button", { name: "Roll", exact: true }).click()]);
     expect(response.status()).toBe(201);
+    // Acknowledgement can precede Base UI's closing animation and DOM removal.
+    await expect(page.getByRole("button", { name: "Roll", exact: true })).toHaveCount(0);
   }
   const after = await basicSnapshot(id, config.accounts.owner.id), rolls = after.children.rolls as Array<Record<string, unknown>>;
   expect(rolls).toHaveLength(2); expect(rolls.map(value => value.kind).sort()).toEqual(["attack", "check"]);
