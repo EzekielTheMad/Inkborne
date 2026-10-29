@@ -25,6 +25,7 @@ interface CharacterPageClientProps {
   evalResult: EvaluationResult;
   contentRefs: ContentRefWithContent[];
   contentSnapshotsComplete?: boolean;
+  nativeManualHp?: boolean;
   initialState: CharacterState;
   maxHp: number;
   allEffects: Effect[];
@@ -48,6 +49,7 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
     schema,
     contentRefs,
     contentSnapshotsComplete,
+    nativeManualHp,
     initialState,
     maxHp,
     allEffects,
@@ -77,6 +79,7 @@ export function CharacterPageClient(props: CharacterPageClientProps) {
         schema={schema}
         contentRefs={contentRefs}
         contentSnapshotsComplete={contentSnapshotsComplete}
+        nativeManualHp={nativeManualHp}
         initialState={initialState}
         initialInventory={initialInventory}
         allEffects={allEffects}

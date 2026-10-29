@@ -50,7 +50,8 @@ const companions=['steps','catalog','progression','race-score-repair','expertise
  'bonus-spells','expanded-spells','class-removal','subclass-update','hp-bonus','parent-admission','ancestry-hp-bonus','earned-racial-spells'];
 const entry=(file,role)=>({file,role,sha256:sha(invoke('git',['show',head+':'+file],{encoding:null}))});
 const source={sourceHead:head,migrations:tracked.filter(file=>/^supabase\/migrations\/[^/]+\.sql$/.test(file)).sort().map(file=>entry(file,'postgres')),
- stages:[...base.map(([role,name])=>entry('supabase/staged/'+name+'.sql',role)),...companions.map(name=>entry('supabase/staged/character-builder-'+name+'.sql','supabase_admin'))]};
+ stages:[...base.map(([role,name])=>entry('supabase/staged/'+name+'.sql',role)),...companions.map(name=>entry('supabase/staged/character-builder-'+name+'.sql','supabase_admin'))],
+ ...(mode==='csj'?{basicSheetStage:entry('supabase/staged/character-basic-sheet-commands.sql','supabase_admin')}:{})};
 assert.equal(source.migrations.length,83);assert.equal(source.stages.length,34);
 const local=path.resolve(root,'../equipment-runtime/unraid',runId);fs.mkdirSync(local,{recursive:true});
 fs.writeFileSync(path.join(local,'host.json'),JSON.stringify(host));fs.writeFileSync(path.join(local,'source.json'),JSON.stringify(source));

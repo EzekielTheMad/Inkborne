@@ -30,7 +30,9 @@ import { DEFAULT_CURRENCY } from "@/lib/types/inventory";
 import type { CropArea } from "@/components/narrative/character-portrait";
 import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import { createStateWriter } from "@/lib/character/state-writer";
-import { updateCharacterState } from "@/lib/sheet/update-state";
+import { updateCharacterState, updateManualHpState } from "@/lib/sheet/update-state";
+import { manualHpParent } from "@/lib/character/basic-sheet-command";
+import { canonicalHitDieJson } from "@/lib/character/durable-hit-die-canonical";
 import {
   addInventoryItem,
   updateInventoryItem,
@@ -248,6 +250,7 @@ export interface CharacterProviderProps {
   contentRefs: ContentRefWithContent[];
   /** True only when the server read every recorded ref and its exact pin. */
   contentSnapshotsComplete?: boolean;
+  nativeManualHp?: boolean;
   initialState: CharacterState;
   initialInventory: InventoryItem[];
   initialSpells: CharacterSpell[];
@@ -271,6 +274,7 @@ export function CharacterProvider({
   schema,
   contentRefs,
   contentSnapshotsComplete = false,
+  nativeManualHp = false,
   initialState,
   initialInventory,
   initialSpells,
@@ -299,12 +303,29 @@ export function CharacterProvider({
 
   const [saveError, setSaveError] = useState<string | null>(null);
   const [reloadRequired, setReloadRequired] = useState(false);
+  const hpRead = useRef({ character, contentRefs, maxHp, schema, baseStatsWithLevel, initialInventory });
+  const hpRefresh = useRef<{ parent: ReturnType<typeof manualHpParent>; state: CharacterState; revision: string } | null>(null);
   const [patchState] = useState(() =>
     createStateWriter(
       initialState,
-      (patch, expectedState, writeOptions) => writeOptions?.requireCurrent || "current_hp" in patch || "temp_hp" in patch
-        ? updateCharacterState(character.id, patch, expectedState)
-        : updateCharacterState(character.id, patch),
+      async (patch, expectedState, writeOptions) => {
+        if (nativeManualHp && ("current_hp" in patch || "temp_hp" in patch)) {
+          if (hpRefresh.current || !expectedState) throw new CharacterStateReloadError("Wait for the confirmed sheet to reload before another HP change.");
+          const loaded = hpRead.current;
+          const parent = manualHpParent(loaded.character, expectedState);
+          const saved = await updateManualHpState(loaded.character.user_id, {
+            character_id: loaded.character.id, expected_parent: parent, expected_max_hp: loaded.maxHp, patch,
+          });
+          if (saved.status === "applied") {
+            hpRefresh.current = { parent, state: saved.state as CharacterState, revision: saved.revision };
+            setReloadRequired(true);
+          }
+          return saved.state as CharacterState;
+        }
+        return writeOptions?.requireCurrent || "current_hp" in patch || "temp_hp" in patch
+          ? updateCharacterState(character.id, patch, expectedState)
+          : updateCharacterState(character.id, patch);
+      },
       setState,
       (error) => {
         if (error instanceof CharacterStateReloadError) {
@@ -314,6 +335,33 @@ export function CharacterProvider({
       { persistedState: character.state ?? {} },
     ),
   );
+  // A complete server refresh replaces the settled writer baseline without
+  // remounting children (in particular an open Journal draft). Never stamp old
+  // class/content mechanics with a new revision or replace a pending write.
+  useLayoutEffect(() => {
+    if (!nativeManualHp || hpRead.current.character === character || patchState.hasPendingWrites()) return;
+    try {
+      const previous = hpRead.current, expected = hpRefresh.current;
+      const fresh = manualHpParent(character, character.state ?? {});
+      const old = manualHpParent(previous.character, previous.character.state ?? {});
+      const sameRevision = fresh.action_revision === old.action_revision;
+      const expectedParent = expected ? { ...expected.parent, state: expected.state, action_revision: expected.revision } : old;
+      if (!contentSnapshotsComplete || maxHp !== previous.maxHp
+        || canonicalHitDieJson(contentRefs) !== canonicalHitDieJson(previous.contentRefs)
+        || canonicalHitDieJson(schema) !== canonicalHitDieJson(previous.schema)
+        || canonicalHitDieJson(baseStatsWithLevel) !== canonicalHitDieJson(previous.baseStatsWithLevel)
+        || canonicalHitDieJson(initialInventory) !== canonicalHitDieJson(previous.initialInventory)
+        || canonicalHitDieJson(fresh) !== canonicalHitDieJson(sameRevision ? old : expectedParent)
+        || (!sameRevision && !expected)) throw new Error("Unconfirmed mechanical read");
+      hpRead.current = { character, contentRefs, maxHp, schema, baseStatsWithLevel, initialInventory };
+      if (!sameRevision) {
+        patchState.acceptConfirmedRead(initialState, character.state ?? {});
+        hpRefresh.current = null; setReloadRequired(false); setSaveError(null);
+      }
+    } catch {
+      setReloadRequired(true); setSaveError("The refreshed mechanical inputs could not be confirmed. Reload before another action.");
+    }
+  }, [character, contentRefs, contentSnapshotsComplete, initialState, maxHp, schema, baseStatsWithLevel, initialInventory, nativeManualHp, patchState, state]);
 
   // Inventory handlers
   const addItem = useCallback(
@@ -443,6 +491,7 @@ export function CharacterProvider({
   const committedMechanics = useRef(mechanicsSnapshot);
   useLayoutEffect(() => { committedMechanics.current = mechanicsSnapshot; }, [mechanicsSnapshot]);
   const assertMechanics = useCallback((requirement: MechanicsRequirement = {}) => {
+    if (reloadRequired) throw new CharacterStateReloadError("Reload the confirmed character before another action.");
     patchState.assertActionReady(state);
     if (committedMechanics.current !== mechanicsSnapshot) throw new Error("Saved mechanical inputs changed. Use the current loaded controls before trying again.");
     if (!isOwner || !contentSnapshotsComplete) throw new Error("Complete owned saved mechanics are required for this action.");
@@ -452,7 +501,7 @@ export function CharacterProvider({
         evalResult.computed.proficiency_bonus, evalResult.grants, `saving_throw_${ability}`, savingThrowBonus);
       if (savingThrow.status !== "available") throw new Error(savingThrow.reason);
     }
-  }, [mechanicsSnapshot, isOwner, contentSnapshotsComplete, mechanics, evalResult, schema, patchState, state, savingThrowBonus]);
+  }, [mechanicsSnapshot, isOwner, contentSnapshotsComplete, mechanics, evalResult, schema, patchState, state, savingThrowBonus, reloadRequired]);
 
   // --- Spells ---
 

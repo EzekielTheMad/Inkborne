@@ -103,7 +103,7 @@ export function CharacterShell({
           <SheetPanel />
         </TabsContent>
 
-        <TabsContent value="narrative" className="flex-1 overflow-y-auto mt-0">
+        <TabsContent value="narrative" keepMounted className="flex-1 overflow-y-auto mt-0 data-[hidden]:hidden">
           <NarrativePanel
             campaignPageBacklinks={campaignPageBacklinks}
             timelineEvents={timelineEvents}

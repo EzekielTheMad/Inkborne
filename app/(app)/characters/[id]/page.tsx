@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { basicSheetCommandsEnabled } from "@/lib/character/creation-ui-server";
 import { redirect, notFound } from "next/navigation";
 import { getCharacterWithSystem } from "@/lib/supabase/characters";
 import { getCharacterContentRefSnapshot } from "@/lib/supabase/content-refs";
@@ -300,6 +301,7 @@ export default async function CharacterPage({ params }: PageProps) {
       evalResult={evalResult}
       contentRefs={contentRefs}
       contentSnapshotsComplete={contentSnapshotsComplete}
+      nativeManualHp={isOwner && enrolledBuilder && basicSheetCommandsEnabled()}
       initialState={initialState}
       maxHp={maxHp}
       allEffects={allEffects}

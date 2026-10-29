@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+const nativeBoundary = vi.hoisted(() => ({ enabled: vi.fn(), assign: vi.fn() }));
+const characterId = "44444444-4444-4444-8444-444444444444";
+vi.mock("@/lib/character/creation-ui-server", () => ({ basicSheetCommandsEnabled: nativeBoundary.enabled }));
+vi.mock("@/app/(app)/characters/[id]/sheet-actions", () => ({ assignNativeCharacterCampaign: nativeBoundary.assign }));
+beforeEach(() => { nativeBoundary.enabled.mockReturnValue(false); nativeBoundary.assign.mockResolvedValue({ status: "unknown" }); });
 
 class TestRedirect extends Error {
   constructor(public to: string) {
@@ -273,6 +278,22 @@ describe("campaign actions", () => {
     expect(chain.update).toHaveBeenCalledWith({ campaign_id: campaignId });
     expect(chain.eq).toHaveBeenCalledWith("user_id", "user-1");
     expect(target).toBe(`/campaigns/${campaignId}`);
+  });
+
+  it("requires the rendered revision for native assignment, without a direct-write fallback", async () => {
+    const { chain } = mockSupabase(); nativeBoundary.enabled.mockReturnValue(true);
+    const target = await captureRedirect(() => assignCharacterToCampaign(makeFormData({ campaign_id: campaignId, character_id: characterId })));
+    expect(target).toBe(`/campaigns/${campaignId}?error=assign_reopen`);
+    expect(chain.update).not.toHaveBeenCalled(); expect(nativeBoundary.assign).not.toHaveBeenCalled();
+  });
+
+  it("passes the exact rendered bigint revision to native assignment and never retries an uncertain result", async () => {
+    const { chain } = mockSupabase(); nativeBoundary.enabled.mockReturnValue(true);
+    const target = await captureRedirect(() => assignCharacterToCampaign(makeFormData({ campaign_id: campaignId, character_id: characterId }), { [characterId]: "9007199254740993" }));
+    expect(nativeBoundary.assign).toHaveBeenCalledWith("user-1", { character_id: characterId, campaign_id: campaignId,
+      expected_revision: "9007199254740993", expected_campaign_id: null });
+    expect(nativeBoundary.assign).toHaveBeenCalledOnce(); expect(chain.update).not.toHaveBeenCalled();
+    expect(target).toBe(`/campaigns/${campaignId}?error=assign_reopen`);
   });
 
   it("unassigns only the authenticated user's character from the given campaign", async () => {

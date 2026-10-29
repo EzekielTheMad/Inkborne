@@ -11,6 +11,8 @@ import { setHomebrewFeatCampaignShare } from "@/lib/supabase/homebrew-feats-serv
 import { setHomebrewBackgroundCampaignShare } from "@/lib/supabase/homebrew-backgrounds-server";
 import { setHomebrewSpellCampaignShare } from "@/lib/supabase/homebrew-spells-server";
 import { setHomebrewItemCampaignShare } from "@/lib/supabase/homebrew-items-server";
+import { basicSheetCommandsEnabled } from "@/lib/character/creation-ui-server";
+import { assignNativeCharacterCampaign } from "@/app/(app)/characters/[id]/sheet-actions";
 
 const createCampaignInput = z.object({
   name: z.string().trim().min(1).max(100),
@@ -221,7 +223,7 @@ export async function rotateCampaignInvite(formData: FormData): Promise<never> {
   redirect(`/campaigns/${parsed.data.campaignId}/settings?rotated=1`);
 }
 
-export async function assignCharacterToCampaign(formData: FormData): Promise<never> {
+export async function assignCharacterToCampaign(formData: FormData, expectedRevisions?: Record<string, string>): Promise<never> {
   const { supabase, user } = await authenticatedClient();
   const parsed = campaignCharacterInput.safeParse({
     campaignId: formData.get("campaign_id"),
@@ -229,14 +231,21 @@ export async function assignCharacterToCampaign(formData: FormData): Promise<nev
   });
   if (!parsed.success) redirect("/campaigns?error=invalid_character");
 
-  const { data: assignedCharacter, error } = await supabase
+  if (basicSheetCommandsEnabled()) {
+    const revision = expectedRevisions?.[parsed.data.characterId];
+    if (!revision) redirect(`/campaigns/${parsed.data.campaignId}?error=assign_reopen`);
+    const result = await assignNativeCharacterCampaign(user.id, { character_id: parsed.data.characterId,
+      campaign_id: parsed.data.campaignId, expected_revision: revision, expected_campaign_id: null });
+    if (result.status !== "applied") redirect(`/campaigns/${parsed.data.campaignId}?error=assign_reopen`);
+  } else {
+    const { data: assignedCharacter, error } = await supabase
     .from("characters")
     .update({ campaign_id: parsed.data.campaignId })
     .eq("id", parsed.data.characterId)
     .eq("user_id", user.id)
     .select("id")
     .single();
-  if (error || !assignedCharacter) {
+    if (error || !assignedCharacter) {
     await reportServerError({
       source: "server_action",
       message: error?.message ?? "Character assignment returned no row",
@@ -248,11 +257,18 @@ export async function assignCharacterToCampaign(formData: FormData): Promise<nev
       },
     });
     redirect(`/campaigns/${parsed.data.campaignId}?error=assign_failed`);
+    }
   }
 
   revalidatePath("/characters");
   revalidatePath(`/campaigns/${parsed.data.campaignId}`);
   redirect(`/campaigns/${parsed.data.campaignId}`);
+}
+
+/** The existing form binds revisions from its rendered list; no latest-row
+ * read can silently turn a stale assignment intent into a current one. */
+export async function assignCharacterAtRevision(expectedRevisions: Record<string, string>, formData: FormData): Promise<never> {
+  return assignCharacterToCampaign(formData, expectedRevisions);
 }
 
 export async function unassignCharacterFromCampaign(formData: FormData): Promise<never> {

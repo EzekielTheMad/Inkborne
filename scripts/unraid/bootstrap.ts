@@ -10,6 +10,7 @@ export async function bootstrap() {
   const runtime = testRuntime(), source = JSON.parse(fs.readFileSync("/run/inkborne/source.json", "utf8")) as {
     sourceHead: string; migrations: Array<{ file: string; sha256: string; role: "postgres" | "supabase_admin" }>;
     stages: Array<{ file: string; sha256: string; role: "postgres" | "supabase_admin" }>;
+    basicSheetStage?: { file: string; sha256: string; role: "supabase_admin" };
   };
   assert.equal(source.sourceHead, runtime.sourceHead); assert.equal(source.migrations.length, 83); assert.equal(source.stages.length, 34);
   const sha = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -78,6 +79,21 @@ export async function bootstrap() {
     const after = await nativeJson(profileSql) as typeof before;
     for (const key of ["functions", "wires", "roles", "schemas", "policies", "relationPrivileges", "memberships", "closure"] as const) assert.deepEqual(after[key], before[key], `import changed ${key}`);
     assert(Object.values(after.rows).every(row => row.count === 0));
+    if (process.env.INKBORNE_TEST_MODE === "csj") {
+      const stage = source.basicSheetStage;
+      assert(stage && stage.file === "supabase/staged/character-basic-sheet-commands.sql" && stage.role === "supabase_admin",
+        "committed finite CSJ stage required");
+      const sql = fs.readFileSync(stage.file, "utf8").replaceAll("\r\n", "\n");
+      assert.equal(sha(sql), stage.sha256);
+      phase = "finite-basic-sheet-installation"; save();
+      await nativeSql(sql, {}, stage.role); steps.push(stage);
+      const profile = await nativeJson(fs.readFileSync("supabase/verification/character-basic-sheet-profile.sql", "utf8")) as { checks: Record<string, boolean> };
+      assert(Object.values(profile.checks).every(value => value === true), "finite CSJ installation closure failed");
+      fs.writeFileSync("/output/basic-sheet-profile.json", JSON.stringify(profile, null, 2) + "\n");
+      // Activate the app adapter only after this exact local overlay is installed.
+      server.INKBORNE_BASIC_SHEET_COMMANDS = "true";
+      fs.writeFileSync("/run/inkborne/server-env.json", JSON.stringify(server) + "\n", { mode: 0o600 });
+    } else assert.equal(source.basicSheetStage, undefined);
     phase = "disposable-auth-accounts"; save();
     const api = JSON.parse(fs.readFileSync("/run/inkborne/api.json", "utf8")) as { anonKey: string; serviceRoleKey: string };
     const client = createClient("http://127.0.0.1:9999", api.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });

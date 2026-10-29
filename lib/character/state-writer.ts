@@ -76,6 +76,13 @@ export function createStateWriter(
   return Object.assign(write, {
     hasPendingWrites: () => pending.length > 0,
     assertActionReady,
+    /** Explicit complete server read; never replace an in-flight intent. The
+     * consumer validates its native revision/mechanical binding first. */
+    acceptConfirmedRead(fresh: CharacterState, raw: CharacterState) {
+      if (pending.length > 0) throw new Error("Wait for the current character save before accepting a fresh read.");
+      confirmed = fresh; persisted = raw; reloadError = undefined;
+      publish();
+    },
     /** A state-dependent action must start from a settled, current render.
      * Refuse stale/busy commands before computing effects or spending a slot. */
     async runAction<T>(

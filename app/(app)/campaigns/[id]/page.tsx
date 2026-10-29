@@ -8,7 +8,7 @@ import {
   UserRoundIcon,
 } from "lucide-react";
 import {
-  assignCharacterToCampaign,
+  assignCharacterAtRevision,
   leaveCampaign,
   unassignCharacterFromCampaign,
 } from "@/app/(app)/campaigns/actions";
@@ -16,6 +16,7 @@ import { ConfirmActionButton } from "@/components/campaigns/confirm-action-butto
 import { Button, buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { CAMPAIGN_MONSTERS_ENABLED } from "@/lib/campaigns/monster-instance-schema";
+import { basicSheetCommandsEnabled } from "@/lib/character/creation-ui-server";
 
 interface CampaignPageProps {
   params: Promise<{ id: string }>;
@@ -55,9 +56,9 @@ export default async function CampaignPage({ params, searchParams }: CampaignPag
       .select("id, title, parent_id, visibility, created_by, updated_at")
       .eq("campaign_id", id)
       .order("title"),
-    supabase
-      .from("characters")
-      .select("id, name, level")
+    (basicSheetCommandsEnabled()
+      ? supabase.from("characters").select("id, name, level, action_revision::text")
+      : supabase.from("characters").select("id, name, level"))
       .eq("user_id", user.id)
       .eq("system_id", campaign.system_id)
       .is("campaign_id", null)
@@ -127,7 +128,9 @@ export default async function CampaignPage({ params, searchParams }: CampaignPag
 
       {query.error && (
         <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          The campaign change could not be completed. Please try again.
+          {query.error === "assign_reopen"
+            ? "Assignment could not be confirmed. Reload the campaign and character before choosing another action."
+            : "The campaign change could not be completed. Please try again."}
         </p>
       )}
 
@@ -222,7 +225,11 @@ export default async function CampaignPage({ params, searchParams }: CampaignPag
 
             {(availableCharactersResult.data ?? []).length > 0 && (
               <form
-                action={assignCharacterToCampaign}
+                action={assignCharacterAtRevision.bind(null, Object.fromEntries((availableCharactersResult.data ?? []).flatMap(character => {
+                  const revision = (character as typeof character & { action_revision?: string | number }).action_revision;
+                  return typeof revision === "string" ? [[character.id, revision]]
+                    : typeof revision === "number" && Number.isSafeInteger(revision) ? [[character.id, String(revision)]] : [];
+                })))}
                 className="mt-3 flex flex-col gap-2 rounded-lg border border-border bg-paper-2 p-3 sm:flex-row"
               >
                 <input type="hidden" name="campaign_id" value={campaign.id} />

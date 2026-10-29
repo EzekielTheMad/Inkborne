@@ -4,6 +4,24 @@ import { createClient } from "@/lib/supabase/client";
 import { z } from "zod";
 import { CharacterStateReloadError } from "@/lib/character/state-save-error";
 import type { CharacterState } from "@/lib/types/character";
+import { manualHpRequestSchema, basicSheetResponseSchema, type ManualHpRequest } from "@/lib/character/basic-sheet-command";
+
+/** Native enrolled HP has its own finite admission. Never fall back to CAS. */
+export async function updateManualHpState(expectedActor: string, input: ManualHpRequest) {
+  const request = manualHpRequestSchema.safeParse(input);
+  if (!request.success) throw new CharacterStateReloadError("This HP change is outside the supported manual save. Reload before choosing another action.");
+  try {
+    const { saveManualCharacterHp } = await import("@/app/(app)/characters/[id]/sheet-actions");
+    const result = basicSheetResponseSchema.parse(await saveManualCharacterHp(expectedActor, request.data));
+    if (result.status === "applied" || result.status === "unchanged") return result;
+    throw new CharacterStateReloadError(result.status === "conflict"
+      ? "This character changed in another tab. Reload before choosing a new action. This action was not applied."
+      : "The HP save could not be confirmed. Reload and check the result before choosing another action.");
+  } catch (error) {
+    if (error instanceof CharacterStateReloadError) throw error;
+    throw new CharacterStateReloadError("The HP save could not be confirmed. Reload and check the result before choosing another action.");
+  }
+}
 
 /**
  * Patches the character.state JSONB column with partial updates.

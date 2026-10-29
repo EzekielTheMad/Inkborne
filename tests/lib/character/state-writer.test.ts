@@ -12,6 +12,28 @@ function deferred() {
 }
 
 describe("character state saves", () => {
+  it("refuses a read while a write is pending, then uses the exact new raw baseline", async () => {
+    const first = deferred(), persist = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValue(undefined);
+    let visible = { current_hp: 24, temp_hp: 0 } as CharacterState;
+    const writer = createStateWriter(visible, persist, value => { visible = value; }, vi.fn(), { persistedState: { current_hp: 24 } });
+    const writing = writer({ current_hp: 20 });
+    expect(() => writer.acceptConfirmedRead({ current_hp: 99 }, { current_hp: 99 })).toThrow("current character save");
+    await Promise.resolve(); first.resolve(); await writing;
+    writer.acceptConfirmedRead({ current_hp: 20, temp_hp: 0 }, { current_hp: 20 });
+    expect(visible).toEqual({ current_hp: 20, temp_hp: 0 });
+    await writer({ temp_hp: 5 });
+    expect(persist).toHaveBeenLastCalledWith({ temp_hp: 5 }, { current_hp: 20 });
+  });
+  it("requires an explicit confirmed read after uncertain HP instead of replaying it", async () => {
+    const persist = vi.fn().mockRejectedValueOnce(new CharacterStateReloadError("unknown")).mockResolvedValue(undefined);
+    let visible = { current_hp: 24 } as CharacterState;
+    const writer = createStateWriter(visible, persist, value => { visible = value; }, vi.fn(), { persistedState: visible });
+    expect(await writer({ current_hp: 20 })).toBe(false);
+    expect(await writer({ current_hp: 20 })).toBe(false); expect(persist).toHaveBeenCalledTimes(1);
+    writer.acceptConfirmedRead({ current_hp: 20 }, { current_hp: 20 });
+    expect(await writer({ current_hp: 18 })).toBe(true);
+    expect(persist).toHaveBeenLastCalledWith({ current_hp: 18 }, { current_hp: 20 });
+  });
   it("rejects a queued full slot map that may contain a failed optimistic spend", async () => {
     const first = deferred();
     const persist = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValue(undefined);
