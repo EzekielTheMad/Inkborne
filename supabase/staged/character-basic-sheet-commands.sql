@@ -125,7 +125,7 @@ BEGIN
     OR NOT private.builder_uuid_v1(p_request->>'character_id')
     OR pg_catalog.jsonb_typeof(p_request->'expected_parent') IS DISTINCT FROM 'object'
     OR pg_catalog.jsonb_typeof(p_request->'patch') IS DISTINCT FROM 'object'
-    OR p_request->'patch'='{}'::jsonb OR (p_request->'patch'-ARRAY['current_hp','temp_hp'])<>'{}'::jsonb
+    OR p_request->'patch'='{}'::jsonb OR ((p_request->'patch')-ARRAY['current_hp','temp_hp'])<>'{}'::jsonb
     OR pg_catalog.jsonb_typeof(p_request->'expected_max_hp') IS DISTINCT FROM 'number'
     OR p_request->>'expected_max_hp' !~ '^[1-9][0-9]{0,9}$'
     OR (p_request->>'expected_max_hp')::numeric>2147483647 THEN RETURN '{"status":"invalid"}'::jsonb; END IF;

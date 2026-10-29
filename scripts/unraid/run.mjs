@@ -32,15 +32,26 @@ async function stopChildren(){
  await Promise.all([...children].map(item=>item.done));
 }
 async function waitFor(url,seconds=120){for(let index=0;index<seconds;index++){try{const result=await fetch(url,{signal:AbortSignal.timeout(3000)});if(result.ok)return;}catch{}await new Promise(resolve=>setTimeout(resolve,1000));}throw Error('local service readiness timeout');}
+function journalArtifact(name){
+ const root=output+'/journal',found=[],pending=[{dir:root,depth:0}];let visited=0;
+ while(pending.length){const {dir,depth}=pending.pop();assert(depth<=3,'bounded Journal output tree required');
+  for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
+   assert(++visited<=64&&!entry.isSymbolicLink(),'bounded owned Journal artifacts required');const path=dir+'/'+entry.name;
+   if(entry.isDirectory())pending.push({dir:path,depth:depth+1});else if(entry.isFile()&&entry.name===name)found.push(path);
+  }
+ }
+ assert.equal(found.length,1,'one exact Journal artifact required');return JSON.parse(fs.readFileSync(found[0],'utf8'));
+}
 process.once('SIGTERM',()=>{void stopChildren().then(()=>process.exit(1));});
 try{
  if(mode==='csj')for(const file of ['e2e/unraid/csj.config.ts','e2e/unraid/csj-flow.spec.ts',
-  'e2e/local-journal/real.config.ts','e2e/local-journal/real-journal.spec.ts'])assert(fs.existsSync(file),'assembled CSJ source is incomplete');
+  'e2e/local-journal/real.config.ts','e2e/local-journal/real-journal.spec.ts','scripts/unraid/native-basic-sheet.ts',
+  'supabase/staged/character-basic-sheet-commands.sql','supabase/verification/character-basic-sheet-profile.sql'])assert(fs.existsSync(file),'assembled CSJ source is incomplete');
  report();console.log(JSON.stringify({phase}));
  await run(['run','typecheck','--','--tsBuildInfoFile','/tmp/inkborne.tsbuildinfo'],'typecheck');
  await run(['run','lint'],'lint');
- const focused = mode==='csj' ? ['tests/resources/helpers.test.ts','tests/lib/character/bardic-inspiration-resources.test.tsx',
-  'tests/components/sheet/resources-widget.test.tsx','tests/lib/character/conditional-casting-resources.test.tsx']
+ const focused = mode==='csj' ? ['tests/app/basic-sheet-actions.test.ts','tests/lib/character/state-writer.test.ts','tests/sheet/update-state.test.ts',
+  'tests/components/character/basic-sheet-draft-retention.test.tsx','tests/app/campaign-actions.test.ts']
  : mode==='builders' ? ['tests/lib/character/ancestry-hit-points.test.ts','tests/lib/character/ancestry-defenses.test.ts',
   'tests/lib/character/earned-racial-spells.test.ts','tests/lib/builder/choice-options.test.ts',
   'tests/components/sheet/content-tabs.test.tsx','tests/app/class-step-client-feat-regressions.test.tsx'] : ['tests/lib/builder/choice-options.test.ts','tests/lib/builder/asi-option-scores.test.ts','tests/components/builder/choice-selector.test.tsx',
@@ -62,11 +73,40 @@ try{
    const receipt=JSON.parse(fs.readFileSync(output+'/csj-flow.json','utf8'));
    assert.equal(receipt.kind,'inkborne-csj-flow-v1');assert.equal(receipt.runId,runtime.runId);assert.equal(receipt.sourceHead,runtime.sourceHead);
    assert.equal(receipt.normalUiCreation,true);assert.equal(receipt.basicSheetPassed,true);
+   const flowCleanup=JSON.parse(fs.readFileSync(output+'/csj-flow-cleanup.json','utf8'));
+   assert.equal(flowCleanup.runId,runtime.runId);assert.equal(flowCleanup.sourceHead,runtime.sourceHead);
+   assert.equal(flowCleanup.complete,true);assert.equal(flowCleanup.browserContextClosed,true);assert.equal(flowCleanup.fixtureBudgetConfirmed,true);
    const journal=JSON.parse(fs.readFileSync(privateDir+'/journal-config.json','utf8'));
    assert.equal(journal.runId,runtime.runId);assert.equal(journal.standaloneCharacterId,receipt.standaloneCharacterId);
    assert.equal(journal.campaignCharacterId,receipt.campaignCharacterId);assert.notEqual(receipt.standaloneCharacterId,receipt.campaignCharacterId);
    phase='actual-csj-journal';report();
    await run(['run','test:e2e','--','--config','e2e/local-journal/real.config.ts'],'csj-journal');
+   // The Journal success receipt precedes its finally cleanup. Require zero
+   // exit AFTER that cleanup, its actual cleanup record and fresh native facts.
+   const real=journalArtifact('journal-real.json'),cleanup=journalArtifact('journal-cleanup.json');
+   assert.equal(real.runId,runtime.runId);assert.equal(real.sourceHead,runtime.sourceHead);
+   for(const key of ['actualNextApp','actualAuth','actualPostgrest','actualDatabaseIdentity','journalWritesPreserveMechanics',
+    'laterHpEditPreservesNarrative','audienceMatrixPassed','nonOwnerWritesDenied','lostResponseDraftRetained',
+    'createResponseLostReadbackPassed','staleOwnerTabPassed','removedEntryConflictPassed','noExtraJournalRow'])assert.equal(real[key],true,'complete actual Journal evidence required');
+   assert.equal(real.entries.length,3);assert.equal(new Set(real.entries.map(entry=>entry.id)).size,3);
+   assert.deepEqual(real.entries.map(entry=>entry.characterId).sort(),[receipt.standaloneCharacterId,receipt.campaignCharacterId,receipt.campaignCharacterId].sort());
+   assert.equal(cleanup.contextsClosed,true);assert.equal(cleanup.recordedEntries,3);assert.equal(cleanup.removed.length,3);assert(cleanup.removed.every(value=>value===true));
+   const {nativeJson}=await import('./native.ts');
+   const final=await nativeJson(`BEGIN READ ONLY; SELECT jsonb_build_object(
+    'accounts',(SELECT jsonb_agg(id ORDER BY id) FROM auth.users),
+    'characters',(SELECT jsonb_agg(id ORDER BY id) FROM public.characters),
+    'campaigns',(SELECT jsonb_agg(id ORDER BY id) FROM public.campaigns),
+    'members',(SELECT jsonb_agg(user_id ORDER BY user_id) FROM public.campaign_members),
+    'journal',(SELECT count(*) FROM public.character_timeline_events),
+    'caps',(SELECT count(*) FROM private.character_builder_capabilities_v1),
+    'seals',(SELECT count(*) FROM private.character_parent_admissions_v1)); ROLLBACK;`);
+   assert.deepEqual(final,{accounts:Object.values(journal.accounts).map(account=>account.id).sort(),
+    characters:[receipt.standaloneCharacterId,receipt.campaignCharacterId].sort(),campaigns:[journal.campaignId],
+    members:[journal.accounts.owner.id,journal.accounts.dm.id,journal.accounts.member.id].sort(),journal:0,caps:0,seals:0});
+   assert(steps.filter(step=>['csj-flow','csj-journal'].includes(step.name)).length===2&&steps.filter(step=>['csj-flow','csj-journal'].includes(step.name)).every(step=>step.exitCode===0));
+   fs.writeFileSync(output+'/csj-cleanup-check.json',JSON.stringify({runId:runtime.runId,sourceHead:runtime.sourceHead,
+    bothActualTestProcessesExitedZero:true,flowContextsClosed:true,journalContextsAndExactEntriesCleaned:true,
+    finalNativeFixtureBudget:final,runtimeTeardownStillRequired:true,passed:true},null,2)+'\n');
   }else await run(['run','test:e2e','--','--config',mode==='builders'?'e2e/unraid/builders.config.ts':'e2e/unraid/playwright.config.ts',
    ...(builderStories.length?['--grep',builderStories.map(story=>storyPatterns[story]).join('|')]:[])],'browser');
  }

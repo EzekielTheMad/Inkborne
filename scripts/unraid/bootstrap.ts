@@ -90,6 +90,7 @@ export async function bootstrap() {
       const profile = await nativeJson(fs.readFileSync("supabase/verification/character-basic-sheet-profile.sql", "utf8")) as { checks: Record<string, boolean> };
       assert(Object.values(profile.checks).every(value => value === true), "finite CSJ installation closure failed");
       fs.writeFileSync("/output/basic-sheet-profile.json", JSON.stringify(profile, null, 2) + "\n");
+      await nativeSql("NOTIFY pgrst, 'reload schema';");
       // Activate the app adapter only after this exact local overlay is installed.
       server.INKBORNE_BASIC_SHEET_COMMANDS = "true";
       fs.writeFileSync("/run/inkborne/server-env.json", JSON.stringify(server) + "\n", { mode: 0o600 });
@@ -140,7 +141,8 @@ export async function bootstrap() {
     if (visibleSystems.error) fs.writeFileSync("/run/inkborne/readiness.log", JSON.stringify({ status: visibleSystems.status, error: visibleSystems.error }) + "\n", { mode: 0o600 });
     assert(!visibleSystems.error && visibleSystems.data?.length === 1 && visibleSystems.data[0].slug === "dnd-5e-2014", "authenticated catalog read failed; details kept private");
     phase = "ready"; save({ passed: true, catalog, cachedResponses: 1572, freshVersionOneCatalog: true, importProcess,
-      currentProfile: after, historicalUpgradeAcceptance: false, authenticatedCatalogRead: true });
+      currentProfile: after, historicalUpgradeAcceptance: false, authenticatedCatalogRead: true,
+      ...(csjFixture ? { currentProfileBoundary: "base-builder-before-finite-CSJ-overlay", basicSheetProfile: "basic-sheet-profile.json" } : {}) });
     console.log(JSON.stringify({ phase, definitions: 1535, snapshots: 1535, accounts: csjFixture ? 4 : 2,
       ...(csjFixture ? { fixtureCampaigns: 1, fixtureCharacters: 0 } : {}) }));
   } catch { save({ passed: false }); throw Error(`scratch bootstrap refused at ${phase}; preserve bootstrap report`); }

@@ -28,7 +28,8 @@ assert(dockerAvailableKiB>=15728640,'Unraid Docker image disk needs 15 GiB free;
 assert.equal(git('status','--porcelain','--untracked-files=normal'),'','Commit source before exporting a test candidate');
 const tracked=git('ls-files').split('\n');
 if(mode==='csj')for(const file of ['e2e/unraid/csj.config.ts','e2e/unraid/csj-flow.spec.ts',
- 'e2e/local-journal/real.config.ts','e2e/local-journal/real-journal.spec.ts']){
+ 'e2e/local-journal/real.config.ts','e2e/local-journal/real-journal.spec.ts','scripts/unraid/native-basic-sheet.ts',
+ 'supabase/staged/character-basic-sheet-commands.sql','supabase/verification/character-basic-sheet-profile.sql']){
  assert(tracked.includes(file),'CSJ requires the committed assembled Flow/Journal consumer before export');
 }
 const templates=new Set(['.env.local.example','infra/backup/.env.example']);
