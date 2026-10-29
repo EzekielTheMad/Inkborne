@@ -21,8 +21,9 @@ paused features or external-action authority.
 `f300b7a`). Thirteen of the existing fourteen full creation journeys pass with
 separately bound evidence: eight current actual stories at`10e77c7` and five
 unchanged retained passes at`b4a13cb`. Preserve their acceptance. Only A6 remains:
-its Bard instrument save restored an unresolved intent before a native outcome
-was captured. Use the current handoff's bounded A6-only check and stopping
+scoped capture identifies a committed ability save interrupted by a Next heap
+restart. Use the reviewed6 GiB Next-only heap within the existing10 GiB cap and
+the current handoff's A6-only full-flow/zero-restart stopping
 rules; do not restart the global queue or historical upgrade chains.
 [Lane record and exact evidence](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).
 

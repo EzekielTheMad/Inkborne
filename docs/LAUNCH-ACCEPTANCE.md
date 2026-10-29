@@ -36,8 +36,8 @@ or overrides this queue. Historical completion counts are not current acceptance
    guards/background writes, actual HTTP access and Fiend correction/replay.
    Current ancestry/A4 and thirteen of the fourteen queued full journeys now
    pass compositionally. In the assigned Character Flow lane, the sole remaining
-   story is A6: its Bard-instrument save entered recovery without a captured
-   native outcome. Run only the bounded A6 check described in the current
+   story is A6: a captured committed save lost its response during a test-server
+   memory restart. Run only the bounded A6 check with the reviewed Next heap fix in the current
    handoff; preserve the thirteen accepted stories and the contract's stopping rules.
    Historical parent/A4/F3 upgrade aggregators and old installer prerequisites
    remain separately open; retain their exact gates, resource and cleanup rules.
@@ -82,11 +82,13 @@ readiness, source-specific casting math and confirmed class-state synchronizatio
 now have actual consumer coverage. A5 retains both genuine concurrent saves at
 revision42→44, down/up allowances, reload and foreign-account refusal.
 
-A6 alone is open: a Bard instrument choice restored a retained operation, and its
-native outcome was not captured before teardown. The documented drift check
-permits one A6-only run with scoped failure-time capture, preserving the original
-intent and every existing oracle. Stop on the existing full workflow pass or use
-the captured cause for a product fix/real blocker report; do not restart accepted
+A6 alone is open. Scoped capture now proves a second-build ability save has one
+owned native receipt while its response stream breaks during Next's3 GiB heap
+restart; the first full control passed. The earlier Flute outcome stays unknown.
+The reviewed fix gives Next alone6 GiB within the unchanged10 GiB runner cap.
+The drift check permits A6 only, preserving the original intent and every oracle.
+Stop on the existing full workflow pass with zero memory restarts or report
+the captured blocker; do not restart accepted
 stories or build another verification framework. All completed attempt runtimes
 and private files are removed; final introduced-image/source cleanup is pending.
 [Exact scope, sources, checks and stopping point](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).

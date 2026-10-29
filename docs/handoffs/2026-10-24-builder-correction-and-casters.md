@@ -23,13 +23,13 @@ The shared owned character,2014 system/version, immutable pins, native role
 projection and operation/recovery contracts remain authoritative; no shared
 domain meaning or parallel calculation model is introduced.
 
-**Drift check:** thirteen existing journeys now have scoped passing evidence.
-The sole unresolved story is A6: choosing a Bard instrument restored a retained
-save, and its exact native outcome was not captured before automatic teardown.
-The next bounded check is **A6 only**, capturing the scoped pending operation
-and its native receipt on failure before cleanup, without retrying or clearing
-the intent. Stop when its existing save/reload/concurrency/access checks pass;
-otherwise use the captured cause for a product fix or report the real blocker.
+**Drift check:** thirteen existing journeys have scoped passing evidence. A6
+alone remains open. Its bounded failure capture now identifies an applied
+ability save whose response broke during Next's3 GiB memory-threshold restart;
+the original operation remains retained. The earlier Flute outcome stays unknown.
+The next bounded check is **A6 only** after the Next-child-only6 GiB heap fix,
+inside the unchanged10 GiB container cap. Stop when its existing full workflow
+passes with zero observed memory restarts, or report the captured blocker.
 Do not add exploratory check batches or another evidence framework without a
 new concrete justification. Unchanged accepted stories stay accepted.
 Shared Unraid queue: Character Flow retains the next bounded A6 slot;
@@ -52,6 +52,17 @@ state/inventory/source roots through two-page/sheet reload and foreign404.
 Independent evidence review clears those eight. A6 alone remains unaccepted:
 its retained Bard-instrument save outcome is unknown. The one-file failure-only
 capture at`e68ce6b` leaves every existing oracle and recovery intent unchanged.
+The targeted run`a392f110-8aaf-44b0-8d1c-88b3789ac165` completes a full current-v1
+Tiefling/Bard/Wizard control and its native readback. During the second build,
+the captured `save_abilities` operation has one matching owned native receipt
+at revision14. The browser records`ERR_INCOMPLETE_CHUNKED_ENCODING`, and the
+redacted Next log records a memory-threshold restart at the same save. More than
+24 GiB host memory remains. This establishes a test-server interruption, not a
+native refusal or lost intent; it does not retrospectively establish the earlier
+Flute outcome. Source`df15e3a` gives only Next dev6 GiB inside the existing runner
+10 GiB cap, retains all host/time guards and reports the observed restart count.
+Independent resource/privacy review is clear. No product behavior changed in
+that runner correction; A6's existing full-flow checks remain the finish line.
 Attempt
 `e008029f-d81e-4858-9609-9d1ceeb32fa9` stopped before browser work on test-file
 typing errors (an optional effects array and Playwright-only query options in
