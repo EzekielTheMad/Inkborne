@@ -8,7 +8,62 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ-FLOW-2 — 2026-10-29 blocked source checkpoint
+## Current CSJ native prerequisites — 2026-10-29 source checkpoint
+
+Victor's verified explicit resume and coordinator's compatible contract dispatch
+assign CSJ-NATIVE-HP and CSJ-NATIVE-CAMPAIGN to Character Flow. Current contract
+v1, continuation and ownership were reread. Source **`afe56e534cf13be2f3956a45a0ed0a6bd0026c6c`**, base
+`20ddd3be41eb19f95809890e5eb38a9100d8c423`, implements both finite paths and the paired read/UI
+boundaries. [Exact 19-file Git blobs/hashes, contracts, checks and remaining proof](2026-10-29-csj-native-source.json).
+
+The new staged overlay adds only character_manual_hp_command_v1 and
+character_campaign_assignment_v1, using existing verified command context/native
+locks and a fingerprint-checked finite admission branch. Existing parent revision/
+order/observation/deferred completion callbacks remain. Generic CAS/direct PATCH
+and old writer paths stay closed; no global gates, original staged hashes,
+calculators, role memberships or hosted configuration were changed. Manual HP is
+nonlethal/current_hp/temp_hp only, excludes concentration/death-save effects and
+uses the existing trusted maximum-HP calculator. Assignment is only an owned
+unassigned character to an actual member/system/content-compatible destination
+with its exact rendered bigint revision. Unknown outcomes never auto-replay.
+
+App adapters remain disabled by default. CSJ bootstrap alone installs this
+committed overlay after the unchanged current profile, validates its closure and
+then enables the finite server-only flag in private scratch configuration. No
+actual installation or environment activation ran during this source phase.
+
+The provider accepts a complete coherent native read only after pending writes
+settle; checks parent/state/revision and relevant pins/schema/base/inventory/maxHP
+instead of restamping old provenance. It keeps children mounted. Coordinator
+also assigned the concrete Narrative tab-unmount fix: supported keepMounted and
+hidden behavior retain the frozen Journal editor/attempt UUID across tab changes.
+Journal product/action/test source remains exactly a3842f4; all ten blob hashes
+match. No Journal/Library worktree or report was written.
+
+**Source checks pass:** five focused files,62 cases through serialized affected
+runs, whole-project typecheck and zero-warning lint; diff checks pass. Real
+provider/BaseUI/TimelineSection tests cover pending/unknown drafts and stable
+attempt identity through tabs and an HP read, pending-read refusal and incoherent
+state/schema rejection. Persistence is simulated. These checks do not install
+SQL or establish actual native transaction/Auth/RLS/browser acceptance. Original
+capacity ce7330f/Journal a3842f4 source review and14 accepted creations are retained.
+
+**Next:** same centrally reserved reviewer checks the frozen exact native/source
+delta. Flow then finishes the existing partial CSJ runner/normal-UI producer,
+including successful process exits plus final cleanup record validation, for
+review and the approved real workflow. Native owner/stale/foreign/service/old-
+writer/rollback/lost-response and field/child/revision/order checks remain actual
+scratch requirements. csj-flow.spec.ts is still absent, so CSJ preflight refuses
+export/run until the selected producer is committed. This is a ready source
+checkpoint, not a renewed missing-code permission blocker or integration verdict.
+
+No runtime, browser, dev server, account, credential or fixture was created.
+Source-check sessions exited and no cleanup is owed. Main source/document/index
+window is released at the scoped docs commit/own-report validation checkpoint;
+coordinator alone records overview/queue/acceptance. Keep heavy execution held
+for the complete assembled-source review.
+
+## Prior CSJ-FLOW-2 — 2026-10-29 blocked source checkpoint
 
 Recorded 2026-10-29T20:09:57.829Z; contract v1 and current continuation/ownership read.
 Source **`31222a1fe026f7459050a2340d041d720c611d18`**, base `dbf2489`, retains the partial runner

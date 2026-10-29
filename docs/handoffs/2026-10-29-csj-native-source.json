@@ -1,0 +1,197 @@
+{
+  "kind": "inkborne-csj-native-source-v1",
+  "assignments": [
+    "CSJ-NATIVE-HP",
+    "CSJ-NATIVE-CAMPAIGN"
+  ],
+  "recordedAt": "2026-10-29T21:01:19.399Z",
+  "contractVersion": 1,
+  "sourceBase": "20ddd3be41eb19f95809890e5eb38a9100d8c423",
+  "sourceHead": "afe56e534cf13be2f3956a45a0ed0a6bd0026c6c",
+  "diffSha256": "e7d04c8a88bf8d7df27bba43a61df11c35c99a364b700687ea8ffeb57f8c4290",
+  "branch": "codex/launch-integration-20261011",
+  "worktree": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification",
+  "status": "implemented-source-awaiting-central-review-and-native-execution",
+  "files": [
+    {
+      "path": "app/(app)/campaigns/[id]/page.tsx",
+      "gitBlob": "da73f11a4e5faac455148ed8337d7cf776b47bd2",
+      "sha256": "46c94bed5f1348b3a99278ecffe2b29c47eace1a3afe193fe63454d402c68f39",
+      "bytes": 13696
+    },
+    {
+      "path": "app/(app)/campaigns/actions.ts",
+      "gitBlob": "f364be206ee970f26248606ca4b522badf6f7a02",
+      "sha256": "ee5cf934fab0afe003a36495f9693b212b7aca7559c25c7abb2928c3b3769efd",
+      "bytes": 15265
+    },
+    {
+      "path": "app/(app)/characters/[id]/page.tsx",
+      "gitBlob": "6b5a3218bd7a7e3b68ef08d1ab58b9922a2f3433",
+      "sha256": "1dae2b337b7d8a0a589cf21453fafbd8875d205bb408f0cccd7bbeb1465de5f4",
+      "bytes": 13142
+    },
+    {
+      "path": "app/(app)/characters/[id]/sheet-actions.ts",
+      "gitBlob": "3191a09b968a946bb6f99b1e3c83e463e6d9e0bd",
+      "sha256": "ea00eb67fde79d59d7b4f544741e189344f34a16179cef0141abd8116071af00",
+      "bytes": 3315
+    },
+    {
+      "path": "components/character/character-page-client.tsx",
+      "gitBlob": "2aafc0db67ad6d20b519102253e086af96dc85b3",
+      "sha256": "032ab192b758ef4ff07aa5e0075774d310ccbb35e458a3208dde05b087e28850",
+      "bytes": 3363
+    },
+    {
+      "path": "components/character/character-shell.tsx",
+      "gitBlob": "87c8fdbc0fcf7a96405fe61c517132e493e8d072",
+      "sha256": "f02207eb9972a82e034a2404c53ea7a0136bbdc674e0077800522c1e5e8b0eeb",
+      "bytes": 4800
+    },
+    {
+      "path": "lib/character/basic-sheet-command.ts",
+      "gitBlob": "af9fc71419d968cac99126a58c561f55bea9849d",
+      "sha256": "06f445511371c0b133357b1f67ea259925cdce7ef4a7c0d36b55e2698c009c77",
+      "bytes": 2425
+    },
+    {
+      "path": "lib/character/character-context.tsx",
+      "gitBlob": "4dcbeb265a14c6bbb84dcffe4353c748f1ad3608",
+      "sha256": "fa56d82d183b8cf5298baf8acb6ea88197759d200540eb78c6c97125ed9b2863",
+      "bytes": 54067
+    },
+    {
+      "path": "lib/character/creation-ui-server.ts",
+      "gitBlob": "914c2c2b2a54ac89c9f1c8955249038ed8dd7de6",
+      "sha256": "d86dc1f4064bc047d949df0fa89eade191fbf7e2b18b63fdbe4b0d0a2515ef2d",
+      "bytes": 535
+    },
+    {
+      "path": "lib/character/state-writer.ts",
+      "gitBlob": "3ae867679b8661a631049db599c2f24c687d9e6b",
+      "sha256": "360ebf6e642eac91fb27f7e4fd0e0e7e3f4570d563999ab63d7cf301022c2ee8",
+      "bytes": 4645
+    },
+    {
+      "path": "lib/sheet/update-state.ts",
+      "gitBlob": "16dc04cc86d13bb01ed817c885824e43da70526f",
+      "sha256": "ab3111285670c5c4e25be505eaaa77f37fd7b1e967e092ba3dc1d8ad164ab2b1",
+      "bytes": 3961
+    },
+    {
+      "path": "scripts/unraid/bootstrap.ts",
+      "gitBlob": "a0a2edbb2ce2a584ec4162638d330cb63d68830a",
+      "sha256": "232531c4bcc2739d02b2d8465f8cc3c287330bc7814b65fcafa7f0aa81bcad28",
+      "bytes": 13098
+    },
+    {
+      "path": "scripts/unraid/remote.mjs",
+      "gitBlob": "b8e1a64dba1c4fcc1d46b3acb31e892ee788f4ee",
+      "sha256": "3ad8e88719d0f80d409c0a0328e88f945085c4cfa9030f4511c45cf68068ea2d",
+      "bytes": 7795
+    },
+    {
+      "path": "supabase/staged/character-basic-sheet-commands.sql",
+      "gitBlob": "8c7409ff992b860882630f9542936e789062eabe",
+      "sha256": "1ad0b4bb74f9ddef155dcf0f4cd7563c9ffed1965fd643ed8913abb8bb18b7fe",
+      "bytes": 20883
+    },
+    {
+      "path": "supabase/verification/character-basic-sheet-profile.sql",
+      "gitBlob": "caf649ab1462d7036e65b20601990fec31be2e9c",
+      "sha256": "18be57e70d5ab74fc9659a58d630dd47137a777105905bcec26575bacef94cc1",
+      "bytes": 2295
+    },
+    {
+      "path": "tests/app/basic-sheet-actions.test.ts",
+      "gitBlob": "42ae3a9c994003cdf352b62d0b4b5472f84c5ab6",
+      "sha256": "876067c2ac70ac070df3916a6b897f0901e04a3027b73d7d4ce3a9bd418d7497",
+      "bytes": 5498
+    },
+    {
+      "path": "tests/app/campaign-actions.test.ts",
+      "gitBlob": "ed2e7f1dc9efbcff55cc74b182723eaaa965abf3",
+      "sha256": "d9370ca0c47cbe9506f67d1e88971eeff27e3b747a5b326d5cce72a681bcabd5",
+      "bytes": 16204
+    },
+    {
+      "path": "tests/components/character/basic-sheet-draft-retention.test.tsx",
+      "gitBlob": "fe43bad5b37ef5828e2d974c737de3f6f4530721",
+      "sha256": "7a355999bacd7a42404b9ffec8866410913a50b2efff0a723e98aa8c65026ebf",
+      "bytes": 8024
+    },
+    {
+      "path": "tests/lib/character/state-writer.test.ts",
+      "gitBlob": "d10b8ec0f1c4a3dc685d8a018feb3b465c068bfa",
+      "sha256": "b96dd48fa183a5b27c6c0c4609fba1f5e4254a0b1cb28a4134810101f56ae95a",
+      "bytes": 9919
+    }
+  ],
+  "userAuthority": "Victor new explicit CSJ-v1 resume in Inkborne Coordinator; verified direct human instruction. Coordinator resumed canonical assignment and approved finite names/plumbing/refresh and CharacterShell retention extension.",
+  "commands": {
+    "hp": "public.character_manual_hp_command_v1(jsonb,jsonb)",
+    "campaign": "public.character_campaign_assignment_v1(jsonb,jsonb)",
+    "identity": "Existing verified same-cookie command context; native begin_builder_step_v1 with authenticated_call=true retains exact JWT/actor/session/profile/expiry/singleton/parent locking.",
+    "admission": "New hp_manual/campaign_assignment source values and fingerprint-checked finite prefix in the existing enrolled BEFORE guard. Existing revision, observed postimage/order and deferred completion callbacks retained. No generic state/CAS/direct PATCH or builder/first_class admission relaxation.",
+    "hpBoundary": "Exact raw mechanics/state preimage + bigint revision, finite current_hp/temp_hp keys, positive nonlethal current HP and bounded temp HP, current non-concentrating parent, existing native maximum-HP calculator matching UI value. Full unrelated parent/child/narrative retention and coherent existing revision/order advance.",
+    "campaignBoundary": "Rendered exact bigint revision and expected null prior assignment, current owner plus actual destination membership/system/pinned-content checks under row locks; assignment/revision/order only. No transfer/unassignment/copy/delete/archive.",
+    "uncertain": "One submission; structured conflict/unavailable/invalid/unknown. No retry/CAS fallback. Unconfirmed HP requires explicit reload; uncertain campaign refreshes its roster via redirect and requires reopen, no silent latest-row rebinding."
+  },
+  "readModel": {
+    "childIdentity": "Provider and CharacterShell remain mounted; no revision key remount. Narrative TabsContent uses supported keepMounted + hidden behavior.",
+    "freshRead": "Existing state writer accepts only a settled explicit read. Provider checks exact acknowledged native parent/revision/state plus complete pins, schema, base inputs, inventory and maxHP before refreshing the baseline. Pending, unexpected or incoherent reads cannot replace writes or clear reload-required state.",
+    "draftProof": "Real CharacterShell/BaseUI tabs + frozen TimelineSection + real provider; unknown and pending create draft/attempt UUID survives Narrative-to-Sheet-to-Narrative and coherent HP read. Persistence/editor rendering are simulated; no current actual browser/DB acceptance."
+  },
+  "activation": {
+    "defaultEnabled": false,
+    "serverOnlyFlag": "INKBORNE_BASIC_SHEET_COMMANDS",
+    "guard": "Requires existing creation UI flag AND new finite flag; only CSJ scratch bootstrap writes the private server flag after installing and validating the committed finite native overlay. Other modes/hosted config unchanged.",
+    "nativeStageSourceManifest": "Existing source.json gains one CSJ-only basicSheetStage with committed bytes/hash; original 83 migrations/34 stages remain unchanged."
+  },
+  "verification": {
+    "focusedFiles": 5,
+    "focusedCases": 62,
+    "focusedEvidence": "61 cases across all five files passed; the final directly changed provider file passes 4 cases (adding schema-binding rejection to its previous 3). Other 58 cases unchanged and passing.",
+    "typecheckPassed": true,
+    "lintPassed": true,
+    "gitDiffCheckPassed": true,
+    "reactAndPostgresRelevantGuidanceRead": true,
+    "independentReviewPending": true,
+    "nativeSqlInstalled": false,
+    "actualDatabaseCasesRun": false,
+    "actualBrowserRun": false,
+    "actualCSJAccepted": false
+  },
+  "preserved": {
+    "journalHead": "a3842f497f9570aaa08f20d26209bf29128aa57e",
+    "journalTenGitBlobHashesUnchanged": true,
+    "capacityHead": "ce7330f68d9981737dc8bc27c1fae334da86c709",
+    "acceptedCreationJourneys": 14,
+    "acceptanceReopened": false,
+    "libraryOrJournalWorktreeEdited": false,
+    "overviewOrCanonicalLedgerEdited": false
+  },
+  "remaining": {
+    "runnerComplete": false,
+    "normalUiProducer": "e2e/unraid/csj-flow.spec.ts remains absent from prior preparation. Complete existing selected two-character producer and final successful-exit/cleanup-record gates after this native source review; no new harness/framework.",
+    "nativeChecks": "Actual scratch must still prove normal enrolled owner success, stale/conflict, foreign/DM/service/old-writer refusal, rollback, response loss/reload and exact field/child/revision/order retention. Native profile records installation/privilege closure only, not those mutation results.",
+    "goal": "Same two normal-created Fighter4/Bard3 IDs, four roles, one campaign, at most three Journal entries, desktop/mobile same IDs; source/runner review before heavy run and exact teardown after."
+  },
+  "runtime": {
+    "started": false,
+    "ownedPersistentProcesses": [],
+    "newAccountsCredentialsFixturesCreated": false,
+    "cleanupOutstanding": false,
+    "sourceCheckSessionsExited": true,
+    "resourceBeforeKiB": {
+      "physical": 4383368,
+      "commit": 3345968
+    },
+    "resourceAfterKiB": {
+      "physical": 4565776,
+      "commit": 3472740
+    }
+  },
+  "nextAction": "Coordinator uses the same central reviewer for exact base/head changed security/native/consumer source; Flow then completes the existing partial runner and selected normal-UI producer in the next agreed source window. No missing implementation approval is required."
+}
