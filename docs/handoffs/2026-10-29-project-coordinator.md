@@ -420,3 +420,34 @@ No heavy runtime, fixture/account/credential creation, native/security change,
 privileged bypass, deployment or production restart occurred. No background
 monitor or later automatic continuation is established. Resume from this exact
 checkpoint and current ownership; do not repeat onboarding or accepted tests.
+
+## CSJ-v1 native resolution resumed
+
+2026-10-29T20:31:09.316Z; baseline clean `8d1961f`. Victor's direct resume instruction
+retains approved goal, scope, acceptance/owners, messaging/replies and test setup
+and explicitly assigns routine native contract resolution to coordinator and
+bounded implementation to Character Flow. Updated installed SKILL.md and
+references/coordination.md reread. The earlier final-blocked section remains a
+historical checkpoint; these are missing implementation dependencies within
+existing authority, not a repeat user approval or goal-review requirement.
+
+| Assignment | Owner / boundary | State | Next result / enabling event |
+| --- | --- | --- | --- |
+| CSJ-NATIVE-HP | Character Flow; finite native owner manual current_hp/temp_hp admission and sheet/provider consumer, coherent acknowledged revision/order | dispatched 2026-10-29T20:31:09.316Z | Exact source/native/file contract confirmation, then implemented focused source checkpoint for central review |
+| CSJ-NATIVE-CAMPAIGN | Character Flow; exact owner unassigned-to-campaign producer and existing assignment action/UI | dispatched 2026-10-29T20:31:09.316Z | Current ownership/revision/prior assignment and destination authorization/content guards, exact source checkpoint |
+| CSJ-FLOW-2 | Character Flow; preserve partial runner/Journal assembly and resume same-ID producer after native dependencies | waiting on dispatched native implementation | Complete frozen runner/consumer for same central review, then guarded actual workflow |
+| CSJ-JOURNAL-1 | Journal retained a3842f4 and own report/source | reviewed source retained | Concrete native/runner interface feedback only if needed, then actual source-equal consumer run |
+| CSJ-REVIEW | Existing single central reviewer /root/csj_review | awaiting frozen native/runner source | Review changed security/transaction/consumer paths; reuse prior clear stages |
+| CSJ-ACCEPT | Coordinator | open; implementation dependencies assigned | Exact real CSJ-1..6 evidence and cleanup; no automatic acceptance from source |
+
+Adopted contracts and preservation requirements are in the canonical resumed
+section; no duplicate roadmap. First bounded dispatch sent with main docs/index
+window reserved for coordinator; Flow may prepare read-only until closure.
+No source write/operation was observed in flight at kickoff. Coordinator stops
+main writes after this scoped docs checkpoint and returns the source window.
+
+No new user input is required. If a material tradeoff/missing authority appears,
+prepare options/recommendation; otherwise resolve and continue. A final blocked
+handoff must name exact obstacle, responsible owner, next action, dispatch state
+and enabling event, saying whether Victor must decide/supply something or only
+resume. Do not stop at a proposed owner or absent implementation.

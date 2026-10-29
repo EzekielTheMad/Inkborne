@@ -9,19 +9,19 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-29T20:13:03.529Z",
+  "updatedAt": "2026-10-29T20:31:09.316Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "CSJ-v1 stops at a precise source-confirmed native prerequisite. Capacity ce7330f and Journal a3842f4 have clear exact-source review and focused checks; Journal is source-assembled at31222a1. Current guards intentionally refuse enrolled owner HP state changes and campaign assignment, so the actual two-character workflow was not run.",
-  "nextAction": "Define the bounded owner-only manual-HP and campaign-assignment native producer/consumer admissions, preserving generic/foreign/old-writer denials and exact revision/retention/rollback semantics. After the next agreed implementation boundary, complete/review the partial runner and resume unchanged CSJ-v1 actual acceptance. Existing fixture approval remains valid.",
+  "currentWork": "CSJ-v1 resumed under explicit updated blocker-resolution instruction. Coordinator adopted finite owner HP and unassigned-to-campaign native contracts and dispatched both implementation prerequisites to Character Flow; existing reviewed source and accepted creations retained.",
+  "nextAction": "Character Flow implements CSJ-NATIVE-HP and CSJ-NATIVE-CAMPAIGN with existing protections intact, returns exact source and focused evidence, then completes the partial runner. Reuse central review, run remaining guarded local same-ID acceptance/cleanup and evaluate CSJ-1..6.",
   "blockers": [
-    "CSJ-NATIVE-HP: current conditional state RPC locks but supplies no enrolled-parent admission; selected HP/tempHP persistence remains blocked. Coordinator owns contract disposition; Character Flow is proposed implementation owner.",
-    "CSJ-NATIVE-CAMPAIGN: existing assignment directly changes protected campaign_id without admission; same-ID campaign/audience setup remains blocked. Coordinator owns contract disposition; Character Flow is proposed implementation owner.",
-    "CSJ runner is partial and fails closed because normal-creation producer is absent; final runner source review, successful Flow/Journal exits and final cleanup verification remain pending. No actual CSJ run occurred."
+    "CSJ-NATIVE-HP implementation/evidence pending from assigned Character Flow; finite contract adopted, no new permission needed.",
+    "CSJ-NATIVE-CAMPAIGN implementation/evidence pending from assigned Character Flow; finite contract adopted, no new permission needed.",
+    "Runner completion/review and actual same-ID CSJ workflow remain sequenced after native source; existing setup approval remains valid."
   ],
   "decisions": [],
   "dependencies": [
@@ -339,7 +339,7 @@
       "area": "Integrated character journey",
       "milestone": "M3/M5.5",
       "requirement": "R06/R08/R20; CSJ-v1 criteria CSJ-1..6",
-      "outcome": "Reviewed capacity and narrative save/recovery source is prepared and Journal source assembled. Two selected creation/sheet/Journal journeys remain blocked on finite native HP and campaign-assignment producer admissions; actual local acceptance is open.",
+      "outcome": "Approved two-character creation/basic-sheet/Journal goal resumed. Missing native owner HP/campaign write paths have adopted bounded contracts and assigned implementation; reviewed capacity and Journal source retained, actual acceptance still open.",
       "implementation": "partial",
       "verification": "source",
       "integration": "unknown",
@@ -351,7 +351,8 @@
         "Character Flow product ce7330f / docs b1e15dc — capacity source/provider proof only; Journal final source and CSJ actual workflow pending",
         "Journal a3842f4 / metadata068e6d3 —42 focused checks/typecheck/lint/discovery; exact ten-file source review clear; actual workflow unrun",
         "Assembled31222a1 / Flow docse5ec4da —canonical Journal blobs match; four-file runner partial, source-confirmed native blockers independently reviewed; no runtime",
-        "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-final-blocked-checkpoint —CSJ-1..6 status and next proposed native packages"
+        "docs/handoffs/2026-10-29-project-coordinator.md#csj-v1-final-blocked-checkpoint —CSJ-1..6 status and next proposed native packages",
+        "docs/LAUNCH-ACCEPTANCE.md#csj-v1-resumed--native-prerequisite-implementation —2026-10-29 explicit resume, adopted finite contracts and dispatched owners"
       ]
     }
   ]

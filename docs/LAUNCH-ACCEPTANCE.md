@@ -150,7 +150,7 @@ The cycle ends at CSJ-v1 local acceptance or a precise blocked checkpoint; it
 does not auto-start the next milestone. Live assignment/evidence state is in
 the [single coordinator checkpoint](handoffs/2026-10-29-project-coordinator.md#csj-v1-coordination-checkpoint).
 
-**Current CSJ-v1 checkpoint — source blocked, 2026-10-29T20:13:03.529Z.**
+**Previous CSJ-v1 checkpoint — source blocked, 2026-10-29T20:13:03.529Z.**
 
 The capacity correction `ce7330f` and Journal `a3842f4` have clear central
 exact-source review and their recorded focused checks. All ten reviewed Journal
@@ -193,6 +193,45 @@ accepted creation journeys and prior source clearances remain intact. Stop this
 cycle at the approved precise-blocked boundary; resume only the next agreed
 native package, then complete/review the runner and return to unchanged CSJ-v1
 criteria. [Exact checkpoint and source references](handoffs/2026-10-29-project-coordinator.md#csj-v1-final-blocked-checkpoint).
+
+### CSJ-v1 resumed — native prerequisite implementation
+
+2026-10-29T20:31:09.316Z: Victor explicitly resumes approved CSJ-v1 in Coordinate mode
+under the updated installed coordinator blocker-resolution rules. Existing scope,
+acceptance, owners, recipients/replies, four-role/two-character/one-campaign/
+max-three-entry disposable approval and external restrictions remain in force.
+The historical blocked checkpoint is preserved; missing implementation is now
+classified as an assigned technical dependency, not a new scope or approval gap.
+
+Coordinator adopts the following routine compatible contracts and dispatches
+both assignments to Character Flow `01a1790d-be90-73d1-91f6-84e48a557ee1`:
+
+| Assignment | Adopted finite boundary | Required preservation |
+| --- | --- | --- |
+| CSJ-NATIVE-HP | Owner-authenticated native producer for existing manual `current_hp`/`temp_hp` operations, paired with sheet/provider state writer. Exact confirmed preimage/revision and relevant trusted mechanical inputs; explicit finite field allowlist; acknowledged resulting state/revision. | No generic CAS admission, rolled spending/rest/death-save/concentration producer or duplicate calculation engine. Preserve unrelated state, narrative, parent/child content/order, current owner and existing builder/first-class protections. Stale/conflict refuses; uncertain response requires reload/exact readback with no blind replay. |
+| CSJ-NATIVE-CAMPAIGN | Existing action/UI paired with exact native owner unassigned-to-destination producer. Expected prior assignment/revision, destination membership/system/content boundaries and precise acknowledgement. | Only assignment plus required coherent revision/order bookkeeping changes. Generic direct PATCH, foreign/DM/service/old-writer paths stay denied. No transfer/unassignment/delete/copy/archive or broader campaign-management scope. |
+
+Character Flow owns the exact compatible producer names/staged native installer/
+admission plumbing, relevant types, source consumers and focused tests using
+existing conventions. Local source/native/scratch-profile implementation of these
+two finite paths is assigned; hosted/security/production changes remain forbidden.
+The coordinator retains shared-contract decisions, overview/queue/checkpoint and
+acceptance. Lane reports/source remain lane-owned. Existing reviewed capacity
+`ce7330f` and Journal `a3842f4` work and all14 accepted creation journeys
+are retained; no baseline suite is repeated merely to resume.
+
+Sequence: finish the two finite native/source boundaries and focused checks;
+return a frozen source checkpoint for the same central independent reviewer;
+complete/review the existing partial runner and same-ID normal-creation producer;
+refresh live resource guards, run the approved real CSJ workflow, require both
+successful Flow/Journal exits and final cleanup proof, then evaluate CSJ-1..6.
+Actual valid owner success, stale/conflict, foreign/service/old-writer refusals,
+rollback, lost response, field/child retention and coherent revision/order must
+be verified in the actual scratch database. Preserve failing evidence and stop
+on unexpected unauthenticated access. Missing code or effort alone does not end
+this resumed cycle; escalate only a real material tradeoff or missing authority.
+
+[Current assignment/result checkpoint](handoffs/2026-10-29-project-coordinator.md#csj-v1-native-resolution-resumed).
 
 Hosting remains Vercel. This reconciliation changes documentation and names,
 not product scope, feature priority, runtime permissions or release authority.
