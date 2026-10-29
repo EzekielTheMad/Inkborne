@@ -10,18 +10,52 @@ all global readiness/class/hit-die gates closed.
 
 ## Latest continuation — 2026-10-29 complete creation journeys
 
+### Lane and contract checkpoint
+
+**Character Flow / R06**, authoritative continuation worktree and
+`codex/launch-integration-20261011`. Shared domain contract **version1** and the
+updated continuation were read at the safe checkpoint; documentation commit
+`4261f27` is integrated as`f300b7a`. Preserve the existing character-flow slice
+and accepted evidence. Owned work is the builder/class client, sheet consumers,
+its compatible content/native producers and focused workflow adapters. Other
+lanes, hosted changes and historical upgrade/release chains are excluded.
+The shared owned character,2014 system/version, immutable pins, native role
+projection and operation/recovery contracts remain authoritative; no shared
+domain meaning or parallel calculation model is introduced.
+
+**Drift check:** thirteen existing journeys now have scoped passing evidence.
+The sole unresolved story is A6: choosing a Bard instrument restored a retained
+save, and its exact native outcome was not captured before automatic teardown.
+The next bounded check is **A6 only**, capturing the scoped pending operation
+and its native receipt on failure before cleanup, without retrying or clearing
+the intent. Stop when its existing save/reload/concurrency/access checks pass;
+otherwise use the captured cause for a product fix or report the real blocker.
+Do not add exploratory check batches or another evidence framework without a
+new concrete justification. Unchanged accepted stories stay accepted.
+Shared Unraid queue: Character Flow retains the next bounded A6 slot;
+Character Journal has requested the following slot after cleanup. That queue
+record starts no runtime and authorizes no schema or permission change.
+
 The user's priority is usable product progress. Finish the existing fourteen
 creation stories, covering all twelve classes; milestone terminology does not
 restart this queue. Use the approved disposable Unraid runtime and retain passing
 evidence for unchanged behavior. Historical upgrade/installer and hosted release
 gates remain separate.
 
-Source `671fb9e4f03700c1cec4f7cfb5692269b6eb9a7e` is independently reviewed.
-Its nine affected stories are **not yet accepted**. Attempt
+Source `10e77c7cad294ae71095222d8c68f6f71e484a8c` is independently reviewed.
+Run`7145dc5d-046b-44f4-9096-5b75626386db` finishes **8/9**, with typecheck/lint
+and six focused files passing. Five casters (Cleric, Druid, Sorcerer, Warlock,
+Wizard), martial A1/A3 and mixed-caster A5 now pass their complete actual
+workflows and native readbacks. A5 proves both real opposite-controller saves,
+revision42→44, two retained receipts/history entries, HP48→40→48 and unchanged
+state/inventory/source roots through two-page/sheet reload and foreign404.
+Independent evidence review clears those eight. A6 alone remains unaccepted:
+its retained Bard-instrument save outcome is unknown. The one-file failure-only
+capture at`e68ce6b` leaves every existing oracle and recovery intent unchanged.
+Attempt
 `e008029f-d81e-4858-9609-9d1ceeb32fa9` stopped before browser work on test-file
 typing errors (an optional effects array and Playwright-only query options in
-Testing Library). Those test typings are corrected; the next step is the same
-nine-story actual run.
+Testing Library). Those test typings are corrected.
 The five named passes retained from source`b4a13cb`, run
 `c0663caa-a92a-46f3-b39d-a575a59c87b4`, are Bard, Paladin, Ranger, Monk A2 and
 Hill Dwarf A4. They include six Saved steps, native ownership, reload and foreign
@@ -43,21 +77,27 @@ The actual runs exposed and led to these bounded product fixes:
 - Class state adopts newer same-scope confirmed revisions after structural saves
   settle, rejects stale/equal-revision contradictions and preserves spell drafts
   with explicit recovery. The required bonus-spell callback contract is retained.
+  Matching no-op receipts also restore canonical choices/level, so an optimistic
+  HP record with different JSON key order cannot leave controls disabled.
 
 Focused source checks pass:138 earned-racial/installer checks,29 cast-dialog
 checks, the causal SSR/hydration tab regression,28 transformer checks,19
 proficiency/role checks and221 class/spell component checks. The final class
-client subset26 also passes. Independent review binds each integrated delta
-through`671fb9e`; actual sequential/concurrent behavior still requires the retry.
+client subset26 also passes. The causal no-op fix passes33 focused checks and
+the final27-test client subset. Independent review binds each integrated delta
+through`10e77c7`; the eight current actual stories and five separately retained
+passes establish thirteen of the fourteen planned journeys. No one-green-batch
+or identical-catalog claim is made; each run retains its own source/catalog identity.
 
-Earlier attempts`82e6c865` (intentional pre-browser stop),`c0663caa` (5/14) and
-`6bd98dc5` (0/9) retain their original failed results. Stale equipment/category
+Earlier attempts`82e6c865` (intentional pre-browser stop),`c0663caa` (5/14),
+`6bd98dc5` (0/9),`e008029f` (typecheck) and`cfdca99b` (stopped after the shared
+no-op regression repeated) retain their original failed results. Stale equipment/category
 expectations were corrected while exact grants, budgets, ownership, native
 readback and both opposite-controller saves remain required. Direct navigation
 waits for DOM/interactive controls; timeouts/retries and resource limits are unchanged.
 
-All attempt runtimes/private files are removed. Final image/source/
-archive cleanup is pending completion of the affected-story retry. The complete baseline,
+All completed/stopped attempt runtimes/private files are removed. Final image/source/
+archive cleanup is pending completion of the A6-only check. The complete baseline,
 targeted cleanup script and eventual receipts are under
 `../equipment-runtime/unraid/usable-builders-20261029T145530Z/`.
 

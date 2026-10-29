@@ -1,6 +1,6 @@
 # Inkborne project-wide Codex orchestrator
 
-Updated 2026-10-28 (America/Phoenix). This is the operational entrypoint.
+Updated 2026-10-29 (America/Phoenix). This is the operational entrypoint.
 [LAUNCH-ACCEPTANCE.md — current execution path](LAUNCH-ACCEPTANCE.md#current-execution-path)
 is the **single current plan, milestone map, backlog and acceptance gate**.
 ROADMAP is navigation, GAME-PLAN is working conventions, and the PRD is the
@@ -16,6 +16,15 @@ global builder queue. New lane assignments do not change milestone acceptance,
 paused features or external-action authority.
 
 ## Resume and ownership
+
+**Current Character Flow pickup:** shared contract v1 is adopted (`4261f27` →
+`f300b7a`). Thirteen of the existing fourteen full creation journeys pass with
+separately bound evidence: eight current actual stories at`10e77c7` and five
+unchanged retained passes at`b4a13cb`. Preserve their acceptance. Only A6 remains:
+its Bard instrument save restored an unresolved intent before a native outcome
+was captured. Use the current handoff's bounded A6-only check and stopping
+rules; do not restart the global queue or historical upgrade chains.
+[Lane record and exact evidence](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).
 
 Continue the **R06 builder workstream** (roadmap M3), in the dependency order in
 the [current plan](LAUNCH-ACCEPTANCE.md#current-execution-path) and

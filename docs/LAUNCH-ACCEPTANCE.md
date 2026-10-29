@@ -34,8 +34,11 @@ or overrides this queue. Historical completion counts are not current acceptance
    Fiend and Draconic pass actual local acceptance. Current-state parent
    acceptance now passes at`13dde07c`, including genuine edits/reload, native
    guards/background writes, actual HTTP access and Fiend correction/replay.
-   Next is current-state ancestry builder acceptance on the reviewed stages
-   already installed by fresh bootstrap, then the queued walkthroughs.
+   Current ancestry/A4 and thirteen of the fourteen queued full journeys now
+   pass compositionally. In the assigned Character Flow lane, the sole remaining
+   story is A6: its Bard-instrument save entered recovery without a captured
+   native outcome. Run only the bounded A6 check described in the current
+   handoff; preserve the thirteen accepted stories and the contract's stopping rules.
    Historical parent/A4/F3 upgrade aggregators and old installer prerequisites
    remain separately open; retain their exact gates, resource and cleanup rules.
 2. **Continue remaining M1–M6 work, including M5.5**, from open requirement rows
@@ -65,7 +68,28 @@ scope or continuation-order conflict. Receipt:
 `5f99574`. This docs-only checkpoint ran no app tests, services or deployments
 and changes no implementation/native/browser acceptance result.
 
-## Active continuation — 2026-10-28 UTC
+## Active continuation — 2026-10-29 UTC
+
+### Character Flow: thirteen creation journeys accepted, A6 remains
+
+Shared domain contract **v1** and the updated continuation are adopted through
+documentation commit`4261f27` (integration`f300b7a`). The assigned lane remains
+Character Flow / R06. Source`10e77c7` passes typecheck/lint, six focused files and
+eight actual workflows; five unaffected named passes are retained from`b4a13cb`.
+Together they accept thirteen existing creation journeys, with their source and
+catalog identities separately bound. Druidic, Rogue tool proficiency, sheet
+readiness, source-specific casting math and confirmed class-state synchronization
+now have actual consumer coverage. A5 retains both genuine concurrent saves at
+revision42→44, down/up allowances, reload and foreign-account refusal.
+
+A6 alone is open: a Bard instrument choice restored a retained operation, and its
+native outcome was not captured before teardown. The documented drift check
+permits one A6-only run with scoped failure-time capture, preserving the original
+intent and every existing oracle. Stop on the existing full workflow pass or use
+the captured cause for a product fix/real blocker report; do not restart accepted
+stories or build another verification framework. All completed attempt runtimes
+and private files are removed; final introduced-image/source cleanup is pending.
+[Exact scope, sources, checks and stopping point](handoffs/2026-10-24-builder-correction-and-casters.md#latest-continuation--2026-10-29-complete-creation-journeys).
 
 ### User decision: simplify development testing and use Unraid
 
