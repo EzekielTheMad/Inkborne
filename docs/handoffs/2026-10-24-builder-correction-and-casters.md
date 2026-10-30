@@ -8,7 +8,17 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ reviewed Journal alert assembly — 2026-10-30T00:02:14.235Z
+## Current CSJ complete actual local pass — 2026-10-30T00:14:59.848Z
+
+**Creation → basic sheet → Journal now passes the approved actual local workflow.** Run **d0f47077-c3f3-4076-aab0-860e5efd5ff6**, frozen source **c1e195a51073dc70d1d1d6a72baa985c850a5bbe**; managed session15227 exits0. [Complete source-bound CSJ-1..6 evidence and cleanup](2026-10-29-csj-local-acceptance-evidence.json). Coordinator records final acceptance; this lane claims the actual result within its finite scope.
+
+Same two normal-created IDs **2067b37c-78c3-43eb-9bce-79ef9cca8205** and **ca8e6c07-d735-4010-9021-212009971281** flow through both selected builds, sheet/native checks, Journal and1280/390. Both actual test processes exit0 **after finally**. FullFlow22proofs cover weapon/check logs, HP/campaign/roles/rollback/lost response/two actual concurrent HTTP backends/exact native retention/draft continuity. Journal3entries save/edit/reopen, audience/denied writes, stale/removed conflicts, uncertain create/edit readback/no duplicate and both mechanics/narrative isolation pass.69 focused/typecheck/lint pass; no memory restart.
+
+Fresh run/head-bound database check confirms4auth/2characters/1DMcampaign/3members/**Journal0/caps0/seals0**, with both contexts closed and all3exact entries removed. Host runtime/private/credentials removed. Final exact cleanup removes13 task images/3 server inputs/3 local archives;18 public evidence files retain verified hashes. Original56 containers/95volumes/all53 imageIDs/networks/service states preserved. Helper and exact transport252104 absent; no owned runtime remains.
+
+**Stopping point:** minimum approved checks all pass; no further verification or feature work. Release clean source/docs/index after own metadata commit for Coordinator acceptance/checkpoint. Retain all six failed overall attempts as failed, prior accepted14 and source reviews. Local/mounted-editor evidence only; hosted/release, resource spending/rest/death-save/concentration/copy policy and browser-crash recovery remain outside this result. Ownership unchanged; shared contractv1 read.
+
+## Prior CSJ reviewed Journal alert assembly — 2026-10-30T00:02:14.235Z
 
 Source **a7308caf158d62126052e920b56d9061d97210e4**, exact one-file assembly of Journal owner **0ef5d18ad4ec89e3484ae8c3812d4546ffd9ce8a**. [Exact assembly/review/source binding](2026-10-29-csj-journal-alert-assembly.json). SAME reviewer CLEAR covers frozen alert delta and sixth cleanup. Four expected warnings now require one visible expected alert in the exact entry editor. All prior dropped/save-disabled/draft/readback/recovery/native/no-duplicate/budget assertions remain;9 Journal product paths and every other canonical source unchanged. No foreign docs/AGENTS/scripts imported, no repeated product suites.
 

@@ -1,0 +1,357 @@
+{
+  "kind": "inkborne-csj-local-acceptance-evidence-v1",
+  "recordedAt": "2026-10-30T00:14:59.848Z",
+  "contractVersion": 1,
+  "status": "actual local workflow passed; ready for Coordinator acceptance",
+  "runId": "d0f47077-c3f3-4076-aab0-860e5efd5ff6",
+  "sourceHead": "c1e195a51073dc70d1d1d6a72baa985c850a5bbe",
+  "branch": "codex/launch-integration-20261011",
+  "worktree": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-verification",
+  "scope": "Approved finite CSJ-1..6 only; neither project-wide nor hosted/release acceptance",
+  "commands": {
+    "actual": "npm run verify:unraid -- csj",
+    "plan": "npm run verify:unraid -- plan",
+    "session": 15227,
+    "processExit": 0
+  },
+  "bothActualTestsExitedZeroAfterFinally": true,
+  "sourceChecks": {
+    "typecheck": 0,
+    "lint": 0,
+    "focused": 0,
+    "cases": 69,
+    "nextMemoryRestarts": 0
+  },
+  "criteria": {
+    "CSJ-1": {
+      "passed": true,
+      "normalUi": true,
+      "stories": [
+        "Half-Elf Fighter4/Acolyte standalone",
+        "Human Lore Bard3/Acolyte campaign"
+      ],
+      "sameCharacterIds": [
+        "2067b37c-78c3-43eb-9bce-79ef9cca8205",
+        "ca8e6c07-d735-4010-9021-212009971281"
+      ],
+      "source": "csj-flow.json; csj-flow-evidence.json; journal-real.json"
+    },
+    "CSJ-2": {
+      "passed": true,
+      "outcome": "Ability/starting equipped Longsword or Rapier attack logs; nonlethal damage/healing/temp HP persist/reopen; BardCHA16 capacity3/maxHP24/DC13/attack+5/slots4+2; exact unrelated parent/child/pin/state/order retention",
+      "nativeProofObjects": 22,
+      "source": "csj-flow-evidence.json and complete csj-flow.json receipt"
+    },
+    "CSJ-3": {
+      "passed": true,
+      "entries": [
+        {
+          "id": "fe49cbc1-716f-4396-be7e-3404c1a43315",
+          "characterId": "2067b37c-78c3-43eb-9bce-79ef9cca8205",
+          "title": "Journal d0f47077 0 4e519757",
+          "visibility": "dm_only"
+        },
+        {
+          "id": "726f5e62-82fc-4d72-8b52-92920129ce29",
+          "characterId": "ca8e6c07-d735-4010-9021-212009971281",
+          "title": "Journal d0f47077 1 a5cefe46",
+          "visibility": "dm_only"
+        },
+        {
+          "id": "8009e2e0-b4ec-4afc-b9f1-34596ec0eedc",
+          "characterId": "ca8e6c07-d735-4010-9021-212009971281",
+          "title": "Journal d0f47077 2 05607b60",
+          "visibility": "campaign"
+        }
+      ],
+      "outcome": "Three exact normal character-linked entries, rich body/title/date/audience/order save/edit/reopen; Journal writes preserve mechanics and later HP preserves narrative",
+      "mechanicBindings": [
+        {
+          "id": "2067b37c-78c3-43eb-9bce-79ef9cca8205",
+          "before": "e3470087ba792aab33b3b16311a34b1151d7c89fd9071ed873b98ca12c1b9ff4",
+          "afterJournal": "e3470087ba792aab33b3b16311a34b1151d7c89fd9071ed873b98ca12c1b9ff4",
+          "afterIntentionalHpEdit": "df66cb055e7e6dc83451d1e137f47abbc326d53f16f49c80c3dc6e2a95463871"
+        },
+        {
+          "id": "ca8e6c07-d735-4010-9021-212009971281",
+          "before": "47efe1b1d147804e1b8a3901d81ce174ac941164f19ef6bcfbc13b57a343d66d",
+          "afterJournal": "47efe1b1d147804e1b8a3901d81ce174ac941164f19ef6bcfbc13b57a343d66d",
+          "afterIntentionalHpEdit": "07ef65fcb45bc44ec9ad4cc7f6c6bd86d7f05949efc6bdf11d77570f50e2c1b5"
+        }
+      ]
+    },
+    "CSJ-4": {
+      "passed": true,
+      "realDistinctRoles": 4,
+      "outcome": "Owner edits; DM allowed read/no mutation; member campaign-only; outsider/anonymous denied",
+      "audienceMatrixPassed": true,
+      "nonOwnerWritesDenied": true
+    },
+    "CSJ-5": {
+      "passed": true,
+      "lostResponseDraftRetained": true,
+      "createResponseLostReadbackPassed": true,
+      "staleOwnerTabPassed": true,
+      "removedEntryConflictPassed": true,
+      "noExtraJournalRow": true,
+      "outcome": "Draft retained; exact operation/entry readback; no blind replay/title-body matching or duplicate insert"
+    },
+    "CSJ-6": {
+      "passed": true,
+      "widths": [
+        1280,
+        390
+      ],
+      "sameIdsAcrossDesktopMobile": true,
+      "sourceContentRuntimeBound": true,
+      "sameCentralIndependentReview": "CLEAR recorded native/consumer/runner and exact final Journal owner delta; no later product changes",
+      "exactCleanupComplete": true
+    }
+  },
+  "finiteNative": {
+    "allTenProfileChecks": {
+      "classGateClosed": true,
+      "readinessClosed": true,
+      "hitDieGateClosed": true,
+      "genericCasUnchanged": true,
+      "noPendingAdmissions": true,
+      "privateHelpersClosed": true,
+      "servicePrivateClosed": true,
+      "noBuilderCapabilities": true,
+      "oldProducerRolesClosed": true,
+      "twoFiniteAuthenticatedEntries": true
+    },
+    "refusals": [
+      {
+        "characterId": "2067b37c-78c3-43eb-9bce-79ef9cca8205",
+        "count": 21,
+        "outcomes": [
+          "refused_unchanged",
+          "invalid_unchanged",
+          "conflict_unchanged"
+        ]
+      },
+      {
+        "characterId": "ca8e6c07-d735-4010-9021-212009971281",
+        "count": 21,
+        "outcomes": [
+          "refused_unchanged",
+          "invalid_unchanged",
+          "conflict_unchanged"
+        ]
+      }
+    ],
+    "rollbackProbes": 3,
+    "actualConcurrency": {
+      "separateBlockedBackends": [
+        723,
+        1057
+      ],
+      "actualOwnerRequests": 2,
+      "applied": 1,
+      "conflict": 1,
+      "blockerReleased": true,
+      "blockerProcessExit": 0
+    },
+    "committedHpResponseLost": true,
+    "noAutomaticReplay": true,
+    "unsavedActualTipTapDraft": {
+      "actualBrowserDraftSurvivesTabsAndNativeHpRefresh": true,
+      "draftNeverSubmitted": true,
+      "extraJournalRows": 0
+    }
+  },
+  "finallyCleanup": {
+    "flow": {
+      "runId": "d0f47077-c3f3-4076-aab0-860e5efd5ff6",
+      "sourceHead": "c1e195a51073dc70d1d1d6a72baa985c850a5bbe",
+      "browserContextClosed": true,
+      "complete": true,
+      "fixtureBudgetConfirmed": true,
+      "runtimeTeardownStillRequired": true
+    },
+    "journal": {
+      "contextsClosed": true,
+      "recordedEntries": 3,
+      "removed": [
+        true,
+        true,
+        true
+      ],
+      "runtimeTeardownStillRequired": true
+    },
+    "freshNative": {
+      "runId": "d0f47077-c3f3-4076-aab0-860e5efd5ff6",
+      "sourceHead": "c1e195a51073dc70d1d1d6a72baa985c850a5bbe",
+      "bothActualTestProcessesExitedZero": true,
+      "flowContextsClosed": true,
+      "journalContextsAndExactEntriesCleaned": true,
+      "finalNativeFixtureBudget": {
+        "caps": 0,
+        "seals": 0,
+        "journal": 0,
+        "members": [
+          "11611efe-b43c-4aa5-a871-f853a42902b8",
+          "d38e3ba1-1ff5-4644-95ce-cb5a02c6a35b",
+          "f9330cc1-4b0f-4dcc-ae33-004b50a722c4"
+        ],
+        "accounts": [
+          "11611efe-b43c-4aa5-a871-f853a42902b8",
+          "665d575c-6816-46cd-9d74-f8cef1c23a1f",
+          "d38e3ba1-1ff5-4644-95ce-cb5a02c6a35b",
+          "f9330cc1-4b0f-4dcc-ae33-004b50a722c4"
+        ],
+        "campaigns": [
+          "91c725eb-9f9a-4321-8740-8c9aa3e5e967"
+        ],
+        "characters": [
+          "2067b37c-78c3-43eb-9bce-79ef9cca8205",
+          "ca8e6c07-d735-4010-9021-212009971281"
+        ]
+      },
+      "runtimeTeardownStillRequired": true,
+      "passed": true
+    }
+  },
+  "runtimeSourceBinding": {
+    "sourceExportSha256": "97353ca7023c74345004f1fd4a69a7825c02778eac68d9e73984da3c07b6b243",
+    "hostPlanSha256": "f8cd68b0685553291e9b161dba081b9f363662173ba65dee916f0217515a614b",
+    "publicCatalogManifestSha256": "60e35087457442e13b2ca8404b129baa934684a02937720a22770894c207e40e",
+    "journalBlob": "effc73fc60f3b48fe6724fb946e077da23fdaea6",
+    "journalSha256": "17ed320f30d2f9888a2d99b5b92065425e08267ede6dda60e46402c8a38721c3",
+    "journalAssemblyManifest": "2026-10-29-csj-journal-alert-assembly.json",
+    "reviewedProduct": "afe56e5 native;28b9333 runner/native;301c5a6 Actions;a50d6d3 provider;a3842f4 Journal;ba09cf2/a7308ca exact Journal test-only assemblies"
+  },
+  "hostCleanup": {
+    "complete": true,
+    "result": {
+      "result": "passed",
+      "phase": "complete",
+      "ephemeralResourcesRemoved": true,
+      "credentialsRemoved": true,
+      "existingServicesUnchanged": true,
+      "availableKiB": 31094176,
+      "finishedUtc": "2026-10-30T00:12:02Z"
+    },
+    "cleanupPlanPath": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\d0f47077-c3f3-4076-aab0-860e5efd5ff6\\cleanup-plan.json",
+    "cleanupPlanSha256": "aac68b3942e839038830afd5ad642b44db44d52bd6f5aee8b124d0948c60e320",
+    "cleanupResultPath": "C:\\Users\\kaios\\Documents\\Codex\\2026-10-11\\task-2\\equipment-runtime\\unraid\\d0f47077-c3f3-4076-aab0-860e5efd5ff6\\cleanup-result.json",
+    "cleanupResultSha256": "50e8e9bd61db93e4e305ab8df3bb175c7542c765b20559dd1d58bb7cf25b20ad",
+    "removedImageCount": 13,
+    "remoteInputsRemoved": 3,
+    "localInputsRemoved": 3,
+    "publicEvidenceFilesRetained": 18,
+    "originalContainers": 56,
+    "originalVolumes": 95,
+    "originalImageIds": 53,
+    "allOriginalResourcesAndServiceStatesPreserved": true,
+    "noRuntimePrivateInputsOrCredentials": true,
+    "helperRemoved": true,
+    "helperSha256": "06c42430ea7325f2803b5735c59ecb423c98bbd118bd9fdd1e42cf0d2427a347",
+    "transportPid": 252104,
+    "transportAbsent": true
+  },
+  "evidence": [
+    {
+      "path": "output/basic-sheet-profile.json",
+      "sha256": "0c1babc41b6fee58f033d0671885adff94de6c3d4098eda1cb7ae603bd4c54e7",
+      "bytes": 1114
+    },
+    {
+      "path": "output/bootstrap.json",
+      "sha256": "1e48f135f0bc4bafd37a957095dd07d513a4bbf550eb9218d6ec3d4743751f1d",
+      "bytes": 1115387
+    },
+    {
+      "path": "output/csj-browser/.last-run.json",
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
+      "bytes": 45
+    },
+    {
+      "path": "output/csj-cleanup-check.json",
+      "sha256": "d76626537e894db86c45a0fe7c2928124052309ebf1a2686562c88dbffc8435a",
+      "bytes": 939
+    },
+    {
+      "path": "output/csj-flow-cleanup.json",
+      "sha256": "af58ce0b7a283b0b99914c8414667169f4424de147021e871a4a887354b163b8",
+      "bytes": 214
+    },
+    {
+      "path": "output/csj-flow-evidence.json",
+      "sha256": "9e775c62adc1cbb5aefec946e3c38e7de0e863fc14b585f6ff48e8b103f518fa",
+      "bytes": 14946
+    },
+    {
+      "path": "output/csj-flow.json",
+      "sha256": "2c87ae5d4786ba4b68062542a592f840921f2a79ecb84a0373801a2fdf057193",
+      "bytes": 306
+    },
+    {
+      "path": "output/host-before.json",
+      "sha256": "0b8a75cac3428866a74c790f49eafbedc6e365ad6111cd5930ef7f51047ccbbd",
+      "bytes": 101
+    },
+    {
+      "path": "output/host-during.json",
+      "sha256": "777a13b065297d24666c9cb4b9a0731d6b4e7cbf019d9d9e6cb779878489ccf8",
+      "bytes": 33
+    },
+    {
+      "path": "output/host-result.json",
+      "sha256": "a24fbb3d41857a5929f429fbc49fc536cc53b43d4e30beeacd961665973d825a",
+      "bytes": 192
+    },
+    {
+      "path": "output/journal/.last-run.json",
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
+      "bytes": 45
+    },
+    {
+      "path": "output/journal/real-journal-actual-journa-a17c1--roles-enforce-its-audience/create-unknown-draft.json",
+      "sha256": "17f9253489058305de6483ba507f81bab78c4913a578c0de1822fb52382fe5e1",
+      "bytes": 492
+    },
+    {
+      "path": "output/journal/real-journal-actual-journa-a17c1--roles-enforce-its-audience/journal-cleanup.json",
+      "sha256": "02ce19feeda2312e2ae34a6aeac80d47cb73e974bc523af5461b18145500ee2a",
+      "bytes": 106
+    },
+    {
+      "path": "output/journal/real-journal-actual-journa-a17c1--roles-enforce-its-audience/journal-real.json",
+      "sha256": "1446a38e03f94b12d4a2c980e34f8235c85791869699f4188b3f949f72a0c0eb",
+      "bytes": 2055
+    },
+    {
+      "path": "output/resources.json",
+      "sha256": "82cc862e1fe32230a6c73223382045d142434b21068f4150fab766386d33cffe",
+      "bytes": 4213
+    },
+    {
+      "path": "output/services-after.json",
+      "sha256": "acf258f42a26c1db1471bc99b920eb083576fbb81a03d820f9fb5ac215e3762a",
+      "bytes": 5001
+    },
+    {
+      "path": "output/services-before.json",
+      "sha256": "acf258f42a26c1db1471bc99b920eb083576fbb81a03d820f9fb5ac215e3762a",
+      "bytes": 5001
+    },
+    {
+      "path": "output/summary.json",
+      "sha256": "404ad98dfa2593b743c09e22874c6e2d1f885a7194079b3d8ea36d588cd5b4e1",
+      "bytes": 2526
+    }
+  ],
+  "preserved": [
+    "Six previous overall attempts remain failed with their exact cleanup records",
+    "Fourteen accepted creation journeys and finite native/Flow acceptance retained",
+    "Library/Journal/Character Flow feature and report ownership unchanged"
+  ],
+  "limitations": [
+    "Local disposable Unraid only; mounted-editor draft recovery only, no browser-crash draft durability",
+    "No durable resource spending, rests, death-save/concentration/copy-policy or broader all-class gameplay",
+    "No push/merge/deployment/hosted data or security changes; paused/deferred work preserved"
+  ],
+  "nextAction": "Clean release to Coordinator to inspect evidence and record CSJ-1..6 local acceptance, then stop this goal. No next feature or additional test batch."
+}
