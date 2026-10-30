@@ -74,7 +74,18 @@ async function openJournal(page: Page, config: Config, characterId: string) {
   await expect(page.getByRole("heading", { name: "Journal & timeline", exact: true })).toBeVisible();
 }
 
-async function loseNextAction(page: Page, config: Config, characterId: string, trigger: () => Promise<unknown>) {
+async function expectJournalAlert(page: Page, editorName: string, expectedText: string) {
+  const editor = page.getByRole("group", { name: editorName, exact: true });
+  await expect(editor).toHaveCount(1);
+  // Next's route announcer is also an alert, outside the journal editor.
+  const alert = editor.getByRole("alert");
+  await expect(alert).toHaveCount(1);
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText(expectedText);
+  return editor;
+}
+
+async function loseNextAction(page: Page, config: Config, characterId: string, editorName: string, trigger: () => Promise<unknown>) {
   let dropped = false;
   const matcher = (url: URL) => url.origin === config.appOrigin && url.pathname === `/characters/${characterId}`;
   await page.route(matcher, async route => {
@@ -84,9 +95,9 @@ async function loseNextAction(page: Page, config: Config, characterId: string, t
   });
   try {
     await trigger();
-    await expect(page.getByRole("alert")).toContainText("Save status unknown");
+    const editor = await expectJournalAlert(page, editorName, "Save status unknown");
     expect(dropped).toBe(true);
-    await expect(page.getByRole("button", { name: "Save entry", exact: true })).toBeDisabled();
+    await expect(editor.getByRole("button", { name: "Save entry", exact: true })).toBeDisabled();
   } finally { await page.unroute(matcher); }
 }
 async function closeDraft(page: Page) {
@@ -163,7 +174,7 @@ test("actual journal saves and reopens without a campaign; real roles enforce it
       await audience.selectOption(visibility);
       await expect(audience).toHaveValue(visibility);
       if (index === 0) {
-        await loseNextAction(page, config, characterId, () => page.getByRole("button", { name: "Save entry", exact: true }).click());
+        await loseNextAction(page, config, characterId, "New journal entry", () => page.getByRole("button", { name: "Save entry", exact: true }).click());
         await expect(page.getByLabel("Entry title", { exact: true })).toHaveValue(title);
         const downloadPromise = page.waitForEvent("download");
         await page.getByRole("button", { name: "Download draft", exact: true }).click();
@@ -216,7 +227,7 @@ test("actual journal saves and reopens without a campaign; real roles enforce it
     await openJournal(page, config, standalone.characterId);
     await page.getByRole("button", { name: `Edit ${standalone.title}`, exact: true }).click();
     await page.locator('.tiptap[contenteditable="true"]').fill("This edit survived a lost response.");
-    await loseNextAction(page, config, standalone.characterId, () => page.getByRole("button", { name: "Save entry", exact: true }).click());
+    await loseNextAction(page, config, standalone.characterId, `Edit ${standalone.title}`, () => page.getByRole("button", { name: "Save entry", exact: true }).click());
     await expect(page.locator('.tiptap[contenteditable="true"]')).toContainText("This edit survived a lost response.");
     await page.getByRole("button", { name: "Check saved entry", exact: true }).click();
     await expect(page.getByRole("complementary", { name: "Saved entry readback" })).toContainText("This edit survived a lost response.");
@@ -240,7 +251,7 @@ test("actual journal saves and reopens without a campaign; real roles enforce it
     await otherTab.getByRole("button", { name: "Save entry", exact: true }).click();
     await expect(otherTab.getByRole("heading", { name: standalone.title, exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Save entry", exact: true }).click();
-    await expect(page.getByRole("alert")).toContainText("changed or was removed");
+    await expectJournalAlert(page, `Edit ${standalone.title}`, "changed or was removed");
     await expect(page.locator('.tiptap[contenteditable="true"]')).toContainText("Stale draft must survive.");
     await expect(page.getByRole("button", { name: "Save entry", exact: true })).toBeDisabled();
     const newer = await clients.owner.from("character_timeline_events").select("description").eq("id", standalone.id).single();
@@ -340,10 +351,10 @@ test("actual journal saves and reopens without a campaign; real roles enforce it
     expect(Boolean(removal.error)).toBe(false); expect(removal.data).toEqual([{ id: removed.id }]);
     deliberatelyRemoved.add(removed.id);
     await page.getByRole("button", { name: "Save entry", exact: true }).click();
-    await expect(page.getByRole("alert")).toContainText("changed or was removed");
+    await expectJournalAlert(page, `Edit ${removed.title}`, "changed or was removed");
     await expect(page.locator('.tiptap[contenteditable="true"]')).toContainText("Removed entry draft survives.");
     await page.getByRole("button", { name: "Check saved entry", exact: true }).click();
-    await expect(page.getByRole("alert")).toContainText("no longer available");
+    await expectJournalAlert(page, `Edit ${removed.title}`, "no longer available");
     await expect(page.getByRole("button", { name: "Save entry", exact: true })).toBeDisabled();
     const absent = await clients.owner.from("character_timeline_events").select("id").eq("id", removed.id);
     expect(Boolean(absent.error)).toBe(false); expect(absent.data).toEqual([]);
