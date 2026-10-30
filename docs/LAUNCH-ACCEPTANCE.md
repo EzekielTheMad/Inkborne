@@ -101,6 +101,43 @@ place in the [decision register](#prd-p1-p3-crosswalk-decision-register-not-sile
 
 ### Approved CSJ-v1 — creation, basic sheet use and Journal
 
+**LOCAL ACCEPTANCE — 2026-10-30T00:18:02.114Z.** Inkborne Project Coordinator accepts
+**CSJ-v1 / CSJ-1..6** for the approved Half-Elf Fighter4/Acolyte standalone
+and Human Lore Bard3/Acolyte campaign journeys. Exact candidate
+`c1e195a51073dc70d1d1d6a72baa985c850a5bbe`, actual disposable run
+`d0f47077-c3f3-4076-aab0-860e5efd5ff6`; both real test processes exit0 after finally.
+[Bound source, criteria, native proofs, actual receipts and cleanup](handoffs/2026-10-29-csj-local-acceptance-evidence.json).
+Same central independent reviewer FINAL CLEAR; root verifies all18 evidence
+hashes and cleanup-plan/result binding. This acceptance supersedes the historical
+blocked/source-only CSJ checkpoints below, without relabeling six failed attempts.
+
+| Approved criterion | Accepted finite local result |
+| --- | --- |
+| CSJ-1 | Both normal six-step creations, exact choices/pins, sheet/reopen and the same two IDs through Journal |
+| CSJ-2 | Ability/equipped starting-weapon logs, damage/healing/tempHP persistence, Bard capacity3 atCHA16 and maxHP24/DC13/attack+5/slots4+2; native owner/42 guard outcomes/rollback/lost-response/concurrency/revision-order/retention |
+| CSJ-3 | Three exact entries saved/edited/reopened with title/date/rich body/audience/order; Journal preserves mechanics and later HP preserves narrative |
+| CSJ-4 | Genuine owner/DM/member/outsider identities plus anonymous boundary; allowed audience reads and non-owner mutation refusals |
+| CSJ-5 | Lost committed responses, exact attempted-ID readback, retained mounted drafts, stale/removed refusal and no extra create |
+| CSJ-6 | Same IDs at1280/390; exact source/content/runtime binding, independent review, both exits/finally receipts, fresh fixture counts and full cleanup |
+
+Test IDs`2067b37c-78c3-43eb-9bce-79ef9cca8205` and
+`ca8e6c07-d735-4010-9021-212009971281` belong to this disposed run only.
+Three exact entries were removed; final native query has4identities/2characters/
+1campaign/3members and0Journal rows/capabilities/seals before runtime teardown.
+Runtime/private credentials,13 introducedimages, six source/archive inputs,
+helper and transport are removed. Original56containers/95volumes/27networks/
+53imageIDs and service snapshots are preserved. All118 SQL-step hashes match
+the candidate; catalog1535 definitions/versions/active, no staging rows.
+
+CSJ-NATIVE-HP and CSJ-NATIVE-CAMPAIGN are resolved within these finite local
+contracts. Character Flow and Journal have no remaining CSJ assignment; their
+product/report ownership stays intact. Library retains its existing work.
+**Stop this CSJ cycle. No further feature or verification run is dispatched.**
+Existing14 accepted creation journeys, other priorities and all exclusions remain.
+Acceptance is disposable-local and mounted-editor only: no browser-crash draft
+durability, durable spending/rest/death-save/concentration/copy-policy, broader
+R06/R08/R20 or hosted/release completion. No user decision remains for CSJ-v1.
+
 Victor explicitly approved CSJ-v1 and dispatch in Inkborne Coordinator on
 2026-10-29. This bounded outcome sits within R06/R08/R20 and preserves the
 existing milestone priorities, accepted creation receipts, paused/deferred work

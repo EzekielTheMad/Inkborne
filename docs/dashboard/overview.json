@@ -9,31 +9,29 @@
     "name": "Inkborne Project Coordinator",
     "threadId": "01a1890b-d3ee-7231-94de-6eb24a755f70"
   },
-  "updatedAt": "2026-10-30T00:03:05.315Z",
+  "updatedAt": "2026-10-30T00:18:02.114Z",
   "source": {
     "reference": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification/docs/LAUNCH-ACCEPTANCE.md",
     "commit": "1f15a44f1c964c51d953188be288b4c0dfb0f910",
     "worktree": "C:/Users/kaios/Documents/Codex/2026-10-11/task-2/equipment-verification",
     "branch": "codex/launch-integration-20261011"
   },
-  "currentWork": "FullFlow local pass repeated atd218977; Journal audience works but unscoped unknown-save alert collided with navigation announcer. Journal-owned four-alert scoping correction0ef5d18 CLEAR and exact one-file assemblya7308ca verified. Sixthfailure/18 hashes/exact cleanup retained; corrected combined run dispatched.",
-  "nextAction": "Character Flow executes existing corrected same-run CSJ; coordinator checks full Journal save/audience/recovery/isolation plus both process exits/final native counts/host cleanup and stops at bounded CSJ local acceptance.",
-  "blockers": [
-    "Corrected actual Journal recovery/audience/isolation and final combined CSJ acceptance remain pending. Native/Flow local evidence retained; alert-test correction reviewed/assembled; no user decision or permission gap."
-  ],
+  "currentWork": "CSJ-v1 locally accepted by Coordinator: both approved normal creation/sheet/Journal journeys pass on the same IDs at1280/390 in rund0f47077/candidatec1e195a; all six criteria, independent final review and exact cleanup verified. Native HP/campaign prerequisites resolved. This bounded coordination cycle stops.",
+  "nextAction": "Stop CSJ-v1. Character Flow and Journal retain product/report ownership with no remaining CSJ assignment; Library keeps its existing work. Wider ledger gates and excluded gameplay/hosted/release acceptance remain separate.",
+  "blockers": [],
   "decisions": [],
   "dependencies": [
     {
       "laneId": "character-flow",
-      "reason": "Retains R08 character work and its report in the shared checkout; coordinator and lane must serialize exact file/index write windows. Accepted creation evidence is retained."
+      "reason": "Approved native/character/basic-sheet/runner CSJ slice accepted locally; lane retains product/report ownership and accepted creation history."
     },
     {
       "laneId": "journal",
-      "reason": "Journal retains its UI/real-story consumer and report; coordinator owns shared persistence and fixture/runner dispositions before real save/reopen/role acceptance."
+      "reason": "Approved same-ID three-entry narrative/audience/recovery CSJ slice accepted locally; lane retains source/report ownership and broader R20 remains separately open."
     },
     {
       "laneId": "library",
-      "reason": "Library retains presentation/report work; coordinator owns related-definition reader/access/version disposition. Current display proof stays simulated/isolated."
+      "reason": "No CSJ blocking dependency; existing Library work, report and independent shared-reader priorities remain unchanged."
     }
   ],
   "deliverables": [
@@ -337,11 +335,11 @@
       "area": "Integrated character journey",
       "milestone": "M3/M5.5",
       "requirement": "R06/R08/R20; CSJ-v1 criteria CSJ-1..6",
-      "outcome": "Finite native and full selected Flow criteria pass locally twice. Journal now reaches uncertain-create status; test alert scope corrected/reviewed and assembled without product/oracle changes. Full Journal and final same-ID acceptance remain open.",
+      "outcome": "Both approved normal-created character journeys continue through basic sheet use and the same-ID Journal workflow at1280/390. Native HP/campaign, genuine privacy/refusals, recovery, two-way data retention and exact cleanup pass. Coordinator accepts only CSJ-v1 locally; broader project/hosted gates remain open.",
       "implementation": "implemented",
       "verification": "local",
-      "integration": "unknown",
-      "acceptance": "open",
+      "integration": "integrated",
+      "acceptance": "accepted",
       "disposition": "included",
       "evidence": [
         "docs/LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal — explicit 2026-10-29 approval and bounded criteria",
@@ -360,8 +358,12 @@
         "616da4d4 runtimec217553 —Flow exit0 afterfinally,22 proof objects, same two IDs1280/390, native42 guarded outcomes and full finite HP/campaign/rollback/concurrency/recovery;18 linked hashes+exact cleanup verified. Overallfailed because Journal exit1 before firstsave.",
         "Journal8468f26 / canonicalba09cf2 / metadata4dacf8b —onefile selector review CLEAR and exact canonical bytes; all other source unchanged; corrected existing combined run dispatched, no receipt mixing or final acceptance.",
         "d25494c9 atd218977 —Flow exit0/22 proofs/completecleanup; Journal exits1 at expected-warning/announcer collision. Recorded0 is not DB0 after uncertain create;18 output hashes/exact cleanup verified.",
-        "Journal0ef5d18 / canonicala7308ca / metadatafde8f41 —four editor-scoped warning checks, same reviewer CLEAR, exact one-file source and everyothercanonicalpath unchanged. Corrected existing combined run dispatched."
-      ]
+        "Journal0ef5d18 / canonicala7308ca / metadatafde8f41 —four editor-scoped warning checks, same reviewer CLEAR, exact one-file source and everyothercanonicalpath unchanged. Corrected existing combined run dispatched.",
+        "docs/LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal —Coordinator local acceptance of CSJ-1..6 and stop, sourcec1e195a/run d0f47077; no broader milestone acceptance.",
+        "docs/handoffs/2026-10-29-csj-local-acceptance-evidence.json —SHA2566d653d8b0b487329d8c905930baab736193ea08fb9c71a164db2df83606dd564; both process exits0 afterfinally, same2IDs1280/390,22native/Flow proofs, Journal real role/recovery/isolation and3 exact entry removals.",
+        "Final cleanup SHA25650e8e9bd61db93e4e305ab8df3bb175c7542c765b20559dd1d58bb7cf25b20ad —fresh4/2/1/3 fixtures/Journal0/caps0/seals0; runtime/private/13images/6inputs/helper/transport removed; original56containers95volumes27networks53images and services preserved.18 linked evidence hashes verified; six earlier attempts remain failed."
+      ],
+      "acceptedBy": "Inkborne Project Coordinator; explicit approved CSJ-v1 criteria; independent final source/evidence/cleanup review CLEAR"
     }
   ]
 }
