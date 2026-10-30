@@ -8,7 +8,15 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ Journal alert locator failure — 2026-10-29T23:58:53.819Z
+## Current CSJ reviewed Journal alert assembly — 2026-10-30T00:02:14.235Z
+
+Source **a7308caf158d62126052e920b56d9061d97210e4**, exact one-file assembly of Journal owner **0ef5d18ad4ec89e3484ae8c3812d4546ffd9ce8a**. [Exact assembly/review/source binding](2026-10-29-csj-journal-alert-assembly.json). SAME reviewer CLEAR covers frozen alert delta and sixth cleanup. Four expected warnings now require one visible expected alert in the exact entry editor. All prior dropped/save-disabled/draft/readback/recovery/native/no-duplicate/budget assertions remain;9 Journal product paths and every other canonical source unchanged. No foreign docs/AGENTS/scripts imported, no repeated product suites.
+
+Sixth actual remains failed; full Flow exit0/local acceptance retained. Journal recordedEntries0 is not DB0 after an uncertain create. Exact cleanup is complete with18 public evidence hashes and original resources preserved, as linked below.
+
+**Next:** release clean main window after own metadata commit; Coordinator closes canonical docs and dispatches existing bounded corrected actual story. Same two newly normal-created IDs within that run,4roles/1campaign/max3entries/1280+390, both process exits0 after finally, final native counts and exact cleanup. No broader matrix/framework or new feature. Source ownership unchanged; shared contractv1 read.
+
+## Prior CSJ Journal alert locator failure — 2026-10-29T23:58:53.819Z
 
 Sixth actual **d25494c9-a8f1-48da-8e20-3e2ee9780cc1**, source **d218977d1ffa57ebd046548e62c146535ade3ae5**: **Flow exits0 with complete run/head-bound receipts and22 proofs again; overall FAILED** at Journal lost-response status lookup. [Exact result, drift check and completed cleanup](2026-10-29-csj-journal-alert-failure.json). Both same normal IDs are reused at1280/390. Prior fifth-run local Flow/native acceptance and accepted14 remain intact.
 
