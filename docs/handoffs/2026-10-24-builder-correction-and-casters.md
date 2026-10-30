@@ -8,7 +8,15 @@ checkout, old backup, every inherited worktree and accepted checkpoint. No push,
 hosted mutation or deployment; Vercel unchanged, M7/creature imports paused and
 all global readiness/class/hit-die gates closed.
 
-## Current CSJ complete actual local pass — 2026-10-30T00:14:59.848Z
+## Current CSJ local acceptance complete — 2026-10-30T00:19:16.332Z
+
+**Coordinator accepted CSJ-1 through CSJ-6 locally** at **29c7d45e2605e84129b19c637f2c842dd0e85133**, frozen candidate **c1e195a51073dc70d1d1d6a72baa985c850a5bbe**, actual run **d0f47077-c3f3-4076-aab0-860e5efd5ff6**. [Canonical decision](../LAUNCH-ACCEPTANCE.md#current-execution-path) and [complete actual evidence/cleanup](2026-10-29-csj-local-acceptance-evidence.json). SAME reviewer FINAL CLEAR covers the workflow,118 SQL hashes,18 public evidence hashes and exact cleanup.
+
+The same normal-created Fighter/Bard IDs pass creation → basic sheet → Journal at1280/390; both test processes exit0 after finally, fresh DB checks pass, and no task runtime/private credentials/helper/images/inputs remain. Existing Unraid resources unchanged. Every prior failed overall attempt stays failed; accepted14 creation journeys and all other overview outcomes retained.
+
+**No remaining CSJ assignment. Stop this goal.** No further source edits, tests, runtime or next feature is dispatched. This acceptance is finite local CSJ only, not whole R06/R08, project launch or hosted/release acceptance. Character Flow retains character product/report; Coordinator retains overview/integration; Journal and Library ownership unchanged. This final own-report/handoff closeout releases the clean shared docs/index window after its metadata commit. Shared contractv1 read.
+
+## Prior CSJ complete actual local pass — 2026-10-30T00:14:59.848Z
 
 **Creation → basic sheet → Journal now passes the approved actual local workflow.** Run **d0f47077-c3f3-4076-aab0-860e5efd5ff6**, frozen source **c1e195a51073dc70d1d1d6a72baa985c850a5bbe**; managed session15227 exits0. [Complete source-bound CSJ-1..6 evidence and cleanup](2026-10-29-csj-local-acceptance-evidence.json). Coordinator records final acceptance; this lane claims the actual result within its finite scope.
 
