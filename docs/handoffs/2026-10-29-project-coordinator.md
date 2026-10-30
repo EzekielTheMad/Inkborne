@@ -743,3 +743,61 @@ Flow own metadata`367cbf1` and Journal own local-evidence checkpoint`4818611`
 retain source freezes and their individual report ownership. Closing messages
 will mirror this acceptance only; no source edits/tests/runtime/next feature.
 Coordinator releases main docs/index after this scoped decision commit.
+
+## GitHub source publication — 2026-10-30
+
+The user authorized pushing the completed work to GitHub with documentation.
+The publication target is the existing continuation branch
+[`codex/launch-integration-20261011`](https://github.com/EzekielTheMad/Inkborne/tree/codex/launch-integration-20261011).
+This is branch publication only. It does not authorize a merge, deployment,
+hosted database/security change, production restart or another feature cycle.
+
+### What this checkpoint delivers
+
+Both approved journeys now pass normal creation, basic sheet use and Journal
+on the same character IDs: Half-Elf Fighter 4/Acolyte standalone and Human Lore
+Bard 3/Acolyte in a campaign. Basic sheet use covers ability/equipped-weapon
+roll logs, nonlethal damage/healing/temp HP persistence and the Bardic Inspiration
+capacity correction. Native HP and initial campaign-assignment commands preserve
+owner, revision, content-pin and access protections. Journal save/edit/reopen,
+audiences, stale-write handling and uncertain-response recovery preserve mechanics;
+later HP changes preserve narrative and mounted drafts.
+
+The branch also carries earlier continuation work and historical checkpoints.
+Publishing it preserves that history; it does not accept every included feature.
+It is not a CSJ-only diff or a merge-ready release. GitHub `main` was
+`6b8601f976d3ee121d11f2ec33c7383393024b91` before publication. After completing
+the local shallow history, its common ancestor with this branch is
+`0a4acb93ab5fcda94d8efa13a87568c3315da108`. Main reconciliation and any PR/merge
+remain separate work. Other lane worktrees and unintegrated changes are excluded.
+
+### Source, evidence and limitations
+
+- Tested application candidate: `c1e195a51073dc70d1d1d6a72baa985c850a5bbe`.
+- Coordinator acceptance: `29c7d45e2605e84129b19c637f2c842dd0e85133`.
+- Completed main-checkout lane closeout: `76c350023c52e45bd2e7c4f4ec61b30e2c5b540a`.
+- [Acceptance authority and current scope](../LAUNCH-ACCEPTANCE.md#approved-csj-v1--creation-basic-sheet-use-and-journal).
+- [Source-bound acceptance evidence and cleanup manifest](2026-10-29-csj-local-acceptance-evidence.json).
+
+The approved disposable-local run `d0f47077-c3f3-4076-aab0-860e5efd5ff6` passed
+both actual workflow processes, 69 focused checks, typecheck and lint. It covered
+1280px/390px, four genuine roles, two normal-created characters, one campaign and
+at most three Journal entries. Independent final review cleared CSJ-1 through
+CSJ-6; cleanup and retained evidence hashes were verified. The fourteen previously
+accepted creation journeys remain accepted without rerunning them for publication.
+The manifest records local raw-evidence paths and hashes; those external runtime
+files and private test credentials are not uploaded as repository artifacts.
+
+Application source is unchanged since that tested candidate; subsequent changes
+are documentation/report closeouts. Publication validation checks documentation,
+links, whitespace, branch identity and targeted credential patterns in outgoing
+history. It reuses accepted behavior evidence rather than rerunning app suites.
+No new runtime or persistent process is needed.
+
+Acceptance remains disposable-local and mounted-editor only. Browser-crash draft
+durability, durable spending/rest, broader gameplay, hosted/provider acceptance,
+production migrations, backup/restore and release gates remain open. Staged SQL
+and server-only feature switches are not activated in a hosted environment by
+this push. Existing priorities, lane ownership, pauses and exclusions remain.
+To inspect the published work, check out this branch; do not apply staged SQL or
+enable feature switches against hosted data without a separately reviewed plan.

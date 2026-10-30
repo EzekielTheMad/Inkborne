@@ -101,6 +101,10 @@ place in the [decision register](#prd-p1-p3-crosswalk-decision-register-not-sile
 
 ### Approved CSJ-v1 — creation, basic sheet use and Journal
 
+GitHub branch publication is authorized separately from local acceptance; see
+the [source publication checkpoint](handoffs/2026-10-29-project-coordinator.md#github-source-publication--2026-10-30)
+for the branch, source/evidence binding and unchanged hosted/release boundaries.
+
 **LOCAL ACCEPTANCE — 2026-10-30T00:18:02.114Z.** Inkborne Project Coordinator accepts
 **CSJ-v1 / CSJ-1..6** for the approved Half-Elf Fighter4/Acolyte standalone
 and Human Lore Bard3/Acolyte campaign journeys. Exact candidate
