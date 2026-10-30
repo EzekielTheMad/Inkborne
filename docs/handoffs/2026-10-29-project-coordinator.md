@@ -663,3 +663,36 @@ Root closes main docs/index at this scoped checkpoint. Flow owns next actual
 run; Journal retains consumer/action/report source ownership and frozen correction.
 Coordinator alone owns combined acceptance.18 other overview deliverables and
 all14 accepted creation receipts remain unchanged; no next feature is started.
+
+## CSJ-v1 scoped Journal warning clear and corrected run dispatched
+
+**CSJ Journal status scoping retry — 2026-10-30T00:03:05.315Z:** sixth run
+`d25494c9-a8f1-48da-8e20-3e2ee9780cc1` at`d218977` retains full
+Flow process exit0/22 proofs/complete receipts at1280/390 and resolved native
+prerequisites. Journal audience lookup passes, then an unscoped alert matches
+both the expected unknown-save warning and Next route announcer. Overall run
+remains failed; recordedEntries0 is not DB0 after the uncertain first create.
+All18 output hashes and exact cleanup verified: runtime/private/helper/transport,
+13 introducedimages/six inputs removed, original56containers/95volumes/27networks/
+53images/services preserved. [Exact failed result and limits](2026-10-29-csj-journal-alert-failure.json).
+
+Journal owner fixes all four same warning sites to exact create/edit editor,
+unique visible expected message, preserving dropped response, disabled save,
+draft, exact-ID readback/no replay and all native/audience/budget checks. Same
+reviewer CLEAR source`0ef5d18a`; discovery/diff pass. Owner checks remaining
+same-story locators for identical label/announcer patterns, finds no further
+instance; no new scenarios or product change. Exact one-file canonical assembly
+`a7308caf158d62126052e920b56d9061d97210e4`, blob`effc73fc60f3b48fe6724fb946e077da23fdaea6`,
+SHA256`17ed320f30d2f9888a2d99b5b92065425e08267ede6dda60e46402c8a38721c3`,
+30215bytes, full-indexdiff`0dc79dbdf95c69cadfa5cc77fc9531b1758692d4ce265d957f3a65e856a08294`
+5856bytes. Every other canonical source remains unchanged; root verifies exact
+source and assembly manifest. [Assembly record](2026-10-29-csj-journal-alert-assembly.json).
+After this docs/index closure Flow is dispatched to the existing corrected
+same-run CSJ package, fresh guards and identical4roles/2normalIDs/1campaign/
+max3entries and actual acceptance assertions. Full Journal recovery/audience/
+isolation and both exits/final native counts/host teardown remain required.
+No new permission/user decision or test framework. All accepted work retained.
+
+Root closes main docs/index at this scoped checkpoint; Flow owns the next
+actual run/exact cleanup. Journal retains source/report ownership; coordinator
+alone accepts CSJ.18 other overview deliverables and14 creations unchanged.
